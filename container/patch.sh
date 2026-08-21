@@ -330,8 +330,9 @@ else
   # Compile from a source NAMED stage2_ondisk_loader.c so the .symtab STT_FILE
   # symbol matches the hardware-validated loader byte-for-byte.
   cp /opt/patcher/stage2_loader.c "$W/s2/stage2_ondisk_loader.c"
+  cp /opt/patcher/stage2_policy.h /opt/patcher/stage2_policy.c "$W/s2/"
   ( cd "$W/s2" && $XT-gcc -shared -fPIC -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra \
-      -Wl,-soname,libpolaris_stage2.so -I. stage2_ondisk_loader.c \
+      -Wl,-soname,libpolaris_stage2.so -I. stage2_ondisk_loader.c stage2_policy.c \
       -o libpolaris_stage2.so -ldl ) || die "loader compile failed"
   LFLAGS="$($XT-readelf -h "$W/s2/libpolaris_stage2.so" | awk -F: '/Flags/{print $2}')"
   grep -q 'soft-float' <<<"$LFLAGS" || die "loader ABI mismatch (not soft-float):$LFLAGS"

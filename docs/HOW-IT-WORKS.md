@@ -103,10 +103,13 @@ bind the **stale stock 2.5.27 ptp2** and the Canon driver would never come up.
 
 ## The two shims: showing a card, and tethered capture
 
-The loader `libpolaris_stage2.so` carries three small env-gated shims. They read
-and write only **public** libgphoto2 struct fields and call only **public**
-`gp_camera_set_config` / `gp_camera_set_single_config` APIs — no firmware code,
-no new exported symbols. The wrapper turns both on.
+The loader `libpolaris_stage2.so` carries three small env-gated shims. The
+wrapper turns both gates on, but the loader additionally applies the shims only
+when `gp_camera_get_abilities` reports exactly the Canon EOS R5 Mark II model
+(including the known upstream 2.5.34 typo spelling). An unknown model, lookup
+failure, Pentax camera, or any other camera is a pure pass-through. This
+fail-closed policy prevents R5-II-specific evidence from being generalized to a
+new driver before hardware testing.
 
 - **Shim #1 — storage / "no card"** (`STAGE2_STORAGE_SHIM=1`). Benro's app decides
   whether to show a memory card from the camera's reported storage info. Driving
@@ -156,6 +159,8 @@ mode installs a tiny 9-line `sh` wrapper there (no logging) that exports
 `/app/lib/stage2/pgphoto.stage2ondisk`. Everything the fresh stack needs lives
 under `/app/lib/stage2`; its runtime deps (`libltdl.so.7`, `libexif.so.12`,
 `libusb-1.0.so.0`, `libudev.so.1`) are already present on the device.
+The toggles therefore request R5 II compatibility behavior; the loader's exact
+model gate remains authoritative and keeps those shims disabled for Pentax.
 
 ## Reversible on-device testing (before you flash)
 

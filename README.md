@@ -86,8 +86,10 @@ Inside the firmware's `appfs`, full mode:
    on-disk paths** at runtime — not from the `CAMLIBS` the wrapper exports — so the
    fresh driver must live there too, not only under `stage2/`.
 
-The **loader's three shims** (each reads/writes only public libgphoto2 fields or
-calls only public `gp_camera_set_config` APIs — no firmware code):
+The **loader's three R5 II-only shims** (no firmware code) are enabled by the
+wrapper but also require the camera ability model to be exactly the corrected or
+upstream-typo spelling of Canon EOS R5 Mark II. Unknown models, Pentax cameras,
+and all other cameras bypass them:
 
 - **Storage shim** (`STAGE2_STORAGE_SHIM=1`, on): writes the Benro `_Camera`
   storage-type field so the app shows a memory card and raises **no "no card"
@@ -96,6 +98,9 @@ calls only public `gp_camera_set_config` APIs — no firmware code):
   tree-walk plus a `gp_camera_set_single_config` hook that force Canon's
   `capturetarget` to **"Internal RAM"** (tethered capture). The Polaris drives
   configs via `set_single_config`, so that hook is the one that fires.
+
+The model check is deliberately fail-closed: inability to read the public
+camera abilities record disables every compatibility write/rewrite.
 
 **Why tethered capture:** through the fresh 2.5.34 core, Canon's card-mode
 post-capture `ObjectAddedEx` event is not delivered, so a card-target shot never

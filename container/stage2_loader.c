@@ -81,6 +81,8 @@
 #include <errno.h>
 #include <sys/mman.h>
 
+#include "stage2_policy.h"
+
 /* Generated slot table: {symbol name, absolute slot vaddr in extended .bss},
  * plus STAGE2_SLOT_BASE (the fixed slot-region base for THIS binary). */
 #include "stage2_ondisk_table.h"
@@ -238,8 +240,35 @@ static void *g_stage2_core = NULL;
 typedef int (*stage2_gp_camera_init_fn)(void *camera, void *context);
 typedef int (*stage2_gp_camera_get_storageinfo_fn)(void *camera, void **sifs_out,
                                                    int *count_out, void *context);
+typedef int (*stage2_gp_camera_get_abilities_fn)(void *camera, void *abilities);
 static stage2_gp_camera_init_fn            g_real_gp_camera_init = NULL;
 static stage2_gp_camera_get_storageinfo_fn g_real_gp_camera_get_storageinfo = NULL;
+static stage2_gp_camera_get_abilities_fn   g_real_gp_camera_get_abilities = NULL;
+
+/* CameraAbilities starts with char model[128] in libgphoto2 2.5.34.  The
+ * patcher pins and validates that source version.  Use an over-sized, aligned
+ * buffer so this loader does not acquire a compile-time dependency on target
+ * libgphoto2 headers while still letting the public getter write its full
+ * structure safely. */
+static int stage2_camera_uses_r5_shims(void *camera)
+{
+    union {
+        max_align_t alignment;
+        unsigned char bytes[4096];
+    } abilities;
+
+    if (!g_real_gp_camera_get_abilities && g_stage2_core)
+        g_real_gp_camera_get_abilities = (stage2_gp_camera_get_abilities_fn)
+            dlsym(g_stage2_core, "gp_camera_get_abilities");
+    if (!g_real_gp_camera_get_abilities || !camera)
+        return 0;
+
+    memset(&abilities, 0, sizeof(abilities));
+    if (g_real_gp_camera_get_abilities(camera, &abilities) != 0)
+        return 0;
+    abilities.bytes[127] = '\0';
+    return stage2_model_uses_r5_shims((const char *)abilities.bytes);
+}
 
 /* Loader-internal wrapper installed in gp_camera_init's slot (see the fill loop).
  * Runs in NORMAL context (not a signal handler), so plain fprintf/getenv/free are
@@ -265,6 +294,13 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     int ret = g_real_gp_camera_init(camera, context);
     if (ret != 0)                                    /* GP_OK == 0 */
         return ret;                                  /* init failed: pass through */
+
+    /* These tail/config workarounds are supported only by R5 II device traces.
+     * Fail closed for Pentax, other cameras, and an unreadable ability record. */
+    if (!stage2_camera_uses_r5_shims(camera)) {
+        fprintf(stderr, "[stage2] compatibility shims: bypassed for non-R5-II camera\n");
+        return ret;
+    }
 
     /* SESSION 20 -- ENV GATE for the storageType write (STAGE2_STORAGE_SHIM).
      * The storage shim writes storageType@+0x1c=2 so Benro's getCameraStorageStatus()
@@ -400,6 +436,8 @@ static int stage2_shim_gp_camera_set_config(void *camera, void *widget,
         if (!tether || strcmp(tether, "0") == 0)
             return g_real_gp_camera_set_config(camera, widget, context);
     }
+    if (!stage2_camera_uses_r5_shims(camera))
+        return g_real_gp_camera_set_config(camera, widget, context);
 
     /* Tether ON: resolve the widget helpers we need (lazy, cached). */
     if (!g_real_gp_widget_get_child_by_name && g_stage2_core)
@@ -477,6 +515,8 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
             return g_real_gp_camera_set_single_config(camera, name, widget,
                                                       context);
     }
+    if (!stage2_camera_uses_r5_shims(camera))
+        return g_real_gp_camera_set_single_config(camera, name, widget, context);
 
     /* Tether ON: only capturetarget is rewritten; every other name (iso,
      * shutterspeed, aperture, ...) passes straight through.  The name is given
