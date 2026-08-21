@@ -75,8 +75,9 @@ The corresponding (modified) source is fully reconstructible: take the upstream
 release above and run container/build_ptp2.sh / container/dbg_patch.py, both in
 this repository. See docs/HOW-IT-WORKS.md and container/build_ptp2.sh.
 
-When the tool runs in full mode it writes `out/licenses/` with the libgphoto2
-`COPYING` (LGPL-2.1) and a source-offer note alongside the produced firmware, so
+In both modes the tool writes `out/licenses/` with the libgphoto2 `COPYING`
+(LGPL-2.1), the exact post-transformation corresponding source archive, and a
+build note alongside the produced firmware, so
 anyone redistributing the resulting image carries the required LGPL notice and
 source pointer.
 

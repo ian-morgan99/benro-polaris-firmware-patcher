@@ -372,10 +372,9 @@ python3 /opt/patcher/gen_firmwareinfo.py /in/firmwareInfo /out/FwPkt > /out/FwPk
 ( cd /out && rm -f FwPkt.zip && (command -v zip >/dev/null && zip -rqX FwPkt.zip FwPkt || python3 -c "import shutil;shutil.make_archive('FwPkt','zip','.','FwPkt')") )
 
 # ---------------------------------------------------------------------------
-# 8b. FULL mode: emit the reversible on-device bundle + LGPL source offer.
+# 8b. FULL mode: emit the reversible on-device bundle.
 #     The bundle lets people TEST before flashing (install_stage2.sh /
-#     restore_stock.sh, LD_PRELOAD-reversible). The LGPL notice + COPYING satisfy
-#     the source-offer for the libgphoto2 binaries shipped in the appfs.
+#     restore_stock.sh, LD_PRELOAD-reversible).
 # ---------------------------------------------------------------------------
 if [ "$MODE" = "full" ]; then
   BUN=/out/stage2-ondisk
@@ -391,25 +390,36 @@ if [ "$MODE" = "full" ]; then
   cp "$NEW_USB1" "$BUN/libgphoto2_port/0.12.2/usb1.so"
   chmod +x "$BUN/ondisk/"*.sh "$BUN/ondisk/pgphoto.wrapper" 2>/dev/null || true
 
-  # LGPL source offer for the shipped libgphoto2 binaries.
-  LIC=/out/licenses; rm -rf "$LIC"; mkdir -p "$LIC"
-  SRCDIR="$(find /work/src -maxdepth 1 -type d -name "libgphoto2-*" | head -1)"
-  [ -n "$SRCDIR" ] && [ -f "$SRCDIR/COPYING" ] && cp "$SRCDIR/COPYING" "$LIC/libgphoto2-COPYING.LGPL-2.1"
-  cat > "$LIC/README-LGPL.txt" <<EOF
-The custom appfs in this output ships freshly-built libgphoto2 $LIBGPHOTO2_VERSION
-binaries (LGPL-2.1): libgphoto2.so.6, libgphoto2_port.so.12, ptp2.so, usb1.so.
-Corresponding source is the official upstream release:
-
-  https://github.com/gphoto/libgphoto2/releases/tag/v$LIBGPHOTO2_VERSION
-
-This patcher rebuilds those binaries from that exact source (see
-container/build_ptp2.sh / build_fullstack.sh). The only source modification is a
-one-line ABI pad appended to struct _Camera (an interop SIZE constant, 4120 bytes;
-see docs/HOW-IT-WORKS.md) — no proprietary/firmware content is added. See NOTICE.
-EOF
   log "  wrote reversible on-device bundle -> /out/stage2-ondisk (install_stage2.sh / restore_stock.sh)"
-  log "  wrote LGPL source offer -> /out/licenses"
 fi
+
+# Every mode distributes a rebuilt LGPL camlib, and full mode distributes the
+# core and port libraries too. Ship the exact post-patch corresponding source;
+# an upstream URL alone is insufficient when this build changed the source or
+# consumed a local development checkout.
+LIC=/out/licenses; rm -rf "$LIC"; mkdir -p "$LIC"
+SRCDIR="$(find /work/src -maxdepth 1 -type d -name "libgphoto2-*" | head -1)"
+[ -n "$SRCDIR" ] && [ -f "$SRCDIR/COPYING" ] || die "corresponding libgphoto2 source tree not found"
+cp "$SRCDIR/COPYING" "$LIC/libgphoto2-COPYING.LGPL-2.1"
+log "creating exact corresponding-source archive (this may take a minute)…"
+( cd "$SRCDIR" && make dist-xz >/tmp/libgphoto2-dist.log 2>&1 ) || {
+  tail -80 /tmp/libgphoto2-dist.log >&2; die "could not create corresponding-source archive";
+}
+SOURCE_ARCHIVE="$(find "$SRCDIR" -maxdepth 1 -type f -name 'libgphoto2-*.tar.xz' | sort | tail -1)"
+[ -n "$SOURCE_ARCHIVE" ] || die "make dist-xz produced no source archive"
+cp "$SOURCE_ARCHIVE" "$LIC/"
+cat > "$LIC/README-LGPL.txt" <<EOF
+The custom appfs in this output contains freshly-built libgphoto2
+$LIBGPHOTO2_VERSION components under LGPL-2.1.
+
+The adjacent $(basename "$SOURCE_ARCHIVE") is the exact corresponding source
+used for these binaries after all patcher transformations. It includes the
+complete preferred form for modification and its build system. The source was
+generated before firmware repacking and contains no Benro firmware.
+
+See this patcher's NOTICE and container/build_ptp2.sh for the build recipe.
+EOF
+log "  wrote exact LGPL corresponding source -> /out/licenses/$(basename "$SOURCE_ARCHIVE")"
 
 log "----------------------------------------------------------------------"
 if [ "$MODE" = "full" ]; then

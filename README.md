@@ -192,7 +192,8 @@ Output:
 - `out/FwPkt.zip` — copy this to your SD card
 - `out/stage2-ondisk/` — *(full mode)* reversible on-device test bundle
   (`ondisk/install_stage2.sh` installs it, `ondisk/restore_stock.sh` reverts)
-- `out/licenses/` — *(full mode)* libgphoto2 `COPYING` (LGPL-2.1) + source offer
+- `out/licenses/` — exact corresponding libgphoto2 source archive, `COPYING`,
+  and build notice (both modes)
 
 The first run builds the Docker image (a few minutes). Later runs are fast.
 
@@ -248,5 +249,5 @@ two small documented source edits (a one-line ABI size pad and an EOS-init
 error-tolerance patch; see [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) and
 [NOTICE](NOTICE)). The tool ships **no firmware and no
 proprietary/decompiled content**; it patches your own extracted `pgphoto`. Full
-mode writes `out/licenses/` (LGPL `COPYING` + source offer) with the firmware. See
+mode writes `out/licenses/` (LGPL `COPYING` + exact corresponding source) with the firmware. See
 [NOTICE](NOTICE) for the full MIT-vs-LGPL breakdown.
