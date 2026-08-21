@@ -9,6 +9,9 @@
   plan and live progress ledger are maintained in the libgphoto2 repository.
 - Package the exact post-transformation libgphoto2 corresponding source in both
   modes, including local-fork builds, instead of relying on an upstream link.
+- Fail closed for dirty local source without explicit opt-in, incompatible
+  source versions, missing Pentax candidate markers, unsafe archives, and
+  candidate ptp2-only QEMU self-test failures; emit exact source provenance.
 
 The patcher now replaces the **entire** libgphoto2 stack by default — core + port
 + ptp2 camlib + usb1 iolib, all fresh 2.5.34 — instead of only the ptp2 camlib +

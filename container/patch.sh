@@ -163,6 +163,11 @@ fi
 NEW_PTP2="$W/out/ptp2.so"
 NEW_CORE="$W/out/libgphoto2.so.6"; NEW_PORT="$W/out/libgphoto2_port.so.12"
 [ -f "$NEW_PTP2" ] || die "ptp2.so build failed"
+if [ -e /libgphoto2-source-input ]; then
+  strings "$NEW_PTP2" | grep -Fq "Pentax vendor mode enabled" ||
+    die "local-source ptp2.so lacks the Pentax candidate marker"
+  log "local-source Pentax candidate marker: present"
+fi
 
 # ---------------------------------------------------------------------------
 # 5. Verify the rebuilt driver resolves against the CORE IT WILL RUN AGAINST.
@@ -261,7 +266,13 @@ fi
 
 if [ "$SELFTEST" = "1" ] && command -v qemu-arm-static >/dev/null 2>&1; then
   if [ "$MODE" = "ptp2only" ]; then
-    /opt/patcher/selftest.sh "$APP" "$NEW_PTP2" "$DEV" || warn "selftest reported an issue (non-fatal)"
+    if [ -e /libgphoto2-source-input ]; then
+      /opt/patcher/selftest.sh "$APP" "$NEW_PTP2" "$DEV" ||
+        die "candidate-source qemu selftest failed"
+    else
+      /opt/patcher/selftest.sh "$APP" "$NEW_PTP2" "$DEV" ||
+        warn "selftest reported an issue (non-fatal)"
+    fi
   else
     warn "selftest skipped in full mode (it emulates ptp2 against the device's 2.5.27"
     warn "core; full mode runs ptp2 against the fresh 2.5.34 core it just built)."
@@ -408,6 +419,7 @@ log "creating exact corresponding-source archive (this may take a minute)…"
 SOURCE_ARCHIVE="$(find "$SRCDIR" -maxdepth 1 -type f -name 'libgphoto2-*.tar.xz' | sort | tail -1)"
 [ -n "$SOURCE_ARCHIVE" ] || die "make dist-xz produced no source archive"
 cp "$SOURCE_ARCHIVE" "$LIC/"
+cp "$W/out/source-provenance.env" /out/build-source-provenance.txt
 cat > "$LIC/README-LGPL.txt" <<EOF
 The custom appfs in this output contains freshly-built libgphoto2
 $LIBGPHOTO2_VERSION components under LGPL-2.1.

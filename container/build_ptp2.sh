@@ -33,15 +33,46 @@ FULLSTACK="${FULLSTACK:-0}"
 
 echo "[build] preparing libgphoto2 $VER"
 cd "$SRC"
-if [ -d /libgphoto2-source ]; then
-  [ -f /libgphoto2-source/configure.ac ] || {
-    echo "[build] ERROR: mounted local source has no configure.ac"; exit 1;
+SOURCE_KIND=release
+SOURCE_COMMIT=
+SOURCE_DIRTY_HASH=
+SOURCE_INPUT_SHA256=
+if [ -d /libgphoto2-source-input ]; then
+  [ -f /libgphoto2-source-input/configure.ac ] || {
+    echo "[build] ERROR: mounted local source directory has no configure.ac"; exit 1;
   }
+  SOURCE_KIND=git-directory
+  git config --global --add safe.directory /libgphoto2-source-input
+  git -C /libgphoto2-source-input rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+    echo "[build] ERROR: local source directory must be a Git checkout"; exit 1;
+  }
+  SOURCE_COMMIT="$(git -C /libgphoto2-source-input rev-parse HEAD)"
+  if [ -n "$(git -C /libgphoto2-source-input status --porcelain --untracked-files=all)" ]; then
+    SOURCE_DIRTY_HASH="$(cd /libgphoto2-source-input && {
+      git diff --binary HEAD
+      git ls-files --others --exclude-standard -z | sort -z | xargs -0 -r sha256sum
+    } | sha256sum | awk '{print $1}')"
+    [ "${ALLOW_DIRTY_SOURCE:-0}" = "1" ] || {
+      echo "[build] ERROR: local source is dirty (hash $SOURCE_DIRTY_HASH); explicit opt-in required"; exit 1;
+    }
+  fi
   rm -rf "libgphoto2-$VER"
   mkdir "libgphoto2-$VER"
-  cp -a /libgphoto2-source/. "libgphoto2-$VER/"
+  cp -a /libgphoto2-source-input/. "libgphoto2-$VER/"
   rm -rf "libgphoto2-$VER/.git" "libgphoto2-$VER/build" "libgphoto2-$VER/build-"*
   echo "[build] using mounted local source (read-only input copied to build workspace)"
+elif [ -f /libgphoto2-source-input ]; then
+  SOURCE_KIND=archive
+  SOURCE_INPUT_SHA256="$(sha256sum /libgphoto2-source-input | awk '{print $1}')"
+  rm -rf "libgphoto2-$VER" /tmp/libgphoto2-source-extract
+  mkdir /tmp/libgphoto2-source-extract
+  EXTRACTED="$(python3 /opt/patcher/safe_extract_source.py \
+    /libgphoto2-source-input /tmp/libgphoto2-source-extract)"
+  [ -n "$EXTRACTED" ] && [ -f "$EXTRACTED/configure.ac" ] || {
+    echo "[build] ERROR: source archive must contain one libgphoto2 source directory"; exit 1;
+  }
+  mv "$EXTRACTED" "libgphoto2-$VER"
+  echo "[build] using source archive (sha256 $SOURCE_INPUT_SHA256)"
 elif [ ! -d "libgphoto2-$VER" ]; then
   for u in \
     "https://github.com/gphoto/libgphoto2/releases/download/v$VER/libgphoto2-$VER.tar.xz" \
@@ -51,9 +82,27 @@ elif [ ! -d "libgphoto2-$VER" ]; then
   tar xf lg.tar
 fi
 cd "libgphoto2-$VER"
+ACTUAL_VERSION="$(sed -n 's/^[[:space:]]*\[\([0-9][0-9.]*\)\],[[:space:]]*$/\1/p' configure.ac | head -1)"
+[ -n "$ACTUAL_VERSION" ] || { echo "[build] ERROR: cannot read source version"; exit 1; }
+case "$ACTUAL_VERSION" in
+  "$VER"|"$VER".*) ;;
+  *) echo "[build] ERROR: source version $ACTUAL_VERSION is incompatible with requested $VER"; exit 1;;
+esac
 if [ ! -x configure ]; then
   echo "[build] generating Autotools files for source checkout"
   autoreconf -is
+fi
+cat > /work/out/source-provenance.env <<EOF
+source_kind=$SOURCE_KIND
+requested_version=$VER
+actual_version=$ACTUAL_VERSION
+git_commit=$SOURCE_COMMIT
+dirty_diff_hash=$SOURCE_DIRTY_HASH
+input_sha256=$SOURCE_INPUT_SHA256
+EOF
+if [ "${SOURCE_PREFLIGHT_ONLY:-0}" = "1" ]; then
+  cat /work/out/source-provenance.env
+  exit 0
 fi
 
 # --- DIAGNOSTIC ONLY: POLARIS_TRACE instrumentation (TRACE=1) ----------------

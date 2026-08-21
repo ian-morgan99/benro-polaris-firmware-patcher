@@ -11,6 +11,7 @@
 #     --fwpkt PATH         stock FwPkt folder (has firmwareInfo) or FwPkt.zip  [required]
 #     --libgphoto2 VER     libgphoto2 release to build            (default 2.5.34)
 #     --libgphoto2-source PATH  local libgphoto2 checkout to build (optional)
+#     --allow-dirty-source explicitly permit a dirty local Git checkout
 #     --out DIR            output directory                       (default ./out)
 #     --ptp2-only          conservative fallback: keep the stock 2.5.27 core, swap
 #                          only the ptp2 camlib + usb1 iolib (+ 14-byte pgphoto patch).
@@ -26,13 +27,14 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; LGSRC=""; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"
+FWPKT=""; VER="2.5.34"; VER_SET=0; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --fwpkt) FWPKT="$2"; shift 2;;
-    --libgphoto2) VER="$2"; shift 2;;
+    --libgphoto2) VER="$2"; VER_SET=1; shift 2;;
     --libgphoto2-source) LGSRC="$2"; shift 2;;
+    --allow-dirty-source) ALLOW_DIRTY=1; shift;;
     --out) OUT="$2"; shift 2;;
     --ptp2-only) MODE="ptp2only"; shift;;
     --selftest) SELFTEST=1; shift;;
@@ -48,10 +50,15 @@ done
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found. Install Docker Desktop / docker." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
 if [ -n "$LGSRC" ]; then
-  [ -d "$LGSRC" ] && [ -f "$LGSRC/configure.ac" ] || {
-    echo "error: --libgphoto2-source must be a libgphoto2 checkout containing configure.ac" >&2; exit 1;
-  }
-  LGSRC="$(cd "$LGSRC" && pwd)"
+  [ "$VER_SET" -eq 0 ] || { echo "error: --libgphoto2 and --libgphoto2-source are mutually exclusive" >&2; exit 1; }
+  if [ -d "$LGSRC" ]; then
+    [ -f "$LGSRC/configure.ac" ] || { echo "error: source checkout lacks configure.ac" >&2; exit 1; }
+    LGSRC="$(cd "$LGSRC" && pwd)"
+  elif [ -f "$LGSRC" ]; then
+    LGSRC="$(cd "$(dirname "$LGSRC")" && pwd)/$(basename "$LGSRC")"
+  else
+    echo "error: --libgphoto2-source must be a checkout or source archive" >&2; exit 1
+  fi
 fi
 
 # --- resolve input into a folder that contains firmwareInfo -----------------
@@ -79,11 +86,12 @@ docker build -q -t "$IMG" -f "$HERE/docker/Dockerfile" "$HERE" >/dev/null
 
 echo "[*] running patcher (mode: $MODE)…"
 set --
-if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source:ro"; fi
+if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source-input:ro"; fi
 docker run --rm \
   -e MODE="$MODE" \
   -e LIBGPHOTO2_VERSION="$VER" -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
+  -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
   "$@" \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"

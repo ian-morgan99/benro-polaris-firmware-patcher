@@ -180,7 +180,8 @@ Options (both launchers):
 |---|---|---|
 | `--fwpkt` / `-FwPkt` | *(required)* | Stock `FwPkt` folder (with `firmwareInfo`) or `FwPkt.zip` |
 | `--libgphoto2` / `-Libgphoto2` | `2.5.34` | libgphoto2 release tag to build |
-| `--libgphoto2-source` / `-Libgphoto2Source` | unset | Build a local libgphoto2 checkout instead of downloading a release. The checkout is mounted read-only and must contain `configure.ac`. Use this for the Pentax development fork. |
+| `--libgphoto2-source` / `-Libgphoto2Source` | unset | Build a local Git checkout or source archive instead of downloading a release. Input is mounted read-only. Use this for the Pentax development fork. |
+| `--allow-dirty-source` / `-AllowDirtySource` | off | Explicitly allow a dirty Git checkout; its dirty-content hash is recorded in output provenance. |
 | `--out` / `-Out` | `./out` | Output directory |
 | `--ptp2-only` / `-Ptp2Only` | off | Conservative fallback: keep the stock 2.5.27 core, swap only ptp2 + usb1 (+14-byte patch). Default is the **full** stack swap. |
 | `--selftest` / `-SelfTest` | off | Emulate the driver load under qemu and confirm the R5 II registers |
@@ -194,6 +195,8 @@ Output:
   (`ondisk/install_stage2.sh` installs it, `ondisk/restore_stock.sh` reverts)
 - `out/licenses/` — exact corresponding libgphoto2 source archive, `COPYING`,
   and build notice (both modes)
+- `out/build-source-provenance.txt` — source kind, requested/actual version,
+  Git commit and dirty hash, or archive SHA-256
 
 The first run builds the Docker image (a few minutes). Later runs are fast.
 
@@ -213,6 +216,18 @@ Build that checkout directly rather than waiting for a release tarball:
 This only packages the driver; it does not prove Pentax hardware behavior. Use
 the reversible `stage2-ondisk` install before producing or flashing an SD-card
 image, and retain the stock restore package.
+
+Local Git inputs must be clean unless the explicit dirty-source option is used.
+Candidate builds fail if the linked camlib lacks its Pentax marker; ptp2-only
+candidate QEMU self-test failures are fatal. Full-mode QEMU execution remains a
+separate B2 requirement because the legacy self-test runs against the stock
+2.5.27 core, not the fresh full-stack core.
+
+The source-input gates can be rerun without firmware:
+
+```bash
+container/test_source_input.sh polaris-patcher /path/to/clean/libgphoto2
+```
 
 ## Installing on the Polaris
 
