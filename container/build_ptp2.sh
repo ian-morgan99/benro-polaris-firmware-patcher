@@ -178,6 +178,7 @@ fi
 #  image now ships libusb headers, they must not auto-enable a usb1 we can't link.
 CONF_ARGS=(--host="$XT" --prefix=/opt/lg
   --disable-static --disable-nls --disable-rpath --disable-docs
+  --disable-dependency-tracking
   --with-camlibs=ptp2 --without-libxml-2.0 --without-jpeg --without-libcurl
   CC="${XT}-gcc" CXX="${XT}-g++" AR="${XT}-ar" RANLIB="${XT}-ranlib"
   STRIP="${XT}-strip" LD="${XT}-ld"
