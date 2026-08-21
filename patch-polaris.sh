@@ -10,6 +10,7 @@
 #  Options:
 #     --fwpkt PATH         stock FwPkt folder (has firmwareInfo) or FwPkt.zip  [required]
 #     --libgphoto2 VER     libgphoto2 release to build            (default 2.5.34)
+#     --libgphoto2-source PATH  local libgphoto2 checkout to build (optional)
 #     --out DIR            output directory                       (default ./out)
 #     --ptp2-only          conservative fallback: keep the stock 2.5.27 core, swap
 #                          only the ptp2 camlib + usb1 iolib (+ 14-byte pgphoto patch).
@@ -25,12 +26,13 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"
+FWPKT=""; VER="2.5.34"; LGSRC=""; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --fwpkt) FWPKT="$2"; shift 2;;
     --libgphoto2) VER="$2"; shift 2;;
+    --libgphoto2-source) LGSRC="$2"; shift 2;;
     --out) OUT="$2"; shift 2;;
     --ptp2-only) MODE="ptp2only"; shift;;
     --selftest) SELFTEST=1; shift;;
@@ -45,6 +47,12 @@ done
 [ -n "$FWPKT" ] || { echo "error: --fwpkt is required" >&2; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found. Install Docker Desktop / docker." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
+if [ -n "$LGSRC" ]; then
+  [ -d "$LGSRC" ] && [ -f "$LGSRC/configure.ac" ] || {
+    echo "error: --libgphoto2-source must be a libgphoto2 checkout containing configure.ac" >&2; exit 1;
+  }
+  LGSRC="$(cd "$LGSRC" && pwd)"
+fi
 
 # --- resolve input into a folder that contains firmwareInfo -----------------
 STAGE="$(mktemp -d)"; trap 'rm -rf "$STAGE"' EXIT
@@ -70,10 +78,13 @@ echo "[*] building docker image '$IMG' (first run only)…"
 docker build -q -t "$IMG" -f "$HERE/docker/Dockerfile" "$HERE" >/dev/null
 
 echo "[*] running patcher (mode: $MODE)…"
+set --
+if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source:ro"; fi
 docker run --rm \
   -e MODE="$MODE" \
   -e LIBGPHOTO2_VERSION="$VER" -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
+  "$@" \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"
 

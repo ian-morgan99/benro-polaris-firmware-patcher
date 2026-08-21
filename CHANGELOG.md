@@ -2,6 +2,12 @@
 
 ## Unreleased — full-libgphoto2 stack swap is now the DEFAULT (hardware-verified)
 
+- Added `--libgphoto2-source` / `-Libgphoto2Source` so an in-development local
+  checkout (including the Pentax fork) can be mounted read-only, copied into the
+  container build workspace, bootstrapped with Autotools, and packaged.
+- Removed the obsolete duplicate `DEVELOPMENT_PLAN.md`; the canonical Pentax
+  plan and live progress ledger are maintained in the libgphoto2 repository.
+
 The patcher now replaces the **entire** libgphoto2 stack by default — core + port
 + ptp2 camlib + usb1 iolib, all fresh 2.5.34 — instead of only the ptp2 camlib +
 usb1 iolib. The old camlib/iolib-only swap becomes the opt-in **fallback**.

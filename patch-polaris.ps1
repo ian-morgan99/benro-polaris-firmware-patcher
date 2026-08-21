@@ -9,6 +9,7 @@
   Options:
     -FwPkt PATH          stock FwPkt folder (has firmwareInfo) or FwPkt.zip  [required]
     -Libgphoto2 VER      libgphoto2 release to build            (default 2.5.34)
+    -Libgphoto2Source PATH  local libgphoto2 checkout to build (optional)
     -Out DIR             output directory                       (default .\out)
     -Ptp2Only            conservative fallback: keep the stock 2.5.27 core, swap only
                          the ptp2 camlib + usb1 iolib (+ 14-byte pgphoto patch).
@@ -24,6 +25,7 @@
 param(
   [Parameter(Mandatory=$true)][string]$FwPkt,
   [string]$Libgphoto2 = "2.5.34",
+  [string]$Libgphoto2Source = "",
   [string]$Out = "",
   [switch]$Ptp2Only,
   [switch]$SelfTest,
@@ -61,13 +63,23 @@ try {
   $st   = if ($SelfTest)  { "1" } else { "0" }
   $usb1 = if ($NoUsb1)    { "0" } else { "1" }
   $mode = if ($Ptp2Only)  { "ptp2only" } else { "full" }
+  $sourceArgs = @()
+  if (-not [string]::IsNullOrEmpty($Libgphoto2Source)) {
+    $source = (Resolve-Path $Libgphoto2Source).Path
+    if (-not (Test-Path (Join-Path $source "configure.ac"))) {
+      throw "-Libgphoto2Source must be a libgphoto2 checkout containing configure.ac"
+    }
+    $sourceArgs = @("-v", "${source}:/libgphoto2-source:ro")
+  }
   Write-Host "[*] running patcher (mode: $mode)..."
-  docker run --rm `
+  & docker run --rm `
     -e MODE=$mode `
     -e LIBGPHOTO2_VERSION=$Libgphoto2 -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
     -e SWAP_USB1=$usb1 `
+    @sourceArgs `
     -v "${In}:/in:ro" -v "${Out}:/out" `
     $Image
+  if ($LASTEXITCODE -ne 0) { throw "patcher container failed with exit code $LASTEXITCODE" }
 
   Write-Host ""
   Write-Host "[OK] Output in: $Out"

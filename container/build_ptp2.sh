@@ -31,9 +31,18 @@ mkdir -p "$SRC" /work/out
 #     (upstream never reads the tail).  See docs/HOW-IT-WORKS.md.
 FULLSTACK="${FULLSTACK:-0}"
 
-echo "[build] fetching libgphoto2 $VER"
+echo "[build] preparing libgphoto2 $VER"
 cd "$SRC"
-if [ ! -d "libgphoto2-$VER" ]; then
+if [ -d /libgphoto2-source ]; then
+  [ -f /libgphoto2-source/configure.ac ] || {
+    echo "[build] ERROR: mounted local source has no configure.ac"; exit 1;
+  }
+  rm -rf "libgphoto2-$VER"
+  mkdir "libgphoto2-$VER"
+  cp -a /libgphoto2-source/. "libgphoto2-$VER/"
+  rm -rf "libgphoto2-$VER/.git" "libgphoto2-$VER/build" "libgphoto2-$VER/build-"*
+  echo "[build] using mounted local source (read-only input copied to build workspace)"
+elif [ ! -d "libgphoto2-$VER" ]; then
   for u in \
     "https://github.com/gphoto/libgphoto2/releases/download/v$VER/libgphoto2-$VER.tar.xz" \
     "https://github.com/gphoto/libgphoto2/releases/download/v$VER/libgphoto2-$VER.tar.bz2"; do
@@ -42,6 +51,10 @@ if [ ! -d "libgphoto2-$VER" ]; then
   tar xf lg.tar
 fi
 cd "libgphoto2-$VER"
+if [ ! -x configure ]; then
+  echo "[build] generating Autotools files for source checkout"
+  autoreconf -is
+fi
 
 # --- DIAGNOSTIC ONLY: POLARIS_TRACE instrumentation (TRACE=1) ----------------
 #  THROWAWAY tracing build — NOT for shipping. Injects unbuffered

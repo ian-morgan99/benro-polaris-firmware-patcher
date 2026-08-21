@@ -180,6 +180,7 @@ Options (both launchers):
 |---|---|---|
 | `--fwpkt` / `-FwPkt` | *(required)* | Stock `FwPkt` folder (with `firmwareInfo`) or `FwPkt.zip` |
 | `--libgphoto2` / `-Libgphoto2` | `2.5.34` | libgphoto2 release tag to build |
+| `--libgphoto2-source` / `-Libgphoto2Source` | unset | Build a local libgphoto2 checkout instead of downloading a release. The checkout is mounted read-only and must contain `configure.ac`. Use this for the Pentax development fork. |
 | `--out` / `-Out` | `./out` | Output directory |
 | `--ptp2-only` / `-Ptp2Only` | off | Conservative fallback: keep the stock 2.5.27 core, swap only ptp2 + usb1 (+14-byte patch). Default is the **full** stack swap. |
 | `--selftest` / `-SelfTest` | off | Emulate the driver load under qemu and confirm the R5 II registers |
@@ -194,6 +195,23 @@ Output:
 - `out/licenses/` — *(full mode)* libgphoto2 `COPYING` (LGPL-2.1) + source offer
 
 The first run builds the Docker image (a few minutes). Later runs are fast.
+
+### Building the Pentax development fork
+
+The canonical Pentax roadmap and progress ledger live in the libgphoto2 fork's
+[`DEVELOPMENT_PLAN.md`](https://github.com/ian-morgan99/libgphoto2/blob/master/DEVELOPMENT_PLAN.md).
+Build that checkout directly rather than waiting for a release tarball:
+
+```bash
+./patch-polaris.sh \
+  --fwpkt /path/to/FwPkt \
+  --libgphoto2-source /path/to/libgphoto2 \
+  --selftest
+```
+
+This only packages the driver; it does not prove Pentax hardware behavior. Use
+the reversible `stage2-ondisk` install before producing or flashing an SD-card
+image, and retain the stock restore package.
 
 ## Installing on the Polaris
 
