@@ -234,6 +234,16 @@ The source-input gates can be rerun without firmware:
 container/test_source_input.sh polaris-patcher /path/to/clean/libgphoto2
 ```
 
+The complete Stage-2 loader (including its ARM-only trampoline landing pad and
+camera-policy gate) has a compile-only cross-build regression test:
+
+```sh
+container/test_stage2_loader_compile.sh arm-linux-gnueabi-gcc
+```
+
+Its slot table is an explicitly non-runtime fixture; production always
+generates the real table from the validated `pgphoto` input.
+
 ## Installing on the Polaris
 
 Use **the same SD-card firmware-update procedure you already use for official
