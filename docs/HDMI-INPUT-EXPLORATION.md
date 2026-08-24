@@ -1,0 +1,93 @@
+# HDMI INPUT subsystem — exploration, enhancement plan & safety
+
+> Status: completed disassembly exploration of `bin/polestar_app` in `appfs.ubifs` (stock firmware 4.0.0.32).
+> Companion documents: [DEVELOPMENT-AND-MAINTENANCE-GUIDE.md](DEVELOPMENT-AND-MAINTENANCE-GUIDE.md) (§2.12 brick-risk, §2.13 shutter release socket), [HOW-IT-WORKS.md](HOW-IT-WORKS.md).
+
+## 1. Executive summary
+
+The camera has an HDMI **input** subsystem (there is no HDMI output anywhere — `HI_MPI_HDMI_*` is unused):
+
+```
+Lontium LT8619C RX → BT1120 16-bit → HiSilicon VI pipe 2 → VENC → RTSP
+```
+
+The subsystem is dormant unless the LT8619C chip answers an ID check (`SP_CheckHdmiId` requires `reg0==22 && reg1==4`, i.e. chip ID `0x1604`).
+
+Default EDID advertises only 480p60 / 576p50 / 720p60 / 1080i50 / 1080i60 / 1080p50 / 1080p60. No 4K, no 24Hz, no PC modes.
+
+Pipeline geometry is hardcoded: `SP_CreateHdmiTask` calls `SP_HdmiViInit(1920,1080,30)`; `StartRtspVideoView` calls `SP_HdmiVencStart(1920,1080,30)`; but `SP_HdmiVencCreateChn` creates the VENC channel at **1280×720@30** (H.264 codec-type 96 or H.265 type 11). VPSS is offline (`HI_MPI_SYS_SetVIVPSSMode(0,0,0,0)`) — there is no scaler in the path. **RTSP output is effectively 720p30 regardless of input.**
+
+## 2. Key findings
+
+### 2.1 Hardware / driver layer
+
+- Lontium LT8619C HDMI receiver over I2C; driver functions `LT8619C_EDIDSet`, `LT8619C_BTSetting`, `LT8619C_Detect`, `LT8619C_MainLoop`.
+- HPD handshake runs on a ~500 ms cycle.
+- Video enters the HiSilicon MPP as BT1120 16-bit on VI pipe 2.
+
+### 2.2 Why Pentax bodies fail
+
+- Pentax "Auto" HDMI may pick modes outside the advertised EDID (e.g. 1080/24p); the fixed VI expects exactly 1920×1080@30 BT1120.
+- Possible RGB vs YCbCr 4:2:2 mismatch (`CSCConversion` handles some cases).
+- HPD handshake timing (500 ms cycle).
+- If the LT8619C chip is absent or fails the ID check (`SP_CheckHdmiId`), the whole subsystem is disabled regardless of source.
+
+### 2.3 State & messaging
+
+Failure path string `HDMI_REBOOT` leads to a `HI_SYSTEM_Reboot` reboot of the device on HDMI failure.
+
+> **Correction to earlier belief:** `reboot@plt` appears exactly once in the binary (0x2aca8) and is **not** in any HDMI path. The earlier claim that HDMI failure self-reboots via plain `reboot()` was wrong; the reboot goes through the HiSilicon system API on the `HDMI_REBOOT` failure path.
+
+## 3. Patch sites (verified addresses)
+
+ELF mapping: RX segment vaddr = fileoff + 0x10000; RW segment vaddr = fileoff + 0x20000.
+
+### 3.1 EDID injection — EASY, recommended first
+
+- `LT8619C_EDIDSet` at **0x139a20** accepts a pointer argument for a custom EDID.
+- Stock default EDID blob at vaddr **0xbe4c7c** (fileoff 0xbd4c7c), manufacturer "FHT", preferred DTD 1280×720@74.25 MHz (720p60), CEA VICs 3,4,5,10,12,13,14,31,32,33,34.
+- Patch approach: replace/redirect the EDID blob with one advertising exactly one mode matching the fixed pipeline (e.g. force 1080p60 only) so "Auto"-mode cameras lock on correctly.
+
+### 3.2 VENC geometry fix — EASY
+
+- Branch A at **0x13ce4c**: `mov r3,#96` (H.264 codec-type); nearby stack stores set channel dims to 1280×720.
+- Branch B at **0x13d060**: `movw r3,#265` (H.265 type 11); same 1280×720 dims.
+- Patch: change stored width/height fields to 1920×1080 so RTSP streams native res. Verify the bitrate formula (`w*h*10`) and rc fields (4096/30/30/gop1) are still sane at 1080p.
+
+### 3.3 True multi-format support — HARD, not recommended initially
+
+Dynamic VI/VENC reconfig on format change + VPSS scaling; large new firmware work, high risk.
+
+## 4. Safety rules
+
+- All patches modify `bin/polestar_app` inside `appfs.ubifs` — **the patcher currently NEVER touches this binary by design (fail-closed)**. Adding this capability is a significant patcher change requiring: verified backup/restore path, checksum/signature handling for the repacked UBI, and a tested recovery route (e.g. reflash stock firmware) before any release.
+- Never modify the source firmware file `firmware/FwPkt/FwPkt/camera/appfs.ubifs` directly; always work on copies.
+- Test order:
+  1. Confirm LT8619C presence via serial log / `SP_CheckHdmiId` behaviour before investing in patches.
+  2. EDID-only patch first (lowest risk, reversible per-binary).
+  3. VENC geometry second; validate with RTSP stream inspection.
+- Brick risk concentrates in UBI repacking and boot-time failures in `polestar_app`; keep a known-good stock image for recovery (see guide §2.12).
+
+## 5. Verification / method notes (reproducibility)
+
+- Extract appfs read-only via Docker image `polaris-patcher-pentax-v3:latest` + `ubi_reader`.
+- Disassemble with `arm-linux-gnueabi-objdump -d`.
+- Key symbols:
+
+| Symbol | Address |
+|---|---|
+| `LT8619C_EDIDSet` | 0x139a20 |
+| `LT8619C_BTSetting` | 0x13b0f0 |
+| `LT8619C_Detect` | 0x13b8bc |
+| `LT8619C_MainLoop` | 0x13bb38 |
+| `SP_CheckHdmiId` | 0x13be24 |
+| `SP_HdmiViInit` | 0x13c8c0 |
+| `SP_HdmiVencCreateChn` | 0x13cdf4 |
+| `SP_HdmiVencStart` | 0x13d810 |
+| `SP_VI_SetMipiAttr` | 0x13e214 |
+| `StartRtspVideoView` | 0x1729d8 |
+| `main` | 0x29e68 |
+
+## 6. Artifacts
+
+Session artifacts (extraction + disassembly) were produced under `/tmp/hdmi-explore/`: full disassembly (`polestar.asm`), symbol table (`polestar_syms.txt`), HDMI string dump (`hdmi_strings.txt`), and the extracted appfs tree. These are reproducible per §5; they are not stored in the repo.
