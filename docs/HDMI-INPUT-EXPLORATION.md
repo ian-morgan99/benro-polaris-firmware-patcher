@@ -133,3 +133,50 @@ Notes:
 3. Bind VENC/VPSS → VO in the HiSilicon graph.
 
 This is a substantially larger effort than the input enhancements (§3) and carries hardware uncertainty (step 3 above). Unlike the input case, however, it is an SDK-supported capability that was switched off rather than an impossible one.
+
+### 8.1 Full analysis — HDMI output enablement (long-term roadmap item)
+
+**Priority: LOW — deliberately parked far downstream.** Do not attempt until the input enhancements (§3) are proven on real hardware and a safe polestar_app patch/recovery workflow exists.
+
+#### Phase 0 — Hardware feasibility probe (no firmware changes)
+
+Before any code work, answer: *is the connector even wired for TX?*
+
+- Probe with the stock modules loaded manually from a serial/telnet shell:
+  `insmod /app/komod/hi3559v200_hdmi.ko` then check `dmesg` for TX controller detection.
+- Inspect the board (if ever opened): trace whether HDMI pins route to the LT8619C only, or also to SoC HDMI TX balls. The presence of `hi_mipi_tx.ko` (also unloaded) suggests the board family supports display-out variants; this unit may or may not be populated that way.
+- If TX is absent → stop here permanently; nothing else in this section matters.
+
+Risk: loading an extra kernel module on a live system is reversible by reboot; low risk if done read-only otherwise.
+
+#### Phase 1 — Module bring-up (loader change only)
+
+- Add `insmod hi3559v200_hdmi.ko` + `insmod hi3559v200_vo.ko` to `sp_load3559v200`.
+- Verify modules load cleanly, no MMZ/IOMMU conflicts with existing allocations (`cat /proc/umap/mmz`).
+- Deliverable: knowledge only — no user-visible feature yet.
+
+#### Phase 2 — VO/HDMI application code (the big lift)
+
+Requires writing new C against the HiSilicon MPP SDK and integrating into `polestar_app`:
+
+- VO device init: `HI_MPI_VO_SetPubAttr` (intf = HDMI), `HI_MPI_VO_Enable`, `HI_MPI_VO_StartChn`.
+- HDMI sink negotiation: `HI_MPI_HDMI_SetAttr`, EDID read from attached display, format selection.
+- Graph binding: VPSS (scale) → VO, or VDEC → VPSS → VO for playback of recorded streams. Note VENC output is H.264/H.265 elementary streams — displaying them needs either a decode loop (VDEC) or binding VI/VPSS directly to VO for zero-copy passthrough (simpler, recommended first).
+- This cannot be done as byte patches; it means building polestar_app-compatible code, which requires reconstructing enough of the build environment (toolchain, MPP headers/libs) — itself a significant project.
+
+#### Phase 3 — Integration & safety
+
+- Full UBI repack workflow with verified backup/restore (prerequisite regardless — see §4).
+- Recovery path must be proven before flashing anything containing new app code.
+- Test matrix: hotplug behavior, format fallback when sink rejects mode, interaction with RTSP streaming and camera functions.
+
+#### Why parked
+
+| Factor | Assessment |
+|---|---|
+| User value | Low vs input fix — input enables the actual use case (live view of camera being controlled) |
+| Effort | Weeks-months: SDK reconstruction + new app code vs hours for §3 patches |
+| Risk | Highest tier: new kernel modules + new app code + unknown hardware wiring |
+| Dependency | Requires everything in §3 and §4 to be complete and field-proven first |
+
+**Recommended sequencing:** §3.1 EDID patch → §3.2 VENC geometry → multi-format support (§3.3) if needed → only then revisit this section.
