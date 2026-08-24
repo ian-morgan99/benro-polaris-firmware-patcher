@@ -169,6 +169,81 @@ For non-technical readers and junior agents picking this up:
 4. **Follow the testing ladder** (§2.11) before any flash: QEMU → stage2-ondisk reversible bundle → full flash only when md5-verified against [TESTED.md](TESTED.md).
 5. **Keep the stock FwPkt** — it is always the factory restore path.
 
+#### 1.4.2.4 Pentax support decision tree — what to do next
+
+The guide now covers all four Pentax-facing surfaces. This decision tree sequences them in the order they should be attempted: **camera control first** (already shipped, zero risk), then **HDMI input**, then **shutter release socket**, then **the wider Alpaca feature set**. Each node states its risk tier and its exit condition.
+
+```mermaid
+flowchart TD
+    START([Goal: full Pentax support on Benro Polaris]) --> CC
+
+    subgraph S1["Stage 1 · Camera control (USB PTP)"]
+        CC{Does USB capture work<br/>with your Pentax body?}
+        CC -->|Yes| CC_OK[✅ DONE — this is the primary path.<br/>libgphoto2 ptp2 driver, already shipped by patcher.<br/>No firmware change.]
+        CC -->|No| CC_FIX[Tier 1: rebuild ptp2 from newer upstream /<br/>Pentax fork via --libgphoto2-source;<br/>check CameraCapabilities.md]
+        CC_FIX --> CC_TEST{Hardware test:<br/>capture + ObjectAdded event?}
+        CC_TEST -->|Pass| CC_OK
+        CC_TEST -->|Fail| CC_STOP([Stop here — report model/firmware.<br/>Do NOT proceed to other stages expecting<br/>them to compensate for broken PTP.])
+    end
+
+    CC_OK --> HDMI_Q{Want live-view video<br/>over RTSP from the Pentax?}
+    HDMI_Q -->|No| SHUT_Q
+    HDMI_Q -->|Yes| HDMI_A
+
+    subgraph S2["Stage 2 · HDMI input (docs/HDMI-INPUT-EXPLORATION.md)"]
+        HDMI_A[Step 0 — read-only probe:<br/>confirm LT8619C chip present via serial log /<br/>SP_CheckHdmiId behaviour. NO FLASHING.]
+        HDMI_A -->|Chip absent| HDMI_NO([❌ Stop — subsystem dormant in hardware.<br/>Nothing to patch.])
+        HDMI_A -->|Chip present| HDMI_B[Step 1 — EDID-only patch<br/>EASY · Tier 3 capability gate:<br/>requires polestar_app patching support first]
+        HDMI_B --> HDMI_C{RTSP locks at 1080p60?}
+        HDMI_C -->|Yes| HDMI_OK[✅ Done — Pentax Auto mode now locks on]
+        HDMI_C -->|No / still 720p30| HDMI_D[Step 2 — VENC geometry patch<br/>1280×720 → 1920×1080 at 0x13ce4c/0x13d060]
+        HDMI_D --> HDMI_E{Stream verified via<br/>RTSP inspection?}
+        HDMI_E -->|Yes| HDMI_OK
+        HDMI_E -->|No| HDMI_STOP([Stop — do not attempt multi-format<br/>support; classified HARD/high-risk])
+    end
+
+    HDMI_OK --> SHUT_Q
+    HDMI_NO --> SHUT_Q
+    HDMI_Q -->|Skip| SHUT_Q{Want physical cable<br/>release to work?}
+
+    subgraph S3["Stage 3 · Shutter release socket (guide §2.13)"]
+        SHUT_A[Step 0 — passive E3→CS-205 adapter cable<br/>Tier 1 · no firmware change · multimeter + cheap CS-205 clone]
+        SHUT_A --> SHUT_B{Fires reliably?<br/>normal drive mode}
+        SHUT_B -->|Yes| SHUT_OK[✅ Done for stills]
+        SHUT_B -->|No| SHUT_C{Bulb-mode hold semantics needed?}
+        SHUT_C -->|No| SHUT_ALT([Use Stage 1 PTP path instead —<br/>it already works and is safer])
+        SHUT_C -->|Yes| SHUT_D[Timing parameter patch in s_stCableReleaseMng<br/>Tier 2+ · inherits polestar_app patching gate<br/>and HDMI doc safety rules]
+        SHUT_D --> SHUT_E{Hardware-verified<br/>wake + latch behaviour?}
+        SHUT_E -->|Yes| SHUT_OK
+        SHUT_E -->|No| SHUT_STOP([Stop — keep stock binary])
+    end
+
+    SHUT_OK --> ALP_Q
+    SHUT_ALT --> ALP_Q
+    SHUT_STOP --> ALP_Q{Want ABP-class features<br/>without an external PC?}
+
+    subgraph S4["Stage 4 · Alpaca capabilities on-device (guide §1.4.2)"]
+        ALP_A[Step 0 — observational research ONLY:<br/>map polestar_app command surface from a root shell.<br/>Zero brick risk, nothing flashed.]
+        ALP_A --> ALP_B{Which features?}
+        ALP_B -->|Alpaca REST/web UI| ALP_C[lighttpd CGI app via guarded bootapp line<br/>Tier 2 · feasible]
+        ALP_B -->|QUEST alignment| ALP_D[C helper daemon, pure maths, no camera needed<br/>Tier 1–2 · ships value immediately]
+        ALP_B -->|Plate solving| ALP_E([❌ Keep external — Pi Zero companion<br/>§1.4.2.2 path 1 Wi-Fi, zero firmware change])
+        ALP_B -->|Kalman/PID motion| ALP_F([⚠️ Only through polestar_app command surface,<br/>never direct UART — single-owner rule §1.4.1])
+        ALP_C & ALP_D --> ALP_V{Hardware-proven on<br/>live device before flash?}
+        ALP_V -->|Yes| ALP_OK[✅ Ship as optional appfs helper]
+        ALP_V -->|No| ALP_STOP([Stop — run externally on PC/Pi instead])
+    end
+
+    ALP_OK --> DONE([Full self-sufficient Polaris])
+```
+
+Reading rules for a junior agent:
+
+1. **Stages are sequential gates, not a menu.** If Stage 1 (PTP capture) fails for your body, fix that first — every later stage assumes it.
+2. **Every "Step 0" is zero-flash work.** Do it before considering any patch.
+3. **Stages 2 and 3 both require a capability the patcher does not have today**: modifying `bin/polestar_app` inside `appfs.ubifs`. That capability must be built with backup/restore, checksum handling and a tested recovery route *before* either stage's patches are attempted (see 🚫 never-touch table, §1.2).
+4. **Stage 4's safest wins need no flashing at all** — the Pi Zero/PC companion runs the same commands over Wi-Fi that ABP uses today.
+
 ## 1.5 Release discipline
 
 - Default mode = **full** (hardware-verified). ptp2-only stays as fallback.
