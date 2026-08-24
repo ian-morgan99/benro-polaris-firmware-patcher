@@ -91,3 +91,18 @@ Dynamic VI/VENC reconfig on format change + VPSS scaling; large new firmware wor
 ## 6. Artifacts
 
 Session artifacts (extraction + disassembly) were produced under `/tmp/hdmi-explore/`: full disassembly (`polestar.asm`), symbol table (`polestar_syms.txt`), HDMI string dump (`hdmi_strings.txt`), and the extracted appfs tree. These are reproducible per §5; they are not stored in the repo.
+
+## 7. Appendix: Would any Pentax K-01 HDMI output mode work without code changes?
+
+**No.** The K-01 offers roughly 1080i, 720p, and lower/540p-class outputs (auto-negotiated; no manual resolution menu). Checked against the fixed Polaris receive chain:
+
+| K-01 option | In Polaris EDID? | Reaches VI correctly? | Verdict |
+|---|---|---|---|
+| 1080i | Yes | No — VI expects progressive 1920×1080@30; interlaced fields arrive as alternating 540-line frames with no deinterlace in the path | Fails |
+| 720p60 | Yes | No — LT8619C pass-through forwards measured 1280×720 timing to a VI hardcoded for 1920×1080 | Fails |
+| 540p / other | No | Not selected against a compliant sink | Fails |
+
+Notes:
+- 1080i is the closest match: `LT8619C_BTSetting` explicitly handles H==1920 && V==540 fields, but nothing downstream combines fields into the progressive frame the HiSilicon VI requires.
+- The root cause is that the Polaris advertises a menu of modes it cannot actually process, while accepting only one thing internally. No camera-side setting can fix this.
+- This reinforces the enhancement path in §3: an EDID-only patch advertising one honest mode (plus optionally the VENC geometry fix) would make K-01/Pentax output work without any changes on the camera side.
