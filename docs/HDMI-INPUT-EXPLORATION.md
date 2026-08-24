@@ -106,3 +106,30 @@ Notes:
 - 1080i is the closest match: `LT8619C_BTSetting` explicitly handles H==1920 && V==540 fields, but nothing downstream combines fields into the progressive frame the HiSilicon VI requires.
 - The root cause is that the Polaris advertises a menu of modes it cannot actually process, while accepting only one thing internally. No camera-side setting can fix this.
 - This reinforces the enhancement path in §3: an EDID-only patch advertising one honest mode (plus optionally the VENC geometry fix) would make K-01/Pentax output work without any changes on the camera side.
+
+## 8. Appendix: Could the Polaris produce HDMI *output*?
+
+**Logically yes — the hardware capability ships in the firmware but is disabled at three levels.**
+
+### What exists
+
+- `komod/hi3559v200_hdmi.ko` — a genuine HiSilicon HDMI **TX** kernel module (`hal_hdmi_tx_capability_get`, hotplug handling, DDC EDID read).
+- `komod/hi3559v200_vo.ko` — Video Output module explicitly supporting BT1120 and HDMI interfaces (`vou_drv_check_hdmi_sync`, `vo_drv_set_hdmi_div`).
+- `komod/hi_mipi_tx.ko` also present (commented out in loader).
+- The Hi3559V200 SoC has a built-in HDMI transmitter block; SDK format tables enumerate all output formats up to 7680×4320p30.
+
+### Why it is off today
+
+| Level | Gate | Evidence |
+|---|---|---|
+| Boot | `hi3559v200_hdmi.ko` / `hi3559v200_vo.ko` never insmod'ed | `sp_load3559v200` only ever `rmmod`s them; insmod list covers VI/VPSS/VENC/etc. only |
+| Userspace | `polestar_app` has zero calls to `HI_MPI_HDMI_*` or `HI_MPI_VO_*` | Symbol table confirms; only LT8619C RX path is wired |
+| Hardware | Whether the physical connector is wired to SoC TX pins vs only the LT8619C RX chip | Unknown without schematic/hardware probing |
+
+### What enabling output would take
+
+1. Load `hi3559v200_hdmi.ko` + `hi3559v200_vo.ko` (one-line loader change, low risk to test).
+2. Add VO device init + `HI_MPI_HDMI` start calls to `polestar_app` — real new code, not a byte patch.
+3. Bind VENC/VPSS → VO in the HiSilicon graph.
+
+This is a substantially larger effort than the input enhancements (§3) and carries hardware uncertainty (step 3 above). Unlike the input case, however, it is an SDK-supported capability that was switched off rather than an impossible one.
