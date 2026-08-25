@@ -180,3 +180,40 @@ Requires writing new C against the HiSilicon MPP SDK and integrating into `poles
 | Dependency | Requires everything in §3 and §4 to be complete and field-proven first |
 
 **Recommended sequencing:** §3.1 EDID patch → §3.2 VENC geometry → multi-format support (§3.3) if needed → only then revisit this section.
+
+### 8.2 Packaging / checksum risk assessment for any HDMI change
+
+Question: *if we make HDMI changes, can we package them without breaking anything?*
+
+**Answer: yes, with high confidence — packaging is not the gating risk.** The existing
+patcher pipeline already handles everything an HDMI change would need:
+
+1. **UBIFS repack** (`container/repack_appfs.sh`) reads the stock image's exact geometry
+   (min I/O, LEB size, max LEB count, fanout, compression, image_seq) rather than guessing,
+   and sets `--space-fixup` — required for auto-resize volumes; its absence causes a
+   "boots once then wedges on next reboot" failure. Field-proven by the libgphoto2 patches.
+2. **firmwareInfo regeneration** (`container/gen_firmwareinfo.py`) covers the only checksum
+   mechanism the device enforces: the bootloader runs `getFwInfo.sh` → `crcInfo` on-board and
+   string-compares each `X MD5:` field against firmwareInfo. The generator recomputes true
+   MD5s and sizes for every component (config, uImage, rootfs.ubifs, appfs.ubifs, gimbal bins)
+   while preserving stock line format/order. So even HDMI changes touching `rootfs.ubifs`
+   (e.g. adding `insmod hi3559v200_hdmi.ko` to `komod/sp_load3559v200`) are covered.
+3. **No hidden signatures**: exploration of the boot chain and FwPkt handling found no RSA or
+   signature verification anywhere — only plain MD5s, which are informational integrity checks,
+   not anti-tamper.
+4. The workflow ships a **reversible on-device bundle** (`install_stage2.sh` /
+   `restore_stock.sh`) so changes can be tested before flashing.
+
+Per-change-type assessment:
+
+| Change type | Packaging confidence | Real risk |
+|---|---|---|
+| EDID byte patch in polestar_app | ~99% (same kind as existing binary patches) | Functional only |
+| VENC geometry patch | ~99% | Functional only |
+| Loader change (insmod hdmi.ko/vo.ko) | ~95% (rootfs file; firmwareInfo covers it) | Module load side-effects at boot |
+| New VO/HDMI application code | ~95% | Highest — new code paths; rollback only via reflash |
+
+A failed HDMI experiment does not break packaging: worst case is a build that boots but
+misbehaves, restored by reflashing stock. Keep the stock FwPkt backup (the tooling already
+warns about this). **Checksums/signatures are a non-issue; the gating risks remain hardware
+wiring unknowns and writing new application code (§8.1).**
