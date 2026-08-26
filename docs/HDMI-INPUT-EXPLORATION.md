@@ -391,3 +391,75 @@ Dynamic VI re-init from detected timing (`0x13c390–98` + MIPI `0x13e2a4–ac`)
 VPSS deinterlace enable (populate the zeroed VIVPSS struct), dynamic VENC geometry
 (`HI_MPI_VENC_SetChnAttr` or re-create), and an honest revised SVD list. Full plan in
 HDMI-IMPLEMENTATION-PLAN.md Phase E.
+
+---
+
+## 12. Phase E implementation (2026-08-26, third session)
+
+### 12.1 Scope decision: static-per-build parameterization
+
+Full dynamic multi-format support (E2 items 2–5 of the plan) requires control-flow
+changes (trampolines, VPSS deinterlace enable) that cannot be validated without
+hardware. Phase E as implemented therefore takes the **static-per-build** slice:
+the operator picks the target timing at patch time and the patcher rewrites every
+hardcoded immediate consistently. This makes e.g. a 1280×720@60 build possible
+today with zero control-flow risk; interlaced input remains **unsupported**
+(no deinterlace path — see §11.2 "advertised but broken").
+
+### 12.2 Dead-code proof (caller-count sweep)
+
+Every HDMI entry point was swept for callers using symbol-annotated grep on the
+full disassembly (`grep "<addr> <SymbolName>" polestar.asm`; plain `bl\t<addr>`
+greps return empty because objdump annotates direct calls):
+
+| Function | Callers | Verdict |
+|---|---|---|
+| `SP_CreateHdmiTask` @0x13c2a8 | main @0x2a284; DumpYuvTask @0x13c524 | LIVE |
+| `RTSP_Init` @0x173494 | main @0x2a298 only | LIVE but stream tree dead |
+| `SP_CreateHdmiDumpYuvTask` @0x13c7d8 | test-msg dispatch @0x42830 only (case 2 of `cmp r3,#9` table @0x42784) | debug path |
+| `SP_HdmiViInit` @0x13c8c0 | SP_CreateHdmiTask @0x13c39c only | LIVE |
+| `SP_VI_StartVi` @0x13e93c | ViInit @0x13c8ec only | LIVE |
+| `SP_HdmiVencStart` @0x13d810 | StartRtspVideoView @0x1729f8 only | **DEAD** |
+| `RtspVideoDataProc` @0x1724c8 | SP_GetVencStreamProc @0x13d6fc only | **DEAD** |
+| `SP_GetVencStreamProc` @0x13d34c | **zero callers** | **DEAD ROOT** |
+| `LT8619CLoopTask` @0x13c020 | none via `bl` — pthread entry via literal pool (bytes `20 c0 13 00`) | LIVE (thread) |
+
+Consequence: the entire RTSP/VENC output tree (`SP_GetVencStreamProc` →
+`RtspVideoDataProc` → `StartRtspVideoView` → VencStart/CreateChn/Stop →
+`RTSP_StartAVCTrackSource` → `HI_VTrack_Source_*` → `RTSP_InitTrackSource`)
+is unreachable in stock firmware. Patching its geometry is harmless but pointless;
+the patcher gates those sites behind `--include-dead`.
+
+### 12.3 New patcher: `container/hdmi_geometry_patch.py`
+
+Parameterized static geometry patcher following the hardened SITES pattern of
+`hdmi_venc_patch.py`. It embeds ARM immediate encoders (verified against stock
+encodings for 1920/1280/720/30 rotated-immediate and 1080 MOVW forms):
+
+- **Live sites (always):** `0x13c390/94/98` (fps/h/w args to SP_HdmiViInit),
+  `0x13e2a4/ac` (MIPI BT1120 w/h).
+- **Dead sites (`--include-dead`):** VENC branches A/B `0x13cea4/ac`,
+  `0x13d0b8/c0`; StartRtspVideoView `0x1729ec/f0/f4` (already 1080p in stock);
+  RTSP_Init `0x1734dc/f4/fc`.
+- Refuses in-place writes; fails loudly on unexpected bytes; idempotent;
+  prints md5.
+
+### 12.4 Verification transcript
+
+All runs against true pristine stock (`md5 f1af6203f35848ca42b24f825dfc6ada`),
+all 15 site bytes pre-verified to match expected stock encodings:
+
+- Default run (1920×1080@30): 0 written / 5 already patched; output byte-identical
+  to stock — correct, since stock already targets this timing.
+- 1280×720@60 build: exactly 5 words changed (`0x12c390/94/98`, `0x12e2a4/ac`);
+  decoded as `mov r2,#60`, `movw r1,#720`, `mov r0,#1280`, `mov r3,#1280`,
+  `mov r3,#720`. Idempotent double-run byte-exact.
+- `--include-dead` 1080p build: 6 written / 9 already patched (= 15 sites total;
+  the 9 already-patched are sites whose target equals stock). Idempotent.
+- End-to-end 1080p artifact (EDID v2 + geometry no-op): 79 bytes changed vs stock,
+  all within `0xbd4c86–0xbd4d7b` (EDID blob region). md5 `5dad6b5e459b4c38ae86c7ed55333897`.
+- Negative test: corrupted site byte → patcher refuses with exit 1.
+
+⚠️ **Not yet done:** hardware validation of any Phase E build before flashing.
+The 720p build changes VI/MIPI timing never exercised by stock — treat as
+experimental until proven on hardware.

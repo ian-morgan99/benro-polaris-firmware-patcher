@@ -415,11 +415,18 @@ Explicitly parked far downstream (exploration doc §8.1). Requires Phases A–C 
 
 ---
 
-## Phase E — Multi-format HDMI input (all common camera outputs) — PLANNED, NOT STARTED
+## Phase E — Multi-format HDMI input (all common camera outputs) — STATIC SLICE IMPLEMENTED, DYNAMIC ITEMS NOT STARTED
 
 Phase E extends Phases A–C from "one honest mode (1080p60)" to accepting **all common camera
-HDMI output formats**, including interlaced. It is a design commitment only — no code exists yet.
-A junior agent must not begin Phase E until Phases A–C are field-proven on hardware.
+HDMI output formats**, including interlaced.
+
+**Status update (2026-08-26):** the *static-per-build* slice of Phase E is implemented as
+`container/hdmi_geometry_patch.py` — see exploration doc §12. It parameterizes all hardcoded
+width/height/fps immediates at patch time (live sites `0x13c390–98`, `0x13e2a4–ac`; dead RTSP/VENC
+sites behind `--include-dead`), enabling e.g. a 1280×720@60 build today. The dynamic items below
+(VI re-init on VideoChange, VPSS deinterlace, per-format VENC re-init) remain **NOT STARTED** and
+require hardware validation. Interlaced input is still unsupported: no deinterlace path exists and
+the EDID does not advertise interlaced modes.
 
 ### E0. Why this phase exists
 
