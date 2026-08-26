@@ -57,6 +57,27 @@ ELF mapping: RX segment vaddr = fileoff + 0x10000; RW segment vaddr = fileoff + 
 ### 3.3 True multi-format support — HARD, not recommended initially
 
 Dynamic VI/VENC reconfig on format change + VPSS scaling; large new firmware work, high risk.
+Now fully planned as **Phase E** in HDMI-IMPLEMENTATION-PLAN.md.
+
+### 3.4 Coverage vs Pentax K-01 HDMI output modes (2026-08-26)
+
+The K-01's HDMI output menu offers exactly: **Auto / 1080i / 720p / 480p**
+(K-01 Operating Manual, "Setting the Video/HDMI Output Format"). In Auto mode it
+negotiates against the sink EDID; with a fixed choice it outputs that timing
+regardless. Mapping each option to what the patched Polaris accepts:
+
+| K-01 setting | Timing emitted | Our patched EDID (VIC 16 + 4) | After Phase C (1080p60 pipeline) | After Phase E (multi-format) |
+|---|---|---|---|---|
+| Auto | Best match from our EDID | Picks VIC 16 (1080p60) | **Works** | Works |
+| 1080i | 1920×1080i60 (VIC 5) | Not advertised → camera falls back or errors | Fails (no deinterlace) | Works (VPSS deinterlace) |
+| 720p | 1280×720p60 (VIC 4) | Advertised (VIC 4) but VI still hardcoded 1920×1080 | Fails (geometry mismatch) | Works (dynamic VI/MIPI/VENC) |
+| 480p | 720×480p60 (VIC 2/3) | Not advertised | Fails | Works |
+
+**Bottom line:** with Phases A–C only, the K-01 works when set to **Auto**
+(it will select our advertised 1080p60) — this is the recommended configuration
+until Phase E ships. The explicit 1080i and 720p settings require Phase E.
+Note the K-01's HDMI output is LCD-mirror/playback only — there is no clean
+live-view feed over HDMI on this camera regardless of patching.
 
 ## 4. Safety rules
 
