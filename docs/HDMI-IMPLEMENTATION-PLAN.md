@@ -327,14 +327,14 @@ Commit to the working branch: the idempotent patch script (`container/hdmi_edid_
 
 Each value is immediately stored to the channel-config stack frame (`str r3,[fp,#-108]` for width, `[fp,#-104]` for height).
 
-**Encoding constraint (important):** 1920 = `0x780` IS directly encodable as an ARM modified immediate (`mov r3,#1920` = `e3a03c07`). 1080 = `0x438` is **NOT** encodable as a single ARM immediate (checked programmatically across all 16 rotations). The same-size fix uses `MOVW` (ARMv7+, already used by this binary at `0x13d060`):
+**Encoding constraint (important):** 1920 = `0x780` IS directly encodable as an ARM modified immediate (`mov r3,#1920` = `e3a03e78`, imm 0x78 rotated right by 28). 1080 = `0x438` is **NOT** encodable as a single ARM immediate (checked programmatically across all 16 rotations). The same-size fix uses `MOVW` (ARMv7+, already used by this binary at `0x13d060`). **Note:** an earlier revision of this document listed `e3a03c07` for 1920 — that encoding is actually `mov r3, #1792` (imm 0x07 ror 24). The correct word is `e3a03e78`. All byte sequences below are little-endian file bytes (ARM words stored LSB-first):
 
 | Address | New bytes | New instruction |
 |---|---|---|
-| `0x13cea4` | `e3a03c07` | `mov r3, #1920` |
-| `0x13ceac` | `e3003438` | `movw r3, #1080` |
-| `0x13d0b8` | `e3a03c07` | `mov r3, #1920` |
-| `0x13d0c0` | `e3003438` | `movw r3, #1080` |
+| `0x13cea4` | `78 3e a0 e3` (`e3a03e78`) | `mov r3, #1920` |
+| `0x13ceac` | `38 34 00 e3` (`e3003438`) | `movw r3, #1080` |
+| `0x13d0b8` | `78 3e a0 e3` (`e3a03e78`) | `mov r3, #1920` |
+| `0x13d0c0` | `38 34 00 e3` (`e3003438`) | `movw r3, #1080` |
 
 All replacements are exactly 4 bytes — **no size change, no branch displacement recalculation needed.**
 
@@ -353,10 +353,10 @@ Usage: hdmi_venc_patch.py <in> <out>. Idempotent."""
 import sys
 
 SITES = {                      # file offset = vaddr - 0x10000 (RX segment)
-    0x13cea4 - 0x10000: (bytes.fromhex('e3a03c05'), bytes.fromhex('e3a03c07')),  # mov #1280 -> mov #1920
-    0x13ceac - 0x10000: (bytes.fromhex('e3a03e2d'), bytes.fromhex('e3003438')),  # mov #720  -> movw #1080
-    0x13d0b8 - 0x10000: (bytes.fromhex('e3a03c05'), bytes.fromhex('e3a03c07')),
-    0x13d0c0 - 0x10000: (bytes.fromhex('e3a03e2d'), bytes.fromhex('e3003438')),
+    0x13cea4 - 0x10000: (bytes.fromhex('053ca0e3'), bytes.fromhex('783ea0e3')),  # mov #1280 -> mov #1920
+    0x13ceac - 0x10000: (bytes.fromhex('2d3ea0e3'), bytes.fromhex('383400e3')),  # mov #720  -> movw #1080
+    0x13d0b8 - 0x10000: (bytes.fromhex('053ca0e3'), bytes.fromhex('783ea0e3')),
+    0x13d0c0 - 0x10000: (bytes.fromhex('2d3ea0e3'), bytes.fromhex('383400e3')),
 }
 
 data = bytearray(open(sys.argv[1], 'rb').read())
@@ -435,4 +435,4 @@ All facts in this plan were re-derived from the stock binary (`appfs.ubifs` md5 
 - Branch A: `13ce4c mov r3,#96`; dims `13cea4 e3a03c05` (1280), `13ceac e3a03e2d` (720). ✔
 - Branch B: `13d060 movw r3,#265`; dims `13d0b8 e3a03c05`, `13d0c0 e3a03e2d`. ✔
 - Width stores go to `[fp,#-108]`, heights to `[fp,#-104]`; bitrate float calc (`×10.0`) at `0x13ce70–0x13ce90` stores to `[fp,#-120]`. ✔
-- Immediate encodability checked programmatically: 1920 encodable as ARM imm (rotate 2); 1080 not encodable → MOVW encoding `e3003438` chosen (binary already uses MOVW at `0x13d060`, confirming ARMv7). ✔
+- Immediate encodability checked programmatically: 1920 encodable as ARM imm `e3a03e78` (imm 0x78, rotate field 14); 1080 not encodable → MOVW encoding `e3003438` chosen (binary already uses MOVW at `0x13d060`, confirming ARMv7). ✔

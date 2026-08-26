@@ -233,3 +233,49 @@ Artifacts:
 - Flashable FwPkt produced at `/tmp/hdmi-work/out/FwPkt/` (not committed — binaries stay out of git).
 
 ⚠️ **Not yet done:** on-hardware acceptance testing per plan Steps B5/C4 (boot, HDMI hotplug detection, RTSP stream at 1080p, both codec paths, unplug/replug recovery, stock reflash restore).
+
+## 10. Critical review findings & EDID v2 (2026-08-26)
+
+A post-implementation review found and fixed several defects. **The VENC patches were
+verified correct** against a freshly re-extracted stock binary (8 bytes, all four sites).
+
+### Process incident: contaminated pristine baseline
+The `/tmp/hdmi-work/app_ext/` extraction directory had been overwritten with patched
+output at some point (its `polestar_app` md5 matched the patched binary, not stock).
+This briefly caused a false "EDID patch was a no-op" alarm. **Lesson / rule:** never
+write patch output into the extraction source tree; always verify by re-extracting
+from the original `.ubifs`. Both patch scripts now refuse in-place writes.
+
+### EDID v1 defects (fixed in `gen_hdmi_edid.py`)
+The generated EDID used textbook CEA encoding for fields where the vendor blob uses
+its own convention, producing values a source would misread:
+- DTD sync bytes nibble-packed (`84 c5`) instead of the vendor's full-byte form
+  (`58` = hfront 88, `2c` = hsync width 44) — source would emit hfront=8/hsync=12.
+- Bytes 64–67 (`21 50 81 00`) carried nonsense image-size/sync-extension bits vs
+  stock `45 00 20 40`.
+- Range-limits descriptor was invalid (min vfreq 0 Hz); gamma byte 0x01 (gamma 1.01,
+  invalid); feature byte 0x01 dropped preferred-timing/RGB444 bits; CEA flags 0x40
+  claimed basic-audio support with no audio data block present.
+- Descriptor slots misaligned vs stock layout (stock places the fd tag at offset 93
+  inside the 90–107 slot; second DTD at 72–89 is a 297 MHz descriptor kept verbatim).
+
+**EDID v2** copies every timing/feature byte verbatim from stock except what we
+intend to change (CEA SVDs VIC 16 native + VIC 4, flags 0x00). Diff vs stock EDID:
+79 bytes, all in header cosmetics + checksums + CEA block. md5 `bbecadb20683e27f9aabe697600088d8`.
+
+### Script hardening
+- `hdmi_venc_patch.py`: fails loudly on partially-patched input; reports sites
+  written vs already-patched; refuses in-place writes; prints md5.
+- `hdmi_edid_patch.py`: reports byte-diff count on patch, explicit message on
+  already-patched input; refuses in-place writes.
+- `gen_hdmi_edid.py`: output path now an argv parameter.
+
+### Documentation corrections
+`docs/HDMI-IMPLEMENTATION-PLAN.md` previously stated `mov r3,#1920` = `e3a03c07`
+(actually 1792); corrected to `e3a03e78`, and script listings converted to
+little-endian file-byte order matching the committed scripts.
+
+### Rebuilt artifacts
+Patched binary from true stock with EDID v2: md5 `d29dce875068a6e3f6b2c7c2618f3c82`
+(89 bytes changed vs stock, range `0x12cea4`–`0xbd4d7b`). Idempotency verified:
+re-running both patchers on the output is a byte-exact no-op.
