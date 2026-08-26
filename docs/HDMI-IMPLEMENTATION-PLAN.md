@@ -415,6 +415,79 @@ Explicitly parked far downstream (exploration doc §8.1). Requires Phases A–C 
 
 ---
 
+## Phase E — Multi-format HDMI input (all common camera outputs) — PLANNED, NOT STARTED
+
+Phase E extends Phases A–C from "one honest mode (1080p60)" to accepting **all common camera
+HDMI output formats**, including interlaced. It is a design commitment only — no code exists yet.
+A junior agent must not begin Phase E until Phases A–C are field-proven on hardware.
+
+### E0. Why this phase exists
+
+Phases A–C make the Polaris accept exactly one format: 1920×1080p60 progressive. Cameras that
+cannot output 1080p60 (e.g. Pentax K-01: auto-negotiates 1080i/720p/540p-class) still fail,
+because:
+
+1. The EDID SVD list advertises modes the pipeline cannot process (stock behaviour retained).
+2. `SP_CreateHdmiTask` hardcodes VI init to 1920×1080@30 (`@0x13c390–98`).
+3. The MIPI BT1120 attribute is hardcoded 1920×1080 (`@0x13e2a4–ac`, ioctl via `/dev/hi_mipi`).
+4. VPSS is bypassed entirely — `SP_VI_SetParam` passes an all-zero VIVPSS struct
+   (`@0x13e628–50`) so there is **no deinterlacing**; interlaced input has no path.
+5. VENC channels are created once with fixed geometry; format changes need re-init or
+   `HI_MPI_VENC_SetChnAttr`.
+
+### E1. Target format matrix
+
+| Format | VIC | Camera examples | Extra work beyond A–C |
+|---|---|---|---|
+| 1920×1080p60/50/30/25/24 | 16/31/32/33/34 | Most modern bodies | None (covered by A–C) |
+| 1280×720p60/50 | 4/19* | K-01, older bodies | Dynamic VI + MIPI + VENC re-init |
+| 1920×1080i60/50 | 5/20 | K-01 default, many DSLRs | All of the above **+ VPSS deinterlace** |
+| 720×480i/p, 720×576i/p (NTSC/PAL) | 2–7, 17–21 | Legacy video-out modes | Same as above; `LT8619C_BTSetting` already detects these timings |
+
+\* Verify VIC numbering against CTA-861 when writing the new EDID; do not trust this table's
+VIC column without checking.
+
+### E2. Required changes (in dependency order)
+
+1. **Revised EDID (Phase B script v3)** — SVD list must advertise *exactly* the set of modes
+   Phase E can actually process, and DTDs for each preferred timing. Honesty rule from §0
+   applies: never advertise what the chain cannot deliver.
+2. **Dynamic VI init on VideoChange** — replace constants at `0x13c390–98` with values derived
+   from the LT8619C-detected timing (width/height/fps already measured in
+   `LT8619C_VideoCheck`). This is the hardest patch site: it changes control flow, not just
+   immediates. Requires trampoline or code-cave technique (see §E4 risk notes).
+3. **MIPI attribute update** — same dynamic width/height at `0x13e2a4–ac`
+   (`SP_VI_SetMipiAttr`, combo_dev_attr_t, ioctl cmd `0x40c86d01`, size 168).
+4. **VPSS deinterlace enable** — populate the VIVPSS struct passed to
+   `HI_MPI_SYS_SetVIVPSSMode` instead of zeros, enabling the deinterlace path for interlaced
+   detections. Progressive modes keep bypass.
+5. **VENC geometry** — either call `HI_MPI_VENC_SetChnAttr` on format change, or destroy/
+   recreate channels per current Phase C pattern extended to each supported geometry.
+
+### E3. Safety rules (in addition to §0 and Escalation rules)
+
+- Every address above was derived from the stock disassembly (`/tmp/hdmi-work/polestar.asm`);
+  re-verify each one against the true pristine binary (md5 `f1af6203f35848ca42b24f825dfc6ada`)
+  before writing any patcher code.
+- No in-place edits of any firmware file; all patches via idempotent committed scripts;
+  rebuild FwPkt and verify checksums after every change (see §8.2 of the exploration doc).
+- Land E2 items **one at a time**, hardware-testing between each: EDID first, then MIPI,
+  then VI, then VPSS deinterlace, then VENC dynamics. A failure at step N must leave steps
+  < N working.
+- Interlaced support is the highest-risk item (touches VPSS config never exercised by stock);
+  do it last and behind the others.
+
+### E4. Open questions to resolve before implementation
+
+- Does the LT8619C driver expose detected fps, or only H/V totals? (Determines whether VI
+  frame-rate can follow the source or stays fixed at 30.)
+- Is there a code cave large enough near `SP_CreateHdmiTask` for a trampoline, or must the
+  dynamic-init logic live in a relocated blob?
+- Does `HI_MPI_SYS_SetVIVPSSMode` accept being called again after boot, or is it init-once?
+- Confirm VPSS deinterlace quality/latency on this SoC generation before promising 1080i.
+
+---
+
 ## Escalation rules (obey literally)
 
 1. Any Checkpoint mismatch → STOP, report exact observed vs expected output.

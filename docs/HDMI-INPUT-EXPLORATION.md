@@ -279,3 +279,94 @@ little-endian file-byte order matching the committed scripts.
 Patched binary from true stock with EDID v2: md5 `d29dce875068a6e3f6b2c7c2618f3c82`
 (89 bytes changed vs stock, range `0x12cea4`–`0xbd4d7b`). Idempotency verified:
 re-running both patchers on the output is a byte-exact no-op.
+
+---
+
+## 11. Follow-up findings (2026-08-26, second session)
+
+### 11.1 EDIDSet(0) mystery resolved
+
+The `LT8619C_EDIDSet` NULL-argument path (default blob via pc-relative literal
+`0x00abb218`) resolves to file offset **`0xbd4c7c`** (vaddr delta `0x10000` for `.rodata`).
+The 256 bytes there are byte-for-byte identical to what our Phase A/B patch overwrites.
+This validates the external-EDID patch path completely: patching the blob at `0xbd4c7c`
+is equivalent to patching what the driver programs into the LT8619C on boot.
+
+### 11.2 Stock internal EDID fully decoded (md5 of blob: `b9ea5322971f319155d62770bdc33125`)
+
+**Base block (EDID 1.3):**
+
+| Offset | Field | Value |
+|---|---|---|
+| 0–7 | Header | `00 FF FF FF FF FF FF 00` |
+| 8–9 | MFG ID | "FHT" |
+| 10–11 | Product code | 0x0001 |
+| 12–15 | Serial | 0x01010101 |
+| 16–17 | Week/Year | week 4, 2018 |
+| 18–19 | Version | 1.3 |
+| 20 | Video input | 0x80 = digital |
+| 21–22 | Max size | 16 × 9 cm |
+| 23 | Gamma | 2.2 |
+| 24 | Features | 0x2a |
+| 35–37 | Established timings | `25 4f 80`: 800×600@60, 720×400 variants, 1280×1024@75, 1024×768@60/70/75/87i, 1152×870@75 + mfr bits |
+| 54–71 | DTD0 | see below |
+| 72–89 | DTD1 | see below |
+| 90–107 | Range limits (tag 0xfd) | V 23–120 Hz, H 15–133 kHz, max pixel clock 300 MHz |
+| 108–123 | Name descriptor | "Freiheit HDMI" |
+| 127 | Checksum | 0x6f (block sums to 0 mod 256 ✔) |
+
+**DTD0 @54** — 1920×1080p60: pixel clock 148.50 MHz, active 1920×1080,
+total 2200×1125, Hsync 44+88, Vsync 5+4, progressive. Raw:
+`02 3a 80 18 71 38 2d 40 58 2c 45 00 20 40 21 00 00 18`.
+
+**DTD1 @72** — 3840×2160p30: pixel clock 297.00 MHz, active 3840×2160,
+total 4400×2250, Hsync 88+176, Vsync 10+8, progressive. Raw:
+`04 74 00 30 f2 70 5a 80 b0 58 8a 00 6d 55 21 00 00 1e`.
+
+> **Decode-method note (for future agents).** The DTD field map is:
+> byte0–1 pixel clock ÷10 kHz LE; byte2 H-active LSBs; byte3 H-blank LSBs;
+> byte4 high nibble = H-active MSBs, low nibble = H-blank MSBs; byte5 V-active LSBs;
+> byte6 V-blank LSBs; byte7 high nibble = V-active MSBs, low nibble = V-blank MSBs;
+> byte17 bit7 = interlace flag. Getting bytes 2/3 roles swapped produces nonsense
+> totals (e.g. 2185×2925) that still pass checksum validation — always sanity-check
+> against known-good timings like 1080p60 (148.5 MHz / 2200×1125).
+
+**CEA extension block:** rev 3, flags 0x71; SVD list
+`[75, 3, 4, 5, 19, 20, 31, 32, 33, 34, 35, 9, 7]` — VIC 75 (1080p50), 480p,
+720p60, 1080i60, 480i/576i, 1080p50/24/25/30, 2880×480p, 480i. Both block checksums
+valid (0x6f / 0x3f).
+
+**Key insight:** the stock EDID advertises interlaced and non-1080p modes it cannot
+process (VI is hardcoded progressive 1920×1080@30, VPSS bypassed = no deinterlacer).
+This is the "advertised but broken" problem Phases A–C fix for one mode and Phase E
+fixes properly.
+
+### 11.3 Receive-chain call graph (verified addresses)
+
+```
+SP_CreateHdmiTask            @0x13c2a8
+ ├─ SP_HdmiViInit(1920,1080,30)   hardcoded args @0x13c390–98
+ │   └─ SP_VI_SetMipiAttr         @0x13e214 — BT1120 1920×1080 attr,
+ │                                  ioctl cmd 0x40c86d01, struct size 168,
+ │                                  dims hardcoded @0x13e2a4–ac
+ ├─ SP_VI_SetParam                @0x13e61c — passes all-zero VIVPSS struct
+ │                                  (@0x13e628–50) ⇒ VPSS bypassed, deinterlace OFF
+ └─ SP_HdmiVencCreateChn          @0x13cdf4
+     ├─ branch A dims             @0x13cea4 (1280) / 0x13ceac (720)
+     └─ branch B dims             @0x13d0b8 / 0x13d0c0
+LT8619CLoopTask              @0x13c020 — polls link status
+LT8619C_BTSetting            @0x13b0f0 — RX-side timing special cases:
+                                          1920×540 fields (1080i), 1440×240/288 (NTSC/PAL i)
+LT8619C_EDIDSet              @0x139a20 — writes 256 B to I2C 0x90; default blob @fileoff 0xbd4c7c
+```
+
+Address-mapping quirks when re-verifying: vaddr↔fileoff delta is `0x10000` for
+`.text`/`.rodata`, `0x20000` for `.data.rel.ro`/`.data`. ARM literal pools use
+pc-base = add-instruction address + 8.
+
+### 11.4 What Phase E must change (summary)
+
+Dynamic VI re-init from detected timing (`0x13c390–98` + MIPI `0x13e2a4–ac`),
+VPSS deinterlace enable (populate the zeroed VIVPSS struct), dynamic VENC geometry
+(`HI_MPI_VENC_SetChnAttr` or re-create), and an honest revised SVD list. Full plan in
+HDMI-IMPLEMENTATION-PLAN.md Phase E.
