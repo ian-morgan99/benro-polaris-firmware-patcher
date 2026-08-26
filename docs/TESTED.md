@@ -159,6 +159,27 @@ Confirmed by the maintainer on a physical R5 Mark II:
   and **survive a reboot**. The rebuilt 2.5.34 `usb1` (port 0.12.2) coexists fine
   with `pgphoto`'s compiled-in 0.12.0 port core in practice.
 
+## Pentax K-1 Mark II — desktop gphoto2 spike (2026-08)
+
+Probed the K-1 Mark II (USB `25fb:0183`) directly from a Linux desktop with
+gphoto2 2.5.28, to assess whether a *host-side* shutter path could complement
+the Polaris' on-board `pgphoto` capture:
+
+- The camera enumerates as a generic **"USB PTP Class Camera"** — no Pentax
+  camlib binds, and Device Capabilities report **"No Image Capture"**.
+- `--capture-image` fails (`Unsupported operation`).
+- Raw opcode injection via `/main/actions/opcode`:
+  - Shutter opcode `0x920A` → camera replies **PTP Operation Not Supported (0x2005)**.
+  - All of `0x9201/02/04/07`, `0x9210/11`, `0x101A`, `0x90C0` → also 0x2005.
+  - **`0x9101`–`0x910F` are accepted** (no 0x2005) — a live Pentax vendor command
+    surface exists that libgphoto2 does not drive. Unexplored; would need raw
+    PTP tooling (ptpcam / python-ptp) and a connected camera.
+
+**Conclusion:** host-side USB shutter control of Pentax bodies via stock Linux
+gphoto2 is a dead end. Expert plate-solved alignment in Open Polaris stays
+jog-based for now; capture on the Polaris itself remains Canon-verified only
+(see above). Revisit the `0x91xx` opcode range if Pentax capture is ever needed.
+
 ## ❌ NOT tested
 
 - **Any camera other than the Canon R5 Mark II.** May regress other models —
