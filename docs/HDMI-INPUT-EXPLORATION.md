@@ -217,3 +217,19 @@ A failed HDMI experiment does not break packaging: worst case is a build that bo
 misbehaves, restored by reflashing stock. Keep the stock FwPkt backup (the tooling already
 warns about this). **Checksums/signatures are a non-issue; the gating risks remain hardware
 wiring unknowns and writing new application code (§8.1).**
+
+## 9. Implementation status (2026-08-26)
+
+Phases B and C of `docs/HDMI-IMPLEMENTATION-PLAN.md` have been **implemented and software-verified**. Hardware testing is still outstanding.
+
+What was done:
+- EDID blob replaced in-place at fileoff `0xbd4c7c` with a generated 256-byte EDID advertising 1920×1080@60 (VIC 16 native, VIC 4 supported). Diff scope confirmed: only bytes within the blob changed.
+- VENC geometry patched at `0x13cea4`, `0x13ceac` (H.264 branch) and `0x13d0b8`, `0x13d0c0` (H.265 branch): `mov #1280 → mov #1920` (`e3a03e78`) and `mov #720 → movw #1080` (`e3003438`). Disassembly diff gate: exactly 8 changed lines, nothing else.
+- Note: the plan's original encoding for 1920 (`e3a03c07`) was wrong — it decodes to 1792. The correct ARM immediate encoding is `e3a03e78` (`mov r3, #120, 28` = 0x780). Caught by the mandatory diff gate; scripts corrected.
+- Repacked appfs via `repack_appfs.sh` (stock geometry preserved), regenerated `firmwareInfo`; appfs MD5/size line verified to match. Round-trip extraction of the repacked image confirms the patched binary is intact.
+
+Artifacts:
+- Patch scripts committed: `container/gen_hdmi_edid.py`, `container/hdmi_edid_patch.py`, `container/hdmi_venc_patch.py`.
+- Flashable FwPkt produced at `/tmp/hdmi-work/out/FwPkt/` (not committed — binaries stay out of git).
+
+⚠️ **Not yet done:** on-hardware acceptance testing per plan Steps B5/C4 (boot, HDMI hotplug detection, RTSP stream at 1080p, both codec paths, unplug/replug recovery, stock reflash restore).
