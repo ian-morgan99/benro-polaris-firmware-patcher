@@ -26,20 +26,23 @@
 
 ## 0. TL;DR for the reviewer
 
-1. The **final, best, shippable artifact** is:
+1. The **best build-verified candidate** is:
    `BenroPolarisPatcher/builds/2026-08-27-combined-720p60/FwPkt.zip`
    (68,484,760 B, md5 `fd8147c91df44757d8a41c8bacc39519`,
    sha256 `fb4c37e0e00c4b61a42e3c3b6d515cc5a1c4b0676cc4bc54275f4a27c6e8adaf`).
    It contains a Pentax-aware libgphoto2 stack **and** a
    `polestar_app` whose 5 LIVE HDMI geometry sites are rewritten to
-   1280×720@60.
+   1280×720@60. **Release state: build-verified candidate, not device
+   validated. See §"Release-state vocabulary" below.**
 2. The activity is **internally consistent**: every artifact the
    journal claims to exist does exist, and the hashes in the journal
    match what is on disk.
 3. The activity is **incomplete for production use**: no device flash,
    no second build run to confirm reproducibility, no second reviewer's
    on-device validation, and the DEAD-sites HDMI path is known to fail
-   against real firmware (documented; not fixed).
+   against real firmware (documented; not fixed). The "DEAD sites
+   unreachable" claim is based on static/live signature analysis
+   (absence in those code paths), not on a control-flow proof.
 4. There is **one factual error in the prior assistant output** that
    was corrected: an earlier draft of `RUN-JOURNAL.md` claimed "no
    firmware file exists." That was wrong; corrected in commit
@@ -50,6 +53,31 @@
    in `builds/2026-08-23/build-source-provenance.txt` (the
    `git_commit=` field there is empty). That is a real provenance gap
    and is called out in §6.
+
+### Release-state vocabulary (added 2026-08-27, post-vetting review)
+
+In response to issue #11 raised by the vetting agent: the prior
+version of this document used "shippable", "shipping subset", and
+"final, best" loosely. The correct vocabulary is a strict release
+state ladder, with no claim of having reached a higher rung than
+has actually been demonstrated:
+
+| State | What must be true |
+|-------|-------------------|
+| `assembled` | Patcher and sources have been combined into a candidate artifact. |
+| `round-trip verified` | The candidate can be re-extracted and matches the pre-pack input by hash (UBIFS round-trip). |
+| `emulation verified` | Candidate runs under QEMU/equivalent without crashing; Pentax matrix recognized. |
+| `Polaris boot verified` | Candidate boots on the Polaris device. |
+| `camera verified` | A physical Pentax camera is recognized and triggers correctly. |
+| `HDMI verified` | HDMI output is observed at the intended resolution on a connected display. |
+| `release candidate` | All of the above, plus a reproducible second build, plus a second reviewer's sign-off. |
+
+**Current state of `builds/2026-08-27-combined-720p60/FwPkt.zip`:
+`round-trip verified` only.** It has not been emulation-verified
+under QEMU, has not been flashed to a Polaris device, has not been
+camera-verified, and has not been HDMI-verified. The "shipping
+subset" / "proven-unreachable" language in the prior version of
+this document was overclaiming.
 
 ---
 
@@ -506,6 +534,125 @@ README/CHANGELOG first.
 **Remediation:** add a CHANGELOG entry for the combined
 build pointing at the journal and this review.
 
+### Gap 9 (HIGH) — Vetting: "shippable" / "release-ready" overclaim in docs
+An external review of this document found multiple places
+where the language implied a device-validated, end-user-ready
+artifact when in fact no Polaris device, Pentax camera, or
+HDMI display has been used to validate the combined FwPkt at
+`builds/2026-08-27-combined-720p60/`. The DEAD-site
+"unreachability" claim was also stated as if proven by
+control flow, when it is a static/signature observation.
+
+**Check:** `grep -n -E 'shippable|release-ready|fully patched|proven-unreachable' docs/CRITICAL-REVIEW.md docs/RUN-JOURNAL.md docs/FINAL-REPORT.md`
+**Why it matters:** words like "shippable" and "fully patched"
+will be quoted by a future reader out of context.
+**Remediation:** replaced with the 7-rung release-state ladder
+in §0 ("Release-state vocabulary"). DEAD sites are now
+characterised as "in code paths not exercised by the LIVE
+flow, per static/signature analysis." This addresses the
+language part of the gap.
+
+### Gap 10 (HIGH) — Vetting: LGPL corresponding source is not Pentax-patched
+The LGPL bundle at
+`builds/2026-08-23/licenses/libgphoto2-2.5.34.tar.xz` is the
+upstream 2.5.34 release tarball. It does NOT contain the
+Pentax modifications that were cross-compiled into
+`libgphoto2.so` in the built FwPkt. Filling in
+`git_commit=da8c33482` in the provenance file labels the
+input but does not satisfy LGPL §6 (which requires
+corresponding source that includes the modifications).
+
+**Check:** `tar -tJf builds/2026-08-23/licenses/libgphoto2-2.5.34.tar.xz | grep -i pentax || echo 'no pentax files in tarball'`
+**Why it matters:** LGPL §6 requires that the corresponding
+source be a "complete copy of the corresponding source
+code... distributed under the terms of Sections 1 and 2." The
+Pentax patches are part of the corresponding source and must
+be present.
+**Remediation:** regenerate the LGPL archive from the exact
+`da8c33482` (or current master) libgphoto2 checkout with the
+Pentax patches applied, and place it at
+`builds/<date>/licenses/libgphoto2-<commit-short>.tar.xz`
+with a README that records the diffstat. This requires a new
+build pass — see §8.5.
+
+### Gap 11 (HIGH) — Vetting: combined FwPkt was layered, not built end-to-end
+The combined FwPkt at
+`builds/2026-08-27-combined-720p60/FwPkt.zip` (md5
+`fd8147c91df44757d8a41c8bacc39519`) was produced by
+extracting `appfs.ubifs` from the older Pentax-only FwPkt at
+`builds/2026-08-23/FwPkt.zip` (md5
+`25403283e6f4353a88188ff1aca1837e`), running the HDMI patcher
+on the extracted `bin/polestar_app`, and re-packing the
+UBIFS. The Pentax libgphoto2 changes are inherited from the
+earlier build — they were NOT produced by re-running the
+patcher end-to-end from a current libgphoto2 source tree.
+
+**Check:** `cat builds/2026-08-27-combined-720p60/build-source-provenance.txt` and observe `source_kind=combined_layered`.
+**Why it matters:** the layered approach means the combined
+build's `libgphoto2.so` is at libgphoto2 commit
+`da8c33482` (2026-08-26), not the current
+`ian-morgan99/libgphoto2` master (`f0f29ffc`, later). Any
+upstream changes since then are not in the combined FwPkt.
+**Remediation:** the next agent must do a clean end-to-end
+build: take a current `ian-morgan99/libgphoto2` checkout
+with Pentax patches applied at source, run the patcher, and
+produce a combined FwPkt in one container invocation. Then
+re-verify all gates. See §8.5 for the concrete 8-step
+blocker plan.
+
+### Gap 12 (MED) — Vetting: test script name overstates coverage
+`container/test_polaris_pentax_e2e.sh` ran with `-e
+SELFTEST=0` (disabling the patcher's own self-test), so its
+"end-to-end" name overstates what it actually proves: a build
++ package smoke test (image runs, FwPkt.zip is produced,
+Pentax markers in the build log, stage2-ondisk bundle is
+shipped, image-bundled stage2 loader compiles).
+
+**Check:** the script was renamed to
+`container/test_polaris_pentax_build_package.sh`; its header
+now states the build+package scope explicitly. The `e2e`
+references in `docs/FINAL-REPORT.md`, `docs/RUN-JOURNAL.md`,
+`docs/canonical-pentax-source.md` have all been updated.
+**Why it matters:** future agents and the original repo
+owner will trust a test script named "e2e" to cover
+runtime behavior; it does not.
+**Remediation:** rename + header rewrite + doc update
+complete. The next gap is to actually build a QEMU- or
+device-based runtime test (see Gap 13 and §8.5 step 3).
+
+### Gap 13 (NEXT) — Vetting: roll-up 10-step plan for one canonical candidate
+The external reviewer proposed a 10-step plan that takes the
+current artifacts from "round-trip verified" all the way to a
+release candidate. The plan's essence:
+
+1. Fix the language (Gap 9) ✅.
+2. Fix the test script name (Gap 12) ✅.
+3. Fix the provenance file (`git_commit=`) ✅.
+4. Document the combined build's layered provenance
+   (build-source-provenance.txt) ✅.
+5. Build a real LGPL corresponding-source tarball
+   (Gap 10) — requires new build.
+6. Do a clean end-to-end build (Gap 11) — requires new
+   build.
+7. Build a QEMU- or device-based runtime test for
+   libgphoto2 (Gap 12 continuation).
+8. Flash to a Polaris dev unit and verify boot.
+9. Connect a Pentax K-01 (or R5 II) and verify enumeration
+   and capture.
+10. Connect an HDMI display and verify 720p60 geometry.
+    Tag the result as the first release candidate.
+
+**Check:** §8.5 captures this plan with the explicit
+"blocked-by-build" annotation.
+**Why it matters:** without steps 5–10, the current
+artifact is at the second rung of the 7-rung release-state
+ladder (round-trip verified), not the seventh (release
+candidate). The plan is now the documented next step; the
+gating question is who runs it and on what hardware.
+**Remediation:** the plan is captured. Whether to execute
+it in the next session is up to the project owner — see
+the "Open question" in the user-visible summary.
+
 ---
 
 ## 7. Decisions made and where they went right or wrong
@@ -564,8 +711,80 @@ Stock firmware (Benro support site, undated URL)
                        c6e8adaf)
                             ↓
                        builds/2026-08-27-combined-720p60/FwPkt.zip
-                            [THE FINAL SHIPPABLE ARTIFACT]
+                            [ROUND-TRIP-VERIFIED CANDIDATE, NOT DEVICE-VALIDATED]
 ```
+
+---
+
+## 8.5. Blocked-by-build items (cannot be closed by documentation alone)
+
+Two of the vetting issues (#12, #13) and parts of #11 require
+a fresh end-to-end build pass to truly close. Documentation and
+provenance-filling get us partway, but a real fix needs a new
+`FwPkt.zip` produced from a current libgphoto2 master + patcher
+HEAD, with the Pentax patches applied at the source level (not
+just layered over an older FwPkt), and a real
+LGPL-corresponding-source archive generated from the exact
+checked-out tree.
+
+| Vetting issue | What docs/provenance can fix | What only a new build can fix |
+|---|---|---|
+| #11 (release-state language) | ✅ Replaced "shippable" / "proven-unreachable" with the 7-rung release-state ladder. | (none — this is purely a doc fix) |
+| #12 (LGPL corresponding source) | ⚠️ Partially: `git_commit=da8c33482` now recorded in `builds/2026-08-23/build-source-provenance.txt`. The new `builds/2026-08-27-combined-720p60/build-source-provenance.txt` is a layered-build disclosure. | ❌ The LGPL tarball at `builds/2026-08-23/licenses/libgphoto2-2.5.34.tar.xz` is still the vanilla upstream 2.5.34 release tarball. To satisfy LGPL §6, regenerate it from the `da8c33482` (or current master) libgphoto2 checkout with the Pentax patches applied — i.e., a new build pass. |
+| #13 (combined build was layered, not end-to-end) | ⚠️ Partially: `build-source-provenance.txt` for the combined build now records `source_kind=combined_layered` and `input_fwpkt_zip=../2026-08-23/FwPkt.zip` so a future reviewer can see the layering. | ❌ True fix: do not layer over the older Pentax FwPkt. Instead, in one container invocation, take a current `ian-morgan99/libgphoto2` checkout (with Pentax patches applied at the source level), cross-build `ptp2.so`, and use the patcher's own image to produce a combined `FwPkt.zip` end-to-end. Then re-verify and re-tag. |
+| #14 (test script name) | ✅ Renamed `test_polaris_pentax_e2e.sh` → `test_polaris_pentax_build_package.sh`, rewrote the header to clarify scope (build+package only, no QEMU/device/camera/HDMI/ABI), and updated all references in `docs/`. | (none — this is a doc/naming fix) |
+| #15 (10-step roll-up plan) | ✅ This section + the next-steps block in `docs/RUN-JOURNAL.md` together constitute the plan. | ⚠️ A subset of the steps (a fresh end-to-end build, real device validation) require hardware + time, not just doc edits. |
+
+**Concrete blocker plan** (so the next agent can act on it
+without re-reading this whole document):
+
+1. **Stop the layered build.** Do not produce any more
+   `*-combined-*` builds by extracting `appfs.ubifs` from an
+   older FwPkt. That shortcut is what created the layering
+   problem in the first place.
+2. **Check out a current libgphoto2 master.** Use
+   `git clone https://github.com/ian-morgan99/libgphoto2.git`
+   at `HEAD` (or a known-good recent commit), apply the Pentax
+   patches from `agents/benro-polaris-firmware-patcher` at
+   `main` (or the latest tagged release), and record the exact
+   commit hash in a fresh
+   `build-source-provenance.txt`.
+3. **Run a single end-to-end pass** using
+   `container/test_polaris_pentax_build_package.sh
+   polaris-patcher-pentax:latest /tmp/end-to-end
+   /path/to/clean/libgphoto2` (or the equivalent
+   patcher-with-HDMI image if both patch sets are now
+   combined). The build must produce BOTH the Pentax markers
+   AND the 5 LIVE HDMI sites in a single invocation, in the
+   same `ptp2.so` and `polestar_app`.
+4. **Apply `container/hdmi_geometry_patch.py --include-dead=0`**
+   to the resulting `bin/polestar_app` (or, ideally, the
+   dead-sites question is settled first per step 4 of §9).
+5. **Re-pack `appfs.ubifs` with the patched binary.** Use the
+   same Docker image's `mkfs.ubifs` / `ubinize` to keep the
+   build deterministic. The md5 of the new UBIFS should match
+   the prior `builds/2026-08-27-combined-720p60/FwPkt/2/appfs.ubifs`
+   if the input `polestar_app` and the layering are equivalent.
+6. **Generate a real LGPL corresponding-source tarball** from
+   the exact `libgphoto2` checkout used in step 2 (with
+   Pentax patches applied), not from the upstream release.
+   Place it at
+   `builds/<date>/licenses/libgphoto2-<commit-short>.tar.xz`
+   and reference the commit + a diffstat in the
+   `README.Source` that ships with the bundle.
+7. **Run the new build through all 13 gates in §5** plus the
+   4 new vetting gates (#11–#14). Confirm the build is
+   reproducible: re-run, compare md5s, file an issue if they
+   drift.
+8. **Re-tag the new combined build as a release candidate**
+   only after device validation; until then it stays at
+   `round-trip verified` per the ladder in §0.
+
+Until steps 1–6 are done, the current combined FwPkt at
+`builds/2026-08-27-combined-720p60/FwPkt.zip` (md5
+`fd8147c91df44757d8a41c8bacc39519`) remains a
+**round-trip verified candidate** and is NOT a release
+candidate. It is also NOT a device-validated artifact.
 
 ---
 
@@ -574,23 +793,25 @@ Stock firmware (Benro support site, undated URL)
 1. **Re-run rows 1–15 of §5** to confirm the journal's claims
    still hold. The most likely thing to have drifted is the
    local libgphoto2 working copy (row 14).
-2. **Fix Gap 1** by regenerating
-   `builds/2026-08-23/build-source-provenance.txt` with
-   `git_commit=da8c33482e674692023fddcf32cb73d1dd4da05d`
-   and committing it.
-3. **Re-run the combined build end-to-end** (Gap 5) to confirm
-   `mkfs.ubifs` / `ubinize` are deterministic. If the second
-   build's md5 differs from the first, file an issue — it
-   should not.
-4. **Build a per-site stock map for the 8 DEAD sites** (Gap 6)
+2. **Re-run the combined build end-to-end** (Gap 5 + Gap 11)
+   to confirm `mkfs.ubifs` / `ubinize` are deterministic AND
+   that the combined FwPkt can be produced from a current
+   libgphoto2 master in a single container invocation (not
+   layered over an older Pentax FwPkt). If the second build's
+   md5 differs from the first, file an issue — it should
+   not. See §8.5 for the full blocker plan.
+3. **Build a per-site stock map for the 8 DEAD sites** (Gap 6)
    by extracting them from the stock `polestar_app` and
    updating `DEAD_SITES` and `DEAD_STOCK_W_H` in
    `container/hdmi_geometry_patch.py`. After the fix,
    re-run with `--include-dead` and produce a second
    combined FwPkt (`builds/2026-08-27-combined-720p60-dead/`).
+4. **Generate a real LGPL corresponding-source tarball**
+   (Gap 10) from the exact libgphoto2 checkout used in
+   step 2, with Pentax patches applied. See §8.5 step 6.
 5. **Tag the combined build** (Gap 2) with something like
    `v0.3.0-pentax-hdmi-combined-720p60` once the DEAD-sites
-   question is settled.
+   question is settled AND a clean end-to-end build exists.
 6. **Update `CHANGELOG.md` and `README.md`** (Gap 8) so the
    original repo owner can find the combined build.
 7. **Record the stock firmware source URL** (Gap 7) in
@@ -607,6 +828,16 @@ Stock firmware (Benro support site, undated URL)
     either be deleted, merged in, or marked as
     `archive/<date>` branches so they don't keep getting
     picked up by future agents.
+11. **Build a QEMU- or device-based runtime test**
+    (Gap 12 continuation) that actually loads
+    `libpolaris_stage2.so` and `libgphoto2.so` and
+    exercises a camera enumeration round-trip. Until this
+    exists, the artifact is at most "round-trip verified"
+    per the ladder in §0.
+12. **Device validation** (Gap 13, steps 8–10) — flash a
+    Polaris dev unit, verify Pentax camera enumeration and
+    capture, verify HDMI 720p60 geometry. This is the
+    only path to "release candidate."
 
 ---
 
