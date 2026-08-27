@@ -56,6 +56,16 @@ def word(v):
 
 # file offset -> (register, role). Expected old bytes are computed from stock
 # constants (1920x1080@30 / 1280x720) and asserted before writing.
+#
+# DEAD_STOCK_W_H is an assumption about the VENC/RTSP sites' stock bytes
+# (1280x720), derived from the disassembly. If the real firmware's stock
+# bytes at a DEAD site differ, the patcher fails loudly at the
+# `if cur != old: sys.exit(...)` check below (not a silent corruption).
+# The safe-failure path is `--include-dead` not being passed: the loop
+# never reaches DEAD sites, and the patched output is byte-exact
+# against stock at those offsets. The combined build runs with
+# `--include-dead` absent (see docker/README.md "Layered combined build"),
+# so the assumption is never exercised in production.
 LIVE_SITES = [
     # SP_CreateHdmiTask: mov r2,#30 ; movw r1,#1080 ; mov r0,#1920 ; bl SP_HdmiViInit
     (0x13c390 - 0x10000, 'fps', 2),
@@ -129,6 +139,10 @@ def main():
             stock_val = STOCK[role]
         old = word(enc_any(rd, stock_val))
         if cur != old:
+            # Fail loud: if the stock assumption (DEAD_STOCK_W_H or STOCK)
+            # does not match the real firmware bytes, the patcher aborts
+            # rather than writing a wrong value. This is the intended
+            # safe-failure behaviour for both LIVE and DEAD sites.
             sys.exit(
                 f"offset {hex(off)} ({role}, r{rd}): found {cur.hex()}, expected "
                 f"{old.hex()} (stock) or {new.hex()} (already patched) — wrong firmware?")
