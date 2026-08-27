@@ -1023,4 +1023,104 @@ candidate. It is also NOT a device-validated artifact.
 - `git log upstream/main` (2026-08-27) — upstream commit
   history.
 
+---
+
+## 11. Open follow-ups (post-closure status, 2026-08-27)
+
+This section records the items that remain after the §6 Gap closure pass
+landed in commit `318b09f`. They are intentionally **not** part of the
+critical-review Gap table — they are operational follow-ups the user
+asked about in plain English, and they need owner decisions before
+they can be closed.
+
+### 11.1 FwPkt.zip availability
+
+- The combined Pentax+HDMI build was performed in a prior worktree and
+  produced `builds/2026-08-27-combined-720p60/FwPkt.zip`
+  (68,484,760 B, md5 `fd8147c91df44757d8a41c8bacc39519`,
+  sha256 `fb4c37e0e00c4b61a42e3c3b6d515cc5a1c4b0676cc4bc54275f4a27c6e8adaf`).
+- **That file is not on disk in this worktree** (or in any of the
+  remaining 3 worktrees as of 2026-08-27). It is also gitignored —
+  the upstream `benro-polaris-firmware-patcher` policy is
+  "distributes no firmware; bring your own FwPkt," and the parent
+  repo's `.gitignore` excludes `FwPkt*.zip` for that reason.
+- The `builds/2026-08-27-combined-720p60/SHA256SUMS` file (1,551 B,
+  committed) records the fingerprint, the source input hashes, the
+  Docker image digest, and the full re-run command. Anyone with
+  access to the same Docker image and the same libgphoto2 checkout
+  can reproduce the .zip.
+- **Owner decision needed:** is the .zip retained on the machine
+  that originally produced it, or does it need to be re-built? This
+  doc only guarantees the *fingerprint* of the build, not the
+  presence of the file. Per the user's standing instruction
+  ("we must not publish the actual firmware artifacts for legal
+  reasons"), the patcher repo is the right place for the
+  fingerprint + re-run instructions, not the .zip itself.
+
+### 11.2 Branch / worktree hygiene
+
+Closed in this commit (the one that added this section; see
+`git log -- docs/CRITICAL-REVIEW.md` for the exact SHA):
+
+- Deleted local branch `agents/hdmi-functionality-exploration`
+  (was at `7814a8d`, identical to `main` — no unique commits).
+- Deleted local branch `agents/review-handover-doc-2026-08-26`
+  (was at `7814a8d`, identical to `main` — no unique commits).
+- Deleted local branch `agents/monitor-active-sessions-looping`
+  (was at `7814a8d`, identical to `main` — no unique commits).
+- Removed the two worktrees associated with the first two branches.
+- Neither dead branch was ever pushed to `origin`, so no
+  `origin/` ref needed deletion.
+
+Remaining branches after this cleanup:
+
+| Branch | HEAD | Status |
+|---|---|---|
+| `main` | `7814a8d` | Pushed to origin; integration target |
+| `agents/attachment-plan-follow-up` | `318b09f` | Pushed; this closure doc + Gaps |
+| `agents/benro-polaris-firmware-docs` | `5d0fc75` | Pushed; Phase E patcher + HDMI docs |
+| `agents/benro-polaris-firmware-analysis` | `1bee700` | Pushed; **mobile-app / Alpaca client work** (see §11.3) |
+
+### 11.3 Mobile-app / Alpaca client — branch-split recommendation
+
+The `agents/benro-polaris-firmware-analysis` branch (1bee700, 4,692
+lines added) contains a **Kotlin/Compose Android + multiplatform
+client** that talks to a Polaris over Wi-Fi / Alpaca protocol:
+
+- `polaris-client/androidApp/` — Compose Android client
+- `polaris-client/composeApp/` — multiplatform Compose client
+- `polaris-client/tools/cli-probe/` — Kotlin CLI probe (Alpaca)
+- `docs/FIRMWARE-ANALYSIS-ALPACA.md` — design notes
+
+That work is **client software**, not firmware-patcher code. The
+upstream `benro-polaris-firmware-patcher` is a C/Python patcher for
+the camera's filesystem; co-locating the two would mislead future
+contributors about the scope of each project.
+
+**Recommendation:** extract `polaris-client/` and
+`docs/FIRMWARE-ANALYSIS-ALPACA.md` into a new repo
+(`ian-morgan99/benro-polaris-mobile-client` or similar), keep
+firmware-patch work in this repo, and rebase
+`agents/benro-polaris-firmware-analysis` onto the new repo's
+default branch. **This commit does NOT perform the split** — it
+records the recommendation and waits for owner sign-off. The split
+involves creating a new remote, rewriting history, and force-pushing,
+all of which are owner decisions.
+
+### 11.4 Upstream-standards alignment
+
+- **Provenance / hygiene:** ✅ meets the standard set by upstream
+  commit `62bc11c` (Patcher v0.2.0). Tag annotation records input
+  hashes, output hashes, Docker image digest, libgphoto2 commit,
+  and release state; commits use the `Co-authored-by: Copilot`
+  trailer; no firmware blobs in git; `SOURCE.md` records the stock
+  firmware fingerprint.
+- **Device validation:** ❌ does NOT meet upstream's
+  "device-confirmed" standard. No Polaris hardware was flashed with
+  the combined build. The 7-rung release-state ladder in
+  §"Release-state vocabulary" places the combined FwPkt at rung 2
+  of 7. Owner action: arrange a hardware validation pass on a
+  Polaris dev unit (or a contributor's own Polaris) and re-tag at
+  rung ≥ 5.
+
 — End of critical review.
