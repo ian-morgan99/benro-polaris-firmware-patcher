@@ -1106,12 +1106,15 @@ lives at **[ian-morgan99/OpenPolaris](https://github.com/ian-morgan99/OpenPolari
 - `docs/FIRMWARE-ANALYSIS-ALPACA.md` re-attached as a 16th commit so
   the protocol ground-truth travels with the client.
 - Top commit `33d2580` adds `LICENSE` (GPL-3.0), `NOTICE`
-  (provenance + relicense), and `CHANGELOG.md` (the move record).
-- Default branch `main`. 17 commits, 67 tracked files (34 .kt, 7 .kts,
-  10 .md).
-- License change: the source branch's README listed MIT as "TBD";
-  OpenPolaris ships under **GPL-3.0** for consistency with the
-  firmware-patcher fork.  `NOTICE` records the relicense.
+  (provenance), and `CHANGELOG.md` (the move record).
+- Follow-up commit `18bd7d3` (2026-08-27) **relicensed GPL-3.0 → MIT**
+  per owner decision (MIT is less restrictive and the client has not
+  yet accepted external contributions, so the relicense is
+  unilateral).  18 commits total on `main`.
+- License decision: the source branch's README listed MIT as "TBD";
+  OpenPolaris ships under **MIT**.  `NOTICE` records the origin from
+  `benro-polaris-firmware-patcher`; `CHANGELOG.md` records the
+  relicense.
 
 **Follow-up** (still open, in this repo): remove the now-redundant
 `polaris-client/` tree and `docs/FIRMWARE-ANALYSIS-ALPACA.md` from
