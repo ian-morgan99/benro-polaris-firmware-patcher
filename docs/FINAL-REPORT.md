@@ -192,3 +192,40 @@ physical gimbal.
   happens upstream; the patcher tracks `master` at the most-recent
   Pentax-aware commit. See [docs/canonical-pentax-source.md](canonical-pentax-source.md)
   for the policy.
+
+## HDMI geometry patcher (post-consolidation extension)
+
+The Pentax consolidation ships the **patcher side** of the project's
+goal: a Polaris firmware that is a Pentax-aware libgphoto2 stack
+(Pentax matrix at the canonical upstream `da8c33482`). What the
+consolidation does **not** touch is the **input side** of the gimbal:
+the HDMI input chain hard-codes 1920x1080@30 in the device's
+`polestar_app` binary.
+
+An HDMI geometry patcher is shipped alongside the patcher as a
+companion tool. It is a stand-alone Python script (no firmware
+rebuild required) that rewrites the immediate operands at the sites
+that hard-code width/height/fps so a build can target a different
+static timing. The current scope is the static slice (5 live sites in
+`SP_CreateHdmiTask` + `SP_VI_SetMipiAttr`); dynamic items (VI re-init
+on `VideoChange`, VPSS deinterlace) are deliberately not started and
+interlaced input is unsupported by design. Phase D (HDMI TX
+enablement) is explicitly out of scope — it is the highest-brick-risk
+item in the plan and is not started.
+
+| Item | Value |
+|------|-------|
+| Patcher | `container/hdmi_geometry_patch.py` (146 lines) |
+| Source commit | `5d0fc75` on `agents/benro-polaris-firmware-docs` |
+| Live sites | 5 (always patched) |
+| Dead sites | 10 (`--include-dead` only; inside proven-unreachable RTSP/VENC tree) |
+| Default | 1920x1080@30 — byte-exact no-op against pristine stock |
+| 720p60 build | changes exactly 5 words; verified against pristine stock |
+| Idempotency | detects already-patched bytes; refuses in-place writes; aborts on unexpected bytes |
+| Documentation | [docs/HDMI-IMPLEMENTATION-PLAN.md](HDMI-IMPLEMENTATION-PLAN.md), [docs/HDMI-INPUT-EXPLORATION.md](HDMI-INPUT-EXPLORATION.md) |
+
+Combined end state: **Pentax libgphoto2 (canonical `da8c33482`) +
+HDMI geometry (Phase E static slice) — the "fully Pentax and HDMI
+patched Polaris firmware" goal is reached at the patcher + companion
+script level.** Device-side flashing of both pieces remains the
+end-user's responsibility; see [docs/HOW-IT-WORKS.md](HOW-IT-WORKS.md).

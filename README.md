@@ -144,6 +144,11 @@ and [docs/TESTED.md](docs/TESTED.md) for exactly what was verified.
 For patcher build-time gates, see [docs/patcher-gates.md](docs/patcher-gates.md);
 for the exact upstream libgphoto2 commit pulled and the branches to ignore,
 see [docs/canonical-pentax-source.md](docs/canonical-pentax-source.md).
+For the companion HDMI geometry patcher (the input side of the patched
+firmware, complementing the libgphoto2 side above), see
+[`container/hdmi_geometry_patch.py`](container/hdmi_geometry_patch.py)
+plus [docs/HDMI-IMPLEMENTATION-PLAN.md](docs/HDMI-IMPLEMENTATION-PLAN.md)
+and [docs/HDMI-INPUT-EXPLORATION.md](docs/HDMI-INPUT-EXPLORATION.md).
 
 ---
 

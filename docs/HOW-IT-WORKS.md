@@ -405,3 +405,8 @@ recoverability, not a guarantee; flash at your own risk.**
 - [`canonical-pentax-source.md`](canonical-pentax-source.md) — the exact
   upstream libgphoto2 commit the patcher pulls from and the branches to
   ignore.
+- [`HDMI-IMPLEMENTATION-PLAN.md`](HDMI-IMPLEMENTATION-PLAN.md) and
+  [`HDMI-INPUT-EXPLORATION.md`](HDMI-INPUT-EXPLORATION.md) — the companion
+  HDMI geometry patcher (Phases A–E, Phase E static slice implemented in
+  `container/hdmi_geometry_patch.py`); the input side of the patched
+  firmware, complementing the libgphoto2 side covered above.
