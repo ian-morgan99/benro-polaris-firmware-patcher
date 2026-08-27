@@ -239,3 +239,37 @@ the VENC / RTSP code paths) are deliberately excluded.
 - Build provenance for the combined FwPkt:
   `builds/2026-08-27-combined-720p60/build-source-provenance.txt`
   (not committed; lives in `builds/` which is gitignored)
+
+## v0.3.0-pentax-hdmi (tagged 2026-08-23 at commit `b3aa306`)
+
+> **Note added 2026-08-27:** the `v0.3.0-pentax-hdmi` tag was
+> created when only the patcher self-tests against a
+> **synthesized stock buffer** had passed (13/13 LIVE sites
+> matched against a Python re-encoding of the patcher output,
+> not real firmware bytes). Verification against the real
+> Benro Polaris firmware happened in subsequent commits
+> (`4b8a3b7`, `4f1c5d3`, `58c166a`, and the four commits
+> pushed as `0354a35` / `ef3c0be` / `fd0a21d` / `0c86436`).
+> A reviewer running `git checkout v0.3.0-pentax-hdmi` lands
+> on a tree that is **earlier than the actual verification
+> work**. For the verified combined build see the
+> `v0.3.0-pentax-hdmi-combined-720p60` tag (commit `0c86436`)
+> and `builds/2026-08-27-combined-720p60/`. This note closes
+> Gap 3.
+
+## v0.3.0-pentax-hdmi-combined-720p60 (tagged 2026-08-27 at commit `0c86436`)
+
+Annotated tag pointing at the verified combined-build state
+described under the "Unreleased" section above. Tag
+annotation records:
+
+- Stock firmware md5
+- Pentax base FwPkt md5
+- Combined FwPkt md5 + size + sha256
+- Docker image digest
+- libgphoto2 commit (`da8c33482`)
+- Build method (`combined_layered`)
+- LIVE/DEAD site counts
+- Release state (`round-trip verified (NOT device validated)`)
+
+Inspect via `git cat-file -p v0.3.0-pentax-hdmi-combined-720p60`.
