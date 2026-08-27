@@ -1059,27 +1059,44 @@ they can be closed.
 
 ### 11.2 Branch / worktree hygiene
 
-Closed in this commit (the one that added this section; see
-`git log -- docs/CRITICAL-REVIEW.md` for the exact SHA):
+Closed in commits documented under `git log -- docs/CRITICAL-REVIEW.md`:
 
-- Deleted local branch `agents/hdmi-functionality-exploration`
-  (was at `7814a8d`, identical to `main` — no unique commits).
-- Deleted local branch `agents/review-handover-doc-2026-08-26`
-  (was at `7814a8d`, identical to `main` — no unique commits).
-- Deleted local branch `agents/monitor-active-sessions-looping`
-  (was at `7814a8d`, identical to `main` — no unique commits).
-- Removed the two worktrees associated with the first two branches.
-- Neither dead branch was ever pushed to `origin`, so no
-  `origin/` ref needed deletion.
+- **Pre-§11 cleanup (commit 318b09f, 2026-08-26):** deleted local
+  branches `agents/hdmi-functionality-exploration`,
+  `agents/review-handover-doc-2026-08-26`, and
+  `agents/monitor-active-sessions-looping` (all three were at
+  `7814a8d`, identical to `main` — no unique commits) and removed
+  their worktrees. None had been pushed to `origin`.
+
+- **Post-§11 cleanup (commit 04a927c → subsequent cherry-pick
+  `3b190e0` on `main`, 2026-08-27):** `agents/benro-polaris-firmware-analysis`
+  carried 16 of 17 unique commits that were *mobile-app / Alpaca client*
+  work, and a single firmware-analysis commit (`1bee700` — the Pentax
+  K-1 II desktop gphoto2 spike). The right cleanup was **not** a
+  destructive filter-branch on a public branch (which would have
+  force-pushed 16 commits of public history to leave a single useful
+  commit), but rather:
+  1. Cherry-picked `1bee700` onto `main` as commit `3b190e0`
+     (21 lines added to `docs/TESTED.md` — a pure documentation
+     addition; co-authored by Copilot per project policy).
+  2. Pushed `main` to `origin` (`7814a8d..3b190e0`).
+  3. Deleted `origin/agents/benro-polaris-firmware-analysis` via
+     `git push origin --delete …`.
+  4. Removed the worktree at
+     `BenroPolarisPatcher.worktrees/benro-polaris-firmware-analysis`.
+  5. Deleted the local branch.
+
+  The Pentax K-1 II content now lives on `main` (where it belongs —
+  it documents a *gphoto2 desktop probe* of the camera the patcher
+  targets), and the public branch history is preserved intact.
 
 Remaining branches after this cleanup:
 
 | Branch | HEAD | Status |
 |---|---|---|
-| `main` | `7814a8d` | Pushed to origin; integration target |
-| `agents/attachment-plan-follow-up` | `318b09f` | Pushed; this closure doc + Gaps |
+| `main` | `3b190e0` | Pushed; integration target — K-1 II finding now here |
+| `agents/attachment-plan-follow-up` | `04a927c` | Pushed; this closure doc + Gaps |
 | `agents/benro-polaris-firmware-docs` | `5d0fc75` | Pushed; Phase E patcher + HDMI docs |
-| `agents/benro-polaris-firmware-analysis` | `1bee700` | Pushed; **mobile-app / Alpaca client work** (see §11.3) |
 
 ### 11.3 Mobile-app / Alpaca client — branch-split **DONE 2026-08-27**
 
@@ -1116,11 +1133,14 @@ lives at **[ian-morgan99/OpenPolaris](https://github.com/ian-morgan99/OpenPolari
   `benro-polaris-firmware-patcher`; `CHANGELOG.md` records the
   relicense.
 
-**Follow-up** (still open, in this repo): remove the now-redundant
-`polaris-client/` tree and `docs/FIRMWARE-ANALYSIS-ALPACA.md` from
-`agents/benro-polaris-firmware-analysis`, leaving only the firmware
-analysis that informed the FwPkt patcher.  Tracked under fork issue
-#17.
+**Follow-up — DONE 2026-08-27 (commit `3b190e0` on `main`,
+documented in §11.2):** instead of rewriting public history to drop
+`polaris-client/` from `agents/benro-polaris-firmware-analysis`, the
+single firmware-analysis commit on that branch (`1bee700` — Pentax
+K-1 II desktop gphoto2 spike) was cherry-picked onto `main` and the
+branch was deleted (local + remote) along with its worktree. The
+Pentax K-1 II finding now lives at `docs/TESTED.md` on `main` where
+it belongs. Fork issue #17 can now be closed.
 
 ### 11.4 Upstream-standards alignment
 
