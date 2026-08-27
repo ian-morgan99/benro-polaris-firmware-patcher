@@ -141,6 +141,9 @@ they live in the trampolined base binary.
 
 See [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) for the full technical story
 and [docs/TESTED.md](docs/TESTED.md) for exactly what was verified.
+For patcher build-time gates, see [docs/patcher-gates.md](docs/patcher-gates.md);
+for the exact upstream libgphoto2 commit pulled and the branches to ignore,
+see [docs/canonical-pentax-source.md](docs/canonical-pentax-source.md).
 
 ---
 
