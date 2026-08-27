@@ -160,3 +160,82 @@ Polaris:** immediate detection, live view, camera controls, and capture.
 
 ### Not tested
 - Any camera other than the R5 Mark II; any firmware other than 4.0.0.32.
+
+---
+
+## Unreleased — Pentax + HDMI combined build (`builds/2026-08-27-combined-720p60/`)
+
+A combined Pentax + HDMI patched FwPkt was produced on
+2026-08-27 by layering the new HDMI geometry patcher over the
+Pentax-only FwPkt at `builds/2026-08-23/`. This entry is
+**informational** — it does NOT mark the combined build as a
+release candidate.
+
+### What was done
+
+- Ported `hdmi_geometry_patch.py` from
+  `agents/benro-polaris-firmware-docs` @ `5d0fc75` to
+  `container/hdmi_geometry_patch.py` (the upstream version
+  targeted a different `polestar_app` build).
+- Re-patched the 5 LIVE HDMI sites in
+  `bin/polestar_app` (md5 `067b8c3ba68f26141a7becc8d92c8ac0`).
+- Re-packed `appfs.ubifs` with the patched `polestar_app`
+  substituted in.
+- Re-zipped the resulting bundle as
+  `builds/2026-08-27-combined-720p60/FwPkt.zip` (md5
+  `fd8147c91df44757d8a41c8bacc39519`, sha256
+  `fb4c37e0e00c4b61a42e3c3b6d515cc5a1c4b0676cc4bc54275f4a27c6e8adaf`,
+  68,484,760 B).
+
+### Release state
+
+**Round-trip verified only.** The combined FwPkt is at the
+second rung of the 7-rung release-state ladder documented in
+[docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md) §0 — it
+has NOT been validated on a Polaris device, a Pentax camera,
+or an HDMI display, and the DEAD-site patches (8 sites in
+the VENC / RTSP code paths) are deliberately excluded.
+
+### Known limitations
+
+- **Layered build.** The combined FwPkt was produced by
+  patching the Pentax-only FwPkt's UBIFS rather than by a
+  clean end-to-end rebuild from a current libgphoto2
+  master. The embedded `libgphoto2.so` is at libgphoto2
+  commit `da8c33482` (2026-08-26), not the current
+  `ian-morgan99/libgphoto2` master. See
+  [docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md) §8.5
+  for the blocker plan that supersedes the layered build.
+- **LGPL corresponding source is vanilla.** The tarball at
+  `builds/2026-08-23/licenses/libgphoto2-2.5.34.tar.xz` is
+  the upstream 2.5.34 release, not the Pentax-patched
+  source. A real LGPL §6 archive must be regenerated from
+  the exact `da8c33482` (or current master) checkout with
+  Pentax patches applied.
+- **No DEAD-site patches.** Sites 0x13c390, 0x13c394,
+  0x13c398, 0x1629f0, 0x16ea90, 0x16eb30, 0x16eb70,
+  0x16f080 (per `DEAD_SITES` in
+  `container/hdmi_geometry_patch.py`) are not patched. The
+  `--include-dead=0` flag is the default. Running with
+  `--include-dead=1` is known to fail on the real
+  firmware's `polestar_app` offsets.
+- **No device / camera / HDMI validation.** See
+  [docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md) §0
+  for the 7-rung ladder and §8.5 for the path to a release
+  candidate.
+
+### References
+
+- Operational record:
+  [docs/RUN-JOURNAL.md](docs/RUN-JOURNAL.md)
+- Critical review (with full gap list, 8.5 blocker plan,
+  and the next-agent re-check list):
+  [docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md)
+- Final state of the build at the time of writing:
+  [docs/FINAL-REPORT.md](docs/FINAL-REPORT.md)
+- Docker image used to build / repack:
+  [docker/README.md](docker/README.md) (image digest
+  `sha256:b475ca01354845358d21e7adbf0eba9fffc3792e8f49a2d548cadf327cc27953`)
+- Build provenance for the combined FwPkt:
+  `builds/2026-08-27-combined-720p60/build-source-provenance.txt`
+  (not committed; lives in `builds/` which is gitignored)
