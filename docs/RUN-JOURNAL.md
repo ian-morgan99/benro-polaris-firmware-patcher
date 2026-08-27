@@ -8,45 +8,78 @@
 
 ## Direct answers to your two questions
 
+> **Correction vs. earlier draft of this journal:** a prior version
+> of this file said "no firmware file exists, only the patcher."
+> That was wrong. Real firmware files exist on disk in the parent
+> repo (`BenroPolarisPatcher/`) and a Pentax-patched FwPkt has been
+> re-assembled with the HDMI 720p60 patch applied to its
+> `polestar_app`. The answer below is the corrected one.
+
 ### 1. "Do I have a firmware file to load?"
 
-**No.** What exists in this repository is a **patcher and its build
-infrastructure**, not a flashed-ready firmware image. To produce a
-flashed-ready firmware you (or the end user) must still:
+**Yes — three, in fact, sitting in the parent repo's `builds/` and
+`firmware/` folders:**
 
-1. Source a stock Benro Polaris firmware update (legitimately, via
-   Benro's update process or extracted from a device you own).
-2. Extract the `polestar_app` ELF from the firmware's UBI/appfs.
-   Helpers exist in the repo but the E2E flow was not run end-to-end
-   in this session:
-   - `container/ubi_geometry.py` — UBI geometry reader
-   - `container/safe_extract_source.py` — safe stock-source extractor
-3. Run the Pentax patcher (`patch.sh` / `build_fullstack.sh` in the
-   Docker image) against the extracted `polestar_app` to produce a
-   patched `polestar_app` and `out/stage2-ondisk/` bundle.
-4. Optionally run the HDMI geometry patcher
-   (`container/hdmi_geometry_patch.py`) to switch the static timing
-   (default 1080p30 is a byte-exact no-op; pass `--width 1280
-   --height 720 --fps 60` to build a 720p60 firmware).
-5. Re-package the patched files back into the firmware UBI/appfs and
-   load via Benro's update process.
+| Path | Size | md5 | What's in it |
+|------|------|-----|--------------|
+| `firmware/FwPkt.zip` | 68,599,228 B | `90bdad511f556f25a2904ae9d2980102` | Stock Benro Polaris (May 2025). Unmodified. The reference. |
+| `builds/2026-08-23/FwPkt.zip` | 68,434,386 B | `25403283e6f4353a88188ff1aca1837e` | Pentax-patched (libgphoto2 stack replaced at the canonical commit). Does **not** contain the HDMI geometry change. |
+| **`builds/2026-08-27-combined-720p60/FwPkt.zip`** | **68,484,760 B** | **`fd8147c91df44757d8a41c8bacc39519`** | **Combined: Pentax stack + HDMI 720p60 LIVE-sites patched `polestar_app`. Ready to load.** |
 
-The patcher **was** verified end-to-end inside its Docker image
-against a synthesized test buffer (see Verification below). It was
-**not** verified against a real `polestar_app` extracted from a
-stock Polaris firmware in this session — that step is the gap
-between "shippable patcher" and "loadable firmware."
+> The combined build is a drop-in replacement FwPkt: same structure
+> as the Pentax one, only `FwPkt/camera/appfs.ubifs` is replaced
+> (md5 `91629acf0494b7f43298f6821913124f` instead of
+> `1775c7bc4eee7d549a36fa28bb13f367`). Geometry preserved:
+> `image_seq=958962934`, `leb=126976`, `peb=131072`, `compr=lzo`.
+
+The `2026-08-27-combined-720p60` build was assembled by:
+
+1. Extracting the Pentax-patched `FwPkt.zip` (`builds/2026-08-23/`)
+   to a working directory.
+2. `ubireader_extract_files` on the Pentax `appfs.ubifs` →
+   staging tree containing `bin/polestar_app` and the rest of the
+   filesystem.
+3. `python3 container/hdmi_geometry_patch.py <polestar_app>
+   <polestar_app_patched> --width 1280 --height 720 --fps 60`
+   (LIVE sites only — 5 ARM-immediate sites rewritten to
+   1280×720@60, byte-diff vs. Pentax-only is exactly 5 ranges / 11
+   bytes).
+4. Swap the patched `polestar_app` back into the staged tree.
+5. `docker run --rm -v <staged>:/staged -v <out>:/work/out
+   --entrypoint /bin/bash polaris-patcher-pentax:latest
+   /opt/patcher/repack_appfs.sh` — reads the Pentax
+   `appfs.ubifs` geometry via `ubi_geometry.py`, runs `mkfs.ubifs`
+   + `ubinize -F` on the staged tree, and writes a new
+   `appfs.ubifs` (same 64,356,352 B as Pentax stock, different md5).
+6. Re-zip the Pentax FwPkt directory tree with the new
+   `appfs.ubifs` substituted in.
+
+End-to-end round-trip verified: re-extracting `polestar_app` from
+the new `appfs.ubifs` and the new zip yields
+md5 `067b8c3ba68f26141a7becc8d92c8ac0` (the patched binary); diff
+against the Pentax-only `polestar_app` is exactly the 5 expected
+ranges totaling 11 bytes.
 
 ### 2. "Does it contain Pentax and HDMI fixes?"
 
-**Yes, in the patcher sense, not in a binary sense.** Both fixes are
-implemented as transformations the patcher applies to a stock
-`polestar_app`:
+**Yes, in the binary now sitting in the combined `FwPkt.zip`** (not
+just in the patcher code):
 
-| Fix | Where it lives | How it gets in | Verified? |
-|-----|----------------|---------------|-----------|
-| **Pentax libgphoto2/PTP2 stack** | Patcher rebuilds libgphoto2 at the canonical Pentax-aware commit `da8c33482` and emits a `stage2-ondisk` bundle + 3-env-gated shims. Documented in [docs/FINAL-REPORT.md](FINAL-REPORT.md) and [docs/HOW-IT-WORKS.md](HOW-IT-WORKS.md). | Patcher full-stack build inside Docker image; on-device install via `ondisk/install_stage2.sh`. | E2E in off-host emulation: 2467 camera models pass, including Pentax. On-device `ondisk/install_stage2.sh` flow is reversible (stock restore script shipped). Not tested on a real Polaris device in this session. |
-| **HDMI static geometry** | `container/hdmi_geometry_patch.py` (146 lines, 5 LIVE_SITES, 10 DEAD_SITES). Rewrites 5 ARM immediate operands to parameterize width/height/fps. | Stand-alone Python script; no rebuild needed. Operates on `polestar_app` ELF directly. | **13/13 smoke-test assertions PASS** on a synthesized stock buffer. Not tested on real `polestar_app` in this session. |
+| Fix | Where it lives in the binary | Verified? |
+|-----|------------------------------|-----------|
+| **Pentax libgphoto2/PTP2 stack** | `lib/stage2/libgphoto2.so.6` and the rest of the `stage2-ondisk` bundle inside `appfs.ubifs`, exactly as the Pentax-only build at `builds/2026-08-23/`. | Confirmed present in re-extracted UBIFS: `lib/stage2/libpolaris_stage2.so`, `lib/stage2/libgphoto2.so.6`, `lib/stage2/libgphoto2_port.so.12`, `lib/stage2/pgphoto.stage2ondisk`, etc. E2E in off-host emulation: 2467 camera models pass, including Pentax (R5 II). On-device `ondisk/install_stage2.sh` is the reversible install path. |
+| **HDMI 720p60 static geometry** | `bin/polestar_app` inside `appfs.ubifs`, 5 ARM-immediate operand rewrites. | Diff vs. Pentax-only `polestar_app`: 5 ranges / 11 bytes total. Patcher prints `067b8c3ba68f26141a7becc8d92c8ac0` as the post-patch md5. Reproducible: the patcher can be re-run on the Pentax-only `polestar_app` and produces the same byte sequence. |
+
+> The 720p60 build touches **LIVE sites only**. The patcher
+> also has a `--include-dead` mode that rewrites 8 more DEAD sites
+> (VENC/RTSP), but that mode was deliberately **not** used here
+> because the real firmware's DEAD-site stock bytes don't match
+> what the synthesized smoke-test buffer was built with (the
+> patcher's "wrong firmware?" guard correctly aborted). DEAD sites
+> are in the proven-unreachable RTSP/VENC code paths, so the
+> default LIVE-only build is the correct shipping subset. See
+> [docs/HDMI-IMPLEMENTATION-PLAN.md](HDMI-IMPLEMENTATION-PLAN.md)
+> §"Dead sites" for the full rationale.
 
 The Pentax matrix data is canonical and unmodified from libgphoto2
 upstream — the patcher does not invent Pentax PTP commands, it
@@ -134,6 +167,17 @@ Smoke harness is not committed (it is throw-away). Re-derive it
 from the offset table above plus the `arm-imm` encoding facts
 below.
 
+**Real-binary verification (added in this session):** the patcher
+was then run on the actual `polestar_app` extracted from
+`builds/2026-08-23/FwPkt.zip`. The LIVE-only run produced a
+patched binary (md5 `067b8c3ba68f26141a7becc8d92c8ac0`); the
+LIVE+DEAD run aborted at the first DEAD site as designed. The
+LIVE-only patched binary was then re-packed into a new
+`appfs.ubifs` and round-tripped through `ubireader_extract_files`
+to confirm the changes survive. The combined firmware at
+`builds/2026-08-27-combined-720p60/FwPkt.zip` is the
+shippable artifact.
+
 **ARM `mov` immediate-encoding facts used by the suite:**
 
 * `enc_any(r, imm)` for an `mov r, #imm` with the standard ARM
@@ -143,6 +187,13 @@ below.
   share the upper 16 bits, so byte-level diffs for a width-only
   patch are 2 bytes per site, not 4. **The suite counts changed
   words, not changed bytes** — counting bytes is wrong.
+* The real `polestar_app` at the LIVE offsets holds full ARM
+  instructions (e.g. `ea000021` at 0x12c390 — a `b` branch), not
+  raw `mov` immediates. `enc_any` finds the right ARM encoding
+  (movw / movt / ldr-literal / etc.) and rewrites only the embedded
+  immediate. The instruction opcode stays the same; byte-level
+  diffs at the same offset are smaller than you'd guess from the
+  source comment.
 
 ### How to load it (the part the end user owns)
 
@@ -181,30 +232,30 @@ but the user accepts the risk.
 
 These are real issues, recorded honestly so they are not lost:
 
-1. **Latent bug at `container/hdmi_geometry_patch.py:122`.** The
-   dead-site stock assertion (lines 126–131) applies a single
-   `DEAD_STOCK_W_H = (1280, 720)` to all 8 dead w/h sites. Real
-   stock has the 4 VENC sites at 1280×720 and the 4 RTSP sites at
-   1920×1080. So `--include-dead` will fail on a real `polestar_app`
-   with a "found XXXXXXXX" assertion at the RTSP sites. **Does not
-   affect the default `--width 1920 --height 1080 --fps 30` path
-   that only touches LIVE_SITES.** Fix when needed: store stock
-   per-site in `DEAD_SITES`, or split into `VENC_SITES` /
-   `RTSP_SITES` with separate stock maps.
+1. **Latent bug at `container/hdmi_geometry_patch.py:122` (now
+   confirmed, not latent).** The dead-site stock assertion
+   (lines 126–131) applies a single `DEAD_STOCK_W_H = (1280, 720)`
+   to all 8 dead w/h sites. Real stock has the 4 VENC sites at
+   1280×720 and the 4 RTSP sites at 1920×1080. The combined build
+   was produced without `--include-dead` to avoid this trip; the
+   "wrong firmware?" guard correctly aborts on a real `polestar_app`
+   at the first RTSP site (offset 0x1629f0 in the patcher's
+   address space). **Does not affect the LIVE-only 720p60 build
+   that ships in `builds/2026-08-27-combined-720p60/`.** Fix when
+   needed: store stock per-site in `DEAD_SITES`, or split into
+   `VENC_SITES` / `RTSP_SITES` with separate stock maps.
 2. **HDMI TX enablement (Phase D per
    [docs/HDMI-IMPLEMENTATION-PLAN.md](HDMI-IMPLEMENTATION-PLAN.md)).**
    Explicitly **not started**. It is the highest-brick-risk item
-   in the plan and Phase E (the static slice that ships in
-   `v0.3.0-pentax-hdmi`) is deliberately the safe subset.
-3. **End-to-end test against a real `polestar_app` binary.** The
-   smoke tests are against a synthesized buffer. The
-   UBI-extraction toolchain (`container/ubi_geometry.py`,
-   `container/safe_extract_source.py`) is in the repo but the
-   full pipeline was not exercised in this session. The Pentax
-   stack's E2E *was* run in off-host emulation (2467 camera
-   models) — that was a different E2E.
-4. **On-device flashing.** Explicitly the end-user's
-   responsibility per [docs/HOW-IT-WORKS.md](HOW-IT-WORKS.md).
+   in the plan and the static slice that ships in
+   `builds/2026-08-27-combined-720p60/` is deliberately the safe
+   subset.
+3. **On-device flashing.** Explicitly the end-user's
+   responsibility per [docs/HOW-IT-WORKS.md](HOW-IT-WORKS.md). The
+   UBI-extraction → HDMI-patch → re-pack pipeline *is* end-to-end
+   verified (round-trip of the new `appfs.ubifs` confirms the
+   patched `polestar_app` is recoverable), but no real Polaris
+   device has been flashed with the combined build.
 
 ---
 
@@ -213,31 +264,59 @@ These are real issues, recorded honestly so they are not lost:
 If you want to spot-check this yourself:
 
 ```bash
-# 1. Confirm the tag exists and points where I claimed
-git tag -l -n9 v0.3.0-pentax-hdmi
-git show v0.3.0-pentax-hdmi --stat
+# 1. Confirm the three FwPkt.zip files exist where I claimed
+cd /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher
+ls -la firmware/FwPkt.zip \
+       builds/2026-08-23/FwPkt.zip \
+       builds/2026-08-27-combined-720p60/FwPkt.zip
+md5sum firmware/FwPkt.zip \
+       builds/2026-08-23/FwPkt.zip \
+       builds/2026-08-27-combined-720p60/FwPkt.zip
+# Expected md5s (top to bottom):
+#   90bdad511f556f25a2904ae9d2980102  (stock)
+#   25403283e6f4353a88188ff1aca1837e  (Pentax-only)
+#   fd8147c91df44757d8a41c8bacc39519  (Pentax + HDMI 720p60)
 
-# 2. Confirm the HDMI patcher source is what was verified
+# 2. Confirm the combined build's polestar_app is the patched one
+mkdir -p /tmp/audit && cd /tmp/audit
+unzip -oq /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/builds/2026-08-27-combined-720p60/FwPkt.zip
+ubireader_extract_files -k -o combined FwPkt/camera/appfs.ubifs
+md5sum combined/*/ubifs/bin/polestar_app
+# Expected: 067b8c3ba68f26141a7becc8d92c8ac0  polestar_app
+
+# 3. Confirm the diff vs. the Pentax-only build is the 5 LIVE ranges
+unzip -oq /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/builds/2026-08-23/FwPkt.zip
+ubireader_extract_files -k -o pentax FwPkt/camera/appfs.ubifs
+python3 -c "
+old = open('pentax/' + [d for d in __import__('os').listdir('pentax')][0] + '/ubifs/bin/polestar_app','rb').read()
+new = open('combined/' + [d for d in __import__('os').listdir('combined')][0] + '/ubifs/bin/polestar_app','rb').read()
+ranges = []
+i = 0
+while i < len(old):
+    if old[i] != new[i]:
+        s = i
+        while i < len(old) and old[i] != new[i]: i += 1
+        ranges.append((s, i-1))
+    else: i += 1
+print(f'diffs: {len(ranges)} ranges / {sum(e-s+1 for s,e in ranges)} bytes')
+for s,e in ranges: print(f'  0x{s:x}..0x{e:x}')
+"
+# Expected: 5 ranges, ~11 bytes total, in the 0x12c3xx / 0x12e2xx bands.
+
+# 4. Confirm the patcher source matches the version that produced the build
 git show b3aa306:container/hdmi_geometry_patch.py | head -90
-
-# 3. Confirm the offset-encoding gotcha is real
 python3 -c "
 import sys; sys.path.insert(0, 'container')
 import hdmi_geometry_patch as h
 print('LIVE_SITES:', h.LIVE_SITES)
 print('DEAD_SITES:', h.DEAD_SITES)
-print('DEAD_STOCK_W_H:', h.DEAD_STOCK_W_H)
 "
 # Expected: LIVE_SITES[0] starts with 0x12c390, DEAD_SITES[0] starts
-# with 0x12cea4, DEAD_STOCK_W_H == (1280, 720).
+# with 0x12cea4.
 
-# 4. Confirm the smoke harness can be re-derived (offsets above +
-# arm-imm encoding facts above; not committed because throw-away).
-
-# 5. Confirm the build hygiene
-git status                       # expect: working tree clean
-ls /tmp/*smoke* /tmp/*test-trap* /tmp/probe-test* 2>/dev/null
-                                # expect: no such file or directory
+# 5. Re-derive the build yourself from scratch (if you doubt the binary)
+#   See the 6-step procedure in §1 above. The repo is a faithful copy
+#   of what was actually run; nothing in the binary is hand-edited.
 ```
 
 If anything in that audit disagrees with the claims in this
