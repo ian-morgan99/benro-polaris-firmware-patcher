@@ -26,7 +26,7 @@ the patcher, and the validation levels reached at end of consolidation.
 | libgphoto2 version tag | `2.5.34` (vendored, no v2.5.34 release) | `build_ptp2.sh:170` (`LIBGPHOTO2_VERSION` default) |
 | Patcher SHA | this worktree HEAD (see git log below) | `git log --oneline -1` |
 | Firmware model | Benro Polaris (cloud-linked gimbal) | `docs/HOW-IT-WORKS.md` |
-| E2E test | `container/test_polaris_pentax_e2e.sh` | a9b411a (this branch) |
+| Build+package test | `container/test_polaris_pentax_build_package.sh` (formerly `test_polaris_pentax_e2e.sh`; renamed — see vetting issue #14) | a9b411a (this branch) |
 
 ### Reproduce the build-source provenance locally
 
@@ -137,13 +137,13 @@ runs to completion in <60s on a normal workstation.
 | 2 | `test_source_input.sh` dirty-rejection path | PASS | same run (covered in suite) |
 | 3 | `test_source_input.sh` archive input path | PASS | same run (covered in suite) |
 | 4 | `test_source_input.sh` unsafe-archive rejection | PASS | same run (covered in suite) |
-| 5 | `test_polaris_pentax_e2e.sh` step 2 (provenance SHA = `da8c33482`) | PASS | prior session, `/tmp/pentax-e2e-debug3/build-source-provenance.txt` |
-| 6 | `test_polaris_pentax_e2e.sh` step 3 (FwPkt.zip + camera/ + gimbal/ produced) | PASS | `/tmp/pentax-e2e-debug3/FwPkt.zip` (md5 991d0960…) |
-| 7 | `test_polaris_pentax_e2e.sh` step 4a (Pentax candidate marker in build log) | PASS | `/tmp/pentax-e2e-debug3/build.log` line 1 |
-| 8 | `test_polaris_pentax_e2e.sh` step 4b (K-01 model string in ptp2.so) | PASS | same build.log line 2 |
-| 9 | `test_polaris_pentax_e2e.sh` step 5 (stage-2 on-disk bundle: install/restore/libpolaris_stage2.so) | PASS | `/tmp/pentax-e2e-debug3/stage2-ondisk/` |
-| 10 | `test_polaris_pentax_e2e.sh` step 6 (ptp2.so contains `Pentax vendor mode enabled`) | PASS | grep -F over on-host `strings` of `/out/lib/ptp2.so` |
-| 11 | `test_polaris_pentax_e2e.sh` step 7 (stage-2 cross-compile with image's `arm-linux-gnueabi-gcc`) | PASS | same e2e run; uses image-bundled `stage2_ondisk_table.h` and `stage2_policy.h` |
+| 5 | `test_polaris_pentax_build_package.sh` step 2 (provenance SHA = `da8c33482`) | PASS | prior session, `/tmp/pentax-e2e-debug3/build-source-provenance.txt` |
+| 6 | `test_polaris_pentax_build_package.sh` step 3 (FwPkt.zip + camera/ + gimbal/ produced) | PASS | `/tmp/pentax-e2e-debug3/FwPkt.zip` (md5 991d0960…) |
+| 7 | `test_polaris_pentax_build_package.sh` step 4a (Pentax candidate marker in build log) | PASS | `/tmp/pentax-e2e-debug3/build.log` line 1 |
+| 8 | `test_polaris_pentax_build_package.sh` step 4b (K-01 model string in ptp2.so) | PASS | same build.log line 2 |
+| 9 | `test_polaris_pentax_build_package.sh` step 5 (stage-2 on-disk bundle: install/restore/libpolaris_stage2.so) | PASS | `/tmp/pentax-e2e-debug3/stage2-ondisk/` |
+| 10 | `test_polaris_pentax_build_package.sh` step 6 (ptp2.so contains `Pentax vendor mode enabled`) | PASS | grep -F over on-host `strings` of `/out/lib/ptp2.so` |
+| 11 | `test_polaris_pentax_build_package.sh` step 7 (stage-2 cross-compile with image's `arm-linux-gnueabi-gcc`) | PASS | same e2e run; uses image-bundled `stage2_ondisk_table.h` and `stage2_policy.h` |
 | 12 | Off-host qemu-arm dlopen of 2467 models | PASS | `docs/TESTED.md` "Verified (offline/in emulation)" table |
 
 ### Why "Verified (offline/in emulation)" not "Verified ON REAL HARDWARE"
@@ -218,14 +218,23 @@ item in the plan and is not started.
 | Patcher | `container/hdmi_geometry_patch.py` (146 lines) |
 | Source commit | `5d0fc75` on `agents/benro-polaris-firmware-docs` |
 | Live sites | 5 (always patched) |
-| Dead sites | 10 (`--include-dead` only; inside proven-unreachable RTSP/VENC tree) |
+| Dead sites | 10 (`--include-dead` only; in code paths not exercised by the LIVE flow, per static/signature analysis) |
 | Default | 1920x1080@30 — byte-exact no-op against pristine stock |
 | 720p60 build | changes exactly 5 words; verified against pristine stock |
 | Idempotency | detects already-patched bytes; refuses in-place writes; aborts on unexpected bytes |
 | Documentation | [docs/HDMI-IMPLEMENTATION-PLAN.md](HDMI-IMPLEMENTATION-PLAN.md), [docs/HDMI-INPUT-EXPLORATION.md](HDMI-INPUT-EXPLORATION.md) |
 
 Combined end state: **Pentax libgphoto2 (canonical `da8c33482`) +
-HDMI geometry (Phase E static slice) — the "fully Pentax and HDMI
-patched Polaris firmware" goal is reached at the patcher + companion
-script level.** Device-side flashing of both pieces remains the
-end-user's responsibility; see [docs/HOW-IT-WORKS.md](HOW-IT-WORKS.md).
+HDMI geometry (Phase E static slice) assembled into a single
+build-verified candidate at
+`builds/2026-08-27-combined-720p60/FwPkt.zip`.** The combined
+Firmware Patcher tooling has been built and round-trip-verified; the
+patcher + companion script path produces a candidate that satisfies
+the goal "produce a single FwPkt containing both Pentax and HDMI
+patches." The candidate is **not** yet a release: it has not been
+emulation-verified, Polaris-boot-verified, camera-verified, or
+HDMI-verified. See [CRITICAL-REVIEW.md](CRITICAL-REVIEW.md)
+§"Release-state vocabulary" for the full ladder and the gates
+required to advance. Device-side flashing of the candidate, if
+attempted, is the end-user's responsibility and is at their own
+risk; see [docs/HOW-IT-WORKS.md](HOW-IT-WORKS.md).

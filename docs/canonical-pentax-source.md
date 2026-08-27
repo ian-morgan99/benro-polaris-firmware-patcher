@@ -69,7 +69,7 @@ For the e2e regression test and the reproduction build we use path (2)
 with a tarball of `da8c33482`; the source-provenance block in
 `/out/build-source-provenance.txt` records the exact SHA, the tarball
 SHA-256, and which build path was taken. See
-`container/test_polaris_pentax_e2e.sh` step 2 for the assertion.
+`container/test_polaris_pentax_build_package.sh` step 2 for the assertion.
 
 ## Re-deriving the canonical SHA
 

@@ -1,17 +1,42 @@
 #!/bin/bash
-# End-to-end Pentax->Polaris build regression.
+# Pentax->Polaris build+package regression.
 #
-# Validates the entire consolidation: a clean upstream libgphoto2 git checkout
-# is mounted into the patcher container, the cross-build runs, the Pentax
-# marker is present in ptp2.so, the firmware bundle is produced, the stage-2
-# on-disk bundle is present, and the stage-2 loader compiles with the same
-# cross-toolchain.
+# (Renamed from test_polaris_pentax_e2e.sh in response to vetting
+# issue #14: "end-to-end" overstates what this proves. This script
+# exercises the build + package path only. It does NOT prove runtime
+# behavior on a Polaris device, on a real Pentax camera, or in a
+# QEMU emulation of the firmware userspace. See CRITICAL-REVIEW.md
+# "Release-state vocabulary" for the full ladder.)
 #
-# This is a NO-EMULATION smoke test: it does not need a Polaris gimbal or a
-# Pentax camera, only the patched toolchain + the local libgphoto2 source.
+# This script validates the entire consolidation up to the package
+# boundary:
+#
+#   - a clean upstream libgphoto2 git checkout is mounted into the
+#     patcher container,
+#   - the cross-build runs with SELFTEST=0 (so the patcher's own
+#     runtime self-test is NOT exercised here),
+#   - the Pentax candidate marker is present in the built ptp2.so,
+#   - the firmware bundle (FwPkt.zip, appfs.ubifs, rootfs.ubifs,
+#     uImage, firmwareInfo, gimbal/) is produced,
+#   - the stage-2 on-disk bundle (install/restore scripts +
+#     libpolaris_stage2.so + ptp2.so) is shipped, and
+#   - the stage-2 loader compiles with the same cross-toolchain
+#     the image uses.
+#
+# Scope: BUILD + PACKAGE ONLY (smoke test). NOT exercised here:
+#
+#   - Polaris boot or device flash
+#   - Pentax camera enumeration / capture
+#   - HDMI output
+#   - libgphoto2 ABI / DT_NEEDED / symbol-version validation
+#     at runtime
+#   - the patcher's full QEMU/self-test path
+#
+# For runtime coverage, see test_polaris_pentax_qemu.sh (planned,
+# tracked in vetting issue #14).
 #
 # Usage:
-#   test_polaris_pentax_e2e.sh IMAGE FW_PKT_DIR CLEAN_LIBGPHOTO2_GIT_CHECKOUT
+#   test_polaris_pentax_build_package.sh IMAGE FW_PKT_DIR CLEAN_LIBGPHOTO2_GIT_CHECKOUT
 
 set -euo pipefail
 

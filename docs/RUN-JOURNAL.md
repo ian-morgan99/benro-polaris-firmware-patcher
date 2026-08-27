@@ -76,8 +76,10 @@ just in the patcher code):
 > because the real firmware's DEAD-site stock bytes don't match
 > what the synthesized smoke-test buffer was built with (the
 > patcher's "wrong firmware?" guard correctly aborted). DEAD sites
-> are in the proven-unreachable RTSP/VENC code paths, so the
-> default LIVE-only build is the correct shipping subset. See
+> are in code paths not exercised by the LIVE/Polaris GUI flow;
+> this is a static- and signature-based observation, not a
+> control-flow proof of unreachability, so the LIVE-only build is
+> the conservative default. See
 > [docs/HDMI-IMPLEMENTATION-PLAN.md](HDMI-IMPLEMENTATION-PLAN.md)
 > §"Dead sites" for the full rationale.
 
@@ -113,8 +115,10 @@ The work spans two linked phases. Tag boundaries:
   (see [docs/patcher-gates.md](patcher-gates.md)).
 * Validate the off-host emulation flow: 2467 libgphoto2 camera
   models pass; the patcher's R5 II target `04a9:3314` passes.
-* `container/test_polaris_pentax_e2e.sh` is the canonical
-  E2E-from-scratch driver; it is wired into the patcher image.
+* `container/test_polaris_pentax_build_package.sh` is the canonical
+  build+package-from-scratch driver; it is wired into the patcher image.
+  Note: this is a build/package smoke test (no QEMU, no device flash,
+  no camera). For runtime coverage, see vetting issue #14.
 
 ### HDMI geometry patcher (this session's headline work)
 
@@ -175,8 +179,12 @@ LIVE+DEAD run aborted at the first DEAD site as designed. The
 LIVE-only patched binary was then re-packed into a new
 `appfs.ubifs` and round-tripped through `ubireader_extract_files`
 to confirm the changes survive. The combined firmware at
-`builds/2026-08-27-combined-720p60/FwPkt.zip` is the
-shippable artifact.
+`builds/2026-08-27-combined-720p60/FwPkt.zip` is therefore at
+the **`round-trip verified`** release state. It is **not** yet
+emulation-verified, Polaris-boot-verified, camera-verified, or
+HDMI-verified, and therefore is **not** a release candidate.
+See [CRITICAL-REVIEW.md](CRITICAL-REVIEW.md) §"Release-state
+vocabulary" for the full ladder.
 
 **ARM `mov` immediate-encoding facts used by the suite:**
 
