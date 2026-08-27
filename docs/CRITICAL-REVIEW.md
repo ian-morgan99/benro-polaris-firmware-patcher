@@ -1081,10 +1081,10 @@ Remaining branches after this cleanup:
 | `agents/benro-polaris-firmware-docs` | `5d0fc75` | Pushed; Phase E patcher + HDMI docs |
 | `agents/benro-polaris-firmware-analysis` | `1bee700` | Pushed; **mobile-app / Alpaca client work** (see §11.3) |
 
-### 11.3 Mobile-app / Alpaca client — branch-split recommendation
+### 11.3 Mobile-app / Alpaca client — branch-split **DONE 2026-08-27**
 
 The `agents/benro-polaris-firmware-analysis` branch (1bee700, 4,692
-lines added) contains a **Kotlin/Compose Android + multiplatform
+lines added) contained a **Kotlin/Compose Android + multiplatform
 client** that talks to a Polaris over Wi-Fi / Alpaca protocol:
 
 - `polaris-client/androidApp/` — Compose Android client
@@ -1092,20 +1092,32 @@ client** that talks to a Polaris over Wi-Fi / Alpaca protocol:
 - `polaris-client/tools/cli-probe/` — Kotlin CLI probe (Alpaca)
 - `docs/FIRMWARE-ANALYSIS-ALPACA.md` — design notes
 
-That work is **client software**, not firmware-patcher code. The
+That work was **client software**, not firmware-patcher code. The
 upstream `benro-polaris-firmware-patcher` is a C/Python patcher for
 the camera's filesystem; co-locating the two would mislead future
 contributors about the scope of each project.
 
-**Recommendation:** extract `polaris-client/` and
-`docs/FIRMWARE-ANALYSIS-ALPACA.md` into a new repo
-(`ian-morgan99/benro-polaris-mobile-client` or similar), keep
-firmware-patch work in this repo, and rebase
-`agents/benro-polaris-firmware-analysis` onto the new repo's
-default branch. **This commit does NOT perform the split** — it
-records the recommendation and waits for owner sign-off. The split
-involves creating a new remote, rewriting history, and force-pushing,
-all of which are owner decisions.
+**Done (2026-08-27):** the split was performed and the client now
+lives at **[ian-morgan99/OpenPolaris](https://github.com/ian-morgan99/OpenPolaris)**:
+
+- Source re-rooted via `git filter-branch --subdirectory-filter
+  polaris-client` (15 client commits kept; firmware-patcher
+  infrastructure commits pruned).
+- `docs/FIRMWARE-ANALYSIS-ALPACA.md` re-attached as a 16th commit so
+  the protocol ground-truth travels with the client.
+- Top commit `33d2580` adds `LICENSE` (GPL-3.0), `NOTICE`
+  (provenance + relicense), and `CHANGELOG.md` (the move record).
+- Default branch `main`. 17 commits, 67 tracked files (34 .kt, 7 .kts,
+  10 .md).
+- License change: the source branch's README listed MIT as "TBD";
+  OpenPolaris ships under **GPL-3.0** for consistency with the
+  firmware-patcher fork.  `NOTICE` records the relicense.
+
+**Follow-up** (still open, in this repo): remove the now-redundant
+`polaris-client/` tree and `docs/FIRMWARE-ANALYSIS-ALPACA.md` from
+`agents/benro-polaris-firmware-analysis`, leaving only the firmware
+analysis that informed the FwPkt patcher.  Tracked under fork issue
+#17.
 
 ### 11.4 Upstream-standards alignment
 
