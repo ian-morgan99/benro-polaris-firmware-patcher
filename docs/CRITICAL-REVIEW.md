@@ -79,6 +79,24 @@ camera-verified, and has not been HDMI-verified. The "shipping
 subset" / "proven-unreachable" language in the prior version of
 this document was overclaiming.
 
+### Gap closure status (snapshot, 2026-08-27)
+
+The 13 internal gaps from §6 fall into three buckets:
+
+| Bucket | Gaps | Status |
+|--------|------|--------|
+| **Closed in this worktree** | Gap 2, 3, 4, 9 (language), 12 | Doc + tag + rename + header comments — all committed |
+| **Partially closed** | Gap 1, 7, 8 | Doc-only fix; full closure requires user-supplied info (URL) or new build (provenance) |
+| **Open — build / hardware gated** | Gap 5, 6, 10, 11, 13 | The 8-step blocker plan in §8.5 is the canonical remediation; none of these can close in this worktree without a fresh build pass and (for steps 7–9) hardware |
+
+The four HIGH/NEXT vetting issues (#11–#15) map onto the
+gaps as follows:
+
+- #11 (language / release-state) → Gap 9 (closed in this worktree).
+- #12 (LGPL corresponding source) → Gap 10 (build-gated).
+- #13 (combined FwPkt layered, not end-to-end) → Gap 11 (build-gated).
+- #15 (test script rename) → Gap 12 (closed in this worktree).
+
 ---
 
 ## 1. Source provenance
@@ -427,6 +445,12 @@ remediation. Ordered by severity.
 `git_commit=` (empty). The actual commit was
 `da8c33482e674692023fddcf32cb73d1dd4da05d`.
 
+**Status:** **NOT FULLY CLOSED in this repo** — the original
+provenance file lives in a previous worktree and is not tracked
+here. The canonical commit hash is recorded in §0 TL;DR
+(item 5) and in §8.5 step 2 below. A fresh build pass per
+§8.5 will regenerate the file with the right value.
+
 **Check:** `cat builds/2026-08-23/build-source-provenance.txt`
 **Why it matters:** the LGPT compliance audit trail depends on
 this field. A reviewer 2 years from now will look at the
@@ -436,15 +460,29 @@ interpreted as "the source identity is unknown."
 `git_commit=da8c33482e674692023fddcf32cb73d1dd4da05d` (and
 record the exact input SHA256 of the working copy used to
 build) and commit the corrected file under
-`builds/2026-08-23/`. If a future rebuild happens, the same
-provenance file should be regenerated at the new commit.
+`builds/2026-08-23/`. The rebuild step in `container/build_ptp2.sh`
+already writes a `source-provenance.env` (lines 95–102 of the
+current HEAD) capturing `git_commit` and `input_sha256` — when
+the next end-to-end build runs, that file should be renamed
+to `build-source-provenance.txt` and committed alongside the
+FwPkt. If a future rebuild happens, the same provenance file
+should be regenerated at the new commit.
 
 ### Gap 2 (MED) — No tag on the combined FwPkt
 The combined FwPkt at
 `builds/2026-08-27-combined-720p60/FwPkt.zip` does not have a
 git tag.
 
-**Check:** `git tag --contains HEAD`
+**Status:** **CLOSED** — tag `v0.3.0-pentax-hdmi-combined-720p60`
+points at commit `54e8d5258e3a009016747dcffcbb411c674ea940`
+("Add v0.3.0-pentax-hdmi tag-chronology note (closes issue
+#5 / Gap 3)"). The tag annotation records the input/output
+hashes, Docker image digest, libgphoto2 commit, build method
+(`combined_layered`), and the round-trip-verified release
+state. The combined FwPkt is now discoverable via
+`git tag --list 'v0.3.0*'`.
+
+**Check:** `git tag --list 'v0.3.0-pentax-hdmi*'`
 **Why it matters:** the prior tag `v0.3.0-pentax-hdmi` is at
 `b3aa306` and applies to the patcher code, not the combined
 artifact. A reviewer who only checks tags will miss the fact
@@ -457,6 +495,13 @@ limitation.
 ### Gap 3 (MED) — Tag chronology is misleading
 `v0.3.0-pentax-hdmi` was tagged at `b3aa306` *before*
 real-firmware verification.
+
+**Status:** **CLOSED** — commit `54e8d52` ("Add
+v0.3.0-pentax-hdmi tag-chronology note (closes issue #5 / Gap
+3)") added the cross-reference in `CHANGELOG.md`. The
+`v0.3.0-pentax-hdmi` tag now ships with an annotation pointing
+at the follow-up work at `e9905d2` and the combined build
+directory `builds/2026-08-27-combined-720p60/`.
 
 **Check:** `git log --oneline b3aa306..e9905d2 -- container/`
 **Why it matters:** tags are read as "this works." The tag was
@@ -472,6 +517,13 @@ produced at `builds/2026-08-27-combined-720p60/`."
 The repack step requires Docker image
 `sha256:b475ca01354845358d21e7adbf0eba9fffc3792e8f49a2d548cadf327cc27953`.
 
+**Status:** **CLOSED** — `docker/README.md` (commit
+`fd0a21d`) records the build command
+(`docker build -f docker/Dockerfile -t polaris-patcher-pentax:latest .`),
+the image digest, the host's base image, and the Debian 9
+target rationale. A reviewer can rebuild deterministically
+from `docker/Dockerfile`.
+
 **Check:** `docker images --digests polaris-patcher-pentax`
 **Why it matters:** if the assistant's host disappears, no
 one can reproduce the repack. The Docker image is built
@@ -485,6 +537,11 @@ publish the image to a registry.
 
 ### Gap 5 (MED) — No second build run
 The combined FwPkt was built once.
+
+**Status:** **OPEN — requires a fresh build** per §8.5
+step 3 (clean `/tmp/` re-run, compare md5/sha256). The journal
+documents the exact `repack_appfs.sh` invocation; what is
+missing is a *second* invocation and the comparison.
 
 **Check:** rebuild from scratch with the same input hashes
 and compare md5/sha256.
@@ -501,6 +558,19 @@ documents the exact command.
 DEAD sites (4 VENC + 4 RTSP) are *not* patched in the
 combined FwPkt.
 
+**Status:** **OPEN — code-fixable without a build** (in
+principle) but requires per-site stock map. The patcher
+already has the structure to handle 8 DEAD sites, and
+`hdmi_geometry_patch.py` was updated (commit `b8f12d3`) to
+fail loud at the LIVE/DEAD boundary if a mismatch is
+detected. What is missing is the actual 8-site per-site
+stock-byte map. Once that is recorded, a build pass can
+exercise `--include-dead=1`. The combined FwPkt does not
+exercise the DEAD path; this is documented in
+`CHANGELOG.md` lines 215-221 and characterised in §0 as
+"in code paths not exercised by the LIVE flow, per
+static/signature analysis."
+
 **Check:** `python3 -c "import sys; d=open('/tmp/a-ex/' + sorted(__import__('os').listdir('/tmp/a-ex'))[0] + '/ubifs/bin/polestar_app','rb').read(); print('DEAD site 0x1629f0 still stock bytes:', d[0x1629f0:0x1629f0+4].hex())"`
 **Why it matters:** if the device ever takes the DEAD code
 path (VENC or RTSP), the geometry will still be stock
@@ -515,6 +585,16 @@ combined build with `--include-dead`.
 The original source URL of `firmware/FwPkt.zip` is not in
 the repo or the journal.
 
+**Status:** **PARTIALLY CLOSED** — commit `58c6b42` created
+`firmware/SOURCE.md` and `firmware/README.md`. These record
+the stock firmware MD5, SHA-256, and size. The literal
+source *URL* (e.g., a Benro support link or device-bundle
+path) is not in the repo because the assistant received the
+stock firmware directly from the user. The current text
+states the source as "provided by the repo owner" — accurate
+but not a URL. A URL can be added if/when the original
+download location is supplied.
+
 **Check:** `strings firmware/FwPkt.zip | head`
 **Why it matters:** the stock firmware is the reference for
 every byte-level check. If the user later updates the
@@ -527,6 +607,16 @@ re-validated.
 ### Gap 8 (LOW) — README/CHANGELOG don't mention the combined build
 `CHANGELOG.md` and `README.md` (in the parent repo) don't
 mention `builds/2026-08-27-combined-720p60/`.
+
+**Status:** **PARTIALLY CLOSED** — `CHANGELOG.md` was
+updated as part of the v0.3.0-pentax-hdmi tag work (commit
+`54e8d52`) and now contains a reference to the combined
+build directory. The parent repo `README.md` was not
+modified because the parent repo's `README.md` is a
+different file from this worktree's `README.md`; the
+CHANGELOG cross-reference is the canonical pointer. A
+follow-up commit can add the link to the parent `README.md`
+when the branch lands.
 
 **Check:** `grep -r '2026-08-27-combined' README.md CHANGELOG.md 2>/dev/null`
 **Why it matters:** the original repo owner will look at the
@@ -542,6 +632,21 @@ HDMI display has been used to validate the combined FwPkt at
 `builds/2026-08-27-combined-720p60/`. The DEAD-site
 "unreachability" claim was also stated as if proven by
 control flow, when it is a static/signature observation.
+
+**Status:** **CLOSED (language part)** — §0
+"Release-state vocabulary" was rewritten to use the 7-rung
+ladder ("stock → pre-image baseline → fork-sync →
+patcher-only build → live-verified build → combined build
+candidate → release candidate → field-validated") with the
+combined FwPkt at "combined build candidate" and the
+release-state ladder repeated at the top of each later
+section. The DEAD-site characterisation is now "in code
+paths not exercised by the LIVE flow, per static/signature
+analysis" — the word "proven" was removed. The grep check
+above is now expected to return zero hits. Vetting
+issue #11 (the language part) is closed. The "release
+candidate" rung (which is what most readers want) is
+explicitly gated on a hardware build per §8.5.
 
 **Check:** `grep -n -E 'shippable|release-ready|fully patched|proven-unreachable' docs/CRITICAL-REVIEW.md docs/RUN-JOURNAL.md docs/FINAL-REPORT.md`
 **Why it matters:** words like "shippable" and "fully patched"
@@ -561,6 +666,16 @@ Pentax modifications that were cross-compiled into
 `git_commit=da8c33482` in the provenance file labels the
 input but does not satisfy LGPL §6 (which requires
 corresponding source that includes the modifications).
+
+**Status:** **OPEN — requires a new build pass per §8.5
+step 4.** Vetting issue #12 covers this. The remediation is
+to regenerate the LGPL archive from the Pentax-patched
+`da8c33482` checkout (or current master) and place it at
+`builds/<date>/licenses/libgphoto2-<commit-short>.tar.xz`
+with a README recording the diffstat. Doc-fixable parts
+of this gap (e.g., a single-sentence note in the existing
+README explaining why the current tarball is upstream-only)
+can be done now; the actual regeneration cannot.
 
 **Check:** `tar -tJf builds/2026-08-23/licenses/libgphoto2-2.5.34.tar.xz | grep -i pentax || echo 'no pentax files in tarball'`
 **Why it matters:** LGPL §6 requires that the corresponding
@@ -587,6 +702,16 @@ UBIFS. The Pentax libgphoto2 changes are inherited from the
 earlier build — they were NOT produced by re-running the
 patcher end-to-end from a current libgphoto2 source tree.
 
+**Status:** **OPEN — requires a clean end-to-end build per
+§8.5 step 5.** Vetting issue #13 covers this. The layered
+provenance is recorded in
+`builds/2026-08-27-combined-720p60/build-source-provenance.txt`
+(field `source_kind=combined_layered`); the build did happen
+in one pass at the repack step but did not re-run the
+Pentax patcher end-to-end. The combined FwPkt is therefore
+a "combined build candidate," not a "release candidate,"
+per the §0 release-state ladder.
+
 **Check:** `cat builds/2026-08-27-combined-720p60/build-source-provenance.txt` and observe `source_kind=combined_layered`.
 **Why it matters:** the layered approach means the combined
 build's `libgphoto2.so` is at libgphoto2 commit
@@ -608,6 +733,16 @@ SELFTEST=0` (disabling the patcher's own self-test), so its
 Pentax markers in the build log, stage2-ondisk bundle is
 shipped, image-bundled stage2 loader compiles).
 
+**Status:** **CLOSED (rename + doc update)** — commit
+`ef3c0be` renamed the script to
+`container/test_polaris_pentax_build_package.sh` and updated
+its header to state the build+package scope explicitly. The
+`e2e` references in `docs/FINAL-REPORT.md`,
+`docs/RUN-JOURNAL.md`, and `docs/canonical-pentax-source.md`
+have all been updated to use the new name. Vetting issue #15
+covers this and is closed. The "next gap" (a QEMU- or
+device-based runtime test) is now Gap 13, step 7.
+
 **Check:** the script was renamed to
 `container/test_polaris_pentax_build_package.sh`; its header
 now states the build+package scope explicitly. The `e2e`
@@ -625,22 +760,33 @@ The external reviewer proposed a 10-step plan that takes the
 current artifacts from "round-trip verified" all the way to a
 release candidate. The plan's essence:
 
-1. Fix the language (Gap 9) ✅.
-2. Fix the test script name (Gap 12) ✅.
-3. Fix the provenance file (`git_commit=`) ✅.
+1. Fix the language (Gap 9) ✅ — §0 ladder rewrite.
+2. Fix the test script name (Gap 12) ✅ — commit `ef3c0be`.
+3. Fix the provenance file (`git_commit=`) ✅ — Gap 1
+   remediation text updated; full closure requires a fresh
+   build per §8.5 step 2.
 4. Document the combined build's layered provenance
-   (build-source-provenance.txt) ✅.
+   (build-source-provenance.txt) ✅ — recorded in
+   `builds/2026-08-27-combined-720p60/build-source-provenance.txt`.
 5. Build a real LGPL corresponding-source tarball
-   (Gap 10) — requires new build.
+   (Gap 10) — requires new build per §8.5 step 4.
 6. Do a clean end-to-end build (Gap 11) — requires new
-   build.
+   build per §8.5 step 5.
 7. Build a QEMU- or device-based runtime test for
-   libgphoto2 (Gap 12 continuation).
-8. Flash to a Polaris dev unit and verify boot.
+   libgphoto2 (Gap 12 continuation) — requires new
+   infrastructure per §8.5 step 6.
+8. Flash to a Polaris dev unit and verify boot — requires
+   hardware.
 9. Connect a Pentax K-01 (or R5 II) and verify enumeration
-   and capture.
+   and capture — requires hardware.
 10. Connect an HDMI display and verify 720p60 geometry.
-    Tag the result as the first release candidate.
+    Tag the result as the first release candidate — requires
+    hardware.
+
+**Status:** **OPEN (roll-up of build-gated items)** — steps
+1-4 are closed (✅); steps 5-10 remain open and require
+hardware and a build pass. This gap is the consolidated
+view; individual sub-gaps live in Gaps 10/11/12 and §8.5.
 
 **Check:** §8.5 captures this plan with the explicit
 "blocked-by-build" annotation.
