@@ -1,5 +1,58 @@
 # Changelog
 
+## Unreleased — FwPkt silent-reject fix (2026-08-27 combined build)
+
+The Polaris on-board updater (`polestar_app → getFwInfo.sh → crcInfo`)
+recomputes the MD5 and size of every component in `FwPkt.zip` and
+string-compares both fields against `firmwareInfo`. A mismatch causes
+a silent reboot with no user notification — the user sees the previous
+firmware and no error.
+
+The 2026-08-27 combined build (Pentax + HDMI 720p60) was rejected for
+exactly this reason: the HDMI repack re-zipped `appfs.ubifs` but did
+not re-run `gen_firmwareinfo.py`, so the shipped manifest still
+advertised the Pentax-only `appfs` MD5 (`1775c7bc…`) while the
+on-disk file was the HDMI-repacked one (`91629acf…`). One mismatched
+line was enough to fail the whole update.
+
+### Added
+- **`container/verify_firmwareinfo.py`** — stdlib-only fail-closed
+  offline re-MD5/size check. Re-runs the same algorithm the device
+  runs. Exits 0 only on a perfect manifest↔file match; exits 1 with
+  a per-line diff otherwise. Runnable on any existing build (stock,
+  Pentax-only, combined, custom).
+- **Build-time gate** in `container/patch.sh:386-396` — the
+  verifier is invoked immediately after `gen_firmwareinfo.py` and
+  the pipeline `die`s before the zip step on a mismatch. A layered
+  repack that forgets to regenerate the manifest cannot leave the
+  pipeline anymore.
+
+### Fixed
+- **`builds/2026-08-27-combined-720p60/FwPkt.zip`** repacked in place
+  with a freshly regenerated `firmwareInfo`. The new manifest matches
+  the shipped `appfs.ubifs` (`91629acf…`, 64,356,352 B). The on-board
+  updater will now accept this packet.
+  - SHA-256 fixed:   `ddc1aab69c97f9d2aea7492709c47f4ea3f1aca443fe5c08bf9ece41a2338e8e` (68,468,962 B)
+  - SHA-256 broken:  `fb4c37e0e00c4b61a42e3c3b6d515cc5a1c4b0676cc4bc54275f4a27c6e8adaf` (68,484,760 B)
+  - The broken packet is preserved as `builds/2026-08-27-combined-720p60/FwPkt.zip.broken`
+    for forensic reference; do not flash it.
+  - A copy of the fixed zip is also on the SMB share at
+    `smb://morganbackup.local/home/Projects/Pentax/BenroPolaris/2026-08-27_pentax-hdmi720p60-live_only/`.
+
+### Verified
+- The new gate was run against four targets and passed/failed as
+  expected:
+  - fixed zip → PASS 6/6
+  - broken zip → FAIL 1/6 (the `appfs` mismatch described above)
+  - fixed zip + 3-byte XOR mutation of `appfs.ubifs` → FAIL 1/6
+  - stock `firmware/FwPkt/FwPkt/` → PASS 6/6
+
+### Docs
+- New `docs/silent-fwpkt-reject-postmortem.md` documents the
+  mechanism, the layered-repack root cause, the fix, the fingerprints,
+  and the recommended user flash order. Issues #19 and #20 are
+  closed against this work.
+
 ## Unreleased — full-libgphoto2 stack swap is now the DEFAULT (hardware-verified)
 
 - Added `--libgphoto2-source` / `-Libgphoto2Source` so an in-development local
