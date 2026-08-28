@@ -246,11 +246,42 @@ The fix is two parts:
 
 1. **Stop swallowing the error.** `cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/`
    alone will fail loudly if the input dir is empty or unreadable.
-2. **Pre-check the input.** A separate `ls -1 /in/gimbal/*.bin | wc -l`
-   guard with a `die` if zero — so the user gets a *clear* "no /in/gimbal
+2. **Pre-check the input.** A separate "is the input populated" guard
+   with a `die` if zero — so the user gets a *clear* "no /in/gimbal
    found, refusing to ship a gimbal-less FwPkt" message rather than a
    confusing `cp: cannot stat` after `2>/dev/null` has already masked
    everything.
+
+   The naive `ls -1 /in/gimbal/*.bin 2>/dev/null | wc -l` form is
+   itself a footgun under `set -euo pipefail`: a non-matching glob
+   makes `ls` exit 2 *inside* the command substitution, and `set -e`
+   aborts the script with a confusing "No such file or directory"
+   before the intended `die()` diagnostic ever runs. Use a shell-array
+   + `nullglob` form instead (matches the implementation in
+   `container/patch.sh`):
+
+   ```sh
+   shopt -s nullglob
+   gimbal_bins=( /in/gimbal/*.bin )
+   shopt -u nullglob
+   if [ "${#gimbal_bins[@]}" -eq 0 ]; then
+     die "no /in/gimbal/*.bin found — refusing to ship a gimbal-less FwPkt (issue #21)"
+   fi
+   cp -p "${gimbal_bins[@]}" /out/FwPkt/gimbal/
+   ```
+
+   Equivalently safe (and one line shorter): use `compgen -G` to test
+   the glob without invoking `ls`:
+
+   ```sh
+   if ! compgen -G '/in/gimbal/*.bin' >/dev/null; then
+     die "no /in/gimbal/*.bin found — refusing to ship a gimbal-less FwPkt (issue #21)"
+   fi
+   ```
+
+   Both forms are bash-native, run with no fork, and convert the
+   "no match" case into normal control flow rather than a glob
+   expansion failure.
 
 ### Why the firmwareInfo check didn't catch it
 

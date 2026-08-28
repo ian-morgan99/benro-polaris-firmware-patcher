@@ -164,16 +164,21 @@ NEW_PTP2="$W/out/ptp2.so"
 NEW_CORE="$W/out/libgphoto2.so.6"; NEW_PORT="$W/out/libgphoto2_port.so.12"
 [ -f "$NEW_PTP2" ] || die "ptp2.so build failed"
 if [ -e /libgphoto2-source-input ]; then
-  # NOTE: 'strings | grep -Fq' under 'set -euo pipefail' is a SIGPIPE footgun
-  # (see docs/pentax-patcher-gate-bug.md). grep -Fqm1 aborts the pipe on match;
-  # strings keeps writing and gets SIGPIPE (exit 141), which pipefail propagates
-  # and 'set -e' turns into a false "marker missing" abort. Use 'grep -Fc' so
-  # grep drains the pipe to EOF (no SIGPIPE) and we only see 0 (match) or 1
-  # (no match) — then convert that to a string compare for the if-test.
-  if [ "$(strings "$NEW_PTP2" | grep -Fc 'Pentax vendor mode enabled')" = 0 ]; then
+  # NOTE: under 'set -euo pipefail', a '$(strings ... | grep -Fc ...)' command
+  # substitution aborts the whole script on the *first* missing marker
+  # (grep exits 1, the substitution exits 1, set -e fires) before the
+  # intended die() ever runs. The previous 'grep -Fqm1' form had the
+  # mirror bug: grep exits on first match, strings keeps writing, gets
+  # SIGPIPE (exit 141), pipefail propagates — also a false abort. Use
+  # the pipeline *as the if condition itself*: 'grep -Fc' reads to EOF
+  # (no SIGPIPE), its exit is the test, and an absence naturally falls
+  # into the else-branch instead of tripping set -e. See
+  # docs/pentax-patcher-gate-bug.md.
+  if strings "$NEW_PTP2" | grep -Fc 'Pentax vendor mode enabled' >/dev/null; then
+    log "local-source Pentax candidate marker: present"
+  else
     die "local-source ptp2.so lacks the Pentax candidate marker"
   fi
-  log "local-source Pentax candidate marker: present"
 fi
 
 # ---------------------------------------------------------------------------
