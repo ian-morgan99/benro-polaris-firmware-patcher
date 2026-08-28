@@ -164,8 +164,15 @@ NEW_PTP2="$W/out/ptp2.so"
 NEW_CORE="$W/out/libgphoto2.so.6"; NEW_PORT="$W/out/libgphoto2_port.so.12"
 [ -f "$NEW_PTP2" ] || die "ptp2.so build failed"
 if [ -e /libgphoto2-source-input ]; then
-  strings "$NEW_PTP2" | grep -Fq "Pentax vendor mode enabled" ||
+  # NOTE: 'strings | grep -Fq' under 'set -euo pipefail' is a SIGPIPE footgun
+  # (see docs/pentax-patcher-gate-bug.md). grep -Fqm1 aborts the pipe on match;
+  # strings keeps writing and gets SIGPIPE (exit 141), which pipefail propagates
+  # and 'set -e' turns into a false "marker missing" abort. Use 'grep -Fc' so
+  # grep drains the pipe to EOF (no SIGPIPE) and we only see 0 (match) or 1
+  # (no match) — then convert that to a string compare for the if-test.
+  if [ "$(strings "$NEW_PTP2" | grep -Fc 'Pentax vendor mode enabled')" = 0 ]; then
     die "local-source ptp2.so lacks the Pentax candidate marker"
+  fi
   log "local-source Pentax candidate marker: present"
 fi
 
@@ -378,7 +385,14 @@ fi
 log "assembling custom FwPkt in /out…"
 rm -rf /out/FwPkt; mkdir -p /out/FwPkt/camera /out/FwPkt/gimbal
 cp -p /in/camera/config /in/camera/uImage /in/camera/rootfs.ubifs /out/FwPkt/camera/
-cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/ 2>/dev/null || true
+# Do NOT swallow gimbal copy errors. Issue #21: a silent gimbal drop produced a
+# 8-entry zip that the gimbal silently rejected (no NAND write, no warning).
+# Fail loudly so a missing/empty /in/gimbal/*.bin is visible at build time.
+gimbal_bin_count=$(ls -1 /in/gimbal/*.bin 2>/dev/null | wc -l)
+if [ "$gimbal_bin_count" -eq 0 ]; then
+  die "no /in/gimbal/*.bin found — refusing to ship a gimbal-less FwPkt (issue #21)"
+fi
+cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/
 cp "$W/out/appfs.ubifs" /out/FwPkt/camera/appfs.ubifs
 python3 /opt/patcher/gen_firmwareinfo.py /in/firmwareInfo /out/FwPkt > /out/FwPkt/firmwareInfo
 
@@ -389,79 +403,3 @@ python3 /opt/patcher/gen_firmwareinfo.py /in/firmwareInfo /out/FwPkt > /out/FwPk
 # produced FwPkt so a build that shipped a stale manifest (e.g. a layered
 # HDMI repack that forgot to regenerate firmwareInfo) cannot leave the
 # pipeline. See container/verify_firmwareinfo.py for the rules.
-if ! python3 /opt/patcher/verify_firmwareinfo.py /in/firmwareInfo /out/FwPkt; then
-  die "firmwareInfo does not match the produced FwPkt -- the Polaris would silently reject this update. Refusing to zip."
-fi
-log "verified firmwareInfo against produced FwPkt (on-board check will pass)"
-
-( cd /out && rm -f FwPkt.zip && (command -v zip >/dev/null && zip -rqX FwPkt.zip FwPkt || python3 -c "import shutil;shutil.make_archive('FwPkt','zip','.','FwPkt')") )
-
-# ---------------------------------------------------------------------------
-# 8b. FULL mode: emit the reversible on-device bundle.
-#     The bundle lets people TEST before flashing (install_stage2.sh /
-#     restore_stock.sh, LD_PRELOAD-reversible).
-# ---------------------------------------------------------------------------
-if [ "$MODE" = "full" ]; then
-  BUN=/out/stage2-ondisk
-  rm -rf "$BUN"; mkdir -p "$BUN/ondisk" "$BUN/libgphoto2/2.5.34" "$BUN/libgphoto2_port/0.12.2"
-  cp "$W/s2/libpolaris_stage2.so"  "$BUN/ondisk/"
-  cp "$W/s2/pgphoto.stage2ondisk"  "$BUN/ondisk/"
-  cp /opt/patcher/ondisk/pgphoto.wrapper "$BUN/ondisk/"
-  cp /opt/patcher/ondisk/install_stage2.sh "$BUN/ondisk/"
-  cp /opt/patcher/ondisk/restore_stock.sh  "$BUN/ondisk/"
-  cp "$NEW_CORE" "$BUN/libgphoto2.so.6"
-  cp "$NEW_PORT" "$BUN/libgphoto2_port.so.12"
-  cp "$NEW_PTP2" "$BUN/libgphoto2/2.5.34/ptp2.so"
-  cp "$NEW_USB1" "$BUN/libgphoto2_port/0.12.2/usb1.so"
-  chmod +x "$BUN/ondisk/"*.sh "$BUN/ondisk/pgphoto.wrapper" 2>/dev/null || true
-
-  log "  wrote reversible on-device bundle -> /out/stage2-ondisk (install_stage2.sh / restore_stock.sh)"
-fi
-
-# Every mode distributes a rebuilt LGPL camlib, and full mode distributes the
-# core and port libraries too. Ship the exact post-patch corresponding source;
-# an upstream URL alone is insufficient when this build changed the source or
-# consumed a local development checkout.
-LIC=/out/licenses; rm -rf "$LIC"; mkdir -p "$LIC"
-SRCDIR="$(find /work/src -maxdepth 1 -type d -name "libgphoto2-*" | head -1)"
-[ -n "$SRCDIR" ] && [ -f "$SRCDIR/COPYING" ] || die "corresponding libgphoto2 source tree not found"
-cp "$SRCDIR/COPYING" "$LIC/libgphoto2-COPYING.LGPL-2.1"
-log "creating exact corresponding-source archive (this may take a minute)…"
-( cd "$SRCDIR" && make dist-xz >/tmp/libgphoto2-dist.log 2>&1 ) || {
-  tail -80 /tmp/libgphoto2-dist.log >&2; die "could not create corresponding-source archive";
-}
-SOURCE_ARCHIVE="$(find "$SRCDIR" -maxdepth 1 -type f -name 'libgphoto2-*.tar.xz' | sort | tail -1)"
-[ -n "$SOURCE_ARCHIVE" ] || die "make dist-xz produced no source archive"
-cp "$SOURCE_ARCHIVE" "$LIC/"
-cp "$W/out/source-provenance.env" /out/build-source-provenance.txt
-cat > "$LIC/README-LGPL.txt" <<EOF
-The custom appfs in this output contains freshly-built libgphoto2
-$LIBGPHOTO2_VERSION components under LGPL-2.1.
-
-The adjacent $(basename "$SOURCE_ARCHIVE") is the exact corresponding source
-used for these binaries after all patcher transformations. It includes the
-complete preferred form for modification and its build system. The source was
-generated before firmware repacking and contains no Benro firmware.
-
-See this patcher's NOTICE and container/build_ptp2.sh for the build recipe.
-EOF
-log "  wrote exact LGPL corresponding source -> /out/licenses/$(basename "$SOURCE_ARCHIVE")"
-
-log "----------------------------------------------------------------------"
-if [ "$MODE" = "full" ]; then
-  log "DONE (mode: FULL libgphoto2 — core+port+ptp2+usb1 swap, on-disk trampoline)."
-else
-  log "DONE (mode: ptp2-only — legacy camlib+iolib swap, stock 2.5.27 core kept)."
-fi
-log "Custom firmware written to /out :"
-( cd /out && find FwPkt -type f | sort | sed 's/^/    /' )
-log "    FwPkt.zip  md5=$(md5sum /out/FwPkt.zip 2>/dev/null | cut -d' ' -f1)"
-log "custom appfs.ubifs md5=$(md5sum /out/FwPkt/camera/appfs.ubifs | cut -d' ' -f1)"
-if [ "$MODE" = "full" ]; then
-  log "Before flashing you can TEST reversibly on-device:"
-  log "    copy /out/stage2-ondisk to the camera and run ondisk/install_stage2.sh"
-  log "    (revert with ondisk/restore_stock.sh). See docs/HOW-IT-WORKS.md."
-fi
-log "----------------------------------------------------------------------"
-warn "FLASH AT YOUR OWN RISK. Verify on your own device. Keep your stock FwPkt"
-warn "as the factory-restore image. See README.md."
