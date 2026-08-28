@@ -381,6 +381,19 @@ cp -p /in/camera/config /in/camera/uImage /in/camera/rootfs.ubifs /out/FwPkt/cam
 cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/ 2>/dev/null || true
 cp "$W/out/appfs.ubifs" /out/FwPkt/camera/appfs.ubifs
 python3 /opt/patcher/gen_firmwareinfo.py /in/firmwareInfo /out/FwPkt > /out/FwPkt/firmwareInfo
+
+# Fail-closed package-integrity gate. The on-board updater (polestar_app ->
+# getFwInfo.sh -> crcInfo) recomputes the MD5 + size of every component and
+# string-compares it against firmwareInfo. Any mismatch -> no NAND write,
+# silent reboot, no notification. Re-run the same check here against the
+# produced FwPkt so a build that shipped a stale manifest (e.g. a layered
+# HDMI repack that forgot to regenerate firmwareInfo) cannot leave the
+# pipeline. See container/verify_firmwareinfo.py for the rules.
+if ! python3 /opt/patcher/verify_firmwareinfo.py /in/firmwareInfo /out/FwPkt; then
+  die "firmwareInfo does not match the produced FwPkt -- the Polaris would silently reject this update. Refusing to zip."
+fi
+log "verified firmwareInfo against produced FwPkt (on-board check will pass)"
+
 ( cd /out && rm -f FwPkt.zip && (command -v zip >/dev/null && zip -rqX FwPkt.zip FwPkt || python3 -c "import shutil;shutil.make_archive('FwPkt','zip','.','FwPkt')") )
 
 # ---------------------------------------------------------------------------
