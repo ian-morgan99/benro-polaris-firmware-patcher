@@ -307,3 +307,11 @@ proof-of-correctness for that change. A re-run of the broken c2 zip
 through the validator fails as above; a re-run of the fixed combined
 zip (`builds/2026-08-27-combined-720p60/FwPkt.zip`, SHA-256
 `ddc1aab6…`) passes all six checks.
+
+---
+
+## See also
+
+- [fwpkt-zip-layout-and-smb-delivery.md](fwpkt-zip-layout-and-smb-delivery.md)
+  — the `FwPkt/` prefix contract, the per-zip verification matrix, and
+  the SMB delivery convention.
