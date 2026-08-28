@@ -388,18 +388,144 @@ cp -p /in/camera/config /in/camera/uImage /in/camera/rootfs.ubifs /out/FwPkt/cam
 # Do NOT swallow gimbal copy errors. Issue #21: a silent gimbal drop produced a
 # 8-entry zip that the gimbal silently rejected (no NAND write, no warning).
 # Fail loudly so a missing/empty /in/gimbal/*.bin is visible at build time.
-gimbal_bin_count=$(ls -1 /in/gimbal/*.bin 2>/dev/null | wc -l)
-if [ "$gimbal_bin_count" -eq 0 ]; then
+#
+# Use a shell array, not `ls | wc -l`: under `set -euo pipefail`, a non-matching
+# glob makes `ls` exit 2 *inside* the command substitution and abort the script
+# with a confusing "No such file" instead of the intended die() diagnostic.
+shopt -s nullglob
+gimbal_bins=( /in/gimbal/*.bin )
+shopt -u nullglob
+if [ "${#gimbal_bins[@]}" -eq 0 ]; then
   die "no /in/gimbal/*.bin found — refusing to ship a gimbal-less FwPkt (issue #21)"
 fi
-cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/
+cp -p "${gimbal_bins[@]}" /out/FwPkt/gimbal/
 cp "$W/out/appfs.ubifs" /out/FwPkt/camera/appfs.ubifs
 python3 /opt/patcher/gen_firmwareinfo.py /in/firmwareInfo /out/FwPkt > /out/FwPkt/firmwareInfo
 
-# Fail-closed package-integrity gate. The on-board updater (polestar_app ->
-# getFwInfo.sh -> crcInfo) recomputes the MD5 + size of every component and
-# string-compares it against firmwareInfo. Any mismatch -> no NAND write,
-# silent reboot, no notification. Re-run the same check here against the
-# produced FwPkt so a build that shipped a stale manifest (e.g. a layered
-# HDMI repack that forgot to regenerate firmwareInfo) cannot leave the
-# pipeline. See container/verify_firmwareinfo.py for the rules.
+# Fail-closed firmwareInfo gate (re-MD5 + re-size every component against
+# the just-built /out/FwPkt). Catches the "stale firmwareInfo" failure mode
+# described in docs/silent-fwpkt-reject-postmortem.md.
+if ! python3 /opt/patcher/verify_firmwareinfo.py /in/firmwareInfo /out/FwPkt; then
+  die "firmwareInfo does not match the produced FwPkt -- the Polaris would silently reject this update. Refusing to zip."
+fi
+log "verified firmwareInfo against produced FwPkt (on-board check will pass)"
+
+# Build the ZIP at a *temp* path so the validator can fail-closed on the
+# *exact* archive we'd ship, and we only atomically rename to the public
+# output path on PASS. Issue #21 follow-up: a prior write-then-validate
+# sequence left a bad zip at /out/FwPkt.zip on FAIL, contradicting the
+# "fail-closed" claim. See container/test_patch_fail_closed.sh.
+#
+# Note: shutil.make_archive's base name is the FIRST arg and it appends
+# ".zip" — so the fallback must build the zip explicitly via zipfile to
+# write to a *literal* ".tmp" path. Without this, make_archive would
+# write directly to /out/FwPkt.zip and defeat the fail-closed guarantee.
+rm -f /out/FwPkt.zip /out/FwPkt.zip.tmp
+( cd /out && (
+  if command -v zip >/dev/null 2>&1; then
+    zip -rqX FwPkt.zip.tmp FwPkt
+  else
+    python3 -c 'import os,zipfile
+zf=zipfile.ZipFile("FwPkt.zip.tmp","w",zipfile.ZIP_DEFLATED)
+for root,dirs,files in os.walk("FwPkt"):
+  # Explicit directory entries — the on-board polestar_app expects
+  # them (matches the layout of the stock Benro-shipped FwPkt.zip).
+  rel=os.path.relpath(root,".")
+  if rel != ".":
+    zi=zipfile.ZipInfo(rel+"/")
+    zi.external_attr=(0o755 << 16)
+    zf.writestr(zi,"")
+  for fn in files:
+    p=os.path.join(root,fn); zf.write(p,p)
+zf.close()'
+  fi
+) && mv FwPkt.zip.tmp FwPkt.zip )
+
+# ---------------------------------------------------------------------------
+# 8a. Final structural verification of the finished ZIP.
+#     The on-board polestar_app silently reboots on any mismatch in zip
+#     layout, missing required files, duplicate members, or stock-component
+#     drift. Catches everything the firmwareInfo check above can't, e.g.
+#     wrong top-level folder name, gimbal files dropped on assembly,
+#     accidental copy of a different stock camera binary. Issue #21.
+#     Validates the *exact* archive at /out/FwPkt.zip (written by the
+#     temp+rename step above). On FAIL, the temp+rename pattern means
+#     no publishable /out/FwPkt.zip exists — the only copy is the .tmp
+#     which we explicitly remove before die().
+# ---------------------------------------------------------------------------
+log "verifying finished FwPkt package layout…"
+if ! python3 /opt/patcher/validate_fw_package.py /out/FwPkt.zip; then
+  rm -f /out/FwPkt.zip /out/FwPkt.zip.tmp
+  die "finished-package structural validator FAILED -- refuse to ship. The on-board updater would silently reject this FwPkt."
+fi
+log "verified FwPkt.zip structure (on-board check will pass)"
+
+# ---------------------------------------------------------------------------
+# 8b. FULL mode: emit the reversible on-device bundle.
+#     The bundle lets people TEST before flashing (install_stage2.sh /
+#     restore_stock.sh, LD_PRELOAD-reversible).
+# ---------------------------------------------------------------------------
+if [ "$MODE" = "full" ]; then
+  BUN=/out/stage2-ondisk
+  rm -rf "$BUN"; mkdir -p "$BUN/ondisk" "$BUN/libgphoto2/2.5.34" "$BUN/libgphoto2_port/0.12.2"
+  cp "$W/s2/libpolaris_stage2.so"  "$BUN/ondisk/"
+  cp "$W/s2/pgphoto.stage2ondisk"  "$BUN/ondisk/"
+  cp /opt/patcher/ondisk/pgphoto.wrapper "$BUN/ondisk/"
+  cp /opt/patcher/ondisk/install_stage2.sh "$BUN/ondisk/"
+  cp /opt/patcher/ondisk/restore_stock.sh  "$BUN/ondisk/"
+  cp "$NEW_CORE" "$BUN/libgphoto2.so.6"
+  cp "$NEW_PORT" "$BUN/libgphoto2_port.so.12"
+  cp "$NEW_PTP2" "$BUN/libgphoto2/2.5.34/ptp2.so"
+  cp "$NEW_USB1" "$BUN/libgphoto2_port/0.12.2/usb1.so"
+  chmod +x "$BUN/ondisk/"*.sh "$BUN/ondisk/pgphoto.wrapper" 2>/dev/null || true
+
+  log "  wrote reversible on-device bundle -> /out/stage2-ondisk (install_stage2.sh / restore_stock.sh)"
+fi
+
+# Every mode distributes a rebuilt LGPL camlib, and full mode distributes the
+# core and port libraries too. Ship the exact post-patch corresponding source;
+# an upstream URL alone is insufficient when this build changed the source or
+# consumed a local development checkout.
+LIC=/out/licenses; rm -rf "$LIC"; mkdir -p "$LIC"
+SRCDIR="$(find /work/src -maxdepth 1 -type d -name "libgphoto2-*" | head -1)"
+[ -n "$SRCDIR" ] && [ -f "$SRCDIR/COPYING" ] || die "corresponding libgphoto2 source tree not found"
+cp "$SRCDIR/COPYING" "$LIC/libgphoto2-COPYING.LGPL-2.1"
+log "creating exact corresponding-source archive (this may take a minute)…"
+( cd "$SRCDIR" && make dist-xz >/tmp/libgphoto2-dist.log 2>&1 ) || {
+  tail -80 /tmp/libgphoto2-dist.log >&2; die "could not create corresponding-source archive";
+}
+SOURCE_ARCHIVE="$(find "$SRCDIR" -maxdepth 1 -type f -name 'libgphoto2-*.tar.xz' | sort | tail -1)"
+[ -n "$SOURCE_ARCHIVE" ] || die "make dist-xz produced no source archive"
+cp "$SOURCE_ARCHIVE" "$LIC/"
+cp "$W/out/source-provenance.env" /out/build-source-provenance.txt
+cat > "$LIC/README-LGPL.txt" <<EOF
+The custom appfs in this output contains freshly-built libgphoto2
+$LIBGPHOTO2_VERSION components under LGPL-2.1.
+
+The adjacent $(basename "$SOURCE_ARCHIVE") is the exact corresponding source
+used for these binaries after all patcher transformations. It includes the
+complete preferred form for modification and its build system. The source was
+generated before firmware repacking and contains no Benro firmware.
+
+See this patcher's NOTICE and container/build_ptp2.sh for the build recipe.
+EOF
+log "  wrote exact LGPL corresponding source -> /out/licenses/$(basename "$SOURCE_ARCHIVE")"
+
+log "----------------------------------------------------------------------"
+if [ "$MODE" = "full" ]; then
+  log "DONE (mode: FULL libgphoto2 — core+port+ptp2+usb1 swap, on-disk trampoline)."
+else
+  log "DONE (mode: ptp2-only — legacy camlib+iolib swap, stock 2.5.27 core kept)."
+fi
+log "Custom firmware written to /out :"
+( cd /out && find FwPkt -type f | sort | sed 's/^/    /' )
+log "    FwPkt.zip  md5=$(md5sum /out/FwPkt.zip 2>/dev/null | cut -d' ' -f1)"
+log "custom appfs.ubifs md5=$(md5sum /out/FwPkt/camera/appfs.ubifs | cut -d' ' -f1)"
+if [ "$MODE" = "full" ]; then
+  log "Before flashing you can TEST reversibly on-device:"
+  log "    copy /out/stage2-ondisk to the camera and run ondisk/install_stage2.sh"
+  log "    (revert with ondisk/restore_stock.sh). See docs/HOW-IT-WORKS.md."
+fi
+log "----------------------------------------------------------------------"
+warn "FLASH AT YOUR OWN RISK. Verify on your own device. Keep your stock FwPkt"
+warn "as the factory-restore image. See README.md."
