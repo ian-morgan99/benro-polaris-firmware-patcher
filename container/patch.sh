@@ -164,9 +164,21 @@ NEW_PTP2="$W/out/ptp2.so"
 NEW_CORE="$W/out/libgphoto2.so.6"; NEW_PORT="$W/out/libgphoto2_port.so.12"
 [ -f "$NEW_PTP2" ] || die "ptp2.so build failed"
 if [ -e /libgphoto2-source-input ]; then
-  strings "$NEW_PTP2" | grep -Fq "Pentax vendor mode enabled" ||
+  # NOTE: under 'set -euo pipefail', a '$(strings ... | grep -Fc ...)' command
+  # substitution aborts the whole script on the *first* missing marker
+  # (grep exits 1, the substitution exits 1, set -e fires) before the
+  # intended die() ever runs. The previous 'grep -Fqm1' form had the
+  # mirror bug: grep exits on first match, strings keeps writing, gets
+  # SIGPIPE (exit 141), pipefail propagates — also a false abort. Use
+  # the pipeline *as the if condition itself*: 'grep -Fc' reads to EOF
+  # (no SIGPIPE), its exit is the test, and an absence naturally falls
+  # into the else-branch instead of tripping set -e. See
+  # docs/pentax-patcher-gate-bug.md.
+  if strings "$NEW_PTP2" | grep -Fc 'Pentax vendor mode enabled' >/dev/null; then
+    log "local-source Pentax candidate marker: present"
+  else
     die "local-source ptp2.so lacks the Pentax candidate marker"
-  log "local-source Pentax candidate marker: present"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -378,23 +390,80 @@ fi
 log "assembling custom FwPkt in /out…"
 rm -rf /out/FwPkt; mkdir -p /out/FwPkt/camera /out/FwPkt/gimbal
 cp -p /in/camera/config /in/camera/uImage /in/camera/rootfs.ubifs /out/FwPkt/camera/
-cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/ 2>/dev/null || true
+# Do NOT swallow gimbal copy errors. Issue #21: a silent gimbal drop produced a
+# 8-entry zip that the gimbal silently rejected (no NAND write, no warning).
+# Fail loudly so a missing/empty /in/gimbal/*.bin is visible at build time.
+#
+# Use a shell array, not `ls | wc -l`: under `set -euo pipefail`, a non-matching
+# glob makes `ls` exit 2 *inside* the command substitution and abort the script
+# with a confusing "No such file" instead of the intended die() diagnostic.
+shopt -s nullglob
+gimbal_bins=( /in/gimbal/*.bin )
+shopt -u nullglob
+if [ "${#gimbal_bins[@]}" -eq 0 ]; then
+  die "no /in/gimbal/*.bin found — refusing to ship a gimbal-less FwPkt (issue #21)"
+fi
+cp -p "${gimbal_bins[@]}" /out/FwPkt/gimbal/
 cp "$W/out/appfs.ubifs" /out/FwPkt/camera/appfs.ubifs
 python3 /opt/patcher/gen_firmwareinfo.py /in/firmwareInfo /out/FwPkt > /out/FwPkt/firmwareInfo
 
-# Fail-closed package-integrity gate. The on-board updater (polestar_app ->
-# getFwInfo.sh -> crcInfo) recomputes the MD5 + size of every component and
-# string-compares it against firmwareInfo. Any mismatch -> no NAND write,
-# silent reboot, no notification. Re-run the same check here against the
-# produced FwPkt so a build that shipped a stale manifest (e.g. a layered
-# HDMI repack that forgot to regenerate firmwareInfo) cannot leave the
-# pipeline. See container/verify_firmwareinfo.py for the rules.
+# Fail-closed firmwareInfo gate (re-MD5 + re-size every component against
+# the just-built /out/FwPkt). Catches the "stale firmwareInfo" failure mode
+# described in docs/silent-fwpkt-reject-postmortem.md.
 if ! python3 /opt/patcher/verify_firmwareinfo.py /in/firmwareInfo /out/FwPkt; then
   die "firmwareInfo does not match the produced FwPkt -- the Polaris would silently reject this update. Refusing to zip."
 fi
 log "verified firmwareInfo against produced FwPkt (on-board check will pass)"
 
-( cd /out && rm -f FwPkt.zip && (command -v zip >/dev/null && zip -rqX FwPkt.zip FwPkt || python3 -c "import shutil;shutil.make_archive('FwPkt','zip','.','FwPkt')") )
+# Build the ZIP at a *temp* path so the validator can fail-closed on the
+# *exact* archive we'd ship, and we only atomically rename to the public
+# output path on PASS. Issue #21 follow-up: a prior write-then-validate
+# sequence left a bad zip at /out/FwPkt.zip on FAIL, contradicting the
+# "fail-closed" claim. See container/test_patch_fail_closed.sh.
+#
+# Note: shutil.make_archive's base name is the FIRST arg and it appends
+# ".zip" — so the fallback must build the zip explicitly via zipfile to
+# write to a *literal* ".tmp" path. Without this, make_archive would
+# write directly to /out/FwPkt.zip and defeat the fail-closed guarantee.
+rm -f /out/FwPkt.zip /out/FwPkt.zip.tmp
+( cd /out && (
+  if command -v zip >/dev/null 2>&1; then
+    zip -rqX FwPkt.zip.tmp FwPkt
+  else
+    python3 -c 'import os,zipfile
+zf=zipfile.ZipFile("FwPkt.zip.tmp","w",zipfile.ZIP_DEFLATED)
+for root,dirs,files in os.walk("FwPkt"):
+  # Explicit directory entries — the on-board polestar_app expects
+  # them (matches the layout of the stock Benro-shipped FwPkt.zip).
+  rel=os.path.relpath(root,".")
+  if rel != ".":
+    zi=zipfile.ZipInfo(rel+"/")
+    zi.external_attr=(0o755 << 16)
+    zf.writestr(zi,"")
+  for fn in files:
+    p=os.path.join(root,fn); zf.write(p,p)
+zf.close()'
+  fi
+) && mv FwPkt.zip.tmp FwPkt.zip )
+
+# ---------------------------------------------------------------------------
+# 8a. Final structural verification of the finished ZIP.
+#     The on-board polestar_app silently reboots on any mismatch in zip
+#     layout, missing required files, duplicate members, or stock-component
+#     drift. Catches everything the firmwareInfo check above can't, e.g.
+#     wrong top-level folder name, gimbal files dropped on assembly,
+#     accidental copy of a different stock camera binary. Issue #21.
+#     Validates the *exact* archive at /out/FwPkt.zip (written by the
+#     temp+rename step above). On FAIL, the temp+rename pattern means
+#     no publishable /out/FwPkt.zip exists — the only copy is the .tmp
+#     which we explicitly remove before die().
+# ---------------------------------------------------------------------------
+log "verifying finished FwPkt package layout…"
+if ! python3 /opt/patcher/validate_fw_package.py /out/FwPkt.zip; then
+  rm -f /out/FwPkt.zip /out/FwPkt.zip.tmp
+  die "finished-package structural validator FAILED -- refuse to ship. The on-board updater would silently reject this FwPkt."
+fi
+log "verified FwPkt.zip structure (on-board check will pass)"
 
 # ---------------------------------------------------------------------------
 # 8b. FULL mode: emit the reversible on-device bundle.

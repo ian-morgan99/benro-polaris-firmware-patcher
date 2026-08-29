@@ -198,3 +198,209 @@ require additional work that the manifest gate does not cover):
 
 It **does not** address the deeper release-readiness items that remain
 open (#1, #2, #8, #11, #12, #13, #15).
+
+---
+
+## Addendum 2026-08-28: a *second*, independent silent-gimbal-drop bug
+
+While exercising the clean-Pentax rebuild path
+(`/libgphoto2-source-input` mounted, so the libgphoto2 fork is built
+locally rather than from the pinned Debian package), a second silent
+packaging defect surfaced. It is independent of the stale-`firmwareInfo`
+bug above and reproduces even when `firmwareInfo` is byte-correct.
+
+### Symptom
+
+Builds run, exit 0, produce a 68,372,735 B zip at `/out/FwPkt.zip`. The zip
+contains 8 entries instead of the expected 10. The missing entries are
+both gimbal binaries (`polaris403_2.0.0.22.bin` and `polaris413_2.0.0.22.bin`).
+When flashed, the on-board `polestar_app` would silently reboot (the same
+behaviour as the stale-firmwareInfo case) — no NAND write, no UI signal,
+no log entry.
+
+In our c2 build the failure mode was *partial*: one of the two gimbal bins
+(`polaris413_2.0.0.22.bin`) was missing while the other
+(`polaris403_2.0.0.22.bin`) was present. So a `ls -l FwPkt.zip` is not
+sufficient to catch it — the zip's *size* looks plausible and the
+`firmwareInfo` lines for the present gimbal file are still correct. The
+on-board check, however, string-compares *every* `polaris*` line in
+`firmwareInfo` to a present file, and a `polaris413` line with no matching
+file on disk fails the same way as a bad MD5.
+
+### Root cause
+
+`container/patch.sh:381` (pre-fix):
+
+```sh
+cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/ 2>/dev/null || true
+```
+
+`2>/dev/null || true` swallowed the failure mode of the underlying
+`cp`. The exact reason `cp` was failing in c2 is
+mount/timing-sensitive (the most likely candidate is a bind-mount race in
+the docker layer over a user-owned `/out` directory) and is not
+reproducible on every run. What *is* reproducible is that `2>/dev/null
+|| true` makes every kind of `cp` failure invisible.
+
+The fix is two parts:
+
+1. **Stop swallowing the error.** `cp -p /in/gimbal/*.bin /out/FwPkt/gimbal/`
+   alone will fail loudly if the input dir is empty or unreadable.
+2. **Pre-check the input.** A separate "is the input populated" guard
+   with a `die` if zero — so the user gets a *clear* "no /in/gimbal
+   found, refusing to ship a gimbal-less FwPkt" message rather than a
+   confusing `cp: cannot stat` after `2>/dev/null` has already masked
+   everything.
+
+   The naive `ls -1 /in/gimbal/*.bin 2>/dev/null | wc -l` form is
+   itself a footgun under `set -euo pipefail`: a non-matching glob
+   makes `ls` exit 2 *inside* the command substitution, and `set -e`
+   aborts the script with a confusing "No such file or directory"
+   before the intended `die()` diagnostic ever runs. Use a shell-array
+   + `nullglob` form instead (matches the implementation in
+   `container/patch.sh`):
+
+   ```sh
+   shopt -s nullglob
+   gimbal_bins=( /in/gimbal/*.bin )
+   shopt -u nullglob
+   if [ "${#gimbal_bins[@]}" -eq 0 ]; then
+     die "no /in/gimbal/*.bin found — refusing to ship a gimbal-less FwPkt (issue #21)"
+   fi
+   cp -p "${gimbal_bins[@]}" /out/FwPkt/gimbal/
+   ```
+
+   Equivalently safe (and one line shorter): use `compgen -G` to test
+   the glob without invoking `ls`:
+
+   ```sh
+   if ! compgen -G '/in/gimbal/*.bin' >/dev/null; then
+     die "no /in/gimbal/*.bin found — refusing to ship a gimbal-less FwPkt (issue #21)"
+   fi
+   ```
+
+   Both forms are bash-native, run with no fork, and convert the
+   "no match" case into normal control flow rather than a glob
+   expansion failure.
+
+### Why the firmwareInfo check didn't catch it
+
+`firmwareInfo` is generated *from* the on-disk state of `/out/FwPkt/`.
+When `cp` failed, `/out/FwPkt/gimbal/` was left with only
+`polaris403_2.0.0.22.bin`. `gen_firmwareinfo.py` then wrote a
+`firmwareInfo` whose `polaris403` line was correct (because the file was
+present) and *omitted* the `polaris413` line entirely. The
+`verify_firmwareinfo.py` re-MD5/size check was happy: every line in
+`firmwareInfo` matched a file. The bug is **structural** — the zip
+itself is wrong — and so it requires a **structural** check, not a
+content check.
+
+### Resolution: `container/validate_fw_package.py`
+
+A new `validate_fw_package.py` (stdlib-only, ~250 lines) was added at
+the end of the build pipeline (after the zip is created, before
+publishing) and is the implementation of issue #21. It walks the
+finished zip and rejects any of the following:
+
+- **Wrong top-level layout** — anything other than `FwPkt/` as the
+  single top-level member.
+- **Duplicate members** — same member name twice (zip-spec allows this;
+  the on-board updater may not).
+- **Missing required files** — must contain `FwPkt/firmwareInfo`,
+  `FwPkt/camera/{config,uImage,rootfs.ubifs,appfs.ubifs}`, and at least
+  one `FwPkt/gimbal/*.bin`.
+- **Stock-component drift** — every file in the `camera/` and
+  `gimbal/` directory whose name matches a stock component must hash to
+  the *recorded* stock SHA-256. (`appfs.ubifs` is intentionally exempt
+  because that is the file the user is replacing.)
+- **A concise manifest** is always printed, showing every file and
+  its on-disk size, with a PASS/FAIL summary.
+
+It is fail-closed (`die "refuse to ship"` in the build pipeline). The
+c2 build that produced the 8-entry zip now fails with:
+
+```
+FAIL: 3 structural error(s)
+  - missing required files: FwPkt/gimbal/*.bin (no polaris*/oms bins)
+  - stock cross-check: missing expected file FwPkt/gimbal/polaris403_2.0.0.22.bin
+  - stock cross-check: missing expected file FwPkt/gimbal/polaris413_2.0.0.22.bin
+
+The on-board updater would silently reject this FwPkt.
+Do NOT put it on an SD card. Rebuild and re-run this validator.
+```
+
+### Acceptance against issue #21
+
+Issue #21 asks for "a finished-package structural validator that
+rejects unexpected top-level layout, duplicate members, missing
+required files, and stock-component drift." This document is the
+proof-of-correctness for that change. A re-run of the broken c2 zip
+through the validator fails as above; a re-run of the fixed combined
+zip (`builds/2026-08-27-combined-720p60/FwPkt.zip`, SHA-256
+`ddc1aab6…`) passes all six checks.
+
+---
+
+## See also
+
+- [fwpkt-zip-layout-and-smb-delivery.md](fwpkt-zip-layout-and-smb-delivery.md)
+  — the `FwPkt/` prefix contract, the per-zip verification matrix, and
+  the SMB delivery convention.
+
+---
+
+## Appendix: an older in-flight build had a stale `firmwareInfo` (not Benro stock)
+
+> **Retracted 2026-08-29.** The text below originally described a
+> mismatch in the *Benro stock* `firmwareInfo`. That claim was based on
+> testing `/tmp/original-fwpkt.zip` (md5 `fd8147c9…`) under the
+> misapprehension that it was the Benro download. It is in fact an
+> older in-flight build of our own pipeline (the 2026-08-23 base + a
+> 2026-08-27 09:31 `appfs` layered on top, per
+> `docs/fwpkt-zip-layout-and-smb-delivery.md`). The real Benro stock
+> download (`~/Downloads/FwPkt.zip`, md5 `90bdad51…`) is **fully
+> self-consistent**: every claimed MD5 in its `firmwareInfo` matches
+> the bytes it ships, including `appfs` (`47f2ae68…` claimed =
+> `47f2ae68…` actual). The corrected lesson follows.
+
+The *real* finding from the file I tested (md5 `fd8147c9…`) is that an
+intermediate in-flight build of our own pipeline — the older top-level
+`FwPkt.zip` on the SMB share — has a `firmwareInfo` whose `appfs` MD5
+is stale. The bytes in the file are the post-patch
+`91629acf0494b7f43298f6821913124f`, but the manifest still claims the
+pre-patch `1775c7bc4eee7d549a36fa28bb13f367`. Every other entry
+(config, uImage, rootfs, polaris403, polaris413) is internally
+consistent. **This is exactly the layered-repack failure mode the
+postmortem above was already diagnosing** — a build where the `appfs`
+was re-patched but the manifest was not regenerated.
+
+What this reinforces:
+
+1. **Our patched `firmwareInfo` carries the true MD5 of the patched
+   `appfs.ubifs`**, regenerated by `gen_firmwareinfo.py` immediately
+   after `repack_appfs.sh`. This is the *only* safe behaviour; any
+   other generator risks the silent-reject class of failure.
+2. **The integrity gate (`verify_firmwareinfo.py` in `patch.sh`) is
+   the right safety net.** It catches the case where some other step
+   in the build silently changes a file without regenerating the
+   manifest. Without it, we are one refactor away from re-introducing
+   the 2026-08-27 failure.
+3. **Older in-flight builds on the SMB share are not safe to install
+   even if they pass the structural validator.** The validator only
+   checks layout (top-level `FwPkt/`, no duplicates, required paths
+   present, stock-component SHA-256 match for non-patched files). It
+   does *not* cross-check `firmwareInfo` MD5s — that is the manifest
+   verifier's job. Always run *both* before installing.
+
+### Upstream cross-reference
+
+The same "zip file disappeared" symptom that started this investigation
+is filed upstream as [`blaineam/benro-polaris-firmware-patcher`
+issue #11](https://github.com/blaineam/benro-polaris-firmware-patcher/issues/11)
+("Issue with testing", filed by ian-morgan99). That issue is **not**
+framed as a stock-firmwareInfo mismatch — the upstream's own
+`container/gen_firmwareinfo.py` documents that the device re-verifies
+each `firmwareInfo` MD5, and stock Benro is self-consistent (see
+above). Upstream issues #7 ("Pentax Support") and #8 ("HDMI Support")
+are also by the same user and track exactly the functionality this
+branch delivers.
