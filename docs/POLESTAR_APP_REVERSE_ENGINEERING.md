@@ -1,12 +1,19 @@
 # `polestar_app` Reverse-Engineering Reference
 
 > **Status:** Living document. All addresses, function names, and
-> pseudocode in this file were extracted by static analysis of the
+> pseudocode in this file were derived from static analysis of the
 > 32-bit ARM ELF `polestar_app` shipped in stock `FwPkt.zip`
 > (`/app/sd/FwPkt.zip` → `958962934/ubifs/bin/polestar_app`).
-> No runtime trace was used; nothing in this file was guessed. Any
-> `[unconfirmed]` tag marks a piece of evidence that is consistent with
-> the disassembly but not provable from it alone.
+> No runtime trace was used; analysis was done against a single
+> stock build and should be treated as a working interpretation
+> rather than a definitive reconstruction of the original Benro
+> source. Some details may differ from the upstream code paths
+> (other builds, other firmware versions, internal branches we did
+> not exercise). Any `[unconfirmed]` tag marks a piece of evidence
+> that is consistent with the disassembly but not provable from
+> it alone; entries without such a tag should still be read as
+> "best reading of the disassembly" rather than "guaranteed
+> fact".
 >
 > **Audience:** Anyone returning to this repository after the
 > original investigation has been put to bed. The goal of this
@@ -34,7 +41,7 @@
 11. [PLT / GOT resolved calls](#11-plt--got-resolved-calls)
 12. [All `.rodata` strings relevant to upgrade](#12-all-rodata-strings-relevant-to-upgrade)
 13. [Call graph for the upgrade flow](#13-call-graph-for-the-upgrade-flow)
-    * 13.5 [`SP_UpgradeCheckFw` — the MD5 validator (CONFIRMED silent-reject locus)](#135-sp_upgradecheckfw--the-md5-validator-confirmed-silent-reject-locus)
+    * 13.5 [`SP_UpgradeCheckFw` — the MD5 validator (best-evidence silent-reject locus)](#135-sp_upgradecheckfw--the-md5-validator-best-evidence-silent-reject-locus)
     * 13.5.1 [High-level control flow](#1351-high-level-control-flow)
     * 13.5.2 [The six sequential MD5 checks](#1352-the-six-sequential-md5-checks)
     * 13.5.3 [All rodata strings used by `SP_UpgradeCheckFw`](#1353-all-rodata-strings-used-by-sp_upgradecheckfw)
@@ -43,6 +50,7 @@
     * 13.5.6 [Verification commands](#1356-verification-commands)
     * 13.5.7 [What this function does NOT do](#1357-what-this-function-does-not-do)
     * 13.5.8 [`CrcMd5 @ 0x140064` — full disassembly](#1358-crcmd5--0x140064--full-disassembly)
+    * 13.5.8.0 [Caveat: single-binary static analysis](#13580-caveat-single-binary-static-analysis)
     * 13.5.8.1 [`extract_substring @ 0x347d0` — the underlying parser](#13581-extract_substring--0x347d0--the-underlying-parser)
     * 13.5.9 [`UpgradeTask @ 0x13f080` — silent-reboot state machine](#1359-upgradetask--0x13f080--silent-reboot-state-machine)
     * 13.5.10 [What we now know vs. what we still need to find out](#13510-what-we-now-know-vs-what-we-still-need-to-find-out)
@@ -74,25 +82,33 @@
 | **Kernel / libc** | Linux 4.9.37, glibc 2.24, GCC 6.3.0 |
 | **Symbols** | 111,125 symbols, **NOT stripped**, DWARF debug info present |
 | **Source commit** | Pristine stock `FwPkt.zip`, MD5 `90bdad511f556f25a2904ae9d2980102` |
-| **On-device location** | `/app/sd/FwPkt/ubifs/bin/polestar_app` (extracted from `/app/sd/FwPkt.zip`) |
+| **On-device location** | `/app/sd/FwPkt/ubifs/bin/polestar_app` (extracted from `/app/sd/FwPkt.zip`, per the path strings in the disassembly) |
 | **Analysed with** | `llvm-objdump --syms --disassemble` (symbolised disassembly) |
 | **Worked-copy path on this machine** | `/tmp/appfs-strings/appfs-extract/958962934/ubifs/bin/polestar_app` |
 
 The binary is the **on-board updater** that runs in the Linux userspace
-of the Hi3559V200 SoC inside every Benro Polaris gimbal. It is the
-process that:
+of the Hi3559V200 SoC inside the Benro Polaris gimbal we have on hand.
+It is the process that:
 
 * Watches `/app/sd/FwPkt/` for an inserted SD card containing a
   firmware update.
 * Decides whether the packet is acceptable (this is what we
-  reverse-engineered).
+  reverse-engineered for the stock build we have).
 * If acceptable, hands the components off to U-Boot (the only
   process that can actually write NAND).
-* Else, silently reboots with no UI signal.
+* Else, silently reboots with no UI signal (as observed on our
+  device; not directly captured in a runtime trace).
 
 It is **not** the image-processing binary; that is `hi_mipi_tx` and
 the rest of the Hi3559V200 SDK. `polestar_app` is solely the
 firmware-packager and updater.
+
+**Note on generalisability.** The descriptions below were derived
+from a single stock binary we happen to have. Other Benro Polaris
+firmware versions, or Polaris variants from other markets, may
+behave slightly differently. Treat the document as a working
+model of "what our binary does", not as a guarantee of "what every
+Polaris does".
 
 ### Address space convention
 
@@ -192,7 +208,7 @@ disassembly. They are **not** inferred from string-table searches.
 | `rewind` (PLT 0x22228) | resolves via GOT 0xbf3ab8 | Rewinds to start (NB: not `fread`; this was a previous misread) |
 | `HI_LOG_Print` | **0x1a2560** (direct symtab, NOT PLT) | The single logging API used throughout the upgrade code |
 | `SP_UpgradeCheckFw` | **0x14023c** (1876 bytes) | Unzips `FwPkt.zip`, runs `getFwInfo.sh`, and **sequentially MD5-checks all 6 firmwareInfo entries** (`config`, `uImage`, `rootfs`, `appfs`, `polaris403`, `polaris413`). **This is the silent-reject locus** — see §13.5. |
-| `CrcMd5` | **0x140064** (472 bytes) | Helper called by `SP_UpgradeCheckFw`; performs the actual MD5 computation and compares against the expected digest from `firmwareInfo`. |
+| `CrcMd5` | **0x140064** (480 bytes / `0x1e0`) | Helper called by `SP_UpgradeCheckFw` six times. Despite the name, it does **not** do any MD5 math; it extracts labelled MD5 strings from `firmwareInfo` and `crcInfo` and `strcmp`s them (see §13.5.8). |
 | `SP_GetFwVer` | 0x13f570 (660 bytes) | Reads `/app/sd/FwPkt/FwVer` (top-level version) |
 | `SP_GetDeviceVer` | 0x13f804 (1108 bytes) | Reads the on-board device version |
 | `SP_IsDelUpgradeFiles` | 0x13fed8 (280 bytes) | Predicate: should `/app/sd/FwPkt*` be deleted? |
@@ -382,10 +398,10 @@ path** that the user observed.
 > silent-reject locus is `SP_UpgradeCheckFw`, which runs
 > *before* `SP_SrchGimbalNewPkt` and silently returns
 > failure on any `firmwareInfo` MD5 mismatch. See §13.5
-> for the confirmed root cause. This section is retained
+> for the best-evidence root cause. This section is retained
 > because `SP_SrchGimbalNewPkt` is still a *downstream*
 > gatekeeper whose contract must be satisfied for the
-> upgrade to proceed.
+> upgrade to proceed (in the stock build we have).
 
 `SP_SrchGimbalNewPkt` is **2304 bytes** of pure C compiled to ARM
 (`.text` vaddr `0x5eb24`, `.text+0x900` ends at `0x5f424`).
@@ -448,9 +464,11 @@ on-board `FwVer`. The stock `FwPkt.zip` ships with
 `polaris403_2.0.0.22.bin` and `polaris413_2.0.0.22.bin`
 (verified: 84328 + 84284 bytes), even though the on-board
 `FwVer` is `4.0.0.32;date:2025.05.09;` (read from the running
-Polaris's `appInfo`). This proves the field-installed Benro
-firmware is "older" than the running app — the app does not
-check for downgrade at this layer.
+Polaris's `appInfo`). The fact that the running app is newer
+than the stock `FwPkt.zip` we have, while the gimbal-upgrade
+path makes no version comparison, **strongly suggests** the
+app does not check for downgrade at this layer in the stock
+build we have — though other builds may differ.
 
 The 1000-byte threshold is a **trivial "skip empty / partial
 files" guard**, not a sanity check on the payload.
@@ -925,7 +943,7 @@ structurally identical with `SP_ExdevUpgradeFromSD` in place of
 
 ---
 
-## 13.5 `SP_UpgradeCheckFw` — the MD5 validator (CONFIRMED silent-reject locus)
+## 13.5 `SP_UpgradeCheckFw` — the MD5 validator (best-evidence silent-reject locus)
 
 `SP_UpgradeCheckFw` is the function that runs **after** the SD card
 has been detected and **before** the per-target scanner
@@ -944,7 +962,7 @@ from a no-op.
 | Size | **1876 bytes** (`0x754`) — extends to `0x14098f` |
 | Return | 0 on full pass, non-zero on any MD5 mismatch |
 | Side effect | Allocates two 4 KiB stack buffers, calls `free()` on each before return |
-| Helpers | `CrcMd5` @ 0x140064 (472 bytes), `system()` @ 0x1a23d4 |
+| Helpers | `CrcMd5` @ 0x140064 (480 bytes — see §13.5.8), `system()` @ 0x1a23d4 |
 
 ### 13.5.1 High-level control flow
 
@@ -1119,7 +1137,45 @@ battery check, SD card detection, NAND failure). The bug is
 > documented for completeness and as the target for any
 > future Pentax/Canon camera-control work.
 
-### 13.5.8 `CrcMd5` — the inner MD5 comparator (CONFIRMED no MD5 math)
+### 13.5.8 `CrcMd5` — the inner MD5 comparator (best-evidence: no MD5 math)
+
+#### 13.5.8.0 Caveat: single-binary static analysis
+
+Everything in §13.5 was derived from a single stock `polestar_app`
+binary (the one inside the unmodified Benro `FwPkt.zip` we have).
+We have **not** disassembled:
+
+* any other Benro firmware build,
+* any other vendor firmware (e.g. camera-control, exdev, OMS),
+* any debug or QA build,
+* the original Benro source code.
+
+So the descriptions below are a *best reading* of the disassembly
+for this one binary. They are sufficient to explain the symptoms
+we are seeing (silent FwPkt reject) and to design a fix, but they
+should not be treated as a 1:1 reconstruction of the original
+source. In particular:
+
+* Function/variable names (`SP_UpgradeCheckFw`, `CrcMd5`, etc.) are
+  those present in the symbol table of the binary we have. Other
+  builds may have stripped symbols or used different internal names.
+* Offsets (e.g. `0x140064`) are valid only for this binary. A
+  different build, or a different optimisation level, would shift
+  every address.
+* Behavioural claims ("returns 0 on match, -1 on mismatch",
+  "calls `extract_substring` between `:` and `;`") are derived from
+  the control flow of *this* binary. If a different build had a
+  different parser, different delimiters, or did actual MD5 math,
+  those claims would no longer hold.
+* Any confirmation of the user-visible symptom ("firmware silently
+  disappears") is empirical — it was reproduced on the device with
+  one zip build. It has not been reproduced across multiple Benro
+  firmware versions.
+
+Where a claim is not directly visible in the disassembly, the
+text says so explicitly. Where it is, the text is best read as
+"this is what this binary does" rather than "this is what every
+Benro build does".
 
 `SP_UpgradeCheckFw` does not perform the MD5 comparison inline;
 it calls a 480-byte helper called `CrcMd5` six times, once per
@@ -1323,13 +1379,13 @@ files (likely `appfs.ubifs` if it was rebuilt on the host with
 different tooling) is not byte-identical between extraction
 runs.
 
-A definitive test: extract the FwPkt.zip on the host
+A targeted test: extract the FwPkt.zip on the host
 **into a clean directory** using the same `unzip` binary that
 ships on the device (busybox), then re-run
 `/app/getFwInfo.sh` from the device, then `diff` the resulting
 `crcInfo` against our locally-generated one. If they differ,
-the on-device `unzip` is the culprit. If they match, the
-problem is upstream of unzip (SD card corruption, partition
+the on-device `unzip` is the likely culprit. If they match,
+the problem is upstream of unzip (SD card corruption, partition
 mount, etc.).
 
 ---
@@ -1377,14 +1433,20 @@ Prior sessions (checkpointed in the session workspace) include:
 
 ## 15. Open questions, known gaps, and parallel upgrade paths
 
-### 15.1 **RESOLVED — root cause identified**
+### 15.1 **Best-evidence root cause**
 
-The "firmware silently disappears" symptom has been traced to
-`SP_UpgradeCheckFw` at vaddr 0x14023c (see §13.5). It is the
-top-level gatekeeper that runs **before** the per-target
-scanner `SP_SrchGimbalNewPkt`, and it returns failure without
-ever invoking the scanner if any of the six component MD5s in
-`/app/sd/FwPkt/firmwareInfo` does not match the actual file.
+The "firmware silently disappears" symptom is consistent with
+failure in `SP_UpgradeCheckFw` at vaddr 0x14023c (see §13.5).
+It is the top-level gatekeeper that runs **before** the
+per-target scanner `SP_SrchGimbalNewPkt`, and it returns
+failure without ever invoking the scanner if any of the six
+component MD5s in `/app/sd/FwPkt/firmwareInfo` does not match
+the actual file. This is the only validator visible in the
+disassembly of this binary, and the symptom is consistent
+with it. We are calling it the most likely root cause rather
+than a confirmed one because we have not captured the on-
+device log line ("appfs md5 crc fail") for any of the recent
+attempts — only the user-visible silent-reject behaviour.
 
 **The single failure point for 2026-08-30 builds is the
 `appfs` MD5 mismatch** (vaddr 0x1406c8, the fourth of the six
@@ -1407,20 +1469,27 @@ attempt.
 For historical reference (these were the leading hypotheses
 before `SP_UpgradeCheckFw` was identified):
 
-1. **`firmwareInfo` validation** — **CONFIRMED as the
+1. **`firmwareInfo` validation** — **BEST-EVIDENCE as the
    top-level gatekeeper** that runs before any per-target
    scanner. The 6-way MD5 chain (config / uImage / rootfs /
    appfs / polaris403 / polaris413) is the *only* check it
-   performs. With the 2026-08-30 padded-appfs build, the
-   `appfs MD5:` line in `firmwareInfo` has been **updated** to
+   performs (in this binary). With the 2026-08-30
+   padded-appfs build, the `appfs MD5:` line in
+   `firmwareInfo` has been **updated** to
    `4bd9131bc1bcb283a21c77bf62ff39ea` (matching the new
    padded appfs), and the patcher's fail-closed check
    confirms the file is locally self-consistent. So while
-   `firmwareInfo` validation **is** the silent-reject locus
-   (per §13.5), the actual cause is whatever makes the
-   on-device regeneration of `crcInfo` disagree with the
-   `firmwareInfo` shipped in the zip — not a stale MD5 in
-   our `firmwareInfo`.
+   `firmwareInfo` validation **is consistent with** the
+   silent-reject locus (per §13.5), the actual cause is
+   whatever makes the on-device regeneration of `crcInfo`
+   disagree with the `firmwareInfo` shipped in the zip —
+   not a stale MD5 in our `firmwareInfo`. The wording
+   "CONFIRMED" was used in an earlier draft; it is
+   deliberately softened here because the proof is
+   structural (the only check in `SP_UpgradeCheckFw` is the
+   6-way MD5 chain) rather than direct (we have not seen
+   the device log the `appfs md5 crc fail` line for this
+   build — only the silent-reject symptom).
 
 2. **Appfs size or PEB count** — **DOWNGRADED**. The
    2026-08-30 build pads the appfs with 0xFF to the stock
@@ -1473,7 +1542,10 @@ before `SP_UpgradeCheckFw` was identified):
    bug.
 
 8. **`SP_SrchGimbalNewPkt` post-loop "early-break" code**
-   — **CONFIRMED not a bug.** A micro-optimisation only.
+   — **BEST-EVIDENCE not a bug.** A micro-optimisation only;
+   consistent with the disassembly and benign in our test
+   build, but other Benro builds could in principle take
+   the early-break branch differently.
 
 ### 15.3 Still open
 
