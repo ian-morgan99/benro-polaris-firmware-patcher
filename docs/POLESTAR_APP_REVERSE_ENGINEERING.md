@@ -42,6 +42,10 @@
     * 13.5.5 [Fix paths](#1355-fix-paths)
     * 13.5.6 [Verification commands](#1356-verification-commands)
     * 13.5.7 [What this function does NOT do](#1357-what-this-function-does-not-do)
+    * 13.5.8 [`CrcMd5 @ 0x140064` — full disassembly](#1358-crcmd5--0x140064--full-disassembly)
+    * 13.5.8.1 [`extract_substring @ 0x347d0` — the underlying parser](#13581-extract_substring--0x347d0--the-underlying-parser)
+    * 13.5.9 [`UpgradeTask @ 0x13f080` — silent-reboot state machine](#1359-upgradetask--0x13f080--silent-reboot-state-machine)
+    * 13.5.10 [What we now know vs. what we still need to find out](#13510-what-we-now-know-vs-what-we-still-need-to-find-out)
 14. [Cross-references to other docs and prior sessions](#14-cross-references-to-other-docs-and-prior-sessions)
 15. [Open questions, known gaps, and parallel upgrade paths](#15-open-questions-known-gaps-and-parallel-upgrade-paths)
     * 15.1 [RESOLVED — root cause identified](#151-resolved--root-cause-identified)
@@ -1115,6 +1119,219 @@ battery check, SD card detection, NAND failure). The bug is
 > documented for completeness and as the target for any
 > future Pentax/Canon camera-control work.
 
+### 13.5.8 `CrcMd5` — the inner MD5 comparator (CONFIRMED no MD5 math)
+
+`SP_UpgradeCheckFw` does not perform the MD5 comparison inline;
+it calls a 480-byte helper called `CrcMd5` six times, once per
+component. Despite the name, `CrcMd5` does **no MD5 math at all**
+— it is a string comparator that extracts a labelled MD5 string
+from `firmwareInfo` and a labelled MD5 string from `crcInfo` and
+`strcmp`s them.
+
+| Field | Value |
+|---|---|
+| Symbol | `CrcMd5` (function name confirmed by on-device log string at 0xa6e07c) |
+| vaddr | **0x140064** |
+| Size | **480 bytes** (`0x1e0`) — extends to `0x140244` |
+| ARM mode | Yes (function prologues use ARM `STMFD SP!, {r4-r11, LR}`) |
+| Function call | `BL CrcMd5` at vaddrs 0x140598, 0x140604, 0x140670, 0x1406dc, 0x140748, 0x1407b4 |
+
+**Signature**: `int CrcMd5(char* firmwareInfo_buf, char* crcInfo_buf, const char* label_str)`.
+
+**Logic (3-step)**:
+
+1. `memset(buf1, 0, 0x80)` and `memset(buf2, 0, 0x80)` — two 128-byte
+   local buffers on the stack at `[fp-0x88]` and `[fp-0x108]`.
+2. `extract_substring(firmwareInfo, label, ':', ';', buf1, 0x80)` at
+   0x1400cc — extract MD5 hex from `firmwareInfo` between the
+   characters `:` and `;` for the given label. On failure: log
+   and return error (line 0x1ae).
+3. `extract_substring(crcInfo, label, ':', ';', buf2, 0x80)` at
+   0x140140 — same extraction from `crcInfo`. On failure: log
+   and return (line 0x1b0).
+4. `strcmp(buf1, buf2)` at 0x1401a4. Returns 0 (match) or -1 (mismatch).
+5. On mismatch: HI_LOG_Print(severity=2, "md5 crc fail", "CrcMd5",
+   line=0x1b3, label, result_code, esc-reset). Return -1.
+   On match: return 0.
+
+**No actual MD5 computation happens anywhere in this function.**
+The MD5 hashes were already computed on the host when the
+firmware packet was built (and stored in `firmwareInfo`), and
+re-computed on the device by `getFwInfo.sh` (and stored in
+`crcInfo`). `CrcMd5` just compares those two pre-computed
+strings character-by-character.
+
+**The six label strings passed to CrcMd5** (each is the key used
+for substring extraction):
+
+| # | vaddr | Label string | Source file |
+|---|---|---|---|
+| 1 | 0xa6df14 | `config MD5:` | `camera/config` |
+| 2 | 0xa6df34 | `uImage MD5:` | `camera/uImage` |
+| 3 | 0xa6df54 | `rootfs MD5:` | `camera/rootfs.ubifs` |
+| 4 | 0xa6df74 | `appfs MD5:` | `camera/appfs.ubifs` |
+| 5 | 0xa6df94 | `polaris403 MD5:` | `gimbal/polaris403_*.bin` |
+| 6 | 0xa6dfbc | `polaris413 MD5:` | `gimbal/polaris413_*.bin` |
+
+Each label string is 16 bytes long (15 chars + NUL), so they
+are contiguous in `.rodata`. The block runs from
+`0xa6df14` to `0xa6dfcc` (inclusive NUL of last label).
+
+**ARM literal-pool formula (CORRECTED)**: The `LDR rX, [PC, #imm]`
+followed by `ADD rX, PC, rX` pattern that resolves a PC-relative
+constant in ARM mode has an off-by-4 trap:
+
+- LDR at address `A` loads from `(A + 8) & ~3 + imm12`.
+- ADD at address `A+4` reads PC as `(A+4) + 8` and adds the pool
+  value to it.
+- Therefore: `final_va = (A+4+8) + pool_value = (A+12) + pool_value`.
+
+The LDR's PC is `(A+8)`, but the ADD's PC is `(A+12)`. Anyone
+using the LDR's PC base for the ADD will get an answer that is
+4 bytes too small. The correct base is **the address of the ADD
+plus 8**, not the LDR.
+
+For the first CrcMd5 call site (config MD5):
+- 0x140584: LDR r3, [PC, #0x380] — pool at (0x140584+8)&~3 + 0x380 = 0x140908, value 0x0092d984
+- 0x140588: ADD r3, PC, r3 — r3 = (0x140588+8) + 0x0092d984 = 0x140590 + 0x0092d984 = **0xa6df14** ✓
+- 0x14058c: MOV r2, r3 (pass label to CrcMd5 as r2)
+
+#### 13.5.8.1 `extract_substring @ 0x347d0` — the inner extraction helper
+
+`CrcMd5` calls a smaller helper to pull the actual hex MD5 out
+of the manifest text:
+
+| Field | Value |
+|---|---|
+| Symbol | (local — name not in symtab) |
+| vaddr | **0x347d0** |
+| Purpose | Find `label` in `buffer`, then return the substring between the next `delim_open` and `delim_close` characters. |
+
+`extract_substring` uses `strstr` to locate the label, then
+walks forward character-by-character looking for `delim_open`
+(`':'`, 0x3a) and `delim_close` (`';'`, 0x3b), copying the
+intervening bytes into the output buffer (max 0x80). It
+returns the offset of the match on success, or -1 if the
+label is not present or the delimiters are missing.
+
+This is the function that turns a line like
+`config MD5:1905e2d041be62b679f7dc6c64ab9d3a;`
+into the bare hex string `1905e2d041be62b679f7dc6c64ab9d3a`
+that gets compared by `strcmp` in `CrcMd5`.
+
+### 13.5.9 `UpgradeTask @ 0x13f080` — the state machine and silent-reboot path
+
+`UpgradeTask` is the periodic worker thread that runs the
+`SP_UpgradeCheckFw` validator and dispatches the result. It is
+a 6-state state machine (states 0..7 with some gaps), polled on
+a long delay, that — critically — **calls
+`HI_SYSTEM_Reboot`** if the MD5 validation fails. This is why
+the "firmware disappears silently" symptom is so mysterious:
+the device doesn't show a popup, it just reboots after a
+100-second pause, dropping the SD card and erasing the failed
+firmware from view.
+
+| Field | Value |
+|---|---|
+| Symbol | `UpgradeTask` (confirmed by symtab lookup) |
+| vaddr | **0x13f080** |
+| Size | **836 bytes** (`0x344`) — extends to `0x13f3c4` |
+| Spawned by | `SP_PushUpgradeStateTask @ 0x13f04c` (52 bytes) |
+| State field | `[r0 + 0x4b8]` (offset 0x4b8 in the UpgradeTask state struct) |
+| "Running" flag | `[r0 + 0x4b0]` |
+| Counter | `[r0 + 0x4c0]` |
+| Result code | `[r0 + 0x4bc]` |
+| "Error" flag | `[r0 + 0x2c0]` |
+
+**State dispatch table at 0x13f104** (switch on `[r0 + 0x4b8]`):
+
+| State | Target | Meaning |
+|---|---|---|
+| 0 or 1 | `B 0x13f12c` | Initial 600-second wait. |
+| **2** | `B 0x13f1ec` | **Call `SP_UpgradeCheckFw`**, store return in `[r0+0x4bc]`. |
+| **3** | `B 0x13f228` | **MD5 fail**: log → `PowerOffsaveLog` → sleep 100 s → **`HI_SYSTEM_Reboot`**. |
+| 4 | `B 0x13f268` | Success: `SP_CreateGimbalUpgradePthread`, set state to 5. |
+| 5 | `B 0x13f360` | Sleep only (waiting for GimbalUpgradeStatusProc to finish). |
+| 6 | `B 0x13f2c8` | Log → `SP_PushUpgradeState(-1)` → `SP_DelUpgradeFiles` → restart. |
+| 7 | `B 0x13f314` | Log → restart with state=0. |
+
+**State 3 (MD5 failure) handler @ 0x13f228 — 0x13f264**:
+
+```
+state=3 handler:
+    HI_LOG_Print(severity=4, "..")
+    PowerOffsaveLog @ 0x412bc
+    sleep 100_000 ms              ; 100 seconds
+    HI_SYSTEM_Reboot @ 0x2ac94    ; writes LINUX_REBOOT_CMD_RESTART to syscall
+```
+
+This is the entire "silent failure" mechanism. There is no
+popup, no LED pattern, no log line in the user-visible UI
+stream. The device just waits 100 seconds and reboots. By
+the time the user looks at it again, the SD card has been
+re-mounted and the failed `FwPkt.zip` has been re-detected,
+but `UpgradeTask` is back in state 0 (or 1) and waiting
+another 600 seconds. The user sees a device that "just lost
+the firmware".
+
+**`SP_DelUpgradeFiles @ 0x13fff0`**: 116 bytes. After a
+non-recoverable upgrade failure, removes the extracted
+firmware directory. This is what makes the firmware file
+"disappear" — it is not deleted, but the extracted
+`/app/sd/FwPkt/` directory is wiped.
+
+**`HI_SYSTEM_Reboot @ 0x2ac94`**: 32 bytes. Writes
+`LINUX_REBOOT_CMD_RESTART = 0x1234567` to the kernel
+reboot syscall (`reboot(0xfee1dead, 0x6722..., 0x1234567, NULL)`).
+
+**`PowerOffsaveLog @ 0x412bc`**: 224 bytes. Flushes any
+pending log lines to the on-flash log file before the
+reboot, so the failure is at least recorded on the device
+(though not surfaced to the user).
+
+### 13.5.10 What we now know vs. what we still need to find out
+
+After reverse-engineering `SP_UpgradeCheckFw`, `CrcMd5`,
+`extract_substring`, and `UpgradeTask`, the entire silent-fail
+mechanism is mapped out. The remaining unknowns are at the
+**runtime environment** layer, not in the binary:
+
+| Confirmed | Source of confidence |
+|---|---|
+| The 6 MD5 labels that get compared | Disassembly of `SP_UpgradeCheckFw` |
+| The string-extraction format (`LABEL MD5:HEX;`) | `CrcMd5` + `extract_substring` disassembly |
+| The device regenerates `crcInfo` via `getFwInfo.sh` | Log strings in binary + symtab `getFwInfo.sh` |
+| Failure mode is silent 100-s reboot | `UpgradeTask` state-3 disassembly |
+| Padding an appfs changes its MD5 from the original | Locally verified: stock = 47f2ae..., padded = 4bd91... |
+| Updating `firmwareInfo` to match the new appfs MD5 makes the zip locally self-consistent | `patch.sh` fail-closed check passes |
+
+| Unconfirmed | Why it matters |
+|---|---|
+| The on-device `unzip` produces byte-identical output to ours | If the device's busybox `unzip` has a different version, file ordering, or encoding, the extracted files might not match `crcInfo`. |
+| The on-device `md5sum` binary matches the host's | If the on-device `md5sum` is busybox and ours is GNU, MD5 of the same file should be identical (MD5 is deterministic), but worth a sanity check. |
+| File ownership/permissions after `unzip` | If `unzip` runs as root and produces files readable only by root, the subsequent `md5sum` (run via `getFwInfo.sh` as root) will still work, but if any other step expects a non-root user, it could fail. |
+| The 600-s initial wait in `UpgradeTask` state 0/1 | Means a fresh SD card insertion takes up to 10 minutes to even *attempt* validation. Combined with the 100-s reboot on failure, a full test cycle takes ~12 minutes. |
+| The user-visible log file (`/app/log/...`) is flushed on the 100-s timeout | `PowerOffsaveLog` is called, but the log file destination needs verification. |
+
+The single most likely cause of the silent failure, given that
+the zip is locally self-consistent, is that **the on-device
+`getFwInfo.sh` is computing a different MD5 for one of the
+files** — either because the on-device `unzip` extracted a
+different byte sequence (e.g. permission bits encoded into the
+archive, file timestamp differences), or because one of the
+files (likely `appfs.ubifs` if it was rebuilt on the host with
+different tooling) is not byte-identical between extraction
+runs.
+
+A definitive test: extract the FwPkt.zip on the host
+**into a clean directory** using the same `unzip` binary that
+ships on the device (busybox), then re-run
+`/app/getFwInfo.sh` from the device, then `diff` the resulting
+`crcInfo` against our locally-generated one. If they differ,
+the on-device `unzip` is the culprit. If they match, the
+problem is upstream of unzip (SD card corruption, partition
+mount, etc.).
+
 ---
 
 ## 14. Cross-references to other docs and prior sessions
@@ -1190,19 +1407,31 @@ attempt.
 For historical reference (these were the leading hypotheses
 before `SP_UpgradeCheckFw` was identified):
 
-1. **`firmwareInfo` validation** — **CONFIRMED as the locus
-   of the bug**, but specifically the *appfs MD5 line*, not
-   any of the other five (config, uImage, rootfs,
-   polaris403, polaris413). Those five pass on the
-   2026-08-30 build because the gimbal bins and the kernel
-   are bit-identical to stock.
+1. **`firmwareInfo` validation** — **CONFIRMED as the
+   top-level gatekeeper** that runs before any per-target
+   scanner. The 6-way MD5 chain (config / uImage / rootfs /
+   appfs / polaris403 / polaris413) is the *only* check it
+   performs. With the 2026-08-30 padded-appfs build, the
+   `appfs MD5:` line in `firmwareInfo` has been **updated** to
+   `4bd9131bc1bcb283a21c77bf62ff39ea` (matching the new
+   padded appfs), and the patcher's fail-closed check
+   confirms the file is locally self-consistent. So while
+   `firmwareInfo` validation **is** the silent-reject locus
+   (per §13.5), the actual cause is whatever makes the
+   on-device regeneration of `crcInfo` disagree with the
+   `firmwareInfo` shipped in the zip — not a stale MD5 in
+   our `firmwareInfo`.
 
-2. **Appfs size or PEB count** — **CONTRADICTED**. Tested
-   2026-08-30 with a padded appfs that matches stock size
-   exactly. The user reports this build *also* disappears
-   silently. The symptom is therefore due to the MD5 of the
-   appfs differing, not its size. (This is the very
-   observation that led to discovering `SP_UpgradeCheckFw`.)
+2. **Appfs size or PEB count** — **DOWNGRADED**. The
+   2026-08-30 build pads the appfs with 0xFF to the stock
+   size of 64,487,424 bytes, and the patcher confirms this
+   matches stock byte-for-byte. The size is correct, but
+   the **MD5 of the padded appfs (`4bd9131b...`) is
+   necessarily different from the MD5 of the original
+   stock appfs (`47f2ae68...`)**, and the `firmwareInfo`
+   in the zip has been updated to match. So size is no
+   longer suspect; the focus is on what the on-device
+   environment does differently.
 
 3. **The on-board `unzip` invocation** — **UNLIKELY**. The
    unpacking step (phase 1 of `SP_UpgradeCheckFw`) is
@@ -1425,40 +1654,36 @@ format string `%*[^v]v%[^bin]` (extracted from the literal
 pool) which matches `v...X.bin` — i.e. a `v`-suffix version
 string followed by `.bin`.
 
-#### 15.4.5 The `CrcMd5 @ 0x140064` MD5 validator
+#### 15.4.5 The `CrcMd5 @ 0x140064` MD5 comparator (see also §13.5.8)
 
 `SP_UpgradeCheckFw` (§13.5) and `SP_OmsUpgradeCheckFwPkt`
 (§15.4) both call a single shared helper, `CrcMd5`, at
-**vaddr 0x140064**, size 472 bytes. This is the actual MD5
-implementation that the firmware uses for all upgrade-time
-manifest validation.
+**vaddr 0x140064**, size 480 bytes. **Despite the name,
+`CrcMd5` does NOT compute any MD5 hash itself** — it is a
+*string comparator* that extracts a labelled MD5 string from
+the `firmwareInfo` manifest and a labelled MD5 string from the
+on-device-regenerated `crcInfo` manifest and `strcmp`s them.
+The full disassembly and signature is given in §13.5.8 above.
 
 **Return convention** (consistent across all callers):
 - Returns **0** on a successful MD5 match.
-- Returns **non-zero** on any failure (file open error,
-  read error, MD5 mismatch, format parse error).
+- Returns **-1** on any mismatch (no other failure modes).
 
 **Inputs** (per the call sites in `SP_UpgradeCheckFw` and
 `SP_OmsUpgradeCheckFwPkt`):
-- `r0` — buffer or path to the data to hash
-- `r1` — size of the data
-- `r2` — string literal (e.g. `"appfs MD5:"`, `"oms MD5:"`)
-  used to look up the expected hash in the manifest
+- `r0` — pointer to the `firmwareInfo` buffer (read by
+  `fopen`+`fread` in the caller)
+- `r1` — pointer to the `crcInfo` buffer (read by `fopen`+`fread`)
+- `r2` — string literal (e.g. `"appfs MD5:"`, `"oms MD5:"`,
+  `"config MD5:"`, `"uImage MD5:"`, `"rootfs MD5:"`,
+  `"polaris403 MD5:"`, `"polaris413 MD5:"`) used to look up
+  the MD5 string in BOTH manifests.
 
-**The CrcMd5 function itself has not yet been fully
-reverse-engineered** — its internal state machine and the
-exact algorithm (standard MD5 vs. some Benro-tweaked variant)
-are pending. A future revision of this document will contain
-the full disassembly. For now, it is sufficient to know
-that:
-
-1. It is the same function used for both FwPkt and OMS paths.
-2. It uses the literal-pool string (`"appfs MD5:"` /
-   `"oms MD5:"`) as the **key into the firmwareInfo
-   manifest**.
-3. It re-computes the MD5 of the actual data and compares to
-   the manifest's value; on mismatch it logs
-   `"<key> md5 crc fail"` and returns non-zero.
+For the full implementation see §13.5.8 — `CrcMd5` is
+structurally a 3-step (memset, extract_substring, extract_substring,
+strcmp) routine, and it logs the failure with the format
+string `"\x1b[0;32;31mUPGRADE...\x1b[m"` style escape codes
+on mismatch.
 
 #### 15.4.6 Why this matters for the patcher
 
@@ -1499,10 +1724,10 @@ After this revision, the binary's full upgrade topology is:
 
 | # | Path | Zip | Validator | Caller |
 |---|---|---|---|---|
-| ① | Gimbal MCU        | `FwPkt.zip`        | `SP_UpgradeCheckFw` (0x14023c)         | (gimbal state machine) |
-| ② | External device   | `ExDevFwPkt.zip`   | `SP_ExDevFwPktCheck` (0x5ccfc)         | `ExdevUpgradeStatusProc` (0x5baec) |
-| ③ | OMS camera-control| `OmsPkt.zip`       | `SP_OmsUpgradeCheckFwPkt` (0x76f24)    | `OmsUpgradeStatusProc` (0x75bfc) |
-| ④ | TCP / OTA         | (network)          | `SP_UpgradeCheckFw` (0x14023c) reused  | `UpgradeTask` (0x13f080) |
+| ① | SD-card FwPkt     | `FwPkt.zip`        | `SP_UpgradeCheckFw` (0x14023c)         | `UpgradeTask` (0x13f080) |
+| ② | Gimbal MCU flash  | (gimbal .bin)      | `SP_SrchGimbalNewPkt` (0x5eb24)        | `GimbalUpgradeStatusProc` (0x5d244) |
+| ③ | External device   | `ExDevFwPkt.zip`   | `SP_ExDevFwPktCheck` (0x5ccfc)         | `ExdevUpgradeStatusProc` (0x5baec) |
+| ④ | OMS camera-control| `OmsPkt.zip`       | `SP_OmsUpgradeCheckFwPkt` (0x76f24)    | `OmsUpgradeStatusProc` (0x75bfc) |
 
 All four paths funnel through the same `CrcMd5 @ 0x140064`
 helper. The MD5+size manifest convention is identical
