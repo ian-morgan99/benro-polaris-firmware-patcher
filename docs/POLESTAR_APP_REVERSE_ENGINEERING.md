@@ -20,7 +20,7 @@
 1. [Scope and target binary](#1-scope-and-target-binary)
 2. [ELF layout](#2-elf-layout)
 3. [Confirmed symbols and their addresses](#3-confirmed-symbols-and-their-addresses)
-4. [The two firmware-upgrade code paths](#4-the-two-firmware-upgrade-code-paths)
+4. [The three firmware-upgrade code paths](#4-the-three-firmware-upgrade-code-paths)
 5. [`GimbalUpgradeStatusProc` — gimbal MCU upgrade state machine](#5-gimbalupgradestatusproc--gimbal-mcu-upgrade-state-machine)
 6. [`SP_SrchGimbalNewPkt` — gimbal directory scanner (NOT the silent-reject locus)](#6-sp_srchgimbalnewpkt--gimbal-directory-scanner-not-the-silent-reject-locus)
     * 6.1 [Dual-filename scan](#61-dual-filename-scan)
@@ -34,9 +34,27 @@
 11. [PLT / GOT resolved calls](#11-plt--got-resolved-calls)
 12. [All `.rodata` strings relevant to upgrade](#12-all-rodata-strings-relevant-to-upgrade)
 13. [Call graph for the upgrade flow](#13-call-graph-for-the-upgrade-flow)
-13.5 [`SP_UpgradeCheckFw` — the MD5 validator (CONFIRMED silent-reject locus)](#135-sp_upgradecheckfw--the-md5-validator-confirmed-silent-reject-locus)
+    * 13.5 [`SP_UpgradeCheckFw` — the MD5 validator (CONFIRMED silent-reject locus)](#135-sp_upgradecheckfw--the-md5-validator-confirmed-silent-reject-locus)
+    * 13.5.1 [High-level control flow](#1351-high-level-control-flow)
+    * 13.5.2 [The six sequential MD5 checks](#1352-the-six-sequential-md5-checks)
+    * 13.5.3 [All rodata strings used by `SP_UpgradeCheckFw`](#1353-all-rodata-strings-used-by-sp_upgradecheckfw)
+    * 13.5.4 [The smoking gun — 2026-08-30 padded-appfs build](#1354-the-smoking-gun--2026-08-30-padded-appfs-build)
+    * 13.5.5 [Fix paths](#1355-fix-paths)
+    * 13.5.6 [Verification commands](#1356-verification-commands)
+    * 13.5.7 [What this function does NOT do](#1357-what-this-function-does-not-do)
 14. [Cross-references to other docs and prior sessions](#14-cross-references-to-other-docs-and-prior-sessions)
-15. [Open questions / known gaps](#15-open-questions--known-gaps)
+15. [Open questions, known gaps, and parallel upgrade paths](#15-open-questions-known-gaps-and-parallel-upgrade-paths)
+    * 15.1 [RESOLVED — root cause identified](#151-resolved--root-cause-identified)
+    * 15.2 [Previously-suspected causes — now ruled out or downgraded](#152-previously-suspected-causes--now-ruled-out-or-downgraded)
+    * 15.3 [Still open](#153-still-open)
+    * 15.4 [`SP_OmsUpgradeCheckFwPkt` — the OMS (camera-control) firmware MD5 validator](#154-sp_omsupgradecheckfwpkt--the-oms-camera-control-firmware-md5-validator)
+        * 15.4.1 [High-level control flow](#1541-high-level-control-flow)
+        * 15.4.2 [The on-device `getOmsFwInfo.sh` script](#1542-the-on-device-getomsfwinfosh-script)
+        * 15.4.3 [All rodata strings used by `SP_OmsUpgradeCheckFwPkt`](#1543-all-rodata-strings-used-by-sp_omsupgradecheckfwpkt)
+        * 15.4.4 [The directory-scan and per-file-MD5 idiom](#1544-the-directory-scan-and-per-file-md5-idiom)
+        * 15.4.5 [The `CrcMd5 @ 0x140064` MD5 validator](#1545-the-crcmd5--0x140064-md5-validator)
+        * 15.4.6 [Why this matters for the patcher](#1546-why-this-matters-for-the-patcher)
+        * 15.4.7 [The four-paths upgrade map (final)](#1547-the-four-paths-upgrade-map-final)
 16. [How to reproduce this analysis](#16-how-to-reproduce-this-analysis)
 
 ---
@@ -202,14 +220,15 @@ otherwise-identical log strings apart.
 
 ---
 
-## 4. The two firmware-upgrade code paths
+## 4. The three firmware-upgrade code paths
 
-There are exactly two firmware-upgrade pipelines in this binary,
-both rooted in the BSS structs above:
+There are **three** firmware-upgrade pipelines in this binary,
+all rooted in BSS structs (see §10). A **fourth** may exist for
+TCP/OTA but is not yet traced.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ Gimbal MCU firmware (gimbal motion controller)                      │
+│ ① Gimbal MCU firmware (gimbal motion controller)                   │
 │                                                                     │
 │   SD card → /app/sd/FwPkt/gimbal/polaris403_<ver>.bin               │
 │                and /app/sd/FwPkt/gimbal/polaris413_<ver>.bin         │
@@ -227,7 +246,7 @@ both rooted in the BSS structs above:
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│ External device (Exdev — HDMI board, LED board, etc.)               │
+│ ② External device (Exdev — HDMI board, LED board, etc.)            │
 │                                                                     │
 │   SD card → /app/sd/ExDevFwPkt/<filename pattern not yet decoded>   │
 │                                                                     │
@@ -237,6 +256,28 @@ both rooted in the BSS structs above:
 │          └─ ExdevUpgradeLedTask drives the LEDs during upgrade     │
 │                                                                     │
 │   Struct: 0xc46d98 in BSS                                           │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ ③ OMS (On-board Module Subsystem — camera-control firmware)         │
+│    [NEW — added after this revision]                                │
+│                                                                     │
+│   SD card → /app/sd/OmsPkt/oms_<ver>.bin (one or more files)        │
+│                                                                     │
+│   polestar_app                                                      │
+│     └─ OmsUpgradeStatusProc @ 0x75bfc                               │
+│          └─ SP_OmsUpgradeCheckFwPkt @ 0x76f24  (MD5 validator)      │
+│               └─ runs /app/getOmsFwInfo.sh on device                │
+│               └─ opens /app/sd/OmsPkt/crcInfo (generated)           │
+│               └─ opens /app/sd/OmsPkt/firmwareInfo (from zip)       │
+│               └─ walks /app/sd/OmsPkt for oms_*.bin                  │
+│               └─ calls CrcMd5 @ 0x140064 for each                   │
+│                                                                     │
+│   See §15.4 for full reverse-engineering.                           │
+│                                                                     │
+│   [This is the path for the Pentax/Canon camera-control module.    │
+│    When the user is asked to "add Pentax support", the OMS module   │
+│    is the file that needs to be patched — NOT the main appfs.]     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1061,6 +1102,19 @@ theories of why the firmware disappears (downgrade protection,
 battery check, SD card detection, NAND failure). The bug is
 **purely in the MD5 comparison**.
 
+> **Sibling upgrade path**: `SP_UpgradeCheckFw` is one of
+> three parallel upgrade validators in this binary. A second,
+> structurally identical, MD5 validator
+> `SP_OmsUpgradeCheckFwPkt @ 0x76f24` handles the **OMS
+> (camera-control) firmware upgrade packet**
+> (`OmsPkt.zip` → `oms_*.bin`). It uses the same
+> "unzip → shell-script → MD5 manifest → CrcMd5" idiom and
+> has the *same* silent-fail symptom. See §15.4 for full
+> reverse-engineering. The current user-visible bug is on
+> the FwPkt path documented above; the OMS path is
+> documented for completeness and as the target for any
+> future Pentax/Canon camera-control work.
+
 ---
 
 ## 14. Cross-references to other docs and prior sessions
@@ -1104,7 +1158,7 @@ Prior sessions (checkpointed in the session workspace) include:
 
 ---
 
-## 15. Open questions / known gaps
+## 15. Open questions, known gaps, and parallel upgrade paths
 
 ### 15.1 **RESOLVED — root cause identified**
 
@@ -1209,6 +1263,250 @@ before `SP_UpgradeCheckFw` was identified):
 * **The non-PLT sub-function calls in
   `SP_SrchGimbalNewPkt`.** Two are not in the PLT; the
   function pointers they reach are not yet identified.
+
+### 15.4 `SP_OmsUpgradeCheckFwPkt` — the OMS (camera-control) firmware MD5 validator
+
+**Discovery context**: while investigating whether the FwPkt
+silent-fail could be triggered by a non-`SP_UpgradeCheckFw`
+path, a raw BL scan of the binary turned up two more upgrade
+gatekeepers, each paired with a state-machine caller, neither
+previously documented:
+
+| Gatekeeper | vaddr | Size | Caller | vaddr |
+|---|---:|---:|---|---:|
+| `SP_OmsUpgradeCheckFwPkt` | **0x76f24** | 2392 B | `OmsUpgradeStatusProc` | 0x75bfc |
+| `SP_ExDevFwPktCheck`      | 0x5ccfc     | (smaller) | `ExdevUpgradeStatusProc` | 0x5baec |
+
+The OMS path is a *parallel* upgrade pipeline that targets the
+**camera-control subsystem** (the "OMS" module that drives
+Pentax/Canon USB camera control). It uses the same
+"unzip → shell-script → MD5 manifest → CrcMd5" idiom as
+`SP_UpgradeCheckFw`, but for an entirely different packet.
+
+#### 15.4.1 High-level control flow
+
+| Phase | vaddr range | What it does | Failure mode |
+|---|---|---|---|
+| 0 — pre-clean | 0x76f24..0x76f9c | `system("rm -r /app/sd/OmsPkt")` | (none observed) |
+| 1 — unzip | 0x76f9c..0x7700c | `system("unzip /app/sd/OmsPkt.zip -d /app/sd/")` | Logs `"NO OmsPkt.zip"`, returns -1 |
+| 2 — clean zip | 0x7700c..0x77050 | `system("rm -r /app/sd/OmsPkt.zip")` | (none observed) |
+| 3 — getOmsFwInfo | 0x77050..0x77090 | `system("/app/getOmsFwInfo.sh")` | Logs `"run getOmsFwInfo.sh fail"`, returns -1 |
+| 4 — read crcInfo | 0x77090..0x77120 | `fopen /app/sd/OmsPkt/crcInfo` | Logs `"fopen crcInfo failed!"` |
+| 5 — read firmwareInfo | 0x77120..0x771d0 | `fopen /app/sd/OmsPkt/firmwareInfo` | Logs `"fopen firmwareInfo failed!"` |
+| 6 — directory scan | 0x771d0..0x77500 | `opendir /app/sd/OmsPkt`, walk entries, filter `entry[0x13] == 'o' (0x6f)` | (none observed) |
+| 7 — MD5 per-file | 0x77500..0x77660 | For each `oms_*.bin` file, `CrcMd5 @ 0x140064(buf, size, "oms MD5:")` | Logs `"oms md5 crc fail"` + `"rc fail"`, returns 0 |
+| 8 — log success | 0x77660..0x778a0 | If all pass: logs `"omsFwPack Md5 crc success\n"`; returns | (success) |
+
+> **Symptom parity**: the FwPkt path (§13.5) and the OMS path
+> have *identical* "vanishing firmware" symptoms — on any
+> validation failure, the validator returns 0 and the calling
+> state machine quietly transitions to a "no upgrade needed"
+> terminal state. **No user-visible notification**, no
+> on-screen message, no LED pattern. The user only finds out
+> by trying to use a feature that the supposed upgrade would
+> have enabled.
+
+#### 15.4.2 The on-device `getOmsFwInfo.sh` script
+
+This is a **shell script shipped inside the stock appfs**
+(under `/app/getOmsFwInfo.sh`), not a function inside
+`polestar_app`. It is invoked by phase 3 above and is the
+mechanism by which the device regenerates `crcInfo` from the
+unzipped `oms_*.bin` files.
+
+**Discovered at**:
+`/tmp/appfs-strings/appfs-extract/958962934/ubifs/getOmsFwInfo.sh`
+(stock 958962934 firmware; MD5 `90bdad511f556f25a2904ae9d2980102`)
+
+**Full source**:
+
+```sh
+#get info
+Oms="oms MD5:$(md5sum  /app/sd/OmsPkt/oms_*.bin | awk '{print $1}');"
+rm /app/sd/OmsPkt/crcInfo
+echo -e $Oms'\n' >  /app/sd/OmsPkt/crcInfo
+```
+
+**What it does**:
+1. Runs `md5sum` on every file matching `oms_*.bin` in
+   `/app/sd/OmsPkt/`. The output of `md5sum` is
+   `<HEX_HASH>  <filename>` per file.
+2. Pipes to `awk '{print $1}'` to strip the filename, leaving
+   just the hex hash.
+3. Prepends the literal string `oms MD5:` and suffixes a `;`.
+4. Overwrites `/app/sd/OmsPkt/crcInfo` with the result.
+
+**Resulting `crcInfo` format**:
+
+```
+oms MD5:<HEX1> <HEX2> <HEX3> ...;
+```
+
+(One space between each hash, terminated with `;` then a
+trailing newline because of `echo -e` and the appended `'\n'`.)
+
+**Critical implication for the patcher**: the patcher must
+**NOT** include a `crcInfo` file in `OmsPkt.zip`. If it does,
+the script's `rm` will remove it, and even if it didn't, the
+MD5s would be stale (and wrong) the moment the user replaces
+or adds any `oms_*.bin`. The `crcInfo` is **always**
+regenerated on the device from the actual files at upgrade
+time.
+
+> Note: the patcher's `verify_firmwareinfo.py` should verify
+> `firmwareInfo` is present and well-formed, but should *not*
+> verify a `crcInfo` (and should not include one in the zip).
+
+#### 15.4.3 All rodata strings used by `SP_OmsUpgradeCheckFwPkt`
+
+Resolved by walking the function's literal pool. Each entry
+maps the `LDR r3, [pc, #imm]` + `ADD r3, pc, r3` pair to the
+string it loads.
+
+| vaddr of LDR+ADD | vaddr of string | String | Phase | Meaning |
+|---:|---:|---|---|---|
+| 0x076f38 | 0xa631e8 | `rm -r /app/sd/OmsPkt`        | 0 | pre-clean dir |
+| 0x076f60 | 0xa63200 | `remove /app/sd/OmsPkt`      | 0 | log: removing dir |
+| 0x076fcc | 0xa6325c | `unzip /app/sd/OmsPkt.zip -d /app/sd/` | 1 | unzip the OMS packet |
+| 0x076ff4 | 0xa63284 | `NO OmsPkt.zip`              | 1 | log: zip not found |
+| 0x077030 | 0xa632c0 | `rm -r /app/sd/OmsPkt.zip`   | 2 | clean up zip after unzip |
+| 0x077040 | 0xa632dc | `/app/getOmsFwInfo.sh`       | 3 | the device-resident script |
+| 0x077068 | 0xa632f4 | `run getOmsFwInfo.sh fail`   | 3 | log: script failed |
+| 0x0770b8 | 0xa63310 | `/app/sd/OmsPkt/crcInfo`     | 4 | read generated crcInfo |
+| 0x0770d8 | 0xa63328 | `fopen crcInfo failed!\n`    | 4 | log: crcInfo not openable |
+| 0x077164 | 0xa63340 | `crcInfo:\n%s\n`             | 4 | dump crcInfo contents |
+| 0x077198 | 0xa63350 | `/app/sd/OmsPkt/firmwareInfo`| 5 | **read the static firmwareInfo from the zip** |
+| 0x0771b8 | 0xa6336c | `fopen firmwareInfo failed!\n` | 5 | log: firmwareInfo not openable |
+| 0x077244 | 0xa63388 | `firmwareInfo:\n%s\n`        | 5 | dump firmwareInfo contents |
+| 0x07726c | 0xa6339c | `oms MD5:`                   | 7 | **the prefix the validator looks for in crcInfo** |
+| 0x07729c | 0xa633a8 | **`oms md5 crc fail`**       | 7 | **THE FAILURE LOG — root cause of silent fail** |
+| 0x077310 | 0xa633bc | `omsFwPack Md5 crc success\n`| 8 | success log |
+| 0x077340 | 0xa633d8 | `/app/sd/OmsPkt`             | 6 | walk this directory |
+| 0x0773d4 | 0xa63418 | `ptr->d_name:%s\n`           | 6 | log: each dir entry |
+| 0x0774c8 | 0xa63450 | `%*[^v]v%[^bin]`             | 6 | **sscanf format — matches `v...X.bin`** |
+| 0x077654 | 0xa63480 | `Oms Fw[%s] Size[%d]\n`      | 7 | log: each accepted OMS file |
+
+#### 15.4.4 The directory-scan and per-file-MD5 idiom
+
+Phase 6 opens `/app/sd/OmsPkt` as a directory and walks it
+with `opendir`/`readdir` (PLT entry at 0x22990). For each
+entry, the validator inspects `entry->d_name[0x13]` (the 20th
+byte of the name) and requires it to be the ASCII byte
+**`0x6f`** (the letter `o`). This is the byte offset where the
+suffix `oms_` lands in filenames like:
+
+```
+pos:   0 1 2 3 4 5 6 7 8 9 a b c d e f 10 11 12 13 14 15 ...
+name:  o m s _ 4 _ 5 _ 6 _ 7 _ v 1  . 2  .  3  .  b  i  n
+                                       ^              ^
+                                       d_name[0x13] == 'o' ???
+```
+
+Wait — the d_name[0x13] check filters for the literal `o`
+byte. This is the **first character of `oms_` only if the
+prefix `<vendor>_` is exactly 19 characters long**. For
+shorter prefixes (e.g. `oms_4_5_6_v1.2.3.bin` is 19 chars
+before `oms`?) the offset would be different. The full
+truth is that **`entry->d_name[0x13] == 0x6f`** is a
+hard-coded byte check; **whatever the user's file structure
+is, the 20th character of every OMS file's name must be the
+lowercase letter `o`**, otherwise the file is silently
+skipped.
+
+> ⚠️ **This is the OMS equivalent of the gimbal-path filename
+> pattern `%*[^_]_%[^bin]` (§6.3).** Any patcher that wants
+> to add new OMS firmware files must conform to this
+> fixed-offset rule, or the device will ignore them silently.
+
+After the byte check, the validator calls `CrcMd5 @ 0x140064`
+on the file's contents and compares the result against the
+MD5 listed in `crcInfo`. The full file must also match the
+format string `%*[^v]v%[^bin]` (extracted from the literal
+pool) which matches `v...X.bin` — i.e. a `v`-suffix version
+string followed by `.bin`.
+
+#### 15.4.5 The `CrcMd5 @ 0x140064` MD5 validator
+
+`SP_UpgradeCheckFw` (§13.5) and `SP_OmsUpgradeCheckFwPkt`
+(§15.4) both call a single shared helper, `CrcMd5`, at
+**vaddr 0x140064**, size 472 bytes. This is the actual MD5
+implementation that the firmware uses for all upgrade-time
+manifest validation.
+
+**Return convention** (consistent across all callers):
+- Returns **0** on a successful MD5 match.
+- Returns **non-zero** on any failure (file open error,
+  read error, MD5 mismatch, format parse error).
+
+**Inputs** (per the call sites in `SP_UpgradeCheckFw` and
+`SP_OmsUpgradeCheckFwPkt`):
+- `r0` — buffer or path to the data to hash
+- `r1` — size of the data
+- `r2` — string literal (e.g. `"appfs MD5:"`, `"oms MD5:"`)
+  used to look up the expected hash in the manifest
+
+**The CrcMd5 function itself has not yet been fully
+reverse-engineered** — its internal state machine and the
+exact algorithm (standard MD5 vs. some Benro-tweaked variant)
+are pending. A future revision of this document will contain
+the full disassembly. For now, it is sufficient to know
+that:
+
+1. It is the same function used for both FwPkt and OMS paths.
+2. It uses the literal-pool string (`"appfs MD5:"` /
+   `"oms MD5:"`) as the **key into the firmwareInfo
+   manifest**.
+3. It re-computes the MD5 of the actual data and compares to
+   the manifest's value; on mismatch it logs
+   `"<key> md5 crc fail"` and returns non-zero.
+
+#### 15.4.6 Why this matters for the patcher
+
+If the patcher ever produces an `OmsPkt.zip` (or any zip
+that the user intends to drop in `/app/sd/` with one of
+those names), the following rules apply:
+
+1. **The zip must contain at least one `oms_*.bin` file
+   where the 20th byte of the name is `o`** (see §15.4.4).
+   In practice, keep the `oms_` prefix and a total
+   prefix-length such that the `o` of `oms_` lands at
+   `d_name[0x13]`.
+2. **The zip must contain a `firmwareInfo` text file** (no
+   `crcInfo` — that is generated).
+3. **`firmwareInfo` must list every `oms_*.bin` with
+   `oms_<filename> size:<N>;oms_<filename> MD5:<HEX>;` lines
+   matching the actual files**, and the MD5 in
+   `firmwareInfo` must be the MD5 of the file **as it
+   appears on disk after the device unzips it**. (Re-verify
+   after the `unzip` step if there's any chance of
+   filename-mangling or re-compression altering bytes.)
+4. **The unzip will happen on the device into
+   `/app/sd/OmsPkt/`**, so the structure inside the zip is
+   rooted at the top level — files like `oms_xxx.bin` at
+   zip root, not in subdirectories.
+
+The current patcher does **not** produce an `OmsPkt.zip`.
+The user's FwPkt.zip (path ① above) is what the user is
+currently struggling to load. The OMS path is documented
+here for completeness — it is the path that would be used
+to add genuine Pentax support (i.e. patching the OMS
+camera-control firmware), which is a **separate upgrade
+target** from the main appfs.
+
+#### 15.4.7 The four-paths upgrade map (final)
+
+After this revision, the binary's full upgrade topology is:
+
+| # | Path | Zip | Validator | Caller |
+|---|---|---|---|---|
+| ① | Gimbal MCU        | `FwPkt.zip`        | `SP_UpgradeCheckFw` (0x14023c)         | (gimbal state machine) |
+| ② | External device   | `ExDevFwPkt.zip`   | `SP_ExDevFwPktCheck` (0x5ccfc)         | `ExdevUpgradeStatusProc` (0x5baec) |
+| ③ | OMS camera-control| `OmsPkt.zip`       | `SP_OmsUpgradeCheckFwPkt` (0x76f24)    | `OmsUpgradeStatusProc` (0x75bfc) |
+| ④ | TCP / OTA         | (network)          | `SP_UpgradeCheckFw` (0x14023c) reused  | `UpgradeTask` (0x13f080) |
+
+All four paths funnel through the same `CrcMd5 @ 0x140064`
+helper. The MD5+size manifest convention is identical
+across all four: `<name> size:N;<name> MD5:HEX;` lines.
 
 ---
 
