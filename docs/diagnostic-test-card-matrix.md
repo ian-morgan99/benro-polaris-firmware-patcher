@@ -321,6 +321,16 @@ python3 docs/tools/build_test_cards.py
 It writes to `/tmp/test-cards/` and copies to the SMB share at
 `Projects/Pentax/BenroPolaris/diagnostics/2026-08-30_test-cards/`.
 
+If the SMB share is not mounted (gvfs does not auto-reconnect after
+reboot/wake), the script skips the SMB copy and prints a hint:
+
+```
+gio mount smb://morganbackup.local/home
+```
+
+then re-run the script. The local files in `/tmp/test-cards/` are
+always written.
+
 The script does not require a connected device — it's pure host-side
 zip rewriting. The only device-side step is loading the SD card and
 watching the boot sequence.

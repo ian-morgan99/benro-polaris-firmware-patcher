@@ -296,16 +296,23 @@ def main():
     # Verify
     verify_cards(cards)
 
-    # Copy to SMB
-    SMB_DEST.mkdir(parents=True, exist_ok=True)
-    for label, zip_path in cards:
-        target = SMB_DEST / zip_path.name
-        shutil.copyfile(zip_path, target)
-        print(f"[smb] {target}")
-
-    print("\nDone. Test cards at:")
-    print(f"  local: {LOCAL_OUT}")
-    print(f"  smb:   {SMB_DEST}")
+    # Copy to SMB only if the share is currently mounted; otherwise skip
+    # gracefully so the script still produces local output and prints a hint.
+    if SMB_DEST.parent.is_dir():
+        SMB_DEST.mkdir(parents=True, exist_ok=True)
+        for label, zip_path in cards:
+            target = SMB_DEST / zip_path.name
+            shutil.copyfile(zip_path, target)
+            print(f"[smb] {target}")
+        print("\nDone. Test cards at:")
+        print(f"  local: {LOCAL_OUT}")
+        print(f"  smb:   {SMB_DEST}")
+    else:
+        print("\nDone. Test cards at:")
+        print(f"  local: {LOCAL_OUT}")
+        print(f"  smb:   SKIPPED (share not mounted at {SMB_DEST})")
+        print("         remount with: gio mount smb://morganbackup.local/Projects/Pentax/BenroPolaris/")
+        print("         then re-run with --copy-to-smb")
 
 if __name__ == "__main__":
     main()
