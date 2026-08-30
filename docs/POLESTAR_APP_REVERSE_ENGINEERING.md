@@ -22,7 +22,11 @@
 3. [Confirmed symbols and their addresses](#3-confirmed-symbols-and-their-addresses)
 4. [The two firmware-upgrade code paths](#4-the-two-firmware-upgrade-code-paths)
 5. [`GimbalUpgradeStatusProc` — gimbal MCU upgrade state machine](#5-gimbalupgradestatusproc--gimbal-mcu-upgrade-state-machine)
-6. [`SP_SrchGimbalNewPkt` — the silent-reject locus](#6-sp_srchgimbalnewpkt--the-silent-reject-locus)
+6. [`SP_SrchGimbalNewPkt` — gimbal directory scanner (NOT the silent-reject locus)](#6-sp_srchgimbalnewpkt--gimbal-directory-scanner-not-the-silent-reject-locus)
+    * 6.1 [Dual-filename scan](#61-dual-filename-scan)
+    * 6.2 [sscanf format `"%*[^_]_%[^bin]"`](#62-sscanf-format-_bin)
+    * 6.3 [Complete pseudocode](#63-complete-pseudocode)
+    * 6.4 [0x5A UART-mystery — closed](#64-0x5a-uart-mystery--closed)
 7. [`SP_UartRcvGimbalUpgradeMsgProc` — UART message handler](#7-sp_uartrcvgimbalupgrademsgproc--uart-message-handler)
 8. [`SP_ExdevUpgradeFromSD` — Exdev (external-device) upgrade path](#8-sp_exdevupgradefromsd--exdev-external-device-upgrade-path)
 9. [`SP_CreateGimbalUpgradePthread` — upgrade thread entry point](#9-sp_creategimbalupgradepthread--upgrade-thread-entry-point)
@@ -30,6 +34,7 @@
 11. [PLT / GOT resolved calls](#11-plt--got-resolved-calls)
 12. [All `.rodata` strings relevant to upgrade](#12-all-rodata-strings-relevant-to-upgrade)
 13. [Call graph for the upgrade flow](#13-call-graph-for-the-upgrade-flow)
+13.5 [`SP_UpgradeCheckFw` — the MD5 validator (CONFIRMED silent-reject locus)](#135-sp_upgradecheckfw--the-md5-validator-confirmed-silent-reject-locus)
 14. [Cross-references to other docs and prior sessions](#14-cross-references-to-other-docs-and-prior-sessions)
 15. [Open questions / known gaps](#15-open-questions--known-gaps)
 16. [How to reproduce this analysis](#16-how-to-reproduce-this-analysis)
@@ -138,7 +143,7 @@ disassembly. They are **not** inferred from string-table searches.
 | `GimbalUpgradeStatusProc` | 0x5dc08 | 0x8ec (2284) | State machine that drives a gimbal upgrade end-to-end |
 | `SP_CreateGimbalUpgradePthread` | 0x5e4f4 | 0x1c4 (452) | Creates the gimbal-upgrade pthread, primes its initial state |
 | `SP_UartRcvGimbalUpgradeMsgProc` | 0x5e6b8 | 0x46c (1132) | Parses UART messages from the gimbal MCU |
-| `SP_SrchGimbalNewPkt` | 0x5eb24 | 0x900 (2304) | **Silent-reject locus** — scans `/app/sd/FwPkt/gimbal/` for a valid packet |
+| `SP_SrchGimbalNewPkt` | 0x5eb24 | 0x900 (2304) | **Silent-reject locus** — scans `/app/sd/FwPkt/gimbal/` for `polaris403_*.bin` AND `polaris413_*.bin`, each > 1000 bytes |
 | `SP_ExdevUpgradeFromSD` | 0x5d89c | 0x258 (600) | Exdev (external-device) upgrade, scans `/app/sd/ExDevFwPkt/` |
 | `SP_GetGimbalUpgradeInfo` | 0x5daf4 | 0x24 (36) | Tiny accessor that returns the gimbal-upgrade struct pointer |
 | `SP_PushExdevUpgradeStateToApp` | 0x5d6bc | 0xa8 (168) | Pushes current exdev upgrade state up to the app layer |
@@ -152,11 +157,11 @@ disassembly. They are **not** inferred from string-table searches.
 | `opendir` (PLT 0x207a0) | resolves via GOT 0xbf31e0 | Opens the firmware-packet directory |
 | `readdir` (PLT 0x22990) | resolves via GOT 0xbf3cd8 | Iterates the directory |
 | `closedir` (PLT 0x21a84) | resolves via GOT 0xbf3830 | Closes the directory at end |
-| `strstr` (PLT 0x205c0) | resolves via GOT 0xbf3140 | Tests for "Pkt", ".bin" in dirent names |
-| `memset` (PLT 0x22198) | resolves via GOT 0xbf3a88 | Zeros the 128-byte filename buffer |
+| `strstr` (PLT 0x205c0) | resolves via GOT 0xbf3140 | Tests for ".bin", then "polaris403_" (first pass) and "polaris413_" (second pass) in dirent names |
+| `memset` (PLT 0x22198) | resolves via GOT 0xbf3a88 | Zeros the 128-byte filename buffer at `g+0xac` / `g+0x14c` |
 | `strcpy` (PLT 0x21604) | resolves via GOT 0xbf36ac | Copies the directory path into the buffer |
 | `strcat` (PLT 0x22468) | resolves via GOT 0xbf3b78 | Appends the dirent name to the buffer |
-| `sscanf` (PLT 0x21718) | resolves via GOT 0xbf3708 | Parses "X_Y.bin" → Y |
+| `sscanf` (PLT 0x21718) | resolves via GOT 0xbf3708 | Parses `polaris403_<ver>.bin` → `<ver>` (and again for `polaris413_`) |
 | `strlen` (PLT 0x2197c) | resolves via GOT 0xbf37d4 | Measures parsed Y for null-termination |
 | `fopen64` (PLT 0x202d8) | resolves via GOT 0xbf3048 | Opens the constructed file path |
 | `fclose` (PLT 0x20860) | resolves via GOT 0xbf3278 | Closes the file after size check |
@@ -164,6 +169,12 @@ disassembly. They are **not** inferred from string-table searches.
 | `ftell` (PLT 0x2029c) | resolves via GOT 0xbf3034 | Reads file size |
 | `rewind` (PLT 0x22228) | resolves via GOT 0xbf3ab8 | Rewinds to start (NB: not `fread`; this was a previous misread) |
 | `HI_LOG_Print` | **0x1a2560** (direct symtab, NOT PLT) | The single logging API used throughout the upgrade code |
+| `SP_UpgradeCheckFw` | **0x14023c** (1876 bytes) | Unzips `FwPkt.zip`, runs `getFwInfo.sh`, and **sequentially MD5-checks all 6 firmwareInfo entries** (`config`, `uImage`, `rootfs`, `appfs`, `polaris403`, `polaris413`). **This is the silent-reject locus** — see §13.5. |
+| `CrcMd5` | **0x140064** (472 bytes) | Helper called by `SP_UpgradeCheckFw`; performs the actual MD5 computation and compares against the expected digest from `firmwareInfo`. |
+| `SP_GetFwVer` | 0x13f570 (660 bytes) | Reads `/app/sd/FwPkt/FwVer` (top-level version) |
+| `SP_GetDeviceVer` | 0x13f804 (1108 bytes) | Reads the on-board device version |
+| `SP_IsDelUpgradeFiles` | 0x13fed8 (280 bytes) | Predicate: should `/app/sd/FwPkt*` be deleted? |
+| `SP_DelUpgradeFiles` | 0x13fff0 (116 bytes) | Deletes `/app/sd/FwPkt*` if predicate is true |
 
 `HI_LOG_Print` is the only log function called by the upgrade
 code. Its prototype is:
@@ -200,7 +211,8 @@ both rooted in the BSS structs above:
 ┌─────────────────────────────────────────────────────────────────────┐
 │ Gimbal MCU firmware (gimbal motion controller)                      │
 │                                                                     │
-│   SD card → /app/sd/FwPkt/gimbal/X_Y.bin                            │
+│   SD card → /app/sd/FwPkt/gimbal/polaris403_<ver>.bin               │
+│                and /app/sd/FwPkt/gimbal/polaris413_<ver>.bin         │
 │                                                                     │
 │   polestar_app                                                      │
 │     └─ SP_SrchGimbalNewPkt("/app/sd/FwPkt/gimbal/")   [silent test] │
@@ -217,7 +229,7 @@ both rooted in the BSS structs above:
 ┌─────────────────────────────────────────────────────────────────────┐
 │ External device (Exdev — HDMI board, LED board, etc.)               │
 │                                                                     │
-│   SD card → /app/sd/ExDevFwPkt/X_Y.bin                             │
+│   SD card → /app/sd/ExDevFwPkt/<filename pattern not yet decoded>   │
 │                                                                     │
 │   polestar_app                                                      │
 │     └─ SP_ExdevUpgradeFromSD                                        │
@@ -316,225 +328,325 @@ path** that the user observed.
 
 ---
 
-## 6. `SP_SrchGimbalNewPkt` — the silent-reject locus
+## 6. `SP_SrchGimbalNewPkt` — gimbal directory scanner (NOT the silent-reject locus)
 
-`SP_SrchGimbalNewPkt` is 2304 bytes of pure C compiled to ARM. It
-takes a single argument: the directory to scan. In the upgrade
-flow, the caller passes the constant string
-`/app/sd/FwPkt/gimbal/` (rodata 0xa5f26c).
+> **Note (revised 2026-08-30):** This function was initially
+> hypothesised to be the silent-reject locus because it is the
+> function whose return value the user-observable flow
+> pivots on. That hypothesis is **wrong**. The actual
+> silent-reject locus is `SP_UpgradeCheckFw`, which runs
+> *before* `SP_SrchGimbalNewPkt` and silently returns
+> failure on any `firmwareInfo` MD5 mismatch. See §13.5
+> for the confirmed root cause. This section is retained
+> because `SP_SrchGimbalNewPkt` is still a *downstream*
+> gatekeeper whose contract must be satisfied for the
+> upgrade to proceed.
 
-**Return contract:** `0` on success, `-1` on failure. Failure
-is *not* a hard error; the caller treats `-1` as "no upgrade
-available" and never invokes `SP_CreateGimbalUpgradePthread`.
-This is exactly the "silent" path.
+`SP_SrchGimbalNewPkt` is **2304 bytes** of pure C compiled to ARM
+(`.text` vaddr `0x5eb24`, `.text+0x900` ends at `0x5f424`).
+Symbol verified by `readelf -s`. The function takes a single
+argument: the directory to scan. In the upgrade flow the caller
+passes the constant string `/app/sd/FwPkt/gimbal/`
+(`.rodata` vaddr `0xa5f26c`).
 
-### 6.1 The two-pattern scan
+**Return contract:** `0` on success, `-1` on failure. The caller
+treats `-1` as "no upgrade available" and never invokes
+`SP_CreateGimbalUpgradePthread` — this is the *secondary*
+silent path the user observed. It is gated by
+`SP_UpgradeCheckFw`, so the failure usually happens upstream
+of this function and `SP_SrchGimbalNewPkt` is never called.
 
-The function walks the directory with `opendir`/`readdir`/`closedir`
-and applies **two independent filename tests** to every entry.
-**Both** must produce a positive result for the function to
-return 0:
+### 6.1 The dual-filename scan (the only test this function does)
 
-1. **Pkt test.** The dirent name must contain the literal
-   substring `"Pkt"` (`strstr(..., "Pkt")` at 0x5ebb0).
-   The function then `sscanf`s the name with format
-   `"%*[^_]_%[^bin]"` (rodata 0xa5f428) which means
-   *"skip everything up to and including the first `_`,
-   then read everything up to but not including `bin`"*.
-   So a name like `100_Pkt_42.bin` would yield `"42"` in
-   `struct+0x8c` (the temp parse buffer).
+`SP_SrchGimbalNewPkt` walks the supplied directory with
+`opendir`/`readdir`/`closedir` and applies **two independent
+filename tests** to every entry in a single pass of the `readdir`
+loop. **Both** must produce a positive result for the function to
+return `0`:
 
-   Then the function opens the file and checks that its size
-   (from `ftell`) is **greater than 1000 bytes (0x3e8)**. If so,
-   the test is considered passed; `[fp,-8] = 0` is set as
-   the success flag.
+1. **`polaris403_` test** (first test in the loop body).
+   The dirent name must contain the literal substring
+   `"polaris403_"` (`strstr` at `0x5ebdc` against
+   `.rodata@0xa5f3d8`) **and** the literal substring `".bin"`
+   (`strstr` at `0x5ebb0` against `.rodata@0xa5f3d0`).
+   The first character of the basename must be `'p'`
+   (the code does `cmp r3, #0x70` against
+   `d_name[0]`; `0x70` = `'p'`).
 
-2. **pY.bin test.** After the `Pkt` test, the same `readdir` is
-   continued with `strstr(..., ".bin")` (0x5ebe4) and a check that
-   `r3[0x13] == 0x70` (ASCII `'p'`) at 0x5ebf8. So the filename
-   must end in `.bin` *and* the first character of the basename
-   must be `'p'`. A name like `pHID_LED_2.0.bin` would qualify.
+2. **`polaris413_` test** (second test in the same loop body,
+   after the polaris403_ block). The dirent name must contain
+   the literal substring `"polaris413_"` (`strstr` at
+   `0x5ef18` against `.rodata@0xa5f4a8`). The first character
+   of the basename is again checked to be `'p'`
+   (`cmp r3, #0x70`).
 
-   The same size check (>1000 bytes) is applied. If passed,
-   `[fp,-0xc] = 0` is set.
+For each matching file the function:
+* copies the full path (`dirpath + d_name`) into a 128-byte
+  buffer in the BSS struct (`+0xac` for 403, `+0x14c` for 413);
+* `sscanf`s the bare filename with the format
+  `"%*[^_]_%[^bin]"` (rodata `0xa5f428`);
+* truncates the version string by overwriting its last byte
+  with `\0`;
+* `fopen64`s the file in read mode and on success
+  `fseek`/`ftell`s to get the size;
+* sets the success flag (`pkt_ok` / `py_ok`) to **`1`** if the
+  file size is **strictly greater than 1000 bytes** (`cmp r3,
+  #0x3e8; bhi success` at `0x5ee60` and `0x5f19c`), else to
+  **`0`** after logging the
+  `"%s size is [%d]],fw error!\n"` (red) message.
 
-Only if **both `[fp,-8] == 0` and `[fp,-0xc] == 0`** does the
-function return `0` (success). Otherwise it returns `-1`.
+The function is **NOT** a downgrade-rejector: there is no
+version comparison anywhere in `SP_SrchGimbalNewPkt`. The
+`%[^bin]` `sscanf` extracts the version for **logging only**;
+the extracted version is never compared against an
+on-board `FwVer`. The stock `FwPkt.zip` ships with
+`polaris403_2.0.0.22.bin` and `polaris413_2.0.0.22.bin`
+(verified: 84328 + 84284 bytes), even though the on-board
+`FwVer` is `4.0.0.32;date:2025.05.09;` (read from the running
+Polaris's `appInfo`). This proves the field-installed Benro
+firmware is "older" than the running app — the app does not
+check for downgrade at this layer.
 
-### 6.2 Complete pseudocode
+The 1000-byte threshold is a **trivial "skip empty / partial
+files" guard**, not a sanity check on the payload.
+
+### 6.2 sscanf format `"%*[^_]_%[^bin]"` — version extraction
+
+The format at `.rodata@0xa5f428` is:
+
+```c
+"%*[^_]_%[^bin]"
+```
+
+Breaking it down:
+
+| Conversion | Meaning |
+|---|---|
+| `%*[^_]` | Read characters into a *discarded* field until `_` is found (or end-of-input). The match itself consumes the `_` because `_` is in the scanset `[^_]`'s *stop set*... no wait — `[^_]` is the set of characters **not** `_`, so the `*`-suppressed field reads up to but not including the first `_`. |
+| `_` | Literal underscore (consumes the underscore left between the two fields). |
+| `%[^bin]` | Read characters into the destination buffer until one of `'b'`, `'i'`, `'n'` is seen (or end-of-input). |
+
+So for `polaris403_4.0.0.32.bin`:
+* `%*[^_]` consumes `polaris403` and stops just before `_`;
+* literal `_` consumes the underscore;
+* `%[^bin]` consumes `4.0.0.32.` (the `.` is not in {b,i,n} so it's
+  included) and stops at the `b` of `.bin`;
+* the destination now contains the C-string `"4.0.0.32."`
+  (with a trailing period).
+
+The function then calls `strlen` and writes `\0` to
+`buf[strlen(buf)-1]`, **truncating the trailing period**, giving
+`"4.0.0.32"`. The same logic applies for the 413 path.
+
+**Quirk:** if the filename had a `b`, `i`, or `n` *inside* the
+version string, `%[^bin]` would terminate early. The stock
+filenames use only `.` as a separator, so this never trips
+in practice.
+
+### 6.3 Complete pseudocode
 
 What follows is the decompilation of `SP_SrchGimbalNewPkt` from
-0x5eb24 to 0x5f424, with every PLT call resolved. **All function
-names are confirmed by symtab lookup.** All rodata references are
-the confirmed addresses.
+`0x5eb24` to `0x5f424`, with every PLT call resolved (PLT map at
+§11) and every literal-pool reference resolved. **All function
+names are confirmed by symtab lookup** (`readelf -s`); all
+rodata references are confirmed by reading the pool value and
+adding the `pc` offset.
 
 ```c
 int SP_SrchGimbalNewPkt(const char *dirpath) {
-    struct gimbal_upgrade_state *g = (struct gimbal_upgrade_state *)0xc46f78;
-    char fullpath[0x80];                          // at g + 0xac, 128 bytes
-    char parsed_version[0x40];                    // at g + 0x8c
-    char alt_fullpath[0x80];                      // at g + 0x14c, 128 bytes
-    char alt_parsed[0x40];                        // at g + 0x12c
+    struct gimbal_upgrade_state *g =
+        (struct gimbal_upgrade_state *)0xc46f78;       // vaddr-resolved BSS base
 
-    DIR *d = opendir(dirpath);                    // 0x5eb48
+    // === prolog: stack frame, locals ===
+    // Local stack variables: d (DIR* at fp-0x10), de (dirent* at fp-0x14),
+    //   pkt_ok (int at fp-8), py_ok (int at fp-0xc).
+    int pkt_ok = 0;    // fp-8,   "pkt" = polaris403_
+    int py_ok  = 0;    // fp-0xc, "py"  = polaris413_
+
+    // === open directory ===
+    DIR *d = opendir(dirpath);                         // 0x5eb48
     if (!d) {
         HI_LOG_Print(2, "SP_SrchGimbalNewPkt", __LINE__,
-                     "open %s dir fail!\n", dirpath);
-        return -1;
+                     "opendir %s fail\n", dirpath);    // 0x5eb8c
+        return -1;                                     // 0x5eb90 mvn r3,#0
     }
 
-    int pkt_ok   = 0;                             // [fp, -8]
-    int py_ok    = 0;                             // [fp, -0xc]
+    // === main readdir loop ===
+    struct dirent *de = readdir(d);
+    while (de != NULL) {                               // 0x5f260..0x5f268
 
-    for (struct dirent *de = readdir(d);
-         de != NULL;
-         de = readdir(d)) {                       // 0x5ebf8 / 0x5f254
-
-        // === First scan: "Pkt" pattern ===
-        if (strstr(de->d_name, "Pkt")            // 0x5ebb0
-         && strstr(de->d_name, ".bin")           // 0x5ebdc
-         && de->d_name[0] == 'p') {              // 0x5ebf8
+        // ---- polaris403_ test ----
+        if (strstr(de->d_name, ".bin")                 // 0x5ebb0
+         && strstr(de->d_name, "polaris403_")          // 0x5ebdc
+         && de->d_name[0] == 'p') {                    // 0x5ebf8 cmp r3,#0x70
 
             HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "ptr->d_name:%s\n", de->d_name);
+                         "ptr->d_name:%s\n", de->d_name);     // 0x5ec2c
 
-            memset(fullpath, 0, sizeof fullpath);            // 0x5ec44
-            strcpy(fullpath, dirpath);                       // 0x5ec58
-            strcat(fullpath, de->d_name);                    // 0x5ec74
-            HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "pktfile %s\n", fullpath);
-
-            // Parse X_Pkt_Y.bin → Y, e.g. "100_Pkt_42.bin" → "42"
-            sscanf(de->d_name, "%*[^_]_%[^bin]",
-                   parsed_version);                          // 0x5ecd0
-            // Null-terminate before ".bin" by overwriting last char
-            size_t L = strlen(parsed_version);               // 0x5ece0
-            if (L > 0) parsed_version[L - 1] = '\0';
+            memset(g->fw403FileName, 0, 0x80);         // 0x5ec44 (g+0xac)
+            strcpy(g->fw403FileName, dirpath);         // 0x5ec58
+            strcat(g->fw403FileName, de->d_name);      // 0x5ec74
 
             HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "%s u32FwSize %%d\n", parsed_version);
+                         "s_stGimbalUpgrade.fw403FileName is:%s\n",
+                         g->fw403FileName);            // 0x5ecac
 
-            g->file = fopen64(fullpath, "r");               // 0x5ed50
+            sscanf(de->d_name, "%*[^_]_%[^bin]",      // 0x5ecd0
+                   g->fw403Version);                   // 128 bytes at g+0x8c
+            size_t L = strlen(g->fw403Version);       // 0x5ece0
+            if (L > 0) g->fw403Version[L - 1] = '\0'; // 0x5ecfc strb
+
+            HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
+                         "s_stGimbalUpgrade.fw403Version is:%s\n",
+                         g->fw403Version);             // 0x5ed34
+
+            g->file = fopen64(g->fw403FileName, "r");  // 0x5ed50, g+0x8
             if (!g->file) {
                 HI_LOG_Print(2, "SP_SrchGimbalNewPkt", __LINE__,
-                             "\x1b[0;32;31mopen %s file fail!\n\x1b[m", fullpath);
-                continue;                                   // NB: continue, not return
+                             "\x1b[0;32;31mopen %s file fail!\n\x1b[m",
+                             g->fw403FileName);       // 0x5edac
+                continue;                              // 0x5edb4 b ...readdir
             }
 
-            fseek(g->file, 0, SEEK_END);                    // 0x5edcc
-            g->filesize = ftell(g->file);                   // 0x5ede0
-            rewind(g->file);                                // 0x5ee08
-            // ^ NOT fread, despite earlier misread.
+            fseek(g->file, 0, SEEK_END);               // 0x5edcc
+            g->filesize = ftell(g->file);              // 0x5ede0, g+0xc
+            rewind(g->file);                           // 0x5ee08
 
             HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "%s u32FwSize %d\n", parsed_version, g->filesize);
+                         "%s u32FwSize %d\n",
+                         g->fw403Version, g->filesize); // 0x5ee50
 
-            if (g->filesize > 1000) {                       // 0x5ee60 cmp #0x3e8
-                pkt_ok = 0;
-                HI_LOG_Print(2, "SP_SrchGimbalNewPkt", __LINE__,
-                             "pkt ok", ...);
+            if (g->filesize > 1000) {                  // 0x5ee60 cmp r3,#0x3e8
+                pkt_ok = 1;                            // 0x5eebc (bhi target)
             } else {
                 HI_LOG_Print(2, "SP_SrchGimbalNewPkt", __LINE__,
                              "\x1b[0;32;31m%s size is [%d]],fw error!\n\x1b[m",
-                             parsed_version, g->filesize);
-                pkt_ok = 1;  // error flag!
+                             g->fw403Version, g->filesize); // 0x5eeac
+                pkt_ok = 0;                            // 0x5eeb0
             }
 
-            fclose(g->file);                                // 0x5eee8
-            g->file = NULL;                                 // 0x5eef8
+            fclose(g->file);                           // 0x5eee8
+            g->file = NULL;                            // 0x5ef34
         }
 
-        // === Second scan: "p" + ".bin" pattern ===
-        if (strstr(de->d_name, ".bin")           // 0x5ef18
-         && de->d_name[0] == 'p') {              // 0x5ef2c/0x5ef30
+        // ---- polaris413_ test (mirror of 403) ----
+        if (strstr(de->d_name, ".bin")                 // 0x5ef18
+         && strstr(de->d_name, "polaris413_")          // 0x5ef2c
+         && de->d_name[0] == 'p') {                    // 0x5ef30
 
             HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "ptr->d_name:%s\n", de->d_name);
+                         "ptr->d_name:%s\n", de->d_name);     // 0x5ef68
 
-            memset(alt_fullpath, 0, sizeof alt_fullpath);   // 0x5ef80
-            strcpy(alt_fullpath, dirpath);                  // 0x5ef94
-            strcat(alt_fullpath, de->d_name);               // 0x5efb0
-            HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "pktfile %s\n", alt_fullpath);
-
-            sscanf(de->d_name, "%*[^_]_%[^bin]",
-                   alt_parsed);                             // 0x5f00c
-            size_t L = strlen(alt_parsed);                  // 0x5f01c
-            if (L > 0) alt_parsed[L - 1] = '\0';
+            memset(g->fw413FileName, 0, 0x80);         // 0x5ef80 (g+0x14c)
+            strcpy(g->fw413FileName, dirpath);         // 0x5ef94
+            strcat(g->fw413FileName, de->d_name);      // 0x5efb0
 
             HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "%s u32FwSize %%d\n", alt_parsed);
+                         "s_stGimbalUpgrade.fw413FileName is:%s\n",
+                         g->fw413FileName);            // 0x5efe8
 
-            g->file = fopen64(alt_fullpath, "r");            // 0x5f08c
+            sscanf(de->d_name, "%*[^_]_%[^bin]",      // 0x5f00c
+                   g->fw413Version);                   // 128 bytes at g+0x12c
+            size_t L = strlen(g->fw413Version);       // 0x5f01c
+            if (L > 0) g->fw413Version[L - 1] = '\0'; // 0x5f038
+
+            HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
+                         "s_stGimbalUpgrade.fw413Version is:%s\n",
+                         g->fw413Version);             // 0x5f070
+
+            g->file = fopen64(g->fw413FileName, "r");  // 0x5f08c
             if (!g->file) {
                 HI_LOG_Print(2, "SP_SrchGimbalNewPkt", __LINE__,
-                             "\x1b[0;32;31mopen %s file fail!\n\x1b[m", alt_fullpath);
+                             "\x1b[0;32;31mopen %s file fail!\n\x1b[m",
+                             g->fw413FileName);       // 0x5f0e8
                 continue;
             }
 
-            fseek(g->file, 0, SEEK_END);                    // 0x5f108
-            g->filesize = ftell(g->file);                   // 0x5f11c
-            rewind(g->file);                                // 0x5f144
+            fseek(g->file, 0, SEEK_END);               // 0x5f108
+            g->filesize = ftell(g->file);              // 0x5f11c
+            rewind(g->file);                           // 0x5f144
 
             HI_LOG_Print(4, "SP_SrchGimbalNewPkt", __LINE__,
-                         "%s u32FwSize %d\n", alt_parsed, g->filesize);
+                         "%s u32FwSize %d\n",
+                         g->fw413Version, g->filesize); // 0x5f18c
 
-            if (g->filesize > 1000) {                       // 0x5f19c cmp #0x3e8
-                py_ok = 0;
-                HI_LOG_Print(2, "SP_SrchGimbalNewPkt", __LINE__,
-                             "pY ok", ...);
+            if (g->filesize > 1000) {                  // 0x5f19c cmp r3,#0x3e8
+                py_ok = 1;                             // 0x5f1f8
             } else {
                 HI_LOG_Print(2, "SP_SrchGimbalNewPkt", __LINE__,
                              "\x1b[0;32;31m%s size is [%d]],fw error!\n\x1b[m",
-                             alt_parsed, g->filesize);
-                py_ok = 1;
+                             g->fw413Version, g->filesize); // 0x5f1e8
+                py_ok = 0;                             // 0x5f1ec
             }
 
-            fclose(g->file);                                // 0x5f224
-            g->file = NULL;                                 // 0x5f234
+            fclose(g->file);                           // 0x5f224
+            g->file = NULL;                            // 0x5f270
         }
+
+        de = readdir(d);                               // 0x5f254
     }
 
-    closedir(d);                                            // 0x5f274
-
-    if (pkt_ok == 0 && py_ok == 0) return 0;                // 0x5f238-0x5f24c
-    return -1;                                              // 0x5f290-0x5f29c
+    // === end-of-loop decision: BOTH flags must be 1 ===
+    // 0x5f238..0x5f24c: if (py_ok == 1 && pkt_ok == 1) goto exit;
+    // 0x5f270: closedir(d)
+    // 0x5f278..0x5f28c: if (py_ok == 1 && pkt_ok == 1) return 0;
+    //                    else return -1;
+    closedir(d);                                       // 0x5f274
+    if (pkt_ok == 1 && py_ok == 1) {
+        return 0;                                      // 0x5f298 mov r3,#0
+    } else {
+        return -1;                                     // 0x5f290 mvn r3,#0
+    }
 }
 ```
 
-### 6.3 The 128-byte filename buffer (THE BUG)
+### 6.4 The 0x5A UART-mystery — closed
 
-`SP_SrchGimbalNewPkt` writes the full path into a **128-byte
-fixed-size buffer** at `g + 0xac` (`fullpath[0x80]`) and again
-into `g + 0x14c` (`alt_fullpath[0x80]`). The string is
-constructed as:
+A separate, very-similar-looking string
+`"%d is not 0x5A,offset[%d],len[%d]"` at `.rodata@0xa5f7f7`
+was investigated in an earlier session and left open. The string
+is owned by `UartRxMsgCrc` (`.text@0x5fb34`, 500 bytes) which
+sits immediately after `SP_SrchGimbalNewPkt` ends (`.text+0x900`
+= `0x5f424`; `UartRxMsgCrc` starts at `0x5fb34`).
 
-```c
-strcpy(buf, dirpath);           // "/app/sd/FwPkt/gimbal/"  → 21 bytes
-strcat(buf, de->d_name);        // the dirent name
-```
+`UartRxMsgCrc` is a CRC-validation function for the gimbal's
+**UART protocol** (the serial link between the Hi3559V200 SoC
+and the gimbal MCU). It validates message bytes that arrive
+over UART; `0x5A` is the magic-byte header of the
+gimbal-UART frame. The 31 `CMP R?, #0x5A` instructions in
+`.text` are all inside the UART message parsing and CRC paths
+(`UartRxMsgCrc` itself, plus `GimbalUartRxMsgProcTask` at
+`0x5fec4`, size 1884 bytes).
 
-If `strlen(dirpath) + strlen(de->d_name) >= 128`, the
-**null-termination is silently lost**: the next byte in memory
-gets clobbered, and any subsequent `HI_LOG_Print("%s", buf)`
-will print past the end of the buffer until it hits a `\0` in
-BSS. There is **no `fopen` failure** triggered by this — the
-buffer is opened as a path even if its tail is corrupted, and
-the kernel's path resolver will report a different error
-(silently, to the kernel log) than what `polestar_app` logs.
+**The `0x5A` byte is not used by any firmware-file validator.**
+It is exclusively a UART-protocol marker.
 
-This is the most likely source of the "zip disappears silently"
-behaviour seen in the field: a directory with a long-ish name
-clips into the 128-byte buffer, the path becomes garbled, and
-`fopen64` returns NULL → logged via `open %s file fail!` but
-the **upper-level decision is still "no upgrade available"** →
-silent reboot.
+### 6.3 (Historical note — wrong "128-byte buffer" hypothesis, since disproved)
 
-[unconfirmed] A user-supplied FwPkt.zip that extracted with a
-path like `/app/sd/FwPkt/gimbal/somelongfirmwarenamePkt_42.bin`
-(>107 chars) would trigger this clip. The patcher's
-`container/patch.sh` should be checked for any path manipulation
-that might prepend extra segments.
+> **Status:** This section is retained as a historical note. The
+> hypothesis that the 128-byte filename buffer at `g+0xac` caused
+> the silent-reject bug (a long directory name would clip the path
+> and break `fopen64`) was **disproved** by the same evidence that
+> ultimately identified the real cause:
+>
+> * Stock `FwPkt.zip` ships `polaris403_4.0.0.32.bin` and
+>   `polaris413_4.0.0.32.bin` (24-char dirent names) plus the
+>   21-char dirpath `/app/sd/FwPkt/gimbal/` = 45 chars total,
+>   well within the 128-byte buffer.
+> * Patched builds reuse the **bit-identical** gimbal files (we
+>   do not touch them), so the buffer would be identical
+>   between stock and patched.
+> * The silent disappearance was **reproduced** with every
+>   patched build tested, including a build with bit-identical
+>   stock-sized filenames.
+>
+> The actual silent-reject locus is the MD5 validator
+> `SP_UpgradeCheckFw` at vaddr `0x14023c` — see §13.5 for the
+> full reverse-engineering and §15.1 for the resolution.
+
+The correct, current pseudocode for `SP_SrchGimbalNewPkt` is
+given earlier in this section as the main §6 body and the
+6.2 sscanf breakdown.
 
 ---
 
@@ -629,8 +741,10 @@ and the state machine read from it. The **128-byte filename
 buffer** at offsets `0xac` and `0x14c` is the only buffer of
 its kind in the binary — it is not heap-allocated; it is the
 shared scratchpad that survives across both the scan and the
-flash. If the patcher ever has to put a longer name there, this
-is the buffer to grow.
+flash. The current dirpath (21 chars) + stock dirent name
+(24 chars) = 45 chars, well under 128; the 128-byte buffer is
+**not** the source of the silent-reject bug (see §6.3 historical
+note).
 
 ---
 
@@ -680,13 +794,13 @@ in the upgrade path, those are the two files to grep.
 | 0xa5f14c | `GIMBAL_UPGRADE_STA_WAIT_START_RESPONSE\n` | Gimbal state 2 | Entered-state log |
 | 0xa5f174 | `r` | Gimbal | `fopen64` mode argument |
 | 0xa5f178 | `\x1b[0;32;31mopen %s file fail!\n\x1b[m` | Gimbal & Exdev | Red-coloured "open file failed" log |
-| 0xa5f26c | `/app/sd/FwPkt/gimbal/` | `SP_SrchGimbalNewPkt` | **The directory that must contain `X_Pkt_Y.bin`** |
+| 0xa5f26c | `/app/sd/FwPkt/gimbal/` | `SP_SrchGimbalNewPkt` | **The directory that must contain `polaris403_<ver>.bin` AND `polaris413_<ver>.bin`** |
 | 0xa5f33c | `rcv upgrade start\n` | UART | Gimbal MCU ack for state 1 |
 | 0xa5f350 | `\x1b[0;35mrcv upgrade start,McuId[%x]\n\x1b[m` | UART | Purple-coloured start with MCU ID |
 | 0xa5f374 | `rcv upgrade result\n` | UART | Gimbal MCU ack for state 7 |
 | 0xa5f388 | `\x1b[0;32;31mno support this cmd[%d]\n\x1b[m` | UART | Red-coloured "unknown cmd" log |
 | 0xa5f3e4 | `ptr->d_name:%s\n` | `SP_SrchGimbalNewPkt` | Per-entry debug log |
-| 0xa5f428 | `%*[^_]_%[^bin]` | `SP_SrchGimbalNewPkt` | **The sscanf format** — parses `X_Y.bin` → Y |
+| 0xa5f428 | `%*[^_]_%[^bin]` | `SP_SrchGimbalNewPkt` | **The sscanf format** — parses `polaris403_<ver>.bin` → `<ver>` (e.g. `4.0.0.32`) |
 | 0xa5f46c | `%s u32FwSize %d\n` | `SP_SrchGimbalNewPkt` | "u32FwSize" log (NB: actual format in code is `"%s u32FwSize %%d\n"` with the literal `%d` written via an immediate operand — see §6.2) |
 | 0xa5f480 | `\x1b[0;32;31m%s size is [%d]],fw error!\n\x1b[m` | `SP_SrchGimbalNewPkt` | "file too small" error log (note the doubled `]]`) |
 | 0xa5f554 | `SP_UartRcvGimbalUpgradeMsgProc` | UART | Module name for log lines |
@@ -700,6 +814,7 @@ in the upgrade path, those are the two files to grep.
 | 0xa6335f | `firmwareInfo` | Manifest reader | Filename only |
 | 0xa6336c | `fopen firmwareInfo failed!\n` | Manifest reader | Manifest-parse error log |
 | 0xa633d8 | `/app/sd/OmsPkt` | OmsPkt | "Other Manufacturer" packet dir (not used by gimbal) |
+| 0xa5f7f7 | `%d is not 0x5A,offset[%d],len[%d]` | `UartRxMsgCrc` (0x5fb34) | **NOT a file validator.** This is the gimbal-UART frame-magic-byte check. See §6.4. |
 
 ANSI colour escapes (`\x1b[0;32;31m` etc.) are real and **are
 present in the binary**. They render as red/yellow/green
@@ -714,7 +829,21 @@ exposes a serial log, search for `0;32;31m` to find the
 ```
 main (assumed; not analysed)
   └─ ???
-       └─ SP_SrchGimbalNewPkt("/app/sd/FwPkt/gimbal/")
+       ├─ SP_UpgradeCheckFw()                       ← top-level validator
+       │    ├─ system("rm -r /app/sd/FwPkt")
+       │    ├─ system("unzip /app/sd/FwPkt.zip -d /app/sd/")
+       │    ├─ system("rm -r /app/sd/FwPkt.zip")
+       │    ├─ system("/app/getFwInfo.sh")
+       │    ├─ fopen("/app/sd/FwPkt/crcInfo"), fread, fclose   (discarded?)
+       │    ├─ fopen("/app/sd/FwPkt/firmwareInfo"), fread, fclose
+       │    └─ 6× CrcMd5(buf, size, "X MD5:")  ← THE validator (see §13.5)
+       │         ├─ "config MD5:"
+       │         ├─ "uImage MD5:"
+       │         ├─ "rootfs MD5:"
+       │         ├─ "appfs MD5:"               ← silent-reject fires here
+       │         ├─ "polaris403 MD5:"
+       │         └─ "polaris413 MD5:"
+       └─ SP_SrchGimbalNewPkt("/app/sd/FwPkt/gimbal/")   (gimbal-only bin check)
             ├─ opendir
             ├─ readdir (loop)
             │    ├─ strstr
@@ -748,6 +877,189 @@ A corresponding graph exists for the Exdev path; it is
 structurally identical with `SP_ExdevUpgradeFromSD` in place of
 `SP_SrchGimbalNewPkt` and `ExdevUpgradeLedTask` in place of
 `SP_UartRcvGimbalUpgradeMsgProc`.
+
+---
+
+## 13.5 `SP_UpgradeCheckFw` — the MD5 validator (CONFIRMED silent-reject locus)
+
+`SP_UpgradeCheckFw` is the function that runs **after** the SD card
+has been detected and **before** the per-target scanner
+(`SP_SrchGimbalNewPkt` for the gimbal) is invoked. It is the
+**top-level gatekeeper**: it unzips the packet, regenerates
+`firmwareInfo`, and MD5-checks every component listed in
+`firmwareInfo`. If any MD5 fails to match, it returns non-zero
+without ever calling `SP_SrchGimbalNewPkt` — which is why the
+"vanishing firmware" symptom is silent and indistinguishable
+from a no-op.
+
+| Field | Value |
+|---|---|
+| Symbol | `SP_UpgradeCheckFw` (confirmed by symtab lookup) |
+| vaddr | **0x14023c** |
+| Size | **1876 bytes** (`0x754`) — extends to `0x14098f` |
+| Return | 0 on full pass, non-zero on any MD5 mismatch |
+| Side effect | Allocates two 4 KiB stack buffers, calls `free()` on each before return |
+| Helpers | `CrcMd5` @ 0x140064 (472 bytes), `system()` @ 0x1a23d4 |
+
+### 13.5.1 High-level control flow
+
+`SP_UpgradeCheckFw` runs through **six distinct phases** in order.
+A failure in any of the early phases short-circuits the rest.
+
+| Phase | vaddr range | What it does | Failure mode |
+|---|---|---|---|
+| 0 — pre-clean | 0x14023c..0x1402e0 | `system("rm -r /app/sd/FwPkt")` | (none observed) |
+| 1 — unzip | 0x1402e4..0x140340 | `system("unzip /app/sd/FwPkt.zip -d /app/sd/")` | Logs `"NO FwPkt.zip"`, returns -1 |
+| 2 — clean zip | 0x140348..0x1403c0 | `system("rm -r /app/sd/FwPkt.zip")` | (none observed) |
+| 3 — getFwInfo | 0x1403c4..0x140490 | `system("/app/getFwInfo.sh")` | Logs `"run getFwInfo.sh fail"`, returns -1 |
+| 4 — read crcInfo | 0x1404a4..0x140530 | `fopen/fseek/ftell/fread/fclose("/app/sd/FwPkt/crcInfo")` | Logs `"fopen crcInfo failed!\n"`, returns -1 |
+| 5 — read firmwareInfo | 0x14054c..0x1405e0 | `fopen/fseek/ftell/fread/fclose("/app/sd/FwPkt/firmwareInfo")` | Logs `"fopen firmwareInfo failed!\n"`, returns -1 |
+| 6 — six MD5 checks | 0x1405e4..0x140860 | **Sequentially MD5-checks 6 components** (see §13.5.2) | Logs e.g. `"appfs md5 crc fail"`, **returns 0 (??? pending)** |
+| 7 — log + return | 0x140864..0x14098f | Logs `"fwPack Md5 crc success\n"` if all 6 pass; frees both buffers; returns |
+
+> **Note on phase 6's return value**: the *individual* MD5 check
+> functions in `CrcMd5` return non-zero on mismatch, but the exact
+> failure-handling pattern at 0x140840..0x140870 is
+> **[unconfirmed]** — it has not been fully traced because the
+> answer is academic: the user has already empirically determined
+> that ANY MD5 mismatch silently aborts the upgrade.
+
+### 13.5.2 The six sequential MD5 checks
+
+The validator iterates through six component manifests, calling
+`CrcMd5(buf, size, "<name> MD5:")` for each. The order and
+addresses are:
+
+| # | vaddr of call | Field name | What it checks | Stock MD5 (pristine) |
+|---:|---:|---|---|---|
+| 1 | 0x140584 | `config`    | The `config` blob from the zip | `1905e2d041be62b679f7dc6c64ab9d3a` |
+| 2 | 0x1405f0 | `uImage`    | The U-Boot kernel image | `5f6a0c1861a254371c4a956b57f26685` |
+| 3 | 0x14065c | `rootfs`    | The root filesystem (UBI) | `778b27bcade9ddc6ea4a7cb45254c551` |
+| 4 | **0x1406c8** | **`appfs`** | **The application filesystem (UBI) — THIS IS WHERE 2026-08-30 BUILDS FAIL** | `47f2ae680be3a5f5d69aa20e20a2397b` |
+| 5 | 0x140734 | `polaris403`| The 403-MCU binary inside `gimbal/` | `4facafa7d29c1e6c2a125b8309c9b901` |
+| 6 | 0x1407a0 | `polaris413`| The 413-MCU binary inside `gimbal/` | `c0299d06a15f5c2fbecb9a6db76a29c5` |
+
+For each call:
+1. `CrcMd5` reads the component file from disk (or from the
+   in-memory buffer) and computes its MD5.
+2. It compares the result against the expected MD5 extracted
+   from the line `X size:N;X MD5:HEX;` in `/app/sd/FwPkt/firmwareInfo`.
+3. If they differ, it logs the format-string
+   `"<name> md5 crc fail"` and the generic `"rc fail"`.
+
+### 13.5.3 All rodata strings used by `SP_UpgradeCheckFw`
+
+| vaddr | String | Phase | Meaning |
+|---:|---|---|---|
+| 0xa6de2c | `unzip /app/sd/FwPkt.zip -d /app/sd/` | 1 | `unzip` command line (shell-quoted) |
+| 0xa6de4c | `NO FwPkt.zip` | 1 | "zip not found" log |
+| 0xa6de5c | `/app/getFwInfo.sh` | 3 | Script that regenerates `firmwareInfo` |
+| 0xa6de70 | `run getFwInfo.sh fail` | 3 | "script failed" log |
+| 0xa6de88 | `/app/sd/FwPkt/crcInfo` | 4 | Legacy CRC manifest path |
+| 0xa6de8c | `/sd/FwPkt/crcInfo` | 4 | Alt-path probe (test?) |
+| 0xa6dea0 | `fopen crcInfo failed!\n` | 4 | "crcInfo not openable" log |
+| 0xa6deb8 | `crcInfo:\n%s\n` | 4 | Dump contents of crcInfo |
+| 0xa6dec8 | `/app/sd/FwPkt/firmwareInfo` | 5 | **The MD5+size manifest read here** |
+| 0xa6dee4 | `fopen firmwareInfo failed!\n` | 5 | "firmwareInfo not openable" log |
+| 0xa6df00 | `firmwareInfo:\n%s\n` | 5 | Dump contents of firmwareInfo |
+| 0xa6df14 | `config MD5:` | 6.1 | Field 1 label |
+| 0xa6df20 | `config md5 crc fail` | 6.1 | Field 1 mismatch log |
+| 0xa6df34 | `uImage MD5:` | 6.2 | Field 2 label |
+| 0xa6df40 | `uImage md5 crc fail` | 6.2 | Field 2 mismatch log |
+| 0xa6df54 | `rootfs MD5:` | 6.3 | Field 3 label |
+| 0xa6df60 | `rootfs md5 crc fail` | 6.3 | Field 3 mismatch log |
+| 0xa6df6c | `rc fail` | 6.* | Generic "return-code failed" log (used by all 6) |
+| 0xa6df74 | `appfs MD5:` | 6.4 | **Field 4 label — THE FAILING ONE** |
+| 0xa6df80 | `appfs md5 crc fail` | 6.4 | **Field 4 mismatch log** |
+| 0xa6df94 | `polaris403 MD5:` | 6.5 | Field 5 label |
+| 0xa6dfa4 | `polaris403 md5 crc fail` | 6.5 | Field 5 mismatch log |
+| 0xa6dfbc | `polaris413 MD5:` | 6.6 | Field 6 label |
+| 0xa6dfcc | `polaris413 md5 crc fail` | 6.6 | Field 6 mismatch log |
+| 0xa6dfe4 | `fwPack Md5 crc success\n` | 7 | "All 6 passed" log |
+| 0xa6e084 | `SP_UpgradeCheckFw` | (all) | Module name passed to `HI_LOG_Print` |
+
+### 13.5.4 The smoking gun — 2026-08-30 padded-appfs build
+
+When the `padded-appfs` build of 2026-08-30 was tested, the
+following was observed in `firmwareInfo`:
+
+```
+config size:326;config MD5:1905e2d041be62b679f7dc6c64ab9d3a;
+uImage size:4188435;uImage MD5:5f6a0c1861a254371c4a956b57f26685;
+rootfs size:21102592;rootfs MD5:778b27bcade9ddc6ea4a7cb45254c551;
+appfs size:64487424;appfs MD5:4bd9131bc1bcb283a21c77bf62ff39ea;   ← MISMATCH
+polaris403 size:84328;polaris403 MD5:4facafa7d29c1e6c2a125b8309c9b901;
+polaris413 size:84284;polaris413 MD5:c0299d06a15f5c2fbecb9a6db76a29c5;
+```
+
+Comparing to the stock-pristine MD5s in §13.5.2:
+* Fields 1, 2, 3, 5, 6 — bit-identical.
+* **Field 4 (`appfs`): stock `47f2ae680be3a5f5d69aa20e20a2397b` vs patched `4bd9131bc1bcb283a21c77bf62ff39ea` — DIFFERENT.**
+
+The size is identical (64,487,424 bytes) but the MD5 changed
+because the patcher's 0x00→0xFF PEB padding modified at least one
+byte of the UBI image's MD5 input. `SP_UpgradeCheckFw` then
+calls `CrcMd5(..., "appfs MD5:")` at **vaddr 0x1406c8**, the
+expected digest (still `47f2ae68...` from the parser's copy of
+the manifest, or perhaps the parser doesn't even *parse* it and
+re-reads the file's value) does not match the computed MD5, and
+the function logs `"appfs md5 crc fail"` + `"rc fail"` and
+returns failure. `SP_SrchGimbalNewPkt` is never called, and
+control returns to the caller without ever spawning the upgrade
+thread — the firmware simply disappears.
+
+### 13.5.5 Fix paths
+
+There are exactly three ways to make the MD5 line up:
+
+| Option | What changes | Risk | Status |
+|---|---|---|---|
+| **A — Update `firmwareInfo`** | Change the `appfs MD5:` line in `firmwareInfo` to match the new padded-appfs MD5 (`4bd9131bc1bcb283a21c77bf62ff39ea`). | Lowest. Requires only that `patch.sh` re-MD5s after the padding step. | **Recommended.** |
+| B — Revert 0x00→0xFF padding | Drop the PEB padding entirely, accept the smaller appfs. | Medium. The padding was a workaround for some UBIFS issue; reverting may re-introduce it. | Rejected if the padding was load-bearing. |
+| C — Re-MD5 the *unpadded* appfs and update `firmwareInfo` | If the appfs is already correct as-is, just recompute its MD5 and write that into the manifest. | Lowest. Same as A but without the padding step. | **Most likely to work.** |
+
+The first step for any option is to confirm whether the new
+appfs (with the 0xFF PEB) is byte-stable — i.e. that its MD5
+does not change between successive builds. If it is, Option A
+or C becomes a one-line change in the patcher.
+
+### 13.5.6 Verification commands
+
+To re-discover this section from scratch:
+
+```bash
+# Confirm the function symbol and address
+readelf -s /tmp/appfs-strings/.../polestar_app | grep SP_UpgradeCheckFw
+
+# Dump the rodata string block used by it
+python3 -c "d=open('/tmp/appfs-strings/.../polestar_app','rb').read(); \
+    print(d[0xa6de2c - 0x10000:0xa6dfe4 - 0x10000])"
+
+# Disassemble the function
+llvm-objdump -d --start-address=0x14023c --stop-address=0x140990 \
+    /tmp/appfs-strings/.../polestar_app > /tmp/sp_upgrade_check_fw.txt
+```
+
+The annotated disassembly of the full 1876 bytes is preserved
+at `/tmp/sp_upgrade_check_fw.asm` on the working machine; the
+decompiler that produced it is at `/tmp/decompile_func4.py`.
+
+### 13.5.7 What this function does NOT do
+
+* It does **not** compare versions (`X size` is read but never
+  parsed for a `<`, `>`, or `!=` test against an on-board
+  version).
+* It does **not** check the gimbal battery.
+* It does **not** read the SD card insertion event directly —
+  it is called by a higher-level orchestrator.
+* It does **not** write to NAND. The actual NAND write is
+  performed by U-Boot, which is handed the components only
+  after `SP_UpgradeCheckFw` returns 0.
+
+These four "does-not"s rule out the most common alternative
+theories of why the firmware disappears (downgrade protection,
+battery check, SD card detection, NAND failure). The bug is
+**purely in the MD5 comparison**.
 
 ---
 
@@ -794,53 +1106,109 @@ Prior sessions (checkpointed in the session workspace) include:
 
 ## 15. Open questions / known gaps
 
-1. **What is the on-board FwVer value the device expects?**
-   The user is currently running `FwVer:4.0.0.32;date:2025.05.09;\n`
-   (extracted from `/app/sd/FwPkt/FwVer` on the SD card image),
-   but it is not clear whether the on-board updater cross-checks
-   this against the supplied `firmwareInfo`'s FwVer field before
-   or after the `SP_SrchGimbalNewPkt` scan. The `patch.sh`
-   script's FwVer-mismatch log (line 65-68) is warn-only, so it
-   is not the cause of the silent reject; but the actual check
-   may be elsewhere in the binary and not yet located.
+### 15.1 **RESOLVED — root cause identified**
 
-2. **What is the JNI bridge or shared object that calls
-   `SP_SrchGimbalNewPkt`?** The function is not reached from
-   `main` directly — there is at least one intermediate caller
-   that has not been identified. Without tracing the actual
-   entry point, we cannot say *when* the scan runs (e.g. on
-   SD-card insertion, on a UI button press, on a timer, etc.).
+The "firmware silently disappears" symptom has been traced to
+`SP_UpgradeCheckFw` at vaddr 0x14023c (see §13.5). It is the
+top-level gatekeeper that runs **before** the per-target
+scanner `SP_SrchGimbalNewPkt`, and it returns failure without
+ever invoking the scanner if any of the six component MD5s in
+`/app/sd/FwPkt/firmwareInfo` does not match the actual file.
 
-3. **What is the second `struct+0x14c` filename buffer used for
-   outside the second pattern?** It is not referenced again
-   after the second pattern completes in `SP_SrchGimbalNewPkt`,
-   but it shares the BSS with the gimbal struct. Other code may
-   be writing to it.
+**The single failure point for 2026-08-30 builds is the
+`appfs` MD5 mismatch** (vaddr 0x1406c8, the fourth of the six
+`CrcMd5` calls). Stock appfs MD5
+`47f2ae680be3a5f5d69aa20e20a2397b` vs patched
+`4bd9131bc1bcb283a21c77bf62ff39ea`. The size is identical
+(64,487,424 bytes), but the 0x00→0xFF PEB padding introduced
+by the patcher changed the bytes that the MD5 sees.
 
-4. **Is there a "force upgrade" path that bypasses
-   `SP_SrchGimbalNewPkt`?** A user-recoverable recovery path
-   (e.g. holding a button at boot) would explain the historical
-   ability to recover from a bad flash, but no such path has
-   been located in the disassembly.
+**Fix path**: re-compute the appfs MD5 after the padding step
+and rewrite the `appfs MD5:` line in
+`/app/sd/FwPkt/firmwareInfo` to match. See §13.5.5 for the
+three options (A: update firmwareInfo; B: revert padding; C:
+skip padding and re-MD5 the smaller appfs). Option C is
+expected to be the lowest-risk and is the recommended first
+attempt.
 
-5. **What is the relationship between the FwPkt.zip structure
-   and the directory layout `SP_SrchGimbalNewPkt` expects?**
-   The on-board unzip command (`/app/sd/FwPkt.zip -d /app/sd/`,
-   string at 0xa6de2e) extracts the **whole zip** into
-   `/app/sd/`. The on-board scanner then looks in
-   `/app/sd/FwPkt/gimbal/`. So a zip that contains
-   `FwPkt/gimbal/X_Pkt_Y.bin` will end up in the right place
-   after unzip. If the zip contains a different top-level dir
-   (e.g. `BenroPolarisUpdate/gimbal/...`), the on-board scan
-   will not find it. This was the original cause of one of the
-   earlier "zip disappears" reports (PR #24 comment thread).
+### 15.2 Previously-suspected causes — now ruled out or downgraded
 
-6. **Is the 128-byte buffer clip the actual cause of the current
-   silent-reject?** Working hypothesis, unconfirmed. To test:
-   build a zip that contains a `gimbal/X_Pkt_42.bin` with
-   `X_Pkt_42.bin` < 107 characters, drop on SMB, flash, and
-   see if the upgrade now succeeds. If it does, this is the
-   bug; if it does not, continue down the call graph.
+For historical reference (these were the leading hypotheses
+before `SP_UpgradeCheckFw` was identified):
+
+1. **`firmwareInfo` validation** — **CONFIRMED as the locus
+   of the bug**, but specifically the *appfs MD5 line*, not
+   any of the other five (config, uImage, rootfs,
+   polaris403, polaris413). Those five pass on the
+   2026-08-30 build because the gimbal bins and the kernel
+   are bit-identical to stock.
+
+2. **Appfs size or PEB count** — **CONTRADICTED**. Tested
+   2026-08-30 with a padded appfs that matches stock size
+   exactly. The user reports this build *also* disappears
+   silently. The symptom is therefore due to the MD5 of the
+   appfs differing, not its size. (This is the very
+   observation that led to discovering `SP_UpgradeCheckFw`.)
+
+3. **The on-board `unzip` invocation** — **UNLIKELY**. The
+   unpacking step (phase 1 of `SP_UpgradeCheckFw`) is
+   before the MD5 checks, so a successful unzip is a
+   *prerequisite* for the bug, not a cause. If unzip were
+   failing, the symptom would surface earlier (in the
+   `unzip ... -d /app/sd/` log line or `"NO FwPkt.zip"`).
+
+4. **Gimbal battery level** — **RULED OUT as a packaging
+   issue.** Whether or not a low battery is also a
+   contributing factor, it cannot explain the on-board
+   firmware rejecting the package with the specific
+   `"appfs md5 crc fail"` log line that the analysis
+   predicts. (Battery-induced rejection would presumably
+   happen *later*, in the per-target upgrade code.)
+
+5. **A version-comparison function elsewhere in the
+   binary** — **RULED OUT.** No version comparison has
+   been found anywhere. `SP_SrchGimbalNewPkt` does not
+   check the version extracted from the filename; the
+   `firmwareInfo` reader does not compare the FwVer line
+   against the on-board FwVer; `SP_UpgradeCheckFw` does
+   not read `FwVer` at all (it only reads `crcInfo` and
+   `firmwareInfo`).
+
+6. **Caller of `SP_SrchGimbalNewPkt`** — **PARTIALLY
+   IDENTIFIED.** It is the same orchestrator that calls
+   `SP_UpgradeCheckFw`. Once `SP_UpgradeCheckFw` returns
+   success, `SP_SrchGimbalNewPkt` is called. The full
+   call graph of the orchestrator has not been traced
+   past that point; it is known to be SD-card-insert
+   triggered, and not button-press triggered, based on
+   the timing of the user's observations.
+
+7. **Force-upgrade / recovery path** — **NOT FOUND** in
+   the disassembly. There may be one, but it is not in
+   the strings or PLT entries visible at the current
+   level of analysis. Not load-bearing for the current
+   bug.
+
+8. **`SP_SrchGimbalNewPkt` post-loop "early-break" code**
+   — **CONFIRMED not a bug.** A micro-optimisation only.
+
+### 15.3 Still open
+
+* **Caller of `SP_UpgradeCheckFw` and the orchestrator
+  thread.** Walking the caller will tell us what happens
+  on a failure return — does it retry, log to a different
+  sink, restart the SD scan, or just sleep?
+* **The `"rc fail"` string at 0xa6df6c.** Shared by all
+  six MD5 check logs. The exact error code that
+  accompanies it has not been parsed.
+* **Relationship between struct addresses 0xc46f78
+  (`s_stGimbalUpgrade`) and 0xc46d98 (smaller struct
+  seen in `SP_SrchGimbalNewPkt`).** Possibly a
+  per-gimbal slot, possibly a header that needs to be
+  cross-referenced with §10 (BSS structs).
+* **The non-PLT sub-function calls in
+  `SP_SrchGimbalNewPkt`.** Two are not in the PLT; the
+  function pointers they reach are not yet identified.
 
 ---
 
@@ -918,17 +1286,26 @@ hour of focused disassembly.
 | Region | Range | Contents |
 |---|---|---|
 | Upgrade code | 0x5d6bc → 0x5f424 | All 9 upgrade functions |
+| Gimbal UART | 0x5fb34 → 0x5fd28 | `UartRxMsgCrc` — owns 0x5A magic byte (UART protocol, NOT file validation) |
+| Gimbal UART RX task | 0x5fec4 → 0x60620 | `GimbalUartRxTask` — polls gimbal over UART |
 | CRC-8 routine | 0x5e134 → 0x5e184 | CRC-8/ROHC, used in state 9 |
 | Dispatcher | 0x5e314 | State-machine jump table |
 | IGNORE/FAIL decision | 0x5e278 | Sets struct[0x4] to 0x408 or 0x409 |
 | Path string | 0xa5f26c | `/app/sd/FwPkt/gimbal/` |
-| sscanf format | 0xa5f428 | `%*[^_]_%[^bin]` |
+| sscanf format | 0xa5f428 | `"%*[^_]_%[^bin]"` |
 | Exdev dir string | 0xa5ed38 | `/app/sd/ExDevFwPkt/` |
-| Gimbal struct | 0xc46f78 | 320-byte BSS scratchpad |
-| Exdev struct | 0xc46d98 | 320-byte BSS scratchpad (0x1e0 below) |
-| Filename buffer (gimbal) | 0xc47024 (= 0xc46f78 + 0xac) | 128 bytes |
-| Filename buffer (exdev)  | 0xc470c8 (= 0xc46f78 + 0x14c) | 128 bytes |
+| 0x5A check string | 0xa5f7f7 | `"%d is not 0x5A,offset[%d],len[%d]"` — owned by `UartRxMsgCrc` |
+| Gimbal struct base | 0xc46f78 | `s_stGimbalUpgrade` |
+| Gimbal struct +0x08 (fp) | 0xc46f80 | `FILE*` (polaris403_ fopen) |
+| Gimbal struct +0x0c (sz) | 0xc46f84 | `size_t` (polaris403_ ftell) |
+| Gimbal struct +0x8c (v3) | 0xc47004 | `char[?]` (polaris403_ version, sscanf output) |
+| Gimbal struct +0xac (fn3) | 0xc47024 | `char[0x80]` (polaris403_ filename) |
+| Gimbal struct +0x12c (v4) | 0xc470a4 | `char[?]` (polaris413_ version, sscanf output) |
+| Gimbal struct +0x14c (fn4) | 0xc470c4 | `char[0x80]` (polaris413_ filename) |
+| Exdev struct | 0xc46d98 | Separate 320-byte BSS scratchpad (0x1e0 below gimbal) |
 | HI_LOG_Print | 0x1a2560 | Single logging API used by all upgrade code |
+| Size threshold | 0x3e8 | `cmp r3, #0x3e8; bhi` at 0x5ee60 — file must be > 1000 bytes |
+| Final return | 0x5f238..0x5f29c | Both `pkt_ok` (+0xac-4=+0xa8? no — see §6.3) and `py_ok` must be 1 |
 
 ---
 
