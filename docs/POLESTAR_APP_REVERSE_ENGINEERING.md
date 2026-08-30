@@ -1477,10 +1477,25 @@ before `SP_UpgradeCheckFw` was identified):
 
 ### 15.3 Still open
 
-* **Caller of `SP_UpgradeCheckFw` and the orchestrator
-  thread.** Walking the caller will tell us what happens
-  on a failure return — does it retry, log to a different
-  sink, restart the SD scan, or just sleep?
+* ~~**Caller of `SP_UpgradeCheckFw` and the orchestrator
+  thread.**~~ **RESOLVED in §13.5.9.** The caller is
+  `UpgradeTask @ 0x13f080` (836 bytes), a state machine
+  with 8 states. State 2 calls `SP_UpgradeCheckFw`;
+  on non-zero return the task dispatches to state 3
+  (MD5-fail), which logs the failure, calls
+  `PowerOffsaveLog`, sleeps 100 s, and calls
+  `HI_SYSTEM_Reboot`. The system reboots with no UI
+  signal — the "silent disappear" the user observed.
+* **Why the on-device `unzip` + `getFwInfo.sh` pair
+  produces a `crcInfo` that disagrees with our
+  `firmwareInfo` even when the host-verified MD5s match.**
+  The MD5 chain (per §13.5.8) is bit-perfect in the
+  binary, so this is environmental, not in the binary.
+  Top candidates: busybox `unzip` reordering or
+  truncating, busybox `md5sum` differing from GNU,
+  SD-card read corruption, or a non-zero exit from
+  `unzip` that `system()` swallows. **This is the
+  question that remains unanswered.**
 * **The `"rc fail"` string at 0xa6df6c.** Shared by all
   six MD5 check logs. The exact error code that
   accompanies it has not been parsed.
