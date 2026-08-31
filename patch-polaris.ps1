@@ -18,6 +18,12 @@
     -SelfTest            qemu-emulate the driver load (R5 II registration)
     -NoFixTypo           do NOT correct the upstream "EOS 5Rm2" model typo
     -NoUsb1              (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
+    -CellularModules DIR  inject pre-built kernel modules from DIR (Phase 3
+                           cellular). Expects usbserial.ko, option.ko,
+                           cdc_acm.ko, qcserial.ko -- built against the
+                           device kernel (Linux 4.9.37 hi3559v200).  When
+                           omitted, the patcher still places a no-op loader
+                           and the script can be wired up by a later patch.
     -Image NAME          docker image tag              (default polaris-patcher)
 
   READ THE README AND DISCLAIMERS FIRST. Tested ONLY against FwVer 4.0.0.32
@@ -33,6 +39,7 @@ param(
   [switch]$SelfTest,
   [switch]$NoFixTypo,
   [switch]$NoUsb1,
+  [string]$CellularModules = "",
   [string]$Image = "polaris-patcher"
 )
 $ErrorActionPreference = "Stop"
@@ -78,13 +85,23 @@ try {
     $sourceArgs = @("-v", "${source}:/libgphoto2-source-input:ro")
   }
   $allowDirty = if ($AllowDirtySource) { "1" } else { "0" }
+  $cellArgs = @()
+  $cellEnv  = ""
+  if (-not [string]::IsNullOrEmpty($CellularModules)) {
+    if (-not (Test-Path -PathType Container $CellularModules)) { throw "-CellularModules: '$CellularModules' is not a directory" }
+    $celPath = (Resolve-Path $CellularModules).Path
+    $cellArgs = @("-v", "${celPath}:/cellular-modules-input:ro")
+    $cellEnv  = "/cellular-modules-input"
+  }
   Write-Host "[*] running patcher (mode: $mode)..."
   & docker run --rm `
     -e MODE=$mode `
     -e LIBGPHOTO2_VERSION=$Libgphoto2 -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
     -e SWAP_USB1=$usb1 `
     -e ALLOW_DIRTY_SOURCE=$allowDirty `
+    -e CELLULAR_MODULES_DIR=$cellEnv `
     @sourceArgs `
+    @cellArgs `
     -v "${In}:/in:ro" -v "${Out}:/out" `
     $Image
   if ($LASTEXITCODE -ne 0) { throw "patcher container failed with exit code $LASTEXITCODE" }

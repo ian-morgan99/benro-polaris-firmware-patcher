@@ -1,5 +1,60 @@
 # Changelog
 
+## Unreleased — Phase 3 cellular (Quectel / Sierra modem support)
+
+The Polaris camera-board firmware (verified on FwVer 4.0.0.32) already ships
+the full Quectel PPP userspace stack — `pppd`, `chat`, the
+`/etc/ppp/peers/quectel-ppp` peer file, and the `check_pppd_ttyusb` /
+`/dev/ttyUSB3` AT-string glue inside `polestar_app`. The gap is the
+**kernel-side USB-serial host driver stack**: `usbserial.ko`, `option.ko`,
+`qcserial.ko`, `cdc_acm.ko`. Without them, the modem never enumerates as
+`/dev/ttyUSB*` and the userspace glue above never runs.
+
+### Added
+- **`--cellular-modules DIR` / `-CellularModules DIR` flag** on both
+  launchers (`patch-polaris.sh`, `patch-polaris.ps1`). Mounts a host
+  directory of pre-built `.ko` files into the container at
+  `/cellular-modules-input:ro` and exports `CELLULAR_MODULES_DIR` to
+  `patch.sh`.
+- **`container/patch.sh` — new section 7a (cellular injection).** Copies
+  the four pre-built modules into `/app/komod/` with stock uid/gid/mode
+  (matched against the existing `udc-core.ko`), installs the
+  `cellular_load.sh` / `cellular_unload.sh` pair alongside
+  `sp_usb2net_load.sh`, and rewrites `/app/bootapp` so the loader runs
+  once per boot, immediately after the HiSilicon platform modules come
+  up. Loader-script install is unconditional; `.ko` injection is
+  conditional on the host directory being supplied and is
+  fail-soft (warn-and-skip on missing modules).
+- **`container/cellular_load.sh` — VID-gated loader.** `set +e` so any
+  individual `insmod` failure is non-fatal. Exits 0 when no Quectel
+  (0x2c7c) or Sierra (0x1199) USB device is enumerated, so it is a safe
+  no-op on non-cellular units.
+- **`container/cellular_unload.sh`** — symmetric `rmmod` in strict
+  reverse order.
+- **`docs/CELLULAR.md`** — full pre-build recipe, on-device verification
+  steps, and the modem-hardware caveat (some Polaris units only have
+  the SIM socket populated with no modem IC).
+
+### Docs
+- New top-level **"Phase 3 — Cellular"** section in `README.md`
+  (between the "Two modes" table and the disclaimer block).
+- New row in the `README.md` options table for `--cellular-modules` /
+  `-CellularModules`.
+
+### Verified
+- Loader-script placement works with the flag omitted (no-op bootapp
+  wiring still added, modem never enumerates, all stock features
+  unaffected).
+- Fail-soft behaviour: when `DIR` is supplied but missing the four
+  expected files, the patcher warns and ships the loader scripts only.
+
+### Not yet verified
+- Real cellular bring-up on hardware. Building the four modules
+  requires the HiSilicon SDK + Linux 4.9.37 kernel headers, which are
+  not part of the docker image. Users with the SDK can supply the
+  modules and run the flag; users without can leave the flag off and
+  use the rest of the patcher unchanged.
+
 ## Unreleased — FwPkt silent-reject fix (2026-08-27 combined build)
 
 The Polaris on-board updater (`polestar_app → getFwInfo.sh → crcInfo`)
