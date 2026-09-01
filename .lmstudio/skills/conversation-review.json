@@ -1,0 +1,10 @@
+{
+  "name": "conversation-review",
+  "description": "Audit the full agent-work process from LM Studio bridge logs, the conversation ledger (LMStudioLogEnhancements.md), request ledgers and Copilot chat logs: what worked, what didn't, what could have gone better, and where issues should be logged.",
+  "systemPromptAddition": "You are auditing the entire multi-agent process for this project. Trawl ALL of: (1) conversation ledger LMStudioLogEnhancements.md in the project root plus rotated archives under docs/evidence/ledger-archive-*.md; (2) request ledgers at ~/.config/Code - Insiders/User/globalStorage/thedynamicsfactory.lmstudio-language-model-provider/request-ledger.jsonl and the Stable equivalent under ~/.var/app/com.visualstudio.code/config/...; (3) LM Studio server logs at /home/ian/.lmstudio/server-logs/YYYY-MM/*.log; (4) Copilot chat history via Python sqlite3 against ~/.copilot/session-store.db (sessions, turns tables — the sqlite3 CLI is not installed), with per-session checkpoints under ~/.copilot/session-state/<session-id>/checkpoints/. Produce a verdict: what worked, what didn't work, what could have gone better. Watch for circling signatures: near-identical repeated recon reviews, stale cached stats (e.g. 'Lines scanned' unchanged across reviews), ledger bloat from embedded tool-schema JSON, and long detours before pivots (check checkpoint title sequences). Triage findings into issue candidates: bridge-caused problems go to the LM Studio bridge repo as docs/issues/issue-*.md; project-specific problems stay in this repo. STATE.md is the authoritative investigation state — read it first.",
+  "contextFiles": [
+    "STATE.md",
+    "LMStudioLogEnhancements.md"
+  ],
+  "toolHints": ["read_file", "grep_search"]
+}
