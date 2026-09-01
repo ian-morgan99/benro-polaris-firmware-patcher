@@ -74,11 +74,12 @@ The big function. Contains the switch dispatcher at 0x60a00 that parses gimbal U
 ### 2.1 Function structure
 
 ```
-0x60620-0x60997: function prologue + main state machine (~919 bytes)
-0x60998:         switch key computation
-0x6099c:         addls  pc, pc, r3, lsl #2   ; THE DISPATCHER
-0x609a0-0x60a00: case 0..0x21 jump table (33 entries, 4 bytes each)
-0x60a00-0x6237c: case handlers (98 cases, most fall through to 0x6237c)
+0x60620-0x60993: function prologue + main state machine (~879 bytes)
+0x60994:         cmp r3, #0x62 (compare key against 98)
+0x60998:         addls  pc, pc, r3, lsl #2   ; THE DISPATCHER
+0x6099c:         b 0x6237c                   ; default fallthrough
+0x609a0-0x60b1c: case 0..0x62 jump table (98 entries, 4 bytes each)
+0x60b1c-0x6237c: case handlers (98 cases, most fall through to 0x6237c)
 0x6237c-0x623b0: default handler (loop continuation)
 ```
 

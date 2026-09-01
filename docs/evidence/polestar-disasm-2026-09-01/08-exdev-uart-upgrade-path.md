@@ -69,7 +69,7 @@ exact branch targets for 0x63/0x64 are still in the
 `GimbalUartRxMsgProcTask` body but were not yet transcribed.
 
 The cmp/branch pattern for case 0x21 is at 0x60b2c; for case 0x61 the cmp
-`r0, #0x61` is in the same dispatcher (0x6099c).
+`r0, #0x61` is in the same dispatcher (0x60998, see file 07).
 
 ---
 
@@ -233,7 +233,7 @@ way to re-trigger is one of:
 
 1. **Cases 0x63 / 0x64** in `GimbalUartRxMsgProcTask` — their full
    handler bodies were not transcribed; only the cmp was noted. They
-   appear in the same dispatcher (0x6099c).
+   appear in the same dispatcher (0x60998, see file 07).
 2. **Function names of helpers 0x3f130 / 0x3f214 / 0x423b4 / 0x4042c**
    are not exported as debug symbols. Their purpose is inferred from
    the call site.

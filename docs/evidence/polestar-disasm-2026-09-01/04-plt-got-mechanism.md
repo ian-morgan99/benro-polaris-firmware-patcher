@@ -33,7 +33,8 @@ so effective base is `dispatcher_addr + 8`.
 
 | Dispatcher | Base | Range | Function |
 |------------|------|-------|----------|
-| 0x6099c | 0x609a4 | 0..98 | `GimbalUartRxMsgProcTask@0x60620` (33 real cases) |
+| 0x60998 | 0x609a0 | 0..98 | `GimbalUartRxMsgProcTask@0x60620` (98 cases, see file 07) |
+| 0x3f668 | 0x3f670 | 0..23 | `EventMsgProc` (24-case, see file 12) |
 | 0x13f104 | 0x13f10c | 0..7 | `UpgradeTask@0x13f080` (state machine) |
 
 ## 4. Literal-Pool Pattern
