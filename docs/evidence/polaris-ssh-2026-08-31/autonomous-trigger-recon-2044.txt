@@ -1,0 +1,144 @@
+=== /app/bin contents ===
+total 44288
+drwxr-x---    2 1000     1000          1120 Jan  1  1970 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-x---    1 1000     1000         65324 Jan 11  2022 chat
+-rwxr-x---    1 1000     1000       9175040 Mar 16  2022 frpc
+-rwxr-x---    1 1000     1000        420780 Apr 15  2021 gdbserver
+-rwxr-x---    1 1000     1000        321740 Apr 24  2021 gphoto2
+-rwxr-x---    1 1000     1000        565476 Jan 11  2022 lighttpd
+-rwxr-x---    1 1000     1000       7801576 Apr 27  2025 pgphoto
+-rwxr-x---    1 1000     1000        472132 Apr 12  2022 polaris_wifi_bt
+-rwxr-x---    1 1000     1000      24941228 May  9  2025 polestar_app
+-rwxr-x---    1 1000     1000        979224 Jan 11  2022 pppd
+-rwxr-x---    1 1000     1000         62088 Jan 11  2022 pppdump
+-rwxr-x---    1 1000     1000         23668 Jan 11  2022 pppstats
+-rwxr-x---    1 1000     1000           230 Jan 11  2022 quectel-ppp-kill
+lrwxrwxrwx    1 1000     1000             5 May  9  2025 sd -> ../sd
+-rwxr-x---    1 1000     1000        491784 Dec  9  2021 vi_chn_dump
+
+=== /app/sd contents (top level) ===
+total 67136
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-xr-x    1 root     root      68599228 Aug 31 18:40 FwPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 HDR
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 Lapse
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 focusStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 normal
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 panorama
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 starskyStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 sun
+drwxr-xr-x    3 root     root         16384 Aug 31 17:58 system
+
+=== /etc/inittab and init.d ===
+# /etc/inittab init(8) configuration for BusyBox
+#
+# Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
+#
+#
+# Note, BusyBox init doesn't support runlevels.  The runlevels field is
+# completely ignored by BusyBox init. If you want runlevels, use sysvinit.
+#
+#
+# Format for each entry: <id>:<runlevels>:<action>:<process>
+#
+# <id>: WARNING: This field has a non-traditional meaning for BusyBox init!
+#
+#	The id field is used by BusyBox init to specify the controlling tty for
+#	the specified process to run on.  The contents of this field are
+#	appended to "/dev/" and used as-is.  There is no need for this field to
+#	be unique, although if it isn't you may have strange results.  If this
+#	field is left blank, it is completely ignored.  Also note that if
+#	BusyBox detects that a serial console is in use, then all entries
+#	containing non-empty id fields will _not_ be run.  BusyBox init does
+#	nothing with utmp.  We don't need no stinkin' utmp.
+#
+# <runlevels>: The runlevels field is completely ignored.
+#
+# <action>: Valid actions include: sysinit, respawn, askfirst, wait, once,
+#                                  restart, ctrlaltdel, and shutdown.
+#
+#       Note: askfirst acts just like respawn, but before running the specified
+#       process it displays the line "Please press Enter to activate this
+#       console." and then waits for the user to press enter before starting
+#       the specified process.
+#
+#       Note: unrecognised actions (like initdefault) will cause init to emit
+#       an error message, and then go along with its business.
+#
+# <process>: Specifies the process to be executed and it's command line.
+#
+# Note: BusyBox init works just fine without an inittab. If no inittab is
+# found, it has the following default behavior:
+#         ::sysinit:/etc/init.d/rcS
+#         ::askfirst:/bin/sh
+#         ::ctrlaltdel:/sbin/reboot
+#         ::shutdown:/sbin/swapoff -a
+#         ::shutdown:/bin/umount -a -r
+#         ::restart:/sbin/init
+#
+# if it detects that /dev/console is _not_ a serial console, it will
+# also run:
+#         tty2::askfirst:/bin/sh
+#         tty3::askfirst:/bin/sh
+#         tty4::askfirst:/bin/sh
+#
+# Boot-time system configuration/initialization script.
+# This is run first except when booting in single-user mode.
+#
+::sysinit:/etc/init.d/rcS
+
+# /bin/sh invocations on selected ttys
+#
+# Note below that we prefix the shell commands with a "-" to indicate to the
+# shell that it is supposed to be a login shell.  Normally this is handled by
+# login, but since we are bypassing login in this case, BusyBox lets you do
+# this yourself...
+#
+# Start an "askfirst" shell on the console (whatever that may be)
+#::askfirst:-/bin/sh
+# Start an "askfirst" shell on /dev/tty2-4
+# tty2::askfirst:-/bin/sh
+# tty3::askfirst:-/bin/sh
+# tty4::askfirst:-/bin/sh
+
+# /sbin/getty invocations for selected ttys
+# tty4::respawn:/sbin/getty 38400 tty5
+# tty5::respawn:/sbin/getty 38400 tty6
+
+# Example of how to put a getty on a serial line (for a terminal)
+::respawn:/sbin/getty -L ttyS000 115200 vt100 -n root -I "Auto login as root ..."
+#::respawn:/sbin/getty -L ttyS1 9600 vt100
+#
+# Example how to put a getty on a modem line.
+#::respawn:/sbin/getty 57600 ttyS2
+
+# Stuff to do when restarting the init process
+::restart:/sbin/init
+
+# Stuff to do before rebooting
+::ctrlaltdel:/sbin/reboot
+::shutdown:/bin/umount -a -r
+::shutdown:/sbin/swapoff -a
+
+---
+total 16
+drwxr-x---    2 1000     1000           424 May  9  2025 .
+drwxr-x---    6 1000     1000          1288 Jan 11  2022 ..
+-rwxr-x---    1 1000     1000           262 Apr  9  2021 S00devs
+-rwxr-x---    1 1000     1000           111 Apr  9  2021 S10mpp
+-rwxr-x---    1 1000     1000           828 Dec 27  2007 S80network
+-rwxr-x---    1 1000     1000           274 Apr  9  2021 rcS
+
+=== /app/etc if it exists ===
+ls: /app/etc/: No such file or directory
+
+=== anything upgrade-related anywhere ===
+
+=== /dev/input entries ===
+ls: /dev/input/: No such file or directory
+
+=== /proc/cmdline ===
+mem=1536M quiet console=ttyAMA0,115200 clk_ignore_unused rw ubi.mtd=4 root=ubi0:ubifs rootfstype=ubifs mtdparts=hinand:512K(u-boot.bin),512K(factoryParam),1M(userParam),5M(uImage),40M(rootfs.ubifs),81M(appfs.ubifs)
+setenv bootcmd 

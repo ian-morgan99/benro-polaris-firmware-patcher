@@ -1,0 +1,144 @@
+===ALIVE===
+Fri May  9 14:38:23 UTC 2025
+===FWPKT_MTIME===
+ls: unrecognized option '--time-style=full-iso'
+BusyBox v1.26.2 (2024-09-04 12:29:19 CST) multi-call binary.
+
+Usage: ls [-1AaCxdLHRFplinsehrSXvctu] [-w WIDTH] [FILE]...
+
+List directory contents
+
+	-1	One column output
+	-a	Include entries which start with .
+	-A	Like -a, but exclude . and ..
+	-C	List by columns
+	-x	List by lines
+	-d	List directory entries instead of contents
+	-L	Follow symlinks
+	-H	Follow symlinks on command line
+	-R	Recurse
+	-p	Append / to dir entries
+	-F	Append indicator (one of */=@|) to entries
+	-l	Long listing format
+	-i	List inode numbers
+	-n	List numeric UIDs and GIDs instead of names
+	-s	List allocated blocks
+	-e	List full date and time
+	-h	List sizes in human readable format (1K 243M 2G)
+	-r	Sort in reverse order
+	-S	Sort by size
+	-X	Sort by extension
+	-v	Sort by version
+	-c	With -l: sort by ctime
+	-t	With -l: sort by mtime
+	-u	With -l: sort by atime
+	-w N	Assume the terminal is N columns wide
+	--color[={always,never,auto}]	Control coloring===FWPKT_INNER===
+
+Archive:  /app/sd/FwPkt.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  08-23-2026 15:47   FwPkt/
+        0  08-29-2026 20:58   FwPkt/camera/
+ 21102592  08-22-2026 10:12   FwPkt/camera/rootfs.ubifs
+  4188435  08-22-2026 10:12   FwPkt/camera/uImage
+ 64487424  08-29-2026 20:58   FwPkt/camera/appfs.ubifs
+      326  08-22-2026 10:12   FwPkt/camera/config
+        0  08-23-2026 15:47   FwPkt/gimbal/
+    84284  08-22-2026 10:12   FwPkt/gimbal/polaris413_2.0.0.22.bin
+    84328  08-22-2026 10:12   FwPkt/gimbal/polaris403_2.0.0.22.bin
+      399  08-29-2026 20:58   FwPkt/firmwareInfo
+ --------                     -------
+ 89947788                     10 files
+===FIRMWARE_SH===
+#!/bin/sh -e
+
+FIRMWARE_DIRS="/lib/firmware /usr/local/lib/firmware"
+
+err() {
+    echo "$@" >&2
+    if [ -x /bin/logger ]; then
+	/bin/logger -t "${0##*/}[$$]" "$@"
+    fi
+}
+
+if [ ! -e /sys$DEVPATH/loading ]; then
+    err "udev firmware loader misses sysfs directory"
+    exit 1
+fi
+
+for DIR in $FIRMWARE_DIRS; do
+    [ -e "$DIR/$FIRMWARE" ] || continue
+    echo 1 > /sys$DEVPATH/loading
+    cat "$DIR/$FIRMWARE" > /sys$DEVPATH/data
+    echo 0 > /sys$DEVPATH/loading
+    exit 0
+done
+
+echo -1 > /sys$DEVPATH/loading
+err "Cannot find  firmware file '$FIRMWARE'"
+exit 1
+===UDEV_RULE===
+# Load firmware
+SUBSYSTEM=="firmware", ACTION=="add", RUN+="/etc/udev/firmware.sh"===FWVER===
+FwVer:4.0.0.32;date:2025.05.09;
+===HDR_DIR===
+total 32
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 .
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 ..
+===SD_FULL===
+total 67024
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 .
+drwxr-x---   12 1000     1000          1592 Aug 27  2026 ..
+-rwxr-xr-x    1 root     root      68484216 Aug 31  2026 FwPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 HDR
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 Lapse
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 focusStack
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 normal
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 panorama
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 starskyStack
+drwxr-xr-x    2 root     root         16384 Aug 31  2026 sun
+drwxr-xr-x    3 root     root         16384 Aug 31  2026 system
+===CHANGED_FILES===
+/app/bin/polestar_app
+/app/lib/lighttpd/webdav.db
+/app/run/lighttpd.pid
+/app/dbus/pid
+/app/wifi/hostapd.conf
+/app/access.log
+/app/bluetooth/var/lib/bluetooth/48:E7:DA:D4:B5:72/settings
+/app/bluetooth/var/lib/bluetooth/48:E7:DA:D4:B5:72/cache/3C:38:24:3C:EA:1B
+/app/bluetooth/var/lib/bluetooth/48:E7:DA:D4:B5:72/cache/4C:23:38:C8:7B:70
+/app/bluetooth/var/lib/bluetooth/48:E7:DA:D4:B5:72/settings.4TS852
+/app/komod/hi3559v200_sys.ko
+/app/komod/libcomposite.ko
+/app/komod/sp_usb2net_load.sh
+/app/komod/hi3559v200_h264e.ko
+/app/komod/hi3559v200_h265e.ko
+/app/komod/sp_usb2net_unload.sh
+/app/komod/hi3559v200_vgs.ko
+/app/komod/hi_user.ko
+/app/komod/hi3559v200_wdt.ko
+/app/komod/hi3559v200_dis.ko
+===DMESG===
+wl_process_host_event: Link event 12, flags 0, status 0
+MACEVENT: WLC_E_DISASSOC_IND, MAC 4c:23:38:c8:7b:6f, reason 8
+CFG80211-ERROR) wl_notify_connect_status_ap : 
+event WLC_E_DEAUTH_IND(6) status 0 reason 3
+CFG80211-ERROR) wl_notify_connect_status_ap : 
+event WLC_E_DISASSOC_IND(12) status 0 reason 8
+CFG80211-ERROR) wl_cfg80211_del_station : 
+Disconnect STA : 4c:23:38:c8:7b:6f scb_val.val 3
+MACEVENT: WLC_E_AUTH_IND, MAC 4c:23:38:c8:7b:6f, Open System
+MACEVENT: WLC_E_ASSOC_IND, MAC 4c:23:38:c8:7b:6f
+CFG80211-ERROR) wl_cfg80211_change_station : 
+WLC_SCB_AUTHORIZE sta_flags_mask not set 
+DHCP - REQUEST [RX] [REQUEST]
+DHCP - ACK [TX] [REPLY]
+DHCP - DISCOVER [RX] [REQUEST]
+DHCP - OFFER [TX] [REPLY]
+DHCP - DISCOVER [RX] [REQUEST]
+DHCP - OFFER [TX] [REPLY]
+DHCP - REQUEST [RX] [REQUEST]
+DHCP - ACK [TX] [REPLY]
+===DONE===

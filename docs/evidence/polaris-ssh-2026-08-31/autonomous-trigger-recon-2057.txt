@@ -1,0 +1,210 @@
+=== look for SP_OmsUpgradeFromSd usage in polestar_app ===
+10827132 SP_OmsUpgradeMsgProc
+10827156 SP_OmsUpgradeCheckFwPkt
+10827208 SP_OmsUpgradeFromSd
+18928929 SP_OmsUpgradeMsgProc
+18929460 SP_OmsUpgradeCheckFwPkt
+18929644 SP_OmsUpgradeFromSd
+23746901 SP_OmsUpgradeCheckFwPkt
+23904139 SP_OmsUpgradeFromSd
+24150108 SP_OmsUpgradeMsgProc
+
+=== look for what reads /app/sd/ ===
+umount /app/sd
+rm -rf /app/sd/*
+/app/sd/normal/
+/app/sd/Lapse/
+/app/sd/focusStack/
+/app/sd/panorama/
+/app/sd/sun/
+/app/sd/HDR/
+/app/sd/starskyStack/
+/app/sd/normal/
+/app/sd/Lapse/
+/app/sd/focusStack/
+/app/sd/panorama/
+/app/sd/sun/
+/app/sd/HDR/
+/app/sd/starskyStack/
+umount /app/sd
+/app/sd/focusStack/
+/app/sd/panorama/
+/app/sd/Lapse/
+
+=== look for timer/loop/cron-like references ===
+nanosleep
+libtimers.so
+libhitimer.so
+HI_Timer_Init
+HI_Timer_GetPastTime
+HI_Timer_DeInit
+HI_Timer_Create
+HI_Timer_Destroy
+HI_Timer_SetTickValue
+dbus_timeout_get_interval
+usleep
+/home/win/polaris/polestarApp/../sdk/middleware/component/mp4/lib:/home/win/polaris/polestarApp/../sdk/middleware/out/lib:/home/win/polaris/polestarApp/../sdk/reference/out/common/lib/Linux:/home/win/polaris/polestarApp/../sdk/reference/out/hal/lib/Linux:/home/win/polaris/polestarApp/../sdk/reference/out/thirdparty/lib:/home/win/polaris/polestarApp/../sdk/rootfs_pack/rootfs/lib:/home/win/polaris/polestarApp/../himix200_lib/libraw/lib:/home/win/polaris/polestarApp/../himix200_lib/libexif/lib:/home/win/polaris/polestarApp/../himix200_lib/libexfat/lib:/home/win/polaris/polestarApp/../himix200_lib/opencv4/lib:/home/win/polaris/polestarApp/../himix200_lib/opencv4/lib/opencv4/3rdparty:/home/win/polaris/polestarApp/../himix200_lib/zlib/lib:/home/win/polaris/polestarApp/../himix200_lib/libjpeg_turbo/lib:/home/win/polaris/polestarApp/../himix200_lib/x264/install/lib:/home/win/polaris/polestarApp/../himix200_lib/openssl/lib:/home/win/polaris/polestarApp/../himix200_lib/libcurl/lib:/home/win/polaris/polestarApp/../himix200_lib/libyuv:/home/win/polaris/polestarApp/../hisiExtlib/lib:/home/win/polaris/polestarApp/../hisiExtlib/log/lib:/home/win/polaris/polestarApp/../hisiExtlib/hitimer/lib:/home/win/polaris/polestarApp/../hisiExtlib/msghandler/lib:/home/win/polaris/polestarApp/../sdk/middleware/thirdparty/ffmpeg/ffmpeg-hisi/install/lib:/home/win/polaris/polestarApp/../sdk/smp/a7_linux/mpp/lib:/home/win/polaris/polestarApp/./bluetooth/lib:/home/win/polaris/polestarApp/../himix200_lib/clapack/lib:/home/win/polaris/polestarApp/../himix200_lib/OpenBLAS/lib
+HI_APPCOMM_CHECK_RANGE(pstDateTime->s32mon, 1, 12)
+HI_APPCOMM_CHECK_RANGE(pstDateTime->s32mday, 1, 31)
+HI_APPCOMM_CHECK_RANGE(pstDateTime->s32hour, 0, 23)
+HI_APPCOMM_CHECK_RANGE(pstDateTime->s32min, 0, 59)
+HI_APPCOMM_CHECK_RANGE(pstDateTime->s32sec, 0, 59)
+SP_NestFileClassCheckFileIsNew
+bt no setup,SP_PmcSetSysSleep fail
+[0;35mSP_SetSysSleep 
+
+=== look at the function names in polestar_app (not all strings) ===
+SP_SendLogToApp
+SP_BtDisconnet
+SP_BlueInit
+SP_MpiSysInit success
+SP_MpiSysInit
+ISP_
+SP_FileListInit Fail
+SP_NestFileListInit Fail
+SP_NestFileClassCreate Fail
+SP_out.jpg
+SP_NestFileClassCheckFileIsNew
+SP_FileListInit
+SP_FileListDelFile
+SP_FileListAddFile
+SP_FileListFree
+SP_NestFileListInit
+SP_NestFileListDelClass
+SP_NestFileListAddClass
+SP_NestFileListGetClassInfo
+SP_NestFileListFree
+SP_NestFileClassCreate
+SP_NestFileClassAddFile
+SP_NestFileListAddFile
+SP_NestFileListDelFile
+SP_NestFileClassFree
+SP_GetNestFileList
+SP_IspListAddClass
+SP_CameraGpioTaskCreate failed
+SP_GpioInit
+SP_CameraGpioTaskCreate
+=== look at context near 18929644 (SP_OmsUpgradeFromSd ref) ===
+ 43656461
+ 6552646d
+ 746c7573
+ 6c706552
+ 6d630079
+ 4f003264
+ 7055736d
+ 64617267
+ 646d4365
+ 636e6143
+ 5300656c
+ 6d4f5f50
+ 67705573
+ 65646172
+ 68737550
+ 69766544
+ 65566563
+ 50530072
+ 736d4f5f
+ 456f5446
+ 50530076
+ 6572435f
+ 4f657461
+ 7055736d
+ 64617267
+
+=== look at the function name reference at 18928929 (SP_OmsUpgradeMsgProc) ===
+ 616d6f4e
+ 6c69466c
+ 73694c65
+ 41620074
+ 466f7475
+ 7375636f
+ 5f707300
+ 6d726f6e
+ 735f6c61
+ 5f505300
+ 656b614d
+ 6d726f4e
+ 68506c61
+ 006f746f
+ 74735f73
+ 6d726f4e
+ 2f006c61
+ 656d6f68
+ 6e69772f
+ 6c6f702f
+
+=== look at 24150108 (SP_OmsUpgradeMsgProc ref) ===
+ 58496c70
+ 4a455f54
+ 445f3153
+ 5f315470
+ 5f004545
+ 4e53545a
+ 31766332
+ 6e6f6339
+ 7463656e
+ 6f636465
+ 6e6f706d
+ 73746e65
+ 614c3831
+ 696c6562
+ 7557676e
+ 61726150
+ 6c656c6c
+ 4e686949
+ 345f3053
+ 704f6f4e
+=== find where the function pointer table is for SP_OmsUpgradeFromSd ===
+-rwxr-x---    1 1000     1000      24941228 May  9  2025 /app/bin/polestar_app
+
+=== string dump near the function name at 18928929 (look for the surrounding code) ===
+ 5f464600
+ 55424544
+ 55425f47
+ 30205347
+ 30303078
+ 30303130
+ 52500030
+ 454c7849
+ 33545341
+ 78222032
+ 76610022
+ 7461735f
+ 6275735f
+ 61203233
+ 61735f76
+ 75735f74
+ 5f323362
+ 46460063
+ 5f43455f
+ 4f564146
+ 4e495f52
+ 20524554
+ 00363532
+ 505f5641
+ 465f5849
+ 425f544d
+ 34345247
+ 56412034
+ 5849505f
+ 544d465f
+ 28454e5f
+ 34524742
+ 45423434
+ 4742202c
+ 34343452
+ 0029454c
+ 505f4646
+ 49464f52
+ 445f454c
+ 5248584e
+ 5851485f
+ 4a003420
+ 4c4f4f50
+ 414d495f
+ 31204547
+ 5f564100
+ 50534944
+ 5449534f
+ 5f4e4f49
+ 4154454d

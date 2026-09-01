@@ -1,0 +1,108 @@
+=== killing long-running processes ===
+killed 3075
+killed 3078
+killed 3079
+could not kill 3077
+
+=== current load ===
+ 20:50:09 up  1:33,  1 users,  load average: 2.11, 2.18, 1.97
+
+=== Search for SP_OmsUpgradeFromSd callers and what triggers it ===
+[0;32;31mpthread_create for SP_CreateExdevUpgradePthread failed
+[0;32;32mpthread_create for SP_CreateExdevUpgradePthread success
+rcv upgrade start[%d]
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result[%d]
+[0;32;31mSendDataFailCnt >= 5
+[0;35mSendDataFail,retry send
+--
+[0;32;31mpthread_create for SP_CreateGimbalUpgradePthread failed
+[0;32;32mpthread_create for SP_CreateGimbalUpgradePthread success
+rcv upgrade start
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result
+[0;32;31mno support this cmd[%d]
+[0;32;31mopendir %s fail
+--
+[0;32;34moms upgrade exit led show reply
+sendPackNum[%d] > RcvPackNum[%d] 
+rcv upgrade data reply,packNum[%d],ret[%d]
+[0;32;31mno support this cmd2[%d]
+rm -r /app/sd/OmsPkt
+
+=== look for what SP_OmsUpgradeFromSd requires ===
+SP_CreateOmsUpgradePthread
+SP_OmsUpgradeMsgProc
+SP_OmsUpgradeCheckFwPkt
+OmsUpgradePushResultTask
+SP_OmsUpgradeFromSd
+SP_PanFileListFree
+--
+crcInfo
+SP_OmsUpgradeMsgProc
+OmsUpgradeTimeOut
+--
+s_stOmsCtx
+SP_OmsUpgradeCheckFwPkt
+szBtName
+--
+SP_OmsIsoToEv
+SP_OmsUpgradeFromSd
+bSendExitLedShow
+--
+EVP_PKEY_cmp_parameters
+SP_OmsUpgradeCheckFwPkt
+_ZN2cv9AlgorithmC1Ev
+--
+_ZN2cv4usac30SymmetricGeometricDistanceImplD2Ev
+SP_OmsUpgradeFromSd
+_ZNK2cv17DescriptorMatcher5writeERNS_11FileStorageE
+--
+_ZTSN2cv19connectedcomponents18LabelingWuParallelIihNS0_4NoOpEE22FirstScan4ConnectivityE
+SP_OmsUpgradeMsgProc
+_ZNSt6vectorIPiSaIS0_EE13_M_assign_auxIPKS0_EEvT_S6_St20forward_iterator_tag
+=== current state - check FwPkt.zip and the dirs ===
+-rwxr-xr-x    1 root     root      68599228 Aug 31 18:40 /app/sd/FwPkt.zip
+
+/app/sd/:
+total 67136
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-xr-x    1 root     root      68599228 Aug 31 18:40 FwPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 HDR
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 Lapse
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 focusStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 normal
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 panorama
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 starskyStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 sun
+drwxr-xr-x    3 root     root         16384 Aug 31 17:58 system
+
+=== current msg queue state ===
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+0x000003ed 0          root       666        0            0           
+0x000003ee 32769      root       666        0            0           
+0x000003eb 65538      root       666        0            0           
+0x000003ea 98307      root       666        0            0           
+0x000003e9 131076     root       666        0            0           
+0x000003ec 163845     root       666        0            0           
+
+
+=== check the running load (should be calming down) ===
+ 20:50:23 up  1:33,  1 users,  load average: 2.00, 2.16, 1.96
+
+=== look in polaris_wifi_bt for msg queue key ===
+1001
+
+=== look at the function symbols in polestar_app (using nm if available) ===
+
+=== look in polestar_app for "rcv upgrade start" exact - find its location ===
+10808836 rcv upgrade start[%d]
+10808861 [0;35mrcv upgrade start,McuId[%x]
+10810172 rcv upgrade start
+10810193 [0;35mrcv upgrade start,McuId[%x]
+10827208 SP_OmsUpgradeFromSd
+18929644 SP_OmsUpgradeFromSd
+23904139 SP_OmsUpgradeFromSd

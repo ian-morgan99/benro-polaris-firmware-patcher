@@ -1,0 +1,22 @@
+BusyBox v1.26.2 (2024-09-04 12:29:19 CST) multi-call binary.
+BusyBox is copyrighted by many authors between 1998-2015.
+Licensed under GPLv2. See source distribution for detailed
+ELF header parsed:
+  shoff = 0x017c8c44 (24,924,228)
+  shnum = 0x29 (41)
+  shstrndx = 0x10 (16)
+  shentsize = 0x28 (40)
+
+=== read string table section header (index 16) ===
+ 0000009a
+ 70000001
+ 00000082
+ 00bb5cec
+ 00ba5cec
+ 000112f8
+ 0000000c
+ 00000000
+ 00000004
+ 00000000
+
+=== parse: sh_name sh_type sh_flags sh_addr sh_offset sh_size sh_link sh_info sh_addralign sh_entsize ===

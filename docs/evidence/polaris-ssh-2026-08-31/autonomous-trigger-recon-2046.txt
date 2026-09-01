@@ -1,0 +1,147 @@
+=== /app/bootapp ===
+ls: /app/bootapp.sh: No such file or directory
+-rwxr-x---    1 1000     1000           666 Mar 12  2022 /app/bootapp
+#!/bin/sh
+
+# set lib path
+LD_LIBRARY_PATH="/lib:/usr/lib:/usr/local/lib:/app/lib"
+export LD_LIBRARY_PATH
+
+#set core dump parameter
+ulimit -c unlimited
+#echo "/app/sd/core.%e-%p-%t"> /proc/sys/kernel/core_pattern
+
+#load ko
+cd /app/komod
+./sp_load3559v200 -i
+
+#./sp_usb2net_load.sh
+
+#start application
+
+cd /app/bin
+nohup ./polaris_wifi_bt >> /app/Mlog.txt &
+#./polestar_app &
+nohup ./polestar_app >> /app/Mlog.txt &
+
+nohup /app/bin/pgphoto >> /app/Clog.txt &
+
+ifconfig lo up
+
+# set network and start telnetd
+if [ -f "/app/network_telnetd.sh" ];then
+	cd /app
+	./network_telnetd.sh
+fi
+
+# start ci agent
+if [ -f "/app/start_agent.sh" ];then
+	cd /app
+	./start_agent.sh
+fi
+
+=== /app/ contents ===
+total 48
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 .
+drwxr-x--x   24 1000     1000          1848 Aug 27 16:37 ..
+-rw-r--r--    1 root     root             0 Aug 31 20:45 Clog.txt
+-rwxr-x---    1 1000     1000            32 May  9  2025 FwVer
+-rw-r--r--    1 root     root           464 Aug 31 20:46 Mlog.txt
+-rw-r--r--    1 root     root            18 Aug 31 20:16 WiFi_BT_CFG.info
+-rw-r--r--    1 root     root             0 Aug 31 20:45 access.log
+drwxr-x---    2 1000     1000          1120 Jan  1  1970 bin
+drwxr-x---    8 1000     1000           616 Aug 25  2021 bluetooth
+-rwxr-x---    1 1000     1000           666 Mar 12  2022 bootapp
+drwxr-x---    2 1000     1000           232 May 28  2022 cfg
+drwxr-x---    3 1000     1000           368 Aug 31 19:16 dbus
+-rw-r--r--    1 root     root             0 Aug 31 20:45 error.log
+-rwxr-x---    1 1000     1000            49 Nov 24  2021 fdisk_T.sh
+-rwxr-x---    1 1000     1000           643 Mar 20  2024 getFwInfo.sh
+-rwxr-x---    1 1000     1000           152 Aug 13  2024 getOmsFwInfo.sh
+drwxr-x---    2 1000     1000          4848 May  9  2025 komod
+drwxr-x---    5 1000     1000          5304 Jan 11  2022 lib
+drwxr-x---    2 1000     1000           160 May  9  2025 private
+-rwxr-x---    1 1000     1000            90 Jul 14  2022 restart_gphoto
+drwxr-x---    2 1000     1000           304 Aug 31 18:49 run
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 sd
+drwxr-x---    2 1000     1000           920 Aug 12  2022 wifi
+
+=== full polaris_wifi_bt strings - upgrade + msg + key + gpio ===
+msgrcv
+msgget
+msgctl
+msgsnd
+/home/parallels/Desktop/polestar/sdk/middleware/component/mp4/lib:/home/parallels/Desktop/polestar/sdk/middleware/out/lib:/home/parallels/Desktop/polestar/sdk/reference/out/common/lib/Linux:/home/parallels/Desktop/polestar/sdk/reference/out/hal/lib/Linux:/home/parallels/Desktop/polestar/sdk/reference/out/thirdparty/lib:/home/parallels/Desktop/polestar/sdk/rootfs_pack/rootfs/lib:/home/parallels/Desktop/polestar/himix200_lib/libraw/lib:/home/parallels/Desktop/polestar/himix200_lib/opencv/lib:/home/parallels/Desktop/polestar/himix200_lib/opencv/share/OpenCV/3rdparty/lib:/home/parallels/Desktop/polestar/himix200_lib/zlib/lib:/home/parallels/Desktop/polestar/himix200_lib/libjpeg_turbo/lib:/home/parallels/Desktop/polestar/himix200_lib/x264/install/lib:/home/parallels/Desktop/polestar/himix200_lib/libyuv:/home/parallels/Desktop/polestar/hisiExtlib/lib:/home/parallels/Desktop/polestar/hisiExtlib/log/lib:/home/parallels/Desktop/polestar/hisiExtlib/hitimer/lib:/home/parallels/Desktop/polestar/hisiExtlib/eventhub/lib:/home/parallels/Desktop/polestar/hisiExtlib/msghandler/lib:/home/parallels/Desktop/polestar/sdk/middleware/thirdparty/ffmpeg/ffmpeg-hisi/install/lib:/home/parallels/Desktop/polestar/sdk/smp/a7_linux/mpp/lib
+g_stMsgAttr
+g_stSendMsgAttr
+sp_msgComm
+[0;32;31mcreate msg queue failed,key[%d]
+[0;32;32mcreate msg queue success,key[%d],id[%d]
+[0;32;32mdelete msg queue success,msqId[%d]
+[0;32;31mdelete msg queue failed,msqId[%d]
+[1;33mSP_sendMsg success; key[%d],type[%ld],code[%ld],val[%s]
+[0;32;31mSP_sendMsg Fail; key[%d],type[%ld],code[%ld],val[%s]
+SP_MsgQueueCreate
+SP_MsgQueueDel
+SP_sendMsg
+[0;32;32mmsg code[%ld],val[%s]
+MsgProcTask
+[0;32;31mreceive msg failed
+SP_CreateMsgProcTask failed
+SP_MsgProc
+MsgProcTask
+SP_CreateMsgProcTask
+key[%s],val[%s]
+wpa_key_mgmt=WPA-PSK
+wpa_group_rekey=86400
+wpa_key_mgmt=WPA-PSK
+wpa_group_rekey=86400
+HAL_GPIO_GetBitVal
+\ key
+l key
+d key
+sp_msgComm.c
+sp_msgComm.h
+msg.h
+sp_msgProc.c
+sp_msgComm.h
+sp_msgProc.h
+sp_msgComm.h
+sp_msgProc.h
+sp_msgProc.h
+sp_msgProc.h
+POLLMSG 0x400
+NLMSG_DATA(nlh) ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
+HI_HAL_EIPCMSG HI_APPCOMM_ERR_ID(HI_APP_MOD_HAL,HI_ERRNO_CUSTOM_BOTTOM+5)
+NLMSG_ERROR 0x2
+__stub_getpmsg 
+NLMSG_NEXT(nlh,len) ((len) -= NLMSG_ALIGN((nlh)->nlmsg_len), (struct nlmsghdr*)(((char*)(nlh)) + NLMSG_ALIGN((nlh)->nlmsg_len)))
+_SC_THREAD_KEYS_MAX _SC_THREAD_KEYS_MAX
+
+=== checking polestar_app for SP_BtGpioInit (handler-side) ===
+0
+
+=== msg queue IDs in polarestar_app ===
+11
+
+=== check for "key" press table ===
+longjmp
+update_pppd_cfg apn name :%s len:%d
+update quectel-ppp-%s user:%s and passwd:%s info complete
+update quectel-chat-connect-%s apn:%s info complete
+update_pppd_cfg
+long 
+short 
+update bg pixel %d with file:%s
+UpdateGyroAttitude
+UPGRADE_STEP_REBOOT
+upgrade aleady running
+UpgradeTask
+Double Star
+press %13.5f hPa
+Longitude: %s D:M:S +E
+Release
+Release
+release-write
+Release Write file descriptor
+release-notify

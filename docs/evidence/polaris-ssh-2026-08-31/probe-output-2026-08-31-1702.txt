@@ -1,0 +1,53 @@
+# Source: 192.168.0.1 (Polaris gimbal, ARMv7, kernel 4.9.37)
+# Captured: 2026-08-31 17:02:24 BST (window ~1m50s)
+# Connection: wlp8s0 -> polaris_d13e86 AP, BSSID 48:E7:DA:D4:B5:73
+
+=== route ===
+192.168.0.1 dev wlp8s0 src 192.168.0.3
+=== ports ===
+22 OPEN, 80 OPEN
+
+===PROBE1_FWPKT===
+/app/sd/FwPkt.zip                            (68,484,216 bytes, Aug 31 2026)
+/etc/udev/rules.d/50-firmware.rules
+/etc/udev/firmware.sh
+
+===PROBE2_DAEMON (ps -ef)===
+  248 root  ./polestar_app
+  326 root  [dhd_watchdog_th]
+/proc comm scan: polestar_app, wl_event_handle, dhd_watchdog_th
+NO install/upgrade/watch/sd/oms/exdev daemon running.
+
+===PROBE3_MOUNT===
+ubi0:ubifs on / type ubifs (rw,relatime)             31MB  (54% used)
+ubi1:ubifs on /app type ubifs (rw,relatime)           68MB  (81% used)
+/dev/mmcblk0p1 on /app/sd type vfat                   119GB (0% used)
+
+===PROBE4_SD===
+/dev/mmcblk0, /dev/mmcblk0p1 (the SD card)
+/dev/ttyAMA0..3 (no /dev/ttyUSB* at all)
+/app:  Clog.txt (empty), FwVer (32 bytes, May 9)
+/app/sd: FwPkt.zip (68MB), HDR/ directory
+/tmp:  usb-topo.sh
+
+===PROBE5_USB===
+usbserial + option (GSM modem) + uvcvideo + usb-storage + usbhid registered
+NO ftdi_sio / NO cdc_acm
+Currently attached: only 1a40:0101 USB2.0 HUB on port 1-1
+NO Pentax camera (25fb:0189) attached
+NO 4G modem actually enumerated
+
+===PROBE6_NET===
+wlan0: 48:e7:da:d4:b5:73 / 192.168.0.1/24
+NO eth0 / NO usb0 / NO rndis — only the AP
+
+===PROBE7_SSHD===
+sshd_config is empty (no overrides)
+sshd is running (we connected to it)
+
+===PROBE8_HARDWARE===
+Hardware: Generic DT based system
+CPU:    ARMv7 Processor rev 5 (v7l)
+RAM:    1550872 kB (1.5GB) — free 1451996 kB
+Kernel: Linux 4.9.37 #59 SMP Wed Sep 4 12:29:11 CST 2024 armv7l
+Build:  (none) — kernel built by win@win, gcc 6.3.0

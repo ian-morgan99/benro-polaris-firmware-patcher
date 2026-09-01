@@ -1,0 +1,42 @@
+=== unzip listing of FwPkt.zip ===
+Archive:  /app/sd/FwPkt.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  05-09-2025 15:09   FwPkt/
+        0  05-09-2025 15:09   FwPkt/gimbal/
+    84284  05-09-2025 15:09   FwPkt/gimbal/polaris413_2.0.0.22.bin
+    84328  05-09-2025 15:09   FwPkt/gimbal/polaris403_2.0.0.22.bin
+        0  05-09-2025 15:09   FwPkt/camera/
+ 21102592  05-09-2025 15:09   FwPkt/camera/rootfs.ubifs
+ 64487424  05-09-2025 15:09   FwPkt/camera/appfs.ubifs
+      326  05-09-2025 15:09   FwPkt/camera/config
+  4188435  05-09-2025 15:09   FwPkt/camera/uImage
+      399  05-09-2025 15:09   FwPkt/firmwareInfo
+ --------                     -------
+ 89947788                     10 files
+
+=== unzip listing details (first 30) ===
+Archive:  /app/sd/FwPkt.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  05-09-2025 15:09   FwPkt/
+        0  05-09-2025 15:09   FwPkt/gimbal/
+...
+    84284  05-09-2025 15:09   FwPkt/gimbal/polaris413_2.0.0.22.bin
+    84328  05-09-2025 15:09   FwPkt/gimbal/polaris403_2.0.0.22.bin
+        0  05-09-2025 15:09   FwPkt/camera/
+ 21102592  05-09-2025 15:09   FwPkt/camera/rootfs.ubifs
+ 64487424  05-09-2025 15:09   FwPkt/camera/appfs.ubifs
+      326  05-09-2025 15:09   FwPkt/camera/config
+  4188435  05-09-2025 15:09   FwPkt/camera/uImage
+      399  05-09-2025 15:09   FwPkt/firmwareInfo
+ --------                     -------
+ 89947788                     10 files
+
+=== count of files ===
+      399  05-09-2025 15:09   FwPkt/firmwareInfo
+ --------                     -------
+ 89947788                     10 files
+
+=== check if /app/sd/OmsPkt exists ===
+ls: /app/sd/OmsPkt*: No such file or directory

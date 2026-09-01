@@ -1,0 +1,87 @@
+===POLESTAR_LIVE===
+-rwxr-x---    1 1000     1000      24941228 May  9 07:08 /app/bin/polestar_app
+===POLESTAR_STRINGS===
+dbus_watch_get_flags
+dbus_watch_get_enabled
+dbus_watch_set_data
+dbus_watch_get_unix_fd
+dbus_watch_handle
+dbus_connection_set_watch_functions
+g_io_add_watch_full
+g_io_add_watch
+SP_EVENT_UPGRADE_FAIL
+SP_EVENT_UPGRADE_SUCCESS
+ExdevUpgradeStatusProc
+[0;35mEXDEV_UPGRADE_STA_SEND_START
+[0;35mEXDEV_UPGRADE_STA_WAIT_START_RESPONSE
+[0;35mEXDEV_UPGRADE_STA_WAIT_SEND_DATA
+[0;35mEXDEV_UPGRADE_STA_SEND_STOP
+[0;35mEXDEV_UPGRADE_STA_SEND_FAIL
+[0;35mEXDEV_UPGRADE_STA_WAIT_FAIL_RESPONSE
+[0;32;32mexdev upgrade success
+[0;32;31mexdev upgrade fail
+rm -r /app/sd/ExDevFwPkt
+rm -r /app/sd/ExDevFwPkt.zip
+[0;32;32mexit gimbal upgrade pthread
+ExdevUpgrade busy
+Check ExDevFwPkt.zip
+/app/sd/ExDevFwPkt/
+[0;32;31mpthread_create for SP_CreateExdevUpgradePthread failed
+[0;32;32mpthread_create for SP_CreateExdevUpgradePthread success
+rcv upgrade start[%d]
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result[%d]
+unzip /app/sd/ExDevFwPkt.zip -d /app/sd/
+NO ExDevFwPkt.zip
+[0;32;32ms_stExdevUpgrade.fwFileName is:%s
+[0;32;32ms_stExdevUpgrade.version is:%s
+[0;35mdetach ExdevUpgradeLedTask
+[0;35mSP_ExdevUpgradeFromSD
+ExdevUpgradeStatusProc
+SP_CreateExdevUpgradePthread
+SP_UartRcvExdevUpgradeMsgProc
+SP_ExDevFwPktCheck
+ExdevUpgradeLedTask
+SP_ExdevUpgradeFromSD
+GimbalUpgradeStatusProc
+GIMBAL_UPGRADE_STA_SEND_START
+GIMBAL_UPGRADE_STA_WAIT_START_RESPONSE
+GIMBAL_UPGRADE_STA_SEND_STOP
+GIMBAL_UPGRADE_STA_SEND_FAIL
+[0;32;32mgimbal upgrade success
+[0;32;31mgimbal upgrade fail
+[0;32;32mexit gimbal upgrade pthread
+/app/sd/FwPkt/gimbal/
+[0;32;31mpthread_create for SP_CreateGimbalUpgradePthread failed
+[0;32;32mpthread_create for SP_CreateGimbalUpgradePthread success
+rcv upgrade start
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result
+[0;32;32ms_stGimbalUpgrade.fw403FileName is:%s
+[0;32;32ms_stGimbalUpgrade.fw403Version is:%s
+[0;32;32ms_stGimbalUpgrade.fw413FileName is:%s
+[0;32;32ms_stGimbalUpgrade.fw413Version is:%s
+GimbalUpgradeStatusProc
+SP_CreateGimbalUpgradePthread
+SP_UartRcvGimbalUpgradeMsgProc
+[0;32;32mgimbal upgrade no suppor uart tx
+[0;32;32mexdev upgrade no suppor uart tx
+OmsUpgradeStatusProc
+[0;35m[%s] upgrade start.
+OMS_UPGRADE_STA_LOAD_FW
+OMS_UPGRADE_STA_CHECK_FW PASS
+[0;32;31mOMS_UPGRADE_STA_CHECK_FW FAIL
+OMS_UPGRADE_STA_SEND_START
+OMS_UPGRADE_STA_WAIT_SEND_DATA
+OMS_UPGRADE_STA_SEND_DATA_FINISH
+OMS_UPGRADE_STA_SEND_CANCLE
+OMS_UPGRADE_STA_FAIL
+OMS_UPGRADE_STA_SUCCESS
+OMS_UPGRADE_STA_END
+[0;32;32mexit oms upgrade pthread
+[0;32;31mSP_CreateOmsUpgradePthread failed
+[0;32;32mSP_CreateOmsUpgradePthread success
+===POLESTAR_NM===
+===POLESTAR_BUSYBOX_DATE===
+Fri May  9 14:38:11 UTC 2025
+===DONE===

@@ -1,0 +1,117 @@
+=== still running load ===
+ 20:51:40 up  1:35,  1 users,  load average: 1.31, 1.91, 1.89
+
+=== check for stuck processes ===
+PID   USER     TIME   COMMAND
+    1 root       0:00 init
+    2 root       0:00 [kthreadd]
+    3 root       0:00 [ksoftirqd/0]
+    5 root       0:00 [kworker/0:0H]
+    7 root       0:00 [rcu_sched]
+    8 root       0:00 [rcu_bh]
+    9 root       0:00 [migration/0]
+   10 root       0:00 [lru-add-drain]
+   11 root       0:00 [cpuhp/0]
+   12 root       0:00 [cpuhp/1]
+   13 root       0:00 [migration/1]
+   14 root       0:00 [ksoftirqd/1]
+   16 root       0:00 [kworker/1:0H]
+   17 root       0:00 [kdevtmpfs]
+   18 root       0:00 [oom_reaper]
+   19 root       0:00 [writeback]
+   20 root       0:00 [kcompactd0]
+   21 root       0:00 [crypto]
+   22 root       0:00 [bioset]
+   23 root       0:00 [kblockd]
+   24 root       0:00 [spi0]
+   25 root       0:00 [spi1]
+   26 root       0:00 [kworker/0:1]
+   27 root       0:00 [spi2]
+   28 root       0:00 [cfg80211]
+   29 root       0:00 [rpciod]
+   30 root       0:00 [xprtiod]
+   31 root       0:00 [kswapd0]
+   32 root       0:00 [vmstat]
+
+=== look for syscall table in polestar_app - this will help with disasm ===
+ls: /usr/bin/*cc*: No such file or directory
+ls: /usr/bin/*gcc*: No such file or directory
+
+=== look at what is around SP_OmsUpgradeFromSd (the strings version) ===
+  \0  \0  \0  \0   S   P   _   C   r   e   a   t   e   O   m   s
+   U   p   g   r   a   d   e   P   t   h   r   e   a   d  \0  \0
+   S   P   _   O   m   s   U   p   g   r   a   d   e   M   s   g
+   P   r   o   c  \0  \0  \0  \0   S   P   _   O   m   s   U   p
+   g   r   a   d   e   C   h   e   c   k   F   w   P   k   t  \0
+   O   m   s   U   p   g   r   a   d   e   P   u   s   h   R   e
+   s   u   l   t   T   a   s   k  \0  \0  \0  \0   S   P   _   O
+   m   s   U   p   g   r   a   d   e   F   r   o   m   S   d  \0
+  \0  \0  \0  \0   S   P   _   P   a   n   F   i   l   e   L   i
+   s   t   F   r   e   e  \n  \0   %   s   S   P   _   %   0   4
+   d   .   j   p   g  \0  \0  \0   F   o   c   u   s   S   t   a
+   c   k   I   s   p   T   a   s   k  \0  \0  \0   %   s   m   s
+   t   i   t   c   h   _   o   u   t   .   j   p   g  \0  \0  \0
+   s   p   h   e   r   i   c   a   l  \0  \0  \0 033   [   0   ;
+   3   5   m   [   %   s   ]       a   d   d       t   o       p
+   r   o   c  \n  \0  \0  \0  \0 033   [   0   ;   3   5   m   [
+   %   s   ]       i   s   p       f   i   n   i   s   h  \n  \0
+ 033   [   0   ;   3   5   m   [   %   s   ]       i   s   p    
+   f   a   i   l  \n  \0  \0  \0 033   [   0   ;   3   5   m   s
+   t   i   t   c   h       c   o   m   p   l   e   t   e  \n  \0
+   s   t   i   t   c   h       f   a   i   l   e   d  \n  \0  \0
+   n   o       j   p   g   ,   n   o       n   e   e   d       i
+   s   p  \n  \0   P   a   n   o   r   a   m   a   T   a   s   k
+  \0  \0  \0  \0   /   a   p   p   /   s   d   /   p   a   n   o
+   r   a   m   a   /  \0  \0  \0   c   l   a   s   s   _   %   d
+   /  \0  \0  \0   H   I   _   m   k   d   i   r       %   s    
+   f   a   i   l  \n  \0  \0  \0   S   P   _   P   A   N   O   R
+   A   M   A   _   S   T   A   _   N   U   L   L  \n  \0  \0  \0
+   S   P   _   P   A   N   O   R   A   M   A   _   S   T   A   _
+   W   A   I   T   _   C   A   M   E   R   A   _   W   A   K   E
+
+=== context around rcv upgrade start[%d] at 10808836 ===
+   f   a   i   l   e   d  \n 033   [   m  \0  \0  \0  \0 033   [
+   0   ;   3   2   ;   3   2   m   p   t   h   r   e   a   d   _
+   c   r   e   a   t   e       f   o   r       S   P   _   C   r
+   e   a   t   e   E   x   d   e   v   U   p   g   r   a   d   e
+   P   t   h   r   e   a   d       s   u   c   c   e   s   s  \n
+ 033   [   m  \0  \0  \0   r   c   v       u   p   g   r   a   d
+   e       s   t   a   r   t   [   %   d   ]  \n  \0  \0 033   [
+   0   ;   3   5   m   r   c   v       u   p   g   r   a   d   e
+       s   t   a   r   t   ,   M   c   u   I   d   [   %   x   ]
+  \n  \0   r   c   v       u   p   g   r   a   d   e       r   e
+   s   u   l   t   [   %   d   ]  \n  \0 033   [   0   ;   3   2
+   ;   3   1   m   S   e   n   d   D   a   t   a   F   a   i   l
+   C   n   t       >   =       5  \n  \0 033   [   0   ;   3   5
+   m   S   e   n   d   D   a   t   a   F   a   i   l   ,   r   e
+   t   r   y       s   e   n   d  \n  \0 033   [   0   ;   3   2
+=== full Mlog.txt tail (200 lines) ===
+
+=== look for type= codes that the gimbal typically uses ===
+[1;34mSP_SendMsgToApp success;type[%ld],code[%ld],val[%s]
+SP_SendMsgToApp
+SP_SendMsgToApp
+SP_SendMsgToApp
+=== Mlog.txt full ===
+0 /app/Mlog.txt
+
+=== /app/run/lighttpd.pid content ===
+301
+
+=== last few log entries from polaris_wifi_bt ===
+/app/WiFi_BT_CFG.info
+info[%s];len:[%d];
+[0;32;31m/app/WiFi_BT_CFG.info
+[0;32;31m/app/WiFi_BT_CFG.info
+SP_GetWifiBtCfgInfo
+SP_SaveWifiBtCfgInfo
+[1;32mINFO
+HI_Flash_GetInfo
+siginfo.h
+siginfo.h
+
+=== look for the SP_SendMsgToApp function context (offset in polestar_app) ===
+10805133 [1;34mSP_SendMsgToApp success;type[%ld],code[%ld],val[%s]
+10805924 SP_SendMsgToApp
+18883118 SP_SendMsgToApp
+23616322 SP_SendMsgToApp

@@ -1,0 +1,182 @@
+=== rcS ===
+#! /bin/sh
+
+/bin/mount -a
+
+for initscript in /etc/init.d/S[0-9][0-9]*
+do
+	if [ -x $initscript ] ;
+	then
+		echo "[RCS]: $initscript"
+		$initscript
+	fi
+done
+
+rm -rf /var/empty
+mkdir /var/empty
+
+umount /dev/pts
+rm -rf /dev/pts
+mkdir /dev/pts
+mount /dev/pts
+/usr/local/bin/sshd
+=== S00devs ===
+#!/bin/sh
+
+mknod /dev/console c 5 1
+mknod /dev/ttyAMA0 c 204 64
+mknod /dev/ttyAMA1 c 204 65
+mknod /dev/ttyAMA2 c 204 66
+mknod /dev/ttyAMA3 c 204 67
+mknod /dev/ttyS000 c 204 64
+mknod /dev/null	   c 1 3
+
+/sbin/mdev -s
+echo /sbin/mdev > /proc/sys/kernel/hotplug
+
+
+
+=== S10mpp ===
+#!/bin/sh
+
+
+ubiattach /dev/ubi_ctrl -m 5
+mount -t ubifs ubi1:ubifs /app
+
+#start application
+cd /app
+./bootapp
+
+=== S80network ===
+#!/bin/sh
+
+ipaddr=
+bootp=
+gateway=
+netmask=
+hostname=
+netdev=
+autoconf=
+
+for ipinfo in `cat /proc/cmdline`
+do
+	case "$ipinfo" in
+	ip=*)
+		for var in  ipaddr bootp gateway netmask hostname netdev autoconf
+		do
+			eval read $var
+		done << EOF
+		`echo "$ipinfo" | sed "s/:/\n/g" | sed "s/^[ 	]*$/-/g"`
+EOF
+		ipaddr=`echo "$ipaddr" | cut -d = -f 2`
+		[ x$ipaddr == x ] && ipaddr=x
+		;;
+	esac
+done
+
+[ -z "$ipaddr" ] && exit 0
+
+echo "      IP: $ipaddr"
+echo "   BOOTP: $bootp"
+echo " GATEWAY: $gateway"
+echo " NETMASK: $netmask"
+echo "HOSTNAME: $hostname"
+echo "  NETDEV: $netdev"
+echo "AUTOCONF: $autoconf"
+
+if [ x$ipaddr == x- ] ; then
+	# use DHCP
+	:
+else
+	cmd="ifconfig $netdev $ipaddr"
+	[ x$netmask != x- ] && cmd="$cmd netmask $netmask"
+	eval $cmd
+	[ x$gateway != x- ] && route add default gw $gateway
+fi
+
+ifconfig lo 127.0.0.1
+
+
+=== /etc/passwd and shells ===
+root:mkyV07dPTqJAc:0:0::/root:/bin/sh
+sshd:f.7q0WSaOJAxU:74:74:Privilege-separated SSH:/var/empty/sshd:/sbin/nologin
+
+=== Look at polaris_wifi_bt strings (just the upgradey ones) ===
+g_s32GpioFd
+[0;32;32mHAL_GPIO_Init OK
+[0;32;31mHAL_GPIO_Init Fail
+SP_GpioInit
+[0;32;31mcreate msg queue failed,key[%d]
+[0;32;32mcreate msg queue success,key[%d],id[%d]
+[1;33mSP_sendMsg success; key[%d],type[%ld],code[%ld],val[%s]
+[0;32;31mSP_sendMsg Fail; key[%d],type[%ld],code[%ld],val[%s]
+key[%s],val[%s]
+SP_BtGpioInit
+SP_BtGpioInit
+SP_WifiGpioInit
+wpa_key_mgmt=WPA-PSK
+wpa_group_rekey=86400
+wpa_key_mgmt=WPA-PSK
+wpa_group_rekey=86400
+SP_WifiGpioInit
+[Error]input ps32fd is null
+/dev/hi_gpio
+[Error] open gpiodev failed
+[Error]gpio(%d) fd is illegal
+[Error]gpio not init
+HAL_GPIO_Init
+HAL_GPIO_SetDir
+HAL_GPIO_GetBitVal
+HAL_GPIO_SetBitVal
+HAL_GPIO_Deinit
+\ key
+l key
+d key
+
+=== Look at pgphoto (custom camera binary) ===
+/lib/ld-linux.so.3
+librt.so.1
+_ITM_deregisterTMCloneTable
+__gmon_start__
+_Jv_RegisterClasses
+_ITM_registerTMCloneTable
+libdl.so.2
+libpthread.so.0
+pthread_equal
+pthread_getspecific
+pthread_getschedparam
+sigaction
+pthread_mutex_unlock
+pthread_key_delete
+pthread_join
+pthread_create
+__h_errno_location
+pthread_cancel
+pthread_once
+__errno_location
+__pthread_unwind_next
+connect
+send
+waitpid
+pthread_cond_signal
+pthread_mutex_lock
+lseek64
+__pthread_register_cancel
+pthread_self
+pthread_mutex_destroy
+pthread_cond_wait
+accept
+pthread_cond_destroy
+pthread_cond_timedwait
+pthread_detach
+pthread_key_create
+sem_wait
+recv
+__pthread_unregister_cancel
+pthread_setspecific
+
+=== what is /app/sd/system? ===
+total 48
+drwxr-xr-x    3 root     root         16384 Aug 31 17:58 .
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 ..
+drwxr-xr-x    2 root     root         16384 Aug 31 19:16 log

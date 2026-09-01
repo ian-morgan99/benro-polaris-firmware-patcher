@@ -1,0 +1,60 @@
+Warning: Permanently added '192.168.0.1' (ECDSA) to the list of known hosts.
+[m[12:34:25:863 [1;32mINFO[m-]:SP_LogPathInit[2979]:[0;35mClogCnt[18],minNun[1],maxNum[18]
+[m[12:34:25:863 [1;32mINFO[m-]:SP_LogPathInit[2982]:[0;35mMlogCnt[18],minNun[1],maxNum[18]
+[m[12:34:25:863 [1;32mINFO[m-]:SP_LogPathInit[2985]:[0;35mAlogCnt[18],minNun[1],maxNum[18]
+[m[12:34:25:863 [1;32mINFO[m-]:SP_LogPathInit[2988]:[0;35mElogCnt[18],minNun[1],maxNum[18]
+[m[12:34:25:944 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:44
+[m[12:34:26:016 [1;32mINFO[m-]:SP_SetUpBt[106]:------------------
+[m[12:34:26:016 [1;32mINFO[m-]:SP_BlueSlaveConfig[2968]:[0;35mBT Name,polaris_d13e86
+[m[12:34:26:016 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+Changing discoverable on succeeded
+Changing polaris_d13e86 succeeded
+[m[12:34:26:025 [1;32mINFO[m-]:gatt_register_service[1147]:gatt_register_service
+Changing pairable on succeeded
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/app/service0xe133a8
+	0000fff0-0000-1000-8000-00805f9b34fb
+	Unknown
+[m[12:34:26:027 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xe133a8/chrc0xe13370
+	0xfff1
+[m[12:34:26:028 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xe133a8/chrc0xe14c00
+	0xfff2
+
+(polestar_app:248): GLib-CRITICAL **: Source ID 49 was not found when attempting to remove it
+
+(polestar_app:248): GLib-CRITICAL **: Source ID 49 was not found when attempting to remove it
+
+(polestar_app:248): GLib-CRITICAL **: Source ID 50 was not found when attempting to remove it
+[m[12:34:26:035 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+Failed to register advertising object
+[m[12:34:26:036 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+[m[12:34:26:036 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+[m[12:34:26:036 [1;32mINFO[m-]:SP_SetBleState[81]:ble slave on
+Changing discoverable on succeeded
+[m[12:34:26:069 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001801-0000-1000-8000-00805f9b34fb
+[m[12:34:26:069 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[m[12:34:26:069 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+[m[12:34:26:069 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001800-0000-1000-8000-00805f9b34fb
+[m[12:34:26:069 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000fff0-0000-1000-8000-00805f9b34fb
+[m[12:34:26:069 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+Application registered
+Advertising object registered
+[m[12:34:26:537 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[12:34:26:744 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:43
+[m[12:34:27:544 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:42
+[m[12:34:28:345 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:41
+[m[12:34:28:819 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[12:34:29:145 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:40
+[m[12:34:29:936 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+[m[12:34:29:936 [1;32mINFO[m-]:NetlinkUeventTask[109]:bt conneted
+[m[12:34:29:936 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1035],val[1]
+[m[m[12:34:29:936 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+[m[12:34:29:936 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1281],val[state:1;]
+[m[m[12:34:29:936 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
+[m[12:34:29:941 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
+[[0;92mNEW[0m] Device 73:DB:02:7C:9C:F8 73-DB-02-7C-9C-F8
+[m[12:34:29:945 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:39

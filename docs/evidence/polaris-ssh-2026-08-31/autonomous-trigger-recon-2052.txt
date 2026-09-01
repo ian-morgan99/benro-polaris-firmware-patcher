@@ -1,0 +1,142 @@
+=== arch info ===
+Linux (none) 4.9.37 #59 SMP Wed Sep 4 12:29:11 CST 2024 armv7l GNU/Linux
+processor	: 0
+model name	: ARMv7 Processor rev 5 (v7l)
+BogoMIPS	: 100.00
+Features	: half thumb fastmult vfp edsp neon vfpv3 tls vfpv4 idiva idivt vfpd32 lpae evtstrm 
+CPU implementer	: 0x41
+CPU architecture: 7
+CPU variant	: 0x0
+CPU part	: 0xc07
+CPU revision	: 5
+
+
+=== libc version ===
+-rwxr-x---    1 1000     1000        153904 Aug 25  2021 /lib/ld-2.24.so
+lrwxrwxrwx    1 1000     1000            10 Jun  6  2019 /lib/ld-linux-armhf.so.3 -> ld-2.24.so
+lrwxrwxrwx    1 1000     1000            10 Jun  6  2019 /lib/ld-linux.so.3 -> ld-2.24.so
+-rwxr-x---    1 1000     1000         29412 Aug 25  2021 /lib/ld-uClibc.so.0
+lrwxrwxrwx    1 1000     1000            10 Jun  6  2019 /lib/ld-linux-armhf.so.3 -> ld-2.24.so
+lrwxrwxrwx    1 1000     1000            10 Jun  6  2019 /lib/ld-linux.so.3 -> ld-2.24.so
+
+=== look at the context near "rcv upgrade start[%d]" in polestar_app (offset 10808836) ===
+ 6d 62 61 6c 49 6e 66 6f 2e 62 45 78 41 78 73 69
+ 4f 6e 20 3d 20 48 49 5f 46 41 4c 53 45 0a 00 00
+ 2f 61 70 70 2f 73 64 2f 45 78 44 65 76 46 77 50
+ 6b 74 2f 00 1b 5b 30 3b 33 32 3b 33 31 6d 53 50
+ 5f 53 72 63 68 45 78 64 65 76 4e 65 77 50 6b 74
+ 20 66 61 69 6c 21 0a 1b 5b 6d 00 00 1b 5b 30 3b
+ 33 32 3b 33 31 6d 70 74 68 72 65 61 64 5f 63 72
+ 65 61 74 65 20 66 6f 72 20 53 50 5f 43 72 65 61
+ 74 65 45 78 64 65 76 55 70 67 72 61 64 65 50 74
+ 68 72 65 61 64 20 66 61 69 6c 65 64 0a 1b 5b 6d
+ 00 00 00 00 1b 5b 30 3b 33 32 3b 33 32 6d 70 74
+ 68 72 65 61 64 5f 63 72 65 61 74 65 20 66 6f 72
+ 20 53 50 5f 43 72 65 61 74 65 45 78 64 65 76 55
+ 70 67 72 61 64 65 50 74 68 72 65 61 64 20 73 75
+ 63 63 65 73 73 0a 1b 5b 6d 00 00 00 72 63 76 20
+ 75 70 67 72 61 64 65 20 73 74 61 72 74 5b 25 64
+ 5d 0a 00 00 1b 5b 30 3b 33 35 6d 72 63 76 20 75
+ 70 67 72 61 64 65 20 73 74 61 72 74 2c 4d 63 75
+ 49 64 5b 25 78 5d 0a 00 72 63 76 20
+
+=== look for printf-like code patterns near the message codes ===
+=== look for OMS-related message strings ===
+bt send Oms FwPack,len[%d]
+bt send omsFwPack[... 
+OMS HwVer[%s]
+OMS FwVer[%s]
+OMS IapVer[%s]
+rm -r /app/sd/OmsPkt.zip
+[0;35mSP_ExdevUpgradeFromSD
+SP_ExdevUpgradeFromSD
+use img ev, img_ev:%.2f;oms_ev:%.2f;CurEev:%.2f
+HG_OmsAdjEvByShutter
+HG_OmsAdjEvByIso
+HG_OmsAdjEvByF
+SP_HG_OmsAdjEv
+OmsAdjEv by %s;
+[0;35moms lux:%0.1f,%0.1f,%0.1f,%0.1f;
+[0;35moms ev:%0.2f,%0.2f,%0.2f,%0.2f;mean ev:%0.2f
+OmsTask
+_____OMS_STEP_NONE
+_____OMS_STEP_DO_OFFLINE
+_____OMS_STEP_DO_ONLINE
+_____OMS_STEP_SET_LUX_STA
+_____OMS_STEP_RUNNING
+oms task aleady running
+SP_CreateOmsTask failed
+SP_CreateOmsTask success
+OmsUpgradeStatusProc
+OMS_UPGRADE_STA_LOAD_FW
+OMS_UPGRADE_STA_CHECK_FW PASS
+[0;32;31mOMS_UPGRADE_STA_CHECK_FW FAIL
+OMS_UPGRADE_STA_SEND_START
+
+=== look for any upgrade-related message receiving strings ===
+rcv upgrade start[%d]
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result[%d]
+rcv upgrade start
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result
+rcv upgrade data reply,packNum[%d],ret[%d]
+
+=== look at SP_OmsUpgradeMsgProc context (might print something) ===
+bt send Oms FwPack,len[%d]
+OMS HwVer[%s]
+OMS FwVer[%s]
+OMS IapVer[%s]
+rm -r /app/sd/OmsPkt.zip
+HG_OmsAdjEvByShutter
+HG_OmsAdjEvByIso
+HG_OmsAdjEvByF
+SP_HG_OmsAdjEv
+OmsAdjEv by %s;
+OmsTask
+_____OMS_STEP_NONE
+_____OMS_STEP_DO_OFFLINE
+_____OMS_STEP_DO_ONLINE
+_____OMS_STEP_SET_LUX_STA
+_____OMS_STEP_RUNNING
+SP_CreateOmsTask failed
+SP_CreateOmsTask success
+OmsUpgradeStatusProc
+OMS_UPGRADE_STA_LOAD_FW
+OMS_UPGRADE_STA_CHECK_FW PASS
+[0;32;31mOMS_UPGRADE_STA_CHECK_FW FAIL
+OMS_UPGRADE_STA_SEND_START
+OMS_UPGRADE_STA_WAIT_SEND_DATA
+[0;32;34mOmsSendPackNum:%d;Progress:%d;
+OMS_UPGRADE_STA_SEND_DATA_FINISH
+OMS_UPGRADE_STA_SEND_CANCLE
+OMS_UPGRADE_STA_FAIL
+OMS_UPGRADE_STA_SUCCESS
+OMS_UPGRADE_STA_END
+
+=== strings near SP_OmsUpgradeFromSd ref (offset 10827208 area) ===
+   g   r   a   d   e   F   r   o   m   S   d  \0  \0  \0  \0  \0
+   S   P   _   P   a   n   F   i   l   e   L   i   s   t   F   r
+   e   e  \n  \0   %   s   S   P   _   %   0   4   d   .   j   p
+   g  \0  \0  \0   F   o   c   u   s   S   t   a   c   k   I   s
+   p   T   a   s   k  \0  \0  \0   %   s   m   s   t   i   t   c
+   h   _   o   u   t   .   j   p   g  \0  \0  \0   s   p   h   e
+   r   i   c   a   l  \0  \0  \0 033   [   0   ;   3   5   m   [
+   %   s   ]       a   d   d       t   o       p   r   o   c  \n
+  \0  \0  \0  \0 033   [   0   ;   3   5   m   [   %   s   ]    
+   i   s   p       f   i   n   i   s   h  \n  \0 033   [   0   ;
+   3   5   m   [   %   s   ]       i   s   p       f   a   i   l
+  \n  \0  \0  \0 033   [   0   ;   3   5   m   s   t   i   t   c
+   h       c   o   m   p   l   e   t   e  \n  \0   s   t   i   t
+   c   h       f   a   i   l   e   d  \n  \0  \0   n   o       j
+   p   g   ,   n   o       n   e   e   d       i   s   p  \n  \0
+   P   a   n   o   r   a   m   a   T   a   s   k  \0  \0  \0  \0
+   /   a   p   p   /   s   d   /   p   a   n   o   r   a   m   a
+   /  \0  \0  \0   c   l   a   s   s   _   %   d   /  \0  \0  \0
+   H   I   _   m   k   d   i   r       %   s       f   a   i   l
+  \n  \0  \0  \0   S   P   _   P   A   N   O   R   A   M   A   _
+   S   T   A   _   N   U   L   L  \n  \0  \0  \0   S   P   _   P
+   A   N   O   R   A   M   A   _   S   T   A   _   W   A   I   T
+   _   C   A   M   E   R   A   _   W   A   K   E   _   U   P  \n
+  \0  \0  \0  \0   S   P   _   P   A   N   O   R   A   M   A   _
+   S   T   A   _   S   E   T   _   S   T   A   R   T  \n  \0  \0

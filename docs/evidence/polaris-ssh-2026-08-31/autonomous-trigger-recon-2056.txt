@@ -1,0 +1,94 @@
+=== get firmwareInfo content from FwPkt.zip ===
+config size:326;config MD5:1905e2d041be62b679f7dc6c64ab9d3a;
+uImage size:4188435;uImage MD5:5f6a0c1861a254371c4a956b57f26685;
+rootfs size:21102592;rootfs MD5:778b27bcade9ddc6ea4a7cb45254c551;
+appfs size:64487424;appfs MD5:47f2ae680be3a5f5d69aa20e20a2397b;
+polaris403 size:84328;polaris403 MD5:4facafa7d29c1e6c2a125b8309c9b901;
+polaris413 size:84284;polaris413 MD5:c0299d06a15f5c2fbecb9a6db76a29c5;
+
+
+=== get camera config ===
+setenv bootargs 'mem=1536M quiet console=ttyAMA0,115200 clk_ignore_unused rw ubi.mtd=4 root=ubi0:ubifs rootfstype=ubifs mtdparts=hinand:512K(u-boot.bin),512K(factoryParam),1M(userParam),5M(uImage),40M(rootfs.ubifs),81M(appfs.ubifs)
+setenv bootcmd 'nand read 0x82000000 0x200000 0x500000;bootm 0x82000000'
+ubootVersion '1004' 
+
+=== check size of unzipped FwPkt.zip into temp dir ===
+unzip: can't change directory to '/tmp/fwinspect': No such file or directory
+mkdir: can't create directory '/tmp/fwinspect': No space left on device
+
+=== firmwareInfo hex ===
+od: /tmp/fwinspect/FwPkt/firmwareInfo: No such file or directory
+
+=== config hex ===
+od: /tmp/fwinspect/FwPkt/camera/config: No such file or directory
+
+=== look for crcInfo anywhere ===
+ls: /tmp/fwinspect/FwPkt/crcInfo: No such file or directory
+ls: /app/sd/FwPkt/: No such file or directory
+
+=== current FwVer content on device ===
+FwVer:4.0.0.32;date:2025.05.09;
+cat: can't open '/app/sd/FwVer': No such file or directory
+ls: /tmp/fwinspect/FwPkt/: No such file or directory
+=== disk space ===
+Filesystem                Size      Used Available Use% Mounted on
+ubi0:ubifs               31.4M     31.4M      8.0K 100% /
+ubi1:ubifs               68.0M     55.1M     12.9M  81% /app
+ubi0:ubifs               31.4M     31.4M      8.0K 100% /
+
+=== mount points ===
+ubi0:ubifs on / type ubifs (rw,relatime)
+proc on /proc type proc (rw,relatime)
+sysfs on /sys type sysfs (rw,relatime)
+ubi1:ubifs on /app type ubifs (rw,relatime)
+none on /dev/pts type devpts (rw,relatime,mode=600,ptmxmode=000)
+/dev/mmcblk0p1 on /app/sd type vfat (rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=continue)
+
+=== /app/sd contents (looking for FwPkt) ===
+total 67136
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-xr-x    1 root     root      68599228 Aug 31 18:40 FwPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 HDR
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 Lapse
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 focusStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 normal
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 panorama
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 starskyStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 sun
+drwxr-xr-x    3 root     root         16384 Aug 31 17:58 system
+
+=== look for FwPkt anywhere on filesystem ===
+/app/sd/FwPkt.zip
+
+=== /app/sd after the 18:40 stage ===
+/app/sd/:
+total 67136
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-xr-x    1 root     root      68599228 Aug 31 18:40 FwPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 HDR
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 Lapse
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 focusStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 normal
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 panorama
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 starskyStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 sun
+drwxr-xr-x    3 root     root         16384 Aug 31 17:58 system
+
+/app/sd/HDR:
+total 32
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 .
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 ..
+
+/app/sd/Lapse:
+total 32
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 .
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 ..
+
+/app/sd/focusStack:
+total 32
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 .
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 ..
+
+/app/sd/normal:

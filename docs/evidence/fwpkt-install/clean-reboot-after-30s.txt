@@ -1,0 +1,23 @@
+Warning: Permanently added '192.168.0.1' (ECDSA) to the list of known hosts.
+=== /app/sd/ now (FwPkt.zip untouched?) ===
+total 133904
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 .
+drwxr-xr-x   12 root     root          1664 Sep  1 12:27 ..
+-rwxr-xr-x    1 root     root      68484216 Aug 31 21:38 FwPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 HDR
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 Lapse
+-rwxr-xr-x    1 root     root      68484216 Sep  1 09:33 OmsPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 focusStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 normal
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 panorama
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 starskyStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 sun
+drwxr-xr-x    3 root     root         16384 Aug 31 17:58 system
+
+=== /app/sd/FwPkt/ — was it created? ===
+ls: /app/sd/FwPkt/: No such file or directory
+
+=== full Mlog (since it rotated to 464 bytes, it is all there is) ===
+[m[m[12:45:27:581 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[12:45:27:581 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+===END===

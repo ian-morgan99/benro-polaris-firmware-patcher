@@ -1,0 +1,480 @@
+=== all SP_/Msg key strings in polaris_wifi_bt ===
+msgget
+SP_GpioInit
+[0;32;31mcreate msg queue failed,key[%d]
+[0;32;32mcreate msg queue success,key[%d],id[%d]
+[1;33mSP_sendMsg success; key[%d],type[%ld],code[%ld],val[%s]
+[0;32;31mSP_sendMsg Fail; key[%d],type[%ld],code[%ld],val[%s]
+SP_MsgQueueCreate
+SP_MsgQueueDel
+SP_sendMsg
+SP_CreateMsgProcTask failed
+SP_MsgProc
+SP_CreateMsgProcTask
+key[%s],val[%s]
+SP_StringPickUpVal
+SP_StringPickUp
+SP_UserParamInit success,s8ParamFd = 1;
+SP_UserParamInit success,s8ParamFd = 2;
+SP_GetUserParam
+SP_GetWifiBtCfgInfo
+SP_SaveWifiBtCfgInfo
+SP_BtGpioInit
+SP_BtGpioInit
+SP_BtStarUp
+SP_BtStop
+SP_UpdateBtConfig
+SP_ReadEvent haven't data receive
+SP_ReadEvent receive %d
+SP_ReadEvent
+SP_WifiGpioInit
+[0;32;32mSP_UpdateWifiConfig 
+[0;32;32mSP_UpdateWifiConfig success,ssid[%s],pwd[%s]
+[0;32;31mSP_UpdateWifiConfig fail Stop wifi
+[0;32;32mNo need SP_UpdateWifiConfig 
+SP_WifiGpioInit
+SP_SetWifiState
+SP_UpdateWifiConfig
+\ key
+l key
+d key
+SP_SetWlanLedStatus
+
+=== look at /app/run/ (running pids?) ===
+total 4
+drwxr-x---    2 1000     1000           304 Aug 31 18:49 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-x---    1 1000     1000             0 May 28  2022 .gitkeep
+-rw-r--r--    1 root     root             4 Aug 31 19:16 lighttpd.pid
+
+=== look at /app/dbus/ ===
+total 4
+drwxr-x---    3 1000     1000           368 Aug 31 19:16 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rw-r--r--    1 root     root             4 Aug 31 19:16 pid
+drwxr-x---    4 1000     1000           288 Oct 13  2020 share
+srwxrwxrwx    1 root     root             0 Aug 31 19:16 system_bus_socket
+/app/dbus/pid
+/app/dbus/share/xml/dbus-1/introspect.dtd
+/app/dbus/share/xml/dbus-1/busconfig.dtd
+/app/dbus/share/dbus-1/session.d/.gitkeep
+/app/dbus/share/dbus-1/system.d/bluetooth.conf
+/app/dbus/share/dbus-1/system.d/dbus-1/system.d/bluetooth.conf
+/app/dbus/share/dbus-1/system-services/org.bluez.service
+/app/dbus/share/dbus-1/system.conf
+/app/dbus/share/dbus-1/session.conf
+/app/dbus/share/dbus-1/services/org.bluez.obex.service
+
+=== /app/cfg/ ===
+total 0
+drwxr-x---    2 1000     1000           232 May 28  2022 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-x---    1 1000     1000             0 May 28  2022 .gitkeep
+
+=== /app/private/ ===
+total 0
+drwxr-x---    2 1000     1000           160 May  9  2025 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+
+=== upgrade strings in polestar_app ===
+SP_EVENT_UPGRADE_FAIL
+SP_EVENT_UPGRADE_SUCCESS
+ExdevUpgradeStatusProc
+[0;35mEXDEV_UPGRADE_STA_SEND_START
+[0;35mEXDEV_UPGRADE_STA_WAIT_START_RESPONSE
+[0;35mEXDEV_UPGRADE_STA_WAIT_SEND_DATA
+[0;35mEXDEV_UPGRADE_STA_SEND_STOP
+[0;35mEXDEV_UPGRADE_STA_SEND_FAIL
+[0;35mEXDEV_UPGRADE_STA_WAIT_FAIL_RESPONSE
+[0;32;32mexdev upgrade success
+[0;32;31mexdev upgrade fail
+rm -r /app/sd/ExDevFwPkt
+rm -r /app/sd/ExDevFwPkt.zip
+[0;32;32mexit gimbal upgrade pthread
+ExdevUpgrade busy
+Check ExDevFwPkt.zip
+/app/sd/ExDevFwPkt/
+[0;32;31mpthread_create for SP_CreateExdevUpgradePthread failed
+[0;32;32mpthread_create for SP_CreateExdevUpgradePthread success
+rcv upgrade start[%d]
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result[%d]
+unzip /app/sd/ExDevFwPkt.zip -d /app/sd/
+NO ExDevFwPkt.zip
+[0;32;32ms_stExdevUpgrade.fwFileName is:%s
+[0;32;32ms_stExdevUpgrade.version is:%s
+[0;35mdetach ExdevUpgradeLedTask
+[0;35mSP_ExdevUpgradeFromSD
+ExdevUpgradeStatusProc
+SP_CreateExdevUpgradePthread
+SP_UartRcvExdevUpgradeMsgProc
+SP_ExDevFwPktCheck
+ExdevUpgradeLedTask
+SP_ExdevUpgradeFromSD
+GimbalUpgradeStatusProc
+GIMBAL_UPGRADE_STA_SEND_START
+GIMBAL_UPGRADE_STA_WAIT_START_RESPONSE
+GIMBAL_UPGRADE_STA_SEND_STOP
+GIMBAL_UPGRADE_STA_SEND_FAIL
+[0;32;32mgimbal upgrade success
+[0;32;31mgimbal upgrade fail
+[0;32;32mexit gimbal upgrade pthread
+/app/sd/FwPkt/gimbal/
+[0;32;31mpthread_create for SP_CreateGimbalUpgradePthread failed
+[0;32;32mpthread_create for SP_CreateGimbalUpgradePthread success
+rcv upgrade start
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result
+[0;32;32ms_stGimbalUpgrade.fw403FileName is:%s
+[0;32;32ms_stGimbalUpgrade.fw403Version is:%s
+
+=== look for message queue keys in polaris_wifi_bt (hex) ===
+STA_FREQHOLD 0x0080
+ADJ_TICK 0x4000
+MAP_DENYWRITE 0x00800
+__INT_FAST16_MAX__ 0x7fffffff
+__SIG_ATOMIC_MAX__ 0x7fffffff
+__PTRDIFF_MAX__ 0x7fffffff
+WNOWAIT 0x01000000
+NLMSG_DATA(nlh) ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
+DN_CREATE 0x00000004
+__SHRT_MAX__ 0x7fff
+=== ipcs -q (active message queues) ===
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+0x000003ed 0          root       666        0            0           
+0x000003ee 32769      root       666        0            0           
+0x000003eb 65538      root       666        0            0           
+0x000003ea 98307      root       666        0            0           
+0x000003e9 131076     root       666        0            0           
+0x000003ec 163845     root       666        0            0           
+
+
+=== ipcs -a (everything) ===
+
+------ Shared Memory Segments --------
+key        shmid      owner      perms      bytes      nattch     status      
+
+------ Semaphore Arrays --------
+key        semid      owner      perms      nsems     
+
+------ Message Queues --------
+key        msqid      owner      perms      used-bytes   messages    
+0x000003ed 0          root       666        0            0           
+0x000003ee 32769      root       666        0            0           
+0x000003eb 65538      root       666        0            0           
+0x000003ea 98307      root       666        0            0           
+0x000003e9 131076     root       666        0            0           
+0x000003ec 163845     root       666        0            0           
+
+
+=== which tools available ===
+/usr/bin/ipcs
+
+=== OMS upgrade strings in polestar_app ===
+OmsUpgradeStatusProc
+OMS_UPGRADE_STA_LOAD_FW
+OMS_UPGRADE_STA_CHECK_FW PASS
+[0;32;31mOMS_UPGRADE_STA_CHECK_FW FAIL
+OMS_UPGRADE_STA_SEND_START
+OMS_UPGRADE_STA_WAIT_SEND_DATA
+OMS_UPGRADE_STA_SEND_DATA_FINISH
+OMS_UPGRADE_STA_SEND_CANCLE
+OMS_UPGRADE_STA_FAIL
+OMS_UPGRADE_STA_SUCCESS
+OMS_UPGRADE_STA_END
+[0;32;32mexit oms upgrade pthread
+[0;32;31mSP_CreateOmsUpgradePthread failed
+[0;32;32mSP_CreateOmsUpgradePthread success
+[0;32;34moms upgrade start reply:do upgrade
+[0;32;31moms upgrade start reply:fail
+[0;32;34moms upgrade start reply:no need upgrade
+[0;32;34moms upgrade data finish reply
+[0;32;34moms upgrade cancel reply
+[0;32;34moms upgrade exit led show reply
+/app/getOmsFwInfo.sh
+run getOmsFwInfo.sh fail
+OmsUpgradeStatusProc
+SP_CreateOmsUpgradePthread
+SP_OmsUpgradeMsgProc
+SP_OmsUpgradeCheckFwPkt
+OmsUpgradePushResultTask
+SP_OmsUpgradeFromSd
+OMS_UPGRADE_PACK_SIZE 128
+OMS_UPGRADE_CMD1 0xAB
+
+=== /app/Mlog.txt tail ===
+[m[m[20:46:59:113 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[20:46:59:113 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+
+=== /app/Clog.txt tail ===
+
+=== /app/error.log tail ===
+
+=== /app/dbus/pid ===
+394
+
+=== ls /app/dbus -la (full) ===
+/app/dbus/:
+total 4
+drwxr-x---    3 1000     1000           368 Aug 31 19:16 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rw-r--r--    1 root     root             4 Aug 31 19:16 pid
+drwxr-x---    4 1000     1000           288 Oct 13  2020 share
+srwxrwxrwx    1 root     root             0 Aug 31 19:16 system_bus_socket
+
+/app/dbus/share:
+total 0
+drwxr-x---    4 1000     1000           288 Oct 13  2020 .
+drwxr-x---    3 1000     1000           368 Aug 31 19:16 ..
+drwxr-x---    6 1000     1000           592 Oct 14  2020 dbus-1
+drwxr-x---    3 1000     1000           224 Oct 13  2020 xml
+
+/app/dbus/share/dbus-1:
+total 12
+drwxr-x---    6 1000     1000           592 Oct 14  2020 .
+drwxr-x---    4 1000     1000           288 Oct 13  2020 ..
+drwxr-x---    2 1000     1000           240 Oct 13  2020 services
+-rwxr-x---    1 1000     1000          3585 Oct 13  2020 session.conf
+drwxr-x---    2 1000     1000           232 May 28  2022 session.d
+drwxr-x---    2 1000     1000           240 Oct 13  2020 system-services
+-rwxr-x---    1 1000     1000          5710 Oct 13  2020 system.conf
+drwxr-x---    3 1000     1000           296 Oct 13  2020 system.d
+
+/app/dbus/share/dbus-1/services:
+total 4
+drwxr-x---    2 1000     1000           240 Oct 13  2020 .
+drwxr-x---    6 1000     1000           592 Oct 14  2020 ..
+-rwxr-x---    1 1000     1000            95 Oct 13  2020 org.bluez.obex.service
+
+/app/dbus/share/dbus-1/session.d:
+total 0
+drwxr-x---    2 1000     1000           232 May 28  2022 .
+drwxr-x---    6 1000     1000           592 Oct 14  2020 ..
+-rwxr-x---    1 1000     1000             0 May 28  2022 .gitkeep
+
+/app/dbus/share/dbus-1/system-services:
+total 4
+drwxr-x---    2 1000     1000           240 Oct 13  2020 .
+drwxr-x---    6 1000     1000           592 Oct 14  2020 ..
+-rwxr-x---    1 1000     1000            95 Oct 13  2020 org.bluez.service
+
+/app/dbus/share/dbus-1/system.d:
+total 4
+drwxr-x---    3 1000     1000           296 Oct 13  2020 .
+drwxr-x---    6 1000     1000           592 Oct 14  2020 ..
+-rwxr-x---    1 1000     1000          1491 Oct 13  2020 bluetooth.conf
+drwxr-x---    3 1000     1000           232 Oct 13  2020 dbus-1
+=== type/code values in polestar_app ===
+
+=== msg queue keys in polestar_app ===
+[0;32;31mcreate msg queue failed,key[%d]
+[0;32;32mcreate msg queue success,key[%d],id[%d]
+[1;33mSP_sendMsg success; key[%d],type[%ld],code[%ld],val[%s]
+[0;32;31mSP_sendMsg Fail; key[%d],type[%ld],code[%ld],val[%s]
+HIGV_MSG_VIDEOSHELTER_MOUSEDOWN_R 0x1005
+HIGV_MSG_VIDEOSHELTER_MOUSEIN 0x1001
+HI_GV_KEYHOOK_STOP 0x1001
+HIGV_MSG_VIDEOSHELTER_MOUSEUP 0x1003
+HIGV_MSG_VIDEOSHELTER_MOUSEDOWN_L 0x1002
+HIGV_MSG_VIDEOSHELTER_MOUSEMOVE 0x1004
+HIGV_MSG_MOVEMONITOR_MOUSEUP 0x1006
+
+=== msg type for upgrade (look for upgrade-related type/code/val) ===
+rcv upgrade start[%d]
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result[%d]
+rcv upgrade start
+[0;35mrcv upgrade start,McuId[%x]
+rcv upgrade result
+rcv upgrade data reply,packNum[%d],ret[%d]
+
+=== look for SP_OmsUpgradeFromSd - is it called from a watcher? ===
+rm -r /app/sd/ExDevFwPkt
+rm -r /app/sd/ExDevFwPkt.zip
+[0;32;32mexit gimbal upgrade pthread
+ExdevUpgrade busy
+Check ExDevFwPkt.zip
+[0;32;31m%s failed, s32Ret[0x%08X]
+--
+[0;32;31mno support this cmd[%d]
+unzip /app/sd/ExDevFwPkt.zip -d /app/sd/
+NO ExDevFwPkt.zip
+[0;32;31mopendir %s fail
+--
+SP_OmsUpgradeMsgProc
+SP_OmsUpgradeCheckFwPkt
+OmsUpgradePushResultTask
+SP_OmsUpgradeFromSd
+SP_PanFileListFree
+--
+SendHwToGimbal hw[%d],ubootVer[%d]
+rm -r /app/sd/FwPkt.zip
+[0;32;31mUPGRADE_STEP_LOAD_FW timeOut
+--
+[0;32;32m%s success,
+unzip /app/sd/FwPkt.zip -d /app/sd/
+NO FwPkt.zip
+/app/getFwInfo.sh
+--
+s_stOmsCtx
+SP_OmsUpgradeCheckFwPkt
+szBtName
+
+=== does polestar_app watch for /app/sd/FwPkt.zip? ===
+rm -r /app/sd/ExDevFwPkt
+rm -r /app/sd/ExDevFwPkt.zip
+Check ExDevFwPkt.zip
+/app/sd/ExDevFwPkt/
+unzip /app/sd/ExDevFwPkt.zip -d /app/sd/
+NO ExDevFwPkt.zip
+SP_ExDevFwPktCheck
+/app/sd/FwPkt/gimbal/
+SP_OmsUpgradeCheckFwPkt
+rm -r /app/sd/FwPkt.zip
+/app/sd/FwPkt/
+rm -r /app/sd/FwPkt
+[1;33mremove /app/sd/FwPkt
+remove /app/sd/FwPkt
+unzip /app/sd/FwPkt.zip -d /app/sd/
+NO FwPkt.zip
+/app/sd/FwPkt/crcInfo
+/app/sd/FwPkt/firmwareInfo
+GIMBAL_FW_PATH "/app/sd/FwPkt/gimbal/"
+EXDEV_FW_PATH "/app/sd/ExDevFwPkt/"
+SP_ExDevFwPktCheck
+SP_OmsUpgradeCheckFwPkt
+SP_OmsUpgradeCheckFwPkt
+SP_ExDevFwPktCheck
+
+=== look for fopen/access/stat with FwPkt in polestar_app ===
+/app/sd/ExDevFwPkt/
+/app/sd/FwPkt/gimbal/
+SP_OmsUpgradeFromSd
+rm -r /app/sd/FwPkt.zip
+/app/sd/FwPkt/
+rm -r /app/sd/FwPkt
+[1;33mremove /app/sd/FwPkt
+remove /app/sd/FwPkt
+unzip /app/sd/FwPkt.zip -d /app/sd/
+/app/sd/FwPkt/crcInfo
+/app/sd/FwPkt/firmwareInfo
+GIMBAL_FW_PATH "/app/sd/FwPkt/gimbal/"
+SP_OmsUpgradeFromSd
+SP_OmsUpgradeFromSd
+
+=== look at what processes are running ===
+PID   USER     TIME   COMMAND
+    1 root       0:00 init
+    2 root       0:00 [kthreadd]
+    3 root       0:00 [ksoftirqd/0]
+    5 root       0:00 [kworker/0:0H]
+    7 root       0:00 [rcu_sched]
+    8 root       0:00 [rcu_bh]
+    9 root       0:00 [migration/0]
+   10 root       0:00 [lru-add-drain]
+   11 root       0:00 [cpuhp/0]
+   12 root       0:00 [cpuhp/1]
+   13 root       0:00 [migration/1]
+   14 root       0:00 [ksoftirqd/1]
+   16 root       0:00 [kworker/1:0H]
+   17 root       0:00 [kdevtmpfs]
+   18 root       0:00 [oom_reaper]
+   19 root       0:00 [writeback]
+   20 root       0:00 [kcompactd0]
+   21 root       0:00 [crypto]
+   22 root       0:00 [bioset]
+   23 root       0:00 [kblockd]
+   24 root       0:00 [spi0]
+   25 root       0:00 [spi1]
+   26 root       0:00 [kworker/0:1]
+   27 root       0:00 [spi2]
+   28 root       0:00 [cfg80211]
+   29 root       0:00 [rpciod]
+   30 root       0:00 [xprtiod]
+   31 root       0:00 [kswapd0]
+   32 root       0:00 [vmstat]
+   33 root       0:00 [nfsiod]
+   58 root       0:00 [bioset]
+   59 root       0:00 [bioset]
+   60 root       0:00 [bioset]
+   61 root       0:00 [bioset]
+   62 root       0:00 [bioset]
+   63 root       0:00 [bioset]
+   64 root       0:00 [bioset]
+   65 root       0:00 [bioset]
+   66 root       0:00 [bioset]
+   67 root       0:00 [bioset]
+   68 root       0:00 [bioset]
+   69 root       0:00 [bioset]
+   70 root       0:00 [bioset]
+   71 root       0:00 [bioset]
+   72 root       0:00 [bioset]
+   73 root       0:00 [bioset]
+   74 root       0:00 [bioset]
+   75 root       0:00 [bioset]
+   76 root       0:00 [bioset]
+   77 root       0:00 [bioset]
+   78 root       0:00 [bioset]
+   79 root       0:00 [bioset]
+   80 root       0:00 [bioset]
+   81 root       0:00 [bioset]
+   82 root       0:00 [bioset]
+   83 root       0:00 [bioset]
+   84 root       0:00 [bioset]
+   85 root       0:00 [bioset]
+   86 root       0:00 [bioset]
+   87 root       0:00 [bioset]
+   88 root       0:00 [bioset]
+   89 root       0:00 [bioset]
+   90 root       0:00 [bioset]
+   91 root       0:00 [bioset]
+   92 root       0:00 [bioset]
+   93 root       0:00 [bioset]
+   94 root       0:00 [bioset]
+   95 root       0:00 [bioset]
+   97 root       0:00 [krfcommd]
+  102 root       0:00 [ubi_bgt0d]
+  103 root       0:00 [ubifs_bgt0_0]
+  115 root       0:00 [kworker/1:1]
+  118 root       0:03 [kworker/u4:1]
+  123 root       0:00 [ubi_bgt1d]
+  126 root       0:00 [ubifs_bgt1_0]
+  180 root       0:00 [irq/49-VI_CAP0]
+  231 root       0:03 [hi_vdec_thread]
+  247 root       0:00 ./polaris_wifi_bt
+  248 root       0:03 ./polestar_app
+  249 root       1:01 /app/bin/pgphoto
+  267 root       0:00 /usr/local/bin/sshd
+  268 root       0:00 -sh
+  301 root       0:00 /app/bin/lighttpd -f /etc/lighttpd/lighttpd.conf -m /app/lib/lighttpd/
+  323 root       0:00 [wl_event_handle]
+  362 root       0:00 [bioset]
+  363 root       0:07 [mmcqd/0]
+  369 root       0:00 [kworker/0:1H]
+  376 root       0:00 [hci0]
+  377 root       0:00 [hci0]
+  380 root       0:00 [kworker/u5:1]
+  381 root       0:00 [kworker/u5:2]
+  386 root       0:00 [kworker/1:1H]
+  394 root       0:00 /app/bluetooth/bin/dbus-daemon --config-file=/app/bluetooth/config/system.conf
+  396 root       0:00 /app/bluetooth/libexec/bluetooth/bluetoothd --configfile=/app/bluetooth/config/main.conf --experimental
+  518 root       0:00 [wl_event_handle]
+ 2238 root       0:00 [kworker/1:0]
+ 2247 root       0:00 [wl_event_handle]
+ 2824 root       0:00 [kworker/0:0]
+ 2831 root       0:00 [wl_event_handle]
+ 2832 root       0:00 [dhd_watchdog_th]
+ 2833 root       0:00 [dhd_dpc]
+ 2834 root       0:00 [dhd_rxf]
+ 2835 root       0:00 [kworker/u4:0]
+ 2843 root       0:00 [wl_event_handle]
+ 2846 root       0:00 /app/wifi/hostapd -B /app/wifi/hostapd.conf
+ 2849 root       0:00 /app/wifi//udhcpd /app/wifi/udhcpd.conf
+ 3075 root       0:00 sh -c  echo "=== file arch via od header ===" od -An -tx1 -N 20 /app/bin/polestar_app | head -2 echo "=== offset of mFwVer[%s] ===" od -An -c /app/bin/polestar_app | awk -v RS= "/mFwVer\[%s\]/{print NR-1; exit}" echo "=== offset of hw:%s;sw:%s;exAxis:%s;sv:%d;ov:%s; ===" od -An -c /app/bin/polestar_app | awk -v RS= "/hw:%s;sw:%s;exAxis:%s;sv:%d;ov:%s;/{print NR-1; exit}" echo "=== offset of hw:%s;sw:%s;exAxis:%s;sv:%d;ov: ; ===" od -An -c /app/bin/polestar_app | awk -v RS= "/hw:%s;sw:%s;exAxis:%s;sv:%d;ov: ;/{print NR-1; exit}" echo "=== offset of SP_GetDeviceVer ===" od -An -c /app/bin/polestar_app | awk -v RS= "/SP_GetDeviceVer/{print NR-1; exit}" echo "=== offset of FwVer v4.0.0.32 20250509 ===" od -An -c /app/bin/polestar_app | awk -v RS= "/FwVer v4.0.0.32 20250509/{print NR-1; exit}" 
+ 3078 root       0:03 od -An -c /app/bin/polestar_app
+ 3079 root      19:37 awk -v RS= /mFwVer\[%s\] {printNR -1; exit}
+ 3427 root       0:00 sshd: root@notty
+ 3430 root       0:00 sh -c  echo "=== type/code values in polestar_app ===" strings /app/bin/polestar_app 2>/dev/null | grep -E "type\[[0-9]+\]|code\[[0-9]+\]|type = |code = " | head -30 echo "" echo "=== msg queue keys in polestar_app ===" strings /app/bin/polestar_app 2>/dev/null | grep -E "0x3e[0-9a-f]{1,2}|0x1001|0x1002|0x1003|0x1004|0x1005|0x1006|key\[%d\]|msg queue success,key" | head -20 echo "" echo "=== msg type for upgrade (look for upgrade-related type/code/val) ===" strings /app/bin/polestar_app 2>/dev/null | grep -E "rcv.*upgrade|rcv.*start|fw.*start|upgrade.*type|UPGRADE_MSG" | head -30 echo "" echo "=== look for SP_OmsUpgradeFromSd - is it called from a watcher? ===" strings /app/bin/polestar_app 2>/dev/null | grep -B1 -A1 "SP_OmsUpgradeFromSd\|Check.*FwPkt\|Fwpkt.*check\|FwPkt.zip" | head -30 echo "" echo "=== does polestar_app watch for /app/sd/FwPkt.zip? ===" strings /app/bin/polestar_app 2>/dev/null | grep -E "FwPkt|Fwpkt|fwpkt" | head -40 echo "" echo "=== look for fopen/access/stat with FwPkt in polestar_app ===" strings /app/bin/polestar_app 2>/dev/null | grep -E "^/app/sd/.*FwPkt|SP_OmsUpgradeFromSd|app/sd/FwPkt" | head -20 echo "" echo "=== look at what processes are running ===" ps -ef 2>&1 
+ 3461 root       0:00 ps -ef

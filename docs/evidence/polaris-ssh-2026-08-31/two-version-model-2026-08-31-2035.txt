@@ -1,0 +1,28 @@
+=== live ps state ===
+Mon Aug 31 20:35:53 UTC 2026
+  248 root       0:03 ./polestar_app
+  267 root       0:00 /usr/local/bin/sshd
+  301 root       0:00 /app/bin/lighttpd -f /etc/lighttpd/lighttpd.conf -m /app/lib/lighttpd/
+ 3075 root       0:00 sh -c  echo "=== file arch via od header ===" od -An -tx1 -N 20 /app/bin/polestar_app | head -2 echo "=== offset of mFwVer[%s] ===" od -An -c /app/bin/polestar_app | awk -v RS= "/mFwVer\[%s\]/{print NR-1; exit}" echo "=== offset of hw:%s;sw:%s;exAxis:%s;sv:%d;ov:%s; ===" od -An -c /app/bin/polestar_app | awk -v RS= "/hw:%s;sw:%s;exAxis:%s;sv:%d;ov:%s;/{print NR-1; exit}" echo "=== offset of hw:%s;sw:%s;exAxis:%s;sv:%d;ov: ; ===" od -An -c /app/bin/polestar_app | awk -v RS= "/hw:%s;sw:%s;exAxis:%s;sv:%d;ov: ;/{print NR-1; exit}" echo "=== offset of SP_GetDeviceVer ===" od -An -c /app/bin/polestar_app | awk -v RS= "/SP_GetDeviceVer/{print NR-1; exit}" echo "=== offset of FwVer v4.0.0.32 20250509 ===" od -An -c /app/bin/polestar_app | awk -v RS= "/FwVer v4.0.0.32 20250509/{print NR-1; exit}" 
+ 3078 root       0:02 od -An -c /app/bin/polestar_app
+ 3186 root       0:00 sshd: root@notty
+=== polestar_app verification ===
+-rwxr-x---    1 1000     1000      24941228 May  9  2025 /app/bin/polestar_app
+f1af6203f35848ca42b24f825dfc6ada  /app/bin/polestar_app
+=== stock FwPkt.zip still staged ===
+ls: /app/sd/polestar_app.stock: No such file or directory
+-rwxr-xr-x    1 root     root      68599228 Aug 31 18:40 /app/sd/FwPkt.zip
+=== Mlog latest ===
+=== fast string counts (grep -aoc) ===
+  [1] sw:%d;
+  [3] sw:%s;
+  [1] hw:%s;sw:%s;exAxis:%s;sv:%d;ov:%s;
+  [1] hw:%s;sw:%s;exAxis:%s;sv:%d;ov: ;
+  [3] SP_GetDeviceVer
+  [1] FwVer v4.0.0.32 20250509
+  [0] 6.0.0.54
+  [1] 4.0.0.32
+  [3] mFwVer
+  [1] exFwVer
+  [1] sysFwVer
+  [1] szFwVer

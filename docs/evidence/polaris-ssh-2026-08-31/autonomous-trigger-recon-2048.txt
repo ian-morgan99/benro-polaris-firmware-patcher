@@ -1,0 +1,36 @@
+=== does polestar_app have inotify or stat-loop on /app/sd/FwPkt.zip? ===
+
+=== msg queue keys constants - what is 0x3e9 (1001)? ===
+sh: python3: not found
+
+=== grep for hex msg keys in polestar_app ===
+0
+
+=== look for hardcoded numbers 1001-1010 in the binary ===
+1001
+1002
+1003
+1004
+1005
+
+=== strings mentioning /app/sd/FwPkt (more context) ===
+rm -r /app/sd/ExDevFwPkt
+rm -r /app/sd/ExDevFwPkt.zip
+[0;32;32mexit gimbal upgrade pthread
+ExdevUpgrade busy
+Check ExDevFwPkt.zip
+[0;32;31m%s failed, s32Ret[0x%08X]
+--
+[0;32;31mno support this cmd[%d]
+unzip /app/sd/ExDevFwPkt.zip -d /app/sd/
+NO ExDevFwPkt.zip
+[0;32;31mopendir %s fail
+--
+SendHwToGimbal hw[%d],ubootVer[%d]
+rm -r /app/sd/FwPkt.zip
+[0;32;31mUPGRADE_STEP_LOAD_FW timeOut
+--
+[0;32;32m%s success,
+unzip /app/sd/FwPkt.zip -d /app/sd/
+NO FwPkt.zip
+/app/getFwInfo.sh

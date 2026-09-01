@@ -1,0 +1,10 @@
+=== read ELF header to find section table ===
+ 464c457f 03010101 00000000 00000000
+ 00280002 00000001 00029d40 00000034
+ 017c8c44 05000200 00200034 0028000a
+ 00280029 70000001 00ba5cec 00bb5cec
+
+e_shoff: 
+e_shentsize: 
+e_shnum: 
+e_shstrndx: 

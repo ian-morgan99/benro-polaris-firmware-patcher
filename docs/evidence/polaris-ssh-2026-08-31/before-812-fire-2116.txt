@@ -1,0 +1,111 @@
+=== PIDs ===
+4565 ./polestar_app 
+5126 sh -c echo '=== PIDs ===' ; pgrep -fl polestar_app ; echo ; echo '=== /app/sd ===' ; ls -la /app/sd/ ; echo ; echo '=== FwPkt.zip md5 ===' ; md5sum /app/sd/FwPkt.zip ; echo ; echo '=== FwVer ===' ; cat /app/FwVer ; echo ; echo '=== Mlog last 60 ===' ; tail -60 /app/Mlog.txt ; echo ; echo '=== Clog last 30 ===' ; tail -30 /app/Clog.txt ; echo ; echo '=== tail of error.log ===' ; tail -20 /app/error.log ; echo ; echo '=== ls /app/run ===' ; ls -la /app/run/ 
+
+=== /app/sd ===
+total 67040
+drwxr-xr-x   10 root     root         16384 Jan  1  1970 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-xr-x    1 root     root      68484216 Aug 31 21:38 FwPkt.zip
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 HDR
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 Lapse
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 focusStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 normal
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 panorama
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 starskyStack
+drwxr-xr-x    2 root     root         16384 Aug 31 17:58 sun
+drwxr-xr-x    3 root     root         16384 Aug 31 17:58 system
+-rwxr-xr-x    1 root     root           558 Aug 31 21:41 trigger_upgrade.sh
+
+=== FwPkt.zip md5 ===
+92da888387b14dc02976b5fa22b94067  /app/sd/FwPkt.zip
+
+=== FwVer ===
+FwVer:4.0.0.32;date:2025.05.09;
+
+=== Mlog last 60 ===
+[m[22:16:04:706 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:04:710 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:04:712 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000045;pitch:0.000023;roll:0.000000;]
+[m[m[22:16:05:745 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:266;val:-100
+[m[22:16:05:746 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[22:16:07:675 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:07:675 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:07:675 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:07:681 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:07:684 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000044;pitch:0.000024;roll:0.000000;]
+[m[m[22:16:08:789 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:08:789 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:08:790 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:08:794 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:08:796 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000045;pitch:0.000024;roll:0.000000;]
+[m[m[22:16:09:673 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:266;val:-100
+[m[22:16:09:673 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[22:16:11:676 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:11:676 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:11:676 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:11:784 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:11:786 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000045;pitch:0.000020;roll:0.000000;]
+[m[m[22:16:12:859 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:12:859 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:12:860 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:12:864 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:12:866 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000048;pitch:0.000024;roll:0.000000;]
+[m[m[22:16:13:311 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[22:16:13:311 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[22:16:13:729 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:266;val:-100
+[m[22:16:13:729 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[22:16:15:726 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:15:726 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:15:726 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:15:731 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:15:732 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000049;pitch:0.000026;roll:0.000000;]
+[m[m[22:16:16:808 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:16:809 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:16:809 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:16:825 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:16:827 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000049;pitch:0.000027;roll:0.000000;]
+[m[m[22:16:17:681 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:266;val:-100
+[m[22:16:17:681 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[22:16:19:678 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:19:679 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:19:679 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:19:705 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:19:707 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000045;pitch:0.000025;roll:0.000000;]
+[m[m[22:16:20:728 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:20:728 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:20:728 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:20:733 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:20:734 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000045;pitch:0.000024;roll:0.000000;]
+[m[m[22:16:21:697 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:266;val:-100
+[m[22:16:21:698 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[22:16:23:682 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:284;val:-100
+[m[22:16:23:682 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:16:23:682 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:16:23:706 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:2;code:517;val:-100
+[m[22:16:23:708 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000045;pitch:0.000023;roll:0.000000;]
+
+=== Clog last 30 ===
+[m[22:15:57:685 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[266],val[-100]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 266  data: -100   --_isInit 1 
+[m[22:16:01:686 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[266],val[-100]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 266  data: -100   --_isInit 1 
+[m[22:16:05:746 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[266],val[-100]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 266  data: -100   --_isInit 1 
+[m[22:16:09:674 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[266],val[-100]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 266  data: -100   --_isInit 1 
+[m[22:16:13:729 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[266],val[-100]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 266  data: -100   --_isInit 1 
+[m[22:16:17:682 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[266],val[-100]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 266  data: -100   --_isInit 1 
+[m[22:16:21:698 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[266],val[-100]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 266  data: -100   --_isInit 1 
+
+=== tail of error.log ===
+
+=== ls /app/run ===
+total 4
+drwxr-x---    2 1000     1000           304 Aug 31 21:55 .
+drwxr-x---   12 1000     1000          1592 Aug 27 16:37 ..
+-rwxr-x---    1 1000     1000             0 May 28  2022 .gitkeep
+-rw-r--r--    1 root     root             5 Aug 31 21:55 lighttpd.pid
