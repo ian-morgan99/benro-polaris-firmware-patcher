@@ -93,7 +93,9 @@ def list_members_from_zip(zip_path):
     members = []
     with zipfile.ZipFile(zip_path, "r") as z:
         for info in z.infolist():
-            members.append((info.filename, None, info.file_size, info.is_dir()))
+            # is_dir() needs py3.6+; the container runs debian:9 (py3.5)
+            isdir = info.filename.endswith("/") or info.external_attr == 0
+            members.append((info.filename, None, info.file_size, isdir))
     return members
 
 

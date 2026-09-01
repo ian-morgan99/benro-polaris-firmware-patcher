@@ -433,7 +433,7 @@ rm -f /out/FwPkt.zip /out/FwPkt.zip.tmp
     python3 -c 'import os,zipfile
 zf=zipfile.ZipFile("FwPkt.zip.tmp","w",zipfile.ZIP_DEFLATED)
 for root,dirs,files in os.walk("FwPkt"):
-  # Explicit directory entries — the on-board polestar_app expects
+  # Explicit directory entries - the on-board polestar_app expects
   # them (matches the layout of the stock Benro-shipped FwPkt.zip).
   rel=os.path.relpath(root,".")
   if rel != ".":
