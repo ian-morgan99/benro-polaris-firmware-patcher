@@ -6,14 +6,21 @@
 **Symbol table:** `SP_OmsUpgradeMsgProc` (static, internal linkage — capstone auto-detected from symbol table).
 **Callers:** exactly **1** — at `vaddr 0x469c8` (inside the OmsUpgrade message loop, see [14-oms-upgrade-loop.md](14-oms-upgrade-loop.md)).
 
-This is the function the prior turn 12-eventmsgproc-dispatch.md was mistakenly
-trying to describe. It is NOT at 0x3f668, it does NOT use `addls pc, pc, r3, lsl #2`,
-and it is NOT part of the 24-case EventMsgProc table at 0x3f668-0x3f6cc.
+This is a **completely separate** function from the EventMsgProc dispatcher
+at 0x3f668. SP_OmsUpgradeMsgProc lives in the OMS subsystem (the OMS
+Bluetooth upgrade thread), is reached from the OmsUpgrade message loop
+at 0x469c8 (see [14-oms-upgrade-loop.md](14-oms-upgrade-loop.md)), and
+does NOT use `addls pc, pc, r3, lsl #2`. It dispatches via ordinary
+byte-comparison `cmp` instructions instead — see section "Outer
+switch" below.
 
-The 24-case EventMsgProc dispatch table at 0x3f668-0x3f6cc (described in
-[12-eventmsgproc-dispatch.md](12-eventmsgproc-dispatch.md) — to be retracted) is a
-**separate** dispatcher; SP_OmsUpgradeMsgProc is reached via the OmsUpgrade
-message loop, not via EventMsgProc.
+The 24-case EventMsgProc dispatch table at 0x3f668-0x3f6cc (described
+in [12-eventmsgproc-dispatch.md](12-eventmsgproc-dispatch.md)) is
+genuinely an `addls` switch and is the SD-upgrade trigger chain
+(NetlinkUeventTask -> case 4 = msgId 0x405 -> SP_ExdevUpgradeFromSD).
+SP_OmsUpgradeMsgProc is a peer function reached via a different
+path (the OMS BT upgrade path), not a substitute for the EventMsgProc
+dispatcher.
 
 ---
 
