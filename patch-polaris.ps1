@@ -20,6 +20,8 @@
     -SelfTest            qemu-emulate the driver load (R5 II registration)
     -NoFixTypo           do NOT correct the upstream "EOS 5Rm2" model typo
     -NoUsb1              (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
+    -PentaxMaxCaptureSize BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
+                                 Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
     -Image NAME          docker image tag              (default polaris-patcher)
 
   READ THE README AND DISCLAIMERS FIRST. Tested ONLY against FwVer 4.0.0.32
@@ -36,6 +38,7 @@ param(
   [switch]$SelfTest,
   [switch]$NoFixTypo,
   [switch]$NoUsb1,
+  [string]$PentaxMaxCaptureSize = "268435456",
   [string]$Image = "polaris-patcher"
 )
 $ErrorActionPreference = "Stop"
@@ -103,7 +106,7 @@ try {
   Write-Host "[*] running patcher (mode: $mode)..."
   & docker run --rm `
     -e MODE=$mode `
-    -e LIBGPHOTO2_VERSION=$Libgphoto2 -e LIBGPHOTO2_PORT_VERSION=$Libgphoto2Port -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
+    -e LIBGPHOTO2_VERSION=$Libgphoto2 -e LIBGPHOTO2_PORT_VERSION=$Libgphoto2Port -e PENTAX_MAX_CAPTURE_SIZE=$PentaxMaxCaptureSize -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
     -e SWAP_USB1=$usb1 `
     -e ALLOW_DIRTY_SOURCE=$allowDirty `
     @sourceArgs `

@@ -16,6 +16,9 @@
 #   BACKUP  stock backup path     (default /app/sd/pgphoto.prestage2.bak)
 #   LIBGPHOTO2_VERSION       core release       (default 2.5.34)
 #   LIBGPHOTO2_PORT_VERSION  port release       (default 0.12.2)
+#   PENTAX_MAX_CAPTURE_SIZE  Pentax capture file-size cap in bytes (default 268435456 = 256 MiB)
+#                            libgphoto2's hard-coded default is 2 GiB which is unsafe on
+#                            the Polaris' constrained RAM. See docs/PENTAX-CAPTURE-BUDGET.md
 set -e
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -25,6 +28,7 @@ BINP=${BINP:-/app/bin/pgphoto}
 BACKUP=${BACKUP:-/app/sd/pgphoto.prestage2.bak}
 LIBGPHOTO2_VERSION=${LIBGPHOTO2_VERSION:-2.5.34}
 LIBGPHOTO2_PORT_VERSION=${LIBGPHOTO2_PORT_VERSION:-0.12.2}
+PENTAX_MAX_CAPTURE_SIZE=${PENTAX_MAX_CAPTURE_SIZE:-268435456}
 
 echo "[install] SRC=$SRC  STAGE2=$STAGE2  BINP=$BINP  BACKUP=$BACKUP"
 

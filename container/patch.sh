@@ -14,6 +14,7 @@
 #  Env:
 #     LIBGPHOTO2_VERSION      libgphoto2 release tag to build    (default 2.5.34)
 #     LIBGPHOTO2_PORT_VERSION libgphoto2_port release tag         (default 0.12.2)
+#     PENTAX_MAX_CAPTURE_SIZE Pentax capture file-size cap in bytes (default 268435456 = 256 MiB)
 #     FIX_R5M2_TYPO           1 = correct the upstream "EOS 5Rm2" model-name typo
 #     SELFTEST                1 = qemu-emulate the driver load (needs qemu-arm-static)
 #
@@ -28,6 +29,12 @@ die(){ printf '\033[1;31m[abort]\033[0m %s\n' "$*" >&2; exit 1; }
 
 LIBGPHOTO2_VERSION="${LIBGPHOTO2_VERSION:-2.5.34}"
 LIBGPHOTO2_PORT_VERSION="${LIBGPHOTO2_PORT_VERSION:-0.12.2}"
+# Pentax capture file-size budget in bytes (issue #2). libgphoto2's hard-coded
+# default is 2 GiB which is unsafe on the Polaris' constrained RAM; a runaway
+# DNG/RAW request from a K-1 II / K-3 III would exhaust heap and abort pgphoto
+# mid-transfer. 256 MiB covers the largest practical capture with headroom. See
+# docs/PENTAX-CAPTURE-BUDGET.md.
+PENTAX_MAX_CAPTURE_SIZE="${PENTAX_MAX_CAPTURE_SIZE:-268435456}"
 FIX_R5M2_TYPO="${FIX_R5M2_TYPO:-1}"
 SELFTEST="${SELFTEST:-0}"
 # Mode:
@@ -61,6 +68,7 @@ TESTED_PGPHOTO_MD5="a0"  # informational only; verified structurally below
 
 STOCK_APPFS=/in/camera/appfs.ubifs
 log "libgphoto2 target : $LIBGPHOTO2_VERSION"
+log "Pentax capture cap: $PENTAX_MAX_CAPTURE_SIZE bytes  (override with PENTAX_MAX_CAPTURE_SIZE=…; issue #2)"
 log "stock appfs.ubifs : $(stat -c %s "$STOCK_APPFS") bytes  md5=$(md5sum "$STOCK_APPFS"|cut -d' ' -f1)"
 
 FWVER="unknown"
@@ -363,12 +371,15 @@ else
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PORT"                   "$STAGE2/libgphoto2_port.so.12"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
-  # Generate the wrapper from its template (CAMIBS_VERSION/IOLIBS_VERSION) so it
-  # matches the staged dir layout above. Issue #1: previously this was a
-  # checked-in file that hard-coded "2.5.34" / "0.12.2", silently producing a
-  # mismatch (and a 14-byte-patch-only noop) for any non-default --libgphoto2.
+  # Generate the wrapper from its template (CAMLIBS_VERSION/IOLIBS_VERSION +
+  # PENTAX_MAX_CAPTURE_SIZE) so it matches the staged dir layout above. Issue #1:
+  # previously this was a checked-in file that hard-coded "2.5.34" / "0.12.2",
+  # silently producing a mismatch (and a 14-byte-patch-only noop) for any
+  # non-default --libgphoto2. Issue #2: the Pentax capture budget placeholder
+  # lets us override libgphoto2's 2 GiB default which is unsafe on Polaris RAM.
   sed -e "s|@CAMLIBS_VERSION@|$LIBGPHOTO2_VERSION|g" \
       -e "s|@IOLIBS_VERSION@|$LIBGPHOTO2_PORT_VERSION|g" \
+      -e "s|@PENTAX_MAX_CAPTURE_SIZE@|$PENTAX_MAX_CAPTURE_SIZE|g" \
       /opt/patcher/ondisk/pgphoto.wrapper.in > "$W/pgphoto.wrapper"
   chmod 755 "$W/pgphoto.wrapper"
   install -m "$P_MODE" -o "$P_UID" -g "$P_GID" "$W/pgphoto.wrapper" "$PG"

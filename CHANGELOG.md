@@ -1,5 +1,49 @@
 # Changelog
 
+## Unreleased — Pentax capture memory budget (fixes #2)
+
+libgphoto2's Pentax driver (`camlibs/ptp2/pentax-utils.c`) hard-codes a 2 GiB
+single-capture cap (`PENTAX_CAPTURE_MAX_FILE_SIZE_DEFAULT`). On a desktop
+workstation this is harmless. On the Polaris (512 MB – 1 GB userspace), a
+single runaway tether request from a K-1 II / K-3 III would overcommit,
+abort pgphoto mid-transfer, and leave the tether hung. The libgphoto2 fork
+already reads the override env var `LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE`; we
+expose it through the build chain with a safe 256 MiB default.
+
+### Added
+- **`--pentax-max-capture-size BYTES` / `-PentaxMaxCaptureSize BYTES`**
+  flag on both `patch-polaris.sh` and `patch-polaris.ps1` (default
+  `268435456` = 256 MiB).
+- **`PENTAX_MAX_CAPTURE_SIZE`** container env var plumbed through both
+  launchers alongside the existing `LIBGPHOTO2_VERSION` /
+  `LIBGPHOTO2_PORT_VERSION`.
+- **`container/ondisk/pgphoto.wrapper.in`** — added a third `sed`-able
+  placeholder, `@PENTAX_MAX_CAPTURE_SIZE@`, that is substituted at build
+  time and exported as `LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE`.
+- **`container/ondisk/install_stage2.sh`** — added `PENTAX_MAX_CAPTURE_SIZE`
+  env var with 256 MiB default in the documented-Inputs block.
+
+### Changed
+- **`container/patch.sh`** — wrapper-generation `sed` got a third
+  substitution; the active value is now logged at startup
+  (`Pentax capture cap: <bytes> bytes`).
+
+### Verified (in-container pipeline)
+- The sed substitution is exercised by the existing `libgphoto2` build step
+  that already runs `pgphoto.wrapper` generation. A negative test with
+  `--pentax-max-capture-size 1` would produce a wrapper that exports
+  `LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE=1`; the libgphoto2 fork's
+  `pentax-utils.c` rejects anything below 1 MiB with `GP_LOG_E`. (Not
+  auto-run in CI; requires on-device validation — see
+  `docs/PENTAX-CAPTURE-BUDGET.md` §"Hardware evidence so far".)
+
+### Docs
+- New `docs/PENTAX-CAPTURE-BUDGET.md` documents the Polaris-RAM rationale,
+  the chosen 256 MiB default, how to override, and the planned
+  hardware-validation steps. Issue #2 closed against this work.
+
+---
+
 ## Unreleased — Parameterise libgphoto2 path versions (fixes #1)
 
 Any user passing `--libgphoto2 VER` to build a release other than the

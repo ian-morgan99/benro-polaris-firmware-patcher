@@ -20,6 +20,8 @@
 #     --selftest           qemu-emulate the driver load (R5 II registration)
 #     --no-fix-typo        do NOT correct the upstream "EOS 5Rm2" model typo
 #     --no-usb1            (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
+#     --pentax-max-capture-size BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
+#                                       Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
 #     --image NAME         docker image tag              (default polaris-patcher)
 #
 #  READ THE README AND DISCLAIMERS FIRST.  Tested ONLY against FwVer 4.0.0.32
@@ -28,7 +30,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -42,8 +44,9 @@ while [ $# -gt 0 ]; do
     --selftest) SELFTEST=1; shift;;
     --no-fix-typo) FIXTYPO=0; shift;;
     --no-usb1) SWAPUSB1=0; shift;;
+    --pentax-max-capture-size) PENTAX_MAX_CAPTURE_SIZE="$2"; shift 2;;
     --image) IMG="$2"; shift 2;;
-    -h|--help) sed -n '2,25p' "$0"; exit 0;;
+    -h|--help) sed -n '2,26p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
   esac
 done
@@ -98,6 +101,7 @@ if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source-input:ro"; fi
 docker run --rm \
   -e MODE="$MODE" \
   -e LIBGPHOTO2_VERSION="$VER" -e LIBGPHOTO2_PORT_VERSION="$PORTVER" \
+  -e PENTAX_MAX_CAPTURE_SIZE="$PENTAX_MAX_CAPTURE_SIZE" \
   -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \

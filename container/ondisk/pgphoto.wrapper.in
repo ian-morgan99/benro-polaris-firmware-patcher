@@ -9,4 +9,12 @@ export LD_LIBRARY_PATH=$D:/app/lib
 export LD_PRELOAD=$D/libpolaris_stage2.so
 export STAGE2_STORAGE_SHIM=1
 export STAGE2_TETHER_CAPTURE=1
+# Pentax capture budget (issue #2). libgphoto2's hard-coded default is 2 GiB,
+# which is unsafe on the Polaris' constrained RAM — a single runaway DNG/RAW
+# request from a K-1 II / K-3 III would exhaust the heap and abort pgphoto
+# mid-transfer. patch.sh sed-substitutes @PENTAX_MAX_CAPTURE_SIZE@ from the
+# PENTAX_MAX_CAPTURE_SIZE env var at build time. Override per-device with
+# PENTAX_MAX_CAPTURE_SIZE=<bytes> in the patcher invocation; documented in
+# docs/PENTAX-CAPTURE-BUDGET.md.
+export LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE=@PENTAX_MAX_CAPTURE_SIZE@
 exec $D/pgphoto.stage2ondisk "$@"
