@@ -12,9 +12,10 @@
 #     /out  destination for the custom FwPkt/ and FwPkt.zip
 #
 #  Env:
-#     LIBGPHOTO2_VERSION   libgphoto2 release tag to build (default 2.5.34)
-#     FIX_R5M2_TYPO        1 = correct the upstream "EOS 5Rm2" model-name typo
-#     SELFTEST             1 = qemu-emulate the driver load (needs qemu-arm-static)
+#     LIBGPHOTO2_VERSION      libgphoto2 release tag to build    (default 2.5.34)
+#     LIBGPHOTO2_PORT_VERSION libgphoto2_port release tag         (default 0.12.2)
+#     FIX_R5M2_TYPO           1 = correct the upstream "EOS 5Rm2" model-name typo
+#     SELFTEST                1 = qemu-emulate the driver load (needs qemu-arm-static)
 #
 #  SEE README.md AND docs/TESTED.md.  Use at your own risk.  Tested ONLY against
 #  Benro Polaris FwVer 4.0.0.32 with a Canon EOS R5 Mark II.
@@ -26,6 +27,7 @@ warn(){ printf '\033[1;33m[warn]\033[0m %s\n' "$*" >&2; }
 die(){ printf '\033[1;31m[abort]\033[0m %s\n' "$*" >&2; exit 1; }
 
 LIBGPHOTO2_VERSION="${LIBGPHOTO2_VERSION:-2.5.34}"
+LIBGPHOTO2_PORT_VERSION="${LIBGPHOTO2_PORT_VERSION:-0.12.2}"
 FIX_R5M2_TYPO="${FIX_R5M2_TYPO:-1}"
 SELFTEST="${SELFTEST:-0}"
 # Mode:
@@ -200,7 +202,7 @@ if [ "$MODE" = "full" ]; then
   [ -f "$NEW_CORE" ] && [ -f "$NEW_PORT" ] || die "full mode: core/port not built"
   $XT-nm -D --defined-only "$NEW_CORE" | awk '{print $3}'  >"$W/prov.txt"
   $XT-nm -D --defined-only "$NEW_PORT" | awk '{print $3}' >>"$W/prov.txt"
-  PROV_DESC="the freshly-built 2.5.34 core/port"
+  PROV_DESC="the freshly-built $LIBGPHOTO2_VERSION core/port"
 else
   $XT-nm -D --defined-only "$DEV/dev_libgphoto2.so.6"       | awk '{print $3}'  >"$W/prov.txt"
   $XT-nm -D --defined-only "$DEV/dev_libgphoto2_port.so.12" | awk '{print $3}' >>"$W/prov.txt"
@@ -287,7 +289,7 @@ if [ "$SELFTEST" = "1" ] && command -v qemu-arm-static >/dev/null 2>&1; then
     fi
   else
     warn "selftest skipped in full mode (it emulates ptp2 against the device's 2.5.27"
-    warn "core; full mode runs ptp2 against the fresh 2.5.34 core it just built)."
+    warn "core; full mode runs ptp2 against the fresh $LIBGPHOTO2_VERSION core it just built)."
   fi
 fi
 
@@ -354,14 +356,22 @@ else
   STAGE2="$APP/lib/stage2"
   rm -rf "$STAGE2"
   install -d -m "$P_MODE" -o "$P_UID" -g "$P_GID" \
-    "$STAGE2" "$STAGE2/libgphoto2/2.5.34" "$STAGE2/libgphoto2_port/0.12.2"
+    "$STAGE2" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION" "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION"
   install -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/libpolaris_stage2.so"  "$STAGE2/libpolaris_stage2.so"
   install -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/pgphoto.stage2ondisk"  "$STAGE2/pgphoto.stage2ondisk"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CORE"                   "$STAGE2/libgphoto2.so.6"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PORT"                   "$STAGE2/libgphoto2_port.so.12"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/2.5.34/ptp2.so"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/0.12.2/usb1.so"
-  install -m "$P_MODE" -o "$P_UID" -g "$P_GID" /opt/patcher/ondisk/pgphoto.wrapper "$PG"
+  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
+  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
+  # Generate the wrapper from its template (CAMIBS_VERSION/IOLIBS_VERSION) so it
+  # matches the staged dir layout above. Issue #1: previously this was a
+  # checked-in file that hard-coded "2.5.34" / "0.12.2", silently producing a
+  # mismatch (and a 14-byte-patch-only noop) for any non-default --libgphoto2.
+  sed -e "s|@CAMLIBS_VERSION@|$LIBGPHOTO2_VERSION|g" \
+      -e "s|@IOLIBS_VERSION@|$LIBGPHOTO2_PORT_VERSION|g" \
+      /opt/patcher/ondisk/pgphoto.wrapper.in > "$W/pgphoto.wrapper"
+  chmod 755 "$W/pgphoto.wrapper"
+  install -m "$P_MODE" -o "$P_UID" -g "$P_GID" "$W/pgphoto.wrapper" "$PG"
   log "  assembled /app/lib/stage2 (loader + core + port + ptp2 + usb1 + trampolined binary)"
   log "  installed self-driving wrapper -> /app/bin/pgphoto (execs /app/lib/stage2/pgphoto.stage2ondisk)"
 
@@ -472,16 +482,16 @@ log "verified FwPkt.zip structure (on-board check will pass)"
 # ---------------------------------------------------------------------------
 if [ "$MODE" = "full" ]; then
   BUN=/out/stage2-ondisk
-  rm -rf "$BUN"; mkdir -p "$BUN/ondisk" "$BUN/libgphoto2/2.5.34" "$BUN/libgphoto2_port/0.12.2"
+  rm -rf "$BUN"; mkdir -p "$BUN/ondisk" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION" "$BUN/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION"
   cp "$W/s2/libpolaris_stage2.so"  "$BUN/ondisk/"
   cp "$W/s2/pgphoto.stage2ondisk"  "$BUN/ondisk/"
-  cp /opt/patcher/ondisk/pgphoto.wrapper "$BUN/ondisk/"
+  cp "$W/pgphoto.wrapper" "$BUN/ondisk/"   # generated from .in (see above)
   cp /opt/patcher/ondisk/install_stage2.sh "$BUN/ondisk/"
   cp /opt/patcher/ondisk/restore_stock.sh  "$BUN/ondisk/"
   cp "$NEW_CORE" "$BUN/libgphoto2.so.6"
   cp "$NEW_PORT" "$BUN/libgphoto2_port.so.12"
-  cp "$NEW_PTP2" "$BUN/libgphoto2/2.5.34/ptp2.so"
-  cp "$NEW_USB1" "$BUN/libgphoto2_port/0.12.2/usb1.so"
+  cp "$NEW_PTP2" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
+  cp "$NEW_USB1" "$BUN/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
   chmod +x "$BUN/ondisk/"*.sh "$BUN/ondisk/pgphoto.wrapper" 2>/dev/null || true
 
   log "  wrote reversible on-device bundle -> /out/stage2-ondisk (install_stage2.sh / restore_stock.sh)"

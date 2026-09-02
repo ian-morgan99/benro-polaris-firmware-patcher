@@ -10,6 +10,10 @@
 #   BACKUP  stock backup path  (default /app/sd/pgphoto.prestage2.bak)
 #   STAGE2  install dir        (default /app/lib/stage2)
 #   PURGE   if 1, also rm -rf $STAGE2
+#
+# libgphoto2 / libgphoto2_port release tags are not needed here -- the camlib /
+# iolib restore at lines 29-31 uses globs, and the optional STAGE2 purge is
+# version-agnostic.
 set -e
 
 BINP=${BINP:-/app/bin/pgphoto}

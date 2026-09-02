@@ -24,7 +24,7 @@ appfs*
 # broad build-artifact patterns above would otherwise swallow. These are the
 # author's own scripts/wrapper (NOT built binaries) and must be in the repo or a
 # fresh clone cannot build the image.
-!container/ondisk/pgphoto.wrapper
+!container/ondisk/pgphoto.wrapper.in
 
 # Toolchain source cache
 src/libgphoto2-*/

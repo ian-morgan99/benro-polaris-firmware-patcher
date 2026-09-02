@@ -10,6 +10,7 @@
 #  Options:
 #     --fwpkt PATH         stock FwPkt folder (has firmwareInfo) or FwPkt.zip  [required]
 #     --libgphoto2 VER     libgphoto2 release to build            (default 2.5.34)
+#     --libgphoto2-port VER  libgphoto2_port release tag         (default 0.12.2)
 #     --libgphoto2-source PATH  local libgphoto2 checkout to build (optional)
 #     --allow-dirty-source explicitly permit a dirty local Git checkout
 #     --out DIR            output directory                       (default ./out)
@@ -27,12 +28,13 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --fwpkt) FWPKT="$2"; shift 2;;
     --libgphoto2) VER="$2"; VER_SET=1; shift 2;;
+    --libgphoto2-port) PORTVER="$2"; shift 2;;
     --libgphoto2-source) LGSRC="$2"; shift 2;;
     --allow-dirty-source) ALLOW_DIRTY=1; shift;;
     --out) OUT="$2"; shift 2;;
@@ -95,7 +97,8 @@ set --
 if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source-input:ro"; fi
 docker run --rm \
   -e MODE="$MODE" \
-  -e LIBGPHOTO2_VERSION="$VER" -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
+  -e LIBGPHOTO2_VERSION="$VER" -e LIBGPHOTO2_PORT_VERSION="$PORTVER" \
+  -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
   "$@" \

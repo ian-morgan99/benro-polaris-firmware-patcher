@@ -1,0 +1,12 @@
+#!/bin/sh
+# pgphoto.wrapper.in -- TEMPLATE; do NOT ship this to the device.
+# patch.sh generates the real wrapper from this template at build time by
+# sed-substituting the two version placeholders below. See issue #1.
+D=/app/lib/stage2
+export CAMLIBS=$D/libgphoto2/@CAMLIBS_VERSION@
+export IOLIBS=$D/libgphoto2_port/@IOLIBS_VERSION@
+export LD_LIBRARY_PATH=$D:/app/lib
+export LD_PRELOAD=$D/libpolaris_stage2.so
+export STAGE2_STORAGE_SHIM=1
+export STAGE2_TETHER_CAPTURE=1
+exec $D/pgphoto.stage2ondisk "$@"

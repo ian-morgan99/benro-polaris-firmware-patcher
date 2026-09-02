@@ -1,5 +1,46 @@
 # Changelog
 
+## Unreleased — Parameterise libgphoto2 path versions (fixes #1)
+
+Any user passing `--libgphoto2 VER` to build a release other than the
+default `2.5.34` was getting a silent mismatch: the patcher produced
+fresh binaries with the right on-device layout but left the shipped
+`pgphoto` wrapper pointing at hard-coded `2.5.34` / `0.12.2` paths. The
+result was a 14-byte-patch-only noop against the stock 2.5.27 core — the
+same symptom as issue #1's "vanilla build" reproducer.
+
+### Added
+- **`--libgphoto2-port VER` / `-Libgphoto2Port VER`** flag (default
+  `0.12.2`) on both `patch-polaris.sh` and `patch-polaris.ps1`.
+- **`LIBGPHOTO2_PORT_VERSION`** container env var (default `0.12.2`)
+  plumbed through both launchers alongside the existing
+  `LIBGPHOTO2_VERSION`.
+- **`container/ondisk/pgphoto.wrapper.in`** — the on-device `pgphoto`
+  wrapper is now generated from a `sed` template at build time, so the
+  camlib/iolib paths it `dlopen`s match the staged
+  `libgphoto2/<core>` / `libgphoto2_port/<port>` directories.
+
+### Changed
+- **`container/patch.sh`** — the six hard-coded `2.5.34` / `0.12.2`
+  path literals (in-app install block + bundle assembly block) now
+  read from `LIBGPHOTO2_VERSION` / `LIBGPHOTO2_PORT_VERSION`.
+- **`container/ondisk/install_stage2.sh`** — same two env vars
+  parameterise the `find_one` lookups and the `mkdir -p`/`cp` commands
+  that populate `/app/lib/stage2`.
+- **`.gitattributes`** — line-ending rule consolidated onto the
+  `*.in` template; the old `pgphoto.wrapper` rule is gone (the file no
+  longer exists; it is generated at build time).
+- **`pgphoto.wrapper`** renamed to **`pgphoto.wrapper.in`** via `git mv`
+  to preserve history; the template's `@CAMLIBS_VERSION@` /
+  `@IOLIBS_VERSION@` placeholders are substituted at build time.
+
+### Fixed
+- Vanilla `--libgphoto2` builds now produce a working image
+  (resolves the "no-op 14-byte patch" symptom in issue #1).
+- Users building the Pentax development fork from a non-default
+  release tag no longer need to hand-edit `pgphoto.wrapper` after
+  the fact.
+
 ## Unreleased — FwPkt silent-reject fix (2026-08-27 combined build)
 
 The Polaris on-board updater (`polestar_app → getFwInfo.sh → crcInfo`)

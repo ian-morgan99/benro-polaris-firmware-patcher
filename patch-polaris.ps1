@@ -10,6 +10,7 @@
   Options:
     -FwPkt PATH          stock FwPkt folder (has firmwareInfo) or FwPkt.zip  [required]
     -Libgphoto2 VER      libgphoto2 release to build            (default 2.5.34)
+    -Libgphoto2Port VER  libgphoto2_port release tag            (default 0.12.2)
     -Libgphoto2Source PATH  local libgphoto2 checkout to build (optional)
     -AllowDirtySource    explicitly permit a dirty local Git checkout
     -Out DIR             output directory                       (default .\out)
@@ -27,6 +28,7 @@
 param(
   [Parameter(Mandatory=$true)][string]$FwPkt,
   [string]$Libgphoto2 = "2.5.34",
+  [string]$Libgphoto2Port = "0.12.2",
   [string]$Libgphoto2Source = "",
   [switch]$AllowDirtySource,
   [string]$Out = "",
@@ -101,7 +103,7 @@ try {
   Write-Host "[*] running patcher (mode: $mode)..."
   & docker run --rm `
     -e MODE=$mode `
-    -e LIBGPHOTO2_VERSION=$Libgphoto2 -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
+    -e LIBGPHOTO2_VERSION=$Libgphoto2 -e LIBGPHOTO2_PORT_VERSION=$Libgphoto2Port -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
     -e SWAP_USB1=$usb1 `
     -e ALLOW_DIRTY_SOURCE=$allowDirty `
     @sourceArgs `

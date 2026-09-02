@@ -1,18 +1,18 @@
 # Everything in this repo that the Linux container consumes MUST be checked out
 # with LF endings, on every platform. A CRLF checkout on Windows makes the
 # container fail with `/bin/bash^M: bad interpreter: No such file or directory`
-# (upstream issue #1), and it would also change the bytes of pgphoto.wrapper /
-# stage2_loader.c that the build is supposed to reproduce byte-for-byte.
+# (upstream issue #1), and it would also change the bytes of pgphoto.wrapper.in
+# / stage2_loader.c that the build is supposed to reproduce byte-for-byte.
 * text=auto eol=lf
 
 *.sh            text eol=lf
 *.py            text eol=lf
 *.c             text eol=lf
 *.h             text eol=lf
+# pgphoto.wrapper.in is the wrapper template (substituted to pgphoto.wrapper at build time)
 *.in            text eol=lf
 *.md            text eol=lf
 Dockerfile      text eol=lf
-pgphoto.wrapper text eol=lf
 
 # The Windows launcher never enters the container; CRLF is conventional there.
 *.ps1           text eol=crlf

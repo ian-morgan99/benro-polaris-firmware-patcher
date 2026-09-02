@@ -14,6 +14,8 @@
 #   STAGE2  install dir           (default /app/lib/stage2)
 #   BINP    launched path         (default /app/bin/pgphoto)
 #   BACKUP  stock backup path     (default /app/sd/pgphoto.prestage2.bak)
+#   LIBGPHOTO2_VERSION       core release       (default 2.5.34)
+#   LIBGPHOTO2_PORT_VERSION  port release       (default 0.12.2)
 set -e
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -21,6 +23,8 @@ SRC=${SRC:-$(cd "$HERE/.." && pwd)}          # bundle root (parent of ondisk/)
 STAGE2=${STAGE2:-/app/lib/stage2}
 BINP=${BINP:-/app/bin/pgphoto}
 BACKUP=${BACKUP:-/app/sd/pgphoto.prestage2.bak}
+LIBGPHOTO2_VERSION=${LIBGPHOTO2_VERSION:-2.5.34}
+LIBGPHOTO2_PORT_VERSION=${LIBGPHOTO2_PORT_VERSION:-0.12.2}
 
 echo "[install] SRC=$SRC  STAGE2=$STAGE2  BINP=$BINP  BACKUP=$BACKUP"
 
@@ -35,8 +39,8 @@ LOADER=$(find_one ondisk/libpolaris_stage2.so libpolaris_stage2.so)
 STG2BIN=$(find_one ondisk/pgphoto.stage2ondisk pgphoto.stage2ondisk)
 CORE=$(find_one libgphoto2.so.6)
 PORT=$(find_one libgphoto2_port.so.12)
-PTP2=$(find_one libgphoto2/2.5.34/ptp2.so)
-USB1=$(find_one libgphoto2_port/0.12.2/usb1.so)
+PTP2=$(find_one "libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so")
+USB1=$(find_one "libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so")
 WRAP=$(find_one ondisk/pgphoto.wrapper pgphoto.wrapper)
 
 # --- 1. back up the REAL stock binary (only once) ----------------------------
@@ -48,13 +52,13 @@ else
 fi
 
 # --- 2. populate /app/lib/stage2 ---------------------------------------------
-mkdir -p "$STAGE2/libgphoto2/2.5.34" "$STAGE2/libgphoto2_port/0.12.2"
+mkdir -p "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION" "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION"
 cp "$LOADER"  "$STAGE2/libpolaris_stage2.so"
 cp "$STG2BIN" "$STAGE2/pgphoto.stage2ondisk";  chmod +x "$STAGE2/pgphoto.stage2ondisk"
 cp "$CORE"    "$STAGE2/libgphoto2.so.6"
 cp "$PORT"    "$STAGE2/libgphoto2_port.so.12"
-cp "$PTP2"    "$STAGE2/libgphoto2/2.5.34/ptp2.so"
-cp "$USB1"    "$STAGE2/libgphoto2_port/0.12.2/usb1.so"
+cp "$PTP2"    "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
+cp "$USB1"    "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
 echo "[install] populated $STAGE2 (loader + core/port + ptp2/usb1 + stage2 binary)"
 
 # --- 2b. also place fresh ptp2/usb1 at the STOCK camlib/iolib paths -----------

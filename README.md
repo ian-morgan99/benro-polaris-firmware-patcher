@@ -185,6 +185,7 @@ Options (both launchers):
 |---|---|---|
 | `--fwpkt` / `-FwPkt` | *(required)* | Stock `FwPkt` folder (with `firmwareInfo`) or `FwPkt.zip` |
 | `--libgphoto2` / `-Libgphoto2` | `2.5.34` | libgphoto2 release tag to build |
+| `--libgphoto2-port` / `-Libgphoto2Port` | `0.12.2` | libgphoto2_port release tag to build. Decoupled from the core tag because the port doesn't track core 1:1. Both values flow into the staged camlib/iolib paths (`libgphoto2/<ver>/ptp2.so`, `libgphoto2_port/<ver>/usb1.so`) and into the on-device `pgphoto` wrapper. |
 | `--libgphoto2-source` / `-Libgphoto2Source` | unset | Build a local Git checkout or source archive instead of downloading a release. Input is mounted read-only. Use this for the Pentax development fork. |
 | `--allow-dirty-source` / `-AllowDirtySource` | off | Explicitly allow a dirty Git checkout; its dirty-content hash is recorded in output provenance. |
 | `--out` / `-Out` | `./out` | Output directory |
