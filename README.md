@@ -179,6 +179,12 @@ them.
 .\patch-polaris.ps1 -FwPkt C:\path\to\FwPkt -SelfTest
 ```
 
+No VS Code or shell setup needed: you can also just **double-click
+`patch-polaris.bat`**. It asks for the `FwPkt` folder/zip path, then runs the
+PowerShell launcher and leaves the window open so you can read the result.
+Passing arguments on the command line (`patch-polaris.bat C:\path\to\FwPkt.zip`)
+skips the prompt and forwards them to the PowerShell script unchanged.
+
 Options (both launchers):
 
 | Option | Default | Meaning |

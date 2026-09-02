@@ -16,6 +16,7 @@ Dockerfile      text eol=lf
 
 # The Windows launcher never enters the container; CRLF is conventional there.
 *.ps1           text eol=crlf
+*.bat           text eol=crlf
 
 # Never line-ending-translate binaries.
 *.so     binary
