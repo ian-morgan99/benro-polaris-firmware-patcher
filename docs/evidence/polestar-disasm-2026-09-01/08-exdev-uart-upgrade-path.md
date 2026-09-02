@@ -137,7 +137,7 @@ as-shipped in the binary.
 0x3f944: bl   #0x4042c           ; SP_SdMountHandler4
 0x3f948: mov  r0, #2
 0x3f94c: bl   #0x5d89c           ; SP_ExdevUpgradeFromSD(r0=2)
-0x3f950: bl   #0x77cf4           ; SP_AfterExdevUpgrade
+0x3f950: bl   #0x77cf4           ; SP_OmsUpgradeFromSd
 0x3f954: b    #0x400dc           ; case end
 ```
 
@@ -183,13 +183,21 @@ confirms it. Other plausible names: `SP_StartExdevUpgrade`,
 `SP_TriggerExdevUpgrade`. The same function is also reachable via the
 UART byte=0x21 path indirectly.
 
-### 6.2 SP_AfterExdevUpgrade @ 0x77cf4
+### 6.2 SP_OmsUpgradeFromSd @ 0x77cf4
 
-Called immediately after `SP_ExdevUpgradeFromSD` returns. Likely performs
-post-upgrade bookkeeping (clearing the running flag, signal completion,
-etc.). The function reads a byte at `+0x6d` from a global pointer
-(observed in the prologue: `ldrb r3, [r3, #0x6d]`), suggesting it
-inspects an `s_bGetExFwRunning` style flag.
+Called immediately after `SP_ExdevUpgradeFromSD` returns. This is the
+OMS (main-controller) upgrade worker — it looks for `/app/sd/OmsPkt/camera/*`
+and runs the FwPkt install pipeline. It is NOT an "after-Exdev helper"
+despite its sequential position in the SD_MOUNTED case body. See
+[09-oms-callers.md](09-oms-callers.md) §`SP_OmsUpgradeFromSd` body
+(0x77cf4..0x77d88) for the full disassembly.
+
+(Note: a previous version of the README referred to 0x77cf4 as
+"SP_AfterExdevUpgrade (helper)". That label was a misreading of the
+sequential call order. The function at 0x77cf4 is named
+`SP_OmsUpgradeFromSd` in source-file DWARF mapping — see
+[16-dwarf-line-mapping.md](16-dwarf-line-mapping.md) line 173 which
+attributes 0x77cf4 to `sp_oms.c:1084` `SP_OmsUpgradeFromSd`.)
 
 ---
 

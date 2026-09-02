@@ -66,9 +66,19 @@ macros is **`SP_OmsUpgradeCheckFwPkt`** (or similar — see §2).
 
 ## 2. The Triggering Code Path
 
-### 2.1 Function `SP_OmsUpgradeCheckFwPkt` (estimated at ~0x140100)
+### 2.1 Function `SP_OmsUpgradeCheckFwPkt` @ VA 0x76f24
 
-This is one of the SP_* functions in the 0x140000–0x15xxxx range. It:
+> **CORRECTION (post-File 18 disasm):** the function lives at **VA 0x76f24**
+> (file_off 0x66f24 in the first LOAD segment), NOT in the 0x140000-0x15xxxx
+> range as originally estimated. The 0x140100 estimate was a stale placeholder
+> from before the DWARF mapping was done. Authoritative address is per:
+>
+> - [18-oms-upgrade-check-fwpkt.md](18-oms-upgrade-check-fwpkt.md)
+>   — full disassembly of the function
+> - [16-dwarf-line-mapping.md](16-dwarf-line-mapping.md) line 174
+>   — DWARF confirms `0x76f24 → SP_OmsUpgradeCheck` at `sp_oms.c:914`
+
+This function:
 
 1. **Reads** the upgrade register via `himd(SP_SOFTINT_REG)` to get the
    current status (PROCESSING / SUCCESS / FAIL).
@@ -76,8 +86,7 @@ This is one of the SP_* functions in the 0x140000–0x15xxxx range. It:
 3. Based on the result, advances the polestar's `obj->field_4b8` (the
    state) accordingly.
 
-The actual function entry needs further disassembly to confirm; the
-critical point is **the polestar communicates the upgrade phase to the
+The critical point is **the polestar communicates the upgrade phase to the
 gimbal via the SP_SOFTINT_REG hardware register, NOT via the 810
 protocol, NOT via /dev/mem from a script**.
 
