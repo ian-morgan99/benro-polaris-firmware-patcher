@@ -200,6 +200,7 @@ Options (both launchers):
 | `--no-fix-typo` / `-NoFixTypo` | off | Keep libgphoto2's upstream `EOS 5Rm2` model-name typo |
 | `--no-usb1` / `-NoUsb1` | off | (ptp2-only) Do **not** swap the `usb1` iolib; patch only the `ptp2` camlib + `pgphoto` |
 | `--pentax-max-capture-size` / `-PentaxMaxCaptureSize` | `268435456` (256 MiB) | Cap on a single Pentax tether capture, in bytes. Overrides libgphoto2's 2 GiB default, which is unsafe on the Polaris' constrained RAM. See [`docs/PENTAX-CAPTURE-BUDGET.md`](docs/PENTAX-CAPTURE-BUDGET.md). |
+| `-ImageTar` (PowerShell only) | unset | Load a prebuilt docker image tarball (`docker save polaris-patcher \| gzip > polaris-patcher-image.tar.gz`) with `docker load` and skip the build step. The tag comes from the tarball itself, so `-Image` is ignored in this mode. See [Portable zip](#portable-zip-prebuilt-image). |
 
 Output:
 - `out/FwPkt/` — the unpacked custom firmware

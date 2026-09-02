@@ -23,7 +23,11 @@
     -PentaxMaxCaptureSize BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
                                  Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
     -Image NAME          docker image tag              (default polaris-patcher)
-
+    -ImageTar PATH       prebuilt image tarball from `docker save` (e.g. a portable
+                         zip distribution). Loads it with `docker load` and skips the
+                         build step entirely; the tag comes from the tarball itself
+                         (-Image is only used as a fallback if parsing fails).
+ 
   READ THE README AND DISCLAIMERS FIRST. Tested ONLY against FwVer 4.0.0.32
   with a Canon EOS R5 Mark II. Flashing firmware is at YOUR OWN RISK.
 #>
@@ -39,7 +43,8 @@ param(
   [switch]$NoFixTypo,
   [switch]$NoUsb1,
   [string]$PentaxMaxCaptureSize = "268435456",
-  [string]$Image = "polaris-patcher"
+  [string]$Image = "polaris-patcher",
+  [string]$ImageTar = ""
 )
 $ErrorActionPreference = "Stop"
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -79,12 +84,27 @@ try {
   $InMount  = ConvertTo-DockerPath $In
   $OutMount = ConvertTo-DockerPath $Out
 
-  Write-Host "[*] building docker image '$Image' (first run only)..."
-  # NOT quiet, and the exit code IS checked: a silent build failure used to let
-  # this script sail on against a stale image and print [OK] over output that
-  # was never produced (issue #29).
-  docker build -t $Image -f (Join-Path $Here "docker\Dockerfile") $Here
-  if ($LASTEXITCODE -ne 0) { throw "docker build failed (exit $LASTEXITCODE). The build output above says why; nothing was patched." }
+  if ($ImageTar) {
+    # Portable-distribution path: load a prebuilt image instead of building from source.
+    if (-not (Test-Path -LiteralPath $ImageTar)) { throw "image tarball not found: $ImageTar" }
+    Write-Host "[*] loading prebuilt docker image from '$ImageTar'..."
+    # Capture the output so we can parse the loaded tag, then echo it. Same exit-code
+    # discipline as issue #29 above.
+    $loadOut = & docker load -i (ConvertTo-DockerPath $ImageTar) 2>&1 | ForEach-Object { "$_" }
+    if ($LASTEXITCODE -ne 0) { throw "docker load failed (exit $LASTEXITCODE). Output above says why; nothing was patched." }
+    $loadOut | ForEach-Object { Write-Host $_ }
+    # The tag comes from the tarball itself; adopt it so docker run below uses it.
+    $m = [regex]::Match(($loadOut -join "`n"), 'Loaded image: (.+)')
+    if ($m.Success) { $Image = $m.Groups[1].Value.Trim() }
+    else { Write-Host "[!] could not parse the loaded image name; using '$Image' (pass -Image if it differs)" }
+  } else {
+    Write-Host "[*] building docker image '$Image' (first run only)..."
+    # NOT quiet, and the exit code IS checked: a silent build failure used to let
+    # this script sail on against a stale image and print [OK] over output that
+    # was never produced (issue #29).
+    docker build -t $Image -f (Join-Path $Here "docker\Dockerfile") $Here
+    if ($LASTEXITCODE -ne 0) { throw "docker build failed (exit $LASTEXITCODE). The build output above says why; nothing was patched." }
+  }
 
   $fix  = if ($NoFixTypo) { "0" } else { "1" }
   $st   = if ($SelfTest)  { "1" } else { "0" }

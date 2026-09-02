@@ -8,10 +8,15 @@ if not exist "%~dp0patch-polaris.ps1" (
   echo [ERROR] patch-polaris.ps1 not found next to this file. & exit /b 1
 )
 
+rem If a prebuilt image tarball sits next to this launcher (portable zip), load it
+rem instead of building from source.
+set "IMAGETAR="
+if exist "%~dp0polaris-patcher-image.tar.gz" set "IMAGETAR=-ImageTar ""%~dp0polaris-patcher-image.tar.gz"""
+
 if "%~1"=="" (
   set /p FWPKT="Path to stock FwPkt folder or FwPkt.zip (type without quotes): "
   if defined FWPKT (
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0patch-polaris.ps1" -FwPkt "%FWPKT%"
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0patch-polaris.ps1" -FwPkt "%FWPKT%" %IMAGETAR%
   ) else (
     echo [ERROR] No path given. Usage: patch-polaris.bat ^<FwPkt-folder-or-zip^> [options]
     pause & exit /b 1
