@@ -106,7 +106,38 @@ resolved by `tools/dwarf_line.py`:
 | `0x0013fff0` | 116 | `SP_DelUpgradeFiles` | `sp_upgrade.c:409` |
 | `0x0014023c` | 1876 | `SP_UpgradeCheckFw` | `sp_upgrade.c:438` |
 
-**Total: 53 upgrade-related functions, ALL mapped to a source file.**
+### sp_upgrade.c — complete 21-function table (extended)
+
+The table above lists 14 sp_upgrade.c functions (all those visible in the symtab with the
+"upgrade" name pattern). The full file contains **21 function starts** (verified by ARM
+`push {regs}` instruction scan, VA range 0x13eae8..0x140a98 — next push at 0x140a98
+is in `sp_ttyUsb.c:47`). The 7 additional functions not captured by the pattern filter:
+
+| VA | Size | Symbol | Source:line | Visibility |
+|---|---|---|---|---|
+| `0x0013eae8` | 400 | `GetGimbalInfoTask` | `sp_upgrade.c:18` | LOCAL |
+| `0x0013ec78` | 52 | `SP_GetGimbalInfoTask` | `sp_upgrade.c:61` | GLOBAL |
+| `0x0013ecac` | 500 | `SendHwToGimbalTask` | `sp_upgrade.c:66` | LOCAL |
+| `0x0013eea0` | 52 | `SP_SendHwToGimbalTask` | `sp_upgrade.c:101` | GLOBAL |
+| `0x0013eed4` | 196 | `GetExFwTask` | `sp_upgrade.c:108` | LOCAL |
+| `0x0013ef98` | 80 | `SP_GetGimbalExFwTask` | `sp_upgrade.c:123` | GLOBAL |
+| `0x0013f570` | 660 | `SP_GetFwVer` | `sp_upgrade.c:263` | GLOBAL |
+| `0x0013f804` | 1108 | `SP_GetDeviceVer` | `sp_upgrade.c:298` | GLOBAL |
+| `0x0013fc58` | 392 | `SP_PushDeviceVer` | `sp_upgrade.c:348` | GLOBAL |
+| `0x00140064` | 472 | `CrcMd5` | `sp_upgrade.c:421` | GLOBAL |
+| `0x00140990` | 264 | `isStrEq` | (none, no DWARF line) | GLOBAL |
+
+**Name conflict at 0x13f04c:** symtab (`readelf -s`) says `SP_PushUpgradeState` (GLOBAL,
+52 bytes). DWARF line info says `sp_upgrade.c:137`. The prior evidence file listed
+`SP_PushUpgradeStateAck` here — that name comes from a different function in
+`sp_msgProc.c:1669` (a different GLOBAL function at 0x4dfb0). The 0x13f04c symbol
+is the sp_upgrade.c variant and is named `SP_PushUpgradeState` in the symtab; the
+"PushUpgradeStateAck" name in the original entry of this table is a misattribution.
+**Use the symtab name `SP_PushUpgradeState` going forward.**
+
+DWARF line entries for sp_upgrade.c: 137 (per `tools/dwarf_line.py --file sp_upgrade.c`).
+
+**Total: 60 upgrade-related functions (53 symtab-matched + 7 sp_upgrade.c additions), ALL mapped to a source file.**
 
 This is a **huge** win — the entire upgrade pipeline now has source attribution.
 The four "interesting" entry points (in execution order) are:

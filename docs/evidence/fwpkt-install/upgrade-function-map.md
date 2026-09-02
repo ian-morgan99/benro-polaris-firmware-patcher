@@ -19,7 +19,39 @@ Source: `dwarf_lines.py` against `polestar_app.original` (24.9 MB ARM ELF, 108k 
 | 0x0005eb24..0x5f424 | SP_SrchGimbalNewPkt            | sp_gimbalUpgrade.c:268..  | Core: search gimbal for new FwPkt.zip |
 | **0x0014023c..0x140990** | **SP_UpgradeCheckFw**     | sp_upgrade.c:438..        | **Run rm/unzip/rm/getFwInfo.sh, MD5-verify 4 files** |
 | 0x0013f804..0x13fc58 | SP_GetDeviceVer                | sp_upgrade.c:298..        | Get gimbal HwVer/FwVer from struct |
-| 0x0013fc58..0x13fc.. | SP_PushDeviceVer               | sp_upgrade.c:348..        | Format `hw:%s;sw:%s;...` and push |
+| 0x0013fc58..0x13fde0 | SP_PushDeviceVer               | sp_upgrade.c:348..        | Format `hw:%s;sw:%s;...` and push |
+
+### sp_upgrade.c complete function table (21 functions, 0x13eae8..0x140a98)
+
+Verified by `push {regs}` instruction scan, cross-referenced with `readelf --syms`
+(LOCAL + GLOBAL) and DWARF line info from `tools/dwarf_line.py --file sp_upgrade.c`.
+
+| VA | Size | Name | DWARF line | Visibility | Notes |
+|---|---|---|---|---|---|
+| 0x13eae8 | 400 | GetGimbalInfoTask | 18 | LOCAL | Polls gimbal info |
+| 0x13ec78 | 52 | SP_GetGimbalInfoTask | 61 | GLOBAL | Wrapper for GetGimbalInfoTask |
+| 0x13ecac | 500 | SendHwToGimbalTask | 66 | LOCAL | Sends HW info to gimbal |
+| 0x13eea0 | 52 | SP_SendHwToGimbalTask | 101 | GLOBAL | Wrapper |
+| 0x13eed4 | 196 | GetExFwTask | 108 | LOCAL | Gets extended-firmware info |
+| 0x13ef98 | 80 | SP_GetGimbalExFwTask | 123 | GLOBAL | Wrapper |
+| 0x13efe8 | 100 | PushUpgradeStateTask | 131 | LOCAL | Pushes state to app |
+| 0x13f04c | 52 | SP_PushUpgradeState (a.k.a. SP_PushUpgradeStateAck in file 16) | 139 | GLOBAL | Wrapper (NAME CONFLICT with sp_msgProc.c:1669) |
+| 0x13f080 | 836 | UpgradeTask | 144 | LOCAL | addls dispatch @ 0x13f104:sp_upgrade.c:156 |
+| 0x13f3c4 | 156 | SP_CreateUpgradeTask | 231 | GLOBAL | (no direct bl 0x13f3c4 found — see file 16) |
+| 0x13f460 | 212 | UpgradeLedTask | 241 | LOCAL | LED blink during upgrade |
+| 0x13f534 | 60 | SP_CreateUpgradeLedTask | 257 | GLOBAL | (called via indirect ptr) |
+| 0x13f570 | 660 | SP_GetFwVer | 263 | GLOBAL | Gets current FwVer |
+| 0x13f804 | 1108 | SP_GetDeviceVer | 298 | GLOBAL | Gets HwVer/FwVer from struct |
+| 0x13fc58 | 392 | SP_PushDeviceVer | 348 | GLOBAL | Format `hw:%s;sw:%s;...` and push |
+| 0x13fde0 | 248 | SP_CheckUpgradeResult | 370 | GLOBAL | Checks upgrade result |
+| 0x13fed8 | 280 | SP_IsDelUpgradeFiles | 388 | LOCAL | Determines if upgrade files should be deleted |
+| 0x13fff0 | 116 | SP_DelUpgradeFiles | 411 | GLOBAL | Deletes upgrade files |
+| 0x140064 | 472 | CrcMd5 | 421 | GLOBAL | MD5 hash computation |
+| 0x14023c | 1876 | SP_UpgradeCheckFw | 440 | GLOBAL | Core: rm/unzip/rm/getFwInfo.sh + 4× CrcMd5 |
+| 0x140990 | 264 | isStrEq | - | GLOBAL | strcmp-like helper |
+
+DWARF line entries for sp_upgrade.c: 137 (per `tools/dwarf_line.py --file sp_upgrade.c`).
+sp_upgrade.c VA range ends at 0x140a98 (next push at 0x140a98 is in sp_ttyUsb.c:47).
 
 ## OmsPkt path (OMS — operates on `/app/sd/OmsPkt.zip`)
 

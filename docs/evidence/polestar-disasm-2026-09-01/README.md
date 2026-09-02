@@ -81,6 +81,7 @@ conclusion.
 | [17-eventmsgproc-dispatch-verified.md](17-eventmsgproc-dispatch-verified.md) | **AUTHORITATIVE** for EventMsgProc dispatch — 24 cases 0x401-0x418, full verified table with case-by-case targets, log-line numbers, and case body sizes. Use this instead of file 12. |
 | [18-oms-upgrade-check-fwpkt.md](18-oms-upgrade-check-fwpkt.md) | **AUTHORITATIVE** for SP_OmsUpgradeCheckFwPkt (VA 0x76f24-0x7787c) — full state machine, 8 return paths, 27 ldr-references, signature validation. Use this for FwPkt format reverse-engineering. |
 | [19-post-sp-omscheckfwpkt-region.md](19-post-sp-omscheckfwpkt-region.md) | **NEW** — Post-`SP_OmsUpgradeCheckFwPkt` region evidence: RETRACTS "twin functions" theory. 0x7770c = epilogue of file 18 func; 0x8770c = unrelated OpenCV destructor; 0x7787c = unnamed one-time init helper; 0x86e40 = OpenCV valloc wrapper. No actionable findings for OMS patcher. |
+| [20-oms-status-proc.md](20-oms-status-proc.md) | **NEW** — `OmsUpgradeStatusProc` (VA 0x75bfc, 2904 bytes, sp_oms.c:858) state machine: top-level `cmp r12, #5` switch with 12-entry jump table, 5 TimeOut call sites, 7 named command/ack helpers. **Wakes from SP_OmsUpgradeMsgProc (0x768e8).** Partial — bodies not yet disassembled. |
 
 ## Critical addresses (verified, file offsets)
 
