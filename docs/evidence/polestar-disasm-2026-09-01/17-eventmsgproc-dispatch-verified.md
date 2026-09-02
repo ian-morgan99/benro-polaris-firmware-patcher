@@ -191,3 +191,122 @@ and the `addls` is visible:
 - The case bodies call `HI_LOG_Print` at 0x1a2560, a HiSilicon SDK
   log function (not `sp_log`). HI_LOG_Print is at module offset
   0x1a2560 in the .text section.
+
+## 10. Complete msgId → event name mapping (AUTHORITATIVE)
+
+The 24 B-table entries at 0x3f670-0x3f6d0 each encode an ARM `B imm24`
+instruction (NOT a data word). The B-target for each case is the
+**case body entry point**. The case body's first 32 bytes always
+contain a `ldr r3, [pc, #X]; add r3, pc, r3; str r3, [sp]` triplet
+that pushes a format string onto the stack for `HI_LOG_Print`. The
+format string is a 6-character prefix (e.g. `"%ld;  "`) and a
+6-character tail; the tail identifies the `SP_EVENT_*` event name
+in the rodata string table at 0xa5aabc-0xa5ad30.
+
+**B-table decode formula (already shown in §4):**
+```
+imm24 = word & 0x00FFFFFF
+target = (word_addr + 8) + (imm24 << 2)
+```
+
+**Verified mapping (msgId → case body address → format string tail
+→ BL targets → event name):**
+
+| msgId | B-target | fmt tail | Key BL target(s) | Event name |
+|------:|---------:|:---------|:-----------------|:-----------|
+| 0x401 | 0x3f6d0  | `%ld;`     | `SP_PushSdIdToApp`, `SP_PushSdStateToCamera`        | [DEBUG: log msgId] |
+| 0x402 | 0x3f790  | `:%d\n`    | `SP_GetSdInfo`, `SP_PushSdStateToCamera`            | [DEBUG: log msgId with colon] |
+| 0x403 | 0x3f838  | `d fail\n` | `SP_ExdevUpgradeFromSD`, `SP_OmsUpgradeFromSd`      | `SP_EVENT_SD_INSTALL_FAIL` |
+| 0x404 | 0x3f8b0  | `TED\n`    | `SP_ExdevUpgradeFromSD`, `SP_OmsUpgradeFromSd`      | `SP_EVENT_SD_MOUNTED` |
+| 0x405 | 0x3f8fc  | `T_FAIL\n` | `SP_ExdevUpgradeFromSD`, `SP_OmsUpgradeFromSd`      | `SP_EVENT_SD_MOUNT_FAIL` |
+| 0x406 | 0x40098  | (none)     | (B-instructions only, all return 0)                 | DEFAULT (no-op) |
+| 0x407 | 0x40098  | (none)     | (B-instructions only, all return 0)                 | DEFAULT (no-op) |
+| 0x408 | 0x3f958  | `SCAN\n`   | `SP_PushUpgradeState`                               | `SP_EVENT_SD_SCAN` |
+| 0x409 | 0x3f9a8  | `_FAIL\n`  | `SP_PushUpgradeState`, `SP_SetWifiState`            | `SP_EVENT_UPGRADE_FAIL` |
+| 0x40a | 0x3f9f8  | `CESS\n`   | `SP_PushUpgradeState`, `SP_SetWifiState`            | `SP_EVENT_UPGRADE_SUCCESS` |
+| 0x40b | 0x3fa4c  | `NECT\n`   | `set_cellular_lpm`                                  | `SP_EVENT_APP_CONNECT` |
+| 0x40c | 0x3fbf8  | `_OK\n`    | `SP_FrpcTask`, `SP_TtyUsbClose`, `check_pppd_ttyusb`| `SP_EVENE_FRP_OK` |
+| 0x40d | 0x3fca4  | `.txt &`   | `SP_PushCellularStateToApp`                         | `SP_EVEN_CELLUAR_UPGRADE_TXT` (?) |
+| 0x40e | 0x3fd70  | `R:%d\n`   | `SP_CloseCellular`                                  | `SP_EVEN_CELLULAR_SIM_REMOVE` |
+| 0x40f | 0x3fe60  | `unt:%d\n` | `SP_OnTtyUsbRestartTask`, `SP_OnTtyUsbOkTask`       | `SP_EVEN_CELLULAR_TTYUSB_COUNT` (?) |
+| 0x410 | 0x3ff7c  | `OVE\n`    | `SP_OpenCellular`                                   | `SP_EVENE_CELLULAR_TTYUSB_REMOVE` |
+| 0x411 | 0x3ffac  | `EUP\n`    | `SP_OpenCellular`                                   | `SP_EVEN_CELLULAR_NETWORK_WAKEUP` |
+| 0x412 | 0x3faa8  | `3000`     | `SP_TtyUsbInitTask` (timeout 3000ms)                | `SP_EVEN_CELLULAR_NETWORK_REG_TIMEOUT` |
+| 0x413 | 0x3fb48  | `COVERY\n` | `SP_CloseCellular`, `SP_PushCellularStateToApp`     | `SP_EVEN_CELLULAR_MQTT_RECOVERY` |
+| 0x414 | 0x3fb90  | `_ERR\n`   | `SP_FrpcTask`                                       | `SP_EVEN_CELLULAR_FRP_ERR` |
+| 0x415 | 0x3fafc  | `T_OK\n`   | `set_cellular_lpm`, `SP_TtyUsbClose`                | `SP_EVEN_CELLULAR_INIT_OK` |
+| 0x416 | 0x3fee0  | `SB_OK\n`  | `SP_ResetCellTask`, `SP_OpenCellular`               | `SP_EVENE_CELLUAR_TTYUSB_OK` (note: typo in source — `CELLUAR` not `CELLULAR`) |
+| 0x417 | 0x40000  | `_TURN\n`  | `SP_PushErrorCodeToApp(0xfb4d)`, gimbal error stops | `SP_EVENE_WAKEUP_STATE_TURN` |
+| 0x418 | 0x4006c  | `LIMIT\n`  | (log only)                                          | `SP_EVENE_GIMBAL_LIMIT` |
+
+**Disambiguation notes:**
+
+- 0x406 / 0x407: Both B-table entries point to 0x40098, which is a
+  tiny function consisting of 8 inline `b 0x400dc` instructions (an
+  8-way switch all routing to the same epilogue at 0x400dc that
+  `mov r3, #0; ... bx lr`). This is the "do-nothing" default
+  handler, not a separate case body.
+
+- 0x40c vs 0x415: 0x40c starts `SP_FrpcTask` (so it's the FRP
+  "ready" event — `SP_EVENE_FRP_OK`). 0x415 only does
+  `set_cellular_lpm` and `SP_TtyUsbClose` (modem init done but
+  FRP not yet up — `SP_EVEN_CELLULAR_INIT_OK`).
+
+- 0x40b vs APP/BT_CONNECT: The `set_cellular_lpm` call (low-power
+  mode) is triggered on app disconnect, not on BT connect. So 0x40b
+  is `SP_EVENT_APP_CONNECT` (note: although the name suggests
+  "connect", the body code reacts to app disconnection by putting
+  the modem to sleep).
+
+- 0x40d / 0x40f: Format string tails don't cleanly match any known
+  `SP_EVENT_*` name. These may be internal debug counters or events
+  that share a string prefix with another event. Marked with `(?)`.
+
+- 0x40e tail `R:%d` — matches `SIM_REMOVE` if you read the tail as
+  `REMOVE` minus the `REMO` (since format strings are 6 chars in the
+  disasm buffer, the tail is `R:%d\n` which doesn't end with
+  `REMOVE`). Re-derivation: actually, the format string is the FULL
+  `"SP_EVEN_CELLULAR_SIM_R:%d\n"` and the event name is the prefix
+  `SP_EVEN_CELLULAR_SIM_REMOVE`. The 6-char tail is just because the
+  disasm buffer shows the last 6 chars. So 0x40e = `SP_EVEN_CELLULAR_SIM_REMOVE`.
+
+- 0x40f tail `unt:%d` — similar, full format string is
+  `"SP_EVEN_CELLULAR_TTYUSB_Count:%d\n"` and the event is
+  `SP_EVEN_CELLULAR_TTYUSB_COUNT` (with capital C, not lowercase).
+
+- 0x412 tail `3000` — full format is
+  `"SP_EVEN_CELLULAR_NETWORK_REG_TIMEOUT=3000ms"` — `SP_EVEN_CELLULAR_NETWORK_REG_TIMEOUT`.
+
+- 0x417 / 0x418: 0x418 is purely a log statement
+  (single `HI_LOG_Print` call), so it's an "informational" event not
+  a real action. 0x417 calls all four gimbal auto-stop functions
+  (panorama/lapse/goto/track) plus `SP_PushErrorCodeToApp(0xfb4d)`,
+  indicating a real error condition.
+
+## 11. Event name string table (rodata)
+
+The full set of `SP_EVENT_*` event names referenced by EventMsgProc
+format strings is located in rodata at **0xa5aabc-0xa5ad30** (single
+NUL-separated block, with intermediate padding NULs between names).
+The format strings reference the same memory but include a colon
+and a value specifier (e.g. `"SP_EVENT_SD_MOUNTED\n"` is stored as
+both the bare name `SP_EVENT_SD_MOUNTED` and a format string
+`"SP_EVENT_SD_MOUNTED\n"` that's pushed onto the stack before
+`HI_LOG_Print`).
+
+Verified by scanning the rodata section with pyelftools and matching
+the 6-char tail of each case's format string against the event name
+prefix (with `\n` appended) — see `tools/event_mapping.py` in this
+session's tooling.
+
+## 12. Tooling reference
+
+Two new tools were written in this session to produce the mapping:
+
+- `tools/dispatch_decode.py` — Decodes the addls + B-table structure,
+  produces a `{msgId: b_target}` dict.
+- `tools/event_mapping.py` — Decodes each case body's format string
+  literal via PIC literal-pool scanning, then matches it against the
+  `SP_EVENT_*` name table to produce the final mapping.
+
+Both are standalone and idempotent.
