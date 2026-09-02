@@ -67,10 +67,20 @@ conclusion.
 | [04-plt-got-mechanism.md](04-plt-got-mechanism.md) | PLT/GOT, switch dispatchers, literal pool stub trick |
 | [05-triggers-and-pivot-options.md](05-triggers-and-pivot-options.md) | **THE TRIGGER COMMANDS** + pivot options A through E |
 | [06-strings-and-logs.md](06-strings-and-logs.md) | Decoded log strings, error messages |
+| [06-srchgimbal-callers.md](06-srchgimbal-callers.md) | Call chain into `SP_SrchGimbalNewPkt` (gimbal packet-search routine) |
 | [07-gimbal-uart-rx-thread.md](07-gimbal-uart-rx-thread.md) | Full byte=0x21 trigger chain analysis |
 | [08-exdev-uart-upgrade-path.md](08-exdev-uart-upgrade-path.md) | **NEW** — Full call graph, EventMsgProc event table, SD_MOUNTED path, 0x61/0x63/0x64 trigger bytes |
+| [09-oms-callers.md](09-oms-callers.md) | Call chain into `SP_OmsUpgradeFromSd` (SD-card OMS install) |
+| [10-capstone-operand-bug.md](10-capstone-operand-bug.md) | Capstone `ins.operands` API bug for ARM `BL` in polestar_app (disasm tooling pitfall) |
+| [11-uncalled-list.md](11-uncalled-list.md) | Truly uncalled upgrade-related functions in polestar_app (dead candidates for pivot) |
+| [12-eventmsgproc-dispatch.md](12-eventmsgproc-dispatch.md) | EventMsgProc dispatch table — full 24-case map (superseded by file 17) |
+| [13-oms-upgrade-msgproc.md](13-oms-upgrade-msgproc.md) | SP_OmsUpgradeMsgProc — the REAL OMS dispatcher (confirmed via disasm + find_callers.py) |
+| [14-oms-upgrade-loop.md](14-oms-upgrade-loop.md) | OmsUpgrade message loop (0x46800 → 0x46a50) — confirmed via disasm |
 | [15-sd-upgrade-handler.md](15-sd-upgrade-handler.md) | SP_OmsUpgradeFromSd / SP_ExdevUpgradeFromSD / SP_UartRcvExdevUpgradTask analysis |
 | [16-dwarf-line-mapping.md](16-dwarf-line-mapping.md) | **NEW** — DWARF line info: 53 upgrade funcs mapped to source, parser bug history, 3 addls dispatchers with sources |
+| [17-eventmsgproc-dispatch-verified.md](17-eventmsgproc-dispatch-verified.md) | **AUTHORITATIVE** for EventMsgProc dispatch — 24 cases 0x401-0x418, full verified table with case-by-case targets, log-line numbers, and case body sizes. Use this instead of file 12. |
+| [18-oms-upgrade-check-fwpkt.md](18-oms-upgrade-check-fwpkt.md) | **AUTHORITATIVE** for SP_OmsUpgradeCheckFwPkt (VA 0x76f24-0x7787c) — full state machine, 8 return paths, 27 ldr-references, signature validation. Use this for FwPkt format reverse-engineering. |
+| [19-post-sp-omscheckfwpkt-region.md](19-post-sp-omscheckfwpkt-region.md) | **NEW** — Post-`SP_OmsUpgradeCheckFwPkt` region evidence: RETRACTS "twin functions" theory. 0x7770c = epilogue of file 18 func; 0x8770c = unrelated OpenCV destructor; 0x7787c = unnamed one-time init helper; 0x86e40 = OpenCV valloc wrapper. No actionable findings for OMS patcher. |
 
 ## Critical addresses (verified, file offsets)
 
@@ -105,8 +115,9 @@ conclusion.
 | 0x62934 | 0x52934 | GimbalUartInitTask (size 324) |
 | 0x62a78 | 0x52a78 | SP_GimbalUartInit (size 68) |
 | 0x5d89c | 0x4d89c | SP_ExdevUpgradeFromSD |
-| 0x77cf4 | 0x67cf4 | SP_AfterExdevUpgrade (helper) |
-| 0x76f24 | 0x66f24 | SP_OmsUpgradeMsgProc (810 protocol gate) |
+| 0x77cf4 | 0x67cf4 | SP_OmsUpgradeFromSd (called from 0x3f950 in EventMsgProc case 4) |
+| 0x768e8 | 0x668e8 | SP_OmsUpgradeMsgProc (BT path, called from 0x469c8) — see file 13 |
+| 0x76f24 | 0x66f24 | SP_OmsUpgradeCheckFwPkt (OMS FwPkt install pipeline) — see file 18 |
 | 0xbf3000 | 0xbd3000 | GLOBALS (in .got) |
 | 0xc5a250 | 0xc3a250 | Upgrade task table (8 entries) |
 | 0xc47148 | — | GLOBALS[0x1310] -> obj pointer |
@@ -214,6 +225,11 @@ UpgradeTask to start. Likely candidates:
   full chain to run)
 - A specific 810 protocol message (0x64 0xf0 0x01) that bypasses
   the watcher entirely
+
+**For FwPkt format details (CRC/MD5 layout, .zip structure, the
+`OmsPkt.zip` vs `FwPkt.zip` dual-stage flow):** see
+[18-oms-upgrade-check-fwpkt.md](18-oms-upgrade-check-fwpkt.md) —
+the authoritative disasm of `SP_OmsUpgradeCheckFwPkt`.
 
 ## SD card hotplug auto-trigger (the simplest path!)
 

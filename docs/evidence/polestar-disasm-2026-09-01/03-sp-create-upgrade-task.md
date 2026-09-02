@@ -134,8 +134,11 @@ section 7.
 
 1. **Who calls SP_CreateUpgradeTask?** — 0 direct `bl 0x13f3c4`
    instructions in the binary. The 810 protocol handler at
-   `SP_OmsUpgradeMsgProc @ 0x76f24` is the only known candidate
-   that COULD call it via the `0x64 0xf0 0x01` subcommand.
+   `SP_OmsUpgradeMsgProc @ 0x768e8` (BT path) is the only known candidate
+   that COULD call it via the `0x64 0xf0 0x01` subcommand. (Note: 0x76f24
+   is `SP_OmsUpgradeCheckFwPkt`, NOT `SP_OmsUpgradeMsgProc` — see
+   [13-oms-upgrade-msgproc.md](13-oms-upgrade-msgproc.md) and
+   [18-oms-upgrade-check-fwpkt.md](18-oms-upgrade-check-fwpkt.md).)
 
 2. **Why does the SD watcher not fire 0x402?** — The watcher's
    `SP_SrchGimbalNewPkt` loop calls `SP_ExdevUpgradeFromSD` and
