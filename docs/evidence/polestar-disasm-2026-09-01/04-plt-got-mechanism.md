@@ -31,11 +31,14 @@ State 1 (watchdog) at 0x13f148-0x13f150:
 ARM pattern: `addls pc, pc, r3, lsl #2`. PC pipeline advances 8 bytes,
 so effective base is `dispatcher_addr + 8`.
 
-| Dispatcher | Base | Range | Function |
-|------------|------|-------|----------|
-| 0x60998 | 0x609a0 | 0..98 | `GimbalUartRxMsgProcTask@0x60620` (98 cases, see file 07) |
-| 0x3f668 | 0x3f670 | 0..23 | `EventMsgProc` (24-case, see file 12) |
-| 0x13f104 | 0x13f10c | 0..7 | `UpgradeTask@0x13f080` (state machine) |
+| Dispatcher | Base | Range | Function | DWARF source:line |
+|------------|------|-------|----------|------------------|
+| 0x60998 | 0x609a0 | 0..98 | `GimbalUartRxMsgProcTask@0x60620` (98 cases, see file 07) | `sp_uart.c:314` |
+| 0x3f668 | 0x3f670 | 0..23 | `EventMsgProc` (24-case, see file 12) | `typecheck-gcc.h:2664` (TU is `sp_msgComm.c`) |
+| 0x13f104 | 0x13f10c | 0..7 | `UpgradeTask@0x13f080` (state machine) | `sp_upgrade.c:156` |
+
+See [16-dwarf-line-mapping.md](16-dwarf-line-mapping.md) for the full DWARF
+line-info mapping (53 upgrade funcs, source attribution, parser methodology).
 
 ## 4. Literal-Pool Pattern
 

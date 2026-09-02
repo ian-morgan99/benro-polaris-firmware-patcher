@@ -69,6 +69,8 @@ conclusion.
 | [06-strings-and-logs.md](06-strings-and-logs.md) | Decoded log strings, error messages |
 | [07-gimbal-uart-rx-thread.md](07-gimbal-uart-rx-thread.md) | Full byte=0x21 trigger chain analysis |
 | [08-exdev-uart-upgrade-path.md](08-exdev-uart-upgrade-path.md) | **NEW** — Full call graph, EventMsgProc event table, SD_MOUNTED path, 0x61/0x63/0x64 trigger bytes |
+| [15-sd-upgrade-handler.md](15-sd-upgrade-handler.md) | SP_OmsUpgradeFromSd / SP_ExdevUpgradeFromSD / SP_UartRcvExdevUpgradTask analysis |
+| [16-dwarf-line-mapping.md](16-dwarf-line-mapping.md) | **NEW** — DWARF line info: 53 upgrade funcs mapped to source, parser bug history, 3 addls dispatchers with sources |
 
 ## Critical addresses (verified, file offsets)
 
