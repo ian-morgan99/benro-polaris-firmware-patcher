@@ -1,7 +1,8 @@
 <#
   Benro Polaris libgphoto2 patcher - Windows launcher (PowerShell)
 
-  Everything runs inside Docker; the only host requirement is Docker Desktop.
+  Everything runs inside Docker; the only host requirement is Docker Desktop
+  (with the Linux container engine, i.e. WSL2 or Hyper-V backend).
 
   Usage:
     .\patch-polaris.ps1 -FwPkt <FwPkt-folder-or-zip> [options]
@@ -39,15 +40,27 @@ $ErrorActionPreference = "Stop"
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
 if ([string]::IsNullOrEmpty($Out)) { $Out = Join-Path $Here "out" }
 
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw "docker not found. Install Docker Desktop." }
+# Docker Desktop wants a real drive-letter path with forward slashes for -v.
+# Resolve-Path can hand back a PowerShell-provider path (FileSystem::C:\...),
+# and a trailing backslash would eat the ':' separator in "path:/in:ro".
+function ConvertTo-DockerPath {
+  param([Parameter(Mandatory=$true)][string]$Path)
+  $full = (Resolve-Path -LiteralPath $Path).ProviderPath
+  if ($full.StartsWith("\\\")) {
+    throw "Docker cannot bind-mount a UNC path ($full). Copy it to a local drive, or map it to a drive letter."
+  }
+  return ($full.TrimEnd('\','/') -replace '\\','/')
+}
+
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw "docker not found. Install Docker Desktop (Linux container engine: WSL2 or Hyper-V backend)." }
 docker info *> $null; if ($LASTEXITCODE -ne 0) { throw "Docker daemon not running." }
 
 # resolve input into a folder containing firmwareInfo
 $Stage = Join-Path ([System.IO.Path]::GetTempPath()) ("polpatch_" + [System.Guid]::NewGuid().ToString("N"))
 $In = $null
 try {
-  if ((Test-Path -PathType Container $FwPkt) -and (Test-Path (Join-Path $FwPkt "firmwareInfo"))) { $In = (Resolve-Path $FwPkt).Path }
-  elseif ((Test-Path -PathType Container $FwPkt) -and (Test-Path (Join-Path $FwPkt "FwPkt\firmwareInfo"))) { $In = (Resolve-Path (Join-Path $FwPkt "FwPkt")).Path }
+  if ((Test-Path -PathType Container $FwPkt) -and (Test-Path (Join-Path $FwPkt "firmwareInfo"))) { $In = (Resolve-Path $FwPkt).ProviderPath }
+  elseif ((Test-Path -PathType Container $FwPkt) -and (Test-Path (Join-Path $FwPkt "FwPkt\firmwareInfo"))) { $In = (Resolve-Path (Join-Path $FwPkt "FwPkt")).ProviderPath }
   elseif (Test-Path -PathType Leaf $FwPkt) {
     Write-Host "[*] extracting $FwPkt ..."
     New-Item -ItemType Directory -Force -Path $Stage | Out-Null
@@ -58,8 +71,15 @@ try {
   } else { throw "-FwPkt must be a FwPkt folder (with firmwareInfo) or a FwPkt.zip" }
 
   New-Item -ItemType Directory -Force -Path $Out | Out-Null
+  $InMount  = ConvertTo-DockerPath $In
+  $OutMount = ConvertTo-DockerPath $Out
+
   Write-Host "[*] building docker image '$Image' (first run only)..."
-  docker build -q -t $Image -f (Join-Path $Here "docker\Dockerfile") $Here | Out-Null
+  # NOT quiet, and the exit code IS checked: a silent build failure used to let
+  # this script sail on against a stale image and print [OK] over output that
+  # was never produced (issue #29).
+  docker build -t $Image -f (Join-Path $Here "docker\Dockerfile") $Here
+  if ($LASTEXITCODE -ne 0) { throw "docker build failed (exit $LASTEXITCODE). The build output above says why; nothing was patched." }
 
   $fix  = if ($NoFixTypo) { "0" } else { "1" }
   $st   = if ($SelfTest)  { "1" } else { "0" }
@@ -70,12 +90,12 @@ try {
     if ($PSBoundParameters.ContainsKey("Libgphoto2")) {
       throw "-Libgphoto2 and -Libgphoto2Source are mutually exclusive"
     }
-    $source = (Resolve-Path $Libgphoto2Source).Path
+      $source = (Resolve-Path $Libgphoto2Source).ProviderPath
     if ((Test-Path -PathType Container $source) -and
         (-not (Test-Path (Join-Path $source "configure.ac")))) {
       throw "source checkout must contain configure.ac"
     }
-    $sourceArgs = @("-v", "${source}:/libgphoto2-source-input:ro")
+      $sourceArgs = @("-v", "$(ConvertTo-DockerPath $source):/libgphoto2-source-input:ro")
   }
   $allowDirty = if ($AllowDirtySource) { "1" } else { "0" }
   Write-Host "[*] running patcher (mode: $mode)..."
@@ -85,7 +105,7 @@ try {
     -e SWAP_USB1=$usb1 `
     -e ALLOW_DIRTY_SOURCE=$allowDirty `
     @sourceArgs `
-    -v "${In}:/in:ro" -v "${Out}:/out" `
+    -v "${InMount}:/in:ro" -v "${OutMount}:/out" `
     $Image
   if ($LASTEXITCODE -ne 0) { throw "patcher container failed with exit code $LASTEXITCODE" }
 

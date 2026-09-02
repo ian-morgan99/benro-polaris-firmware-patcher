@@ -36,3 +36,29 @@ src/libgphoto2-*/
 .DS_Store
 Thumbs.db
 *.swp
+
+# LM Studio bridge conversation ledger (append-only, grows ~100 KB per review;
+# rotated reviews live in docs/evidence/ledger-archive-*.md which IS tracked)
+LMStudioLogEnhancements.md
+
+# Session workspace state (rebuilt every session; never authoritative).
+# Per issue #30, this is a per-session scratch file for the agent host, not
+# repo content; the canonical FwPkt-install investigation log lives in the
+# dedicated analysis repo (issue #17 split).
+STATE.md
+
+# Per-host build outputs from container runs (out/<date>-<flavour>/). The
+# FwPkt inputs the user supplied are NOT here — those live under FwPkt/
+# (already ignored). `out/` is the container-side mirror.
+#
+# Per issue #30, `builds/` is load-bearing for provenance claims (see
+# issues #3/#7 which reference builds/…/build-source-provenance.txt). The
+# compromise: ignore the directory at root so `git status` stays clean, but
+# anyone reproducing a build can rebuild the same provenance locally and
+# compare hashes. Provenance itself is *not* tracked.
+builds/
+
+# Cross-project coordination notes (see docs/CROSS-PROJECT.md for the
+# rationale; that file is the public-facing version of this convention).
+# Excluded from this repo, not deleted.
+docs/CROSS-PROJECT.md

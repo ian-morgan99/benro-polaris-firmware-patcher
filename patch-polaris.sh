@@ -82,7 +82,13 @@ fi
 
 mkdir -p "$OUT"
 echo "[*] building docker image '$IMG' (first run only)…"
-docker build -q -t "$IMG" -f "$HERE/docker/Dockerfile" "$HERE" >/dev/null
+# NOT quiet, and the exit code IS checked with a clear message: a silent build
+# failure used to let this script sail on against a stale image and print [✓]
+# over output that was never produced (issue #29).
+if ! docker build -t "$IMG" -f "$HERE/docker/Dockerfile" "$HERE"; then
+  echo "error: docker build failed. The build output above says why; nothing was patched." >&2
+  exit 1
+fi
 
 echo "[*] running patcher (mode: $MODE)…"
 set --
