@@ -54,8 +54,13 @@
   path (camera/main firmware), not the Quectel cellular path.
   The Quectel gate is closed; the OMS USB-UART gate is the
   current blocker.
-- **Device state (live):** awake, SSH responsive, padded FwPkt.zip
-  on `/app/sd/`. See [Live device](#live-device).
+- **Device state (live):** **UNKNOWN / DARK as of 2026-09-05** —
+  `812` trigger was fired against the padded FwPkt.zip, no updater
+  decision seen in Mlog, device then went dark through repeated
+  unreachable periods and two manual restarts. Do not assume
+  awake/SSH-responsive without re-verifying. See
+  [Live device](#live-device) and
+  [§ Session log 2026-09-04/05](#session-log-2026-09-0405--812-trigger-fired-inconclusive-then-device-instability).
 
 ## Live device
 
@@ -67,7 +72,8 @@
 | Wake method | bare `bluetoothctl connect 48:E7:DA:D4:B5:72` from a single piped session — the connect IS the wake pulse |
 | Last known Mlog | `/app/yocto/run/customer/Mlog/Mlog_<date>.log` (NOT in `/var/log`) |
 | Last reboot attempt | today, 16:0x UTC — AP appeared briefly, sshd never bound, dropped before SSH connect |
-| Current state | **AWAKE.** SSH responsive (port 22 open, lighttpd on 80, control daemon on 9090). polestar_app running as PID 248. `/app/sd/FwPkt.zip` (stock, 68.6MB) still staged. Watcher at `/tmp/polaris-watch/watch.sh` active. **Gimbal will re-sleep if the BT-paired phone leaves range** — see [§ Sleeping-when-phone-leaves](#sleeping-when-phone-leaves-do-not-blame-sshd). |
+| Current state | **UNKNOWN / DARK as of 2026-09-05, ~1hr+ AP absence.** See [§ Session log 2026-09-04/05](#session-log-2026-09-0405--812-trigger-fired-inconclusive-then-device-instability) below — the `812` trigger was fired against the padded zip, produced no updater decision in Mlog, and the device subsequently went through repeated unreachable periods and two user-initiated manual restarts. As of the last check the Polaris AP (`polaris_d13e86`) was not broadcasting. `scripts/resilient-monitor.sh` is running in the background (read-only; auto-detects reconnect, snapshots boot/uptime/FwVer, continuously captures Mlog — see logs under `docs/evidence/fwpkt-install/resilient-monitor-*.log`) so the reconnect moment won't be missed. Do not assume the AWAKE state below still holds without re-verifying, and do **not** send another trigger until boot history is reviewed. |
+| Prior known-good state (2026-08-31, superseded) | SSH responsive (port 22 open, lighttpd on 80, control daemon on 9090). polestar_app running as PID 248. `/app/sd/FwPkt.zip` (stock, 68.6MB) still staged. Watcher at `/tmp/polaris-watch/watch.sh` active. **Gimbal will re-sleep if the BT-paired phone leaves range** — see [§ Sleeping-when-phone-leaves](#sleeping-when-phone-leaves-do-not-blame-sshd). |
 
 **If the device is awake:**
 
@@ -594,6 +600,151 @@ the final reflash. **Do not start new recon threads.** The single remaining step
 If a session finds itself re-deriving any of this, it has drifted back into recon
 mode. The evidence is already in `docs/evidence/polaris-ssh-2026-08-31/` — read the
 latest capture, then run step 2.
+
+## Session log 2026-09-04/05 — 812 trigger fired, inconclusive, then device instability
+
+**Confidence key:** ✅ directly observed this session · ⚠️ inferred, not proven ·
+❓ open question, do not assume an answer.
+
+### What was done
+
+- ✅ Step 2 of the decisive-next-move runbook was executed:
+  `./scripts/attempt-fwpkt-install.sh` ran its pre-flight (confirmed
+  `/app/sd/FwPkt.zip` MD5 `92da888387b14dc02976b5fa22b94067`, matching the
+  padded build), captured `Mlog.txt` before/after, and sent the `1&812&0&#`
+  wire frame to TCP 9090.
+- ✅ The only Mlog line produced by the trigger, across every capture this
+  session, was:
+  ```
+  [12:33:20:103 ERROR-]:msg_rcv_from_app_process[65]:rcv msg from App[8]:type:0;code:812;val:
+  ```
+  **No `CHECK_FW`, no PASS/FAIL, no reflash/install marker ever appeared.**
+  This is the single most important fact from this session: the command was
+  *received* by `polestar_app`, but there is no log evidence it was *acted on*.
+- ✅ Post-trigger, `/app/FwVer` still read `FwVer:4.0.0.32;date:2025.05.09;` —
+  unchanged from the pre-trigger baseline. Expected either way (an appfs-only
+  patch does not bump this string), so this neither confirms nor refutes
+  install — it's just consistent with "nothing happened yet" or "an appfs
+  swap happened without touching this file."
+- ⚠️ A second, **unintentional** `812` frame was sent later in the session
+  during an unrelated connectivity check that accidentally combined a raw
+  TCP-9090 payload probe with the trigger payload. Flagging this so no future
+  session misreads the evidence window as "one clean trigger, one clean
+  response" — there were two sends, one deliberate and one accidental.
+
+### Device instability observed after the trigger(s)
+
+- ✅ A 6-minute background uptime poll (10 s interval) showed the device
+  reachable and incrementing normally through ~210 s post-trigger, then
+  **unreachable from ~220 s through the end of the 360 s window.** This
+  coincided with the accidental second `812` send above, so the two events
+  cannot be cleanly separated in time. ❓ Whether this dark period was a
+  delayed reboot caused by the trigger, or unrelated Wi-Fi/power instability,
+  is **unresolved**.
+- ✅ The user then manually resumed the device via iPhone (their words: "i
+  think it just timed out. i resumed it via iphone"). SSH returned
+  **"Connection refused"** (not a timeout) for about 2 minutes afterward —
+  i.e. the network interface answered but `sshd` was not yet listening,
+  consistent with an in-progress boot/service-start sequence.
+- ✅ Full connectivity briefly returned (ping OK, ports 22/80/9090 open,
+  `iw dev wlp8s0 link` showed active association to the Polaris AP
+  `48:e7:da:d4:b5:73`, but at a weak **-81 dBm** / **1.0 MBit/s** link).
+  A subsequent SSH evidence-capture attempt failed with **"No route to
+  host"** almost immediately after — consistent with a marginal/unstable
+  radio link, not necessarily a device-side fault.
+- ✅ The user then said "I had to restart it" (a second manual restart). A
+  300-second retry loop for a read-only evidence snapshot (`date`, `uptime`,
+  `FwVer`, staged-package MD5s, update-related `Mlog.txt` grep, key process
+  list) never got a single successful connection in that window.
+- ✅ Following that, this session confirmed via `nmcli`/`ip route` that one
+  apparent "successful ping" to `192.168.0.1` was **not the Polaris** — Wi-Fi
+  (`wlp8s0`) had disconnected from `polaris_d13e86` entirely, and the ping
+  was actually routed over the wired LAN (`enp11s0` → `192.168.68.1`) to an
+  unrelated device that happens to share the `192.168.0.1` address on a
+  different subnet context. **Lesson for future sessions:** always confirm
+  `nmcli device status` shows `wlp8s0` connected to `polaris_d13e86` before
+  trusting a bare ping to `192.168.0.1` as Polaris evidence.
+- ✅ After that correction, `polaris_d13e86` did not reappear in Wi-Fi scans
+  for at least ~20 minutes of active polling (two ~5–8 minute scan loops).
+  As of the last check in this session, the AP was still not broadcasting.
+
+### What this does and does not prove
+
+- ❌ **Does NOT prove** the FwPkt install ran or succeeded — no updater
+  decision was ever logged.
+- ❌ **Does NOT prove** the install failed/was rejected either — silence is
+  also consistent with the trigger being ignored for an unrelated reason
+  (see `docs/silent-fwpkt-reject-postmortem.md`), or with the relevant log
+  lines being written to a file this session didn't capture in time.
+- ⚠️ **Weakly suggests** something changed device-side around the trigger
+  (the dark period, the "Connection refused" boot signature, the repeated
+  need for manual restarts), but this is equally explainable by pre-existing
+  Wi-Fi/hardware flakiness (the observed -81 dBm signal is poor) that has
+  nothing to do with the `812` command.
+- ❓ **Open, unresolved:** how many times has the device actually rebooted
+  since the trigger, and were any of those reboots *caused by* the trigger?
+  No boot-counter or `dmesg` boot-timestamp evidence has been captured to
+  answer this. This should be the first thing pulled once SSH is available
+  again — before sending any further commands.
+
+### Explicit rule for the next session
+
+**Do not send another `812` (or any other) trigger** until:
+1. SSH access is re-established and stable (not just a momentary port-open).
+2. A boot-counter / `dmesg` timestamp check has been done to establish how
+   many reboots have occurred and roughly when, so any future trigger's
+   effect can be measured against a known baseline.
+3. The Mlog capture strategy is upgraded to *keep polling/capturing through
+   a possible dark period* (this session's single-snapshot approach lost
+   any log lines written during the unreachable windows).
+
+### Extended outage continuation (same session, later) — new resilient tooling
+
+- ✅ After the ~20-minute gap noted above, three further Wi-Fi scan loops
+  were run back-to-back (~16 min, ~4 min, ~1 min effective runtimes,
+  varying by loop sleep interval). **None saw `polaris_d13e86` reappear.**
+  Cumulative AP-absence time reached **roughly 1 hour** with zero
+  sightings — the longest gap observed in this whole investigation.
+- ✅ Re-checked `gh issue list` (open + closed) during this gap: nothing
+  new/actionable. Issues #1/#2/#5/#9/#10/#12 already closed; open issues
+  #11/#8/#7/#6/#3 are pre-existing feature requests/questions with no new
+  activity. No GitHub work is currently pending.
+- ✅ Asked the user to physically check the device (power/light state);
+  the user was not available to answer. Physical intervention may be
+  required — passive network scanning cannot distinguish "device is off"
+  from "device is on but Wi-Fi radio hasn't come back."
+- ✅ **Built `scripts/resilient-monitor.sh`** to address the explicit rule
+  above (point 3) proactively, so the *next* time the device comes back
+  we don't lose the boot-history/Mlog evidence to another dark-period gap.
+  It is 100% read-only (no writes to `/app/sd/`, no port-9090 triggers) and:
+  - Correctly distinguishes real Polaris association (`nmcli` shows
+    `wlp8s0` connected to a `polaris_*` profile) from the
+    `192.168.0.1`-is-not-unique false positive documented above.
+  - Actively calls `nmcli device wifi rescan` while down, rather than
+    waiting on NetworkManager's own scan cadence (there is a saved
+    `polaris_d13e86` profile with `autoconnect=yes`, so once seen it
+    should auto-associate).
+  - On every UP/DOWN transition, appends a timestamped line to
+    `docs/evidence/fwpkt-install/resilient-monitor-timeline.log`.
+  - On every UP transition, takes a cheap snapshot (`/proc/uptime`,
+    a `FwVer` grep, first `dmesg` line) into the same timeline log —
+    this is the boot-counter/history evidence point 2 above calls for.
+  - On every UP transition, (re)starts `tail -n0 -F /app/Mlog.txt` over
+    SSH, appending continuously to
+    `docs/evidence/fwpkt-install/resilient-monitor-mlog.log` (never
+    truncated). If SSH drops, the tail dies naturally and is restarted
+    from the new EOF on the next UP transition — so Mlog evidence is
+    captured continuously across dark periods instead of only at
+    single snapshot points, satisfying point 3 above.
+  - Still does **not** send any trigger — it is purely observational,
+    per the explicit rule.
+  - Launched detached in the background (`nohup ... & disown`,
+    `POLL_SECS=6`) so it keeps running independently of any single
+    session/shell and will capture the reconnect moment automatically.
+  - **Still no send of `812` or any other trigger.** The explicit rule
+    above remains in force: once this monitor shows STATE UP and a
+    stable snapshot, review the boot-history evidence with the user
+    before considering another trigger attempt.
 
 ## What to do right now (no device)
 
