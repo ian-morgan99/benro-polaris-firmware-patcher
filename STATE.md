@@ -788,6 +788,44 @@ latest capture, then run step 2.
 - Monitor is still running and continuing to watch for the next
   UP window; still no trigger sent.
 
+### Second reconnect confirms brown-out pattern (2026-09-04T12:44Z–12:49Z)
+
+- Between `12:44Z` and `12:49Z`, `nmcli device status` showed `wlp8s0`
+  **flapping repeatedly** between `connecting (configuring)` →
+  `disconnected` → `connecting (configuring)` against `polaris_d13e86`,
+  never completing full association for ~5 minutes straight. This is
+  the AP itself appearing/disappearing rapidly — i.e. the Wi-Fi radio
+  powering up just long enough to beacon, then dying before the
+  handshake/DHCP completes. Strong visual confirmation of a device that
+  is repeatedly power-cycling, not one that's simply out of range.
+- ✅ At `12:49:05Z` the monitor caught a **second full UP window**:
+  `uptime=15.79s` (another fresh boot, same kernel boot line), then
+  **DOWN again at `12:49:14Z` — only ~9 seconds later**, even shorter
+  than the first window.
+- 🔑 **Battery reading is identical to the first capture**:
+  `Voltage:8.94;capacity:1;ChargeState:1;` — exact same voltage/capacity
+  as the `12:37Z` window. Two independent boots, ~12 minutes apart,
+  both reporting the same very-low battery state. This is strong
+  evidence the battery is sitting at (or being clamped to) a
+  brown-out/protection threshold rather than continuing to drain.
+- New detail this window: gimbal UART link showed transient errors
+  immediately after boot — `GimbalUartRxTask: crc[0] != 225`,
+  `CRC fail: 0x00...`, `UART_PREFIX error` — before recovering and
+  resuming normal `Voltage/capacity` and yaw/pitch/roll reporting.
+  Consistent with a voltage rail glitching during power-up before
+  settling; not indicative of a firmware corruption issue.
+- **Conclusion so far (2 data points): the device is in a repeated
+  short-boot / brown-out cycle at a near-constant very-low battery
+  level (~1%, 8.94V), each cycle lasting single-digit-to-tens of
+  seconds before losing power again.** This fully explains the extended
+  outage independent of the patch/firmware question. No `CHECK_FW` or
+  updater lines seen in either window — both were steady-state boots,
+  not update attempts. **No trigger sent.** Recommendation to the user
+  is unchanged and now higher-confidence: **charge the device** before
+  any further SSH/trigger activity is attempted — the current low-power
+  state makes any install attempt (which needs the device to stay up
+  through a reboot cycle) unreliable regardless of firmware readiness.
+
 ## What to do right now (no device)
 
 If the device is in deep sleep and there's nothing to probe, prefer step 0 of
