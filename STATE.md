@@ -746,6 +746,48 @@ latest capture, then run step 2.
     stable snapshot, review the boot-history evidence with the user
     before considering another trigger attempt.
 
+### First reconnect captured by the resilient monitor (2026-09-04T12:37Z)
+
+- ✅ After the monitor had run for ~8 minutes reporting STATE DOWN, it
+  captured a **brief UP window**:
+  - `12:37:10Z` — STATE UP (associated + SSH reachable).
+  - `12:37:14Z` — SNAPSHOT: `uptime=17.60s`, `fwver='?'` (grep pattern
+    didn't match this time — not concerning, cosmetic),
+    `boot0='Booting Linux on physical CPU 0x0'`.
+  - `12:38:08Z` — STATE DOWN again, i.e. the window lasted **under one
+    minute** before Wi-Fi/SSH dropped again.
+- 🔑 **`uptime=17.60s` is the key data point.** It proves the device had
+  *just* rebooted (kernel boot line confirms a real cold/warm boot, not
+  a stale cached ping) mere seconds before we caught it — i.e. the
+  device **is cycling reboots on its own**, consistent with either (a)
+  the user's manual power-cycles/iPhone-app resume finally taking
+  effect, or (b) the device repeatedly rebooting and failing to hold
+  its Wi-Fi AP up for more than ~50 seconds at a time.
+- ✅ The continuous Mlog tail (`resilient-monitor-mlog.log`) captured
+  **real content during this window**: normal gimbal-task traffic —
+  `GimbalUartRxMsgProcTask` voltage/capacity reports
+  (`Voltage:8.94;capacity:1;ChargeState:1;`), `SP_PushModeState`/
+  `SP_SendMsgToApp` mode-state pushes (`mode:1;state:0;`), and
+  yaw/pitch/roll telemetry (e.g. `yaw:-0.258933;pitch:0.872677;`).
+  **This is the first confirmation in this whole outage that the
+  device boots to a fully normal, functioning application state** —
+  gimbal firmware alive, battery reporting (~1% capacity, 8.94V —
+  battery is very low, which may explain the short up-windows if it's
+  browning out), and app-communication tasks running normally. No
+  `CHECK_FW`/updater-decision lines appeared in this window (window was
+  too short/unrelated to any FwPkt path — this was just steady-state
+  gimbal operation, not an update attempt).
+- ⚠️ **Working theory: low battery (~1%, 8.94V) may be causing the
+  device to brown out / power-cycle repeatedly**, explaining the
+  pattern of brief UP windows (tens of seconds) followed by DOWN again,
+  rather than a stable boot. This is a plausible non-firmware
+  explanation for the extended outage and intermittent reconnects.
+  If the user has access to the device, **charging it** before any
+  further action would be the highest-value next step — independent of
+  any patch/trigger question.
+- Monitor is still running and continuing to watch for the next
+  UP window; still no trigger sent.
+
 ## What to do right now (no device)
 
 If the device is in deep sleep and there's nothing to probe, prefer step 0 of
