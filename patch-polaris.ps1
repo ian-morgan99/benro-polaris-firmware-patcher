@@ -22,6 +22,12 @@
     -NoUsb1              (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
     -PentaxMaxCaptureSize BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
                                  Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
+    -CellularModules DIR  inject pre-built kernel modules from DIR (Phase 3
+                           cellular). Expects usbserial.ko, option.ko,
+                           cdc_acm.ko, qcserial.ko -- built against the
+                           device kernel (Linux 4.9.37 hi3559v200).  When
+                           omitted, the patcher still places a no-op loader
+                           and the script can be wired up by a later patch.
     -Image NAME          docker image tag              (default polaris-patcher)
     -ImageTar PATH       prebuilt image tarball from `docker save` (e.g. a portable
                          zip distribution). Loads it with `docker load` and skips the
@@ -43,6 +49,7 @@ param(
   [switch]$NoFixTypo,
   [switch]$NoUsb1,
   [string]$PentaxMaxCaptureSize = "268435456",
+  [string]$CellularModules = "",
   [string]$Image = "polaris-patcher",
   [string]$ImageTar = ""
 )
@@ -123,13 +130,23 @@ try {
       $sourceArgs = @("-v", "$(ConvertTo-DockerPath $source):/libgphoto2-source-input:ro")
   }
   $allowDirty = if ($AllowDirtySource) { "1" } else { "0" }
+  $cellArgs = @()
+  $cellEnv  = ""
+  if (-not [string]::IsNullOrEmpty($CellularModules)) {
+    if (-not (Test-Path -PathType Container $CellularModules)) { throw "-CellularModules: '$CellularModules' is not a directory" }
+    $celPath = (Resolve-Path $CellularModules).Path
+    $cellArgs = @("-v", "${celPath}:/cellular-modules-input:ro")
+    $cellEnv  = "/cellular-modules-input"
+  }
   Write-Host "[*] running patcher (mode: $mode)..."
   & docker run --rm `
     -e MODE=$mode `
     -e LIBGPHOTO2_VERSION=$Libgphoto2 -e LIBGPHOTO2_PORT_VERSION=$Libgphoto2Port -e PENTAX_MAX_CAPTURE_SIZE=$PentaxMaxCaptureSize -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
     -e SWAP_USB1=$usb1 `
     -e ALLOW_DIRTY_SOURCE=$allowDirty `
+    -e CELLULAR_MODULES_DIR=$cellEnv `
     @sourceArgs `
+    @cellArgs `
     -v "${InMount}:/in:ro" -v "${OutMount}:/out" `
     $Image
   if ($LASTEXITCODE -ne 0) { throw "patcher container failed with exit code $LASTEXITCODE" }

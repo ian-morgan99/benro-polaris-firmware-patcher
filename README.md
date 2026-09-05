@@ -32,6 +32,37 @@ Both modes are **reversible** by re-flashing your stock `FwPkt`. Full mode also
 writes a `stage2-ondisk/` bundle so you can **test on-device before flashing**
 (install/revert scripts; see [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md)).
 
+## Phase 3 — Cellular (optional)
+
+The stock Polaris firmware (verified on FwVer 4.0.0.32) ships the full
+**Quectel PPP userspace** already (`pppd`, `chat`, the `/etc/ppp/peers/quectel-ppp`
+peer file, the `check_pppd_ttyusb` glue inside `polestar_app`, and the
+`/dev/ttyUSB3` AT-string path that drives it). What is **not** shipped is the
+**kernel-side USB-serial host stack** — `usbserial.ko`, `option.ko`, `qcserial.ko`,
+`cdc_acm.ko` — so the modem never enumerates as `/dev/ttyUSB*` and the
+userspace glue never runs.
+
+`--cellular-modules DIR` (or `-CellularModules DIR` on Windows) injects those
+four pre-built `.ko` modules into `/app/komod/`, alongside the existing
+`sp_usb2net_load.sh` template that ships with the device, and wires
+`cellular_load.sh` into `/app/bootapp` so it runs once per boot, immediately
+after the HiSilicon platform modules are up. The loader is **VID-gated**: it
+only `insmod`s the four modules when a Quectel (0x2c7c) or Sierra (0x1199) USB
+device is present, so the script is a safe no-op on non-cellular units.
+
+**You must supply the four `.ko` files** — the patcher does not (and cannot)
+build them. The device kernel is Linux 4.9.37 on the HiSilicon hi3559v200
+SoC, and the docker image only carries a glibc 2.24 cross-toolchain, not the
+HiSilicon SDK or matching kernel headers. See [docs/CELLULAR.md](docs/CELLULAR.md)
+for the full pre-build recipe, on-device verification steps, and the
+modem-hardware caveat (some Polaris units only have a SIM socket with no
+populated modem on the PCB; the loader is then a permanent no-op).
+
+When `--cellular-modules` is **omitted** the patcher still places a no-op
+`cellular_load.sh` / `cellular_unload.sh` pair in `/app/komod/` so the bootapp
+wiring is in place for a future patch; the patcher never fails-closed on
+missing modules.
+
 ---
 
 ## ⚠️ READ THIS FIRST — DISCLAIMERS
@@ -209,6 +240,7 @@ Options (both launchers):
 | `--no-usb1` / `-NoUsb1` | off | (ptp2-only) Do **not** swap the `usb1` iolib; patch only the `ptp2` camlib + `pgphoto` |
 | `--pentax-max-capture-size` / `-PentaxMaxCaptureSize` | `268435456` (256 MiB) | Cap on a single Pentax tether capture, in bytes. Overrides libgphoto2's 2 GiB default, which is unsafe on the Polaris' constrained RAM. See [`docs/PENTAX-CAPTURE-BUDGET.md`](docs/PENTAX-CAPTURE-BUDGET.md). |
 | `-ImageTar` (PowerShell only) | unset | Load a prebuilt docker image tarball (`docker save polaris-patcher \| gzip > polaris-patcher-image.tar.gz`) with `docker load` and skip the build step. The tag comes from the tarball itself, so `-Image` is ignored in this mode. See [Portable zip](#portable-zip-prebuilt-image). |
+| `--cellular-modules DIR` / `-CellularModules DIR` | unset | **Phase 3** — inject pre-built USB-serial host drivers (Quectel/Sierra modems) from `DIR` into `/app/komod/`. Expects `usbserial.ko`, `option.ko`, `cdc_acm.ko`, `qcserial.ko` built against the device kernel (Linux 4.9.37 hi3559v200). When omitted, the patcher still installs a VID-gated `cellular_load.sh` no-op so the wiring can be completed later. See [docs/CELLULAR.md](docs/CELLULAR.md). |
 
 Output:
 - `out/FwPkt/` — the unpacked custom firmware

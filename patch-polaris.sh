@@ -22,6 +22,12 @@
 #     --no-usb1            (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
 #     --pentax-max-capture-size BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
 #                                       Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
+#     --cellular-modules DIR  inject pre-built kernel modules from DIR (Phase 3
+#                             cellular). Expects usbserial.ko, option.ko,
+#                             cdc_acm.ko, qcserial.ko — built against the
+#                             device kernel (Linux 4.9.37 hi3559v200).  When
+#                             omitted, the patcher still places a no-op loader
+#                             and the script can be wired up by a later patch.
 #     --image NAME         docker image tag              (default polaris-patcher)
 #
 #  READ THE README AND DISCLAIMERS FIRST.  Tested ONLY against FwVer 4.0.0.32
@@ -30,7 +36,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; CELMODS=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -45,11 +51,17 @@ while [ $# -gt 0 ]; do
     --no-fix-typo) FIXTYPO=0; shift;;
     --no-usb1) SWAPUSB1=0; shift;;
     --pentax-max-capture-size) PENTAX_MAX_CAPTURE_SIZE="$2"; shift 2;;
+    --cellular-modules) CELMODS="$2"; shift 2;;
     --image) IMG="$2"; shift 2;;
-    -h|--help) sed -n '2,26p' "$0"; exit 0;;
+    -h|--help) sed -n '2,34p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
   esac
 done
+
+if [ -n "$CELMODS" ]; then
+  [ -d "$CELMODS" ] || { echo "error: --cellular-modules: '$CELMODS' is not a directory" >&2; exit 1; }
+  CELMODS="$(cd "$CELMODS" && pwd)"
+fi
 
 [ -n "$FWPKT" ] || { echo "error: --fwpkt is required" >&2; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found. Install Docker Desktop / docker." >&2; exit 1; }
@@ -97,7 +109,8 @@ fi
 
 echo "[*] running patcher (mode: $MODE)…"
 set --
-if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source-input:ro"; fi
+if [ -n "$LGSRC" ]; then set -- "$@" -v "$LGSRC:/libgphoto2-source-input:ro"; fi
+if [ -n "$CELMODS" ]; then set -- "$@" -v "$CELMODS:/cellular-modules-input:ro"; fi
 docker run --rm \
   -e MODE="$MODE" \
   -e LIBGPHOTO2_VERSION="$VER" -e LIBGPHOTO2_PORT_VERSION="$PORTVER" \
@@ -105,6 +118,7 @@ docker run --rm \
   -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
+  -e CELLULAR_MODULES_DIR="${CELMODS:+/cellular-modules-input}" \
   "$@" \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"
