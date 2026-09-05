@@ -48,7 +48,7 @@ COPY container/ /opt/patcher/
 # CR is a no-op on an already-LF file, so this is safe to run unconditionally.
 RUN set -eux; \
     find /opt/patcher -type f -exec sed -i 's/\r$//' {} +; \
-    chmod +x /opt/patcher/*.sh /opt/patcher/ondisk/*.sh /opt/patcher/ondisk/pgphoto.wrapper; \
+    chmod +x /opt/patcher/*.sh /opt/patcher/ondisk/*.sh; \
     head -1 /opt/patcher/patch.sh | grep -q '^#!/bin/bash$'
 
 # /in  : read-only mount of the user's stock FwPkt (folder or unzipped)

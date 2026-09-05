@@ -26,6 +26,17 @@ appfs*
 # fresh clone cannot build the image.
 !container/ondisk/pgphoto.wrapper.in
 
+# Session-local reverse-engineering scratch (firmware-derived blobs +
+# disassembly caches; never authoritative, never committed per the firmware
+# policy above).
+artifacts/
+__pycache__/
+*.pyc
+
+# LM Studio auto-generated log-review issue drafts (session scratch, not
+# authoritative; the skill config itself IS tracked).
+.lmstudio/log-review-issues/
+
 # Toolchain source cache
 src/libgphoto2-*/
 *.tar.xz

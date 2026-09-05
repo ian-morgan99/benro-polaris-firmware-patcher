@@ -1,0 +1,9 @@
+[2026-09-04T12:29:25Z] resilient-monitor.sh started (poll=6s host=192.168.0.1 iface=wlp8s0)
+[2026-09-04T12:29:25Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-04T12:37:10Z] STATE UP (associated + SSH reachable)
+[2026-09-04T12:37:14Z] SNAPSHOT uptime=17.60s fwver='?' boot0='Booting Linux on physical CPU 0x0'
+[2026-09-04T12:38:08Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-04T12:49:05Z] STATE UP (associated + SSH reachable)
+[2026-09-04T12:49:06Z] SNAPSHOT uptime=15.79s fwver='?' boot0='Booting Linux on physical CPU 0x0'
+[2026-09-04T12:49:14Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-04T13:05:55Z] monitor stopped (signal)
