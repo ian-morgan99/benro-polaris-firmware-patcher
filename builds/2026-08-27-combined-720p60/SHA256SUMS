@@ -1,0 +1,30 @@
+# SHA-256 sums of the v0.3.0-pentax-hdmi-combined-720p60 combined build outputs.
+#
+# These sums are recorded so that a re-run of the combined build can be
+# checked against them. The combined build was only run once (the
+# "second run" that closes Gap 5 / issue #7 has not been performed in
+# this session; the user has not commissioned it and the build is
+# expensive). When the second run is performed, the new FwPkt.zip
+# should hash to the same value; if it does not, `mkfs.ubifs` /
+# `ubinize` is non-deterministic on this host/image and a
+# `--no-time-stamps` (or equivalent) flag change is required before
+# the combined FwPkt can be promoted from "round-trip verified" to
+# "release candidate" in docs/CRITICAL-REVIEW.md §0.
+#
+# File: FwPkt.zip (combined Pentax+HDMI 720p60 patched Benro Polaris
+# firmware ZIP)
+# Size: 68,484,760 bytes
+# MD5:    fd8147c91df44757d8a41c8bacc39519
+# Docker: polaris-patcher-pentax:latest
+#         digest sha256:b475ca01354845358d21e7adbf0eba9fffc3792e8f49a2d548cadf327cc27953
+# Re-run command (from repo root, with stock firmware in firmware/):
+#   docker run --rm -i \
+#     -v "$PWD:/work" -w /work \
+#     polaris-patcher-pentax:latest \
+#     bash -c '/opt/patcher/repack_appfs.sh \
+#         --in /work/firmware/FwPkt.zip \
+#         --pentax /work/builds/2026-08-23/FwPkt.zip \
+#         --out /work/builds/2026-08-27-combined-720p60-rerun/FwPkt.zip'
+#   cd builds/2026-08-27-combined-720p60-rerun/ && sha256sum -c SHA256SUMS
+
+fb4c37e0e00c4b61a42e3c3b6d515cc5a1c4b0676cc4bc54275f4a27c6e8adaf  FwPkt.zip

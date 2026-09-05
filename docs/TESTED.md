@@ -187,3 +187,21 @@ jog-based for now; capture on the Polaris itself remains Canon-verified only
 - **Any firmware other than FwVer 4.0.0.32.**
 - Long-term stability, thermals, gimbal interaction, edge cases (disconnect
   mid-capture, etc.).
+
+## Related documentation
+
+- [`HOW-IT-WORKS.md`](HOW-IT-WORKS.md) — full design of the on-disk
+  trampolines, the 64-slot dlopen bootstrap, and the per-feature shims.
+- [`patcher-gates.md`](patcher-gates.md) — every patcher-side environment
+  variable / build-mode gate, with default values, what each gate flips, and
+  confirmation that all are fail-closed.
+- [`canonical-pentax-source.md`](canonical-pentax-source.md) — the exact
+  upstream libgphoto2 commit the patcher pulls from, the branches to ignore,
+  and how the patcher resolves a source input at build time.
+- [`HDMI-IMPLEMENTATION-PLAN.md`](HDMI-IMPLEMENTATION-PLAN.md) — junior-agent
+  targeted plan for the HDMI geometry patcher (Phases A–E). Phase E static
+  slice is implemented in `container/hdmi_geometry_patch.py`; Phase D (TX
+  enablement) is explicitly not started.
+- [`HDMI-INPUT-EXPLORATION.md`](HDMI-INPUT-EXPLORATION.md) — background on
+  the HDMI input chain, safety rules, and the dead-code proof (§12) that
+  gates the 10 `--include-dead` RTSP/VENC sites.

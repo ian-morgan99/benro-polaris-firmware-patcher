@@ -396,3 +396,17 @@ recoverability, not a guarantee; flash at your own risk.**
 - Touches **at most three** appfs files (`ptp2.so`, `usb1.so`, `pgphoto`); every
   other appfs file — including all other iolibs (`disk`/`serial`/`ptpip`/… ) — is
   byte-identical to stock.
+
+## Related documentation
+
+- [`TESTED.md`](TESTED.md) — what has and has not been verified on hardware.
+- [`patcher-gates.md`](patcher-gates.md) — every patcher-side env-var /
+  build-mode gate, default values, and fail-closed verification.
+- [`canonical-pentax-source.md`](canonical-pentax-source.md) — the exact
+  upstream libgphoto2 commit the patcher pulls from and the branches to
+  ignore.
+- [`HDMI-IMPLEMENTATION-PLAN.md`](HDMI-IMPLEMENTATION-PLAN.md) and
+  [`HDMI-INPUT-EXPLORATION.md`](HDMI-INPUT-EXPLORATION.md) — the companion
+  HDMI geometry patcher (Phases A–E, Phase E static slice implemented in
+  `container/hdmi_geometry_patch.py`); the input side of the patched
+  firmware, complementing the libgphoto2 side covered above.
