@@ -114,6 +114,36 @@ grep -q 'K-01 model string present' "$T/build.log" || {
 [ -f "$T/stage2-ondisk/ondisk/restore_stock.sh" ] || { echo "missing restore_stock.sh" >&2; exit 1; }
 [ -f "$T/stage2-ondisk/ondisk/libpolaris_stage2.so" ] || { echo "missing libpolaris_stage2.so" >&2; exit 1; }
 
+# The flashable ZIP is the source of truth. Re-extract its appfs and prove the
+# embedded runtime is byte-identical to the optional reversible bundle; this
+# catches packaging-only path mistakes such as installing restart_gphoto into
+# the build container's literal /app instead of the firmware tree.
+APPFS_AUDIT="$T/appfs-payload-audit"
+rm -rf "$APPFS_AUDIT"
+docker run --rm --entrypoint bash \
+  -v "$T:/audit" "$IMAGE" -c '
+    set -e
+    ubireader_extract_files -o /audit/appfs-payload-audit \
+      /audit/FwPkt/camera/appfs.ubifs >/dev/null
+  '
+APPFS_ROOT="$(find "$APPFS_AUDIT" -type d -name ubifs | head -1)"
+[ -n "$APPFS_ROOT" ] || { echo "could not re-extract generated appfs" >&2; exit 1; }
+for mapping in \
+  'bin/pgphoto:ondisk/pgphoto.wrapper' \
+  'restart_gphoto:ondisk/restart_gphoto.sh' \
+  'lib/stage2/libpolaris_stage2.so:ondisk/libpolaris_stage2.so' \
+  'lib/stage2/pgphoto.stage2ondisk:ondisk/pgphoto.stage2ondisk' \
+  'lib/stage2/libgphoto2.so.6:libgphoto2.so.6' \
+  'lib/stage2/libgphoto2_port.so.12:libgphoto2_port.so.12' \
+  'lib/stage2/libgphoto2/2.5.34/ptp2.so:libgphoto2/2.5.34/ptp2.so' \
+  'lib/stage2/libgphoto2_port/0.12.2/usb1.so:libgphoto2_port/0.12.2/usb1.so'
+do
+  embedded=${mapping%%:*}
+  bundled=${mapping#*:}
+  cmp "$APPFS_ROOT/$embedded" "$T/stage2-ondisk/$bundled" || {
+    echo "appfs payload differs from bundle: $embedded" >&2; exit 1; }
+done
+
 # 6) The on-disk ptp2 is the freshly-cross-built 2.5.34 with Pentax marker.
 PTP2_SO="$T/stage2-ondisk/libgphoto2/2.5.34/ptp2.so"
 [ -f "$PTP2_SO" ] || { echo "missing on-disk ptp2 ($PTP2_SO)" >&2; exit 1; }
