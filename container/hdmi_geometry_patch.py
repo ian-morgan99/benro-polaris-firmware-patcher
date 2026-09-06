@@ -17,10 +17,20 @@ tree — SP_GetVencStreamProc has zero callers):
 
 Usage:
   hdmi_geometry_patch.py <in> <out> [--width W --height H --fps F] [--include-dead]
+                         [--dead-stock-map FILE]
 
 Idempotent; refuses in-place writes; fails loudly on unexpected bytes.
+
+--dead-stock-map FILE (issue #8): a JSON object mapping each DEAD-site file
+offset (hex, e.g. "0x12cea4") to the 4-byte little-endian hex of the ACTUAL
+stock bytes found at that offset in the real firmware (extract with
+container/extract_dead_site_bytes.py). When provided, DEAD sites are validated
+against those real bytes instead of the synthesized DEAD_STOCK_W_H assumption,
+so --include-dead can claim full coverage honestly. Without it, the assumption
+is used and a mismatch still fails loudly (the safe-failure path).
 """
 import hashlib
+import json
 import sys
 
 
@@ -104,6 +114,7 @@ def main():
     inp, outp = args[0], args[1]
     width, height, fps = STOCK['w'], STOCK['h'], STOCK['fps']
     include_dead = False
+    dead_stock_map = None
     it = iter(args[2:])
     for a in it:
         if a == '--width':
@@ -114,6 +125,11 @@ def main():
             fps = int(next(it))
         elif a == '--include-dead':
             include_dead = True
+        elif a == '--dead-stock-map':
+            # JSON: {"0x12cea4": "a4f3c3e1", ...} — real stock bytes per DEAD site.
+            with open(next(it), 'r') as f:
+                raw = json.load(f)
+            dead_stock_map = {int(k, 0): bytes.fromhex(v) for k, v in raw.items()}
         else:
             sys.exit(f"unknown arg {a}")
     if inp == outp:
@@ -132,20 +148,28 @@ def main():
         if cur == new:
             already += 1
             continue
-        # expected stock value at this offset
-        if (off, role) in [(o, r) for o, r, _ in DEAD_SITES] and role in ('w', 'h'):
+        # expected stock bytes at this offset. Issue #8: a per-site map of the
+        # REAL firmware bytes (extracted from appfs.ubifs) takes precedence over
+        # the synthesized DEAD_STOCK_W_H assumption, so --include-dead can be run
+        # with full, honest coverage. Without the map the assumption is used and
+        # any mismatch still fails loudly below (the safe-failure path).
+        if dead_stock_map is not None and off in dead_stock_map:
+            old = dead_stock_map[off]
+        elif (off, role) in [(o, r) for o, r, _ in DEAD_SITES] and role in ('w', 'h'):
             stock_val = DEAD_STOCK_W_H[0 if role == 'w' else 1]
+            old = word(enc_any(rd, stock_val))
         else:
-            stock_val = STOCK[role]
-        old = word(enc_any(rd, stock_val))
+            old = word(enc_any(rd, STOCK[role]))
         if cur != old:
-            # Fail loud: if the stock assumption (DEAD_STOCK_W_H or STOCK)
-            # does not match the real firmware bytes, the patcher aborts
-            # rather than writing a wrong value. This is the intended
-            # safe-failure behaviour for both LIVE and DEAD sites.
+            # Fail loud: if the expected stock bytes (the DEAD_STOCK_W_H / STOCK
+            # assumption, or a --dead-stock-map entry) do not match the real
+            # firmware bytes, the patcher aborts rather than writing a wrong
+            # value. This is the intended safe-failure behaviour for both LIVE
+            # and DEAD sites.
+            src = "map" if (dead_stock_map is not None and off in dead_stock_map) else "stock"
             sys.exit(
                 f"offset {hex(off)} ({role}, r{rd}): found {cur.hex()}, expected "
-                f"{old.hex()} (stock) or {new.hex()} (already patched) — wrong firmware?")
+                f"{old.hex()} ({src}) or {new.hex()} (already patched) — wrong firmware?")
         data[off:off+4] = new
         changed += 1
 

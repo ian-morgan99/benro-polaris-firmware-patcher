@@ -17,6 +17,9 @@
 #     PENTAX_MAX_CAPTURE_SIZE Pentax capture file-size cap in bytes (default 268435456 = 256 MiB)
 #     FIX_R5M2_TYPO           1 = correct the upstream "EOS 5Rm2" model-name typo
 #     SELFTEST                1 = qemu-emulate the driver load (needs qemu-arm-static)
+#     SSH_PUBKEY              optional: authorized_keys line(s) to authorise for
+#                             root SSH debugging (adds ONE new file to the appfs;
+#                             issue #31 — opt-in, off by default)
 #
 #  SEE README.md AND docs/TESTED.md.  Use at your own risk.  Tested ONLY against
 #  Benro Polaris FwVer 4.0.0.32 with a Canon EOS R5 Mark II.
@@ -358,7 +361,19 @@ else
       -o libpolaris_stage2.so -ldl ) || die "loader compile failed"
   LFLAGS="$($XT-readelf -h "$W/s2/libpolaris_stage2.so" | awk -F: '/Flags/{print $2}')"
   grep -q 'soft-float' <<<"$LFLAGS" || die "loader ABI mismatch (not soft-float):$LFLAGS"
-  log "  loader: md5=$(md5sum "$W/s2/libpolaris_stage2.so"|cut -d' ' -f1) ABI=$LFLAGS"
+  # Issue #27: fail-closed provenance check. The loader now links stage2_policy.c
+  # (R5-II compatibility-shim gate, commit ccde305), so it is NOT the upstream
+  # hardware-validated loader (md5 74f681de…). If a build ever reproduces that
+  # old md5, or lacks the R5-gate marker string, our policy code is silently
+  # missing from the shipped binary — abort instead of shipping it.
+  LOADER_MD5="$(md5sum "$W/s2/libpolaris_stage2.so"|cut -d' ' -f1)"
+  if [ "$LOADER_MD5" = "74f681de5a43e068df36ae61001a4e79" ]; then
+    die "loader md5 matches the PRE-R5-GATE upstream loader (74f681de) — stage2_policy.c is not in this build (issue #27)"
+  fi
+  if ! strings "$W/s2/libpolaris_stage2.so" | grep -q 'stage2_model_uses_r5_shims'; then
+    die "loader lacks the R5-II gate marker (stage2_model_uses_r5_shims) — stage2_policy.c missing from build (issue #27)"
+  fi
+  log "  loader: md5=$LOADER_MD5 ABI=$LFLAGS (R5-II gate present, issue #27)"
 
   # d) assemble /app/lib/stage2 and install the wrapper as /app/bin/pgphoto.
   STAGE2="$APP/lib/stage2"
@@ -386,6 +401,22 @@ else
   log "  assembled /app/lib/stage2 (loader + core + port + ptp2 + usb1 + trampolined binary)"
   log "  installed self-driving wrapper -> /app/bin/pgphoto (execs /app/lib/stage2/pgphoto.stage2ondisk)"
 
+  # Replace the stock /app/restart_gphoto with our single-owner restart helper
+  # (issue #33: the stock script's 'pkill /app/bin/pgphoto' matches nothing once
+  # the wrapper execs pgphoto.stage2ondisk, so the old instance survives, keeps
+  # port 8080, and every replacement dies on bind -> crash loop, issue #34).
+  # The helper: PID-file ownership + /proc/$pid/cmdline verification, TERM then
+  # bounded wait for process exit AND 8080 unbind, KILL fallback, restart-in-
+  # progress lock so the polestar watchdog (checkGphotoTask) can't race it.
+  RST="/app/restart_gphoto"
+  if [ -e "$RST" ]; then
+    R_UID="$(stat -c %u "$RST")"; R_GID="$(stat -c %g "$RST")"; R_MODE="$(stat -c %a "$RST")"
+  else
+    R_UID="$P_UID"; R_GID="$P_GID"; R_MODE=755
+  fi
+  install -m "$R_MODE" -o "$R_UID" -g "$R_GID" /opt/patcher/ondisk/restart_gphoto.sh "$RST"
+  log "  installed single-owner restart helper -> /app/restart_gphoto (issue #33/#34)"
+
   # ALSO place the fresh ptp2/usb1 at the STOCK camlib/iolib paths. This is the
   # path the swapped 2.5.34 core actually dlopens its camlib from at runtime
   # (device-confirmed: NOT the CAMLIBS the wrapper exports — the core resolves
@@ -401,6 +432,61 @@ else
     install -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1" "$STOCK_USB1"
     log "  placed fresh usb1 at stock iolib path: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
   fi
+fi
+
+# ---------------------------------------------------------------------------
+# 7. OPTIONAL (SSH_PUBKEY, issue #31): authorise a public key for root SSH
+#    debugging. Ported from upstream blaineam/benro-polaris-firmware-patcher
+#    commit 004c057 ("Add optional --ssh-key debug access").
+#
+#    The stock firmware ALREADY runs OpenSSH — /etc/init.d/rcS ends with
+#    `/usr/local/bin/sshd`, and its sshd_config has `PermitRootLogin yes` +
+#    `AuthorizedKeysFile .ssh/authorized_keys`. The only thing missing is a key
+#    in /root/.ssh (rootfs), which this tool never touches.
+#
+#    So instead of modifying anything, we ADD the optional boot hook the stock
+#    /app/bootapp already calls if present:
+#        if [ -f "/app/network_telnetd.sh" ];then cd /app; ./network_telnetd.sh; fi
+#    The hook appends the key to /root/.ssh/authorized_keys at boot. One new
+#    appfs file; every existing file stays exactly as the mode above left it.
+#    Fail-closed: if bootapp doesn't call a hook we can safely claim, we abort
+#    rather than edit bootapp itself.
+#
+#    Decision (2026-09-06, issue #31): opt-in and OFF by default — the Polaris
+#    is its own AP and the stock root password is blank, so SSH exposure is
+#    unchanged unless this flag is passed. The hook is additive: it never
+#    removes the password path, so it cannot lock us out.
+# ---------------------------------------------------------------------------
+SSH_HOOK=""
+if [ -n "${SSH_PUBKEY:-}" ]; then
+  log "ssh debug: authorising public key(s) for root@polaris…"
+  BOOTAPP="$APP/bootapp"
+  [ -f "$BOOTAPP" ] || die "SSH_PUBKEY set but /app/bootapp is missing from this appfs — refusing to guess a boot hook"
+  for cand in network_telnetd.sh start_agent.sh; do
+    grep -q "$cand" "$BOOTAPP" || continue          # bootapp must actually call it
+    if [ -e "$APP/$cand" ]; then
+      warn "  /app/$cand already exists in this firmware — leaving it alone, trying the next hook"
+      continue
+    fi
+    SSH_HOOK="$cand"; break
+  done
+  [ -n "$SSH_HOOK" ] || die "SSH_PUBKEY: no free boot hook that /app/bootapp calls (looked for network_telnetd.sh, start_agent.sh) — refusing to modify bootapp"
+
+  printf '%s\n' "$SSH_PUBKEY" > "$W/ssh_keys.txt"
+  python3 /opt/patcher/gen_ssh_hook.py \
+      --keys "$W/ssh_keys.txt" --hook-name "$SSH_HOOK" --out "$W/ssh_hook.sh" \
+      || die "SSH_PUBKEY: invalid public key material (see the error above)"
+
+  # sshd lives in the rootfs, which this tool ships byte-identical. Warn (don't
+  # abort) if it isn't there — the hook is harmless either way.
+  grep -aq 'sshd' /in/camera/rootfs.ubifs 2>/dev/null \
+    || warn "  no 'sshd' found in this rootfs.ubifs — the key will be installed but nothing may serve SSH"
+
+  # same owner/mode as bootapp itself (which provably has +x — S10mpp runs it)
+  B_UID="$(stat -c %u "$BOOTAPP")"; B_GID="$(stat -c %g "$BOOTAPP")"; B_MODE="$(stat -c %a "$BOOTAPP")"
+  install -m "$B_MODE" -o "$B_UID" -g "$B_GID" "$W/ssh_hook.sh" "$APP/$SSH_HOOK"
+  log "  added /app/$SSH_HOOK (boot hook, $B_MODE $B_UID:$B_GID — same as bootapp) — appends to /root/.ssh/authorized_keys at boot"
+  log "  after flashing: ssh -i <your private key> root@<polaris ip>"
 fi
 
 # ---------------------------------------------------------------------------
@@ -499,6 +585,7 @@ if [ "$MODE" = "full" ]; then
   cp "$W/pgphoto.wrapper" "$BUN/ondisk/"   # generated from .in (see above)
   cp /opt/patcher/ondisk/install_stage2.sh "$BUN/ondisk/"
   cp /opt/patcher/ondisk/restore_stock.sh  "$BUN/ondisk/"
+  cp /opt/patcher/ondisk/restart_gphoto.sh "$BUN/ondisk/"
   cp "$NEW_CORE" "$BUN/libgphoto2.so.6"
   cp "$NEW_PORT" "$BUN/libgphoto2_port.so.12"
   cp "$NEW_PTP2" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
@@ -536,6 +623,57 @@ generated before firmware repacking and contains no Benro firmware.
 See this patcher's NOTICE and container/build_ptp2.sh for the build recipe.
 EOF
 log "  wrote exact LGPL corresponding source -> /out/licenses/$(basename "$SOURCE_ARCHIVE")"
+
+if [ -n "$SSH_HOOK" ]; then
+  log "SSH debug access is ENABLED in this image (/app/$SSH_HOOK):"
+  log "    after flashing:  ssh -i <your private key> root@<polaris ip>"
+  log "    anyone with that private key has root on the device over the network."
+fi
+# ---------------------------------------------------------------------------
+# 8c. SSH hook (issue #31): also emit it standalone, so anyone who already has
+#     device access (serial console, or the root password) can enable key login
+#     WITHOUT flashing — and so the exact script that went into the appfs is
+#     auditable.
+# ---------------------------------------------------------------------------
+if [ -n "$SSH_HOOK" ]; then
+  SSHOUT=/out/ssh-debug; rm -rf "$SSHOUT"; mkdir -p "$SSHOUT"
+  install -m 755 "$W/ssh_hook.sh" "$SSHOUT/$SSH_HOOK"
+  cat > "$SSHOUT/README.txt" <<EOF
+SSH debug access
+================
+
+The custom firmware in ../FwPkt now contains ONE extra appfs file:
+
+    /app/$SSH_HOOK
+
+It is the optional boot hook the stock /app/bootapp already calls if it exists,
+so no existing firmware file had to be modified to add it. At every boot it
+appends your public key(s) to /root/.ssh/authorized_keys. The stock firmware
+already runs OpenSSH (/usr/local/bin/sshd, started by /etc/init.d/rcS, with
+PermitRootLogin yes) — only the key was missing.
+
+After flashing:
+
+    ssh -i <your private key> root@<polaris ip>
+
+Install it WITHOUT flashing (if you already have device access):
+
+    scp $SSH_HOOK root@<polaris ip>:/app/$SSH_HOOK
+    ssh root@<polaris ip> 'chmod +x /app/$SSH_HOOK && /app/$SSH_HOOK'
+    # (it also runs itself on every subsequent boot)
+
+Remove it:
+
+    rm /app/$SSH_HOOK
+    # and drop your key from /root/.ssh/authorized_keys
+    # or reflash stock firmware, which restores both partitions
+
+SECURITY: anyone holding the matching PRIVATE key gets root on this Polaris
+over the network. The device's sshd also still accepts the stock root password,
+which this tool does not change.
+EOF
+  log "  wrote standalone ssh hook -> /out/ssh-debug/$SSH_HOOK (install without flashing; see README.txt)"
+fi
 
 log "----------------------------------------------------------------------"
 if [ "$MODE" = "full" ]; then

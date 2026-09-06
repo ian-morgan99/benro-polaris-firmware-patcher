@@ -1,0 +1,1787 @@
+[m[14:37:30:888 [1;32mINFO[m-]:SP_LogPathInit[2979]:[0;35mClogCnt[21],minNun[4],maxNum[24]
+[m[14:37:30:888 [1;32mINFO[m-]:SP_LogPathInit[2982]:[0;35mMlogCnt[21],minNun[4],maxNum[24]
+[m[14:37:30:888 [1;32mINFO[m-]:SP_LogPathInit[2985]:[0;35mAlogCnt[21],minNun[4],maxNum[24]
+[m[14:37:30:888 [1;32mINFO[m-]:SP_LogPathInit[2988]:[0;35mElogCnt[21],minNun[4],maxNum[24]
+[m[14:37:30:888 [1;32mINFO[m-]:SP_LogPathInit[2995]:rm -rf /app/sd/system/log/Clog_000004.log
+umount: can't unmount /app/sd: Invalid argument
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+[m[14:37:39:274 [1;32mINFO[m-Init]:main[94]:[0;35mFwVer v4.0.0.32 20250509
+[m[14:37:39:274 [1;32mINFO[m-Init]:main[95]:+++++++++++++++++++++
+[m[14:37:39:284 [1;32mINFO[m-Init]:main[97]:+++++++++++++++++++++
+[m[14:37:39:284 [1;32mINFO[m-]:HI_SYSTEM_GetStartupWakeupSource[75]:[0;35mHI_SYSTEM_STARTUP_SRC_STARTUP
+[m[14:37:39:285 [1;32mINFO[m-]:SP_GpioInit[37]:[0;32;32mHAL_GPIO_Init OK
+[m[m[14:37:39:286 [1;31mERROR[m-]:SP_GpioUnexport[226]:Failed to unexport gpio![m[14:37:39:288 [1;31mERROR[m-]:SP_GpioUnexport[226]:Failed to unexport gpio![m[14:37:39:291 [1;32mINFO[m-]:CameraGpioTask[116]:camera gpio value = 1
+[m[14:37:39:299 [1;32mINFO[m-]:SP_UserParamInit[238]:SP_UserParamInit success,s8ParamFd = 2;
+[m[14:37:39:299 [1;32mINFO[m-]:SP_UserParamInit[247]:SettlingTime[2];
+[m[14:37:39:300 [1;32mINFO[m-]:SP_SetAutoOffSw[329]:SP_SetAutoOffSw:0;
+[m[14:37:39:300 [1;32mINFO[m-]:SP_UserParamInit[254]:s32AutoOffSw[0];
+[m[14:37:39:300 [1;32mINFO[m-]:SP_UserParamInit[260]:s32AutoLevelEn[1];
+[m[14:37:39:300 [1;32mINFO[m-]:SP_UserParamInit[266]:s32TimeIntervalType[0];
+[m[14:37:39:301 [1;32mINFO[m-]:SP_GetFactoryParam[56]:[0;32;34mfactoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[14:37:39:301 [1;32mINFO[m-]:SP_GetFactoryParam[63]:hw:1.1
+[m[14:37:39:301 [1;32mINFO[m-]:SP_GetFactoryParam[67]:date:2021.11.29
+[m[14:37:39:301 [1;32mINFO[m-]:SP_GetFactoryParam[71]:pcb:1.20
+[m[14:37:39:301 [1;33mWARN[m-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[14:37:39:301 [1;32mINFO[m-]:SP_GetFactoryParam[75]:CellHwVer:0
+[m[14:37:39:301 [1;32mINFO[m-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
+[m[14:37:39:303 [1;32mINFO[m-]:SP_GetFwVer[286]:fwVerinfo[FwVer:4.0.0.32;date:2025.05.09;
+(];len:[32];
+[m[14:37:39:303 [1;32mINFO[m-]:SP_GetFwVer[293]:FwVer[4.0.0.32];
+[m[14:37:39:380 [1;32mINFO[m-]:SP_SetSysInitTime[134]:RTC DateTime: 2025/05/09-14:37:39
+[m[14:37:39:380 [1;32mINFO[m-]:SP_SetSysInitTime[142]:[0;35mBuild DateTime: 2025/05/09-14:37:27
+[m[14:37:39:079 [1;32mINFO[m-SYSTEM]:HI_SYSTEM_SetDateTime[402]:Fri May  9 14:37:39 2025
+
+[m[14:37:39:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1001],id[131076]
+[m[m[14:37:39:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1002],id[98307]
+[m[m[14:37:39:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1003],id[65538]
+[m[m[14:37:39:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1004],id[163845]
+[m[m[14:37:39:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1006],id[32769]
+[m[m[14:37:39:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1005],id[0]
+[m[m[14:37:39:082 [1;32mINFO[m-]:SP_CreateBtRcvMsgProcTask[186]:SP_CreateBtRcvMsgProcTask success
+[m[14:37:39:082 [1;32mINFO[m-]:SP_CreateBtSendMsgProcTask[244]:SP_CreateBtSendMsgProcTask success
+[m[14:37:39:320 [1;32mINFO[m-]:SP_NetInit[217]:INIT WEB SERVER OK 
+[m[14:37:39:326 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=1] start
+[m[14:37:39:326 [1;32mINFO[m-]:Uart3Open[52]:open uart3 success,fd[12]
+[m[14:37:39:388 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0/mmcblk0p1
+[m[14:37:39:388 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0
+[m[14:37:39:419 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:37:39:429 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/virtual/bdi/179:0
+[m[14:37:39:430 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa
+[m[14:37:39:430 [1;umount: can't unmount /app/sd: Invalid argument
+Configuration file: /app/wifi/hostapd.conf
+rfkill: Cannot open RFKILL control device
+Using interface wlan0 with hwaddr 48:e7:da:d4:b5:73 and ssid "polaris_d13e86"
+wlan0: interface state UNINITIALIZED->ENABLED
+wlan0: AP-ENABLED 
+32mINFO[m-]:NetlinkUeventTask[73]:remove sd card
+[m[14:37:39:442 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1025],val[1]
+[m[m[14:37:39:442 [1;32mINFO[m-]:EventMsgProc[2603]:SP_EVENT_SD_UNPLUGED
+[m[14:37:39:442 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[279],val[state:0;]
+[m[m[14:37:39:443 [1;31mERROR[m-]:SP_FileListFree[195]:list no init
+[m[14:37:39:443 [1;32mINFO[m-]:SP_NomalFileListFree[33]:SP_NomalFileListFree
+[m[14:37:39:444 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:444 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:444 [1;32mINFO[m-]:SP_FocusStackFileListFree[33]:SP_FocusStackFileListFree
+[m[14:37:39:444 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:444 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:444 [1;32mINFO[m-]:SP_PanFileListFree[36]:SP_PanFileListFree
+[m[14:37:39:445 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:445 [1;32mINFO[m-]:SP_LapseFileListFree[65]:SP_LapseFileListFree
+[m[14:37:39:445 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:445 [1;32mINFO[m-]:SP_SunFileListFree[30]:SP_SunFileListFree
+[m[14:37:39:446 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:446 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:446 [1;32mINFO[m-]:SP_HdrFileListFree[33]:SP_HdrFileListFree
+[m[14:37:39:446 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:446 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[14:37:39:446 [1;32mINFO[m-]:SP_StarskyStackFileListFree[31]:SP_StarskyStackFileListFree
+[m[14:37:39:480 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001
+[m[14:37:39:481 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:1
+[m[14:37:39:481 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2
+[m[14:37:39:481 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:3
+[m[14:37:39:497 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/bus/sdio/drivers/dummy_sdmmc
+[m[14:37:39:501 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/ieee80211/phy0
+[m[14:37:39:706 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0
+[m[14:37:39:706 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/rx-0
+[m[14:37:39:706 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/tx-0
+[m[14:37:39:707 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/sdio/drivers/bcmsdh_sdmmc
+[m[14:37:39:707 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/platform/drivers/bcmdhd_wlan
+[m[14:37:40:043 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:0;]
+[m[m[14:37:40:117 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[m[14:37:40:331 [1;32mINFO[m-]:SP_CreateSensorMngTask[276]:SP_CreateSensorMngTask success
+[m[14:37:40:334 [1;32mINFO[m-]:SP_MpuInit[133]:SP_MpuInit success
+[m[14:37:40:334 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:0;sta:1;Use:1;
+[m[14:37:40:340 [1;31mERROR[m-]:SP_I2cRead[78]:SP_I2cRead error
+[m[14:37:40:340 [1;32mINFO[m-]:MagIdentityChipID[49]:QMC6310U_STA
+[m[14:37:40:341 [1;32mINFO[m-]:SP_MpiSysInit[59]:SP_MpiSysInit success
+[m[14:37:40:341 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:1;sta:1;Use:1;
+[m[14:37:40:341 [1;32mINFO[m-]:SP_GetGyroCalInfo[186]:[0;35mNO Gyro calibrate info
+[m[14:37:40:342 [1;32mINFO[m-]:SP_GetGyroCalInfo[189]:[m[14:37:40:342 [1;32mINFO[m-]:SP_CreateCheckPhotoTimeOutTask[901]:SP_CreateCheckPhotoTimeOutTask success
+GyroOffset x[0.0];y[0.0];z[0.0];
+[m[14:37:40:342 [1;32mINFO[m-]:SP_CreateCableReleaseTask[1009]:SP_CreateCableReleaseTask success
+
+[m[14:37:40:343 [1;32mINFO[m-]:SP_GetAcceCalInfo[628]:[0;35mNO Acce calibrate info
+[m[14:37:40:343 [1;32mINFO[m-]:SP_GetAcceCalInfo[634]:AcceOffset x[0.0];y[0.0];z[0.0];
+[m[14:37:40:343 [1;32mINFO[m-]:SP_GetMagCalinfo[573]:[0;35mNO Mag calibrate info
+[m[14:37:40:343 [1;32mINFO[m-]:SP_GetMagCalinfo[576]:mag Offset x[0];y[0];z[0];
+[m[14:37:40:343 [1;32mINFO[m-]:SP_GetMagCalinfo[579]:mag Bias x[0.0];y[0.0];z[0.0];
+[m[14:37:40:343 [1;32mINFO[m-]:SP_GetMagCalinfo[582]:mag scale x[1.0];y[1.0];z[1.0];
+[m[14:37:40:346 [1;31mERROR[m-]:SP_CheckHdmiId[643]:HDMI Hw no Support
+[m[14:37:40:346 [1;32mINFO[m-]:SP_SetHwCode[3258]:[m[14:37:40:346 [1;32mINFO[m-]:SendHwToGimbalTask[82]:SendHwToGimbal hw[11],ubootVer[0]
+[0;35mHwCode:2;sta:0;Use:1;
+[m[14:37:40:348 [1;32mINFO[m-]:SensorMngTask[115]:SP_SENSOR_STA_GIMBAL_ANGLE_INIT Box0Yaw:0.2604;Box0Pitch:-0.9667;
+[m[14:37:40:350 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[433]:bSendHwAck
+[m[14:37:40:902 [1;32mINFO[m-]:AcceAttitudeInit[596]:xMean[0.83],yMean[0.02],zMean[0.56]
+[m[14:37:40:903 [1;32mINFO[m-]:AcceAttitudeInit[619]:[0;35mxVar[0.007866],yVar[0.004981],zVar[0.011384]
+[m[14:37:40:903 [1;32mINFO[m-]:SP_BoxAhraInit[890]:[0;35maAcce:x[0.8298],y[0.0167],z[0.5637]
+[m[14:37:40:905 [1;32mINFO[m-]:SP_BoxAhraInit[896]:++++++acce init ok +++++++++++
+[m[14:37:40:905 [1;32mINFO[m-]:SP_BoxAhraInit[898]:aAcce:x[1.6987],y[-55.7977],z[0.0000]
+[m[14:37:40:905 [1;32mINFO[m-]:SensorMngTask[85]:SP_SENSOR_STA_BOX_AHRS_INIT SUCCESS
+[m[14:37:41:229 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa
+[m[14:37:41:230 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/virtual/bdi/179:0
+[m[14:37:41:232 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0
+[m[14:37:41:232 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0/mmcblk0p1
+[m[14:37:41:232 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1026],val[1]
+[m[m[14:37:41:232 [1;32mINFO[m-]:EventMsgProc[2615]:SP_EVENT_SD_PLUGED
+[m[14:37:41:253 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1027],val[1]
+[m[m[14:37:41:253 [1;32mINFO[m-]:EventMsgProc[2641]:SP_EVENT_SD_MOUNTED
+[m[14:37:41:347 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:5;sta:0;Use:0;
+[m[14:37:41:347 [1;31mERROR[m-]:SP_CheckTtyUsbOk[2319]:SP_CheckTtyUsbOk
+[m[14:37:41:347 [1;32mINFO[m-]:SP_CreateOmsTask[218]:SP_CreateOmsTask success
+[m[14:37:41:348 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[14:37:41:348 [1;32mINFO[m-]:OmsTask[171]:[m[14:37:41:348 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:0;]
+[m_____OMS_STEP_NONE
+[m[14:37:41:348 [1;32mINFO[m-]:SP_GimbalGetExAxsiSate[913]:uart send:SP_GimbalGetExAxsiSate
+[m[14:37:41:350 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[358]:UART_GIMBAL_FW_VER 2.0.0.22
+[m[14:37:41:354 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[364]:UART_GIMBAL_HW_VER 1.2
+[m[14:37:41:356 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[370]:UART_GIMBAL_IAP_VER 1.3
+[m[14:37:41:360 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:9.88;capacity:1;ChargeState:1;
+[m[14:37:41:360 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[319]:[0;35mExAxsiOn = 0
+[m[14:37:41:365 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[448]:ExAngle:0.000
+[m[14:37:41:616 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0
+[m[14:37:42:011 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[14:37:42:016 [1;32mINFO[m-]:SP_BlueInit[2986]:[0;35mSP_BlueInit start
+[m[14:37:42:019 [1;32mINFO[m-]:SP_BlueInit[3009]:[0;35mg_main_loop_new
+[m[14:37:42:086 [1;32mINFO[m-]:SP_BlueInit[3046]:-------------main loop running -------
+[m[14:37:42:092 [1;32mINFO[m-]:connect_handler[121]:connect_handler
+[m[14:37:42:105 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.AgentManager1]
+[m[14:37:42:114 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.ProfileManager1]
+[m[14:37:42:129 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Adapter1]
+[[0;92mNEW[0m] Controller 48:E7:DA:D4:B5:72 polaris_d13e86 [default]
+[m[14:37:42:134 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattManager1]
+[m[14:37:42:137 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Media1]
+[m[14:37:42:139 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.NetworkServer1]
+[m[14:37:42:142 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.LEAdvertisingManager1]
+[m[14:37:42:143 [1;32mINFO[m-]:client_ready[2875]:client_ready
+Agent registered
+[m[14:37:42:148 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:45
+[m[14:37:42:238 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001801-0000-1000-8000-00805f9b34fb
+[m[14:37:42:238 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[m[14:37:42:238 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+[m[14:37:42:238 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001800-0000-1000-8000-00805f9b34fb
+[m[14:37:42:238 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+[m[14:37:42:252 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Alias: polaris_d13e86
+[m[14:37:42:253 [1;32mINFO[m-]:parse_iter[288]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Pairable: yes
+[m[14:37:42:258 [1;32mINFO[m-]:parse_iter[288]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Discoverable: yes
+[m[14:37:42:349 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[14:37:42:349 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:4;sta:1;Use:1;
+[m[14:37:42:349 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:3;sta:1;Use:1;
+[m[14:37:42:612 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:37:42:702 [1;32mINFO[m-]:SP_GetSdInfo[2483]:u64TotalSize:121866;u64FreeSize::121730;u64UsedSize:136
+[m[14:37:42:702 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1029],val[1]
+[m[m[14:37:42:702 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[279],val[state:1;]
+[m[m[14:37:42:702 [1;32mINFO[m-]:EventMsgProc[2657]:SP_EVENT_SD_SCAN
+[m[14:37:42:704 [1;32mINFO[m-]:SP_GetNomalFileList[90]: PhotoMaxNum 0;FileCount 0
+[m[14:37:42:706 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/focusStack/],ClassCount[0],maxCalss[0]
+[m[14:37:42:706 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/focusStack/],IspClassCount[0]
+[m[14:37:42:708 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/panorama/],ClassCount[0],maxCalss[0]
+[m[14:37:42:708 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/panorama/],IspClassCount[0]
+[m[14:37:42:708 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[14:37:42:709 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/Lapse/],ClassCount[0],maxCalss[0]
+[m[14:37:42:709 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[14:37:42:711 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/sun/],ClassCount[0],maxCalss[0]
+[m[14:37:42:712 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/HDR/],ClassCount[0],maxCalss[0]
+[m[14:37:42:712 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/HDR/],IspClassCount[0]
+[m[14:37:42:712 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[14:37:42:713 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/starskyStack/],ClassCount[0],maxCalss[0]
+[m[14:37:42:837 [1;32mINFO[m-]:SP_LogPathInit[2979]:[0;35mClogCnt[21],minNun[5],maxNum[25]
+[m[14:37:42:838 [1;32mINFO[m-]:SP_LogPathInit[2982]:[0;35mMlogCnt[21],minNun[5],maxNum[25]
+[m[14:37:42:838 [1;32mINFO[m-]:SP_LogPathInit[2985]:[0;35mAlogCnt[21],minNun[5],maxNum[25]
+[m[14:37:42:838 [1;32mINFO[m-]:SP_LogPathInit[2988]:[0;35mElogCnt[21],minNun[5],maxNum[25]
+[m[14:37:42:838 [1;32mINFO[m-]:SP_LogPathInit[2995]:rm -rf /app/sd/system/log/Clog_000005.log
+[m[14:37:42:948 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:44
+[m[14:37:43:012 [1;32mINFO[m-]:SP_SetUpBt[106]:------------------
+[m[14:37:43:012 [1;32mINFO[m-]:SP_BlueSlaveConfig[2968]:[0;35mBT Name,polaris_d13e86
+[m[14:37:43:012 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+Changing discoverable on succeeded
+[m[14:37:43:018 [1;32mINFO[m-]:gatt_register_service[1147]:gatt_register_service
+Changing polaris_d13e86 succeeded
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/app/service0xa8401528
+	0000fff0-0000-1000-8000-00805f9b34fb
+	Unknown
+[m[14:37:43:021 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xa8401528/chrc0xa8401500
+	0xfff1
+[m[14:37:43:021 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xa8401528/chrc0xa8402820
+	0xfff2
+Changing pairable on succeeded
+
+(polestar_app:248): GLib-CRITICAL **: Source ID 42 was not found when attempting to remove it
+[m[14:37:43:026 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+Failed to register advertising object
+[m[14:37:43:026 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+[m[14:37:43:026 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+[m[14:37:43:027 [1;32mINFO[m-]:SP_SetBleState[81]:ble slave on
+Changing discoverable on succeeded
+[m[14:37:43:055 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001801-0000-1000-8000-00805f9b34fb
+[m[14:37:43:055 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[m[14:37:43:056 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+[m[14:37:43:056 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001800-0000-1000-8000-00805f9b34fb
+[m[14:37:43:056 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000fff0-0000-1000-8000-00805f9b34fb
+[m[14:37:43:056 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+Application registered
+Advertising object registered
+[m[14:37:43:388 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[507]:gimbal in place:pitch[1] yaw[1] ex[1]
+[m[14:37:43:528 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[14:37:43:749 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:43
+[m[14:37:44:549 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:42
+[m[14:37:45:349 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:41
+[m[14:37:45:809 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:37:46:149 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:40
+[m[14:37:46:949 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:39
+[m[14:37:47:749 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:38
+[m[14:37:48:550 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:37
+[m[14:37:49:009 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:37:49:350 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:36
+[m[14:37:50:150 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:35
+[m[14:37:50:950 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:34
+[m[14:37:51:750 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:33
+[m[14:37:52:209 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:37:52:550 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:32
+[m[14:37:53:351 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:31
+[m[14:37:54:151 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:30
+[m[14:37:54:951 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:29
+[m[14:37:55:409 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:37:55:751 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:28
+[m[14:37:56:551 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:27
+[m[14:37:57:351 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:26
+[m[14:37:58:151 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:25
+[m[14:37:58:609 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:37:58:952 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:24
+[m[14:37:59:631 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[14:37:59:752 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:23
+[m[14:38:00:552 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:22
+[m[14:38:01:352 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:21
+[m[14:38:01:809 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:38:02:152 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:20
+[m[14:38:02:952 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:19
+[m[14:38:03:753 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:18
+[m[14:38:04:553 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:17
+[m[14:38:05:009 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:38:05:353 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:16
+[m[14:38:06:153 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:15
+[m[14:38:06:953 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:14
+[m[14:38:07:753 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:13
+[m[14:38:08:209 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[14:38:08:554 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:12
+[m[14:38:09:354 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:11
+[m[14:38:10:154 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:10
+[m[14:38:10:954 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:9
+[m[14:38:11:754 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:8
+[m[14:38:12:554 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:7
+[m[14:38:13:354 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:6
+[m[14:38:14:155 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:5
+[m[14:38:14:955 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:4
+[m[14:38:15:755 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:3
+[m[14:38:16:555 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:2
+[m[14:38:17:355 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:1
+[m[14:38:17:356 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿªUZ¥
+[m[14:38:29:719 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[14:38:43:352 [1;32mINFO[m-]:WifiBtTask[201]:wifi auto off
+[m[14:38:43:352 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1281],val[state:0;]
+[m[m[14:38:43:352 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[0]
+[m[14:38:43:489 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/rx-0
+[m[14:38:43:489 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/tx-0
+[m[14:38:43:490 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0
+[m[14:38:43:589 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/ieee80211/phy0
+[m[14:38:43:589 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/bus/sdio/drivers/bcmsdh_sdmmc
+[m[14:38:43:590 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/bus/platform/drivers/bcmdhd_wlan
+[m[14:38:43:590 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/module/bcmdhd
+[m[14:38:43:590 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:1
+[m[14:38:43:590 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2
+[m[14:38:43:590 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:3
+[m[14:38:43:590 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001
+[m[14:38:43:629 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:0;bt:1;]
+[m[m[14:57:18:759 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+[m[14:57:18:759 [1;32mINFO[m-]:NetlinkUeventTask[109]:bt conneted
+[m[14:57:18:759 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1035],val[1]
+[m[m[14:57:18:759 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+[m[14:57:18:759 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1281],val[state:1;]
+[m[m[14:57:18:759 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
+[m[14:57:18:766 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
+[[0;92mNEW[0m] Device 72:1E:26:DA:D4:DE 72-1E-26-DA-D4-DE
+[m[14:57:18:774 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/module/bcmdhd
+[m[14:57:18:775 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/sdio/drivers/dummy_sdmmc
+[m[14:57:19:700 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001
+[m[14:57:19:700 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:1
+[m[14:57:19:701 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2
+[m[14:57:19:701 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:3
+[m[14:57:19:717 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/bus/sdio/drivers/dummy_sdmmc
+[m[14:57:19:721 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/ieee80211/phy1
+[m[14:57:19:885 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0
+[m[14:57:19:886 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/rx-0
+[m[14:57:19:886 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/tx-0
+[m[14:57:19:886 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/sdio/drivers/bcmsdh_sdmmc
+[m[14:57:19:886 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/platform/drivers/bcmdhd_wlan
+Configuration file: /app/wifi/hostapd.conf
+rfkill: Cannot open RFKILL control device
+Using interface wlan0 with hwaddr 48:e7:da:d4:b5:73 and ssid "polaris_d13e86"
+wlan0: interface state UNINITIALIZED->ENABLED
+wlan0: AP-ENABLED 
+[m[14:57:20:098 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[14:57:21:762 [1;32mINFO[m-]:SP_BtDisconnet[269]:remove bt conneted
+[m[14:57:22:582 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006
+	00001801-0000-1000-8000-00805f9b34fb
+	Generic Attribute Profile
+[m[14:57:22:590 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007
+	00002a05-0000-1000-8000-00805f9b34fb
+	Service Changed
+[m[14:57:22:590 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a05-0000-1000-8000-00805f9b34fb
+[m[14:57:22:597 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007/desc0009
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:605 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a
+	0000180a-0000-1000-8000-00805f9b34fb
+	Device Information
+[m[14:57:22:608 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000b
+	00002a29-0000-1000-8000-00805f9b34fb
+	Manufacturer Name String
+[m[14:57:22:609 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a29-0000-1000-8000-00805f9b34fb
+[m[14:57:22:611 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000d
+	00002a24-0000-1000-8000-00805f9b34fb
+	Model Number String
+[m[14:57:22:611 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a24-0000-1000-8000-00805f9b34fb
+[m[14:57:22:613 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f
+	d0611e78-bbb4-4591-a5f8-487910ae4366
+	Vendor specific
+[m[14:57:22:616 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010
+	8667556c-9a37-4c91-84ed-54ee27d90049
+	Vendor specific
+[m[14:57:22:616 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:8667556c-9a37-4c91-84ed-54ee27d90049
+[m[14:57:22:618 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0012
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:22:620 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0013
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:622 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014
+	9fa480e0-4967-4542-9390-d343dc5d04ae
+	Vendor specific
+[m[14:57:22:624 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015
+	af0badb1-5b99-43cd-917a-a77bc549e3cc
+	Vendor specific
+[m[14:57:22:625 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:af0badb1-5b99-43cd-917a-a77bc549e3cc
+[m[14:57:22:626 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0017
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:22:628 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0018
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:631 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e
+	0000180f-0000-1000-8000-00805f9b34fb
+	Battery Service
+[m[14:57:22:633 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f
+	00002a19-0000-1000-8000-00805f9b34fb
+	Battery Level
+[m[14:57:22:633 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a19-0000-1000-8000-00805f9b34fb
+[m[14:57:22:635 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f/desc0021
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:637 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022
+	00001805-0000-1000-8000-00805f9b34fb
+	Current Time Service
+[m[14:57:22:640 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023
+	00002a2b-0000-1000-8000-00805f9b34fb
+	Current Time
+[m[14:57:22:640 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a2b-0000-1000-8000-00805f9b34fb
+[m[14:57:22:642 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023/desc0025
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:644 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0026
+	00002a0f-0000-1000-8000-00805f9b34fb
+	Local Time Information
+[m[14:57:22:644 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a0f-0000-1000-8000-00805f9b34fb
+[m[14:57:22:646 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028
+	7905f431-b5ce-4e99-a40f-4b1e122d00d0
+	Vendor specific
+[m[14:57:22:648 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029
+	69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+	Vendor specific
+[m[14:57:22:648 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+[m[14:57:22:650 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029/desc002b
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:22:653 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c
+	9fbf120d-6301-42d9-8c58-25e699a21dbd
+	Vendor specific
+[m[14:57:22:653 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:9fbf120d-6301-42d9-8c58-25e699a21dbd
+[m[14:57:22:655 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c/desc002e
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:657 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f
+	22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+	Vendor specific
+[m[14:57:22:657 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+[m[14:57:22:659 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f/desc0031
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:661 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032
+	89d3502b-0f36-433a-8ef4-c502ad55f8dc
+	Vendor specific
+[m[14:57:22:664 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033
+	9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+	Vendor specific
+[m[14:57:22:664 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+[m[14:57:22:666 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0035
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:22:668 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0036
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:670 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037
+	2f7cabce-808d-411f-9a0c-bb92ba96c102
+	Vendor specific
+[m[14:57:22:670 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:2f7cabce-808d-411f-9a0c-bb92ba96c102
+[m[14:57:22:672 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc0039
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:22:674 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc003a
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:22:677 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b
+	c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+	Vendor specific
+[m[14:57:22:677 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+[m[14:57:22:680 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b/desc003d
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:24:300 [1;32mINFO[m-]:SP_GetProxyDeviceInfo[2921]:[0;35mname[iPhone] address[72:1E:26:DA:D4:DE]
+[m[14:57:24:300 [1;32mINFO[m-]:property_changed[735]:[0;35mdisconnect 
+[m[14:57:24:305 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007/desc0009
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:311 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007
+	00002a05-0000-1000-8000-00805f9b34fb
+	Service Changed
+[m[14:57:24:325 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006
+	00001801-0000-1000-8000-00805f9b34fb
+	Generic Attribute Profile
+[m[14:57:24:327 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000b
+	00002a29-0000-1000-8000-00805f9b34fb
+	Manufacturer Name String
+[m[14:57:24:330 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000d
+	00002a24-0000-1000-8000-00805f9b34fb
+	Model Number String
+[m[14:57:24:332 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a
+	0000180a-0000-1000-8000-00805f9b34fb
+	Device Information
+[m[14:57:24:334 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0012
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:24:336 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0013
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:338 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010
+	8667556c-9a37-4c91-84ed-54ee27d90049
+	Vendor specific
+[m[14:57:24:340 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f
+	d0611e78-bbb4-4591-a5f8-487910ae4366
+	Vendor specific
+[m[14:57:24:342 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0017
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:24:344 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0018
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:346 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015
+	af0badb1-5b99-43cd-917a-a77bc549e3cc
+	Vendor specific
+[m[14:57:24:348 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014
+	9fa480e0-4967-4542-9390-d343dc5d04ae
+	Vendor specific
+[m[14:57:24:350 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f/desc0021
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:352 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f
+	00002a19-0000-1000-8000-00805f9b34fb
+	Battery Level
+[m[14:57:24:354 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e
+	0000180f-0000-1000-8000-00805f9b34fb
+	Battery Service
+[m[14:57:24:355 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023/desc0025
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:357 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023
+	00002a2b-0000-1000-8000-00805f9b34fb
+	Current Time
+[m[14:57:24:359 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0026
+	00002a0f-0000-1000-8000-00805f9b34fb
+	Local Time Information
+[m[14:57:24:361 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022
+	00001805-0000-1000-8000-00805f9b34fb
+	Current Time Service
+[m[14:57:24:363 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029/desc002b
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:24:365 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029
+	69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+	Vendor specific
+[m[14:57:24:367 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c/desc002e
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:369 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c
+	9fbf120d-6301-42d9-8c58-25e699a21dbd
+	Vendor specific
+[m[14:57:24:371 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f/desc0031
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:373 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f
+	22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+	Vendor specific
+[m[14:57:24:374 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028
+	7905f431-b5ce-4e99-a40f-4b1e122d00d0
+	Vendor specific
+[m[14:57:24:376 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0035
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:24:378 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0036
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:379 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+[m[14:57:24:381 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033
+	9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+	Vendor specific
+[m[14:57:24:383 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc0039
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:24:385 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc003a
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:24:387 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037
+	2f7cabce-808d-411f-9a0c-bb92ba96c102
+	Vendor specific
+[m[14:57:24:388 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b/desc003d
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:24:390 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b
+	c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+	Vendor specific
+[m[14:57:24:392 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032
+	89d3502b-0f36-433a-8ef4-c502ad55f8dc
+	Vendor specific
+[m[14:57:24:394 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
+[[0;91mDEL[0m] Device 72:1E:26:DA:D4:DE iPhone
+[m[14:57:32:153 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+[m[14:57:32:153 [1;32mINFO[m-]:NetlinkUeventTask[109]:bt conneted
+[m[14:57:32:153 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1035],val[1]
+[m[m[14:57:32:154 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+[m[14:57:32:154 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1281],val[state:1;]
+[m[m[14:57:32:154 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
+[m[14:57:32:159 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
+[[0;92mNEW[0m] Device 72:1E:26:DA:D4:DE 72-1E-26-DA-D4-DE
+[m[14:57:35:154 [1;32mINFO[m-]:SP_BtDisconnet[269]:remove bt conneted
+[m[14:57:35:903 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006
+	00001801-0000-1000-8000-00805f9b34fb
+	Generic Attribute Profile
+[m[14:57:35:911 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007
+	00002a05-0000-1000-8000-00805f9b34fb
+	Service Changed
+[m[14:57:35:911 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a05-0000-1000-8000-00805f9b34fb
+[m[14:57:35:919 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007/desc0009
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:922 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a
+	0000180a-0000-1000-8000-00805f9b34fb
+	Device Information
+[m[14:57:35:924 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000b
+	00002a29-0000-1000-8000-00805f9b34fb
+	Manufacturer Name String
+[m[14:57:35:924 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a29-0000-1000-8000-00805f9b34fb
+[m[14:57:35:926 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000d
+	00002a24-0000-1000-8000-00805f9b34fb
+	Model Number String
+[m[14:57:35:926 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a24-0000-1000-8000-00805f9b34fb
+[m[14:57:35:928 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f
+	d0611e78-bbb4-4591-a5f8-487910ae4366
+	Vendor specific
+[m[14:57:35:930 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010
+	8667556c-9a37-4c91-84ed-54ee27d90049
+	Vendor specific
+[m[14:57:35:930 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:8667556c-9a37-4c91-84ed-54ee27d90049
+[m[14:57:35:932 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0012
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:35:934 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0013
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:936 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014
+	9fa480e0-4967-4542-9390-d343dc5d04ae
+	Vendor specific
+[m[14:57:35:938 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015
+	af0badb1-5b99-43cd-917a-a77bc549e3cc
+	Vendor specific
+[m[14:57:35:938 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:af0badb1-5b99-43cd-917a-a77bc549e3cc
+[m[14:57:35:940 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0017
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:35:942 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0018
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:944 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e
+	0000180f-0000-1000-8000-00805f9b34fb
+	Battery Service
+[m[14:57:35:946 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f
+	00002a19-0000-1000-8000-00805f9b34fb
+	Battery Level
+[m[14:57:35:947 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a19-0000-1000-8000-00805f9b34fb
+[m[14:57:35:948 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f/desc0021
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:951 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022
+	00001805-0000-1000-8000-00805f9b34fb
+	Current Time Service
+[m[14:57:35:953 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023
+	00002a2b-0000-1000-8000-00805f9b34fb
+	Current Time
+[m[14:57:35:953 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a2b-0000-1000-8000-00805f9b34fb
+[m[14:57:35:955 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023/desc0025
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:957 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0026
+	00002a0f-0000-1000-8000-00805f9b34fb
+	Local Time Information
+[m[14:57:35:957 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a0f-0000-1000-8000-00805f9b34fb
+[m[14:57:35:959 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028
+	7905f431-b5ce-4e99-a40f-4b1e122d00d0
+	Vendor specific
+[m[14:57:35:961 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029
+	69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+	Vendor specific
+[m[14:57:35:961 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+[m[14:57:35:963 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029/desc002b
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:35:965 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c
+	9fbf120d-6301-42d9-8c58-25e699a21dbd
+	Vendor specific
+[m[14:57:35:965 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:9fbf120d-6301-42d9-8c58-25e699a21dbd
+[m[14:57:35:967 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c/desc002e
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:969 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f
+	22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+	Vendor specific
+[m[14:57:35:970 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+[m[14:57:35:971 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f/desc0031
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:973 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032
+	89d3502b-0f36-433a-8ef4-c502ad55f8dc
+	Vendor specific
+[m[14:57:35:976 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033
+	9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+	Vendor specific
+[m[14:57:35:976 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+[m[14:57:35:978 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0035
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:35:980 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0036
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:982 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037
+	2f7cabce-808d-411f-9a0c-bb92ba96c102
+	Vendor specific
+[m[14:57:35:982 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:2f7cabce-808d-411f-9a0c-bb92ba96c102
+[m[14:57:35:984 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc0039
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:35:986 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc003a
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:35:988 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b
+	c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+	Vendor specific
+[m[14:57:35:988 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+[m[14:57:35:990 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b/desc003d
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:37:323 [1;32mINFO[m-]:SP_GetProxyDeviceInfo[2921]:[0;35mname[iPhone] address[72:1E:26:DA:D4:DE]
+[m[14:57:37:323 [1;32mINFO[m-]:property_changed[735]:[0;35mdisconnect 
+[m[14:57:37:324 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007/desc0009
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:332 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007
+	00002a05-0000-1000-8000-00805f9b34fb
+	Service Changed
+[m[14:57:37:342 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006
+	00001801-0000-1000-8000-00805f9b34fb
+	Generic Attribute Profile
+[m[14:57:37:351 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000b
+	00002a29-0000-1000-8000-00805f9b34fb
+	Manufacturer Name String
+[m[14:57:37:354 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000d
+	00002a24-0000-1000-8000-00805f9b34fb
+	Model Number String
+[m[14:57:37:356 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a
+	0000180a-0000-1000-8000-00805f9b34fb
+	Device Information
+[m[14:57:37:358 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0012
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:37:360 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0013
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:362 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010
+	8667556c-9a37-4c91-84ed-54ee27d90049
+	Vendor specific
+[m[14:57:37:364 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f
+	d0611e78-bbb4-4591-a5f8-487910ae4366
+	Vendor specific
+[m[14:57:37:365 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0017
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:37:367 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0018
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:369 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015
+	af0badb1-5b99-43cd-917a-a77bc549e3cc
+	Vendor specific
+[m[14:57:37:371 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014
+	9fa480e0-4967-4542-9390-d343dc5d04ae
+	Vendor specific
+[m[14:57:37:373 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f/desc0021
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:375 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f
+	00002a19-0000-1000-8000-00805f9b34fb
+	Battery Level
+[m[14:57:37:377 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e
+	0000180f-0000-1000-8000-00805f9b34fb
+	Battery Service
+[m[14:57:37:379 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023/desc0025
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:381 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023
+	00002a2b-0000-1000-8000-00805f9b34fb
+	Current Time
+[m[14:57:37:383 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0026
+	00002a0f-0000-1000-8000-00805f9b34fb
+	Local Time Information
+[m[14:57:37:385 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022
+	00001805-0000-1000-8000-00805f9b34fb
+	Current Time Service
+[m[14:57:37:387 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029/desc002b
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:37:389 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+[m[14:57:37:390 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029
+	69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+	Vendor specific
+[m[14:57:37:392 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c/desc002e
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:395 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c
+	9fbf120d-6301-42d9-8c58-25e699a21dbd
+	Vendor specific
+[m[14:57:37:396 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f/desc0031
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:398 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f
+	22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+	Vendor specific
+[m[14:57:37:401 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028
+	7905f431-b5ce-4e99-a40f-4b1e122d00d0
+	Vendor specific
+[m[14:57:37:402 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0035
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:37:404 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0036
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:406 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033
+	9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+	Vendor specific
+[m[14:57:37:408 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc0039
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:37:410 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc003a
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[14:57:37:412 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037
+	2f7cabce-808d-411f-9a0c-bb92ba96c102
+	Vendor specific
+[m[14:57:37:414 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b/desc003d
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[14:57:37:416 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b
+	c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+	Vendor specific
+[m[14:57:37:418 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032
+	89d3502b-0f36-433a-8ef4-c502ad55f8dc
+	Vendor specific
+[m[14:57:37:419 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
+[[0;91mDEL[0m] Device 72:1E:26:DA:D4:DE iPhone
+[m[14:57:40:302 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+[m[14:57:40:302 [1;32mINFO[m-]:NetlinkUeventTask[109]:bt conneted
+[m[14:57:40:302 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1035],val[1]
+[m[m[14:57:40:302 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+[m[14:57:40:302 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1281],val[state:1;]
+[m[m[14:57:40:302 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
+[m[14:57:40:308 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
+[[0;92mNEW[0m] Device 72:1E:26:DA:D4:DE 72-1E-26-DA-D4-DE
+[m[14:57:40:572 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=2 192.168.0.2:49996] from [1] s_u32ClientNum[1]
+[m[14:57:40:572 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[14:57:40:572 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=2] start
+[m[14:57:40:572 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[14:57:40:635 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:790;val:step:1;
+[m[14:57:40:637 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:265;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:268;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:275;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:267;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:266;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:296;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:303;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:300;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:775;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:778;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:823;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:826;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:802;val:-1
+[m[14:57:40:641 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:804;val:-1
+[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:824;val:-1
+[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:524;val:-1
+[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:790;val:step:1;
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[790],val[step:1;]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:296;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[296],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:303;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[303],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:300;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[300],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:775;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[775],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:778;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[778],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:823;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[823],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:826;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[826],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:802;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[802],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:804;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[804],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:824;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[824],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:524;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[3],code[524],val[-1]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:790;val:step:1;
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[790],val[step:1;]
+[m[m[14:57:40:642 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:780;val:-1
+[m[14:57:40:642 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[780],val[-1]
+[m[m[14:57:40:643 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:818;val:-1
+[m[14:57:40:643 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[818],val[-1]
+[m[m[14:57:40:643 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[14:57:40:643 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[14:57:40:643 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[14:57:40:643 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[14:57:40:643 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[14:57:40:643 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
+[m[m[14:57:40:643 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[303],val[state:0;]
+[m[m[14:57:40:643 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
+[m[m[14:57:40:643 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespace:121730;usespace:136;]
+[m[m[14:57:40:643 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:1;charge:1;]
+[m[m[14:57:40:644 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[826],val[state:0;]
+[m[m[14:57:40:644 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[802],val[band:0;]
+[m[m[14:57:40:644 [1;32mINFO[m-]:SP_GetWarningToneState[971]:SP_GetWarningToneState
+[m[14:57:40:644 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:644 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[824],val[state:0;]
+[m[m[14:57:40:645 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:0;]
+[m[m[14:57:40:646 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:649 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:651 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:653 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:655 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:657 [1;31mERROR[m-]:GimbalUartRxTask[221]:len[50]>readNum[17] - offset[10]
+[m[14:57:40:657 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0xa5 0xa 0x0 0x45 0x5 0x1 0x1 0x1 0x57 0x5a 0x2e 0x32 0x32 0x0 0x2 0x5a 0x0 
+[m[14:57:40:657 [1;32mINFO[m-]:GimbalUartTxTask[669]:[m[14:57:40:657 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:657 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 [0;35mgimbal uart send wakeup cmd
+0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 
+[m[14:57:40:657 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:658 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 
+[m[14:57:40:658 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:658 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 
+[m[14:57:40:658 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:658 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 
+[m[14:57:40:658 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:658 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 
+[m[14:57:40:658 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:658 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 
+[m[14:57:40:658 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:658 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0 
+[m[14:57:40:658 [1;31mERROR[m-]:GimbalUartRxTask[214]:[0;32;31mUART_PREFIX error
+[m[14:57:40:658 [1;32mINFO[m-]:GimbalUartRxTask[260]:CRC fail:0x0 0x0 0x0 
+[m[14:57:40:659 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:662 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:664 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:666 [1;32mINFO[m-]:GimbalUartTxTask[669]:[0;35mgimbal uart send wakeup cmd
+[m[14:57:40:667 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[507]:gimbal in place:pitch[1] yaw[1] ex[1]
+[m[14:57:40:667 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[0]
+[m[14:57:40:669 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[0]
+[m[14:57:40:671 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[0]
+[m[14:57:40:673 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[0]
+[m[14:57:40:675 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[0]
+[m[14:57:40:677 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[0]
+[m[14:57:40:679 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[804],val[state:0;]
+[m[m[14:57:40:756 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:524;val:-1
+[m[14:57:40:756 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:0;]
+[m[m[14:57:40:775 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:304;val:-1
+[m[14:57:40:776 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:284;val:-1
+[m[14:57:40:776 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:790;val:step:1;
+[m[14:57:40:776 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[304],val[state:0;]
+[m[m[14:57:40:777 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[14:57:40:777 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[14:57:40:777 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[m[14:57:40:826 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:545;val:-1
+[m[14:57:40:826 [1;32mINFO[m-]:SP_GetCameraDir[1003]:SP_GetCameraDir
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:272;val:step:9;
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:271;val:step:11;
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:547;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:306;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:517;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:545;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:775;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:778;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:823;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:545;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:799;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:808;val:type:0;
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:775;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:778;val:-1
+[m[14:57:40:914 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:823;val:-1
+[m[14:57:40:915 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[547],val[en:1;]
+[m[m[14:57:40:916 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[306],val[type:0;]
+[m[m[14:57:40:916 [1;32mINFO[m-]:SP_GetCameraDir[1003]:SP_GetCameraDir
+[m[14:57:40:916 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespace:121730;usespace:136;]
+[m[m[14:57:40:916 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:1;charge:1;]
+[m[m[14:57:40:916 [1;32mINFO[m-]:SP_GetCameraDir[1003]:SP_GetCameraDir
+[m[14:57:40:916 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[799],val[ret:-1;]
+[m[m[14:57:40:916 [1;32mINFO[m-]:SP_MsgSysFromAppProc[897]:[0;35mclient type[0];id[2];
+[m[14:57:40:916 [1;32mINFO[m-]:SP_ClientCtxAdd[376]:[0;35mSP_ClientCtxAdd:id[2];type[wifi];WifiCount[1],CellCount[0];
+[m[14:57:40:916 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[808],val[ret:0;]
+[m[m[14:57:40:916 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespace:121730;usespace:136;]
+[m[m[14:57:40:916 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:1;charge:1;]
+[m[m[14:57:40:918 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[272],val[step:9;state:1;]
+[m[m[14:57:40:920 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[271],val[step:11;state:1;]
+[m[m[14:57:40:922 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.260381;pitch:0.872640;roll:0.000000;]
+[m[m[14:57:41:156 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:808;val:type:0;
+[m[14:57:41:157 [1;32mINFO[m-]:SP_MsgSysFromAppProc[897]:[0;35mclient type[0];id[2];
+[m[14:57:41:157 [1;32mINFO[m-]:SP_ClientCtxAdd[367]:[0;35mSP_ClientCtxAdd,find same id[2],del it at first;type[wifi];WifiCount[0],CellCount[0];
+[m[14:57:41:157 [1;32mINFO[m-]:SP_ClientCtxAdd[376]:[0;35mSP_ClientCtxAdd:id[2];type[wifi];WifiCount[1],CellCount[0];
+[m[14:57:41:157 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[808],val[ret:0;]
+[m[m[14:57:41:224 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:802;val:-1
+[m[14:57:41:225 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[802],val[band:0;]
+[m[m[14:57:41:531 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[416]:[0;35mUART_GIMBAL_TEST_INFO
+[m[14:57:41:531 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[417]:[0;35m+++++++++++++++++++++
+0xa5 0xf 0xca 0x3a 0x1 0xcf 0xf3 0xbf 0xff 0x0 0x0 0x0 0x0 0x94 0x5a 
+[m[14:57:41:531 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[422]:[0;35m---------------------
+[m[14:57:41:533 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:9.37;capacity:1;ChargeState:1;
+[m[14:57:41:533 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:1;charge:1;]
+[m[m[14:57:41:714 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:296;val:-1
+[m[14:57:41:714 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
+[m[m[14:57:41:716 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:782;val:date:2026-09-04;time:12:29:40;zone:+3600;
+[m[14:57:41:717 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:517;val:-1
+[m[14:57:41:717 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:286;val:-1
+[m[14:57:41:717 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:4;code:282;val:-1
+[m[14:57:41:717 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:543;val:-1
+[m[14:57:41:717 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:547;val:-1
+[m[14:57:41:717 [1;32mINFO[m-]:SP_AppSetDateTime[187]:App_time:year[2026];mon[9];day[4];hour[12];min[29];
+[m[12:29:40:079 [1;32mINFO[m-SYSTEM]:HI_SYSTEM_SetDateTime[402]:Fri Sep  4 12:29:40 2026
+
+[m[12:29:40:080 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[782],val[ret:0]
+[m[m[12:29:40:080 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[m[12:29:40:080 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[282],val[urer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[m[12:29:40:080 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[543],val[time:2;]
+[m[m[12:29:40:080 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[547],val[en:1;]
+[m[m[12:29:40:080 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[282],val[format:0;]
+[m[m[12:29:40:081 [1;32mINFO[m-]:SP_MsgFromCameraProc[1461]:camera img format:0
+[m[12:29:40:081 [1;31mERROR[m-]:SP_MsgFromCameraProc[1464]:[0;32;31mcamera format no include jpg
+[m[12:29:40:081 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[282],val[format:0;]
+[m[m[12:29:40:082 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.260383;pitch:0.872649;roll:0.000000;]
+[m[m[12:29:40:298 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=2] s_u32ClientNum[0]
+[m[12:29:40:298 [1;32mINFO[m-]:SP_ClientCtxDel[390]:[0;35mSP_ClientCtxDel:id[2],type[wifi];WifiCount[0],CellCount[0];
+[m[12:29:40:306 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=3 192.168.0.2:49998] from [1] s_u32ClientNum[1]
+[m[12:29:40:306 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[12:29:40:306 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=3] start
+[m[12:29:40:306 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[12:29:40:370 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:780;val:-1
+[m[12:29:40:370 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:818;val:-1
+[m[12:29:40:371 [1;32mINFO[m-]:SP_GetDeviceVer[309]:gimbal HwVer[1.2]
+[m[12:29:40:371 [1;32mINFO[m-]:SP_GetDeviceVer[316]:gimbal FwVer[2.0.0.22]
+[m[12:29:40:371 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:284;val:-1
+[m[12:29:40:371 [1;32mINFO[m-]:SP_GetDeviceVer[322]:stFatoryInfo HwVer[1.1]
+[m[12:29:40:371 [1;32mINFO[m-]:SP_GetDeviceVer[327]:mFwVer[4.0.0.32]
+[m[12:29:40:371 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[780],val[hw:1.1.1.2;sw:6.0.0.54;exAxis:;sv:1;ov: ;]
+[m[m[12:29:40:371 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[12:29:40:371 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[12:29:40:840 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=3] s_u32ClientNum[0]
+[m[12:29:40:840 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[3]
+[m[12:29:40:858 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=4 192.168.0.2:50000] from [1] s_u32ClientNum[1]
+[m[12:29:40:858 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[12:29:40:858 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=4] start
+[m[12:29:40:858 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[12:29:40:917 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:808;val:type:0;
+[m[12:29:40:917 [1;32mINFO[m-]:SP_MsgSysFromAppProc[897]:[0;35mclient type[0];id[4];
+[m[12:29:40:917 [1;32mINFO[m-]:SP_ClientCtxAdd[376]:[0;35mSP_ClientCtxAdd:id[4];type[wifi];WifiCount[1],CellCount[0];
+[m[12:29:40:918 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[808],val[ret:0;]
+[m[m[12:29:40:920 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:780;val:-1
+[m[12:29:40:920 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:818;val:-1
+[m[12:29:40:920 [1;32mINFO[m-]:SP_GetDeviceVer[309]:[m[12:29:40:920 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:284;val:-1
+gimbal HwVer[1.2]
+[m[12:29:40:920 [1;32mINFO[m-]:SP_GetDeviceVer[316]:gimbal FwVer[2.0.0.22]
+[m[12:29:40:920 [1;32mINFO[m-]:SP_GetDeviceVer[322]:stFatoryInfo HwVer[1.1]
+[m[12:29:40:920 [1;32mINFO[m-]:SP_GetDeviceVer[327]:mFwVer[4.0.0.32]
+[m[12:29:40:920 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[780],val[hw:1.1.1.2;sw:6.0.0.54;exAxis:;sv:1;ov: ;]
+[m[m[12:29:40:920 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[12:29:40:920 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[12:29:41:469 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:808;val:type:0;
+[m[12:29:41:470 [1;32mINFO[m-]:SP_MsgSysFromAppProc[897]:[0;35mclient type[0];id[4];
+[m[12:29:41:470 [1;32mINFO[m-]:SP_ClientCtxAdd[367]:[0;35mSP_ClientCtxAdd,find same id[4],del it at first;type[wifi];WifiCount[0],CellCount[0];
+[m[12:29:41:470 [1;32mINFO[m-]:SP_ClientCtxAdd[376]:[0;35mSP_ClientCtxAdd:id[4];type[wifi];WifiCount[1],CellCount[0];
+[m[12:29:41:470 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[808],val[ret:0;]
+[m[m[12:29:41:513 [1;32mINFO[m-]:SP_BtDisconnet[269]:remove bt conneted
+[m[12:29:42:100 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006
+	00001801-0000-1000-8000-00805f9b34fb
+	Generic Attribute Profile
+[m[12:29:42:111 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007
+	00002a05-0000-1000-8000-00805f9b34fb
+	Service Changed
+[m[12:29:42:112 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a05-0000-1000-8000-00805f9b34fb
+[m[12:29:42:117 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007/desc0009
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:119 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a
+	0000180a-0000-1000-8000-00805f9b34fb
+	Device Information
+[m[12:29:42:122 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000b
+	00002a29-0000-1000-8000-00805f9b34fb
+	Manufacturer Name String
+[m[12:29:42:122 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a29-0000-1000-8000-00805f9b34fb
+[m[12:29:42:124 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000d
+	00002a24-0000-1000-8000-00805f9b34fb
+	Model Number String
+[m[12:29:42:124 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a24-0000-1000-8000-00805f9b34fb
+[m[12:29:42:126 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f
+	d0611e78-bbb4-4591-a5f8-487910ae4366
+	Vendor specific
+[m[12:29:42:129 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010
+	8667556c-9a37-4c91-84ed-54ee27d90049
+	Vendor specific
+[m[12:29:42:129 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:8667556c-9a37-4c91-84ed-54ee27d90049
+[m[12:29:42:131 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0012
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:42:133 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0013
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:136 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014
+	9fa480e0-4967-4542-9390-d343dc5d04ae
+	Vendor specific
+[m[12:29:42:138 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015
+	af0badb1-5b99-43cd-917a-a77bc549e3cc
+	Vendor specific
+[m[12:29:42:138 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:af0badb1-5b99-43cd-917a-a77bc549e3cc
+[m[12:29:42:141 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0017
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:42:143 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0018
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:145 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e
+	0000180f-0000-1000-8000-00805f9b34fb
+	Battery Service
+[m[12:29:42:147 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f
+	00002a19-0000-1000-8000-00805f9b34fb
+	Battery Level
+[m[12:29:42:148 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a19-0000-1000-8000-00805f9b34fb
+[m[12:29:42:150 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f/desc0021
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:152 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022
+	00001805-0000-1000-8000-00805f9b34fb
+	Current Time Service
+[m[12:29:42:155 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023
+	00002a2b-0000-1000-8000-00805f9b34fb
+	Current Time
+[m[12:29:42:155 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a2b-0000-1000-8000-00805f9b34fb
+[m[12:29:42:157 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023/desc0025
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:160 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0026
+	00002a0f-0000-1000-8000-00805f9b34fb
+	Local Time Information
+[m[12:29:42:160 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:00002a0f-0000-1000-8000-00805f9b34fb
+[m[12:29:42:162 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028
+	7905f431-b5ce-4e99-a40f-4b1e122d00d0
+	Vendor specific
+[m[12:29:42:164 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029
+	69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+	Vendor specific
+[m[12:29:42:164 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+[m[12:29:42:167 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029/desc002b
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:42:169 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c
+	9fbf120d-6301-42d9-8c58-25e699a21dbd
+	Vendor specific
+[m[12:29:42:169 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:9fbf120d-6301-42d9-8c58-25e699a21dbd
+[m[12:29:42:171 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c/desc002e
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:174 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f
+	22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+	Vendor specific
+[m[12:29:42:174 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+[m[12:29:42:176 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f/desc0031
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:179 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032
+	89d3502b-0f36-433a-8ef4-c502ad55f8dc
+	Vendor specific
+[m[12:29:42:181 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033
+	9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+	Vendor specific
+[m[12:29:42:181 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+[m[12:29:42:183 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0035
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:42:186 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0036
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:191 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037
+	2f7cabce-808d-411f-9a0c-bb92ba96c102
+	Vendor specific
+[m[12:29:42:191 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:2f7cabce-808d-411f-9a0c-bb92ba96c102
+[m[12:29:42:193 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc0039
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:42:196 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc003a
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:42:198 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b
+	c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+	Vendor specific
+[m[12:29:42:199 [1;32mINFO[m-]:SP_GetCharacteristicUuid[1700]:uuid:c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+[m[12:29:42:201 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;92mNEW[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b/desc003d
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:43:529 [1;32mINFO[m-]:SP_GetProxyDeviceInfo[2921]:[0;35mname[iPhone] address[72:1E:26:DA:D4:DE]
+[m[12:29:43:529 [1;32mINFO[m-]:property_changed[735]:[0;35mdisconnect 
+[m[12:29:43:530 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007/desc0009
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:532 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006/char0007
+	00002a05-0000-1000-8000-00805f9b34fb
+	Service Changed
+[m[12:29:43:534 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0006
+	00001801-0000-1000-8000-00805f9b34fb
+	Generic Attribute Profile
+[m[12:29:43:536 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000b
+	00002a29-0000-1000-8000-00805f9b34fb
+	Manufacturer Name String
+[m[12:29:43:539 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a/char000d
+	00002a24-0000-1000-8000-00805f9b34fb
+	Model Number String
+[m[12:29:43:546 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000a
+	0000180a-0000-1000-8000-00805f9b34fb
+	Device Information
+[m[12:29:43:555 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0012
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:43:562 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010/desc0013
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:570 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f/char0010
+	8667556c-9a37-4c91-84ed-54ee27d90049
+	Vendor specific
+[m[12:29:43:575 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service000f
+	d0611e78-bbb4-4591-a5f8-487910ae4366
+	Vendor specific
+[m[12:29:43:580 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+[m[12:29:43:584 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0017
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:43:594 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015/desc0018
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:600 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014/char0015
+	af0badb1-5b99-43cd-917a-a77bc549e3cc
+	Vendor specific
+[m[12:29:43:603 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0014
+	9fa480e0-4967-4542-9390-d343dc5d04ae
+	Vendor specific
+[m[12:29:43:606 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f/desc0021
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:608 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e/char001f
+	00002a19-0000-1000-8000-00805f9b34fb
+	Battery Level
+[m[12:29:43:610 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service001e
+	0000180f-0000-1000-8000-00805f9b34fb
+	Battery Service
+[m[12:29:43:613 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023/desc0025
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:615 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0023
+	00002a2b-0000-1000-8000-00805f9b34fb
+	Current Time
+[m[12:29:43:617 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022/char0026
+	00002a0f-0000-1000-8000-00805f9b34fb
+	Local Time Information
+[m[12:29:43:620 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0022
+	00001805-0000-1000-8000-00805f9b34fb
+	Current Time Service
+[m[12:29:43:622 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029/desc002b
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:43:625 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char0029
+	69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9
+	Vendor specific
+[m[12:29:43:627 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c/desc002e
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:629 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002c
+	9fbf120d-6301-42d9-8c58-25e699a21dbd
+	Vendor specific
+[m[12:29:43:632 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f/desc0031
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:634 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028/char002f
+	22eac6e9-24d6-4bb5-be44-b36ace7c7bfb
+	Vendor specific
+[m[12:29:43:636 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0028
+	7905f431-b5ce-4e99-a40f-4b1e122d00d0
+	Vendor specific
+[m[12:29:43:639 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0035
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:43:641 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033/desc0036
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:644 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0033
+	9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2
+	Vendor specific
+[m[12:29:43:646 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc0039
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:43:648 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037/desc003a
+	00002902-0000-1000-8000-00805f9b34fb
+	Client Characteristic Configuration
+[m[12:29:43:651 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char0037
+	2f7cabce-808d-411f-9a0c-bb92ba96c102
+	Vendor specific
+[m[12:29:43:653 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattDescriptor1]
+[[0;91mDEL[0m] Descriptor
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b/desc003d
+	00002900-0000-1000-8000-00805f9b34fb
+	Characteristic Extended Properties
+[m[12:29:43:655 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattCharacteristic1]
+[[0;91mDEL[0m] Characteristic
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032/char003b
+	c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7
+	Vendor specific
+[m[12:29:43:658 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.GattService1]
+[[0;91mDEL[0m] Primary Service
+	/org/bluez/hci0/dev_72_1E_26_DA_D4_DE/service0032
+	89d3502b-0f36-433a-8ef4-c502ad55f8dc
+	Vendor specific
+[m[12:29:43:660 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
+[[0;91mDEL[0m] Device 72:1E:26:DA:D4:DE iPhone
+[m[12:29:58:808 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:29:58:809 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:30:04:324 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=5 192.168.0.4:51000] from [1] s_u32ClientNum[2]
+[m[12:30:04:324 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[12:30:04:324 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[12:30:04:324 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=5] start
+[m[12:30:04:329 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=5] s_u32ClientNum[1]
+[m[12:30:04:329 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[5]
+[m[12:30:07:290 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=6 192.168.0.4:51006] from [1] s_u32ClientNum[2]
+[m[12:30:07:290 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[12:30:07:290 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[12:30:07:290 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=6] start
+[m[12:30:07:290 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[6]:type:0;code:812;val:
+[m[12:30:07:290 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=6] s_u32ClientNum[1]
+[m[12:30:07:290 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[6]
+[m[12:30:28:896 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:30:28:896 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:30:58:984 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:30:58:984 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:31:29:071 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:31:29:072 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:31:59:159 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:31:59:159 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:32:29:247 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:32:29:247 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:32:59:334 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:32:59:334 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:33:20:096 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=7 192.168.0.4:34070] from [1] s_u32ClientNum[2]
+[m[12:33:20:096 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[12:33:20:096 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=7] start
+[m[12:33:20:097 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=7] s_u32ClientNum[1]
+[m[12:33:20:097 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[7]
+[m[12:33:20:097 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[12:33:20:102 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=8 192.168.0.4:34082] from [1] s_u32ClientNum[2]
+[m[12:33:20:103 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[12:33:20:103 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=8] start
+[m[12:33:20:103 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[8]:type:0;code:812;val:
+[m[12:33:20:103 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=8] s_u32ClientNum[1]
+[m[12:33:20:103 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[8]
+[m[12:33:20:103 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[12:33:29:422 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:33:29:422 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:33:59:509 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:33:59:509 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:34:29:597 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:34:29:597 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:34:59:684 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:34:59:684 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[12:35:29:772 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[12:35:29:772 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+                                                                                                                               <Ü|l~¬~MNà‹L~(® —½xMlN@(­1®Á„mO leª[\¤ ˆà¢-=
+c]qœNª_\B ]B$ÜB^ M"] \B]JÏ#¬Ÿ­C G\jlllC|ýC˜Í%ç 6}>1|î‹ÎØþÝ@]DÝD(®(@ ý=D)½@¼=m}gÍÄmŠ0(ØMY|+¬(=Èœì|"ml7M>_(Èœ|z}{¤]\/ Iâ.|†Ý4±2ª¥ „/.Éþ(-¨MÅNQ”\ ½vS>MH<\$l|+( \HM N   ½,êM!%M#Îe (¾Ëß² ã,ND

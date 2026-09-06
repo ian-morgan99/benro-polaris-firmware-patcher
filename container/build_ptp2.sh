@@ -228,16 +228,16 @@ fi
 CONF_ARGS=(--host="$XT" --prefix=/opt/lg
   --disable-static --disable-nls --disable-rpath --disable-docs
   --disable-dependency-tracking
-  --with-camlibs=ptp2 --without-libxml-2.0 --without-jpeg --without-libcurl
+  --with-camlibs=ptp2,pentax --without-libxml-2.0 --without-jpeg --without-libcurl
   CC="${XT}-gcc" CXX="${XT}-g++" AR="${XT}-ar" RANLIB="${XT}-ranlib"
   STRIP="${XT}-strip" LD="${XT}-ld"
   LIBEXIF_CFLAGS="-I/usr/include" LIBEXIF_LIBS="-L$DEV -lexif")
 if [ -f "$DEV/libusb-1.0.so.0" ]; then
-  CONF_ARGS+=(CPPFLAGS="-I/usr/include -I/usr/include/libusb-1.0"
+  CONF_ARGS+=(CPPFLAGS="-I/usr/include -I/usr/include/libusb-1.0 -DLIBGPHOTO2_ENABLE_PENTAX_RESEARCH_CAPTURE=1"
     LDFLAGS="-L$DEV -Wl,-rpath-link,$DEV -Wl,--allow-shlib-undefined"
     LIBUSB_CFLAGS="-I/usr/include/libusb-1.0" LIBUSB_LIBS="-L$DEV -lusb-1.0")
 else
-  CONF_ARGS+=(CPPFLAGS="-I/usr/include"
+  CONF_ARGS+=(CPPFLAGS="-I/usr/include -DLIBGPHOTO2_ENABLE_PENTAX_RESEARCH_CAPTURE=1"
     LDFLAGS="-L$DEV -Wl,-rpath-link,$DEV"
     --with-libusb-1.0=no --with-libusb=no)
 fi

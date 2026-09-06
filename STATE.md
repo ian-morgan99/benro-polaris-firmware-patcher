@@ -13,16 +13,44 @@
 ## TL;DR for a fresh agent
 
 - **Problem:** custom `FwPkt.zip` packages need to install on the Benro
-  Polaris gimbal. The standard "drop zip on SD card and reboot" flow
-  is the autonomous path. The iPhone-app 810+USB-UART path is a
-  separate, secondary path that requires a USB-serial gadget which
-  this device does not have.
-- **Path A (autonomous, primary):** place FwPkt.zip at `/app/sd/`
-  → restart polestar_app (or reboot) → on-boot watcher detects zip
-  → runs `SP_UpgradeCheckFw` → if MD5s differ, hands off to U-Boot
-  for NAND reflash. **Confirmed working in the 18:50 pre-probe
-  capture** (polestar_app restart fired the watcher; it said "no need
-  upgrade" only because the stock zip was already on the SD card).
+  Polaris gimbal. The standard "pre-extract the zip and put the
+  `FwPkt/` folder on the SD card, then boot" flow is the autonomous
+  path (the Benro download page was revised on 2026-09-06 to this
+  wording). Dropping only `FwPkt.zip` on the SD card is silently
+  ignored on plain boot — only the iPhone-app 810+USB-UART path or the
+  810-driven on-board `unzip` step takes the zip. The 810+USB-UART path
+  is a separate, secondary path that requires a USB-serial gadget
+  which this device does not have. See
+  [docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md](docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md).
+- **Path A (autonomous, primary):** *pre-extract* the FwPkt.zip to
+  `/app/sd/FwPkt/{gimbal,camera}/` **before** boot (or before the SD
+  card goes in) → on boot the `0x405 SP_EVENT_SD_SCAN` walks the
+  extracted tree, runs `SP_UpgradeCheckFw` → if MD5s differ, hands
+  off to U-Boot for NAND reflash. **Confirmed working in the 18:50
+  pre-probe capture** (polestar_app restart fired the watcher; it
+  said "no need upgrade" only because the stock zip was already on
+  the SD card). **Dropping only the `.zip` at `/app/sd/FwPkt.zip`
+  does NOT trigger the upgrade on a plain boot** — only the
+  810-driven `0x402` path unzips it; see
+  [docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md](docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md).
+  The Benro download page was revised on 2026-09-06 to instruct
+  end-users to unzip the package first and move the `FwPkt/` folder
+  to the SD card; that wording now matches what the firmware has
+  always read on boot.
+
+  **Confirmed 2026-09-06 via direct inspection of the device's SD card
+  on the PC (`/dev/sdb1`, FAT32, 119 GB, mounted at `/app/sd/` on the
+  gimbal):** the card carries `FwPkt.zip` + `OmsPkt.zip` + the
+  gimbal's own Mlog/Clog/access/error log history under `/system/log/`
+  + camera-mode destination directories (`focusStack/`, `HDR/`, `Lapse/`,
+  `normal/`, `panorama/`, `starskyStack/`, `sun/`, all empty). So
+  `/app/sd/` on this unit is the **removable SD card slot**, not an
+  internal partition — `/dev/mmcblk0p1 → /app/sd` per
+  [docs/evidence/polestar-disasm-2026-09-01/00-HANDOVER-2026-08-31.md](docs/evidence/polestar-disasm-2026-09-01/00-HANDOVER-2026-08-31.md)
+  is correct. The earlier repo inference that this was an internal
+  partition was wrong; the gimbal writes its own Mlog history to the
+  card as well, which is why forensic captures are reproducible from
+  the card even when SSH is down.
 - **Path B (iPhone app, secondary):** iPhone sends `810` over TCP 9090
   → `SP_TtyUsbUartInit` opens `/dev/ttyUSB2` or `/dev/ttyUSB3` → FwPkt
   streams over USB-serial. **Blocked:** no USB-serial gadget on this

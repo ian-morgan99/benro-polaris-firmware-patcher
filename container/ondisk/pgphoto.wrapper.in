@@ -17,4 +17,59 @@ export STAGE2_TETHER_CAPTURE=1
 # PENTAX_MAX_CAPTURE_SIZE=<bytes> in the patcher invocation; documented in
 # docs/PENTAX-CAPTURE-BUDGET.md.
 export LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE=@PENTAX_MAX_CAPTURE_SIZE@
+# PID-file ownership for the single-owner restart helper (issue #33). Refuse
+# a watchdog-spawned duplicate when the recorded stage-2 owner is still live.
+PIDFILE=/var/run/openpolaris-pgphoto.pid
+LAUNCH_LOCK=/var/run/openpolaris-pgphoto.launch.lock
+BACKOFF_FILE=/var/run/openpolaris-pgphoto.backoff
+if ! mkdir "$LAUNCH_LOCK" 2>/dev/null; then
+    echo "[stage2] another pgphoto launch is already in progress; refusing duplicate" >&2
+    exit 0
+fi
+trap 'rm -rf "$LAUNCH_LOCK"' EXIT
+if [ -f "$PIDFILE" ]; then
+    OLDPID=$(cat "$PIDFILE" 2>/dev/null)
+    if [ -n "$OLDPID" ] && [ -d "/proc/$OLDPID" ]; then
+        OLDCMD=$(tr '\0' '\n' < "/proc/$OLDPID/cmdline" 2>/dev/null | head -1)
+        if [ "$OLDCMD" = "$D/pgphoto.stage2ondisk" ]; then
+            echo "[stage2] pgphoto already owned by PID $OLDPID; refusing duplicate launch" >&2
+            exit 0
+        fi
+    fi
+fi
+
+# Bound watchdog crash loops. A prior owner that survived at least two minutes
+# counts as stable and resets the sequence; otherwise repeated launches back
+# off 5 -> 10 -> 30 -> 60 seconds (issue #34).
+NOW=$(date +%s)
+COUNT=0
+LAST=0
+if [ -f "$BACKOFF_FILE" ]; then
+    read COUNT LAST < "$BACKOFF_FILE"
+fi
+case "$COUNT:$LAST:$NOW" in
+    *[!0-9:]*|::*|*:) COUNT=0; LAST=0 ;;
+esac
+AGE=$((NOW - LAST))
+if [ "$LAST" -eq 0 ] || [ "$AGE" -ge 120 ] || [ "$AGE" -lt 0 ]; then
+    COUNT=0
+else
+    COUNT=$((COUNT + 1))
+fi
+case "$COUNT" in
+    0) DELAY=0 ;;
+    1) DELAY=5 ;;
+    2) DELAY=10 ;;
+    3) DELAY=30 ;;
+    *) DELAY=60 ; COUNT=4 ;;
+esac
+echo "$COUNT $NOW" > "${BACKOFF_FILE}.tmp" 2>/dev/null && \
+    mv "${BACKOFF_FILE}.tmp" "$BACKOFF_FILE"
+if [ "$DELAY" -gt 0 ]; then
+    echo "[stage2] repeated pgphoto launch; backing off ${DELAY}s" >&2
+    sleep "$DELAY"
+fi
+echo $$ > "${PIDFILE}.tmp" 2>/dev/null && mv "${PIDFILE}.tmp" "$PIDFILE"
+rm -rf "$LAUNCH_LOCK"
+trap - EXIT
 exec $D/pgphoto.stage2ondisk "$@"

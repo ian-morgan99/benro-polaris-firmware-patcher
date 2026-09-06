@@ -212,7 +212,8 @@ Options (both launchers):
 
 Output:
 - `out/FwPkt/` — the unpacked custom firmware
-- `out/FwPkt.zip` — copy this to your SD card
+- `out/FwPkt.zip` — the flashable package (see *Installing on the Polaris* below
+  for what to do with it on the SD card)
 - `out/stage2-ondisk/` — *(full mode)* reversible on-device test bundle
   (`ondisk/install_stage2.sh` installs it, `ondisk/restore_stock.sh` reverts)
 - `out/licenses/` — exact corresponding libgphoto2 source archive, `COPYING`,
@@ -267,7 +268,31 @@ Use **the same SD-card firmware-update procedure you already use for official
 Benro updates**, but with the `FwPkt.zip` this tool produced. The device
 verifies the package (MD5), reboots, and U-Boot writes it.
 
-**To roll back:** run the same procedure with your **original stock `FwPkt`**.
+> **Important — what goes on the SD card.** The Benro download page was
+> revised on 2026-09-06 to instruct end-users to *"Unzip the package
+> you downloaded and then move the folders to SD card"* — i.e. copy
+> the **extracted `FwPkt/` folder** (with `camera/`, `gimbal/`, and
+> `firmwareInfo` inside it) to the root of the SD card, **not** the
+> zip. On a plain boot, `polestar_app`'s `0x405 SP_EVENT_SD_SCAN`
+> walks the extracted directory tree at `/app/sd/FwPkt/`; only the
+> Benro-app 810 trigger (the iPhone / Android app) takes the zip. See
+> [docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md](docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md)
+> for the full evidence chain.
+>
+> Concretely, the SD card root must end up as:
+> ```
+> /<sdcard>/
+> └── FwPkt/                       ← the folder that was inside the zip
+>     ├── firmwareInfo
+>     ├── camera/{appfs.ubifs,config,rootfs.ubifs,uImage}
+>     └── gimbal/{polaris403_*.bin,polaris413_*.bin}
+> ```
+> Do not flatten the contents onto the SD card root — `polestar_app`
+> hardcodes the `FwPkt/` prefix in its lookup paths and will silently
+> reject the upgrade if it is missing.
+
+**To roll back:** run the same procedure with your **original stock `FwPkt`**,
+unzipped the same way.
 
 ---
 

@@ -42,7 +42,16 @@ device-confirmed build:
 | port `libgphoto2_port.so.12` | `lib/stage2/` | `aa3ff3507774bcd9f7af32993b2f869b` |
 | ptp2 `ptp2.so` (camlib) | `lib/stage2/libgphoto2/2.5.34/` **and** `lib/libgphoto2/2.5.27.1/` | `9bdbd13d064f7f94102926e013fdf977` |
 | usb1 `usb1.so` (iolib) | `lib/stage2/libgphoto2_port/0.12.2/` **and** `lib/libgphoto2_port/0.12.0/` | `5199e973f5a0f9012f261383470ef27f` |
-| loader `libpolaris_stage2.so` | `lib/stage2/` | `74f681de5a43e068df36ae61001a4e79` |
+| loader `libpolaris_stage2.so` | `lib/stage2/` | `6b278b715bcaab4b4fea9c34f38c1ac3` **†** |
+
+> † **Issue #27:** the loader now links `stage2_policy.c` (R5-II compatibility-
+> shim gate, commit `ccde305`), so it is **not** byte-identical to the upstream
+> hardware-validated loader (`74f681de…`, recorded in
+> `builds/2026-08-23/stage2-ondisk/`). The value above is from the
+> 2026-09-05 combined build — **build-verified, not yet flash-validated**.
+> `patch.sh` fails closed if a build ever reproduces the pre-gate md5 or lacks
+> the `stage2_model_uses_r5_shims` marker (i.e. the policy code silently went
+> missing). Re-validate on hardware with the next device cycle (#15 §8.5 step 7).
 | trampolined `pgphoto.stage2ondisk` | `lib/stage2/` | `a83ac7bbee13078ca53807a452961285` |
 | wrapper `pgphoto` | `bin/` | `868c3097d6337689a431da76fe45343b` |
 

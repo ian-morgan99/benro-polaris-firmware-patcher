@@ -22,6 +22,10 @@
 #     --no-usb1            (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
 #     --pentax-max-capture-size BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
 #                                       Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
+#     --ssh-key FILE|KEY   opt-in: authorise a public key for root SSH debugging
+#                          (issue #31). FILE may be a path to an authorized_keys
+#                          file or the key line(s) themselves. OFF by default —
+#                          without it the build is byte-for-byte unchanged.
 #     --image NAME         docker image tag              (default polaris-patcher)
 #
 #  READ THE README AND DISCLAIMERS FIRST.  Tested ONLY against FwVer 4.0.0.32
@@ -30,7 +34,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -45,6 +49,7 @@ while [ $# -gt 0 ]; do
     --no-fix-typo) FIXTYPO=0; shift;;
     --no-usb1) SWAPUSB1=0; shift;;
     --pentax-max-capture-size) PENTAX_MAX_CAPTURE_SIZE="$2"; shift 2;;
+    --ssh-key) SSHKEY="$2"; shift 2;;
     --image) IMG="$2"; shift 2;;
     -h|--help) sed -n '2,26p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
@@ -95,6 +100,17 @@ if ! docker build -t "$IMG" -f "$HERE/docker/Dockerfile" "$HERE"; then
   exit 1
 fi
 
+# --ssh-key (issue #31): accept a path to an authorized_keys file or the key
+# line(s) themselves; pass the key material through as SSH_PUBKEY.
+SSH_PUBKEY=""
+if [ -n "$SSHKEY" ]; then
+  if [ -f "$SSHKEY" ]; then
+    SSH_PUBKEY="$(cat "$SSHKEY")"
+  else
+    SSH_PUBKEY="$SSHKEY"
+  fi
+fi
+
 echo "[*] running patcher (mode: $MODE)…"
 set --
 if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source-input:ro"; fi
@@ -105,6 +121,7 @@ docker run --rm \
   -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
+  -e SSH_PUBKEY="$SSH_PUBKEY" \
   "$@" \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"

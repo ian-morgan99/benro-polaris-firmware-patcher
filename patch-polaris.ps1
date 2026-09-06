@@ -43,6 +43,10 @@ param(
   [switch]$NoFixTypo,
   [switch]$NoUsb1,
   [string]$PentaxMaxCaptureSize = "268435456",
+  # Issue #31: opt-in root SSH debug access. Path to an authorized_keys file
+  # (or the key line(s) themselves). OFF by default — without it the build is
+  # byte-for-byte unchanged.
+  [string]$SshKey = "",
   [string]$Image = "polaris-patcher",
   [string]$ImageTar = ""
 )
@@ -123,12 +127,20 @@ try {
       $sourceArgs = @("-v", "$(ConvertTo-DockerPath $source):/libgphoto2-source-input:ro")
   }
   $allowDirty = if ($AllowDirtySource) { "1" } else { "0" }
+  # Issue #31: --ssh-key accepts a path to an authorized_keys file or the key
+  # line(s) themselves; pass the key material through as SSH_PUBKEY.
+  $sshPubKey = ""
+  if ($SshKey) {
+    if (Test-Path -LiteralPath $SshKey -PathType Leaf) { $sshPubKey = Get-Content -Raw $SshKey }
+    else { $sshPubKey = $SshKey }
+  }
   Write-Host "[*] running patcher (mode: $mode)..."
   & docker run --rm `
     -e MODE=$mode `
     -e LIBGPHOTO2_VERSION=$Libgphoto2 -e LIBGPHOTO2_PORT_VERSION=$Libgphoto2Port -e PENTAX_MAX_CAPTURE_SIZE=$PentaxMaxCaptureSize -e FIX_R5M2_TYPO=$fix -e SELFTEST=$st `
     -e SWAP_USB1=$usb1 `
     -e ALLOW_DIRTY_SOURCE=$allowDirty `
+    -e SSH_PUBKEY=$sshPubKey `
     @sourceArgs `
     -v "${InMount}:/in:ro" -v "${OutMount}:/out" `
     $Image

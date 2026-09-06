@@ -175,9 +175,11 @@ own unit **before** committing a flash.
 
 The entire build is byte-for-byte reproducible from the same inputs. Running the
 public patcher in its container against a stock FwPkt (default full mode)
-reproduces **every** hardware-validated component exactly: the reliability base,
+reproduces **every** component exactly: the reliability base,
 the trampolined `pgphoto.stage2ondisk` (`a83ac7bb`), the loader
-`libpolaris_stage2.so` (`74f681de`), the wrapper (`868c3097`), and all four rebuilt
+`libpolaris_stage2.so` (now `6b278b71…` — it links the R5-II gate from
+`stage2_policy.c`, so it differs from the upstream hardware-validated
+`74f681de`; see TESTED.md †, issue #27), the wrapper (`868c3097`), and all four rebuilt
 LGPL libraries — core `b4c7ec31`, port `aa3ff350`, ptp2 `9bdbd13d`, usb1
 `5199e973`. The only value that shifts run-to-run is the **whole-image**
 `appfs.ubifs` md5, because UBIFS stamps a per-inode mtime at repack time; every

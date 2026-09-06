@@ -47,6 +47,19 @@ PTP2=$(find_one "libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so")
 USB1=$(find_one "libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so")
 WRAP=$(find_one ondisk/pgphoto.wrapper pgphoto.wrapper)
 
+# Issue #2 follow-up: if the staged wrapper still carries the build-time
+# placeholder, apply the env override to it now. A wrapper that was already
+# substituted at build time (no placeholder left) keeps its baked value —
+# the override scope is therefore: build-time by default, install-time only
+# when the wrapper is still in template form.
+if grep -q '@PENTAX_MAX_CAPTURE_SIZE@' "$WRAP" 2>/dev/null; then
+    sed "s|@PENTAX_MAX_CAPTURE_SIZE@|$PENTAX_MAX_CAPTURE_SIZE|g" "$WRAP" > "$HERE/pgphoto.wrapper.fixed" \
+        && mv "$HERE/pgphoto.wrapper.fixed" "$WRAP"
+    echo "[install] applied PENTAX_MAX_CAPTURE_SIZE override to wrapper (was still in template form)"
+else
+    echo "[install] wrapper already has a baked capture cap; PENTAX_MAX_CAPTURE_SIZE env override not applied (build-time scope)"
+fi
+
 # --- 1. back up the REAL stock binary (only once) ----------------------------
 if [ -e "$BACKUP" ]; then
     echo "[install] backup already present ($BACKUP) -- NOT overwriting"
@@ -92,8 +105,12 @@ echo "[install] installed wrapper -> $BINP"
 cat <<EOF
 
 [install] DONE.  To (re)start with the Stage-2 core:
-    pkill -f pgphoto          # stop the running stock pgphoto (+ its watchdog if any)
-    /app/restart_gphoto       # or reboot -- polestar relaunches $BINP (now the wrapper)
+    /app/restart_gphoto       # single-owner restart (PID-file + 8080 unbind wait, issue #33)
+                              # or reboot -- polestar relaunches $BINP (now the wrapper)
+  If /app/restart_gphoto is still the STOCK script (pkill /app/bin/pgphoto),
+  copy ondisk/restart_gphoto.sh over it first — the stock pkill matches nothing
+  once the wrapper execs pgphoto.stage2ondisk, so the old instance survives and
+  the new one dies on port 8080 (crash loop, issue #34).
 
   Watch the first launch:
     tail -f /tmp/stage2ondisk.log 2>/dev/null   # if you tee; else check console

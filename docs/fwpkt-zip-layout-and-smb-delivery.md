@@ -97,7 +97,7 @@ maintainers can see *why* the build we shipped is the one we shipped.
 | `~/Downloads/FwPkt.zip`                                                   | `90bdad511f556f25a2904ae9d2980102` | 10      | PASS     | Byte-identical to stock. |
 | `builds/2026-08-23/FwPkt.zip`                                             | `25403283…`                       | 10      | PASS     | Layered Pentax-only build; works. |
 | `builds/2026-08-27-combined-720p60/FwPkt.zip`                             | `e4a6a37d84745cb05b02d6e5ca8f45d4` | 10      | PASS     | Combined Pentax + HDMI 720p60 + live-view. The shipped build. |
-| `SMB:BenroPolaris/FwPkt.zip` (top-level, older copy)                      | `fd8147c9…`                       | 10      | PASS     | 2026-08-23 base + 2026-08-27 09:31 appfs. Pre-dates the combined build. |
+| `SMB:BenroPolaris/FwPkt.zip` (top-level, older copy)                      | `fd8147c9…`                       | 10      | PASS*    | 2026-08-23 base + 2026-08-27 09:31 appfs. Pre-dates the combined build. *Structurally valid, but its `firmwareInfo` is stale (appfs MD5 mismatch) — `verify_firmwareinfo.py` FAILs it, so the on-board updater will silently reject it. See §4.4. |
 | `SMB:BenroPolaris/2026-08-27_pentax-hdmi720p60-live_only/FwPkt.zip`       | `e4a6a37d84745cb05b02d6e5ca8f45d4` | 10      | PASS     | Earlier delivery of the combined build. |
 | `SMB:BenroPolaris/2026-08-28_latest_pentax-hdmi720p60-live_only/FwPkt.zip` | `e4a6a37d84745cb05b02d6e5ca8f45d4` | 10      | PASS     | Current recommended flash target. |
 | `/tmp/c2-rebuild/out/FwPkt.zip`                                           | (broken)                          | 8       | **FAIL** | Clean rebuild against the wrong Pentax source. Missing both gimbal bins. |
@@ -167,23 +167,46 @@ a fresh checkout on a different machine).
 ### 4.4 Don't ship the top-level `BenroPolaris/FwPkt.zip`
 
 The top-level `FwPkt.zip` on the share is a 2026-08-23 base build with a
-2026-08-27 09:31 appfs (md5 `fd8147c9…`). It still passes the validator
-and the Polaris will not reject it, but it does **not** contain the
-Pentax camlib or the HDMI 720p60 patch — so it will not deliver the
-Pentax functionality the user wants. New deliveries should always be
-made into a new dated subfolder, never overwrite the top-level file.
+2026-08-27 09:31 appfs (md5 `fd8147c9…`). It is **structurally valid**
+(`validate_fw_package.py` passes) but its `firmwareInfo` was not
+regenerated after the appfs swap, so it is **manifest-invalid**:
+`verify_firmwareinfo.py` FAILs it (claimed appfs MD5 ≠ actual), and the
+on-board updater will **silently reject** it — no NAND write, no toast,
+immediate reboot (the failure mode documented in
+`docs/silent-fwpkt-reject-postmortem.md`, issue #23). It also does not
+contain the Pentax camlib or the HDMI 720p60 patch. New deliveries should
+always be made into a new dated subfolder, never overwrite the top-level
+file.
+
+> "Passes the validator" (structural) is **not** shorthand for
+> flash-safe: the two gates cover different failure classes —
+> `validate_fw_package.py` checks zip layout / required files /
+> stock-component drift; `verify_firmwareinfo.py` checks that the
+> manifest matches the shipped bytes. A zip must pass **both** before it
+> goes on an SD card (see §5).
 
 ---
 
 ## 5. How to verify a delivery
 
-To verify a delivered zip before flashing:
+A delivered zip must pass **both** offline gates before flashing — they
+catch different failure classes (structural layout vs manifest integrity,
+see §4.4):
 
 ```bash
+# Gate 1: structural — zip layout, required files, duplicates, stock drift.
 python3 container/validate_fw_package.py /path/to/delivered/FwPkt.zip
+
+# Gate 2: manifest — firmwareInfo MD5/size vs the actual shipped bytes
+# (re-runs the on-board check offline; a stale manifest is the silent-
+# reject root cause, issue #23). Unzip first, then run against the
+# extracted FwPkt dir using the stock firmwareInfo as reference:
+mkdir /tmp/fwpkt-check && cd /tmp/fwpkt-check
+unzip -o /path/to/delivered/FwPkt.zip
+python3 container/verify_firmwareinfo.py <stock>/firmwareInfo /tmp/fwpkt-check/FwPkt
 ```
 
-Expect:
+Expect from gate 1:
 
 ```
 PASS: 0 errors, 0 warnings
@@ -199,8 +222,14 @@ PASS: 0 errors, 0 warnings
   FwPkt/gimbal/polaris413_2.0.0.22.bin 84,284 B
 ```
 
-Then check the MD5 against the value in `README.txt`. If either check
-fails, do not flash the zip.
+and from gate 2:
+
+```
+OK: N entries verified, firmwareInfo matches shipped files
+```
+
+Then check the zip MD5 against the value in `README.txt`. If **any**
+check fails, do not flash the zip.
 
 ---
 
