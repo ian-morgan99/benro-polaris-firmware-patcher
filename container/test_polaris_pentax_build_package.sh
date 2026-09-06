@@ -138,9 +138,11 @@ docker run --rm --entrypoint bash \
       -I/opt/patcher \
       -I/opt/patcher/testdata \
       -o /tmp/libpolaris_stage2.so \
-      /opt/patcher/stage2_loader.c
+      /opt/patcher/stage2_loader.c /opt/patcher/stage2_policy.c -ldl
     test -f /tmp/libpolaris_stage2.so
     file /tmp/libpolaris_stage2.so | grep -q "ARM"
+    strings /tmp/libpolaris_stage2.so |
+      grep "stage2_model_uses_r5_shims" >/dev/null
   ' || { echo "stage-2 loader failed to compile" >&2; exit 1; }
 
 echo "polaris-pentax end-to-end: PASS"

@@ -14,3 +14,9 @@ cp "$(dirname "$0")/testdata/stage2_ondisk_table.h" "$work/"
 	"$work/stage2_ondisk_loader.c" "$work/stage2_policy.c" \
 	-o "$work/libpolaris_stage2.so" -ldl
 file "$work/libpolaris_stage2.so"
+
+# Mirror patch.sh's provenance gate. Consume the complete strings output: under
+# pipefail, grep -q can otherwise reject a present marker when strings gets
+# SIGPIPE after grep's early exit.
+strings "$work/libpolaris_stage2.so" |
+	grep 'stage2_model_uses_r5_shims' >/dev/null

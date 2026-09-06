@@ -370,7 +370,9 @@ else
   if [ "$LOADER_MD5" = "74f681de5a43e068df36ae61001a4e79" ]; then
     die "loader md5 matches the PRE-R5-GATE upstream loader (74f681de) — stage2_policy.c is not in this build (issue #27)"
   fi
-  if ! strings "$W/s2/libpolaris_stage2.so" | grep -q 'stage2_model_uses_r5_shims'; then
+  # Do not use grep -q here: with pipefail, an early successful grep exit can
+  # SIGPIPE strings(1), turning a present marker into a failed pipeline.
+  if ! strings "$W/s2/libpolaris_stage2.so" | grep 'stage2_model_uses_r5_shims' >/dev/null; then
     die "loader lacks the R5-II gate marker (stage2_model_uses_r5_shims) — stage2_policy.c missing from build (issue #27)"
   fi
   log "  loader: md5=$LOADER_MD5 ABI=$LFLAGS (R5-II gate present, issue #27)"
@@ -408,7 +410,7 @@ else
   # The helper: PID-file ownership + /proc/$pid/cmdline verification, TERM then
   # bounded wait for process exit AND 8080 unbind, KILL fallback, restart-in-
   # progress lock so the polestar watchdog (checkGphotoTask) can't race it.
-  RST="/app/restart_gphoto"
+  RST="$APP/restart_gphoto"
   if [ -e "$RST" ]; then
     R_UID="$(stat -c %u "$RST")"; R_GID="$(stat -c %g "$RST")"; R_MODE="$(stat -c %a "$RST")"
   else
