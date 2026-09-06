@@ -73,3 +73,7 @@ builds/
 # rationale; that file is the public-facing version of this convention).
 # Excluded from this repo, not deleted.
 docs/CROSS-PROJECT.md
+
+# github issue poller runtime state
+.github-issue-poll-state
+.github-issue-poll.log
