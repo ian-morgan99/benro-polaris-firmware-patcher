@@ -284,7 +284,7 @@ if [ "$FULLSTACK" = "1" ]; then
   [ -n "$PORT_BUILT" ] || { echo "[build] FULLSTACK ERROR: libgphoto2_port.so.12 not produced"; exit 1; }
   cp -L "$CORE_BUILT" /work/out/libgphoto2.so.6
   cp -L "$PORT_BUILT" /work/out/libgphoto2_port.so.12
-  # Strip the whole fullstack (core+port+ptp2+usb1): shrinks the appfs footprint
+  # Strip the core/ptp2/usb1 to shrink the appfs footprint
   # (the on-disk `.symtab` is not needed at runtime — dlopen resolves via `.dynsym`
   # which strip keeps). The result is within a handful of bytes of the
   # hardware-validated libs (which were also stripped).
@@ -298,8 +298,9 @@ if [ "$FULLSTACK" = "1" ]; then
   else
     echo "[build] FULLSTACK ERROR: gp_camera_new does not allocate 4140 B — _Camera pad failed"; exit 1
   fi
-  "$XT-strip" /work/out/libgphoto2.so.6 /work/out/libgphoto2_port.so.12 \
+  # Strip core, ptp2, usb1, but DO NOT strip libgphoto2_port.so.12 - it needs LIBGPHOTO2_5_0 symbols for the new core
+  "$XT-strip" /work/out/libgphoto2.so.6 \
               /work/out/ptp2.so /work/out/usb1.so
   echo "[build] FULLSTACK: core libgphoto2.so.6 built (stripped): $(stat -c %s /work/out/libgphoto2.so.6) bytes"
-  echo "[build] FULLSTACK: port libgphoto2_port.so.12 built (stripped): $(stat -c %s /work/out/libgphoto2_port.so.12) bytes"
+  echo "[build] FULLSTACK: port libgphoto2_port.so.12 built (NOT stripped, retains LIBGPHOTO2_5_0 symbols): $(stat -c %s /work/out/libgphoto2_port.so.12) bytes"
 fi
