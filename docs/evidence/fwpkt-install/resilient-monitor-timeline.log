@@ -7,3 +7,20 @@
 [2026-09-04T12:49:06Z] SNAPSHOT uptime=15.79s fwver='?' boot0='Booting Linux on physical CPU 0x0'
 [2026-09-04T12:49:14Z] STATE DOWN (not associated or SSH unreachable)
 [2026-09-04T13:05:55Z] monitor stopped (signal)
+[2026-09-07T16:16:06Z] resilient-monitor.sh started (poll=5s host=192.168.0.1 iface=wlp8s0)
+[2026-09-07T16:16:06Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-07T16:22:32Z] USER POWER-OFF initiated (manual power-cycle of gimbal, before staged-FwPkt SD reflash attempt)
+[2026-09-07T16:42:42Z] STATE UP (associated + SSH reachable)
+[2026-09-07T16:42:43Z] SNAPSHOT uptime=19.15s fwver='?' boot0='Booting Linux on physical CPU 0x0'
+[2026-09-07T16:42:58Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-07T16:43:03Z] STATE UP (associated + SSH reachable)
+[2026-09-07T16:43:04Z] SNAPSHOT uptime=39.82s fwver='?' boot0='Booting Linux on physical CPU 0x0'
+[2026-09-07T16:43:38Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-07T16:44:05Z] STATE UP (associated + SSH reachable)
+[2026-09-07T16:44:06Z] SNAPSHOT uptime=102.07s fwver='?' boot0='Booting Linux on physical CPU 0x0'
+[2026-09-07T16:59:10Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-07T17:00:33Z] STATE UP (associated + SSH reachable)
+[2026-09-07T17:00:34Z] SNAPSHOT uptime=1090.03s fwver='?' boot0='dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!'
+[2026-09-07T17:00:41Z] STATE DOWN (not associated or SSH unreachable)
+[2026-09-07T17:01:01Z] STATE UP (associated + SSH reachable)
+[2026-09-07T17:01:02Z] SNAPSHOT uptime=24.74s fwver='?' boot0='Booting Linux on physical CPU 0x0'

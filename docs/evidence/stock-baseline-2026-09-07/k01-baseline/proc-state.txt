@@ -1,0 +1,15 @@
+--- /proc/loadavg ---
+1.23 0.77 0.36 1/155 888
+--- /proc/uptime ---
+337.31 636.89
+--- /proc/meminfo (head) ---
+MemTotal:        1550872 kB
+MemFree:         1453664 kB
+MemAvailable:    1453524 kB
+Buffers:           30644 kB
+Cached:            20176 kB
+SwapCached:            0 kB
+Active:            54588 kB
+Inactive:          16192 kB
+Active(anon):      19960 kB
+Inactive(anon):        0 kB

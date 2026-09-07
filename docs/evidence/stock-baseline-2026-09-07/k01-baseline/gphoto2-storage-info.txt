@@ -1,0 +1,15 @@
+
+*** Error ***              
+An error occurred in the io-library ('Could not claim the USB device'): Could not claim interface 0 (Device or resource busy). Make sure no other program (gvfs-gphoto2-volume-monitor) or kernel module (such as sdc2xx, stv680, spca50x) is using the device and you have read/write access to the device.
+*** Error (-53: 'Could not claim the USB device') ***       
+
+For debugging messages, please use the --debug option.
+Debugging messages may help finding a solution to your problem.
+If you intend to send any error or debug messages to the gphoto
+developer mailing list <gphoto-devel@lists.sourceforge.net>, please run
+gphoto2 as follows:
+
+    env LANG=C gphoto2 --debug --debug-logfile=my-logfile.txt --storage-info
+
+Please make sure there is sufficient quoting around the arguments.
+

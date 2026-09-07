@@ -1,0 +1,305 @@
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+[m[06:54:46:234 [1;32mINFO[m-Init]:main[94]:[0;35mFwVer v4.0.0.32 20250509
+[m[06:54:46:235 [1;32mINFO[m-Init]:main[95]:+++++++++++++++++++++
+[m[06:54:46:244 [1;32mINFO[m-Init]:main[97]:+++++++++++++++++++++
+[m[06:54:46:244 [1;32mINFO[m-]:HI_SYSTEM_GetStartupWakeupSource[75]:[0;35mHI_SYSTEM_STARTUP_SRC_STARTUP
+[m[06:54:46:244 [1;32mINFO[m-]:SP_GpioInit[37]:[0;32;32mHAL_GPIO_Init OK
+[m[m[06:54:46:250 [1;32mINFO[m-]:SP_UserParamInit[238]:SP_UserParamInit success,s8ParamFd = 2;
+[m[06:54:46:250 [1;32mINFO[m-]:SP_UserParamInit[247]:SettlingTime[2];
+[m[06:54:46:250 [1;32mINFO[m-]:SP_SetAutoOffSw[329]:SP_SetAutoOffSw:0;
+[m[06:54:46:250 [1;32mINFO[m-]:SP_UserParamInit[254]:s32AutoOffSw[0];
+[m[06:54:46:251 [1;32mINFO[m-]:SP_UserParamInit[260]:s32AutoLevelEn[0];
+[m[06:54:46:251 [1;32mINFO[m-]:SP_UserParamInit[266]:s32TimeIntervalType[0];
+[m[06:54:46:252 [1;32mINFO[m-]:SP_GetFactoryParam[56]:[0;32;34mfactoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[06:54:46:252 [1;32mINFO[m-]:SP_GetFactoryParam[63]:hw:1.1
+[m[06:54:46:252 [1;32mINFO[m-]:SP_GetFactoryParam[67]:date:2021.11.29
+[m[06:54:46:252 [1;32mINFO[m-]:SP_GetFactoryParam[71]:pcb:1.20
+[m[06:54:46:252 [1;33mWARN[m-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[06:54:46:252 [1;32mINFO[m-]:SP_GetFactoryParam[75]:CellHwVer:0
+[m[06:54:46:253 [1;32mINFO[m-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
+[m[06:54:46:253 [1;32mINFO[m-]:SP_GetFwVer[286]:fwVerinfo[FwVer:4.0.0.32;date:2025.05.09;
+(];len:[32];
+[m[06:54:46:253 [1;32mINFO[m-]:SP_GetFwVer[293]:FwVer[4.0.0.32];
+[m[06:54:46:257 [1;32mINFO[m-]:WakeUpGpioTask[247]:dTimeMs:2057691121
+[m[06:54:46:257 [1;32mINFO[m-]:CameraGpioTask[116]:camera gpio value = 1
+[m[06:54:46:260 [1;32mINFO[m-]:SP_SaveUserParamToFlash[136]:SP_SaveUserParam success,s8ParamFd = 1;
+[m[06:54:46:260 [1;32mINFO[m-]:SP_SaveUserParamTask[154]:SaveUserParam
+[m[06:54:46:329 [1;32mINFO[m-]:SP_SetSysInitTime[134]:RTC DateTime: 2026/09/07-06:54:46
+[m[06:54:46:329 [1;32mINFO[m-]:SP_SetSysInitTime[142]:[0;35mBuild DateTime: 2025/05/09-14:37:27
+[m[06:54:46:079 [1;32mINFO[m-SYSTEM]:HI_SYSTEM_SetDateTime[402]:Mon Sep  7 06:54:46 2026
+
+[m[06:54:46:079 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1001],id[131076]
+[m[m[06:54:46:079 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1002],id[98307]
+[m[m[06:54:46:079 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1003],id[65538]
+[m[m[06:54:46:079 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1004],id[163845]
+[m[m[06:54:46:079 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1006],id[32769]
+[m[m[06:54:46:079 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1005],id[0]
+[m[m[06:54:46:080 [1;32mINFO[m-]:SP_CreateBtRcvMsgProcTask[186]:SP_CreateBtRcvMsgProcTask success
+[m[06:54:46:080 [1;32mINFO[m-]:SP_CreateBtSendMsgProcTask[244]:SP_CreateBtSendMsgProcTask success
+[m[06:54:46:172 [1;32mINFO[m-]:SP_NetInit[217]:INIT WEB SERVER OK 
+[m[06:54:46:172 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=1] start
+[m[06:54:46:174 [1;32mINFO[m-]:Uart3Open[52]:open uart3 success,fd[11]
+[m[06:54:46:198 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=2 192.168.0.5:49422] from [1] s_u32ClientNum[1]
+[m[06:54:46:198 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[06:54:46:198 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[06:54:46:198 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=2] start
+[m[06:54:46:295 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:296;val:-1
+[m[06:54:46:296 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
+[m[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:303;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:300;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:775;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:778;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[303],val[state:0;]
+[m[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:823;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:826;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
+[m[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:802;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:804;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:0;totalspace:0;freespace:0;usespace:0;]
+[m[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:824;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:0;charge:0;]
+[m[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:524;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:296;val:-1
+[m[06:54:46:298 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[826],val[state:0;]
+[m[m[06:54:46:298 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[802],val[band:0;]
+[m[m[06:54:46:298 [1;32mINFO[m-]:SP_GetWarningToneState[971]:SP_GetWarningToneState
+[m[06:54:46:299 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[824],val[state:0;]
+[m[m[06:54:46:299 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:0;]
+[m[m[06:54:46:299 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
+[m[m[06:54:46:300 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[804],val[state:0;]
+[m[m[06:54:46:300 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:303;val:-1
+[m[06:54:46:300 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:300;val:-1
+[m[06:54:46:300 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:775;val:-1
+[m[06:54:46:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[m[06:54:46:301 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:778;val:-1
+[1;34mSP_SendMsgToApp success;type[2],code[303],val[state:0;]
+[m[m[06:54:46:301 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:823;val:-1
+[m[06:54:46:301 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[m[06:54:46:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
+[m[0;32;32mrcv msg from App[2]:type:2;code:826;val:-1
+[m[06:54:46:301 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:802;val:-1
+[m[06:54:46:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:0;totalspace:0;freespace:0;usespace:0;]
+[m[m[06:54:46:301 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:804;val:-1
+[m[06:54:46:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:0;charge:0;]
+[m[m[06:54:46:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[826],val[state:0;]
+[m[m[06:54:46:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[802],val[band:0;]
+[m[m[06:54:46:301 [1;32mINFO[m-]:SP_GetWarningToneState[971]:SP_GetWarningToneState
+[m[06:54:46:302 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:824;val:-1
+[m[06:54:46:302 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:3;code:524;val:-1
+[m[06:54:46:302 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:780;val:-1
+[m[06:54:46:302 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:818;val:-1
+[m[06:54:46:302 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[824],val[state:0;]
+[m[m[06:54:46:302 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:0;]
+[m[m[06:54:46:302 [1;32mINFO[m-]:SP_GetDeviceVer[322]:stFatoryInfo HwVer[1.1]
+[m[06:54:46:302 [1;32mINFO[m-]:SP_GetDeviceVer[327]:mFwVer[4.0.0.32]
+[m[06:54:46:303 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[804],val[state:0;]
+[m[m[06:54:46:837 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:808;val:type:0;
+[m[06:54:46:837 [1;32mINFO[m-]:SP_MsgSysFromAppProc[897]:[0;35mclient type[0];id[2];
+[m[06:54:46:837 [1;32mINFO[m-]:SP_ClientCtxAdd[376]:[0;35mSP_ClientCtxAdd:id[2];type[wifi];WifiCount[1],CellCount[0];
+[m[06:54:46:837 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[808],val[ret:0;]
+[m[m[06:54:47:174 [1;32mINFO[m-]:SP_CreateSensorMngTask[276]:SP_CreateSensorMngTask success
+[m[06:54:47:177 [1;32mINFO[m-]:SP_MpuInit[133]:SP_MpuInit success
+[m[06:54:47:177 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:0;sta:1;Use:1;
+[m[06:54:47:182 [1;31mERROR[m-]:SP_I2cRead[78]:SP_I2cRead error
+[m[06:54:47:182 [1;32mINFO[m-]:MagIdentityChipID[49]:QMC6310U_STA
+[m[06:54:47:182 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:1;sta:1;Use:1;
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetGyroCalInfo[186]:[0;35mNO Gyro calibrate info
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetGyroCalInfo[189]:GyroOffset x[0.0];y[0.0];z[0.0];
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetAcceCalInfo[628]:[0;35mNO Acce calibrate info
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetAcceCalInfo[634]:AcceOffset x[0.0];y[0.0];z[0.0];
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetMagCalinfo[573]:[0;35mNO Mag calibrate info
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetMagCalinfo[576]:mag Offset x[0];y[0];z[0];
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetMagCalinfo[579]:mag Bias x[0.0];y[0.0];z[0.0];
+[m[06:54:47:182 [1;32mINFO[m-]:SP_GetMagCalinfo[582]:mag scale x[1.0];y[1.0];z[1.0];
+[m[06:54:47:184 [1;32mINFO[m-]:SensorMngTask[115]:SP_SENSOR_STA_GIMBAL_ANGLE_INIT Box0Yaw:-0.0009;Box0Pitch:-0.8727;
+[m[06:54:47:273 [1;32mINFO[m-]:SP_MpiSysInit[59]:SP_MpiSysInit success
+[m[06:54:47:273 [1;32mINFO[m-]:SP_CreateCheckPhotoTimeOutTask[901]:SP_CreateCheckPhotoTimeOutTask success
+[m[06:54:47:273 [1;32mINFO[m-]:SP_CreateCableReleaseTask[1009]:SP_CreateCableReleaseTask success
+
+[m[06:54:47:274 [1;31mERROR[m-]:SP_CheckHdmiId[643]:HDMI Hw no Support
+[m[06:54:47:274 [1;32mINFO[m-]:SendHwToGimbalTask[82]:SendHwToGimbal hw[11],ubootVer[0]
+[m[06:54:47:274 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:2;sta:0;Use:1;
+[m[06:54:47:276 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[433]:bSendHwAck
+[m[06:54:47:735 [1;32mINFO[m-]:AcceAttitudeInit[596]:xMean[0.79],yMean[0.02],zMean[0.62]
+[m[06:54:47:735 [1;32mINFO[m-]:AcceAttitudeInit[619]:[0;35mxVar[0.000622],yVar[0.000666],zVar[0.000712]
+[m[06:54:47:735 [1;32mINFO[m-]:SP_BoxAhraInit[890]:[0;35maAcce:x[0.7908],y[0.0184],z[0.6191]
+[m[06:54:47:736 [1;32mINFO[m-]:SP_BoxAhraInit[896]:++++++acce init ok +++++++++++
+[m[06:54:47:736 [1;32mINFO[m-]:SP_BoxAhraInit[898]:aAcce:x[1.6992],y[-51.9292],z[0.0000]
+[m[06:54:47:736 [1;32mINFO[m-]:SensorMngTask[85]:SP_SENSOR_STA_BOX_AHRS_INIT SUCCESS
+[m[06:54:48:100 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa
+[m[06:54:48:104 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/virtual/bdi/179:0
+[m[06:54:48:106 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0
+[m[06:54:48:106 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0/mmcblk0p1
+[m[06:54:48:106 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1026],val[1]
+[m[m[06:54:48:106 [1;32mINFO[m-]:EventMsgProc[2615]:SP_EVENT_SD_PLUGED
+[m[06:54:48:128 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1027],val[1]
+[m[m[06:54:48:128 [1;32mINFO[m-]:EventMsgProc[2641]:SP_EVENT_SD_MOUNTED
+[m[06:54:48:274 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:5;sta:0;Use:0;
+[m[06:54:48:274 [1;31mERROR[m-]:SP_CheckTtyUsbOk[2319]:SP_CheckTtyUsbOk
+[m[06:54:48:275 [1;32mINFO[m-]:SP_CreateOmsTask[218]:SP_CreateOmsTask success
+[m[06:54:48:275 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[06:54:48:275 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[06:54:48:275 [1;32mINFO[m-]:SP_GimbalGetExAxsiSate[913]:uart send:SP_GimbalGetExAxsiSate
+[m[06:54:48:275 [1;32mINFO[m-]:SP_BlueInit[2986]:[0;35mSP_BlueInit start
+[m[06:54:48:278 [1;32mINFO[m-]:OmsTask[171]:_____OMS_STEP_NONE
+[m[06:54:48:278 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[358]:UART_GIMBAL_FW_VER 2.0.0.22
+[m[06:54:48:279 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[364]:UART_GIMBAL_HW_VER 1.2
+[m[06:54:48:279 [1;32mINFO[m-]:SP_BlueInit[3009]:[0;35mg_main_loop_new
+[m[06:54:48:281 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[370]:UART_GIMBAL_IAP_VER 1.3
+[m[06:54:48:283 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:10.81;capacity:50;ChargeState:1;
+[m[06:54:48:283 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:50;charge:1;]
+[m[m[06:54:48:286 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[319]:[0;35mExAxsiOn = 0
+[m[06:54:48:287 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:0;]
+[m[m[06:54:48:288 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[448]:ExAngle:0.000
+[m[06:54:48:308 [1;32mINFO[m-]:SP_BlueInit[3046]:-------------main loop running -------
+[m[06:54:48:314 [1;32mINFO[m-]:connect_handler[121]:connect_handler
+[m[06:54:48:323 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.AgentManager1]
+[m[06:54:48:334 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.ProfileManager1]
+[m[06:54:48:341 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Adapter1]
+[[0;92mNEW[0m] Controller 48:E7:DA:D4:B5:72 polaris_d13e86 [default]
+[m[06:54:48:347 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattManager1]
+[m[06:54:48:350 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Media1]
+[m[06:54:48:355 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.NetworkServer1]
+[m[06:54:48:357 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.LEAdvertisingManager1]
+[m[06:54:48:363 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
+[[0;92mNEW[0m] Device 42:01:EB:BE:56:8D 42-01-EB-BE-56-8D
+[m[06:54:48:363 [1;32mINFO[m-]:client_ready[2875]:client_ready
+Agent registered
+[m[06:54:49:079 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:45
+[m[06:54:49:275 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[06:54:49:275 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:4;sta:1;Use:1;
+[m[06:54:49:275 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:3;sta:1;Use:1;
+[m[06:54:49:275 [1;32mINFO[m-]:SP_SetUpBt[106]:------------------
+[m[06:54:49:275 [1;32mINFO[m-]:SP_BlueSlaveConfig[2968]:[0;35mBT Name,polaris_d13e86
+[m[06:54:49:275 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+[m[06:54:49:277 [1;32mINFO[m-]:SP_GetDeviceVer[309]:gimbal HwVer[1.2]
+[m[06:54:49:277 [1;32mINFO[m-]:SP_GetDeviceVer[316]:gimbal FwVer[2.0.0.22]
+[m[06:54:49:277 [1;32mINFO[m-]:SP_GetDeviceVer[322]:stFatoryInfo HwVer[1.1]
+[m[06:54:49:277 [1;32mINFO[m-]:SP_GetDeviceVer[327]:mFwVer[4.0.0.32]
+[m[06:54:49:277 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[780],val[hw:1.1.1.2;sw:6.0.0.54;exAxis:;sv:1;ov: ;]
+[m[m[06:54:49:280 [1;32mINFO[m-]:gatt_register_service[1147]:gatt_register_service
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/app/service0xabc03440
+	0000fff0-0000-1000-8000-00805f9b34fb
+	Unknown
+[m[06:54:49:281 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xabc03440/chrc0xabc038d8
+	0xfff1
+[m[06:54:49:281 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xabc03440/chrc0xabc03e90
+	0xfff2
+[m[06:54:49:285 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+Failed to register advertising object
+[m[06:54:49:285 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+[m[06:54:49:285 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+[m[06:54:49:286 [1;32mINFO[m-]:SP_SetBleState[81]:ble slave on
+Changing discoverable on succeeded
+Changing polaris_d13e86 succeeded
+Changing pairable on succeeded
+Changing discoverable on succeeded
+[m[06:54:49:335 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001801-0000-1000-8000-00805f9b34fb
+[m[06:54:49:335 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[m[06:54:49:335 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+[m[06:54:49:335 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001800-0000-1000-8000-00805f9b34fb
+[m[06:54:49:335 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000fff0-0000-1000-8000-00805f9b34fb
+[m[06:54:49:335 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+Application registered
+Advertising object registered
+[m[06:54:49:786 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[06:54:49:879 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:44
+[m[06:54:50:113 [1;32mINFO[m-]:SP_GetSdInfo[2483]:u64TotalSize:121866;u64FreeSize::121680;u64UsedSize:186
+[m[06:54:50:114 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1029],val[1]
+[m[m[06:54:50:114 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[279],val[state:1;]
+[m[m[06:54:50:114 [1;32mINFO[m-]:EventMsgProc[2657]:SP_EVENT_SD_SCAN
+[m[06:54:50:115 [1;32mINFO[m-]:SP_GetNomalFileList[90]: PhotoMaxNum 0;FileCount 0
+[m[06:54:50:117 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/focusStack/],ClassCount[0],maxCalss[0]
+[m[06:54:50:117 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/focusStack/],IspClassCount[0]
+[m[06:54:50:121 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/panorama/],ClassCount[0],maxCalss[0]
+[m[06:54:50:121 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/panorama/],IspClassCount[0]
+[m[06:54:50:122 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[06:54:50:123 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/Lapse/],ClassCount[0],maxCalss[0]
+[m[06:54:50:123 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[06:54:50:125 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/sun/],ClassCount[0],maxCalss[0]
+[m[06:54:50:129 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/HDR/],ClassCount[0],maxCalss[0]
+[m[06:54:50:129 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/HDR/],IspClassCount[0]
+[m[06:54:50:129 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[06:54:50:131 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/starskyStack/],ClassCount[0],maxCalss[0]
+[m[06:54:50:131 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[777],val[hintId:3;]
+[m[m[06:54:50:131 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespace:121680;usespace:186;]
+[m[m[06:54:50:292 [1;32mINFO[m-]:SP_LogPathInit[2979]:[0;35mClogCnt[21],minNun[37],maxNum[57]
+[m[06:54:50:293 [1;32mINFO[m-]:SP_LogPathInit[2982]:[0;35mMlogCnt[21],minNun[37],maxNum[57]
+[m[06:54:50:293 [1;32mINFO[m-]:SP_LogPathInit[2985]:[0;35mAlogCnt[21],minNun[37],maxNum[57]
+[m[06:54:50:293 [1;32mINFO[m-]:SP_LogPathInit[2988]:[0;35mElogCnt[21],minNun[37],maxNum[57]
+[m[06:54:50:293 [1;32mINFO[m-]:SP_LogPathInit[2995]:rm -rf /app/sd/system/log/Clog_000037.log
+[m[06:54:50:680 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:43
+[m[06:54:51:480 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:42
+[m[06:54:52:280 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:41
+[m[06:54:53:080 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:40
+[m[06:54:53:881 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:39
+[m[06:54:54:681 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:38
+[m[06:54:55:481 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:37
+[m[06:54:56:281 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:36
+[m[06:54:57:081 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:35
+[m[06:54:57:882 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:34
+[m[06:54:58:072 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:54:58:072 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[06:54:58:682 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:33
+[m[06:54:59:482 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:32
+[m[06:55:00:282 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:31
+[m[06:55:01:082 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:30
+[m[06:55:01:883 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:29
+[m[06:55:02:683 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:28
+[m[06:55:03:483 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:27
+[m[06:55:04:283 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:26
+[m[06:55:05:083 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:25
+[m[06:55:05:884 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:24
+[m[06:55:06:684 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:23
+[m[06:55:07:484 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:22
+[m[06:55:08:284 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:21
+[m[06:55:09:085 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:20
+[m[06:55:09:885 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:19
+[m[06:55:10:685 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:18
+[m[06:55:11:485 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:17
+[m[06:55:12:285 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:16
+[m[06:55:13:086 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:15
+[m[06:55:13:886 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:14
+[m[06:55:14:686 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:13
+[m[06:55:15:486 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:12
+[m[06:55:16:287 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:11
+[m[06:55:17:087 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:10
+[m[06:55:17:887 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:9
+[m[06:55:18:687 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:8
+[m[06:55:19:487 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:7
+[m[06:55:20:288 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:6
+[m[06:55:21:088 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:5
+[m[06:55:21:888 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:4
+[m[06:55:22:688 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:3
+[m[06:55:23:488 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:2
+[m[06:55:24:289 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:1
+[m[06:55:24:289 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿªUZ¥
+[m[06:55:28:158 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:55:28:158 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[06:55:34:934 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=3 192.168.0.4:56080] from [1] s_u32ClientNum[2]
+[m[06:55:34:934 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[06:55:34:934 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[06:55:34:934 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=3] start
+[m[06:55:34:934 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:783;val:-100
+[m[06:55:34:934 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[783],val[ret:0;]
+[m[m[06:55:40:935 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=3] s_u32ClientNum[1]
+[m[06:55:40:935 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[3]
+[m[06:55:58:245 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:55:58:245 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[06:56:28:331 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:56:28:331 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[06:56:58:417 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:56:58:417 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[06:57:28:503 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:57:28:504 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[06:57:58:590 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:57:58:590 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[06:58:28:676 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[06:58:28:676 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]

@@ -1,0 +1,239 @@
+[m[00:00:59:255 [1;32mINFO[m-]:main[194]:[0;32;31m 
+ 
+ 
+ 
+ 
+ 
+------/app/bin/pgphoto: version: 1.3.4  build: 1.3.9  ---libgphoto: 0562e8a  ----env: USER=root  ---- 
+ 
+ 
+[m[00:00:59:257 [1;32mINFO[m-]:ipc_msg_queue_create[50]:[0;32;32m--- create msg queue success, key[1003], id[65538]
+[m[m[00:00:59:258 [1;32mINFO[m-]:ipc_msg_queue_create[50]:[0;32;32m--- create msg queue success, key[1002], id[98307]
+[m[SP_RunThread]     thread name ipc_msg_loop
+[spc_ipc_msg_loop]     thread name ipc_msg_loop thread  -1231191248
+[m[00:00:59:260 [1;32mINFO[m-]:scanUsb[1853]:[0;32;31m--- openUsbDir ret 0
+[m[00:00:59:260 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/002/001      idVendor: 1d6b  idProduct: 0003 
+[m[00:00:59:410 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/002      idVendor: 1a40  idProduct: 0101 
+[m[00:00:59:411 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/001      idVendor: 1d6b  idProduct: 0002 
+[m[14:37:27:476 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[279],val[state:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 279  data: state:0;   --_isInit 1 
+gphoto2 2.5.27
+
+Copyright (c) 2000-2021 Marcus Meissner and others
+
+gphoto2 comes with NO WARRANTY, to the extent permitted by law. You may
+redistribute copies of gphoto2 under the terms of the GNU General Public
+License. For more information about these matters, see the files named COPYING.
+
+This version of gphoto2 is using the following software versions and options:
+gphoto2         2.5.27         /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, popt(m), exif, no cdk, no aa, no jpeg, no readline
+libgphoto2      2.5.27         standard camlibs (SKIPPING lumix), /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF
+libgphoto2_port 2.5.27         iolibs: ptpip, /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF, no USB, no serial
+0.069398 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ax203  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/canon  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/digigr8  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/dimagev  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/directory  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005a  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005c  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/kodak_dc240  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/mars  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/pentax  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ptp2  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ricoh_g3  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sierra  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sonix  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sq905  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/st2205  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/topfield  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/tp6801  value: (null) 
+0.248409 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+0.248992 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: PTP/IP Connection  path: ptpip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+0.250530 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: IP Connection  path: ip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+0.251805 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Serial Port Device  path: serial: lib:../lib/libgphoto2_port/0.12.0/serial
+0.253194 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Universal Serial Bus  path: usb: lib:../lib/libgphoto2_port/0.12.0/usb1
+0.263664 gp_abilities_list_detect [gphoto2-abilities-list.c:515](0): --- gp_abilities_list_detect_usb type: 4
+0.263780 gp_abilities_list_detect_usb [gphoto2-abilities-list.c:406](0): --- Auto-detecting USB cameras...
+--- list count = 0 
+0.276521 gp_camera_init [gphoto2-camera.c:678](0): Initializing camera...
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ax203  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/canon  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/digigr8  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/dimagev  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/directory  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005a  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005c  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/kodak_dc240  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/mars  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/pentax  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ptp2  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ricoh_g3  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sierra  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sonix  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sq905  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/st2205  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/topfield  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/tp6801  value: (null) 
+0.403792 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+0.403889 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: PTP/IP Connection  path: ptpip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+0.404918 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: IP Connection  path: ip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+0.406064 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Serial Port Device  path: serial: lib:../lib/libgphoto2_port/0.12.0/serial
+0.407269 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Universal Serial Bus  path: usb: lib:../lib/libgphoto2_port/0.12.0/usb1
+0.415081 gp_abilities_list_detect [gphoto2-abilities-list.c:515](0): --- gp_abilities_list_detect_usb type: 4
+0.415161 gp_abilities_list_detect_usb [gphoto2-abilities-list.c:406](0): --- Auto-detecting USB cameras...
+0.425386 gp_context_error            (0): Could not detect any camera
+
+*** Error ***              
+Could not detect any camera
+[m[14:37:28:185 [1;32mINFO[m-]:sp_Gphoto_Init[147]:----sp_Gphoto_Init ret -105 
+[m[14:37:28:185 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m o: www-folder-path......: disabled
+ o: HTTP TCP port........: 8080
+ o: HTTP Listen Address..: (null)
+ o: username:password....: disabled
+ o: commands.............: enabled
+[m[14:37:28:189 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[14:37:30:488 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[279],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 279  data: state:1;   --_isInit 1 
+[m[14:39:23:219 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[14:39:23:222 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[14:39:23:223 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+[m[14:39:23:224 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+[m[14:39:23:302 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[14:39:23:303 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[14:39:23:333 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+[m[14:39:23:376 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+[m[14:39:23:802 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+[m[17:44:27:080 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[282],val[urer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 282  data: urer:none;model:none;state:-5;storage:0;photoFormat:0;   --_isInit 1 
+[m[17:44:27:081 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[282],val[format:0;]
+[m[m[17:44:33:137 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[17:44:33:182 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[17:44:33:183 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[17:44:33:285 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+[m[17:44:33:286 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+[m[17:44:34:253 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[17:44:34:256 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[17:44:34:257 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[17:44:34:358 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+[m[17:44:34:359 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+[m[17:57:55:011 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[274],val[state:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 274  data: state:0;   --_isInit 1 
+[m[17:57:55:564 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[274],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 274  data: state:1;   --_isInit 1 
+[m[17:57:55:584 [1;32mINFO[m-]:spGphotoRest[500]:[0;32;31m----spGphotoRest  
+[m[17:57:56:584 [1;32mINFO[m-]:scanUsb[1853]:[0;32;31m--- openUsbDir ret 0
+[m[17:57:56:585 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/002/001      idVendor: 1d6b  idProduct: 0003 
+[m[17:57:56:652 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[274],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 274  data: state:1;   --_isInit 1 
+[m[17:57:56:684 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[274],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 274  data: state:1;   --_isInit 1 
+[m[17:57:57:381 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/003      idVendor: 1a40  idProduct: 0101 
+[m[17:57:57:382 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/001      idVendor: 1d6b  idProduct: 0002 
+gphoto2 2.5.27
+
+Copyright (c) 2000-2021 Marcus Meissner and others
+
+gphoto2 comes with NO WARRANTY, to the extent permitted by law. You may
+redistribute copies of gphoto2 under the terms of the GNU General Public
+License. For more information about these matters, see the files named COPYING.
+
+This version of gphoto2 is using the following software versions and options:
+gphoto2         2.5.27         /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, popt(m), exif, no cdk, no aa, no jpeg, no readline
+libgphoto2      2.5.27         standard camlibs (SKIPPING lumix), /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF
+libgphoto2_port 2.5.27         iolibs: ptpip, /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF, no USB, no serial
+42002430.641913 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ax203  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/canon  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/digigr8  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/dimagev  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/directory  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005a  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005c  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/kodak_dc240  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/mars  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/pentax  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ptp2  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ricoh_g3  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sierra  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sonix  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sq905  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/st2205  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/topfield  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/tp6801  value: (null) 
+42002430.726786 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+42002430.726917 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: PTP/IP Connection  path: ptpip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+42002430.728079 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: IP Connection  path: ip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+42002430.729229 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Serial Port Device  path: serial: lib:../lib/libgphoto2_port/0.12.0/serial
+42002430.730292 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Universal Serial Bus  path: usb: lib:../lib/libgphoto2_port/0.12.0/usb1
+42002430.738312 gp_abilities_list_detect [gphoto2-abilities-list.c:515](0): --- gp_abilities_list_detect_usb type: 4
+42002430.738390 gp_abilities_list_detect_usb [gphoto2-abilities-list.c:406](0): --- Auto-detecting USB cameras...
+--- list count = 0 
+42002430.746701 gp_camera_init [gphoto2-camera.c:678](0): Initializing camera...
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ax203  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/canon  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/digigr8  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/dimagev  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/directory  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005a  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005c  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/kodak_dc240  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/mars  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/pentax  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ptp2  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ricoh_g3  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sierra  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sonix  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sq905  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/st2205  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/topfield  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/tp6801  value: (null) 
+42002430.848681 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+42002430.848785 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: PTP/IP Connection  path: ptpip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+42002430.849678 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: IP Connection  path: ip: lib:../lib/libgphoto2_port/0.12.0/ptpip
+42002430.850704 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Serial Port Device  path: serial: lib:../lib/libgphoto2_port/0.12.0/serial
+42002430.851743 gp_abilities_list_detect [gphoto2-abilities-list.c:503](0): --- port info name: Universal Serial Bus  path: usb: lib:../lib/libgphoto2_port/0.12.0/usb1
+42002430.859671 gp_abilities_list_detect [gphoto2-abilities-list.c:515](0): --- gp_abilities_list_detect_usb type: 4
+42002430.859748 gp_abilities_list_detect_usb [gphoto2-abilities-list.c:406](0): --- Auto-detecting USB cameras...
+42002430.869506 gp_context_error            (0): Could not detect any camera
+
+*** Error ***              
+Could not detect any camera
+[m[17:57:58:628 [1;32mINFO[m-]:sp_Gphoto_Init[147]:----sp_Gphoto_Init ret -105 
+[m[17:57:58:628 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[m[17:57:58:628 [1;32mINFO[m-]:spGphotoRest[506]:[0;32;31m----spGphotoRest ok  
+[m[17:57:58:686 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+[m[18:00:31:327 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[18:00:31:329 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[18:00:31:330 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[18:00:31:344 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........3 
+[m[18:00:31:431 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+[m[18:00:31:432 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+[m[18:00:32:408 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+[m[18:00:32:410 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........4 
+on client close..........4 

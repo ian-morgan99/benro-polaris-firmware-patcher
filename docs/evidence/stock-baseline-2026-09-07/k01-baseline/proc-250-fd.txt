@@ -1,0 +1,22 @@
+total 0
+dr-x------    2 root     root             0 Sep  7 18:11 .
+dr-xr-xr-x    8 root     root             0 Sep  7 18:00 ..
+lr-x------    1 root     root            64 Sep  7 18:11 0 -> /dev/null
+l-wx------    1 root     root            64 Sep  7 18:11 1 -> /app/Mlog.txt
+l-wx------    1 root     root            64 Sep  7 18:11 10 -> pipe:[705]
+lrwx------    1 root     root            64 Sep  7 18:11 11 -> socket:[708]
+lrwx------    1 root     root            64 Sep  7 18:11 12 -> /dev/ttyAMA3
+lrwx------    1 root     root            64 Sep  7 18:11 13 -> socket:[709]
+lrwx------    1 root     root            64 Sep  7 18:11 14 -> /dev/sys
+lrwx------    1 root     root            64 Sep  7 18:11 15 -> /dev/vb
+lrwx------    1 root     root            64 Sep  7 18:11 16 -> socket:[788]
+lrwx------    1 root     root            64 Sep  7 18:11 17 -> anon_inode:[eventfd]
+lrwx------    1 root     root            64 Sep  7 18:11 18 -> socket:[1660]
+l-wx------    1 root     root            64 Sep  7 18:11 2 -> /app/Mlog.txt
+lrwx------    1 root     root            64 Sep  7 18:11 3 -> /dev/mem
+lrwx------    1 root     root            64 Sep  7 18:11 4 -> /dev/hi_gpio
+lr-x------    1 root     root            64 Sep  7 18:11 5 -> /sys/devices/platform/soc/120d2000.gpio_chip/gpiochip2/gpio/gpio23/value
+lr-x------    1 root     root            64 Sep  7 18:11 6 -> /sys/devices/platform/soc/120db000.gpio_chip/gpiochip11/gpio/gpio88/value
+lrwx------    1 root     root            64 Sep  7 18:11 7 -> /dev/i2c-2
+lrwx------    1 root     root            64 Sep  7 18:11 8 -> anon_inode:[eventpoll]
+lr-x------    1 root     root            64 Sep  7 18:11 9 -> pipe:[705]

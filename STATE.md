@@ -100,8 +100,9 @@
 | Wake method | bare `bluetoothctl connect 48:E7:DA:D4:B5:72` from a single piped session — the connect IS the wake pulse |
 | Last known Mlog | `/app/yocto/run/customer/Mlog/Mlog_<date>.log` (NOT in `/var/log`) |
 | Last reboot attempt | today, 16:0x UTC — AP appeared briefly, sshd never bound, dropped before SSH connect |
-| Current state | **UNKNOWN / DARK as of 2026-09-05, ~1hr+ AP absence.** See [§ Session log 2026-09-04/05](#session-log-2026-09-0405--812-trigger-fired-inconclusive-then-device-instability) below — the `812` trigger was fired against the padded zip, produced no updater decision in Mlog, and the device subsequently went through repeated unreachable periods and two user-initiated manual restarts. As of the last check the Polaris AP (`polaris_d13e86`) was not broadcasting. `scripts/resilient-monitor.sh` is running in the background (read-only; auto-detects reconnect, snapshots boot/uptime/FwVer, continuously captures Mlog — see logs under `docs/evidence/fwpkt-install/resilient-monitor-*.log`) so the reconnect moment won't be missed. Do not assume the AWAKE state below still holds without re-verifying, and do **not** send another trigger until boot history is reviewed. |
+| Current state | **RECOVERED to stock at 2026-09-07 16:42 UTC.** See [§ Session log 2026-09-07](#session-log-2026-09-07--direct-nand-edits-bypass-bricks-gimbal-sd-card-extract-fw-recovery) — direct NAND edits by a prior agent session left the gimbal wedged in a pgphoto-respawn loop; recovery via the canonical SD-card pre-extracted `FwPkt/` flow (stock `firmware/FwPkt.zip`, 2026-08-22) was successful. AP `polaris_d13e86` broadcasting, SSH on 22 / lighttpd on 80 / `polestar_app` on 9090 all responsive. `/app/FwVer` shows `FwVer:4.0.0.32` (stock). `/app/bin/polestar_app` size 24,941,228 bytes (stock) and `/app/bin/pgphoto` size 7,801,576 bytes (stock). User has authorised **building a new 'best build' next** — see [§ Session log 2026-09-07](#session-log-2026-09-07--direct-nand-edits-bypass-bricks-gimbal-sd-card-extract-fw-recovery). |
 | Prior known-good state (2026-08-31, superseded) | SSH responsive (port 22 open, lighttpd on 80, control daemon on 9090). polestar_app running as PID 248. `/app/sd/FwPkt.zip` (stock, 68.6MB) still staged. Watcher at `/tmp/polaris-watch/watch.sh` active. **Gimbal will re-sleep if the BT-paired phone leaves range** — see [§ Sleeping-when-phone-leaves](#sleeping-when-phone-leaves-do-not-blame-sshd). |
+| 2026-09-07 mid-day (superseded) | **WEDGED.** See [§ Session log 2026-09-07](#session-log-2026-09-07--direct-nand-edits-bypass-bricks-gimbal-sd-card-extract-fw-recovery). Blue+green LED on, BT visible (then disappeared after power-cycle), AP not broadcasting. `checkGphotoTask` looped restarting pgphoto with `nohup: can't execute '/app/bin/pgphoto': No such file or directory` — root cause was the prior agent's "direct edits, reverted, relating to SD backup". |
 
 **If the device is awake:**
 
@@ -980,3 +981,110 @@ That produces `probes-<timestamp>/` with:
 - `10-mlog-latest.txt` — last `Mlog_*` file pulled.
 
 Update the `Hypotheses` section in this file with the results.
+
+---
+
+## Session log 2026-09-07 — direct NAND edits (bypass) bricks gimbal, SD-card-extract FW recovery
+
+**HARD RULE established this session:** no future agent may modify firmware on
+the Polaris except by staging a pre-extracted `FwPkt/` tree on the SD card.
+See `.github/skills/fwpkt-update-flow/SKILL.md` for the full rule and the
+BT-wake + keepalive procedure.
+
+### What happened
+
+At ~14:00 UTC on 2026-09-07 (16:00 gimbal-local), a prior agent session had
+SSH access to the gimbal and made **direct changes to NAND** (`/app/bin/`,
+`/app/lib/` etc.) in pursuit of an SD-backup / patch-related change, then
+attempted to revert. The revert left the device wedged:
+
+- `/app/bin/pgphoto` was gone or unreachable from the loader.
+- `libpolaris_stage2.so` reported `[stage2] FATAL early call to gp_port_new
+  @slot=0x300000f0 before fill (slot unresolved / called in pre-fill
+  window). Aborting cleanly.`
+- `checkGphotoTask` looped restarting pgphoto (`pgphoto is exit, reboot it`),
+  but the launcher kept reporting `nohup: can't execute
+  '/app/bin/pgphoto': No such file or directory`.
+- The pgphoto respawn loop saturated CPU and starved everything else,
+  including the radios — the AP stopped broadcasting and BT discovery went
+  blank (after the power-cycle).
+- The only persistent evidence of what was happening came from the SD card
+  (`/system/log/Mlog_*`), which the gimbal kept writing to throughout.
+
+### Evidence trail
+
+- Full SD card log dump (80 files, 46 MB) saved at
+  `docs/evidence/fwpkt-install/on-card-logs-2026-09-07/` with an INDEX.md.
+- Archive: `docs/evidence/fwpkt-install/sd-card-logs-2026-09-07_20260907T163607Z.tar.gz`
+  (2.4 MB, 81 entries).
+- The wedged boot is `Mlog_000062.log` / `Clog_000062.log` (16 MB / 2 MB).
+- The last clean boot is `Mlog_000061.log` / `Clog_000061.log` (11:48
+  gimbal-local, Pentax K-3 Mark III connected, captures normal).
+
+### Pivot analysis
+
+The Mlog gap between 11:48 (clean boot) and the 14:37 boot is exactly the
+window the user identified for the other agent's edits. The first pgphoto
+launch of the 14:37 boot hit the stage2 `[stage2] FATAL early call` race —
+suggesting the agent's edits left something timing-sensitive in place that
+slightly changed the LD_PRELOAD init order, even though their stated intent
+was a clean revert.
+
+### Recovery
+
+1. Pulled the SD card from the gimbal, mounted it read-only on the PC via
+   udisks2, dumped the entire `/system/log/` to the repo.
+2. Staged `firmware/FwPkt.zip` (stock, MD5 `90bdad51...`, 2026-08-22) as the
+   pre-extracted `/FwPkt/` tree at the SD root, in the canonical Benro
+   layout (`/FwPkt/{firmwareInfo,camera/{appfs.ubifs,config,rootfs.ubifs,uImage},gimbal/{polaris403_2.0.0.22.bin,polaris413_2.0.0.22.bin}}`).
+   Verified `firmwareInfo` per-file MD5 entries match the actual bytes.
+3. Reseated the SD card in the gimbal, clean power-cycle (button-off, 30s,
+   button-on).
+4. The on-boot `SP_EVENT_SD_SCAN` walked `/app/sd/FwPkt/{gimbal,camera}/`,
+   `crcInfo` per-file MD5 compare passed against the staged tree (mismatch
+   vs NAND), U-Boot reflash ran (~5 min), gimbal rebooted.
+5. AP `polaris_d13e86` reappeared. SSH on 22 / lighttpd on 80 /
+   `polestar_app` on 9090 all responsive.
+6. Confirmed: `/app/FwVer` = `FwVer:4.0.0.32;date:2025.05.09;` (stock);
+   `/app/bin/polestar_app` = 24,941,228 bytes (stock); `/app/bin/pgphoto`
+   = 7,801,576 bytes (stock).
+
+### What was wrong with the bypass attempt (and how to not do it again)
+
+The bypass itself was the cause of the brick. Specifically:
+
+- Direct edits to `/app/bin/` (or `/app/lib/stage2/`, or `/app/conf/`, or
+  `/app/yocto/...`) are not visible to the on-boot watcher, which compares
+  the entire NAND appfs MD5 against `firmwareInfo`. An in-place edit leaves
+  NAND inconsistent with what the watcher thinks is installed.
+- Even if the bypass is later "reverted" by reverting the in-place edit,
+  the revert is *also* an in-place edit and has the same problem. The
+  on-boot watcher will silently reject any future staged zip whose
+  `firmwareInfo` claims match the *un-edited* reference tree but whose
+  bytes don't match the *edited* NAND.
+- The patcher (`container/`) is the only sanctioned path. If a real change
+  is needed that the patcher cannot express, file an issue rather than
+  working around the rule.
+
+### Next: "best build" v2
+
+User has authorised building a new 'best build' once SSH is back. Plan:
+
+1. Diff NAND `/app/bin/polestar_app` (now stock) against
+   `firmware/FwPkt.zip`'s extracted copy — confirm there are no surprises.
+2. Audit the patcher's `libpolaris_stage2.so` for the loader-race bug
+   (`FATAL early call to gp_port_new before fill`). The fix is to either
+   delay the abort, or have `gp_port_new` block until slots are filled.
+3. Add a watchdog backoff to `checkGphoto` (don't restart pgphoto every
+   ~30s on every failed launch; cap retry count and add jitter).
+4. Decide mode: full-mode (with the patcher improvements) or
+   `--ptp2-only` (no stage2 loader, no race risk, fewer camera features).
+5. Rebuild and re-stage via the sanctioned flow.
+
+### Skills and rules added this session
+
+- `.github/skills/fwpkt-update-flow/SKILL.md` — new. Hard rule + the
+  sanctioned flow + "things that are NOT allowed" + recovery procedure
+  + BT-wake and keepalive guidance. This is the only sanctioned way to
+  install firmware on the Polaris.
+

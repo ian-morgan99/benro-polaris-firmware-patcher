@@ -1,0 +1,416 @@
+[m[m[10:27:58:340 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:27:58:340 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:27:58:367 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:27:58:367 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:27:58:375 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:27:58:376 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:27:58:376 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:27:58:379 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:27:58:381 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000874;pitch:0.878067;roll:0.000000;]
+[m[m[10:27:59:388 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:27:59:389 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:27:59:389 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:27:59:398 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:27:59:400 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000871;pitch:0.878065;roll:0.000000;]
+[m[m[10:28:00:377 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:00:378 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:00:398 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:00:398 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:00:411 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:00:411 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:00:411 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:00:422 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:00:424 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000872;pitch:0.878065;roll:0.000000;]
+[m[m[10:28:01:431 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:01:431 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:01:431 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:01:439 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:01:441 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000873;pitch:0.878069;roll:0.000000;]
+[m[m[10:28:02:406 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:02:406 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:02:424 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:02:425 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:02:449 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:02:450 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:02:450 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:02:453 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:02:455 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000872;pitch:0.878062;roll:0.000000;]
+[m[m[10:28:03:462 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:03:462 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:03:462 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:03:470 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:03:472 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000875;pitch:0.878065;roll:0.000000;]
+[m[m[10:28:03:472 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[480]:gimbal Yaw:0.050;pitch:-50.309;roll:0.000;tYaw:-0.050;tRoll:0.000;
+[m[10:28:04:433 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:04:433 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:04:451 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:04:451 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:04:477 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:04:477 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:04:477 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:04:481 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:04:483 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000875;pitch:0.878064;roll:0.000000;]
+[m[m[10:28:05:492 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:05:492 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:05:492 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:05:501 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:05:503 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000875;pitch:0.878066;roll:0.000000;]
+[m[m[10:28:06:459 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:06:459 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:06:477 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:06:477 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:06:507 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:06:507 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:06:507 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:06:510 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:06:512 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000875;pitch:0.878063;roll:0.000000;]
+[m[m[10:28:07:519 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:07:519 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:07:519 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:07:528 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:07:530 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000874;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:08:487 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:08:487 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:08:505 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:08:505 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:08:535 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:08:535 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:08:535 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:08:538 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:08:540 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000874;pitch:0.878062;roll:0.000000;]
+[m[m[10:28:09:547 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:09:548 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:09:548 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:09:556 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:09:558 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000878;pitch:0.878066;roll:0.000000;]
+[m[m[10:28:10:511 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:10:511 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:10:531 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:10:531 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:10:562 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:10:562 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:10:562 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:10:565 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:10:567 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000874;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:11:613 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:11:613 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:11:613 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:11:622 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:11:625 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000871;pitch:0.878066;roll:0.000000;]
+[m[m[10:28:12:538 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:12:538 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:12:555 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:12:555 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:12:628 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:12:628 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:12:628 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:12:632 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:12:634 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000871;pitch:0.878065;roll:0.000000;]
+[m[m[10:28:13:640 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:13:641 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:13:641 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:13:649 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:13:651 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000877;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:14:563 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:14:564 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:14:582 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:14:582 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:14:655 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:14:655 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:14:655 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:14:659 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:14:661 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000878;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:15:666 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:15:666 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:15:666 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:15:670 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:15:672 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000877;pitch:0.878064;roll:0.000000;]
+[m[m[10:28:15:988 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361f0000285a ;
+[m[10:28:15:988 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361f0000285a ;]
+[m[m[10:28:16:595 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:16:595 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:16:614 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:16:614 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:16:674 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:16:675 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:16:675 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:16:677 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:16:679 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000871;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:17:686 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:17:686 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:17:686 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:17:695 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:17:697 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000869;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:18:630 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:18:630 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:18:647 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:18:647 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:18:700 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:18:700 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:18:700 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:18:702 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:18:704 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000874;pitch:0.878065;roll:0.000000;]
+[m[m[10:28:19:710 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:19:710 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:19:710 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:19:719 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:19:721 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000877;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:20:650 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:20:651 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:20:669 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:20:669 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:20:724 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:20:724 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:20:724 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:20:726 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:20:728 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000875;pitch:0.878064;roll:0.000000;]
+[m[m[10:28:21:734 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:21:735 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:21:735 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:21:744 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:21:745 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000874;pitch:0.878065;roll:0.000000;]
+[m[m[10:28:22:676 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:22:676 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:22:695 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:22:695 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:22:748 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:22:748 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:22:749 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:22:751 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:22:753 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000872;pitch:0.878062;roll:0.000000;]
+[m[m[10:28:23:760 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:23:760 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:23:760 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:23:769 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:23:770 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000872;pitch:0.878065;roll:0.000000;]
+[m[m[10:28:24:702 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:24:702 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:24:722 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:24:722 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:24:773 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:24:773 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:24:774 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:24:779 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:24:781 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000869;pitch:0.878068;roll:0.000000;]
+[m[m[10:28:25:804 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:25:804 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:25:804 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:25:808 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:25:810 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000872;pitch:0.878064;roll:0.000000;]
+[m[m[10:28:26:812 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:26:812 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:26:814 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:26:814 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:26:815 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:26:823 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:26:825 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000875;pitch:0.878063;roll:0.000000;]
+[m[m[10:28:26:831 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:26:831 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:27:832 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:27:833 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:27:833 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:27:841 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:27:843 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000872;pitch:0.878067;roll:0.000000;]
+[m[m[10:28:28:849 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:28:849 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:28:849 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:28:858 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:28:860 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000869;pitch:0.878062;roll:0.000000;]
+[m[m[10:28:28:873 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:266;val:-100
+[m[10:28:28:873 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[266],val[-100]
+[m[m[10:28:28:899 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:28:899 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:Automatic,0,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[10:28:29:864 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:284;val:-100
+[m[10:28:29:864 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[10:28:29:864 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[10:28:29:873 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[9]:type:2;code:517;val:-100
+[m[10:28:29:875 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:-0.000874;pitch:0.878064;roll:0.000000;]
+umount: can't unmount /app/sd: Invalid argument
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+Bus 001 Device 003: ID 25fb:0189
+[m[11:48:46:533 [1;32mINFO[m-Init]:main[94]:[0;35mFwVer v4.0.0.32 20250509
+[m[11:48:46:533 [1;32mINFO[m-Init]:main[95]:+++++++++++++++++++++
+[m[11:48:46:543 [1;32mINFO[m-Init]:main[97]:+++++++++++++++++++++
+[m[11:48:46:543 [1;32mINFO[m-]:HI_SYSTEM_GetStartupWakeupSource[75]:[0;35mHI_SYSTEM_STARTUP_SRC_STARTUP
+[m[11:48:46:544 [1;32mINFO[m-]:SP_GpioInit[37]:[0;32;32mHAL_GPIO_Init OK
+[m[m[11:48:46:545 [1;31mERROR[m-]:SP_GpioUnexport[226]:Failed to unexport gpio![m[11:48:46:547 [1;31mERROR[m-]:SP_GpioUnexport[226]:Failed to unexport gpio![m[11:48:46:551 [1;32mINFO[m-]:CameraGpioTask[116]:camera gpio value = 1
+[m[11:48:46:559 [1;32mINFO[m-]:SP_UserParamInit[198]:SP_UserParamInit success,s8ParamFd = 1;
+[m[11:48:46:559 [1;32mINFO[m-]:SP_UserParamInit[207]:SettlingTime[2];
+[m[11:48:46:559 [1;32mINFO[m-]:SP_SetAutoOffSw[329]:SP_SetAutoOffSw:0;
+[m[11:48:46:559 [1;32mINFO[m-]:SP_UserParamInit[214]:s32AutoOffSw[0];
+[m[11:48:46:560 [1;32mINFO[m-]:WakeUpGpioTask[247]:dTimeMs:2075331416
+[m[11:48:46:561 [1;32mINFO[m-]:SP_UserParamInit[219]:s32AutoLevelEn[0];
+[m[11:48:46:561 [1;32mINFO[m-]:SP_UserParamInit[225]:s32TimeIntervalType[0];
+[m[11:48:46:564 [1;32mINFO[m-]:SP_GetFactoryParam[56]:[0;32;34mfactoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[11:48:46:565 [1;32mINFO[m-]:SP_GetFactoryParam[63]:hw:1.1
+[m[11:48:46:565 [1;32mINFO[m-]:SP_GetFactoryParam[67]:date:2021.11.29
+[m[11:48:46:565 [1;32mINFO[m-]:SP_GetFactoryParam[71]:pcb:1.20
+[m[11:48:46:565 [1;33mWARN[m-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[11:48:46:565 [1;32mINFO[m-]:SP_GetFactoryParam[75]:CellHwVer:0
+[m[11:48:46:565 [1;32mINFO[m-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
+[m[11:48:46:567 [1;32mINFO[m-]:SP_GetFwVer[286]:fwVerinfo[FwVer:4.0.0.32;date:2025.05.09;
+(];len:[32];
+[m[11:48:46:567 [1;32mINFO[m-]:SP_GetFwVer[293]:FwVer[4.0.0.32];
+[m[11:48:46:568 [1;32mINFO[m-]:SP_SaveUserParamToFlash[122]:SP_SaveUserParam success,s8ParamFd = 2;
+[m[11:48:46:568 [1;32mINFO[m-]:SP_SaveUserParamTask[154]:SaveUserParam
+[m[11:48:46:640 [1;32mINFO[m-]:SP_SetSysInitTime[134]:RTC DateTime: 2026/09/07-11:48:46
+[m[11:48:46:640 [1;32mINFO[m-]:SP_SetSysInitTime[142]:[0;35mBuild DateTime: 2025/05/09-14:37:27
+[m[11:48:46:079 [1;32mINFO[m-SYSTEM]:HI_SYSTEM_SetDateTime[402]:Mon Sep  7 11:48:46 2026
+
+[m[11:48:46:079 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1001],id[131076]
+[m[m[11:48:46:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1002],id[98307]
+[m[m[11:48:46:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1003],id[65538]
+[m[m[11:48:46:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1004],id[163845]
+[m[m[11:48:46:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1006],id[32769]
+[m[m[11:48:46:080 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1005],id[0]
+[m[m[11:48:46:082 [1;32mINFO[m-]:SP_CreateBtRcvMsgProcTask[186]:SP_CreateBtRcvMsgProcTask success
+[m[11:48:46:082 [1;32mINFO[m-]:SP_CreateBtSendMsgProcTask[244]:SP_CreateBtSendMsgProcTask success
+[m[11:48:46:326 [1;32mINFO[m-]:SP_NetInit[217]:INIT WEB SERVER OK 
+[m[11:48:46:330 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=1] start
+[m[11:48:46:333 [1;32mINFO[m-]:Uart3Open[52]:open uart3 success,fd[13]
+[m[11:48:46:343 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0/mmcblk0p1
+[m[11:48:46:343 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0
+[m[11:48:46:399 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/virtual/bdi/179:0
+[umount: can't unmount /app/sd: Invalid argument
+Configuration file: /app/wifi/hostapd.conf
+rfkill: Cannot open RFKILL control device
+Using interface wlan0 with hwaddr 48:e7:da:d4:b5:73 and ssid "polaris_d13e86"
+wlan0: interface state UNINITIALIZED->ENABLED
+wlan0: AP-ENABLED 
+m[11:48:46:400 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa
+[m[11:48:46:400 [1;32mINFO[m-]:NetlinkUeventTask[73]:remove sd card
+[m[11:48:46:411 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[m[11:48:46:411 [1;32mINFO[m-]:EventMsgProc[2603]:SP_EVENT_SD_UNPLUGED
+[1;33mSP_sendMsg success; key[1004],type[5],code[1025],val[1]
+[m[m[11:48:46:412 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[279],val[state:0;]
+[m[m[11:48:46:412 [1;31mERROR[m-]:SP_FileListFree[195]:list no init
+[m[11:48:46:412 [1;32mINFO[m-]:SP_NomalFileListFree[33]:SP_NomalFileListFree
+[m[11:48:46:413 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:413 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:413 [1;32mINFO[m-]:SP_FocusStackFileListFree[33]:SP_FocusStackFileListFree
+[m[11:48:46:414 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:414 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:414 [1;32mINFO[m-]:SP_PanFileListFree[36]:SP_PanFileListFree
+[m[11:48:46:415 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:415 [1;32mINFO[m-]:SP_LapseFileListFree[65]:SP_LapseFileListFree
+[m[11:48:46:415 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:415 [1;32mINFO[m-]:SP_SunFileListFree[30]:SP_SunFileListFree
+[m[11:48:46:416 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:416 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:416 [1;32mINFO[m-]:SP_HdrFileListFree[33]:SP_HdrFileListFree
+[m[11:48:46:416 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:416 [1;31mERROR[m-]:SP_NestFileListFree[384]:list no init
+[m[11:48:46:416 [1;32mINFO[m-]:SP_StarskyStackFileListFree[31]:SP_StarskyStackFileListFree
+[m[11:48:46:450 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001
+[m[11:48:46:451 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:1
+[m[11:48:46:451 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2
+[m[11:48:46:451 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:3
+[m[11:48:46:467 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/bus/sdio/drivers/dummy_sdmmc
+[m[11:48:46:472 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/ieee80211/phy0
+[m[11:48:46:677 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0
+[m[11:48:46:677 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/rx-0
+[m[11:48:46:678 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/tx-0
+[m[11:48:46:678 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/sdio/drivers/bcmsdh_sdmmc
+[m[11:48:46:678 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/platform/drivers/bcmdhd_wlan
+[m[11:48:47:064 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:0;]
+[m[m[11:48:47:332 [1;32mINFO[m-]:SP_CreateSensorMngTask[276]:SP_CreateSensorMngTask success
+[m[11:48:47:336 [1;32mINFO[m-]:SP_MpuInit[133]:SP_MpuInit success
+[m[11:48:47:336 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:0;sta:1;Use:1;
+[m[11:48:47:341 [1;31mERROR[m-]:SP_I2cRead[78]:SP_I2cRead error
+[m[11:48:47:342 [1;32mINFO[m-]:MagIdentityChipID[49]:QMC6310U_STA
+[m[11:48:47:342 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:1;sta:1;Use:1;
+[m[11:48:47:342 [1;32mINFO[m-]:SP_GetGyroCalInfo[186]:[0;35mNO Gyro calibrate info
+[m[11:48:47:343 [1;32mINFO[m-]:SP_GetGyroCalInfo[189]:GyroOffset x[0.0];y[0.0];z[0.0];
+[m[11:48:47:344 [1;32mINFO[m-]:SP_MpiSysInit[59]:SP_MpiSysInit success
+[m[11:48:47:344 [1;32mINFO[m-]:SP_GetAcceCalInfo[628]:[0;35mNO Acce calibrate info
+[m[11:48:47:344 [1;32mINFO[m-]:SP_GetAcceCalInfo[634]:AcceOffset x[0.0];y[0.0];z[0.0];
+[m[11:48:47:344 [1;32mINFO[m-]:SP_GetMagCalinfo[573]:[0;35mNO Mag calibrate info
+[m[11:48:47:344 [1;32mINFO[m-]:SP_GetMagCalinfo[576]:mag Offset x[0];y[0];z[0];
+[m[11:48:47:344 [1;32mINFO[m-]:SP_GetMagCalinfo[579]:mag Bias x[0.0];y[0.0];z[0.0];
+[m[11:48:47:344 [1;32mINFO[m-]:SP_GetMagCalinfo[582]:mag scale x[1.0];y[1.0];z[1.0];
+[m[11:48:47:345 [1;32mINFO[m-]:SP_CreateCheckPhotoTimeOutTask[901]:SP_CreateCheckPhotoTimeOutTask success
+[m[11:48:47:346 [1;32mINFO[m-]:SP_CreateCableReleaseTask[1009]:SP_CreateCableReleaseTask success
+
+[m[11:48:47:347 [1;32mINFO[m-]:SensorMngTask[115]:SP_SENSOR_STA_GIMBAL_ANGLE_INIT Box0Yaw:-0.0002;Box0Pitch:-1.1106;
+[m[11:48:47:349 [1;31mERROR[m-]:SP_CheckHdmiId[643]:HDMI Hw no Support
+[m[11:48:47:349 [1;32mINFO[m-]:SendHwToGimbalTask[82]:SendHwToGimbal hw[11],ubootVer[0]
+[m[11:48:47:349 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:2;sta:0;Use:1;
+[m[11:48:47:350 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[433]:bSendHwAck
+[m[11:48:47:894 [1;32mINFO[m-]:AcceAttitudeInit[596]:xMean[0.92],yMean[0.02],zMean[0.41]
+[m[11:48:47:895 [1;32mINFO[m-]:AcceAttitudeInit[619]:[0;35mxVar[0.003466],yVar[0.002574],zVar[0.007163]
+[m[11:48:47:895 [1;32mINFO[m-]:SP_BoxAhraInit[890]:[0;35maAcce:x[0.9177],y[0.0185],z[0.4066]
+[m[11:48:47:897 [1;32mINFO[m-]:SP_BoxAhraInit[896]:++++++acce init ok +++++++++++
+[m[11:48:47:897 [1;32mINFO[m-]:SP_BoxAhraInit[898]:aAcce:x[2.6118],y[-66.0810],z[0.0000]
+[m[11:48:47:897 [1;32mINFO[m-]:SensorMngTask[85]:SP_SENSOR_STA_BOX_AHRS_INIT SUCCESS
+[m[11:48:47:959 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa
+[m[11:48:47:960 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/virtual/bdi/179:0
+[m[11:48:47:963 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0
+[m[11:48:47:963 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0/mmcblk0p1
+[m[11:48:47:963 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1026],val[1]
+[m[m[11:48:47:963 [1;32mINFO[m-]:EventMsgProc[2615]:SP_EVENT_SD_PLUGED
+[m[11:48:47:983 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1027],val[1]
+[m[m[11:48:47:983 [1;32mINFO[m-]:EventMsgProc[2641]:SP_EVENT_SD_MOUNTED
+[m[11:48:48:349 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:5;sta:0;Use:0;
+[m[11:48:48:349 [1;31mERROR[m-]:SP_CheckTtyUsbOk[2319]:SP_CheckTtyUsbOk
+[m[11:48:48:350 [1;32mINFO[m-]:SP_CreateOmsTask[218]:SP_CreateOmsTask success
+[m[11:48:48:350 [1;32mINFO[m-]:OmsTask[171]:_____OMS_STEP_NONE
+[m[11:48:48:351 [1;32mINFO[m-]:SP_GimbalGetExAxsiSate[913]:uart send:SP_GimbalGetExAxsiSate
+[m[11:48:48:351 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[11:48:48:351 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:0;]
+[m[m[11:48:48:352 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[358]:UART_GIMBAL_FW_VER 2.0.0.22
+[m[11:48:48:357 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[364]:UART_GIMBAL_HW_VER 1.2
+[m[11:48:48:357 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[370]:UART_GIMBAL_IAP_VER 1.3
+[m[11:48:48:358 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:12.48;capacity:100;ChargeState:2;
+[m[11:48:48:363 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[319]:[0;35mExAxsiOn = 0
+[m[11:48:48:365 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[448]:ExAngle:0.000
+[m[11:48:48:578 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0
+[m[11:48:48:977 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[11:48:48:978 [1;32mINFO[m-]:SP_BlueInit[2986]:[0;35mSP_BlueInit start
+[m[11:48:48:984 [1;32mINFO[m-]:SP_BlueInit[3009]:[0;35mg_main_loop_new
+[m[11:48:49:042 [1;32mINFO[m-]:SP_BlueInit[3046]:-------------main loop running -------
+[m[11:48:49:046 [1;32mINFO[m-]:connect_handler[121]:connect_handler
+[m[11:48:49:055 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.AgentManager1]
+[m[11:48:49:065 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.ProfileManager1]
+[m[11:48:49:080 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Adapter1]
+[[0;92mNEW[0m] Controller 48:E7:DA:D4:B5:72 polaris_d13e86 [default]
+[m[11:48:49:085 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattManager1]
+[m[11:48:49:087 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Media1]
+[m[11:48:49:089 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.NetworkServer1]
+[m[11:48:49:091 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.LEAdvertisingManager1]
+[m[11:48:49:093 [1;32mINFO[m-]:client_ready[2875]:client_ready
+Agent registered
+[m[11:48:49:150 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:45
+[m[11:48:49:189 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001801-0000-1000-8000-00805f9b34fb
+[m[11:48:49:189 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[m[11:48:49:189 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+[m[11:48:49:189 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001800-0000-1000-8000-00805f9b34fb
+[m[11:48:49:189 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+[m[11:48:49:203 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Alias: polaris_d13e86
+[m[11:48:49:203 [1;32mINFO[m-]:parse_iter[288]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Pairable: yes
+[m[11:48:49:209 [1;32mINFO[m-]:parse_iter[288]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Discoverable: yes
+[m[11:48:49:339 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[11:48:49:352 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[11:48:49:352 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:4;sta:1;Use:1;
+[m[11:48:49:352 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:3;sta:1;Use:1;
+[m[11:48:49:443 [1;32mINFO[m-]:SP_GetSdInfo[2483]:u64TotalSize:121866;u64FreeSize::121797;u64UsedSize:69
+[m[11:48:49:443 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1029],val[1]
+[m[m[11:48:49:443 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[279],val[state:1;]
+[m[m[11:48:49:443 [1;32mINFO[m-]:EventMsgProc[2657]:SP_EVENT_SD_SCAN
+[m[11:48:49:445 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0003.jpg
+[m[11:48:49:445 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0004.jpg
+[m[11:48:49:445 [1;32mINFO[m-]:SP_GetNomalFileList[90]: PhotoMaxNum 4;FileCount 2
+[m[11:48:49:448 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/focusStack/],ClassCount[0],maxCalss[0]
+[m[11:48:49:448 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/focusStack/],IspClassCount[0]
+[m[11:48:49:449 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/panorama/],ClassCount[0],maxCalss[0]
+[m[11:48:49:449 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/panorama/],IspClassCount[0]
+[m[11:48:49:449 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[11:48:49:451 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/Lapse/],ClassCount[0],maxCalss[0]
+[m[11:48:49:451 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[11:48:49:452 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/sun/],ClassCount[0],maxCalss[0]
+[m[11:48:49:453 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/HDR/],ClassCount[0],maxCalss[0]
+[m[11:48:49:453 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/HDR/],IspClassCount[0]
+[m[11:48:49:453 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[11:48:49:455 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/starskyStack/],ClassCount[0],maxCalss[0]
