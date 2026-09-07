@@ -103,11 +103,11 @@ test -z "$(sed -n 's/^dirty_diff_hash=//p' "$T/build-source-provenance.txt")" ||
 [ -f "$T/FwPkt/firmwareInfo" ] || { echo "missing FwPkt/firmwareInfo" >&2; exit 1; }
 [ -d "$T/FwPkt/gimbal" ] || { echo "missing FwPkt/gimbal" >&2; exit 1; }
 
-# 4) The patcher's two Pentax gates both passed in the build log.
+# 4) The patcher's Pentax gates all passed in the build log.
 grep -q 'local-source Pentax candidate marker: present' "$T/build.log" || {
   echo "Pentax marker gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
-grep -q 'K-01 model string present' "$T/build.log" || {
-  echo "PENTAX=1 K-01 model gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
+grep -q 'local-source target models: K-1 II and K-3 III present' "$T/build.log" || {
+  echo "K-1 II/K-3 III image model gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
 
 # 5) The on-disk stage-2 bundle is shipped.
 [ -f "$T/stage2-ondisk/ondisk/install_stage2.sh" ] || { echo "missing install_stage2.sh" >&2; exit 1; }
@@ -128,6 +128,9 @@ docker run --rm --entrypoint bash \
   '
 APPFS_ROOT="$(find "$APPFS_AUDIT" -type d -name ubifs | head -1)"
 [ -n "$APPFS_ROOT" ] || { echo "could not re-extract generated appfs" >&2; exit 1; }
+cmp "$APPFS_ROOT/openpolaris-libgphoto2-provenance.txt" \
+  "$T/build-source-provenance.txt" || {
+  echo "embedded source provenance differs from build output" >&2; exit 1; }
 for mapping in \
   'bin/pgphoto:ondisk/pgphoto.wrapper' \
   'restart_gphoto:ondisk/restart_gphoto.sh' \
@@ -154,6 +157,10 @@ PTP2_MARKER_FILE="$(mktemp)"
 strings "$PTP2_SO" > "$PTP2_MARKER_FILE" || true
 grep -F 'Pentax vendor mode enabled' "$PTP2_MARKER_FILE" >/dev/null || {
   echo "Pentax vendor mode marker not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
+grep -F 'Pentax:K-1 Mark II (PTP mode)' "$PTP2_MARKER_FILE" >/dev/null || {
+  echo "K-1 II model not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
+grep -F 'Pentax:K-3 Mark III (MTP mode)' "$PTP2_MARKER_FILE" >/dev/null || {
+  echo "K-3 III model not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
 rm -f "$PTP2_MARKER_FILE"
 # And the trampolined on-disk core binary is shipped.
 [ -f "$T/stage2-ondisk/libgphoto2.so.6" ] || { echo "missing on-disk libgphoto2.so.6" >&2; exit 1; }

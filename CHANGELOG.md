@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — firmware-contained Pentax provenance and target-model gate
+
+- Embed the exact clean libgphoto2 source identity at
+  `/app/openpolaris-libgphoto2-provenance.txt`, so a flashed device can prove
+  its source SHA without relying on files retained beside the ZIP.
+- Fail a local-source build unless the final `ptp2.so` contains both the
+  Pentax K-1 II and K-3 III model registrations as well as the Pentax vendor
+  marker.
+- Re-extract the generated appfs in the package test and compare its embedded
+  provenance byte-for-byte with the build output; also assert both target
+  model strings in the shipped camlib.
+
 ## Unreleased — Pentax capture memory budget (fixes #2)
 
 libgphoto2's Pentax driver (`camlibs/ptp2/pentax-utils.c`) hard-codes a 2 GiB

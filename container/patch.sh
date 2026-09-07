@@ -192,6 +192,12 @@ if [ -e /libgphoto2-source-input ]; then
   else
     die "local-source ptp2.so lacks the Pentax candidate marker"
   fi
+  for model in 'Pentax:K-1 Mark II (PTP mode)' 'Pentax:K-3 Mark III (MTP mode)'; do
+    if ! strings "$NEW_PTP2" | grep -F "$model" >/dev/null; then
+      die "local-source ptp2.so lacks required target model: $model"
+    fi
+  done
+  log "local-source target models: K-1 II and K-3 III present"
 fi
 
 # ---------------------------------------------------------------------------
@@ -435,6 +441,14 @@ else
     log "  placed fresh usb1 at stock iolib path: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
   fi
 fi
+
+# Preserve source identity inside the flashable image, not only in the build
+# output beside FwPkt.zip. This lets a running device prove which exact clean
+# libgphoto2 checkout produced its embedded stack (issue #1/#13).
+[ -f "$W/out/source-provenance.env" ] || die "source provenance was not generated"
+install -m 644 -o 0 -g 0 "$W/out/source-provenance.env" \
+  "$APP/openpolaris-libgphoto2-provenance.txt"
+log "embedded libgphoto2 provenance -> /app/openpolaris-libgphoto2-provenance.txt"
 
 # ---------------------------------------------------------------------------
 # 7. OPTIONAL (SSH_PUBKEY, issue #31): authorise a public key for root SSH
