@@ -440,6 +440,20 @@ else
     install -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1" "$STOCK_USB1"
     log "  placed fresh usb1 at stock iolib path: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
   fi
+
+  # Replace the stock libgphoto2.so.6 with the freshly-built 2.5.34 core to fix
+  # the iolibs-lookup discrepancy. The runtime has TWO libgphoto2 paths:
+  # a. Trampolined /app/lib/stage2/libgphoto2.so.6 — loaded by pgphoto.stage2ondisk via absolute path. Working.
+  # b. Stock /app/lib/libgphoto2.so.6 2.5.27 — loaded by a child process via relative path lookup.
+  #    This path fails with 'No iolibs found in '../lib/libgphoto2_port/0.12.0''.
+  # By replacing the stock libgphoto2.so.6 with the fresh 2.5.34 build, both paths
+  # load the same Pentax-aware core and the iolibs lookup succeeds.
+  STOCK_CORE="$APP/lib/libgphoto2.so.6"
+  if [ -f "$STOCK_CORE" ]; then
+    S_UID="$(stat -c %u "$STOCK_CORE")"; S_GID="$(stat -c %g "$STOCK_CORE")"; S_MODE="$(stat -c %a "$STOCK_CORE")"
+    install -m "$S_MODE" -o "$S_UID" -g "$S_GID" "$NEW_CORE" "$STOCK_CORE"
+    log "  replaced stock libgphoto2.so.6 with fresh 2.5.34 core at /app/lib/libgphoto2.so.6"
+  fi
 fi
 
 # Preserve source identity inside the flashable image, not only in the build
@@ -537,6 +551,51 @@ if ! python3 /opt/patcher/verify_firmwareinfo.py /in/firmwareInfo /out/FwPkt; th
   die "firmwareInfo does not match the produced FwPkt -- the Polaris would silently reject this update. Refusing to zip."
 fi
 log "verified firmwareInfo against produced FwPkt (on-board check will pass)"
+
+# Post-repack content assertion: re-extract the finished appfs and verify that
+# /app/bin/pgphoto exists, is executable/non-empty, contains the expected wrapper
+# markers, and that /app/lib/stage2/pgphoto.stage2ondisk plus the core/port/camlib/iolib set exist.
+# This directly covers the #39 regression boundary (empty /app/bin/ after flash).
+log "verifying finished appfs.ubifs contains required runtime files..."
+UBIFS_EXTRACT_DIR="$W/appfs_verify"
+rm -rf "$UBIFS_EXTRACT_DIR"
+mkdir -p "$UBIFS_EXTRACT_DIR"
+ubireader_extract_files -k -o "$UBIFS_EXTRACT_DIR" "$W/out/appfs.ubifs" >/dev/null 2>&1
+APP_VERIFY="$(find "$UBIFS_EXTRACT_DIR" -maxdepth 3 -name ubifs -type d | head -1)"
+[ -n "$APP_VERIFY" ] || die "appfs re-extraction failed"
+
+# Verify /app/bin/pgphoto exists and is executable
+PG_WRAPPER="$APP_VERIFY/app/bin/pgphoto"
+if [ ! -f "$PG_WRAPPER" ]; then
+  die "post-repack assertion failed: /app/bin/pgphoto missing from appfs.ubifs"
+fi
+if [ ! -x "$PG_WRAPPER" ]; then
+  die "post-repack assertion failed: /app/bin/pgphoto is not executable"
+fi
+# Verify wrapper contains expected markers
+if ! grep -q 'pgphoto.stage2ondisk' "$PG_WRAPPER"; then
+  die "post-repack assertion failed: /app/bin/pgphoto does not contain expected wrapper markers"
+fi
+log "  verified /app/bin/pgphoto exists, is executable, and contains wrapper markers"
+
+# Verify Stage-2 runtime files exist in the appfs
+STAGE2_BIN="$APP_VERIFY/app/lib/stage2/pgphoto.stage2ondisk"
+if [ ! -f "$STAGE2_BIN" ]; then
+  die "post-repack assertion failed: /app/lib/stage2/pgphoto.stage2ondisk missing from appfs.ubifs"
+fi
+STAGE2_LOADER="$APP_VERIFY/app/lib/stage2/libpolaris_stage2.so"
+if [ ! -f "$STAGE2_LOADER" ]; then
+  die "post-repack assertion failed: /app/lib/stage2/libpolaris_stage2.so missing from appfs.ubifs"
+fi
+CORE_LIB="$APP_VERIFY/app/lib/stage2/libgphoto2.so.6"
+if [ ! -f "$CORE_LIB" ]; then
+  die "post-repack assertion failed: /app/lib/stage2/libgphoto2.so.6 missing from appfs.ubifs"
+fi
+PORT_LIB="$APP_VERIFY/app/lib/stage2/libgphoto2_port.so.12"
+if [ ! -f "$PORT_LIB" ]; then
+  die "post-repack assertion failed: /app/lib/stage2/libgphoto2_port.so.12 missing from appfs.ubifs"
+fi
+log "  verified Stage-2 runtime files (pgphoto.stage2ondisk, libpolaris_stage2.so, libgphoto2.so.6, libgphoto2_port.so.12) exist in appfs.ubifs"
 
 # Build the ZIP at a *temp* path so the validator can fail-closed on the
 # *exact* archive we'd ship, and we only atomically rename to the public
