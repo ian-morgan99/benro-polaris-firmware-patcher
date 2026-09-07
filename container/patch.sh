@@ -553,8 +553,8 @@ fi
 log "verified firmwareInfo against produced FwPkt (on-board check will pass)"
 
 # Post-repack content assertion: re-extract the finished appfs and verify that
-# /app/bin/pgphoto exists, is executable/non-empty, contains the expected wrapper
-# markers, and that /app/lib/stage2/pgphoto.stage2ondisk plus the core/port/camlib/iolib set exist.
+# bin/pgphoto exists, is executable/non-empty, contains the expected wrapper
+# markers, and that lib/stage2/pgphoto.stage2ondisk plus the core/port/camlib/iolib set exist.
 # This directly covers the #39 regression boundary (empty /app/bin/ after flash).
 log "verifying finished appfs.ubifs contains required runtime files..."
 UBIFS_EXTRACT_DIR="$W/appfs_verify"
@@ -564,38 +564,38 @@ ubireader_extract_files -k -o "$UBIFS_EXTRACT_DIR" "$W/out/appfs.ubifs" >/dev/nu
 APP_VERIFY="$(find "$UBIFS_EXTRACT_DIR" -maxdepth 3 -name ubifs -type d | head -1)"
 [ -n "$APP_VERIFY" ] || die "appfs re-extraction failed"
 
-# Verify /app/bin/pgphoto exists and is executable
-PG_WRAPPER="$APP_VERIFY/app/bin/pgphoto"
+# Verify bin/pgphoto exists and is executable (extracted paths don't have /app/ prefix)
+PG_WRAPPER="$APP_VERIFY/bin/pgphoto"
 if [ ! -f "$PG_WRAPPER" ]; then
-  die "post-repack assertion failed: /app/bin/pgphoto missing from appfs.ubifs"
+  die "post-repack assertion failed: bin/pgphoto missing from appfs.ubifs"
 fi
 if [ ! -x "$PG_WRAPPER" ]; then
-  die "post-repack assertion failed: /app/bin/pgphoto is not executable"
+  die "post-repack assertion failed: bin/pgphoto is not executable"
 fi
 # Verify wrapper contains expected markers
 if ! grep -q 'pgphoto.stage2ondisk' "$PG_WRAPPER"; then
-  die "post-repack assertion failed: /app/bin/pgphoto does not contain expected wrapper markers"
+  die "post-repack assertion failed: bin/pgphoto does not contain expected wrapper markers"
 fi
-log "  verified /app/bin/pgphoto exists, is executable, and contains wrapper markers"
+log "  verified bin/pgphoto exists, is executable, and contains wrapper markers"
 
-# Verify Stage-2 runtime files exist in the appfs
-STAGE2_BIN="$APP_VERIFY/app/lib/stage2/pgphoto.stage2ondisk"
+# Verify Stage-2 runtime files exist in the appfs (extracted paths don't have /app/ prefix)
+STAGE2_BIN="$APP_VERIFY/lib/stage2/pgphoto.stage2ondisk"
 if [ ! -f "$STAGE2_BIN" ]; then
-  die "post-repack assertion failed: /app/lib/stage2/pgphoto.stage2ondisk missing from appfs.ubifs"
+  die "post-repack assertion failed: lib/stage2/pgphoto.stage2ondisk missing from appfs.ubifs"
 fi
-STAGE2_LOADER="$APP_VERIFY/app/lib/stage2/libpolaris_stage2.so"
+STAGE2_LOADER="$APP_VERIFY/lib/stage2/libpolaris_stage2.so"
 if [ ! -f "$STAGE2_LOADER" ]; then
-  die "post-repack assertion failed: /app/lib/stage2/libpolaris_stage2.so missing from appfs.ubifs"
+  die "post-repack assertion failed: lib/stage2/libpolaris_stage2.so missing from appfs.ubifs"
 fi
-CORE_LIB="$APP_VERIFY/app/lib/stage2/libgphoto2.so.6"
+CORE_LIB="$APP_VERIFY/lib/stage2/libgphoto2.so.6"
 if [ ! -f "$CORE_LIB" ]; then
-  die "post-repack assertion failed: /app/lib/stage2/libgphoto2.so.6 missing from appfs.ubifs"
+  die "post-repack assertion failed: lib/stage2/libgphoto2.so.6 missing from appfs.ubifs"
 fi
-PORT_LIB="$APP_VERIFY/app/lib/stage2/libgphoto2_port.so.12"
+PORT_LIB="$APP_VERIFY/lib/stage2/libgphoto2_port.so.12"
 if [ ! -f "$PORT_LIB" ]; then
-  die "post-repack assertion failed: /app/lib/stage2/libgphoto2_port.so.12 missing from appfs.ubifs"
+  die "post-repack assertion failed: lib/stage2/libgphoto2_port.so.12 missing from appfs.ubifs"
 fi
-log "  verified Stage-2 runtime files (pgphoto.stage2ondisk, libpolaris_stage2.so, libgphoto2.so.6, libgphoto2_port.so.12) exist in appfs.ubifs"
+log "  verified Stage-2 runtime files (lib/stage2/pgphoto.stage2ondisk, lib/stage2/libpolaris_stage2.so, lib/stage2/libgphoto2.so.6, lib/stage2/libgphoto2_port.so.12) exist in appfs.ubifs"
 
 # Build the ZIP at a *temp* path so the validator can fail-closed on the
 # *exact* archive we'd ship, and we only atomically rename to the public
