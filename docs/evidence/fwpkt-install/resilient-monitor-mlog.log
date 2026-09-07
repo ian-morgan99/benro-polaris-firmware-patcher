@@ -4170,3 +4170,19 @@ usb_disconnect ------------------
 [m[18:40:37:037 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
 [m[18:40:37:037 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=211] s_u32ClientNum[1]
 [m[18:40:37:037 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[211]
+[m[18:40:58:051 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=212 192.168.0.4:40960] from [1] s_u32ClientNum[2]
+[m[18:40:58:051 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[18:40:58:051 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=212] start
+[m[18:40:58:051 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[212]:type:0;code:266;val:
+[m[18:40:58:051 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[18:40:58:052 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=212] s_u32ClientNum[1]
+[m[18:40:58:052 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[212]
+[m[18:40:58:054 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=213 192.168.0.4:40974] from [1] s_u32ClientNum[2]
+[m[18:40:58:054 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[18:40:58:054 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[18:40:58:054 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=213] start
+[m[18:40:58:055 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[213]:type:0;code:266;val:
+[m[18:40:58:055 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=213] s_u32ClientNum[1]
+[m[18:40:58:055 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[213]
+[m[18:41:00:869 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[18:41:00:869 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
