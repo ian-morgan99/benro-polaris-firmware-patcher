@@ -2,9 +2,25 @@
 
 Revision: 2026-09-08
 
-The Polaris `pgphoto` integration exposed an important libgphoto2 compatibility gap: it asks for the generic widget vocabulary used by established libgphoto2 clients (`aperture`, `imageformat`, `imagequality`, `autofocusdrive`, `manualfocusdrive`, `manualfocus`, `capturetarget`), while the newer Pentax ptp2 work sometimes exposes the underlying capability only through Pentax-specific names.
+The Polaris `pgphoto` integration exposed an important libgphoto2 compatibility gap: it asks for the generic widget vocabulary used by established libgphoto2 clients (`aperture`, `imageformat`, `imagequality`, `autofocus`, `autofocusdrive`, `manualfocusdrive`, `manualfocus`, `capturetarget`), while the newer Pentax ptp2 work sometimes exposes the underlying capability only through Pentax-specific names.
 
-The normative protocol/API analysis now lives in `ian-morgan99/libgphoto2` at `docs/pentax/GENERIC_CONTROL_COMPATIBILITY_AUDIT.md` and issue #51. Implementation fixes belong in libgphoto2 unless the failure is specifically a Polaris runtime/packaging problem.
+The normative protocol/API analysis lives in `ian-morgan99/libgphoto2` at `docs/pentax/GENERIC_CONTROL_COMPATIBILITY_AUDIT.md`.
+
+Public tracking:
+- libgphoto2 #51 — discovery/index
+- libgphoto2 #52 — full Pentax/Ricoh model × control sweep
+- #53 aperture
+- #54 imageformat
+- #55 imagequality
+- #56 autofocus capture policy
+- #57 autofocusdrive
+- #58 manualfocus
+- #59 manualfocusdrive
+- #60 capturetarget
+
+Issues #61–#65 in libgphoto2 are closed duplicates; do not use them.
+
+Implementation fixes belong in libgphoto2 unless the failure is specifically a Polaris runtime/packaging problem.
 
 ## Polaris responsibilities
 
@@ -21,3 +37,5 @@ The normative protocol/API analysis now lives in `ian-morgan99/libgphoto2` at `d
 For each generic control fixed in libgphoto2, collect on-device evidence showing: exact firmware/patcher/libgphoto2 provenance; config-tree presence; pgphoto lookup success; GET/SET/action result as applicable; independent read-back or visible effect where safe; reconnect/restart behaviour; and no regression to Canon/Nikon/other stock camera paths.
 
 The libgphoto2 hardware matrix remains the authority for camera-support claims. Polaris evidence is the integration confirmation, not a substitute for direct source-repo hardware tests.
+
+Detailed provenance-sensitive research and the working cross-model matrix are maintained in private `ian-morgan99/PrivateResearch/pentax-ricoh/`.
