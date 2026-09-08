@@ -45,7 +45,8 @@ marked otherwise.
 | b-0905 | `builds/2026-09-05-combined-pentax256-hdmi720p60/FwPkt.zip` | `e6fe0c9c…40b474e6` | `df237eb1f88f6411` | `b3e608a0…46f11abf` | `91f4c9146` (ian-morgan99/libgphoto2 master) | patcher `1c2f9ce` + HDMI `b3aa306` (extracted via git show) | combined pentax256+hdmi | First build with real Pentax vendor code backing the 256 MiB capture cap. Round-trip verified, not device-validated. |
 | b-0907cand | `builds/2026-09-07-k1ii-k3iii-candidate/FwPkt.zip` | `955ec67a…40ec94e` | `61a000cf62d911b8` | `d745fe16…c49d3d1` | `6aa3e4e66` (ian-morgan99/libgphoto2) | patcher `af5b0d3` (per OpenPolaris handover doc) | K-1II/K-3III candidate | Clean libgphoto2 commit; provenance fields partially filled. |
 | o-fixed | `out/k1ii-k3iii-fixed/FwPkt.zip` | `dcfeb60c…4588148` | `196253430f9f4725` | `b8104485…ac80e94ae1` | release 2.5.34 (commit field blank in provenance) | patcher ~`fbf5539` era (pre-iolibs fix) | fixed (pre-iolibs) | Contains port-strip fix, NOT the iolibs/stock-core fix. |
-| o-v3 | `out/k1ii-k3iii-fixed-v3/` (tree; **no canonical zip in repo**) | SD-zip: `5491835a…d5518018` | — | `d220682e…c4927da0620efa5` | release 2.5.34 (commit field blank in provenance) | patcher ~`f3dbff4`+`9e47a34` era (iolibs + post-repack assertion) | **v3 — installed on device** | Zipped by an agent session outside `patch.sh`; outer hash never recorded. Payload verified = v3 tree. Installed Sep 7 22:15 UTC. |
+| o-v3 | `out/k1ii-k3iii-fixed-v3/` (tree; **no canonical zip in repo**) | SD-zip: `5491835a…d5518018` | — | `d220682e…c4927da0620efa5` | **vanilla 2.5.34 (NOT the fork)** | patcher ~`f3dbff4`+`9e47a34` era (iolibs + post-repack assertion) | **v3 — installed on device, SUPERSEDED** | Built *without* `--libgphoto2-source`, so `build_ptp2.sh` downloaded the vanilla GitHub release tarball. Its `ptp2.so` (877,348 B) has **none** of the Pentax-fork markers (`pentax_identify_supported_model`, "stale Pentax session", etc.) — confirmed by string comparison against the candidate fork build. This is why K-1 II / K-3 III fell into the `-2` config loop on-device. Zipped outside `patch.sh`; outer hash never recorded. Installed Sep 7 22:15 UTC. |
+| **o-v4** | `out/k1ii-k3iii-fixed-v4-20260908/FwPkt.zip` | `d0674ef6…e7a8fd90` | `cfcd8c7c0942e739` | `85c3a693…a87781` (appfs) | **`6aa3e4e66` (ian-morgan99/libgphoto2 master, the real Pentax fork)** | patcher main @ `a975933` era; built via `patch-polaris.sh --libgphoto2-source LibGphoto2/libgphoto2` | **v4 — CORRECT fork build (current best)** | Built 2026-09-08 with the Pentax fork mounted as source input. `ptp2.so` = 927,572 B (matches candidate), all fork markers present (`pentax_identify_supported_model`, "stale Pentax session", K-1 II / K-3 III models). Provenance: `git_commit=6aa3e4e66`, dirty_diff_hash recorded. This is the build to stage on the SD card. |
 
 ### Registry rules
 - **One row per artifact.** Never reuse a row for two different byte sets.
@@ -89,7 +90,48 @@ unzip -p FwPkt.zip FwPkt/firmwareInfo | grep 'appfs'   # appfs MD5 must match re
 | `OpenPolaris` | Delivery (`ScpFirmwareDelivery`), protocol codes, HW test results | Records the *received* registry id + hashes in its handover doc; links back here. Does **not** re-derive provenance. |
 | `libgphoto2` fork | The Pentax source commits that builds are made from | Provides the commit SHA a build is pinned to; does not track FwPkt zips itself. |
 
+## Build-process rule: always pass `--libgphoto2-source` (the v3 root cause)
+
+**A Pentax build MUST be built with our fork mounted as source input, or it
+silently ships vanilla libgphoto2.** This is the exact failure behind the 2026-09-07/08
+incident: `out/k1ii-k3iii-fixed-v3` was built *without* `--libgphoto2-source`, so
+`container/build_ptp2.sh` fell through to its last branch — downloading the vanilla
+`gphoto/libgphoto2` 2.5.34 release tarball from GitHub. The result: a `ptp2.so` with
+**none** of our Pentax vendor-mode / stale-session code, which is why both the K-1 II
+and K-3 III fell into the `gp_camera_get_single_config … failed: -2` loop on-device.
+
+The correct invocation (see `patch-polaris.sh`):
+
+```bash
+bash patch-polaris.sh \
+  --fwpkt firmware/FwPkt.zip \
+  --libgphoto2-source /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2 \
+  --allow-dirty-source \
+  --out <absolute-path>          # docker -v needs an absolute path
+```
+
+Two guards make this safe and verifiable:
+1. **The build log must print** `[build] using mounted local source` (not the vanilla
+   `wget` path) and `[patcher] local-source Pentax candidate marker: present`.
+2. **Post-build, verify the fork markers are actually in the shipped `ptp2.so`:**
+
+   ```bash
+   PTP=$(find <out>/stage2-ondisk -name ptp2.so | head -1)
+   for s in "pentax_identify_supported_model" "stale Pentax session" \
+            "K-1 Mark II" "observing camera state" "Pentax vendor mode enabled"; do
+     strings "$PTP" | grep -qF "$s" && echo "OK  $s" || echo "MISSING  $s"
+   done
+   ```
+
+   A correct fork build's `ptp2.so` is ~927 KB and has all markers present; a vanilla
+   build is ~877 KB and has none. If any marker is missing, the build picked up stock
+   libgphoto2 — do not stage it. Record the resulting row in this registry with the
+   real `git_commit` (read from `<out>/build-source-provenance.txt`).
+
 ## Open follow-ups (do not block on these)
-- [ ] Backfill blank `git_commit` fields in `out/k1ii-k3iii-fixed*` provenance files (v3 + fixed).
-- [ ] Promote v3 to a canonical `builds/<date>-k1ii-k3iii-v3/FwPkt.zip` via `container/patch.sh` so it has a repo-tracked zip, then add its exact outer hash as a new row.
-- [ ] Optional: create a private GitHub (or SMB-pinned) location for zip bytes; add a `zip_location` column when it exists.
+- [ ] **Stage v4** (`o-v4`, zip md5 `d0674ef6…`) on the SD card and re-test K-1 II /
+      K-3 III — this is the first build with the real Pentax fork in `ptp2.so`.
+- [ ] Backfill blank `git_commit` fields in `out/k1ii-k3iii-fixed*` provenance files
+      (v3 + fixed were vanilla; v4 has it filled).
+- [ ] Optional: create a private GitHub (or SMB-pinned) location for zip bytes; add a
+      `zip_location` column when it exists.

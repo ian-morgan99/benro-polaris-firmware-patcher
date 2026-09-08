@@ -252,8 +252,33 @@ re-litigating it from scratch. Full registry lives in
   was a one-off zip of the v3 tree.
 - The user hand-copied that zip to the SD card; the on-boot watcher installed it.
   Confirmed on-device: `/app/lib/stage2/*` timestamps **Sep 7 22:15** (= v3 build
-  time, device clock UTC), fresh 2.5.34 core at both stage2 and stock paths,
-  `ptp2.so` carries the Pentax model markers. **The payload was correct (v3).**
+  time, device clock UTC), fresh 2.5.34 core at both stage2 and stock paths.
+
+### ROOT CAUSE (found 2026-09-08) — v3 was built from VANILLA libgphoto2, not our fork
+- v3's `build-source-provenance.txt` says `source_kind=release`, blank `git_commit`.
+  That means it was built **without** `--libgphoto2-source`, so
+  `container/build_ptp2.sh` fell through to its last branch: downloading the vanilla
+  `gphoto/libgphoto2` 2.5.34 release tarball from GitHub.
+- Proof by string comparison of the shipped `ptp2.so`:
+  - v3 ptp2 = **877,348 B**, has **none** of our fork-only markers
+    (`pentax_identify_supported_model`, "stale Pentax session", "K-1 Mark II",
+    "observing camera state"). (The `Pentax:Optio/K3` model strings it *does* have
+    are upstream libgphoto2, not our additions — do not mistake them for the fork.)
+  - The candidate build (`b-0907cand`, built from real fork commit `6aa3e4e66`) ptp2
+    = **927,572 B** and has all of those markers present.
+- Consequence: v3's Pentax vendor-mode / stale-session handling code was simply not in
+  the shipped driver — which is exactly why both K-1 II and K-3 III fell into the
+  `gp_camera_get_single_config … failed: -2` loop on-device, and why v3 "deteriorated"
+  relative to the ~11am candidate build.
+
+### The fix (v4) — fresh build from our fork
+- Rebuilt with `patch-polaris.sh --libgphoto2-source LibGphoto2/libgphoto2`
+  (the nested fork checkout at master `6aa3e4e66`, which carries all 10
+  reconciliation-fix markers). Build log printed `[build] using mounted local source`
+  + `[patcher] local-source Pentax candidate marker: present`.
+- Result: `out/k1ii-k3iii-fixed-v4-20260908/FwPkt.zip`, zip md5 **`d0674ef6…e7a8fd90`**,
+  appfs md5 `85c3a693…`. Its ptp2 = 927,572 B with all fork markers present. Provenance
+  now records `git_commit=6aa3e4e66` + dirty_diff_hash. **This is the build to stage.**
 
 ### The gap this exposed
 - The outer hash was never recorded anywhere, so for ~24 h nobody could state
@@ -261,24 +286,26 @@ re-litigating it from scratch. Full registry lives in
   hand-zipped tree broke the "immutable FwPkt + manifest" chain — the installer
   only checks *payload* MD5s via `firmwareInfo`, so a non-canonical container is
   functionally fine but invisible to provenance.
-- Fix now in place: `docs/FWPKT-PROVENANCE-CONTRACT.md` (registry + handoff rule),
-  wired into `AGENTS.md` and the `fwpkt-update-flow` skill so every repo/agent
-  records the outer hash + commit links before a zip crosses any boundary.
+- Fix now in place: `docs/FWPKT-PROVENANCE-CONTRACT.md` (registry + handoff rule +
+  the "always pass `--libgphoto2-source`" build-process guard), wired into `AGENTS.md`
+  and the `fwpkt-update-flow` skill.
 
-### Camera lockup (K-1 II) — same window
-- With the K-1 II attached, gphoto fell into the known stale-PTP-session
-  `gp_camera_get_single_config … failed: -2` loop; the camera then took down the
-  network stack and the gimbal wedged (pingable, sshd not binding). A full reboot
-  cleared it; BT-wake via iPhone restored SSH. Camera unplugged to stop the lock.
+### Camera lockup (K-1 II / K-3 III) — same window
+- With a Pentax attached, gphoto fell into the stale-PTP-session
+  `gp_camera_get_single_config … failed: -2` loop; on the K-1 II this also took down
+  the network stack and wedged the gimbal (pingable, sshd not binding). A full reboot
+  cleared it; BT-wake via iPhone restored SSH. The `-2` loop is now explained by the
+  vanilla-libgphoto2 root cause above: v3's ptp2 lacked the fork's stale-session
+  reconciliation code that would have handled this.
 - Pre-lockup evidence is in the rotated on-card logs
   (`/app/sd/system/log/Mlog_000068.log`, `Clog_000068.log`), not the current
   `/app/Mlog.txt` (which restarted at the last boot).
 
 ### Follow-ups (tracked, non-blocking)
-- [ ] Promote v3 to a canonical `builds/<date>-k1ii-k3iii-v3/FwPkt.zip` via
-      `container/patch.sh`; add its exact outer hash as a new registry row.
+- [ ] **Stage v4** (`o-v4`) on the SD card and re-test K-1 II / K-3 III — first build
+      with the real Pentax fork in `ptp2.so`.
 - [ ] Backfill the blank `git_commit` fields in the `out/k1ii-k3iii-fixed*`
-      provenance files (v3 + fixed).
+      provenance files (v3 + fixed were vanilla; v4 has it filled).
 
 ---
 
