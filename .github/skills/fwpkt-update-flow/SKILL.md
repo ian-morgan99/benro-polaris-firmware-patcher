@@ -116,6 +116,29 @@ After the reboot:
 If any of those are wrong, do **not** attempt a second bypass. Re-stage the
 SD card with a known-good `FwPkt.zip` and repeat from step 1.
 
+### Provenance gate (before you stage ANY zip — cross-repo, cross-agent)
+
+Before staging a zip on the SD card, it must have a row in
+`docs/FWPKT-PROVENANCE-CONTRACT.md`. This binds every repo (`BenroPolarisPatcher`,
+`OpenPolaris`, the libgphoto2 fork) and every agent session:
+
+1. **You built it** → add its registry row *now* (zip MD5 + SHA-256, payload appfs
+   MD5 from `firmwareInfo`, libgphoto2 commit SHA, patcher commit/branch).
+   Recompute the hashes from the actual file; do not copy them from a doc.
+2. **You received it** (from another agent, human, repo, or machine) → verify all
+   four handoff values against its registry row before staging:
+
+   ```bash
+   md5sum FwPkt.zip                 # == registry "zip MD5"
+   sha256sum FwPkt.zip             # == registry "zip SHA-256"
+   unzip -p FwPkt.zip FwPkt/firmwareInfo | grep appfs   # appfs MD5 == registry
+   ```
+
+3. **No matching row** → the zip is *unprovenanced*. Do not stage it; reconcile
+   first (add the row, or get the sender's four values). A hand-zipped tree with a
+   correct payload still needs its outer hash recorded — that is exactly the gap
+   behind the 2026-09-07/08 v3 incident.
+
 ## Things that are NOT allowed
 
 The following are explicitly prohibited because they have either bricked the
@@ -422,7 +445,8 @@ mitigating this, but it's not a guarantee).
 | Edit `container/` patcher source on PC | ✅ |
 | Build a `FwPkt.zip` on PC via `patch-polaris.sh` | ✅ |
 | Validate a built `FwPkt.zip` with `validate_fw_package.py` | ✅ |
-| Pre-extract `FwPkt.zip` → `/FwPkt/` on SD root, verify MD5s, reseat | ✅ |
+| Pre-extract `FwPkt.zip` → `/FwPkt/` on SD root, verify MD5s, reseat | ✅ (only if it has a provenance-registry row) |
+| Stage a zip with no `docs/FWPKT-PROVENANCE-CONTRACT.md` registry row | ❌ |
 | Edit `/app/bin/*` on the device over SSH | ❌ |
 | Edit `/app/lib/stage2/*` on the device over SSH | ❌ |
 | Drop `FwPkt.zip` alone on SD root | ❌ |
@@ -440,6 +464,9 @@ mitigating this, but it's not a guarantee).
   failure mode applies to any zip whose MD5 entries don't match the bytes.
 - `docs/fwpkt-zip-layout-and-smb-delivery.md` — the zip-prefix contract and
   the per-file MD5 validation rules.
+- `docs/FWPKT-PROVENANCE-CONTRACT.md` — cross-repo/cross-agent registry: which
+  FwPkt bytes are which, by commit links + hashes; the handoff rule that binds
+  every repo and agent session.
 - `STATE.md` — the live investigation state; updated whenever a session
   violates this rule or recovers from one.
 

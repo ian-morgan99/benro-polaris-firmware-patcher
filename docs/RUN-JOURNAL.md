@@ -236,6 +236,52 @@ but the user accepts the risk.
 
 ---
 
+## 2026-09-07/08 — v3 K-1II/K-3III build: handoff provenance gap + camera lockup
+
+Chronological record of what happened, so the next session is not
+re-litigating it from scratch. Full registry lives in
+[docs/FWPKT-PROVENANCE-CONTRACT.md](FWPKT-PROVENANCE-CONTRACT.md).
+
+### What was built and installed
+- `out/k1ii-k3iii-fixed-v3/` (tree, **no canonical zip in repo**) is the v3
+  build: libgphoto2 release 2.5.34 with the iolibs-resolution fix (`f3dbff4`)
+  + post-repack content assertion (`9e47a34`). Payload `appfs MD5 = d220682e…`.
+- An agent session zipped that tree *outside* `container/patch.sh` and handed the
+  user a bare `FwPkt.zip`. Its outer MD5 is **`5491835a65cc405de43958dbd5518018`**
+  (size 68,346,437) — which matched no `builds/` or `out/` artifact, because it
+  was a one-off zip of the v3 tree.
+- The user hand-copied that zip to the SD card; the on-boot watcher installed it.
+  Confirmed on-device: `/app/lib/stage2/*` timestamps **Sep 7 22:15** (= v3 build
+  time, device clock UTC), fresh 2.5.34 core at both stage2 and stock paths,
+  `ptp2.so` carries the Pentax model markers. **The payload was correct (v3).**
+
+### The gap this exposed
+- The outer hash was never recorded anywhere, so for ~24 h nobody could state
+  "the zip on the card is build X" without re-extracting it. Root cause: a
+  hand-zipped tree broke the "immutable FwPkt + manifest" chain — the installer
+  only checks *payload* MD5s via `firmwareInfo`, so a non-canonical container is
+  functionally fine but invisible to provenance.
+- Fix now in place: `docs/FWPKT-PROVENANCE-CONTRACT.md` (registry + handoff rule),
+  wired into `AGENTS.md` and the `fwpkt-update-flow` skill so every repo/agent
+  records the outer hash + commit links before a zip crosses any boundary.
+
+### Camera lockup (K-1 II) — same window
+- With the K-1 II attached, gphoto fell into the known stale-PTP-session
+  `gp_camera_get_single_config … failed: -2` loop; the camera then took down the
+  network stack and the gimbal wedged (pingable, sshd not binding). A full reboot
+  cleared it; BT-wake via iPhone restored SSH. Camera unplugged to stop the lock.
+- Pre-lockup evidence is in the rotated on-card logs
+  (`/app/sd/system/log/Mlog_000068.log`, `Clog_000068.log`), not the current
+  `/app/Mlog.txt` (which restarted at the last boot).
+
+### Follow-ups (tracked, non-blocking)
+- [ ] Promote v3 to a canonical `builds/<date>-k1ii-k3iii-v3/FwPkt.zip` via
+      `container/patch.sh`; add its exact outer hash as a new registry row.
+- [ ] Backfill the blank `git_commit` fields in the `out/k1ii-k3iii-fixed*`
+      provenance files (v3 + fixed).
+
+---
+
 ## Deferred (out of scope, all documented in `v0.3.0-pentax-hdmi` tag annotation and [docs/FINAL-REPORT.md](FINAL-REPORT.md))
 
 These are real issues, recorded honestly so they are not lost:
