@@ -103,6 +103,30 @@ arrives, calls `SP_UpgradeCheckFw`, hands off to U-Boot for NAND write if the
 MD5s differ from the installed firmware. **This step takes 5–10 minutes.**
 The gimbal will reboot itself when U-Boot finishes.
 
+#### Verified remote equivalent when the mounted SD is reachable
+
+On 2026-09-09, `o-v6-lockfix` was installed successfully without physically
+moving the card. This is allowed because it still uses the complete extracted
+`/app/sd/FwPkt/` tree and the normal boot-time watcher; it does not modify NAND
+over SSH.
+
+After proving device identity, an empty target, registry provenance, and stable
+power, stream the whole tree to the SD mount:
+
+```bash
+tar czf - -C /absolute/path/to/registered-build FwPkt |
+  ssh root@192.168.0.1 'tar xzf - -C /app/sd && sync'
+```
+
+Recompute every camera/gimbal payload MD5 on `/app/sd/FwPkt` and compare it to
+the on-card `firmwareInfo` before rebooting. Do not merge with or overwrite an
+unknown partial tree. Stop keepalives, then trigger the normal boot watcher with
+`ssh root@192.168.0.1 'sync; /sbin/reboot'`. In that session the TCP `812`
+helper sent a frame but did not reboot, so require a real SSH drop and uptime
+reset. During reconnect, reject the Hitron route and wait for the Polaris BSSID
+plus `wlp8s0` route before checking source provenance, component hashes,
+process/listener ownership, and physical camera behavior.
+
 ### 4. Verify recovery
 
 After the reboot:

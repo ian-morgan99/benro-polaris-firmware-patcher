@@ -98,3 +98,36 @@ Every upgrade issue must identify which of these need updating and update them b
 - OpenPolaris E2E matrix
 
 Keep direct libgphoto2 evidence separate from Polaris runtime and OpenPolaris E2E evidence.
+
+## Project memory — Polaris debugging (junior-agent onboarding)
+
+The full operational debugging guide lives in
+`.github/skills/polaris-debugging/SKILL.md` (SSH access, gimbal-vs-router
+identity checks, on-device pgphoto/gphoto2 testing, log reading/download,
+Bluetooth wake + wireless connect incl. sandbox, repo routing). Read it before
+touching the live device. Load-bearing rules, restated:
+
+- **Identity first.** `192.168.0.1` is shared with the home cable router. Never
+  trust a session until you have (a) a real `polaris_*` AP association
+  (`nmcli … | grep 48:E7:DA`), (b) `ip route get 192.168.0.1` via the wifi dev,
+  and (c) `cat /app/FwVer` over SSH. Pingability alone proves nothing.
+- **SSH is read-only diagnostic.** No direct code/binary changes under `/app`
+  as a supported fix; everything flows issue → owning repo → FwPkt build →
+  SD-card install (see `fwpkt-update-flow` skill).
+- **On-device camera test = direct CLI, not the daemon.** Stop pgphoto, run
+  `/app/bin/gphoto2` with `CAMLIBS`/`IOLIBS`/`LD_LIBRARY_PATH` from
+  `/app/lib/stage2`, then restart the daemon and tail `/app/Clog.txt`.
+- **Dual-path (#38) check on every flashed build:**
+  `md5sum /app/lib/stage2/libgphoto2.so.6 /app/lib/libgphoto2.so.6` must match,
+  and `/proc/<pgphoto>/maps` must show which core is actually loaded. Symptom
+  signature: `No iolibs found in '../lib/libgphoto2_port/0.12.0'` +
+  `sp_Gphoto_Init ret -2` + `state:-2`.
+- **Repo routing (log the issue where the first divergence happens):**
+  direct libgphoto2 SHA fails → `ian-morgan99/libgphoto2`; direct passes but
+  packaged Stage-2/pgphoto path fails → this repo; both pass but app fails →
+  `ian-morgan99/OpenPolaris`; evidenced defects may be modelled in
+  `BenroHardwareValidator/benro-polaris-test-harness` (harness PASS ≠ physical
+  support).
+- **Wake/keepalive:** BT connect to `48:E7:DA:D4:B5:72` is the wake pulse
+  (gimbal must be powered on); keep long jobs alive with the 9090 ping loop
+  (`1&266&0&#` every 30 s). Details in the skill.
