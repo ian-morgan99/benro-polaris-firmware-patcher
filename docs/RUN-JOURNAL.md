@@ -236,6 +236,30 @@ but the user accepts the risk.
 
 ---
 
+## 2026-09-09 — K-3 III lockup root cause and K-1 II direct v5b baseline
+
+- Live identity was proven via `polaris_d13e86` / `48:E7:DA:D4:B5:73`, route
+  `dev wlp8s0`, and `/app/FwVer` `4.0.0.32`; K-3 III enumerated as `25fb:0189`.
+- o-v5b had matching Stage-2/stock core MD5
+  `6ae6c633b0d20d7c5bcdf717605a9224`, but no pgphoto process or 8080 listener.
+  A persistent ownerless `/var/run/openpolaris-pgphoto.launch.lock` made every
+  watchdog launch return “another pgphoto launch is already in progress”.
+- OS reboot reset uptime but did not clear `/var/run`; the lock and failure
+  survived reboot. Evidence: `docs/evidence/k3iii-lockup-2026-09-09/`.
+- Source fix: launch locks now publish an owner PID, preserve live-owner locks,
+  reclaim dead/unknown-owner locks, and only remove locks still owned by the
+  current launcher. Focused regression test passes.
+- #51 matched-stack fix added: replace stock `libgphoto2_port.so.12` alongside
+  the already-replaced stock core so `/app/bin/gphoto2` cannot pair 2.5.34 core
+  with the incompatible 2.5.27 port library.
+- Direct K-1 II (`25fb:0183`, firmware 1.02) at exact libgphoto2 `990281d72`:
+  detection/summary PASS; three preview frames PASS (27,610 / 9,743 / 8,146
+  bytes, valid JPEG, 509 / 345 / 302 ms); focus-init PASS; near/far manual
+  focus FAIL `-6`; safe ISO and shutter round trips FAIL `-2` without changing
+  the setting. This proves v5b source preview/connectivity on K-1 II and keeps
+  the control failures at the direct-libgphoto2 boundary.
+- K-01 was not present in host USB enumeration and remains NOT TESTED.
+
 ## 2026-09-07/08 — v3 K-1II/K-3III build: handoff provenance gap + camera lockup
 
 Chronological record of what happened, so the next session is not

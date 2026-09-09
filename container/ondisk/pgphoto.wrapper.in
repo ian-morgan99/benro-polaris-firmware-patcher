@@ -2,7 +2,8 @@
 # pgphoto.wrapper.in -- TEMPLATE; do NOT ship this to the device.
 # patch.sh generates the real wrapper from this template at build time by
 # sed-substituting the two version placeholders below. See issue #1.
-D=/app/lib/stage2
+D=${OPENPOLARIS_STAGE2_DIR:-/app/lib/stage2}
+RUN_DIR=${OPENPOLARIS_RUN_DIR:-/var/run}
 export CAMLIBS=$D/libgphoto2/@CAMLIBS_VERSION@
 export IOLIBS=$D/libgphoto2_port/@IOLIBS_VERSION@
 export LD_LIBRARY_PATH=$D:/app/lib
@@ -19,14 +20,39 @@ export STAGE2_TETHER_CAPTURE=1
 export LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE=@PENTAX_MAX_CAPTURE_SIZE@
 # PID-file ownership for the single-owner restart helper (issue #33). Refuse
 # a watchdog-spawned duplicate when the recorded stage-2 owner is still live.
-PIDFILE=/var/run/openpolaris-pgphoto.pid
-LAUNCH_LOCK=/var/run/openpolaris-pgphoto.launch.lock
-BACKOFF_FILE=/var/run/openpolaris-pgphoto.backoff
+PIDFILE=$RUN_DIR/openpolaris-pgphoto.pid
+LAUNCH_LOCK=$RUN_DIR/openpolaris-pgphoto.launch.lock
+BACKOFF_FILE=$RUN_DIR/openpolaris-pgphoto.backoff
 if ! mkdir "$LAUNCH_LOCK" 2>/dev/null; then
-    echo "[stage2] another pgphoto launch is already in progress; refusing duplicate" >&2
-    exit 0
+    # SIGKILL/power loss can strand the mkdir-based lock.  A permanent stale
+    # directory makes every later watchdog launch return success without ever
+    # starting pgphoto.  Give a just-created owner time to publish its PID,
+    # then reclaim the directory only when that owner is definitely gone.
+    LOCKPID=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    if [ -z "$LOCKPID" ]; then
+        sleep 1
+        LOCKPID=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    fi
+    case "$LOCKPID" in
+        ''|*[!0-9]*) LOCKPID= ;;
+    esac
+    if [ -n "$LOCKPID" ] && [ -d "/proc/$LOCKPID" ]; then
+        echo "[stage2] another pgphoto launch is already in progress (PID $LOCKPID); refusing duplicate" >&2
+        exit 0
+    fi
+    echo "[stage2] reclaiming stale pgphoto launch lock (owner ${LOCKPID:-unknown})" >&2
+    rm -rf "$LAUNCH_LOCK"
+    if ! mkdir "$LAUNCH_LOCK" 2>/dev/null; then
+        echo "[stage2] another pgphoto launch won stale-lock recovery; refusing duplicate" >&2
+        exit 0
+    fi
 fi
-trap 'rm -rf "$LAUNCH_LOCK"' EXIT
+echo $$ > "$LAUNCH_LOCK/pid"
+release_launch_lock() {
+    OWNER=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    [ "$OWNER" = "$$" ] && rm -rf "$LAUNCH_LOCK"
+}
+trap 'release_launch_lock' EXIT HUP INT TERM
 if [ -f "$PIDFILE" ]; then
     OLDPID=$(cat "$PIDFILE" 2>/dev/null)
     if [ -n "$OLDPID" ] && [ -d "/proc/$OLDPID" ]; then
@@ -70,6 +96,6 @@ if [ "$DELAY" -gt 0 ]; then
     sleep "$DELAY"
 fi
 echo $$ > "${PIDFILE}.tmp" 2>/dev/null && mv "${PIDFILE}.tmp" "$PIDFILE"
-rm -rf "$LAUNCH_LOCK"
+release_launch_lock
 trap - EXIT
 exec $D/pgphoto.stage2ondisk "$@"

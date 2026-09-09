@@ -1,0 +1,78 @@
+[m[m[22:28:02:321 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:02:321 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:02:322 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:02:330 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:02:332 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644907;pitch:0.872715;roll:0.000000;]
+[m[m[22:28:03:340 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:03:340 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:03:340 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:03:349 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:03:351 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644907;pitch:0.872717;roll:0.000000;]
+[m[m[22:28:04:358 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:04:358 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:04:358 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:04:367 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:04:369 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644906;pitch:0.872719;roll:0.000000;]
+[m[m[22:28:04:618 [1;31mERROR[m-]:checkGphotoTask[3315]:[0;32;31mpgphoto is exit,reboot it
+[restart_gphoto] stale PID file (PID 2196 is not pgphoto); removing
+[m[22:28:05:266 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:266;val:-100
+[m[22:28:05:266 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[2],code[266],val[-100]
+[m[m[22:28:05:373 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:05:373 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:05:373 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:05:382 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:05:384 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644911;pitch:0.872719;roll:0.000000;]
+[restart_gphoto] no running pgphoto found
+[restart_gphoto] starting pgphoto via /app/bin/pgphoto
+[m[m[22:28:06:392 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:06:392 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:06:392 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:06:401 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:06:403 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644912;pitch:0.872716;roll:0.000000;]
+[m[m[22:28:07:410 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:07:410 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:07:410 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:07:419 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:07:421 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644913;pitch:0.872718;roll:0.000000;]
+[restart_gphoto] FAIL: pgphoto exited immediately (PID 2577); check /app/Clog.txt
+[m[m[22:28:08:435 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:08:435 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:08:435 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:08:444 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:08:445 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644907;pitch:0.872719;roll:0.000000;]
+[m[m[22:28:09:263 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:266;val:-100
+[m[22:28:09:263 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[2],code[266],val[-100]
+[m[m[22:28:09:453 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:09:453 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:09:453 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:09:461 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:09:463 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644908;pitch:0.872719;roll:0.000000;]
+[m[m[22:28:09:645 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=576 192.168.0.4:39322] from [1] s_u32ClientNum[3]
+[m[22:28:09:645 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[22:28:09:645 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[22:28:09:645 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=576] start
+[m[22:28:09:645 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[576]:type:0;code:266;val:
+[m[22:28:09:645 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=576] s_u32ClientNum[2]
+[m[22:28:09:645 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[576]
+[m[22:28:09:648 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=577 192.168.0.4:39326] from [1] s_u32ClientNum[3]
+[m[22:28:09:648 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[22:28:09:648 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[22:28:09:648 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=577] start
+[m[22:28:09:648 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[577]:type:0;code:266;val:
+[m[22:28:09:648 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=577] s_u32ClientNum[2]
+[m[22:28:09:648 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[577]
+[m[22:28:10:477 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:10:477 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:10:478 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:10:486 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:10:488 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644906;pitch:0.872719;roll:0.000000;]
+[m[m[22:28:11:495 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:11:495 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:11:495 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:11:504 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:11:506 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644909;pitch:0.872721;roll:0.000000;]
+[m[m[22:28:12:513 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:284;val:-100
+[m[22:28:12:513 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[22:28:12:513 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[22:28:12:522 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[14]:type:2;code:517;val:-100
+[m[22:28:12:524 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[517],val[yaw:0.644908;pitch:0.872718;roll:0.000000;]

@@ -441,18 +441,26 @@ else
     log "  placed fresh usb1 at stock iolib path: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
   fi
 
-  # Replace the stock libgphoto2.so.6 with the freshly-built 2.5.34 core to fix
-  # the iolibs-lookup discrepancy. The runtime has TWO libgphoto2 paths:
+  # Replace the stock core AND port with the freshly-built matched pair.  The
+  # runtime has two libgphoto2 paths:
   # a. Trampolined /app/lib/stage2/libgphoto2.so.6 — loaded by pgphoto.stage2ondisk via absolute path. Working.
   # b. Stock /app/lib/libgphoto2.so.6 2.5.27 — loaded by a child process via relative path lookup.
   #    This path fails with 'No iolibs found in '../lib/libgphoto2_port/0.12.0''.
-  # By replacing the stock libgphoto2.so.6 with the fresh 2.5.34 build, both paths
-  # load the same Pentax-aware core and the iolibs lookup succeeds.
+  # Replacing only the stock core left /app/bin/gphoto2 loading that new core
+  # beside the old 2.5.27 port library, which fails on the versioned
+  # gp_port_init_localedir symbol (issue #51).  Both active paths must therefore
+  # carry the same core/port pair.
   STOCK_CORE="$APP/lib/libgphoto2.so.6"
+  STOCK_PORT="$APP/lib/libgphoto2_port.so.12"
   if [ -f "$STOCK_CORE" ]; then
     S_UID="$(stat -c %u "$STOCK_CORE")"; S_GID="$(stat -c %g "$STOCK_CORE")"; S_MODE="$(stat -c %a "$STOCK_CORE")"
     install -m "$S_MODE" -o "$S_UID" -g "$S_GID" "$NEW_CORE" "$STOCK_CORE"
     log "  replaced stock libgphoto2.so.6 with fresh 2.5.34 core at /app/lib/libgphoto2.so.6"
+  fi
+  if [ -f "$STOCK_PORT" ]; then
+    S_UID="$(stat -c %u "$STOCK_PORT")"; S_GID="$(stat -c %g "$STOCK_PORT")"; S_MODE="$(stat -c %a "$STOCK_PORT")"
+    install -m "$S_MODE" -o "$S_UID" -g "$S_GID" "$NEW_PORT" "$STOCK_PORT"
+    log "  replaced stock libgphoto2_port.so.12 with fresh matched port at /app/lib/libgphoto2_port.so.12"
   fi
 fi
 
