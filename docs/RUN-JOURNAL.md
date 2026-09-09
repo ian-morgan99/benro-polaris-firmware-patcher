@@ -259,6 +259,12 @@ but the user accepts the risk.
   the setting. This proves v5b source preview/connectivity on K-1 II and keeps
   the control failures at the direct-libgphoto2 boundary.
 - K-01 was not present in host USB enumeration and remains NOT TESTED.
+- Clean recovery candidate `o-v6-lockfix` built from patcher `5d6b59f` and a
+  clean detached libgphoto2 `990281d72`. ZIP MD5
+  `7a1ba1c69845fd77e4b9a4ba104744ba`, ZIP SHA-256
+  `93903726570dfd20f014da4c5c1429240144dd28b4dbb9a64489aa44805e0de3`,
+  appfs MD5 `e2c479db2fa8339e6b20d075c363ee1a`. All build/package gates passed;
+  registry row recorded before staging. Status: PENDING INSTALL.
 
 ## 2026-09-07/08 — v3 K-1II/K-3III build: handoff provenance gap + camera lockup
 
