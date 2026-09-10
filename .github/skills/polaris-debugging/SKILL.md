@@ -209,6 +209,45 @@ kernel uevent (`NetlinkUeventTask … remove@…usb1/1-1.x`) + `usb_disconnect`
 followed by 286 flipping to `manufacturer:none;model:none` — that is a physical
 unplug/battery-flat, not a protocol fault.
 
+## §3b. Direct-on-PC baseline test (the decisive ownership experiment)
+
+Before routing any camera defect, AGENTS.md requires the **direct exact-SHA +
+directly-attached-camera** result. Do it on the host PC with the fork's own
+harness — no gphoto2 CLI build needed:
+
+```bash
+cd /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2
+git log --oneline -1          # MUST equal the device's git_commit (provenance file)
+ninja -C _build examples/pentax-safe-preview   # builds in seconds if libs are current
+
+export LD_LIBRARY_PATH=_build/libgphoto2:_build/libgphoto2_port/libgphoto2_port \
+       CAMLIBS=_build/camlibs IOLIBS=_build/libgphoto2_port/libusb1
+lsusb | grep 25fb            # get the bus,device (e.g. usb:001,039)
+
+./_build/examples/pentax-safe-preview "Pentax:K-1 Mark II (PTP mode)" usb:BUS,DEV 5
+# or: "Pentax:K-3 Mark III (MTP mode)" for the K-3 III
+```
+
+Interpretation (this is what decides repo ownership):
+
+| Result | Ownership |
+|---|---|
+| Harness FAILS (init / no frames) with camera attached to PC | candidate **libgphoto2** defect → file in `ian-morgan99/libgphoto2` |
+| Harness PASSES but Polaris fails | **Polaris-local** (pgphoto/Stage-2/session/loader) → this repo |
+| Both pass, app still misbehaves | **OpenPolaris** client/protocol issue |
+
+Known-good baseline (2026-09-10, K-1 II @ 990281d72): init OK, then ~9
+NoUpdateImage warmup attempts, then `get-frame returned 0x2001 (8023 bytes)` and
+`frame=1..5 valid_jpeg=yes`. Remember: **in this fork `PTP_RC_OK == 0x2001`** —
+a "0x2001" in a log line is *success*, not an error.
+
+Preview-specific gotcha (see #36/#55): the camera needs several seconds after
+start-PC-LV before its first frame; `camera_capture_preview()` tears PC-LV down
+after every failed request unless the **`pentaxpclvkeep`** config widget ("Pentax
+Keep Live View") is set. pgphoto does not set it, so Polaris restarts live view
+per request and re-enters the warmup window each time — a prime suspect for both
+the 0xa008 churn and the Wi-Fi radio starvation lockout.
+
 ## 4. Reading and downloading log files
 
 Where logs live on the device:
@@ -508,6 +547,7 @@ required for cadence/performance qualification.
 | SSH in | join `polaris_d13e86` → `ssh root@192.168.0.1` (key via patcher boot hook, or root password) |
 | Prove it's the gimbal | `nmcli … \| grep 48:E7:DA` + `ip route get 192.168.0.1` → wifi dev + `cat /app/FwVer`; use embedded provenance/hashes, not FwVer, to identify the patcher build |
 | Test camera on-device | stop daemon → direct `gphoto2` with `CAMLIBS/IOLIBS/LD_LIBRARY_PATH` from `/app/lib/stage2` → restart daemon, tail Clog. Watchdog reclaims USB in ~30 s — do it in one session |
+| Direct-on-PC baseline (ownership) | fork repo: `ninja -C _build examples/pentax-safe-preview`, run with `LD_LIBRARY_PATH=_build/libgphoto2:_build/libgphoto2_port/libgphoto2_port CAMLIBS=_build/camlibs IOLIBS=_build/libgphoto2_port/libusb1` + camera attached to PC. PASS→Polaris-local, FAIL→libgphoto2 (§3b) |
 | CLI dies at load (`relocation error … LIBGPHOTO2_5_0`) | #51: `LD_PRELOAD=/app/lib/stage2/libgphoto2_port.so.12` (scope to the gphoto2 call only) until the port replacement ships |
 | Read logs | `/app/Clog.txt`, `/app/Mlog.txt`; **persistent numbered logs at `/app/sd/system/log/`** (`grep -a` — they can be binary); wedged device → pull SD, read `/system/log/` on PC |
 | Download logs | `scp` often fails (no SFTP) → prefer `ssh 'tar czf - …' \| tar xzf -`; archive into `docs/evidence/<topic>-<date>/` |
