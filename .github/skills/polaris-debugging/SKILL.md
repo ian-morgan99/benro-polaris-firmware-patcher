@@ -473,10 +473,14 @@ JPEG SOI/EOI pairs (25,930 bytes total), so this is not an empty-boundary
 failure. It is an unusably slow/interfering stream: Clog showed successful
 12--13 KB Pentax frames (~9 attempts, ~275 ms) interleaved with
 `waitCameraIdle busy` and failed config/control calls. Shortly afterward the
-Polaris AP, SSH, 9090, and Bluetooth connection all disappeared together; treat
-that as a device/radio outage and preserve the SD logs before rebooting. Do not
-claim that live view caused the outage until the persistent logs establish the
-first failing process.
+Polaris AP, SSH, 9090, and Bluetooth connection all disappeared together. The
+AP later recovered without a reboot: uptime continued and the original
+polestar/pgphoto PIDs were still alive. Persistent monitor snapshots contained
+Broadcom driver failures `No more free tdata_psh_info!!` and
+`Out of tdata_disc_grp`, establishing Wi-Fi transmit bookkeeping/pool exhaustion
+as the immediate outage mechanism, not an OS or camera crash. Live view is a
+load trigger; do not claim it is the sole cause without a one-client A/B run.
+Preserve the SD and monitor logs before rebooting.
 
 The unstripped stock `pgphoto` makes the busy message precise. Function
 `waitCameraIdle` is at `0x000fd32c` (`gpManager.c:2087`). It polls
