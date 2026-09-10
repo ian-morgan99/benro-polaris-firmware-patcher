@@ -33,4 +33,27 @@ OUT=$(run_wrapper 2>&1)
 printf '%s\n' "$OUT" | grep -q "launch is already in progress (PID $$)"
 test -d "$TMP/run/openpolaris-pgphoto.launch.lock"
 
-echo 'PASS: pgphoto wrapper reclaims stale locks and preserves live-owner locks'
+# --- issue #34 TA review regression: a TERM during the backoff sleep must
+# terminate the wrapper BEFORE it can publish a PID / exec a new pgphoto
+# instance.  Seed the backoff file so DELAY=5, run the wrapper in the
+# background, send TERM ~2 s into the backoff, and assert: (a) exit code 143,
+# (b) the "backing off" path was taken, (c) no PID file was published, and
+# (d) the fake stage-2 binary never launched. ---
+rm -rf "$TMP/run/openpolaris-pgphoto.launch.lock"   # clear the live-owner lock from the previous section
+rm -f "$TMP/run/openpolaris-pgphoto.pid"
+NOW=$(date +%s)
+echo "0 $NOW" > "$TMP/run/openpolaris-pgphoto.backoff"   # -> COUNT=1, DELAY=5
+OUTF="$TMP/term-during-backoff.out"
+OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_STAGE2_DIR=$TMP/stage2 \
+    sh "$WRAPPER" >"$OUTF" 2>&1 &
+WPID=$!
+sleep 2
+kill -TERM "$WPID" 2>/dev/null || true
+rc=0
+wait "$WPID" || rc=$?
+test "$rc" = "143"
+printf '%s\n' "$(cat "$OUTF")" | grep -q 'backing off'
+test ! -e "$TMP/run/openpolaris-pgphoto.pid"
+! printf '%s\n' "$(cat "$OUTF")" | grep -q '^launched$'
+
+echo 'PASS: pgphoto wrapper reclaims stale locks, preserves live-owner locks, and exits safely on TERM during backoff (issue #34)'

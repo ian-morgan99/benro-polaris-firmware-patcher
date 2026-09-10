@@ -52,7 +52,15 @@ release_launch_lock() {
     OWNER=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
     [ "$OWNER" = "$$" ] && rm -rf "$LAUNCH_LOCK"
 }
-trap 'release_launch_lock' EXIT HUP INT TERM
+# TA review (issue #34): termination and cleanup must be separate/exit-safe.
+# On TERM/HUP/INT the wrapper exits immediately so it CANNOT continue past the
+# backoff sleep to publish a PID / exec a new pgphoto instance after the launch
+# lock has been released.  `exit` (not kill -TERM $$, whose re-entrancy is
+# unspecified across shells) makes the exit final; release_launch_lock then
+# runs via EXIT exactly once.  Regression: send TERM during the 5-60 s backoff
+# and prove no pgphoto is subsequently launched.
+trap 'exit 143' HUP INT TERM
+trap 'release_launch_lock' EXIT
 if [ -f "$PIDFILE" ]; then
     OLDPID=$(cat "$PIDFILE" 2>/dev/null)
     if [ -n "$OLDPID" ] && [ -d "/proc/$OLDPID" ]; then
@@ -93,7 +101,14 @@ echo "$COUNT $NOW" > "${BACKOFF_FILE}.tmp" 2>/dev/null && \
     mv "${BACKOFF_FILE}.tmp" "$BACKOFF_FILE"
 if [ "$DELAY" -gt 0 ]; then
     echo "[stage2] repeated pgphoto launch; backing off ${DELAY}s" >&2
-    sleep "$DELAY"
+    # Run the sleep in the background and wait on it: a trapped TERM/HUP/INT
+    # interrupts `wait` immediately (a foreground `sleep` would only be seen by
+    # the trap after it finished, delaying termination up to 60 s).  The exit-143
+    # trap then makes the wrapper terminate before it can publish a PID or exec
+    # a new pgphoto instance (issue #34 TA review regression: TERM during the
+    # backoff must not lead to a launch).
+    ( sleep "$DELAY" ) &
+    wait $! 2>/dev/null
 fi
 echo $$ > "${PIDFILE}.tmp" 2>/dev/null && mv "${PIDFILE}.tmp" "$PIDFILE"
 release_launch_lock
