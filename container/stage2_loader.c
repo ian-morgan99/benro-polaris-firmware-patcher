@@ -73,6 +73,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <dlfcn.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -365,6 +366,91 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
     }
     fprintf(stderr, "[stage2] keep-lv: pentaxpclvkeep ON for this session "
                     "(PC-LV stays running across preview requests)\n");
+}
+
+/* ===========================================================================
+ * SHIM #5 -- Pentax preview backoff (issue #55).  Gated on STAGE2_PENTAX_PREVIEW_BACKOFF
+ * (default ON; set =0 to A/B against the legacy unbounded loop).
+ *
+ * The camlib's per-frame retry is bounded (30 attempts / 1.5 s), but pgphoto's
+ * OUTER preview-request loop is not: when PC-LV never yields a frame it calls
+ * gp_camera_capture_preview back-to-back for hours, and that sustained PTP
+ * traffic starves the Wi-Fi radio (#55).  This wrapper counts consecutive
+ * GP_ERROR_TIMEOUT (-10) results (the exhausted-0xa008 terminal branch) and,
+ * after STAGE2_PENTAX_PREVIEW_BACKOFF_MAX consecutive failures (default 3),
+ * sleeps for a cooldown (STAGE2_PENTAX_PREVIEW_BACKOFF_SECS, default 30 s)
+ * before the next request is allowed to reach the camera.  Any non-timeout
+ * result resets the counter.  The sleep happens in pgphoto's preview thread,
+ * so sshd/radios get CPU back between bursts instead of a continuous hammer. */
+typedef int (*stage2_gp_camera_capture_preview_fn)(void *camera, void *file,
+                                                  void *context);
+static stage2_gp_camera_capture_preview_fn g_real_gp_camera_capture_preview = NULL;
+static int  g_pentax_preview_timeouts = 0;
+static time_t g_pentax_preview_backoff_until = 0;
+
+#define STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT   3
+#define STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT  30
+
+/* GP_ERROR_TIMEOUT in this libgphoto2 (port-result.h). */
+#define STAGE2_GP_ERROR_TIMEOUT (-10)
+
+static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
+                                                void *context)
+{
+    if (!g_real_gp_camera_capture_preview && g_stage2_core)
+        g_real_gp_camera_capture_preview =
+            (stage2_gp_camera_capture_preview_fn)
+                dlsym(g_stage2_core, "gp_camera_capture_preview");
+    if (!g_real_gp_camera_capture_preview) {
+        fprintf(stderr, "[stage2] preview-backoff: FATAL real "
+                        "gp_camera_capture_preview unresolved (core handle %p)\n",
+                g_stage2_core);
+        return -1;                                   /* GP_ERROR */
+    }
+
+    const char *gate = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF");
+    if ((gate && strcmp(gate, "0") == 0) ||
+        !stage2_camera_uses_pentax_keep_lv(camera))
+        return g_real_gp_camera_capture_preview(camera, file, context);
+
+    /* Cooldown: a previous burst exhausted the failure budget; hold this
+     * request until the cooldown elapses so the radio gets breathing room. */
+    if (g_pentax_preview_backoff_until) {
+        time_t now = time(NULL);
+        if (now < g_pentax_preview_backoff_until) {
+            int wait_s = (int)(g_pentax_preview_backoff_until - now);
+            fprintf(stderr, "[stage2] preview-backoff: cooldown %ds before next "
+                            "preview request\n", wait_s);
+            sleep((unsigned)wait_s);
+        }
+    }
+
+    int ret = g_real_gp_camera_capture_preview(camera, file, context);
+    if (ret == STAGE2_GP_ERROR_TIMEOUT) {
+        const char *maxs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_MAX");
+        const char *secs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_SECS");
+        int max_failures = STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT;
+        int cooldown_s   = STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT;
+        if (maxs && atoi(maxs) > 0)
+            max_failures = atoi(maxs);
+        if (secs && atoi(secs) > 0)
+            cooldown_s = atoi(secs);
+
+        g_pentax_preview_timeouts++;
+        if (g_pentax_preview_timeouts >= max_failures) {
+            g_pentax_preview_backoff_until = time(NULL) + cooldown_s;
+            fprintf(stderr, "[stage2] preview-backoff: %d consecutive timeouts "
+                            "-- backing off %ds (issues #36/#55)\n",
+                    g_pentax_preview_timeouts, cooldown_s);
+        }
+    } else {
+        if (g_pentax_preview_timeouts)
+            fprintf(stderr, "[stage2] preview-backoff: recovered after %d "
+                            "consecutive timeouts\n", g_pentax_preview_timeouts);
+        g_pentax_preview_timeouts = 0;
+        g_pentax_preview_backoff_until = 0;
+    }
+    return ret;
 }
 
 /* Loader-internal wrapper installed in gp_camera_init's slot (see the fill loop).
@@ -999,6 +1085,20 @@ static void stage2_ondisk_init(void)
             slot_store(STAGE2_SLOTS[i].slot,
                        (void *)&stage2_shim_gp_camera_set_single_config);
             fprintf(stderr, "[stage2] capturetarget: gp_camera_set_single_config "
+                            "slot -> shim (real core fn cached for pass-through)\n");
+            filled++;
+            continue;
+        }
+        /* SHIM #5: gp_camera_capture_preview is redirected to the Pentax
+         * preview-backoff wrapper (stage2_shim_gp_camera_capture_preview).  It
+         * counts consecutive GP_ERROR_TIMEOUT results and backs off before the
+         * next request, bounding pgphoto's otherwise-unbounded preview loop so
+         * a dead PC-LV session cannot starve the Wi-Fi radio (#55).  Pure
+         * pass-through for non-Pentax models or STAGE2_PENTAX_PREVIEW_BACKOFF=0. */
+        if (strcmp(name, "gp_camera_capture_preview") == 0) {
+            slot_store(STAGE2_SLOTS[i].slot,
+                       (void *)&stage2_shim_gp_camera_capture_preview);
+            fprintf(stderr, "[stage2] preview-backoff: gp_camera_capture_preview "
                             "slot -> shim (real core fn cached for pass-through)\n");
             filled++;
             continue;
