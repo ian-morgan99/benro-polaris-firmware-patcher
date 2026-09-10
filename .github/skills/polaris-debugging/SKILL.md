@@ -447,6 +447,60 @@ embedded source provenance, component hashes, one pgphoto owner, one 8080
 listener, `/proc/<pid>/maps`, and a physical camera operation. On the successful
 v6 run, the full outage was about one minute and live view returned a valid JPEG.
 
+**Second successful run (2026-09-10): `o-v7-preview-shims`.** Same flow, end to
+end: staged via `tar czf - | ssh … 'tar xzf - -C /app/sd && sync'`, all six
+on-card MD5s matched `firmwareInfo` + the registry row (zip `9e2addfc…`, appfs
+`66cb2604…`), triggered with `sync; /sbin/reboot`. Back in ~5 min. Post-boot
+proof: `/app/openpolaris-libgphoto2-provenance.txt` = `git_commit=38780d88b`,
+single pgphoto owner, and the **#38/#51 dual-path check passed on this build** —
+`md5sum /app/lib/stage2/libgphoto2.so.6 /app/lib/libgphoto2.so.6` matched
+(`6ae6c633…`) with `/proc/<pgphoto>/maps` showing the stage-2 core loaded (the
+o-v6 mismatch is gone). OpenPolaris issue #73 documents this route for adoption
+by the app's firmware-upload process.
+
+**Field-test caveat from that run (K-3 III, o-v7):** first capture after a
+preview session succeeded; the *second* was refused by the camlib's stale
+transfer-candidate guard (`A previous capture's transfer candidate (1) is still
+pending` → `GP_ERROR_CAMERA_BUSY`, 9090 state `-110`) — see patcher #37. Also:
+the Stage-2 loader logged **no** `[stage2] keep-lv:` line for the K-3 III, so
+Shim #4's model gate needs verification (suspect: `gp_camera_get_abilities` at
+init time returns a different/empty model string than expected). Do not assume
+the preview shims are active on-device until that log line appears.
+
+**Do not misdiagnose the v7 live-view/control failure (2026-09-10 K-1 II).** A
+12-second HTTP 8080 capture contained two `Content-Length` parts and two complete
+JPEG SOI/EOI pairs (25,930 bytes total), so this is not an empty-boundary
+failure. It is an unusably slow/interfering stream: Clog showed successful
+12--13 KB Pentax frames (~9 attempts, ~275 ms) interleaved with
+`waitCameraIdle busy` and failed config/control calls. Shortly afterward the
+Polaris AP, SSH, 9090, and Bluetooth connection all disappeared together; treat
+that as a device/radio outage and preserve the SD logs before rebooting. Do not
+claim that live view caused the outage until the persistent logs establish the
+first failing process.
+
+The unstripped stock `pgphoto` makes the busy message precise. Function
+`waitCameraIdle` is at `0x000fd32c` (`gpManager.c:2087`). It polls
+`gp_params.status` at struct offset `0xab0` every 2 ms; DWARF names the enum
+values `CAMSTATUSIDLE=0` and `CAMSTATUSBUSY=1`. It does **not** read Pentax
+GetAllConditions state directly. Therefore `waitCameraIdle busy` proves Benro's
+application-global scheduler is occupied; it does not prove that Pentax
+condition `state=3` was classified as camera busy. Correlate the status holder,
+concurrent 8080/9090 clients, and the first process/radio failure before choosing
+a fix. Run qualification with one deliberate preview client: close other app,
+desktop, emulator, and ad-hoc HTTP clients or record them explicitly.
+
+**K-3 III focus prerequisite (direct HW, exact v7 source SHA).** Image
+Transmitter 2 only enables Near/Far inside PC live view. At libgphoto2
+`38780d88`, off-LV minimum Near/Far returned `0xa00c`; in a same-session harness
+that first obtained a valid JPEG and retained PC-LV, minimum Near (`+23`) and Far
+(`-23`) each returned `0x2001` on the first `0x9017`, with zero retries and
+successful d035/keep cleanup. Four surrounding preview frames remained valid.
+Do not alter the opcode, direction sign, displacement, or retry count to fix an
+off-LV failure. The downstream sequence must be: start and prove PC-LV -> issue
+one bounded focus command -> prove another frame -> explicitly stop/restore LV.
+Protocol acceptance is not physical direction observation; record those as
+separate gates.
+
 ## 7. Which GitHub repo owns which defect (logging logic)
 
 Route every issue to the layer that **first diverges** — never to the layer
