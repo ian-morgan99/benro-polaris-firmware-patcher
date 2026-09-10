@@ -381,18 +381,37 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
  * sleeps for a cooldown (STAGE2_PENTAX_PREVIEW_BACKOFF_SECS, default 30 s)
  * before the next request is allowed to reach the camera.  Any non-timeout
  * result resets the counter.  The sleep happens in pgphoto's preview thread,
- * so sshd/radios get CPU back between bursts instead of a continuous hammer. */
+ * so sshd/radios get CPU back between bursts instead of a continuous hammer.
+ *
+ * On-demand gate (design principle: capture preview panes only when specifically
+ * needed): at most one REAL frame fetch per STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS
+ * (default 2 s); calls inside the window return GP_ERROR_CAMERA_BUSY (-110, a
+ * non-terminal "camera busy" state) instead of generating PTP traffic.  This is
+ * what makes preview OFF/low-traffic actually leave processing headroom for the
+ * unit itself, and it sets up future on-demand uses (e.g. platesolving: grab a
+ * frame when needed, then release). */
 typedef int (*stage2_gp_camera_capture_preview_fn)(void *camera, void *file,
                                                   void *context);
 static stage2_gp_camera_capture_preview_fn g_real_gp_camera_capture_preview = NULL;
 static int  g_pentax_preview_timeouts = 0;
 static time_t g_pentax_preview_backoff_until = 0;
 
+/* On-demand gate (design principle: capture preview panes only when specifically
+ * needed, not as a side effect of periodic polling).  Live Clog analysis showed
+ * ~4-5 frame fetches per app poll while PC-LV is active (~13k blocks / boot),
+ * which starves the unit's own processing + radios.  This minimum-interval gate
+ * caps real camera traffic at one frame per N seconds; calls inside the window
+ * return GP_ERROR_CAMERA_BUSY (-110, "camera busy" -- a non-terminal state the
+ * app already renders as pending) instead of hitting PTP.  Set =0 to disable. */
+static time_t g_pentax_preview_last_fetch = 0;
+
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT   3
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT  30
+#define STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT 2
 
-/* GP_ERROR_TIMEOUT in this libgphoto2 (port-result.h). */
-#define STAGE2_GP_ERROR_TIMEOUT (-10)
+/* GP result codes in this libgphoto2 (port-result.h / gphoto2-result.h). */
+#define STAGE2_GP_ERROR_TIMEOUT (-10)   /* GP_ERROR_TIMEOUT */
+#define STAGE2_GP_ERROR_CAMERA_BUSY (-110) /* GP_ERROR_CAMERA_BUSY */
 
 static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
                                                 void *context)
@@ -423,6 +442,25 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
                             "preview request\n", wait_s);
             sleep((unsigned)wait_s);
         }
+    }
+
+    /* On-demand gate: at most one real frame fetch per N seconds.  Calls inside
+     * the window return GP_ERROR_CAMERA_BUSY (non-terminal; the app renders it
+     * as "camera busy"/pending and retries later) instead of generating PTP
+     * traffic, so preview panes are captured only when specifically needed --
+     * not on every internal tick/poll.  STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=0
+     * disables the gate (legacy behavior). */
+    {
+        const char *mins = getenv("STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS");
+        int min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT;
+        if (mins && atoi(mins) >= 0)
+            min_interval_s = atoi(mins);
+        time_t now = time(NULL);
+        if ((min_interval_s > 0) && g_pentax_preview_last_fetch &&
+            (now - g_pentax_preview_last_fetch < min_interval_s)) {
+            return STAGE2_GP_ERROR_CAMERA_BUSY;
+        }
+        g_pentax_preview_last_fetch = now;
     }
 
     int ret = g_real_gp_camera_capture_preview(camera, file, context);
