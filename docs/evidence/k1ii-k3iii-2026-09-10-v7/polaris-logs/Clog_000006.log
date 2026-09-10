@@ -1,0 +1,1603 @@
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[m[18:24:04:083 [1;32mINFO[m-]:main[194]:[0;32;31m 
+ 
+ 
+ 
+ 
+ 
+------/app/lib/stage2/pgphoto.stage2ondisk: version: 1.3.4  build: 1.3.9  ---libgphoto: 0562e8a  ----env: USER=root  ---- 
+ 
+ 
+[m[18:24:04:085 [1;32mINFO[m-]:ipc_msg_queue_create[50]:[0;32;32m--- create msg queue success, key[1003], id[65538]
+[m[m[18:24:04:085 [1;32mINFO[m-]:ipc_msg_queue_create[50]:[0;32;32m--- create msg queue success, key[1002], id[98307]
+[m[SP_RunThread]     thread name ipc_msg_loop
+[spc_ipc_msg_loop]     thread name ipc_msg_loop thread  -1231514832
+[m[18:24:04:088 [1;32mINFO[m-]:scanUsb[1853]:[0;32;31m--- openUsbDir ret 0
+[m[18:24:04:088 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/002/001      idVendor: 1d6b  idProduct: 0003 
+[m[18:24:04:331 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/003      idVendor: 2109  idProduct: 2211 
+[m[18:24:04:331 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/002      idVendor: 1a40  idProduct: 0101 
+[m[18:24:04:331 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/001      idVendor: 1d6b  idProduct: 0002 
+[m[18:24:04:406 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[279],val[state:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 279  data: state:0;   --_isInit 1 
+gphoto2 2.5.27
+
+Copyright (c) 2000-2021 Marcus Meissner and others
+
+gphoto2 comes with NO WARRANTY, to the extent permitted by law. You may
+redistribute copies of gphoto2 under the terms of the GNU General Public
+License. For more information about these matters, see the files named COPYING.
+
+This version of gphoto2 is using the following software versions and options:
+gphoto2         2.5.27         /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, popt(m), exif, no cdk, no aa, no jpeg, no readline
+libgphoto2      2.5.27         standard camlibs (SKIPPING lumix), /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF
+libgphoto2_port 2.5.27         iolibs: ptpip, /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF, no USB, no serial
+0.069447 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ax203  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/canon  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/digigr8  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/dimagev  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/directory  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005a  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005c  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/kodak_dc240  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/mars  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/pentax  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ptp2  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ricoh_g3  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sierra  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sonix  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sq905  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/st2205  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/topfield  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/tp6801  value: (null) 
+--- list count = 0 
+0.275940 gp_camera_set_abilities [gphoto2-camera.c:358](0): Setting abilities ('Pentax K-3 Mark III (MTP mode)')...
+The port you specified ('usb:001,003') can not be found. Please specify one of the ports found by 'gphoto2 --list-ports' and make sure the spelling is correct (i.e. with prefix 'serial:' or 'usb:').
+0.276746 gp_port_info_list_get_info [gphoto2-port-info-list.c:506](0): Invalid parameters: '(n >= 0) && (unsigned int)n < list->count' is NULL/FALSE.
+
+*** Error ***              
+You have to set the port prior to initialization of the camera.
+[m[18:24:05:207 [1;32mINFO[m-]:sp_Gphoto_Init[147]:----sp_Gphoto_Init ret -5 
+[m[18:24:05:208 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m o: www-folder-path......: disabled
+ o: HTTP TCP port........: 8080
+ o: HTTP Listen Address..: (null)
+ o: username:password....: disabled
+ o: commands.............: enabled
+[m[18:24:05:212 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:24:07:697 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[279],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 279  data: state:1;   --_isInit 1 
+[m[18:24:12:780 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:24:12:781 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:24:14:822 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+[m[18:24:14:857 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+[m[18:24:15:237 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+[m[18:24:15:850 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[282],val[urer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 282  data: urer:none;model:none;state:-5;storage:0;photoFormat:0;   --_isInit 1 
+[m[18:24:15:850 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[282],val[format:0;]
+[m[m[18:24:43:541 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[274],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 274  data: state:1;   --_isInit 1 
+[m[18:24:43:561 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[274],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 274  data: state:1;   --_isInit 1 
+[m[18:24:43:619 [1;32mINFO[m-]:spGphotoRest[500]:[0;32;31m----spGphotoRest  
+[m[18:24:44:619 [1;32mINFO[m-]:scanUsb[1853]:[0;32;31m--- openUsbDir ret 0
+[m[18:24:44:619 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/002/001      idVendor: 1d6b  idProduct: 0003 
+[m[18:24:44:619 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/004      idVendor: 25fb  idProduct: 0183 
+[m[18:24:44:620 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/003      idVendor: 2109  idProduct: 2211 
+[m[18:24:44:620 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/002      idVendor: 1a40  idProduct: 0101 
+[m[18:24:44:620 [1;32mINFO[m-]:scanUsb[1877]:[0;32;31m----------  devpath: /dev/bus/usb/001/001      idVendor: 1d6b  idProduct: 0002 
+gphoto2 2.5.27
+
+Copyright (c) 2000-2021 Marcus Meissner and others
+
+gphoto2 comes with NO WARRANTY, to the extent permitted by law. You may
+redistribute copies of gphoto2 under the terms of the GNU General Public
+License. For more information about these matters, see the files named COPYING.
+
+This version of gphoto2 is using the following software versions and options:
+gphoto2         2.5.27         /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, popt(m), exif, no cdk, no aa, no jpeg, no readline
+libgphoto2      2.5.27         standard camlibs (SKIPPING lumix), /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF
+libgphoto2_port 2.5.27         iolibs: ptpip, /Applications/Xcode.app/Contents/Developer/usr/bin/gcc, ltdl, EXIF, no USB, no serial
+40.709528 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ax203  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/canon  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/digigr8  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/dimagev  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/directory  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005a  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/jl2005c  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/kodak_dc240  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/mars  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/pentax  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ptp2  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/ricoh_g3  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sierra  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sonix  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/sq905  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/st2205  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/topfield  value: (null) 
+--- camera list name: ../lib/libgphoto2/2.5.27.1/tp6801  value: (null) 
+--- list count = 1 
+40.799767 gp_camera_set_abilities [gphoto2-camera.c:358](0): Setting abilities ('Pentax K-1 Mark II (PTP mode)')...
+40.800187 gp_camera_set_port_info [gphoto2-camera.c:420](0): Setting port info for port 'Universal Serial Bus' at 'usb:001,004'...
+Pentax session already open from a previous connection; observing camera state.
+Pentax init stage vendor enable succeeded; function flags 0x00000003.
+[stage2] compatibility shims: bypassed for non-R5-II camera
+----- gp_camera_init ret 0
+42.367068 gp_port_info_list_count [gphoto2-port-info-list.c:357](0): ---- 4 regular entries available.
+Model                          Port            
+----------------------------------------------------------
+Pentax K-1 Mark II (PTP mode)  usb:001,004     
+[m[18:24:47:412 [1;32mINFO[m-]:cameraInit[2675]:[0;32;31m-------------------------------------------------------------
+Camera summary: 
+[m[18:24:48:016 [1;32mINFO[m-]:cameraInit[2679]:[m-----------------------------------------------------------
+/main/actions/oldfocusdrivenear
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1702]:Label: Drive Pentax old-focus near (K-1 II)
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1740]:Type: TOGGLE
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1741]:Current: 0
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/actions/oldfocusdrivefar
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1702]:Label: Drive Pentax old-focus far (K-1 II)
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1740]:Type: TOGGLE
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1741]:Current: 0
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/actions/manualfocusdrivenear
+[m[18:24:53:276 [1;32mINFO[m-]:print_widget[1702]:Label: Drive Pentax focus near
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1740]:Type: TOGGLE
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1741]:Current: 0
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/actions/manualfocusdrivefar
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1702]:Label: Drive Pentax focus far
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1740]:Type: TOGGLE
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1741]:Current: 0
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/actions/opcode
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1702]:Label: PTP Opcode
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1712]:Current: 0x1001,0xparam1,0xparam2
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/settings/datetime
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1702]:Label: Camera Date and Time
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1761]:Type: DATE
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1762]:Current: 1789061224
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1763]:Printable: Thu Sep 10 17:27:04 2026
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1764]:Help: Use 'now' as the current time when setting.
+
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/serialnumber
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1702]:Label: Serial Number
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:277 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1712]:Current: 7371227
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/manufacturer
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1702]:Label: Camera Manufacturer
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1712]:Current: RICOH IMAGING COMPANY, LTD.
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/cameramodel
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1702]:Label: Camera Model
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1712]:Current: PENTAX K-1 Mark II
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/deviceversion
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1702]:Label: Device Version
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1712]:Current: 1.02
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/vendorextension
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1702]:Label: Vendor Extension
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1712]:Current: ????????????????
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxconditions
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Conditions
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1712]:Current: state=3; astro-phase=inactive/other; exposure-mode-raw=8; user-mode-raw=0; drive-mode-raw=0; ISO=100; exposure-step=1; open-av-num=14; shooting=no; processing=no; task-changing=no; Tv-changeable=yes; bulb-timer=no; bulb-seconds=1/100; aperture=14/10; exposure-comp=0/10; astrotracer3=no; astro-shift=no; astro-movement-failed=no; astro-time-too-long=no; astro-limit=0; gps-state=0
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxliveviewcontrols
+[m[18:24:53:278 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Live View Controls
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1712]:Current: area=720x480; active=720x480; caf-active=576x320; caf-spot=48x48; af-position=360,240; af-response-bytes=8; zoom-raw=1
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxpropd00f
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Shutter/Bulb Descriptor
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1712]:Current: code=0xd00f; datatype=0x0008; getset=1; form=2; enum-count=56; value-bytes=8; value-hex=0100000064000000
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxprop5007
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Aperture Descriptor
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1712]:Current: code=0x5007; datatype=0x0004; getset=1; form=2; enum-count=22; value-bytes=2; value-hex=8c00
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxpropd01e
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax ISO Descriptor
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1712]:Current: code=0xd01e; datatype=0x0006; getset=1; form=2; enum-count=12; value-bytes=4; value-hex=64000000
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxprop5010
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Exposure Compensation Descriptor
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1712]:Current: code=0x5010; datatype=0x0003; getset=1; form=2; enum-count=31; value-bytes=2; value-hex=0000
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxprop5008
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Focal Length Descriptor
+[m[18:24:53:279 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1712]:Current: code=0x5008; datatype=0x0006; getset=0; form=0; enum-count=0; value-bytes=4; value-hex=88130000
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxprop5005
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax White Balance Descriptor
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1712]:Current: code=0x5005; datatype=0x0004; getset=1; form=2; enum-count=18; value-bytes=2; value-hex=0400
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxpropd013
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Drive Mode Descriptor
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1712]:Current: code=0xd013; datatype=0x0006; getset=1; form=2; enum-count=23; value-bytes=4; value-hex=00000000
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxpropd02b
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Focus Peaking Descriptor
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1712]:Current: code=0xd02b; descriptor-parse=failed; descriptor-bytes=16; descriptor-hex=2bd00440010000020200000040024001; value-bytes=4; value-hex=00d00440
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxpropd035
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax PC Live View Descriptor
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1712]:Current: code=0xd035; descriptor-parse=failed; descriptor-bytes=6; descriptor-hex=35d000000000; value-bytes=0; value-hex=
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxfocuspeaking
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Focus Peaking
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1783]:Current: off
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 off
+[m[18:24:53:280 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 on
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 on+outline
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxcimode
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Custom Image Mode
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1783]:Current: autoselect
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 autoselect
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 vivid
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 natural
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 portrait
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 landscape
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 miyabi
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 satobi
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 poptune
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 honoka
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 flat
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 bleach bypass
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 reversal film
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 monotone
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 cross process
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxpclvkeep
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Keep Live View
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1740]:Type: TOGGLE
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1741]:Current: 0
+[m[18:24:53:281 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxcardwritingmode
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Card Writing Mode
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1783]:Current: off
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 off
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 SD1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 SD2
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 both
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxdirectshutter
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Direct Shutter Speed
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1783]:Current: 1/100
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 30/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 25/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 20/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 15/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 13/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 10/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 8/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 6/1
+[m[18:24:53:282 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 5/1
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 4/1
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 3/1
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 25/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 2/1
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 16/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 13/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 1/1
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 8/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 6/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 5/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 4/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 3/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 1/4
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 1/5
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 1/6
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 1/8
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 1/10
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 1/13
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 1/15
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 1/20
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 1/25
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 1/30
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 1/40
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 1/50
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 1/60
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 1/80
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 1/100
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 1/125
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 1/160
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 1/200
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 1/250
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 1/320
+[m[18:24:53:283 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 1/400
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 1/500
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 1/640
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 1/800
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 1/1000
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 1/1250
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 1/1600
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 1/2000
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 1/2500
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 1/3200
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 1/4000
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 52 1/5000
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 53 1/6400
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 54 1/8000
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 55 0/1
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxdirectiso
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Direct ISO Speed
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1783]:Current: 100
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 100
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 200
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 400
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 800
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 1600
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 3200
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 6400
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 12800
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 25600
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 51200
+[m[18:24:53:284 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 102400
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 204800
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxdirectaperture
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Direct Aperture
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1783]:Current: f/1.4
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 f/1.4
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 f/1.6
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 f/1.8
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 f/2
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 f/2.2
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 f/2.5
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 f/2.8
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 f/3.2
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 f/3.5
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 f/4
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 f/4.5
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 f/5
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 f/5.6
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 f/6.3
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 f/7.1
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 f/8
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 f/9
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 f/10
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 f/11
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 f/13
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 f/14
+[m[18:24:53:285 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 f/16
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxdirectev
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Direct Exposure Compensation
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1783]:Current: 0
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 5
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 4.7
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 4.3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 4
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 3.7
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 3.3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 2.7
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 2.3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 2
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 1.7
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 1.3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 1
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 0.7
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 0.3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 0
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 -0.3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 -0.7
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 -1
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 -1.3
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 -1.7
+[m[18:24:53:286 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 -2
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 -2.3
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 -2.7
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 -3
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 -3.3
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 -3.7
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 -4
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 -4.3
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 -4.7
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 -5
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxliveviewafposition
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Live View AF Position
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1712]:Current: 360,240
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxliveviewzoom
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Live View Zoom
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1783]:Current: off
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 off
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 2x
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 4x
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 8x
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 10x
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 16x
+[m[18:24:53:287 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxdrivemode
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax Drive Mode
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1783]:Current: single
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 single
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 interval
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 interval-movie
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 unknown-3
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 continuous-hi
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 continuous-mid
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 continuous-lo
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 self-timer-12s
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 self-timer-2s
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 remote
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 remote-3s
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 remote-cont
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 mirror-up
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 mirror-up-remote
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 unknown-14
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 multi-exposure
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 unknown-16
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 unknown-17
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 unknown-18
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 unknown-19
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 unknown-20
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 unknown-21
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 self-timer-cont
+[m[18:24:53:288 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/pentaxdirectwb
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1702]:Label: Pentax White Balance
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1783]:Current: daylight
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 auto
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 daylight
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 shade
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 cloudy
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 fluorescent-d
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 fluorescent-n
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 fluorescent-w
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 tungsten
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 flash
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 manual-1
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 manual-2
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 manual-3
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 color-temp-1
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 color-temp-2
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 color-temp-3
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 auto-800f
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/status/batterylevel
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1702]:Label: Battery Level
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1712]:Current: 100%
+[m[18:24:53:289 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/capturesettings/aperture
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1702]:Label: Aperture
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1783]:Current: f/1.4
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 f/1.4
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 f/1.6
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 f/1.8
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 f/2
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 f/2.2
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 f/2.5
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 f/2.8
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 f/3.2
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 f/3.5
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 f/4
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 f/4.5
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 f/5
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 f/5.6
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 f/6.3
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 f/7.1
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 f/8
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 f/9
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 f/10
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 f/11
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 f/13
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 f/14
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 f/16
+[m[18:24:53:290 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/other/5001
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1702]:Label: Battery Level
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1777]:Type: MENU
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1783]:Current: 100
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 0
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 1
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 2
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 3
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 4
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 5
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 6
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 7
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 8
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 9
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 10
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 11
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 12
+[m[18:24:53:291 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 13
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 14
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 15
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 16
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 17
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 18
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 19
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 20
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 21
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 22
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 23
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 24
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 25
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 26
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 27
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 28
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 29
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 30
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 31
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 32
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 33
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 34
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 35
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 36
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 37
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 38
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 39
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 40
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 41
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 42
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 43
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 44
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 45
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 46
+[m[18:24:53:292 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 47
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 48
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 49
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 50
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 51
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 52 52
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 53 53
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 54 54
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 55 55
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 56 56
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 57 57
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 58 58
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 59 59
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 60 60
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 61 61
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 62 62
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 63 63
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 64 64
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 65 65
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 66 66
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 67 67
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 68 68
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 69 69
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 70 70
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 71 71
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 72 72
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 73 73
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 74 74
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 75 75
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 76 76
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 77 77
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 78 78
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 79 79
+[m[18:24:53:293 [1;32mINFO[m-]:print_widget[1787]:Choice: 80 80
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 81 81
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 82 82
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 83 83
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 84 84
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 85 85
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 86 86
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 87 87
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 88 88
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 89 89
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 90 90
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 91 91
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 92 92
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 93 93
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 94 94
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 95 95
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 96 96
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 97 97
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 98 98
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 99 99
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1787]:Choice: 100 100
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/other/5011
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1702]:Label: Date & Time
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1712]:Current: 20260910T172709
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/other/d406
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1702]:Label: PTP Property 0xd406
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1712]:Current: 
+[m[18:24:53:294 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/other/d407
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1702]:Label: PTP Property 0xd407
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1712]:Current: 1
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+/main/other/d303
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1702]:Label: PTP Property 0xd303
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1712]:Current: 1
+[m[18:24:53:295 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[18:24:53:345 [1;32mINFO[m-]:cameraInit[2688]:[m----------------------------------------------------------
+[m[18:24:53:346 [1;32mINFO[m-]:print_widget[1702]:Label: Camera Manufacturer
+[m[18:24:53:346 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:346 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:346 [1;32mINFO[m-]:print_widget[1712]:Current: RICOH IMAGING COMPANY, LTD.
+[m[18:24:53:346 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[18:24:53:356 [1;32mINFO[m-]:print_widget[1702]:Label: Camera Model
+[m[18:24:53:356 [1;32mINFO[m-]:print_widget[1703]:Readonly: 1
+[m[18:24:53:356 [1;32mINFO[m-]:print_widget[1711]:Type: TEXT
+[m[18:24:53:356 [1;32mINFO[m-]:print_widget[1712]:Current: PENTAX K-1 Mark II
+[m[18:24:53:356 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[18:24:53:366 [1;32mINFO[m-]:cameraInit[2703]:[m----------------------------------------------------------
+---- size 768   type 5 
+48.440338 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:24:58:959 [1;32mINFO[m-]:checkWidgetForName[2783]:[0;32;31m---- shutterspeed not found in configuration tree. 
+54.032859 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:04:435 [1;32mINFO[m-]:checkWidgetForName[2783]:[0;32;31m---- manualfocusdrive not found in configuration tree. 
+59.508914 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:10:037 [1;32mINFO[m-]:checkWidgetForName[2783]:[0;32;31m---- autofocusdrive not found in configuration tree. 
+65.214875 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:15:629 [1;32mINFO[m-]:checkWidgetForName[2783]:[0;32;31m---- imageformat not found in configuration tree. 
+[m[18:25:15:640 [1;32mINFO[m-]:cameraInit[2708]:[m----------------------------------------------------------
+[m[18:25:15:650 [1;32mINFO[m-]:cameraInit[2713]:[m-----------------------------------------------------------
+[m[18:25:15:650 [1;32mINFO[m-]:sp_Gphoto_Init[147]:----sp_Gphoto_Init ret 0 
+[m[18:25:15:750 [1;32mINFO[m-]:updateCameraViewFinder[3564]:[0;32;31m----updateViewFinder 
+70.824207 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:21:277 [1;32mINFO[m-]:updateCameraViewFinder[3625]:----updateViewFinder enable:1  ret:-1 
+[m[18:25:21:477 [1;32mINFO[m-]:sp_Gphoto_Init[156]:[0;32;31m----enableViewFinder ret -1 
+[m[18:25:21:477 [1;32mINFO[m-]:updateCameraAutoFocus[3633]:[0;32;31m----updateCameraAutoFocus 0
+76.551101 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:26:774 [1;32mINFO[m-]:updateCameraAutoFocus[3703]:----updateCameraAutoFocus enable:0  ret:-1 
+[m[18:25:26:875 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:25:26:875 [1;32mINFO[m-]:sp_Gphoto_Init[164]:[0;32;31m----updateCameraAutoFocus ret -1 
+81.948770 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:32:131 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info manualfocus ret -1 
+[m[18:25:32:131 [1;32mINFO[m-]:getCameraStorageStatus[1898]:[0;32;31m----getCameraStorageStatus 2
+87.204521 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:37:546 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 30  info capturetarget=1 ret -1 
+92.720272 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:41:560 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:25:42:591 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:25:42:591 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:25:42:592 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:25:42:593 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[18:25:43:088 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info capturetarget ret -1 
+[m[18:25:43:088 [1;32mINFO[m-]:enableCaptureTarget[114]:[0;32;31m----enableCaptureTarget  new target:  status: -1
+[m[18:25:43:088 [1;32mINFO[m-]:enableCaptureTarget[126]:[0;32;31m----enableCaptureTarget  cInfo:capturetarget=1  ret:-1  onlyJpg:0 
+98.163732 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:25:43:098 [1;32mINFO[m-]:current_shutter[1719]:[0;32;31m----get_current_shutter 111  0 
+--- waitCameraIdle busy  
+[m[18:25:44:128 [1;32mINFO[m-]:current_shutter[1724]:[0;32;31m----get_current_shutter 22 -2110
+[m[18:25:44:128 [1;32mINFO[m-]:current_shutter[1735]:[0;32;31m----current_shutter  configInfo:s:-1;  ret:-2110  sValue  
+[m[18:25:44:129 [1;32mINFO[m-]:get_current_shutter[1704]:[0;32;31m----get_current_shutter  configInfo:s:-1;  ret:-2110 
+[m[18:25:44:129 [1;32mINFO[m-]:getCameraStorageStatus[1898]:[0;32;31m----getCameraStorageStatus 2
+[m[18:25:44:129 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;storage:2;photoFormat:2;]
+[m[m[18:25:44:130 [1;32mINFO[m-]:sp_Gphoto_Init[190]:----sp_Gphoto_Init_finish 
+ 
+ 
+ 
+ 
+ 
+ 
+[m[18:25:44:130 [1;32mINFO[m-]:spGphotoRest[506]:[0;32;31m----spGphotoRest ok  
+[m[18:25:44:232 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:25:48:370 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret -1 
+--- waitCameraIdle busy  
+[m[18:25:48:372 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1702]:Label: Aperture
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1783]:Current: f/1.4
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 f/1.4
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 f/1.6
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 f/1.8
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 f/2
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 f/2.2
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 f/2.5
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 f/2.8
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 f/3.2
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 f/3.5
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 f/4
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 f/4.5
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 f/5
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 f/5.6
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 f/6.3
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 f/7.1
+[m[18:25:48:508 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 f/8
+[m[18:25:48:509 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 f/9
+[m[18:25:48:509 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 f/10
+[m[18:25:48:509 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 f/11
+[m[18:25:48:509 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 f/13
+[m[18:25:48:509 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 f/14
+[m[18:25:48:509 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 f/16
+[m[18:25:48:509 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[18:25:48:509 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info aperture ret 0 
+[m[18:25:48:509 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:25:48:510 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:25:48:511 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+Pentax preview stage read-PC-LV returned 0x02ff.
+--- waitCameraIdle busy  
+[m[18:25:49:542 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 2  ret 0 
+[m[18:25:49:542 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[18:25:49:543 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:;R:;]
+[m[m[18:25:49:544 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+Pentax preview stage start-PC-LV returned 0x2001.
+[m[18:25:49:825 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+Pentax preview stage get-frame returned 0x2001 (30068 bytes, 17 attempts, 547 ms).
+--- waitCameraIdle busy  
+[m[18:25:50:578 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 1  ret 0 
+[m[18:25:50:578 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[18:25:50:578 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:;R:;]
+[m[m[18:25:50:579 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:25:51:610 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:25:51:611 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:25:51:611 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:25:51:612 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+----handle_sign_pipe
+on client close..........3 
+106.898646 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+----handle_sign_pipe
+on client close..........2 
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:25:57:281 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret -1 
+[m[18:25:57:282 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+Pentax preview stage read-PC-LV returned 0x02ff.
+--- waitCameraIdle busy  
+[m[18:25:58:313 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:25:58:313 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:25:58:313 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:25:58:314 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (29851 bytes, 9 attempts, 274 ms).
+--- waitCameraIdle busy  
+[m[18:25:59:346 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 2  ret 0 
+[m[18:25:59:346 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[18:25:59:347 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:;R:;]
+[m[m[18:25:59:348 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+115.338053 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:26:02:684 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:26:05:918 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret -1 
+[m[18:26:05:919 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[282],val[urer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;storage:2;photoFormat:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 282  data: urer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;storage:2;photoFormat:2;   --_isInit 1 
+120.992953 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:26:11:185 [1;32mINFO[m-]:getCameraImageFormat[1770]:[0;32;31m----getImageFormat   type 0
+[m[18:26:11:185 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[282],val[format:0;]
+[m126.259151 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:26:11:186 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:26:12:217 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:26:12:217 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:26:12:217 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:26:12:219 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:26:13:250 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 3  ret 0 
+[m[18:26:13:250 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[18:26:13:250 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:;R:;]
+[m[m[18:26:13:252 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:26:14:283 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:26:14:283 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:26:14:283 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:26:14:284 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:26:15:315 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 2  ret 0 
+[m[18:26:15:316 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[18:26:15:316 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:;R:;]
+[m[m[18:26:15:317 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:26:16:350 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 1  ret 0 
+[m[18:26:16:350 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[18:26:16:350 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:;R:;]
+[m[m[18:26:16:351 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+131.511889 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:26:21:778 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info iso ret -1 
+[m[18:26:21:779 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+Pentax preview stage read-PC-LV returned 0x02ff.
+--- waitCameraIdle busy  
+[m[18:26:22:809 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 3  ret 0 
+[m[18:26:22:809 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[18:26:22:810 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:;R:;]
+[m[m[18:26:22:811 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (30106 bytes, 10 attempts, 307 ms).
+--- waitCameraIdle busy  
+[m[18:26:23:842 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:26:23:842 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:26:23:843 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:26:23:844 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+----handle_sign_pipe
+on client close..........1 
+[m[18:26:24:776 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+139.850895 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:26:29:829 [1;32mINFO[m-]:updateCameraViewFinder[3564]:[0;32;31m----updateViewFinder 
+[m[18:26:29:992 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info exposurecompensation ret -1 
+145.065567 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:26:29:993 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:26:31:025 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 1  ret 0 
+[m[18:26:31:025 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[18:26:31:025 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:;R:;]
+[m--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:26:35:538 [1;32mINFO[m-]:updateCameraViewFinder[3625]:----updateViewFinder enable:0  ret:-1 
+150.612215 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+156.127919 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+174.414031 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+185.065849 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:27:15:407 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[18:27:15:482 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:27:15:483 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:27:15:495 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:27:15:496 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:27:15:499 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:27:15:500 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:27:15:500 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:27:15:503 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:27:15:532 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+190.607515 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:27:15:577 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+[m[18:27:15:991 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+[m[18:27:16:002 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........2 
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:27:17:844 [1;32mINFO[m-]:updateCameraViewFinder[3564]:[0;32;31m----updateViewFinder 
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:27:20:948 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info iso ret -1 
+[m[18:27:20:949 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+196.022824 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:27:21:096 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:27:26:556 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret -1 
+[m[18:27:26:557 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[18:27:26:666 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+Pentax preview stage read-PC-LV returned 0x02ff.
+--- waitCameraIdle busy  
+[m[18:27:27:587 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:27:27:587 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:27:27:587 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:27:27:589 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (29958 bytes, 11 attempts, 341 ms).
+--- waitCameraIdle busy  
+[m[18:27:28:619 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 2  ret 0 
+[m[18:27:28:619 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[18:27:28:619 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:;R:;]
+[m[m[18:27:28:621 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:27:29:651 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 1  ret 0 
+[m[18:27:29:651 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[18:27:29:651 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:;R:;]
+[m[m[18:27:29:652 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[282],val[urer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;storage:2;photoFormat:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 282  data: urer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;storage:2;photoFormat:2;   --_isInit 1 
+204.797399 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+----handle_sign_pipe
+on client close..........3 
+----handle_sign_pipe
+on client close..........2 
+--- waitCameraIdle busy  
+[m[18:27:30:682 [1;32mINFO[m-]:getCameraImageFormat[1770]:[0;32;31m----getImageFormat   unkown  type 0
+[m[18:27:30:683 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[282],val[format:0;]
+[m[m[18:27:30:684 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:27:31:719 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:27:31:719 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:27:31:720 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:27:31:721 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:27:32:752 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 3  ret 0 
+[m[18:27:32:752 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[18:27:32:752 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:;R:;]
+[m[m[18:27:32:754 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:27:33:784 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:27:33:784 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:27:33:785 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:27:33:786 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:27:34:818 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 2  ret 0 
+[m[18:27:34:818 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[18:27:34:818 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:;R:;]
+[m[m[18:27:34:819 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+210.262633 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:27:35:371 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:27:40:563 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret -1 
+Pentax preview stage read-PC-LV returned 0x02ff.
+[m[18:27:40:924 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (28445 bytes, 11 attempts, 338 ms).
+----handle_sign_pipe
+on client close..........3 
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (30094 bytes, 12 attempts, 380 ms).
+----handle_sign_pipe
+on client close..........2 
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (28450 bytes, 9 attempts, 275 ms).
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (30227 bytes, 9 attempts, 270 ms).
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (28468 bytes, 12 attempts, 377 ms).
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (30136 bytes, 11 attempts, 341 ms).
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (28309 bytes, 10 attempts, 311 ms).
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (29875 bytes, 10 attempts, 307 ms).
+Pentax preview stage read-PC-LV returned 0x02ff.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (28425 bytes, 10 attempts, 315 ms).
+----handle_sign_pipe
+on client close..........1 
+[m[18:28:07:955 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+245.033575 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:28:12:687 [1;32mINFO[m-]:updateCameraViewFinder[3564]:[0;32;31m----updateViewFinder 
+--- waitCameraIdle busy  
+250.658043 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+256.233008 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+261.947602 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+267.477616 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:28:48:030 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+283.104323 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+288.502718 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:28:53:430 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:28:54:460 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 3  ret 0 
+[m[18:28:54:460 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[18:28:54:461 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:;R:;]
+[m[m[18:28:54:462 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:28:55:493 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:28:55:493 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:28:55:494 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:28:55:495 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:28:56:528 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 2  ret 0 
+[m[18:28:56:528 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[18:28:56:528 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:;R:;]
+[m[m[18:28:56:529 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:28:57:560 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 1  ret 0 
+[m[18:28:57:560 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[18:28:57:561 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:;R:;]
+[m[m[18:28:57:562 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[276],val[fNum:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 276  data: fNum:2;   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:28:58:594 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 7  value: 2 ret -2110 
+293.919183 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+[m[18:28:59:635 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 8  value: 2 ret -2110 
+[m[18:28:59:635 [1;32mINFO[m-]:camera_set_aperture[790]:[0;32;31m----camera_set_aperture configType 8  value: 2 ret -2110 
+[m[18:28:59:636 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[276],val[fNum:2;ret:-2110;]
+[m[m[18:28:59:637 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[260],val[ev:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 260  data: ev:0;   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:29:00:668 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 2  value: 0 ret -2110 
+[m[18:29:00:668 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[260],val[ev:0;ret:-2110;]
+[m299.128347 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+317.694792 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+323.333944 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:29:32:889 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+328.684734 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:29:38:954 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info iso ret -1 
+[m[18:29:38:955 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+334.029377 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:29:44:527 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret -1 
+[m[18:29:44:528 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1702]:Label: Aperture
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1783]:Current: f/1.4
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 f/1.4
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 f/1.6
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 f/1.8
+[m[18:29:44:635 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 f/2
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 f/2.2
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 f/2.5
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 f/2.8
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 f/3.2
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 f/3.5
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 f/4
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 f/4.5
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 f/5
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 f/5.6
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 f/6.3
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 f/7.1
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 f/8
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 f/9
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 f/10
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 f/11
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 f/13
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 f/14
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 f/16
+[m[18:29:44:636 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[18:29:44:636 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info aperture ret 0 
+[m[18:29:44:636 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:29:44:637 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:29:44:638 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+339.711907 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:29:50:269 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info exposurecompensation ret -1 
+[m[18:29:50:270 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+345.344346 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:29:55:557 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret -1 
+[m[18:29:55:558 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:0;f:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:0;f:0;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:29:55:760 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  1
+[m[18:29:55:760 [1;32mINFO[m-]:updateCameraAutoFocus[3633]:[0;32;31m----updateCameraAutoFocus 1
+350.833834 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:01:332 [1;32mINFO[m-]:updateCameraAutoFocus[3703]:----updateCameraAutoFocus enable:1  ret:-1 
+[m[18:30:07:339 [1;32mINFO[m-]:updateCameraAutoFocus[3633]:[0;32;31m----updateCameraAutoFocus 0
+362.413248 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:12:855 [1;32mINFO[m-]:updateCameraAutoFocus[3703]:----updateCameraAutoFocus enable:0  ret:-1 
+[m[18:30:12:856 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:12:856 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:0;f:0;ret:-1;]
+[m[m[18:30:12:857 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:6;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:6;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:30:12:858 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:12:858 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+367.931486 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:18:145 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+[m[18:30:18:148 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+373.221362 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:23:698 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+[m[18:30:23:700 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+378.774058 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:30:29:345 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+[m[18:30:29:345 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret -1 fDelay 2
+[m[18:30:29:345 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:6;ret:-1;]
+[m384.418927 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:29:346 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:6;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:6;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:30:29:346 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:29:346 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:30:379 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:31:412 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:32:444 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret -1 fDelay 2
+[m[18:30:32:444 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:6;ret:-1;]
+[m[m[18:30:32:445 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:5;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:5;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:30:32:445 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:32:445 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:33:479 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:34:512 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+390.273092 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+[m[18:30:35:548 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 5 ret -1 fDelay 2
+[m[18:30:35:548 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:5;ret:-1;]
+[m[m[18:30:35:549 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:5;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:5;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:30:35:550 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:35:550 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:36:583 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:37:617 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:38:649 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 5 ret -1 fDelay 2
+[m[18:30:38:649 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:5;ret:-1;]
+[m[m[18:30:38:650 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:6;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:6;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:30:38:651 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:38:651 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:39:684 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:40:717 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+396.046713 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:46:874 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+[m[18:30:46:874 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret -1 fDelay 2
+[m[18:30:46:875 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:6;ret:-1;]
+[m[m[18:30:46:876 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:6;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:6;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:30:46:876 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:46:876 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+401.949996 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:52:821 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+[m[18:30:52:823 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+407.896581 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:30:58:373 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+413.447029 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:30:58:375 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:30:59:410 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret -1 fDelay 2
+[m[18:30:59:410 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:6;ret:-1;]
+[m[m[18:30:59:411 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:6;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:6;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:30:59:411 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:30:59:411 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:00:443 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:01:475 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:02:505 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret -1 fDelay 2
+[m[18:31:02:505 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:6;ret:-1;]
+[m[m[18:31:02:507 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:6;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:6;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:31:02:507 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:31:02:507 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:03:539 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+419.033432 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:31:09:502 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+[m[18:31:09:504 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+424.577650 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:31:14:906 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:-1 
+[m[18:31:14:906 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret -1 fDelay 2
+[m[18:31:14:906 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:6;ret:-1;]
+[m[m[18:31:14:907 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:1;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:31:14:907 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:31:14:908 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+429.981335 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:31:20:336 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:1  ret:-1 
+435.410883 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:31:20:338 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:21:374 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:22:405 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 1 ret -1 fDelay 2
+[m[18:31:22:405 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:1;ret:-1;]
+[m[m[18:31:22:406 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:31:22:407 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:31:22:407 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:23:440 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:24:473 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+--- waitCameraIdle busy  
+[m[18:31:25:504 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 2 ret -1 fDelay 2
+[m[18:31:25:504 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:-1;]
+[m[m[18:31:25:505 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[18:31:25:505 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[18:31:25:505 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+441.324133 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:31:31:899 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:2  ret:-1 
+[m[18:31:31:902 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+446.975441 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:31:37:824 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:2  ret:-1 
+[m[18:31:37:826 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+452.899952 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+--- waitCameraIdle busy  
+[m[18:31:43:676 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:2  ret:-1 
+[m[18:31:43:676 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 2 ret -1 fDelay 2
+[m[18:31:43:677 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:-1;]
+[m458.750574 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:31:43:678 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:44:709 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:31:44:709 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:31:44:709 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:31:44:711 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:45:741 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 3  ret 0 
+[m[18:31:45:741 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[18:31:45:742 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:;R:;]
+[m[m[18:31:45:743 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:46:776 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:31:46:776 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:31:46:777 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:31:46:778 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:47:820 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 2  ret 0 
+[m[18:31:47:820 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[18:31:47:821 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:;R:;]
+[m[m[18:31:47:822 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:48:853 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:31:48:853 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:31:48:854 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:31:48:855 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[276],val[fNum:3;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 276  data: fNum:3;   --_isInit 1 
+464.044524 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+[m[18:31:49:886 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 7  value: 3 ret -2110 
+--- waitCameraIdle busy  
+[m[18:31:50:927 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 8  value: 3 ret -2110 
+[m[18:31:50:927 [1;32mINFO[m-]:camera_set_aperture[790]:[0;32;31m----camera_set_aperture configType 8  value: 3 ret -2110 
+[m[18:31:50:928 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[276],val[fNum:3;ret:-2110;]
+[m[m[18:31:50:929 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:51:960 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:31:51:960 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:31:51:960 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:31:51:962 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[276],val[fNum:21;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 276  data: fNum:21;   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:52:996 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 7  value: 21 ret -2110 
+--- waitCameraIdle busy  
+[m[18:31:54:038 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 8  value: 21 ret -2110 
+[m[18:31:54:038 [1;32mINFO[m-]:camera_set_aperture[790]:[0;32;31m----camera_set_aperture configType 8  value: 21 ret -2110 
+[m[18:31:54:038 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[276],val[fNum:21;ret:-2110;]
+[m[m[18:31:54:040 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[258],val[iso:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 258  data: iso:0;   --_isInit 1 
+469.707352 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+--- waitCameraIdle busy  
+[m[18:31:55:071 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 0  value: 0 ret -2110 
+[m[18:31:55:072 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[258],val[iso:0;ret:-2110;]
+[m[m[18:31:55:073 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[258],val[iso:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 258  data: iso:0;   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:56:104 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 0  value: 0 ret -2110 
+[m[18:31:56:104 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[258],val[iso:0;ret:-2110;]
+[m[m[18:31:56:106 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[259],val[wb:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 259  data: wb:0;   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:57:137 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 1  value: 0 ret -2110 
+[m[18:31:57:138 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[259],val[wb:0;ret:-2110;]
+[m[m[18:31:57:139 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[261],val[s:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 261  data: s:0;   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:58:173 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 3  value: 0 ret -2110 
+[m[18:31:58:173 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[261],val[s:0;ret:-2110;]
+[m[m[18:31:58:174 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:31:59:206 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:31:59:206 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:31:59:207 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:31:59:208 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+475.170021 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:32:06:232 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret -1 
+[m[18:32:06:233 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[18:32:06:431 [1;32mINFO[m-]:print_widget[1702]:Label: Aperture
+[m[18:32:06:431 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1783]:Current: f/1.4
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 f/1.4
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 f/1.6
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 f/1.8
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 f/2
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 f/2.2
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 f/2.5
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 f/2.8
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 f/3.2
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 f/3.5
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 f/4
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 f/4.5
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 f/5
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 f/5.6
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 f/6.3
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 f/7.1
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 f/8
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 f/9
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 f/10
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 f/11
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 f/13
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 f/14
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 f/16
+[m[18:32:06:432 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[18:32:06:432 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info aperture ret 0 
+[m[18:32:06:432 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:32:06:433 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m494.170992 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+500.092770 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+506.242501 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[m[18:32:31:907 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[18:32:31:929 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:32:31:930 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:32:31:947 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:32:31:948 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:32:32:863 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:32:32:865 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:32:32:865 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:32:32:866 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:32:32:866 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:32:32:867 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+[m[18:32:32:874 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........1 
+[m[18:32:32:875 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+--- waitCameraIdle busy  
+[m[18:32:32:940 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 0  ret 0 
+[m[18:32:32:940 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[18:32:32:940 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:;R:;]
+[m[m[18:32:32:941 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:32:33:972 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 3  ret 0 
+[m[18:32:33:972 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[18:32:33:973 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:;R:;]
+[m[m[18:32:33:974 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+--- waitCameraIdle busy  
+[m[18:32:35:006 [1;32mINFO[m-]:getCameraConfig[724]:[0;32;31m----getCameraConfig from local configType 7  ret 0 
+[m[18:32:35:006 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[18:32:35:007 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/1.4,f/1.6,f/1.8,f/2,f/2.2,f/2.5,f/2.8,f/3.2,f/3.5,f/4,f/4.5,f/5,f/5.6,f/6.3,f/7.1,f/8,f/9,f/10,f/11,f/13,f/14,f/16,;]
+[m[m[18:32:35:008 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 

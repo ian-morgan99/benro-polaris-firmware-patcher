@@ -39,11 +39,24 @@ NoUpdateImage warmup churn continued exactly as pre-shim.
 | K-1 II "dead to Polaris" after USB-compat toggle / reconnect | `Clog_000008` session; detection flaps, then config storm | patcher **#50** (K-1 II fails to connect under o-v5b) — supplemented as continuation on o-v7 |
 | **OpenPolaris sends preview stream to port 9090 (control), not 8080** | `Mlog_000008`: `unkown msg:GET /?action=stream HTTP/1.1 … Host: 192.168.0.1:9090`, `User-Agent: OpenPolaris/0.1` — Polaris logs it as an unknown control message | **NEW** OpenPolaris issue (created) — corroborates the other agent's in-flight fix |
 
-## Error-code note
-GP result codes start at `-102`; the small `-2` / `-6` seen here are camlib-level
-returns surfaced through `gp_camera_get_single_config` / capture, not GP_ERROR_*:
-- `-2` = widget/config not found (empty or unpopulated config tree — MTP-mode bodies).
-- `-6` = `GP_ERROR_NOT_SUPPORTED` path for capture on those same bodies.
+## Error-code note (corrected 2026-09-10 per TA review of patcher #50)
+Generic GP result codes live in the `0..-99` range (`gphoto2-port-result.h`);
+camera-level codes begin at `-102` (`GP_ERROR_CORRUPTED_DATA`,
+`gphoto2-result.h`). So:
+- `-2` = **`GP_ERROR_BAD_PARAMETERS`** — returned by `gp_camera_get_single_config()`
+  when the requested widget is not in the config tree. Not by itself proof of an
+  "empty tree"; it means *this key* was missing/unavailable at that moment.
+- `-6` = **`GP_ERROR_NOT_SUPPORTED`** — the normal constant for capture on bodies
+  whose camlib path does not support `capture_image`.
+
+K-1 II storm detail (per TA request): the distinct requested keys are
+`shutterspeed`, `manualfocusdrive`, `imageformat`, `autofocusdrive` (2 misses each,
+via pgphoto's `checkWidgetForName` diagnostics = 8 named misses); the 1,808
+`get_single_config … failed: -2` lines are pgphoto's app-level config-poll loop
+re-querying those missing widgets. These four keys are exactly the generic controls
+tracked in fork #54/#57/#59 (imageformat / autofocusdrive / manualfocusdrive) +
+shutterspeed — consistent with an unpopulated/absent config surface for K-1 II,
+but ownership still needs the §3b direct-on-PC baseline before assignment.
 
 ## Direct-on-PC baseline (§3b) — PENDING re-attach
 K-01 (`25fb:0131`) and K-3 III (`25fb:0189`) were attached to the PC, udev rule
