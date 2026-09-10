@@ -378,10 +378,11 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
  * traffic starves the Wi-Fi radio (#55).  This wrapper counts consecutive
  * GP_ERROR_TIMEOUT (-10) results (the exhausted-0xa008 terminal branch) and,
  * after STAGE2_PENTAX_PREVIEW_BACKOFF_MAX consecutive failures (default 3),
- * sleeps for a cooldown (STAGE2_PENTAX_PREVIEW_BACKOFF_SECS, default 30 s)
- * before the next request is allowed to reach the camera.  Any non-timeout
- * result resets the counter.  The sleep happens in pgphoto's preview thread,
- * so sshd/radios get CPU back between bursts instead of a continuous hammer.
+ * opens a cooldown window (STAGE2_PENTAX_PREVIEW_BACKOFF_SECS, default 30 s).
+ * While inside the window the call returns GP_ERROR_CAMERA_BUSY immediately --
+ * NON-BLOCKING by design (TA review of 446fbfd): no sleep is held inside the
+ * intercepted camera call, so stop/cancel/restart never wait out a cooldown and
+ * the session worker is not pinned.  Any non-timeout result resets the counter.
  *
  * On-demand gate (design principle: capture preview panes only when specifically
  * needed): at most one REAL frame fetch per STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS
@@ -432,15 +433,20 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
         !stage2_camera_uses_pentax_keep_lv(camera))
         return g_real_gp_camera_capture_preview(camera, file, context);
 
-    /* Cooldown: a previous burst exhausted the failure budget; hold this
-     * request until the cooldown elapses so the radio gets breathing room. */
+    /* Cooldown (NON-BLOCKING, per TA review of 446fbfd): a previous burst
+     * exhausted the failure budget.  While inside the cooldown window we return
+     * GP_ERROR_CAMERA_BUSY immediately instead of sleeping -- a blocking sleep
+     * inside the intercepted call would make stop/cancel/restart wait up to the
+     * full cooldown and hold the camera/session worker unnecessarily.  The
+     * caller's next poll (or an explicit restart) simply finds the window over;
+     * no thread is held, so lifecycle operations stay responsive. */
     if (g_pentax_preview_backoff_until) {
         time_t now = time(NULL);
         if (now < g_pentax_preview_backoff_until) {
-            int wait_s = (int)(g_pentax_preview_backoff_until - now);
-            fprintf(stderr, "[stage2] preview-backoff: cooldown %ds before next "
-                            "preview request\n", wait_s);
-            sleep((unsigned)wait_s);
+            int remain_s = (int)(g_pentax_preview_backoff_until - now);
+            fprintf(stderr, "[stage2] preview-backoff: in cooldown (%ds left) -- "
+                            "returning busy without blocking\n", remain_s);
+            return STAGE2_GP_ERROR_CAMERA_BUSY;
         }
     }
 
