@@ -242,11 +242,16 @@ NoUpdateImage warmup attempts, then `get-frame returned 0x2001 (8023 bytes)` and
 a "0x2001" in a log line is *success*, not an error.
 
 Preview-specific gotcha (see #36/#55): the camera needs several seconds after
-start-PC-LV before its first frame; `camera_capture_preview()` tears PC-LV down
-after every failed request unless the **`pentaxpclvkeep`** config widget ("Pentax
-Keep Live View") is set. pgphoto does not set it, so Polaris restarts live view
-per request and re-enters the warmup window each time — a prime suspect for both
-the 0xa008 churn and the Wi-Fi radio starvation lockout.
+start-PC-LV before its first frame. At deployed libgphoto2 `990281d72`, a
+terminal/cancelled preview failure (including exhausted `0xa008` retries) calls
+`pentax_restore_live_view(params, 0)` unconditionally. The
+**`pentaxpclvkeep`** widget preserves PC-LV across successful preview calls only;
+it does not preserve PC-LV on this failure path. Therefore setting the widget in
+pgphoto cannot by itself fix the observed `0xa008` churn. Preserving PC-LV while
+NoUpdateImage is transient requires an explicit, bounded libgphoto2 error-path
+change plus direct and Polaris hardware qualification. Independently, the
+Polaris outer request loop must back off/cancel after repeated failed requests
+so it cannot starve the Wi-Fi radio.
 
 ## 4. Reading and downloading log files
 
