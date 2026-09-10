@@ -245,6 +245,29 @@ static stage2_gp_camera_init_fn            g_real_gp_camera_init = NULL;
 static stage2_gp_camera_get_storageinfo_fn g_real_gp_camera_get_storageinfo = NULL;
 static stage2_gp_camera_get_abilities_fn   g_real_gp_camera_get_abilities = NULL;
 
+/* SHIM #4 (Pentax keep-live-view, issues #36/#55) -- extra core fns.  After a
+ * successful gp_camera_init on a Pentax model we push the camlib's
+ * `pentaxpclvkeep` toggle ON so camera_capture_preview() skips its per-frame
+ * d035 teardown (pentax_restore_live_view) and PC live view stays running
+ * across preview requests.  Without it, every failed Polaris preview request
+ * tears down + restarts live view and re-enters the NoUpdateImage warmup
+ * window -- the churn that starves the Wi-Fi radio (#55). */
+typedef int (*stage2_gp_camera_get_single_config_fn)(void *camera, const char *name,
+                                                     void **widget_out, void *context);
+typedef int (*stage2_gp_widget_set_value_int_fn)(void *widget, const void *value);
+static stage2_gp_camera_get_single_config_fn g_real_gp_camera_get_single_config = NULL;
+static stage2_gp_widget_set_value_int_fn     g_real_gp_widget_set_value_int    = NULL;
+/* Reuses Shim #3's `g_real_gp_camera_set_single_config` (defined further down,
+ * in the SHIM #3 block) as the put-handler entry that copies the toggle into
+ * params->pentax.keep_live_view.  Forward-declare here so this file compiles
+ * top-to-bottom; the later definition carries the `= NULL` initializer. */
+typedef int (*stage2_gp_camera_set_single_config_fwd_fn)(void *camera,
+                                                        const char *name,
+                                                        void *widget,
+                                                        void *context);
+static stage2_gp_camera_set_single_config_fwd_fn
+    g_real_gp_camera_set_single_config;
+
 /* CameraAbilities starts with char model[128] in libgphoto2 2.5.34.  The
  * patcher pins and validates that source version.  Use an over-sized, aligned
  * buffer so this loader does not acquire a compile-time dependency on target
@@ -268,6 +291,80 @@ static int stage2_camera_uses_r5_shims(void *camera)
         return 0;
     abilities.bytes[127] = '\0';
     return stage2_model_uses_r5_shims((const char *)abilities.bytes);
+}
+
+/* SHIM #4 model gate: any Pentax/Ricoh body (the keep-live-view widget only
+ * exists for vendor-mode Pentax models).  Reuses the abilities read from the
+ * same core handle. */
+static int stage2_camera_uses_pentax_keep_lv(void *camera)
+{
+    union {
+        max_align_t alignment;
+        unsigned char bytes[4096];
+    } abilities;
+
+    if (!g_real_gp_camera_get_abilities && g_stage2_core)
+        g_real_gp_camera_get_abilities = (stage2_gp_camera_get_abilities_fn)
+            dlsym(g_stage2_core, "gp_camera_get_abilities");
+    if (!g_real_gp_camera_get_abilities || !camera)
+        return 0;
+
+    memset(&abilities, 0, sizeof(abilities));
+    if (g_real_gp_camera_get_abilities(camera, &abilities) != 0)
+        return 0;
+    abilities.bytes[127] = '\0';
+    return stage2_model_uses_pentax_keep_lv((const char *)abilities.bytes);
+}
+
+/* SHIM #4 -- push `pentaxpclvkeep` ON for a Pentax session.  Best-effort: the
+ * widget only exists once vendor mode is enabled, so a GP_ERROR_NOT_SUPPORTED
+ * (or any non-OK) result is logged and swallowed; it never fails init. */
+static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
+{
+    if (!g_real_gp_camera_get_single_config && g_stage2_core)
+        g_real_gp_camera_get_single_config =
+            (stage2_gp_camera_get_single_config_fn)
+                dlsym(g_stage2_core, "gp_camera_get_single_config");
+    if (!g_real_gp_camera_set_single_config && g_stage2_core)
+        g_real_gp_camera_set_single_config =
+            (stage2_gp_camera_set_single_config_fwd_fn)
+                dlsym(g_stage2_core, "gp_camera_set_single_config");
+    if (!g_real_gp_widget_set_value_int && g_stage2_core)
+        g_real_gp_widget_set_value_int = (stage2_gp_widget_set_value_int_fn)
+            dlsym(g_stage2_core, "gp_widget_set_value");
+    if (!g_real_gp_camera_get_single_config || !g_real_gp_camera_set_single_config ||
+        !g_real_gp_widget_set_value_int) {
+        fprintf(stderr, "[stage2] keep-lv: FATAL real get/set_single_config/"
+                        "widget_set_value unresolved (core handle %p)\n",
+                g_stage2_core);
+        return;
+    }
+
+    void *widget = NULL;
+    int ret = g_real_gp_camera_get_single_config(camera, "pentaxpclvkeep",
+                                                 &widget, context);
+    if (ret != 0) {                                  /* GP_OK == 0 */
+        fprintf(stderr, "[stage2] keep-lv: pentaxpclvkeep widget unavailable "
+                        "(ret=%d) -- leaving default per-frame teardown\n", ret);
+        return;
+    }
+    int on = 1;
+    if (g_real_gp_widget_set_value_int(widget, &on) != 0) {
+        fprintf(stderr, "[stage2] keep-lv: widget value set failed\n");
+        return;
+    }
+    /* Route through the camlib's put handler (_put_Pentax_KeepLiveView), which
+     * copies the toggle into params->pentax.keep_live_view -- that is the flag
+     * camera_capture_preview() checks to skip its per-frame d035 teardown. */
+    ret = g_real_gp_camera_set_single_config(camera, "pentaxpclvkeep", widget,
+                                             context);
+    if (ret != 0) {
+        fprintf(stderr, "[stage2] keep-lv: set_single_config failed (ret=%d) -- "
+                        "leaving default per-frame teardown\n", ret);
+        return;
+    }
+    fprintf(stderr, "[stage2] keep-lv: pentaxpclvkeep ON for this session "
+                    "(PC-LV stays running across preview requests)\n");
 }
 
 /* Loader-internal wrapper installed in gp_camera_init's slot (see the fill loop).
@@ -294,6 +391,19 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     int ret = g_real_gp_camera_init(camera, context);
     if (ret != 0)                                    /* GP_OK == 0 */
         return ret;                                  /* init failed: pass through */
+
+    /* SHIM #4 -- Pentax keep-live-view (issues #36/#55).  After a successful
+     * init on a Pentax model, push `pentaxpclvkeep` ON so camera_capture_preview()
+     * keeps PC live view running across preview requests instead of tearing it
+     * down + restarting per request (which re-enters the NoUpdateImage warmup
+     * window and drives the radio-starvation churn).  Vendor mode is already
+     * enabled by init, so the widget is available.  Default ON; set
+     * STAGE2_PENTAX_KEEP_LV=0 to A/B against the legacy per-frame teardown. */
+    {
+        const char *klv = getenv("STAGE2_PENTAX_KEEP_LV");
+        if ((!klv || strcmp(klv, "0") != 0) && stage2_camera_uses_pentax_keep_lv(camera))
+            stage2_pentax_enable_keep_live_view(camera, context);
+    }
 
     /* These tail/config workarounds are supported only by R5 II device traces.
      * Fail closed for Pentax, other cameras, and an unreadable ability record. */
