@@ -46,8 +46,13 @@ if [ -d /libgphoto2-source-input ]; then
   git -C /libgphoto2-source-input rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
     echo "[build] ERROR: local source directory must be a Git checkout"; exit 1;
   }
-  SOURCE_COMMIT="$(git -C /libgphoto2-source-input rev-parse HEAD)"
-  if [ -n "$(git -C /libgphoto2-source-input status --porcelain --untracked-files=all)" ]; then
+  SOURCE_COMMIT="$(git -C /libgphoto2-source-input rev-parse HEAD)" || {
+    echo "[build] ERROR: cannot resolve local source commit"; exit 1;
+  }
+  SOURCE_STATUS="$(git -C /libgphoto2-source-input status --porcelain --untracked-files=all)" || {
+    echo "[build] ERROR: cannot inspect local source status"; exit 1;
+  }
+  if [ -n "$SOURCE_STATUS" ]; then
     SOURCE_DIRTY_HASH="$(cd /libgphoto2-source-input && {
       git diff --binary HEAD
       git ls-files --others --exclude-standard -z | sort -z | xargs -0 -r sha256sum

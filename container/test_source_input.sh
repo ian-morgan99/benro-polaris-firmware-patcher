@@ -25,7 +25,9 @@ test "$(sed -n 's/^git_commit=//p' "$T/clean/source-provenance.env")" = \
   "$(git -C "$SOURCE" rev-parse HEAD)"
 test -z "$(sed -n 's/^dirty_diff_hash=//p' "$T/clean/source-provenance.env")"
 
-git clone -q --no-hardlinks "$SOURCE" "$T/dirty"
+# Do not retain an alternates pointer outside the directory mounted into Docker.
+# The test must exercise dirty-source rejection, not an inaccessible object DB.
+git clone -q --no-local "$SOURCE" "$T/dirty"
 printf 'dirty fixture\n' > "$T/dirty/provenance-fixture.txt"
 if run_preflight "$T/dirty" "$T/rejected" 0 >"$T/rejected.log" 2>&1; then
   echo "dirty checkout was not rejected" >&2; exit 1
