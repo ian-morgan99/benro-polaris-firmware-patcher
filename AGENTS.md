@@ -72,7 +72,13 @@ the libgphoto2 fork) or which agent session produced it — must be traceable by
   A zip with no matching registry row is *unprovenanced* — do not stage it.
 - **Zips stay out of public git.** Zip bytes live in `builds/`, `out/`, the SMB
   share, or the SD card; only the registry row (hashes + commit links) is
-  committed. A private zip location may be added later as a `zip_location` column.
+  committed. The private zip location now exists: every built zip is uploaded to
+  the **private** `ian-morgan99/PrivateResearch` repo under
+  `firmware-packets/<registry-id>/` in the same session it is built — see the
+  `fwpkt-private-upload` skill (`.github/skills/fwpkt-private-upload/SKILL.md`)
+  and its script. The registry row's location column points there; other agents
+  fetch the bytes from that repo and verify all four handoff values before
+  staging.
 
 ## Regression protection
 
