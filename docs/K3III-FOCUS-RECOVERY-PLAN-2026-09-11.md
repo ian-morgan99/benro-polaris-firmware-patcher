@@ -102,9 +102,10 @@ Do not ask for the camera until every offline gate above passes. At that point:
 - Minimum `adj:-1` request while the 8080 client remained established: PASS.
   pgphoto logged `Pentax manual focus drive (new) returned response 0x2001`;
   complete preview frames continued immediately before and after the operation.
-- Physical focus: **operator-confirmed PASS from the OpenPolaris app**. The
-  operator confirmed the focus controls definitely work, covering functional
-  movement rather than relying on the `311 ret:0` acknowledgement alone.
+- Physical manual focus: **operator-confirmed PASS from the OpenPolaris app**.
+  The operator explicitly clarified that this confirmation applies to manual
+  focus only, covering functional movement rather than relying on the
+  `311 ret:0` acknowledgement alone. Autofocus is not qualified by this result.
 - Post-focus health: PASS. K-3 III remained enumerated; `polestar_app` and the
   same pgphoto process remained alive; ports 22, 8080, and 9090 stayed open;
   no `tdata_psh_info`, fatal, segmentation, or duplicate-launch signature was
@@ -121,10 +122,10 @@ Do not ask for the camera until every offline gate above passes. At that point:
 | K-3 III identification/runtime provenance | PASS |
 | Pre-focus live-view JPEG data plane | PASS |
 | Near request reaches K-3 III new-family focus operation | PASS — raw `0x2001` |
-| Near physical movement/direction | PASS — operator confirmed app focus controls work |
+| Near physical movement/direction | PASS — operator confirmed app manual-focus controls work |
 | Intervening JPEG after near | PASS |
 | Far request reaches K-3 III new-family focus operation | PASS — subsequent app controls logged raw `0x2001` |
-| Far physical movement/direction | PASS — operator confirmed app focus controls work |
+| Far physical movement/direction | PASS — operator confirmed app manual-focus controls work |
 | Post-focus preview and clean stop | PASS |
 | Ports 22/9090, route and processes | PASS |
 | Capture | Retest separately; not implied by focus PASS |
