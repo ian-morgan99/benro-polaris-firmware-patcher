@@ -1,0 +1,8 @@
+SEND 1&291&2&state:0;#
+RECV 262@mod:0;f:0;ret:-1;#262@mod:1;f:6;ret:0;#262@mod:1;f:6;ret:0;#262@mod:1;f:6;ret:0;#262@mod:1;f:2;ret:0;#262@mod:1;f:2;ret:0;#262@mod:1;f:5;ret:0;#262@mod:1;f:1;ret:0;#262@mod:1;f:6;ret:0;#262@mod:1;f:4;ret:0;#262@mod:1;f:0;ret:0;#262@mod:1;f:1;ret:0;#262@mod:1;f:6;ret:0;#262@mod:1;f:1;ret:0;#291@state:0;ret:0;#
+SEND 1&292&2&#
+RECV 292@state:0;#
+SEND 1&264&4&state:1;bulb:0;c:-1;#
+RECV 264@state:1#
+SEND 1&286&4&#
+RECV 264@state:-1005#286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#

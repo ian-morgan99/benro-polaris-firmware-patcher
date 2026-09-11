@@ -1,0 +1,105 @@
+Pentax preview stage get-frame returned 0x2001 (75089 bytes, 1 attempts, 18 ms).
+Pentax preview stage get-frame returned 0x2001 (70487 bytes, 1 attempts, 17 ms).
+3669.360506 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+Pentax preview stage get-frame returned 0x2001 (75174 bytes, 1 attempts, 19 ms).
+Pentax preview stage get-frame returned 0x2001 (74836 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (72365 bytes, 1 attempts, 22 ms).
+3675.764342 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+Pentax preview stage get-frame returned 0x2001 (78568 bytes, 1 attempts, 17 ms).
+on client close..........3 
+Pentax preview stage get-frame returned 0x2001 (76606 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (73395 bytes, 1 attempts, 20 ms).
+3682.255481 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+Pentax preview stage get-frame returned 0x2001 (74835 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (75187 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (74822 bytes, 1 attempts, 22 ms).
+3688.564458 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+Pentax preview stage get-frame returned 0x2001 (69023 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (74082 bytes, 1 attempts, 18 ms).
+[m[08:47:51:051 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+Pentax preview stage get-frame returned 0x2001 (75967 bytes, 1 attempts, 19 ms).
+3694.907565 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+Pentax preview stage get-frame returned 0x2001 (76177 bytes, 1 attempts, 18 ms).
+[m[08:47:54:033 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1702]:Label: ISO Speed
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1783]:Current: 100
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 100
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 200
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 400
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 800
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 1600
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 3200
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 6400
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 12800
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 25600
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 51200
+[m[08:47:54:033 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 102400
+[m[08:47:54:034 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 204800
+[m[08:47:54:034 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 409600
+[m[08:47:54:034 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 819200
+[m[08:47:54:034 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 1600000
+[m[08:47:54:034 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[08:47:54:034 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info iso ret 0 
+[m[08:47:54:034 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[08:47:54:035 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[08:47:54:037 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[08:47:54:038 [1;32mINFO[m-]:print_widget[1702]:Label: Shutter Speed
+[m[08:47:54:038 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[08:47:54:038 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1783]:Current: 1/5000
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 1/8000
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 1/6400
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 1/5000
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 1/4000
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 1/3200
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 1/2500
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 1/2000
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 1/1600
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 1/1250
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 1/1000
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 1/800
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 1/640
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 1/500
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 1/400
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 1/320
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 1/250
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 1/200
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 1/160
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 1/125
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 1/100
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 1/80
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 1/60
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 1/50
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 1/40
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 1/30
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 1/25
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 1/20
+[m[08:47:54:039 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 1/15
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 1/13
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 1/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 1/8
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 1/6
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 1/5
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 1/4
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 3/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 4/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 5/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 6/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 8/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 1/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 13/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 16/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 2/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 25/10
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 3/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 4/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 5/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 6/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 8/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 10/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 13/1
+[m[08:47:54:040 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 15/1

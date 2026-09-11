@@ -628,6 +628,24 @@ The first successful post-v6 K-3 III probe returned `Content-Length: 78417`
 followed by `ff d8`. That proves a real frame, but a longer capture is still
 required for cadence/performance qualification.
 
+For raw 9090 qualification, use the command's real subtype and keep one socket
+open long enough to receive asynchronous pushes. Proven examples are camera
+info `1&286&4&#`, live-view get `1&292&2&#`, live-view set
+`1&291&2&state:1;#`, focus adjust `1&311&1&mode:1;adj:-1;#`, and capture
+`1&264&4&state:1;bulb:0;c:-1;#`. A frame sent with the wrong subtype can be
+silently ignored; an empty short-lived `nc` result is therefore NOT TESTED,
+not a failure.
+
+Do not qualify focus from `311@ret:0` alone. The 2026-09-11 v9d K-3 III run
+returned success for both directions while the operator observed no lens
+movement and Clog contained no model-aware `0x9017` dispatch line. Focus needs
+physical movement/direction or an equivalent lower-level dispatch trace plus
+post-command JPEG proof. Likewise, do not suggest a longer client wait when
+capture has already emitted terminal `state:-1005`: inspect Clog for the
+underlying result. In that run it was `GP_ERROR_CAMERA_BUSY (-110)` because a
+previous transfer candidate was still pending; waiting in the UI cannot clear
+that camera-side lifecycle state.
+
 ## Quick reference
 
 | Task | Command / rule |
