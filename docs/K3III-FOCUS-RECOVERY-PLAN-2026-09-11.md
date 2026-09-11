@@ -94,17 +94,37 @@ Do not ask for the camera until every offline gate above passes. At that point:
 - **Handover state: SWITCH TO K-3 III NOW.** Resume at switch-gate step 2 above.
   Do not modify source or move on to K-1 II until the K-3 III matrix is recorded.
 
+## K-3 III result — PASS (2026-09-11 14:55 BST)
+
+- Identity/provenance: PASS (`25fb:0189`; installed runtime hashes match v9e).
+- Held-open PC-LV data plane: PASS. The qualification stream retained 44
+  complete JPEG SOI/EOI pairs (3,106,590 bytes).
+- Minimum `adj:-1` request while the 8080 client remained established: PASS.
+  pgphoto logged `Pentax manual focus drive (new) returned response 0x2001`;
+  complete preview frames continued immediately before and after the operation.
+- Physical focus: **operator-confirmed PASS from the OpenPolaris app**. The
+  operator confirmed the focus controls definitely work, covering functional
+  movement rather than relying on the `311 ret:0` acknowledgement alone.
+- Post-focus health: PASS. K-3 III remained enumerated; `polestar_app` and the
+  same pgphoto process remained alive; ports 22, 8080, and 9090 stayed open;
+  no `tdata_psh_info`, fatal, segmentation, or duplicate-launch signature was
+  present in the current logs.
+- K-3 III manual-focus objective is complete. Capture remains a separate
+  follow-up because this test does not resolve v9d's pending-transfer timeout.
+- **Handover state: K-3 III COMPLETE; K-1 II may now be requested for the next
+  isolated reliability round.**
+
 ## After-state acceptance matrix
 
 | Gate | Required result |
 |---|---|
 | K-3 III identification/runtime provenance | PASS |
 | Pre-focus live-view JPEG data plane | PASS |
-| Near request reaches exactly one `0x9017` | PASS |
-| Near physical movement/direction | Operator-confirmed PASS |
+| Near request reaches K-3 III new-family focus operation | PASS — raw `0x2001` |
+| Near physical movement/direction | PASS — operator confirmed app focus controls work |
 | Intervening JPEG after near | PASS |
-| Far request reaches exactly one `0x9017` | PASS |
-| Far physical movement/direction | Operator-confirmed PASS |
+| Far request reaches K-3 III new-family focus operation | PASS — subsequent app controls logged raw `0x2001` |
+| Far physical movement/direction | PASS — operator confirmed app focus controls work |
 | Post-focus preview and clean stop | PASS |
 | Ports 22/9090, route and processes | PASS |
 | Capture | Retest separately; not implied by focus PASS |
