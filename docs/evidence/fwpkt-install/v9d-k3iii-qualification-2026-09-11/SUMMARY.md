@@ -9,6 +9,8 @@ initialised successfully and reported camera state 1.
 | Runtime provenance/processes | PASS | Exact embedded commit; polestar_app and Stage-2 pgphoto running; ports 22, 8080 and 9090 listening. |
 | Live-view control | PASS | 291 start returned `state:1;ret:0`; 292 returned `state:1`. Operator confirmed live view worked. |
 | Live-view data plane | PASS | One 12 s client received 512,661 bytes, six Content-Length parts and six complete JPEG SOI/EOI pairs. |
+| Live-view stability | PASS | One continuous 120 s client received 3,871,480 bytes and 58 complete JPEG frames (~0.483 fps). All 24 five-second health samples retained the route and found ports 22 and 9090 open. |
+| Live-view shutdown | PASS | 291 stop returned `state:0;ret:0`; 292 then returned `state:0`. |
 | Focus protocol acknowledgement | PASS only as transport | Both bounded 311 requests returned `ret:0`; pgphoto received each once. |
 | Physical focus movement | FAIL | Operator observed no focus movement. No model-aware dispatch/0x9017 line appeared in Clog, so the pgphoto 311 adapter acknowledgement is a false positive. |
 | Shutter initiation | PARTIAL | Camera visibly/sort-of released and 264 first returned `state:1`. |
