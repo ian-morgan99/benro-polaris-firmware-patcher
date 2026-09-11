@@ -322,9 +322,10 @@ if [ "$MODE" = "ptp2only" ]; then
   log "patching pgphoto (3 gates + resetUsb return-0 + list-files skip)…"
   python3 /opt/patcher/analyze_pgphoto.py "$PG" --apply "$W/pgphoto.patched" >/dev/null
   DIFFB="$( { cmp -l "$PG" "$W/pgphoto.patched" || true; } | wc -l | tr -d ' ')"
-  # 14 = 3 (gates) + 7 (resetUsb: mov r0,#0 + bx lr) + 4 (list-files bl → nop)
-  [ "$DIFFB" = "14" ] || die "pgphoto patch changed $DIFFB bytes (expected 14) — aborting"
-  log "  pgphoto patched: 14 bytes (gates + resetUsb + list-files skip) ✓"
+  # 17 = 3 (gates) + 7 (resetUsb: mov r0,#0 + bx lr) + 4 (list-files bl → nop)
+  #      + 3 changed bytes in the ARM movw r0,#3000 focus-idle instruction.
+  [ "$DIFFB" = "17" ] || die "pgphoto patch changed $DIFFB bytes (expected 17) — aborting"
+  log "  pgphoto patched: 17 bytes (gates + resetUsb + list-files skip + focus idle wait) ✓"
 
   O_UID="$(stat -c %u "$STOCK_PTP2")"; O_GID="$(stat -c %g "$STOCK_PTP2")"; O_MODE="$(stat -c %a "$STOCK_PTP2")"
   install -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2"           "$STOCK_PTP2"
@@ -337,7 +338,7 @@ if [ "$MODE" = "ptp2only" ]; then
 else
   # -------------------------------------------------------------------------
   # 6 (full). Full-libgphoto2 on-disk trampoline swap (DEFAULT).
-  #   a) reliability-patched base (the same 14-byte patch, symbol-discovered)
+  #   a) reliability-patched base (the same 17-byte patch, symbol-discovered)
   #   b) on-disk trampoline the 64 boundary entries over that base
   #   c) compile the generic loader against the generated slot table
   #   d) assemble /app/lib/stage2 + install the self-driving wrapper as
@@ -346,8 +347,8 @@ else
   log "full-libgphoto2: building reliability-patched base…"
   python3 /opt/patcher/analyze_pgphoto.py "$PG" --apply "$W/pgphoto.base" >/dev/null
   DIFFB="$( { cmp -l "$PG" "$W/pgphoto.base" || true; } | wc -l | tr -d ' ')"
-  [ "$DIFFB" = "14" ] || die "reliability base changed $DIFFB bytes (expected 14) — aborting"
-  log "  base: 14-byte reliability patch (resetUsb + list-files + 3 gates) md5=$(md5sum "$W/pgphoto.base"|cut -d' ' -f1)"
+  [ "$DIFFB" = "17" ] || die "reliability base changed $DIFFB bytes (expected 17) — aborting"
+  log "  base: 17-byte reliability patch (resetUsb + list-files + 3 gates + focus idle wait) md5=$(md5sum "$W/pgphoto.base"|cut -d' ' -f1)"
 
   log "full-libgphoto2: on-disk trampolining 64 boundary entries…"
   rm -rf "$W/s2"; mkdir -p "$W/s2"

@@ -82,9 +82,10 @@ reads the tail (ABI-inert).** The build fails closed unless the rebuilt core's
 
 The 64 trampolines only redirect the *boundary* API. `pgphoto`'s own non-boundary
 cold-start code (`resetUsb`, the eager `ARG_LIST_FILES` full-card scan) is **not**
-trampolined, so full mode first applies the **same 14-byte reliability patch** that
+trampolined, so full mode first applies the **same 17-byte reliability patch** that
 ptp2-only mode applies (symbol-discovered: `resetUsb → return 0`, skip
-`ARG_LIST_FILES`, + the 3 dispatch gates), then trampolines over that base. A
+`ARG_LIST_FILES`, extend the focus idle wait, + the 3 dispatch gates), then
+trampolines over that base. A
 fail-closed collision guard proves no trampoline overwrites a reliability byte
 (the reliability sites live in non-boundary functions or mid-function, so there
 are provably **0 collisions**).
@@ -404,8 +405,8 @@ recoverability, not a guarantee; flash at your own risk.**
   won't blindly patch unknown builds.
 - Aborts if the rebuilt driver's **glibc ceiling > 2.24**.
 - Aborts if the driver imports a **core symbol the device lacks**.
-- Aborts if the `pgphoto` patch touches anything other than **14 bytes**
-  (3 gates + `resetUsb` return-0 + `ARG_LIST_FILES` skip).
+- Aborts if the `pgphoto` patch touches anything other than **17 bytes**
+  (3 gates + `resetUsb` return-0 + `ARG_LIST_FILES` skip + focus idle wait).
 - For the **usb1 iolib** (when enabled): aborts unless it is soft-float EABI with
   glibc ceiling ≤ 2.24, exports the three iolib entry points, its `DT_NEEDED` ⊆
   the stock `usb1.so`'s, and every core/port and `libusb_*` symbol it imports is
