@@ -19,6 +19,7 @@ set -e
 BINP=${BINP:-/app/bin/pgphoto}
 BACKUP=${BACKUP:-/app/sd/pgphoto.prestage2.bak}
 STAGE2=${STAGE2:-/app/lib/stage2}
+SUPERVISOR_LOCK=${OPENPOLARIS_RUN_DIR:-/var/run}/openpolaris-camera-usb-supervisor.lock
 
 if [ ! -e "$BACKUP" ]; then
     echo "[restore] FATAL: no backup at $BACKUP -- cannot restore stock." >&2
@@ -28,6 +29,14 @@ fi
 
 cp "$BACKUP" "$BINP";  chmod +x "$BINP"
 echo "[restore] restored stock $BACKUP -> $BINP"
+
+# A supervisor is intentionally independent of pgphoto so it survives a
+# pgphoto restart. Stop it before returning to the stock runtime.
+if [ -f "$SUPERVISOR_LOCK/pid" ]; then
+    SUPERVISOR_PID=$(cat "$SUPERVISOR_LOCK/pid" 2>/dev/null)
+    case "$SUPERVISOR_PID" in ''|*[!0-9]*) SUPERVISOR_PID= ;; esac
+    [ -n "$SUPERVISOR_PID" ] && kill -TERM "$SUPERVISOR_PID" 2>/dev/null || true
+fi
 
 # restore the stock ptp2/usb1 placed at the stock camlib/iolib paths (if backed up)
 for f in /app/lib/libgphoto2/*/ptp2.so /app/lib/libgphoto2_port/*/usb1.so; do

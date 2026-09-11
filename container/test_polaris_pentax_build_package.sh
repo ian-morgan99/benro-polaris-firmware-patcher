@@ -113,6 +113,7 @@ grep -q 'local-source target models: K-1 II and K-3 III present' "$T/build.log" 
 [ -f "$T/stage2-ondisk/ondisk/install_stage2.sh" ] || { echo "missing install_stage2.sh" >&2; exit 1; }
 [ -f "$T/stage2-ondisk/ondisk/restore_stock.sh" ] || { echo "missing restore_stock.sh" >&2; exit 1; }
 [ -f "$T/stage2-ondisk/ondisk/libpolaris_stage2.so" ] || { echo "missing libpolaris_stage2.so" >&2; exit 1; }
+[ -f "$T/stage2-ondisk/ondisk/camera_usb_supervisor.sh" ] || { echo "missing camera_usb_supervisor.sh" >&2; exit 1; }
 
 # The flashable ZIP is the source of truth. Re-extract its appfs and prove the
 # embedded runtime is byte-identical to the optional reversible bundle; this
@@ -134,6 +135,7 @@ cmp "$APPFS_ROOT/openpolaris-libgphoto2-provenance.txt" \
 for mapping in \
   'bin/pgphoto:ondisk/pgphoto.wrapper' \
   'restart_gphoto:ondisk/restart_gphoto.sh' \
+  'lib/stage2/camera_usb_supervisor.sh:ondisk/camera_usb_supervisor.sh' \
   'lib/stage2/libpolaris_stage2.so:ondisk/libpolaris_stage2.so' \
   'lib/stage2/pgphoto.stage2ondisk:ondisk/pgphoto.stage2ondisk' \
   'lib/stage2/libgphoto2.so.6:libgphoto2.so.6' \

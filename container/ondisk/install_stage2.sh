@@ -46,6 +46,7 @@ PORT=$(find_one libgphoto2_port.so.12)
 PTP2=$(find_one "libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so")
 USB1=$(find_one "libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so")
 WRAP=$(find_one ondisk/pgphoto.wrapper pgphoto.wrapper)
+USB_SUPERVISOR=$(find_one ondisk/camera_usb_supervisor.sh camera_usb_supervisor.sh)
 
 # Issue #2 follow-up: if the staged wrapper still carries the build-time
 # placeholder, apply the env override to it now. A wrapper that was already
@@ -76,6 +77,7 @@ cp "$CORE"    "$STAGE2/libgphoto2.so.6"
 cp "$PORT"    "$STAGE2/libgphoto2_port.so.12"
 cp "$PTP2"    "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
 cp "$USB1"    "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
+cp "$USB_SUPERVISOR" "$STAGE2/camera_usb_supervisor.sh"; chmod +x "$STAGE2/camera_usb_supervisor.sh"
 echo "[install] populated $STAGE2 (loader + core/port + ptp2/usb1 + stage2 binary)"
 
 # --- 2b. also place fresh ptp2/usb1 at the STOCK camlib/iolib paths -----------

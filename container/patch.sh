@@ -399,6 +399,7 @@ else
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PORT"                   "$STAGE2/libgphoto2_port.so.12"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
+  install -m 755 -o "$P_UID" -g "$P_GID" /opt/patcher/ondisk/camera_usb_supervisor.sh "$STAGE2/camera_usb_supervisor.sh"
   # Generate the wrapper from its template (CAMLIBS_VERSION/IOLIBS_VERSION +
   # PENTAX_MAX_CAPTURE_SIZE) so it matches the staged dir layout above. Issue #1:
   # previously this was a checked-in file that hard-coded "2.5.34" / "0.12.2",
@@ -674,6 +675,7 @@ if [ "$MODE" = "full" ]; then
   cp /opt/patcher/ondisk/install_stage2.sh "$BUN/ondisk/"
   cp /opt/patcher/ondisk/restore_stock.sh  "$BUN/ondisk/"
   cp /opt/patcher/ondisk/restart_gphoto.sh "$BUN/ondisk/"
+  cp /opt/patcher/ondisk/camera_usb_supervisor.sh "$BUN/ondisk/"
   cp "$NEW_CORE" "$BUN/libgphoto2.so.6"
   cp "$NEW_PORT" "$BUN/libgphoto2_port.so.12"
   cp "$NEW_PTP2" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"

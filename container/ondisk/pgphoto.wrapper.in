@@ -113,4 +113,10 @@ fi
 echo $$ > "${PIDFILE}.tmp" 2>/dev/null && mv "${PIDFILE}.tmp" "$PIDFILE"
 release_launch_lock
 trap - EXIT
+# pgphoto retains stale CameraAbilities/usb:BUS,DEVICE state across its internal
+# reset path. Keep one process-independent, debounced USB identity supervisor
+# alive so an actual camera detach/reattach/body swap gets a clean restart.
+if [ -x "$D/camera_usb_supervisor.sh" ]; then
+    nohup "$D/camera_usb_supervisor.sh" >> /app/Clog.txt 2>&1 &
+fi
 exec $D/pgphoto.stage2ondisk "$@"
