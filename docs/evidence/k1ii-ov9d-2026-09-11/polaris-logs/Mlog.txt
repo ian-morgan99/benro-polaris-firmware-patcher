@@ -1,0 +1,8 @@
+[m[09:12:09:955 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[09:12:09:955 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[restart_gphoto] FAIL: pgphoto stayed alive but port 8080 did not become ready
+[m[m[09:12:40:041 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[09:12:40:041 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[09:12:49:499 [1;31mERROR[m-]:checkGphotoTask[3315]:[0;32;31mpgphoto is exit,reboot it
+[restart_gphoto] stopping pgphoto (PID 714)
+[restart_gphoto] starting pgphoto via /app/bin/pgphoto
