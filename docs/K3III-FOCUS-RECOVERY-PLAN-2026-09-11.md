@@ -72,6 +72,28 @@ Do not ask for the camera until every offline gate above passes. At that point:
 6. Stop live view cleanly. Confirm camera state 1, route, ports 22/9090, and no
    `tdata_psh_info` exhaustion or pgphoto restart.
 
+## Current checkpoint — ready for K-3 III (2026-09-11 13:09 BST)
+
+- Source fix: patcher `e41a954`; corrected 17-byte aggregate fail-closed gate:
+  `37bac5b`; registry commit: `e201ca6`. All are pushed to `origin/main`.
+- Candidate: `o-v9e-focus-idle-wait`; libgphoto2
+  `90de508a5441cb7e2b1b02d601b15a7547d7bcee` from a clean, self-contained
+  checkout.
+- Offline gates: focused tests 5/5 PASS; full-stack ABI/symbol, Stage-2
+  collision, post-repack runtime-content, firmwareInfo, and ZIP-layout gates
+  PASS.
+- Artifact: ZIP MD5 `89e3714ee5f650c5d2463be11996b0ca`; ZIP SHA-256
+  `9af10ebf42b17193e073f46902b6a5263509a6be19155ee307e8fc3350d52583`;
+  appfs MD5 `3434cd42b3d092552c9599ff338fffc3`. Uploaded to the private
+  `PrivateResearch/firmware-packets/o-v9e-focus-idle-wait/` folder.
+- Installation: PASS through the sanctioned extracted `/app/sd/FwPkt/`
+  boot-watcher flow. All six on-card files matched `firmwareInfo` before reboot.
+- Post-install: all seven runtime files match the build byte-for-byte; embedded
+  provenance names the clean libgphoto2 SHA; `polestar_app` and pgphoto are
+  running; ports 22 and 9090 are open; K-1 II remains identified as `25fb:0183`.
+- **Handover state: SWITCH TO K-3 III NOW.** Resume at switch-gate step 2 above.
+  Do not modify source or move on to K-1 II until the K-3 III matrix is recorded.
+
 ## After-state acceptance matrix
 
 | Gate | Required result |
