@@ -1,6 +1,6 @@
 ---
 name: polaris-debugging
-description: Debugging guide for junior agents working on the Benro Polaris gimbal camera stack. USE FOR: getting SSH access to the device, confirming you are talking to the Polaris and not the home router, testing the camera path with pgphoto/gphoto2 on-device, reading and downloading logs, waking the device over Bluetooth and connecting wirelessly (including from a sandbox), and deciding which GitHub repo owns a given defect. DO NOT USE FOR: building FwPkt.zip locally (use container/ + fwpkt-update-flow skill), flashing firmware (fwpkt-update-flow skill), or libgphoto2 source changes (libgphoto2 fork repo).
+description: "Debugging guide for junior agents working on the Benro Polaris gimbal camera stack. USE FOR: SSH access, device identity and routing checks, pgphoto/gphoto2 camera-path tests, log collection, Bluetooth wake and Wi-Fi connection, and defect ownership. DO NOT USE FOR: building or flashing FwPkt.zip, or editing libgphoto2 source."
 ---
 
 # Polaris debugging guide (junior agents)
@@ -220,13 +220,38 @@ cd /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2
 git log --oneline -1          # MUST equal the device's git_commit (provenance file)
 ninja -C _build examples/pentax-safe-preview   # builds in seconds if libs are current
 
-export LD_LIBRARY_PATH=_build/libgphoto2:_build/libgphoto2_port/libgphoto2_port \
-       CAMLIBS=_build/camlibs IOLIBS=_build/libgphoto2_port/libusb1
+export LD_LIBRARY_PATH="$PWD/_build/libgphoto2:$PWD/_build/libgphoto2_port/libgphoto2_port" \
+       CAMLIBS="$PWD/_build/camlibs/ptp2" \
+       IOLIBS="$PWD/_build/libgphoto2_port/libusb1:$PWD/_build/libgphoto2_port/usbscsi"
 lsusb | grep 25fb            # get the bus,device (e.g. usb:001,039)
 
-./_build/examples/pentax-safe-preview "Pentax:K-1 Mark II (PTP mode)" usb:BUS,DEV 5
-# or: "Pentax:K-3 Mark III (MTP mode)" for the K-3 III
+./_build/examples/pentax-safe-preview "Pentax K-1 Mark II (PTP mode)" usb:BUS,DEV 5
+# or: "Pentax K-3 Mark III (MTP mode)" for the K-3 III
 ```
+
+Use the public ability names printed by `gphoto2 --list-cameras`: they contain
+`Pentax K-...`, not the internal table spelling `Pentax:K-...`. With multiple
+bodies attached, a failed exact-model lookup is fatal; never fall back to
+autodetection. Confirm the harness prints the expected model, VID:PID and port.
+
+For a final control qualification, build and run the constrained harnesses one
+at a time:
+
+```bash
+ninja -C _build examples/pentax-safe-preview \
+  examples/pentax-safe-focus examples/pentax-safe-shutter-roundtrip
+./_build/examples/pentax-safe-focus "$MODEL" "$PORT" near-lv
+./_build/examples/pentax-safe-focus "$MODEL" "$PORT" far-lv
+./_build/examples/pentax-safe-shutter-roundtrip "$MODEL" "$PORT"
+```
+
+Focus is PASS only when PC-LV yields a valid JPEG before the one bounded drive,
+the model-specific opcode is accepted, another valid JPEG arrives afterwards,
+and cleanup succeeds. Record physical lens direction separately; protocol
+acceptance cannot prove visible motion. Shutter is PASS only when the harness
+derives the live baseline, selects a non-Bulb exposure no longer than 1/30 s,
+verifies it through `pentaxconditions`, and restores the exact baseline. Do not
+use a harness that assumes a particular starting shutter value.
 
 Interpretation (this is what decides repo ownership):
 
@@ -610,7 +635,7 @@ required for cadence/performance qualification.
 | SSH in | join `polaris_d13e86` → `ssh root@192.168.0.1` (key via patcher boot hook, or root password) |
 | Prove it's the gimbal | `nmcli … \| grep 48:E7:DA` + `ip route get 192.168.0.1` → wifi dev + `cat /app/FwVer`; use embedded provenance/hashes, not FwVer, to identify the patcher build |
 | Test camera on-device | stop daemon → direct `gphoto2` with `CAMLIBS/IOLIBS/LD_LIBRARY_PATH` from `/app/lib/stage2` → restart daemon, tail Clog. Watchdog reclaims USB in ~30 s — do it in one session |
-| Direct-on-PC baseline (ownership) | fork repo: `ninja -C _build examples/pentax-safe-preview`, run with `LD_LIBRARY_PATH=_build/libgphoto2:_build/libgphoto2_port/libgphoto2_port CAMLIBS=_build/camlibs IOLIBS=_build/libgphoto2_port/libusb1` + camera attached to PC. PASS→Polaris-local, FAIL→libgphoto2 (§3b) |
+| Direct-on-PC baseline (ownership) | Fork repo: build the constrained harnesses; pin core, `CAMLIBS=_build/camlibs/ptp2`, and both USB I/O module paths exactly as in §3b; use the public exact-model name and explicit port. PASS means Polaris-local; FAIL means candidate libgphoto2 defect. |
 | CLI dies at load (`relocation error … LIBGPHOTO2_5_0`) | #51: `LD_PRELOAD=/app/lib/stage2/libgphoto2_port.so.12` (scope to the gphoto2 call only) until the port replacement ships |
 | Read logs | `/app/Clog.txt`, `/app/Mlog.txt`; **persistent numbered logs at `/app/sd/system/log/`** (`grep -a` — they can be binary); wedged device → pull SD, read `/system/log/` on PC |
 | Download logs | `scp` often fails (no SFTP) → prefer `ssh 'tar czf - …' \| tar xzf -`; archive into `docs/evidence/<topic>-<date>/` |
