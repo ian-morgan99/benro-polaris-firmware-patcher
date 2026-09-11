@@ -122,10 +122,14 @@ bash patch-polaris.sh \
   --out <absolute-path>          # docker -v needs an absolute path
 ```
 
-Two guards make this safe and verifiable:
-1. **The build log must print** `[build] using mounted local source` (not the vanilla
+Three guards make this safe and verifiable:
+1. **Full mode fails closed without `--libgphoto2-source`.** The conspicuous
+   `--allow-vanilla-source` escape hatch is only for intentional stock builds;
+   provenance then records `vanilla_source_explicit=1`. It must not be used for
+   a Pentax candidate.
+2. **The build log must print** `[build] using mounted local source` (not the vanilla
    `wget` path) and `[patcher] local-source Pentax candidate marker: present`.
-2. **Post-build, verify the fork markers are actually in the shipped `ptp2.so`:**
+3. **Post-build, verify the fork markers are actually in the shipped `ptp2.so`:**
 
    ```bash
    PTP=$(find <out>/stage2-ondisk -name ptp2.so | head -1)

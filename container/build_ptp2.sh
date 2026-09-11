@@ -37,6 +37,15 @@ SOURCE_KIND=release
 SOURCE_COMMIT=
 SOURCE_DIRTY_HASH=
 SOURCE_INPUT_SHA256=
+VANILLA_SOURCE_EXPLICIT=0
+if [ "$FULLSTACK" = "1" ] && [ ! -e /libgphoto2-source-input ] &&
+   [ "${ALLOW_VANILLA_SOURCE:-0}" != "1" ]; then
+  echo "[build] ERROR: full-stack build requires an explicit source input; refusing silent vanilla release fallback"
+  exit 1
+fi
+if [ ! -e /libgphoto2-source-input ] && [ "${ALLOW_VANILLA_SOURCE:-0}" = "1" ]; then
+  VANILLA_SOURCE_EXPLICIT=1
+fi
 if [ -d /libgphoto2-source-input ]; then
   [ -f /libgphoto2-source-input/configure.ac ] || {
     echo "[build] ERROR: mounted local source directory has no configure.ac"; exit 1;
@@ -79,6 +88,7 @@ elif [ -f /libgphoto2-source-input ]; then
   mv "$EXTRACTED" "libgphoto2-$VER"
   echo "[build] using source archive (sha256 $SOURCE_INPUT_SHA256)"
 elif [ ! -d "libgphoto2-$VER" ]; then
+  [ "$VANILLA_SOURCE_EXPLICIT" = "1" ] && echo "[build] WARNING: explicitly building the vanilla release source"
   for u in \
     "https://github.com/gphoto/libgphoto2/releases/download/v$VER/libgphoto2-$VER.tar.xz" \
     "https://github.com/gphoto/libgphoto2/releases/download/v$VER/libgphoto2-$VER.tar.bz2"; do
@@ -104,6 +114,7 @@ actual_version=$ACTUAL_VERSION
 git_commit=$SOURCE_COMMIT
 dirty_diff_hash=$SOURCE_DIRTY_HASH
 input_sha256=$SOURCE_INPUT_SHA256
+vanilla_source_explicit=$VANILLA_SOURCE_EXPLICIT
 EOF
 if [ "${SOURCE_PREFLIGHT_ONLY:-0}" = "1" ]; then
   cat /work/out/source-provenance.env

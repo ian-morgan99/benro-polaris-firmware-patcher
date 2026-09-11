@@ -198,6 +198,10 @@ if [ -e /libgphoto2-source-input ]; then
     fi
   done
   log "local-source target models: K-1 II and K-3 III present"
+elif [ "$MODE" = "full" ]; then
+  [ "${ALLOW_VANILLA_SOURCE:-0}" = "1" ] ||
+    die "full mode lacks required libgphoto2 source input"
+  warn "explicit vanilla-source build: Pentax fork markers and target models are absent by design"
 fi
 
 # ---------------------------------------------------------------------------
