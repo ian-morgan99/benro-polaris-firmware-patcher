@@ -112,8 +112,67 @@ Do not ask for the camera until every offline gate above passes. At that point:
   present in the current logs.
 - K-3 III manual-focus objective is complete. Capture remains a separate
   follow-up because this test does not resolve v9d's pending-transfer timeout.
-- **Handover state: K-3 III COMPLETE; K-1 II may now be requested for the next
-  isolated reliability round.**
+- **Handover state: K-3 III live view and manual focus COMPLETE; keep K-3 III
+  attached while the newly isolated autofocus and dual-candidate capture work
+  below is addressed. Do not request K-1 II yet.**
+
+## Remaining K-3 III work discovered after manual-focus PASS
+
+### A. Tap-to-position autofocus — OPEN
+
+Observed UI result: manual focus works; autofocus does not produce a useful
+visible result. Do not treat these as one feature.
+
+The PrivateResearch IMAGE Transmitter 2 source supplies the missing contract:
+
+1. Require active PC live view and map the tap from the displayed/cropped image
+   into camera live-view coordinates, bounded by the CAF active area.
+2. Write `PTP_DPC_PENTAX_LiveViewAFPosition` (`0xd036`) using the existing
+   8-byte payload `{2,0,0,0,Xlo,Xhi,Ylo,Yhi}`. K-3 III snaps the requested
+   coordinate to an AF point and echoes that point on read-back.
+3. Invoke `CamAutoFocus()`, which calls Pentax `InitiateCapture` (`0x9011`)
+   with release mode 0/current, **focus mode 1**, MWB mode, sync mode 0, and
+   aperture-reset value. This is an autofocus-only operation, distinct from
+   normal still capture (focus mode 2/3) and manual drive (`0x9017`).
+4. Expose that operation as Pentax `autofocusdrive`; pgphoto's existing
+   `updateCameraAutoFocus` path already requests this generic widget.
+
+Acceptance: one centre and one off-centre app tap while PC-LV stays active;
+`0xd036` SET/read-back proves the selected K-3 III point; exactly one focus-mode
+1 operation succeeds; operator sees focus at the tapped area; JPEGs continue;
+no still image/candidate is created. Track in libgphoto2 #57. Never alias this
+to manual focus or claim success from the coordinate SET alone.
+
+### B. Periodic Shot failed / Camera busy — OPEN, root cause proven
+
+The 14:57 app shot succeeded completely: camera `IMGP3472.JPG`, capture return
+0, download/delete return 0, protocol states 2/3/5, and a valid 14,076,599-byte
+`/app/sd/normal/SP_0013.jpg` (MD5
+`8fb0f2ac1adb79d3a29955579844a497`). The log also says
+`numOfCaptureImage 2`. At 15:02 the next shot was refused before exposure:
+`A previous capture's transfer candidate (1) is still pending`, library `-110`,
+app `state:-1005`; `SP_0014.jpg` was not created.
+
+This occurrence is not a slow-transfer/UI-timeout defect. A dual-format shot
+created two camera-side candidates; libgphoto2 transferred/finalized one and
+returned success while the second remained. Fix libgphoto2 #73 by reconciling
+all candidates from the *same initiated exposure*, with a strict candidate/time
+bound and conditions verification after every deletion. Preserve the later
+pre-capture stale-candidate barrier: an unknown candidate found at session or
+request start must never be blindly deleted. Also define which dual-format
+member Polaris receives so RAW bytes cannot be silently saved under `.jpg`.
+
+Acceptance: two consecutive K-3 III app captures in the current dual-format
+configuration; each produces a valid intended-format file and protocol states
+2/3/5; no pending candidate before shot two; then repeat with JPEG-only. Retain
+the full Clog/Mlog window and post-test process/port health.
+
+### C. Newly verified OpenPolaris UI behaviour
+
+- Pinch-to-zoom works in live view (operator-confirmed).
+- Manual near/far controls work (operator-confirmed and raw `0x2001`).
+- Tap-to-position autofocus remains OPEN under section A; pinch zoom does not
+  prove camera-side live-view zoom or AF-position semantics by itself.
 
 ## After-state acceptance matrix
 
