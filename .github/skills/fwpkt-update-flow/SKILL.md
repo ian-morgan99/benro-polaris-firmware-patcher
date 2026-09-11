@@ -163,6 +163,13 @@ Before staging a zip on the SD card, it must have a row in
    correct payload still needs its outer hash recorded — that is exactly the gap
    behind the 2026-09-07/08 v3 incident.
 
+**Where to fetch zips.** Every zip this project builds is uploaded to the
+**private** `ian-morgan99/PrivateResearch` repo under
+`firmware-packets/<registry-id>/FwPkt.zip` (see the `fwpkt-private-upload`
+skill). If a registry row's location points there, clone/fetch that folder and
+verify all four handoff values against the row before staging. The public repos
+never contain the zip bytes — only the row.
+
 ## Things that are NOT allowed
 
 The following are explicitly prohibited because they have either bricked the
