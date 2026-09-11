@@ -84,7 +84,19 @@ Strips the `SetRemoteMode` toggle added in 2.5.34's `camera_exit` to
 avoid an extra re-enumeration. Same fail-closed story as 2.4: only
 `MODE=ptp2only` enables it.
 
-### 2.6 `SELFTEST` (default 0)
+### 2.6 Manual-focus idle-wait site
+
+Full-stack builds require exactly one `waitCameraIdle(500)` call immediately
+preceded by its argument load inside the symbol range of
+`updateCameraManualFocus`. The reliability patch changes that argument to 3000
+ms so background preview/config work can drain before a lens-drive dispatch.
+
+*Fail-closed check*: discovery is restricted by symbol range, call adjacency,
+callee name and original instruction word. Zero or multiple matches, a changed
+encoding, or a missing symbol aborts the build. The identical autofocus wait and
+all focus values/opcodes remain untouched.
+
+### 2.7 `SELFTEST` (default 0)
 
 When set, after a successful flash the patcher qemu-emulates the
 stage-2 bundle's `dlopen` to confirm all symbols resolve. Pure

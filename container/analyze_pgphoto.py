@@ -27,6 +27,11 @@ Patches applied by --apply:
      view / capture can start. Skipping it makes the camera ready in seconds; the
      app still lists files on demand when the gallery is opened.
 
+  4. updateCameraManualFocus's pre-dispatch waitCameraIdle budget is increased
+     from 500 ms to 3000 ms.  This waits for background preview/config work to
+     release pgphoto's internal busy state BEFORE a lens-drive command is sent;
+     it does not retry or duplicate a completed focus movement.
+
 TRAMPOLINE_ADDR (pgphoto's own gp_filesystem_set_info_dirty) is also reported;
 the rebuilt driver trampolines there because the device's on-disk
 libgphoto2.so.6 predates that symbol.
@@ -44,6 +49,8 @@ PUSH_FP_LR = 0xE92D4800        # `push {fp, lr}` — stock resetUsb prologue
 MOV_R0_0   = 0xE3A00000
 BX_LR      = 0xE12FFF1E
 NOP        = 0xE1A00000        # `mov r0, r0`
+MOV_R0_500 = 0xE3A00F7D        # `mov r0,#500`
+MOVW_R0_3000 = 0xE3000BB8      # `movw r0,#3000`
 OBJDUMP   = os.environ.get("OBJDUMP", "arm-linux-gnueabi-objdump")
 
 def sym_value(elf, name):
@@ -127,6 +134,30 @@ def find_listfiles_bl(insns, crange):
                     break
     return list(dict.fromkeys(hits))
 
+def find_manual_focus_idle_wait(insns, frange):
+    """Find the one pre-dispatch ``waitCameraIdle(500)`` call in
+    updateCameraManualFocus.
+
+    Restricting both instructions to the named function prevents changing the
+    identical autofocus wait or any unrelated 500 ms delay.  The binary has a
+    symbol table, so absence/duplication is a hard failure rather than a guessed
+    byte-pattern patch.
+    """
+    if not frange:
+        return []
+    a, b = frange
+    hits = []
+    for i, (va, txt) in enumerate(insns[:-1]):
+        if not (a <= va < b):
+            continue
+        if not re.match(r'mov\s+r0,\s*#(?:500|0x1f4)\b', txt):
+            continue
+        next_va, next_txt = insns[i + 1]
+        if next_va == va + 4 and next_txt.startswith("bl") \
+                and "waitCameraIdle" in next_txt:
+            hits.append(va)
+    return list(dict.fromkeys(hits))
+
 def main():
     path = sys.argv[1]
     apply_to = None
@@ -138,10 +169,12 @@ def main():
         tramp    = sym_value(elf, "gp_filesystem_set_info_dirty")
         resetusb = sym_value(elf, "resetUsb")
         crange   = sym_range(elf, "cameraInit")
+        mfrange  = sym_range(elf, "updateCameraManualFocus")
         ranges = [r for r in (sym_range(elf, n) for n in GATE_FUNCS) if r]
         insns  = disasm(path)
         gates  = find_gates(insns, ranges) if ranges else []
         lfbls  = find_listfiles_bl(insns, crange) if crange else []
+        mfwaits = find_manual_focus_idle_wait(insns, mfrange)
         data   = bytearray(open(path, "rb").read())
 
         # verify every gate really holds `mov r3,r0`
@@ -160,6 +193,11 @@ def main():
             off = vaddr_to_off(elf, va)
             if off is not None and (struct.unpack_from("<I", data, off)[0] >> 24) == 0xEB:
                 lf.append((va, off))
+        mf = []
+        for va in mfwaits:
+            off = vaddr_to_off(elf, va)
+            if off is not None and struct.unpack_from("<I", data, off)[0] == MOV_R0_500:
+                mf.append((va, off))
 
     if tramp is not None:
         print("TRAMPOLINE_ADDR=0x%08x" % tramp)
@@ -169,6 +207,8 @@ def main():
         print("RESETUSB_ADDR=0x%08x" % resetusb)
     for va, off in lf:
         print("LISTFILES_BL=0x%08x" % va)
+    for va, off in mf:
+        print("FOCUS_IDLE_WAIT_ADDR=0x%08x" % va)
 
     if apply_to:
         problems = []
@@ -176,6 +216,7 @@ def main():
         if len(good) != 3:     problems.append("gates=%d (want 3)" % len(good))
         if not reset_ok:       problems.append("resetUsb prologue not found")
         if len(lf) != 1:       problems.append("list-files dispatch=%d (want 1)" % len(lf))
+        if len(mf) != 1:       problems.append("manual-focus idle wait=%d (want 1)" % len(mf))
         if problems:
             sys.stderr.write("refusing to patch: " + "; ".join(problems) + "\n")
             sys.exit(2)
@@ -184,6 +225,7 @@ def main():
         struct.pack_into("<I", data, reset_off,   MOV_R0_0)   # resetUsb: return 0
         struct.pack_into("<I", data, reset_off+4, BX_LR)
         struct.pack_into("<I", data, lf[0][1],    NOP)        # skip ARG_LIST_FILES
+        struct.pack_into("<I", data, mf[0][1], MOVW_R0_3000)  # wait before focus dispatch
         with open(apply_to, "wb") as g:
             g.write(data)
         os.chmod(apply_to, 0o755)

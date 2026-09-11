@@ -221,8 +221,9 @@ only** — its bytes never execute. Replacing it changes nothing.
 
 ## The fix
 
-Two coordinated pieces, shipped together: a rebuilt driver, and a **14-byte**
-`pgphoto` patch (three dispatch gates + two reliability edits). All reversible.
+Two coordinated pieces, shipped together: a rebuilt driver, and a small,
+structurally discovered `pgphoto` patch (three dispatch gates plus targeted
+reliability edits). All reversible.
 
 ### 1. Rebuild `ptp2.so`
 
@@ -269,6 +270,21 @@ neutralised:
 Both extra sites are discovered from `pgphoto`'s symbol table (`resetUsb`, and
 the `cb_arg_run` call inside `cameraInit` preceded by the `ARG_LIST_FILES`
 opcode), so the tool still fails safe on firmware it wasn't built for.
+
+### 4. Foreground manual-focus idle budget
+
+Stock `updateCameraManualFocus()` calls `waitCameraIdle(500)` before it reaches
+the public libgphoto2 configuration boundary. Installed v9d evidence showed a
+K-1 II focus request needed just over two seconds for background preview/config
+work to release that state; another bounded request failed before dispatch. The
+patch changes only this manual-focus pre-dispatch budget to 3000 ms. It does not
+change the autofocus wait, focus direction or magnitude, the model-specific
+`0x9017`/`0x9016` implementation, or retry a completed movement.
+
+The site is accepted only when `analyze_pgphoto.py` finds exactly one adjacent
+`mov r0,#500; bl waitCameraIdle` pair inside the symbol range of
+`updateCameraManualFocus`. Missing, duplicate, differently encoded, or relocated
+sites fail closed.
 
 `pgphoto` keeps its static libgphoto2 **core** (2.5.27). The rebuilt driver
 binds its ~65 core calls to that core — safe because the camlib↔core API is
