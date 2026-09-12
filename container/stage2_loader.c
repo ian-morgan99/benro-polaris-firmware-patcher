@@ -470,7 +470,14 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
     }
 
     int ret = g_real_gp_camera_capture_preview(camera, file, context);
-    if (ret == STAGE2_GP_ERROR_TIMEOUT) {
+    if (ret != 0) {
+        /* Count ANY failure (timeout -10, not-supported -2, USB busy -53, etc.)
+         * toward the backoff budget.  The K-1 II in PTP mode returns -2 for
+         * unsupported config items and the outer pgphoto loop hammers
+         * gp_camera_capture_preview back-to-back; if only -10 counted, the
+         * cooldown never triggered and the sustained PTP traffic starved the
+         * Wi-Fi radio (#55).  Any non-zero result is a failure that should
+         * contribute to the "camera is not cooperating" budget. */
         const char *maxs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_MAX");
         const char *secs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_SECS");
         int max_failures = STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT;
@@ -483,14 +490,14 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
         g_pentax_preview_timeouts++;
         if (g_pentax_preview_timeouts >= max_failures) {
             g_pentax_preview_backoff_until = time(NULL) + cooldown_s;
-            fprintf(stderr, "[stage2] preview-backoff: %d consecutive timeouts "
-                            "-- backing off %ds (issues #36/#55)\n",
-                    g_pentax_preview_timeouts, cooldown_s);
+            fprintf(stderr, "[stage2] preview-backoff: %d consecutive failures "
+                            "(last ret=%d) -- backing off %ds (issues #36/#55)\n",
+                    g_pentax_preview_timeouts, ret, cooldown_s);
         }
     } else {
         if (g_pentax_preview_timeouts)
             fprintf(stderr, "[stage2] preview-backoff: recovered after %d "
-                            "consecutive timeouts\n", g_pentax_preview_timeouts);
+                            "consecutive failures\n", g_pentax_preview_timeouts);
         g_pentax_preview_timeouts = 0;
         g_pentax_preview_backoff_until = 0;
     }
