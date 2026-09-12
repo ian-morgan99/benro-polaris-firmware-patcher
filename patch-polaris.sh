@@ -28,6 +28,10 @@
 #                          (issue #31). FILE may be a path to an authorized_keys
 #                          file or the key line(s) themselves. OFF by default —
 #                          without it the build is byte-for-byte unchanged.
+#     --build-id ID        embed a human-readable build identifier (e.g.
+#                          "6.0.0.54.1") into /app/openpolaris-libgphoto2-provenance.txt
+#                          so patcher-only builds (same libgphoto2 commit, different
+#                          patcher) are distinguishable at runtime. OFF by default.
 #     --image NAME         docker image tag              (default polaris-patcher)
 #
 #  READ THE README AND DISCLAIMERS FIRST.  Tested ONLY against FwVer 4.0.0.32
@@ -36,7 +40,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -53,6 +57,7 @@ while [ $# -gt 0 ]; do
     --no-usb1) SWAPUSB1=0; shift;;
     --pentax-max-capture-size) PENTAX_MAX_CAPTURE_SIZE="$2"; shift 2;;
     --ssh-key) SSHKEY="$2"; shift 2;;
+    --build-id) BUILDID="$2"; shift 2;;
     --image) IMG="$2"; shift 2;;
     -h|--help) sed -n '2,26p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
@@ -131,6 +136,7 @@ docker run --rm \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
   -e ALLOW_VANILLA_SOURCE="$ALLOW_VANILLA" \
   -e SSH_PUBKEY="$SSH_PUBKEY" \
+  -e BUILD_ID="$BUILDID" \
   "$@" \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"

@@ -116,6 +116,14 @@ dirty_diff_hash=$SOURCE_DIRTY_HASH
 input_sha256=$SOURCE_INPUT_SHA256
 vanilla_source_explicit=$VANILLA_SOURCE_EXPLICIT
 EOF
+# Optional human-readable build identifier (issue: patcher-only builds share the
+# same libgphoto2 git_commit, so the device cannot tell e.g. o-v9g from o-v9h).
+# When BUILD_ID is set (via --build-id), append it so a running device proves which
+# exact patcher build produced its embedded stack. Omitted when unset, keeping
+# older builds byte-identical.
+if [ -n "${BUILD_ID:-}" ]; then
+  printf 'build_id=%s\n' "$BUILD_ID" >> /work/out/source-provenance.env
+fi
 if [ "${SOURCE_PREFLIGHT_ONLY:-0}" = "1" ]; then
   cat /work/out/source-provenance.env
   exit 0
