@@ -662,6 +662,40 @@ that camera-side lifecycle state.
 | Change the device | GitHub issue in owning repo → FwPkt build → SD-card install. Never edit `/app` over SSH as a fix |
 | Dual-path (#38/#51) check | Stage-2 and stock hashes must match for both `libgphoto2.so.6` and `libgphoto2_port.so.12`; grep `/proc/PID/maps` for active paths |
 
+## 7. K-1 II deployment hazards (learned 2026-09-11/12, o-v9f → o-v9h)
+
+**Boot-with-preview-ON radio starvation (#55/#64).** With a Pentax camera
+attached and the app's preview ON at power-on, pgphoto hammers PTP back-to-back;
+the sustained traffic starves the Broadcom Wi-Fi driver and SSH/Wi-Fi drop while
+BT keeps advertising (flapping every ~40 s). The device often recovers on its
+own within minutes — poll `uptime` rather than assuming a hard wedge. o-v9h
+(`6.0.0.54.1`) bounds the *preview* loop (any non-zero `gp_camera_capture_preview`
+result now counts toward the 3-failure/30 s cooldown). **Known residual gap:**
+the K-1 II's 5 s `get_single_config failed: -2` config-poll loop (#59) is a
+second unbounded PTP source not yet bounded — expect flapping until that is fixed.
+
+**Verify the backoff actually engaged before trusting it.** Grep Clog for
+`[stage2] preview-backoff: N consecutive failures (last ret=...)`. Only the
+init-time `slot -> shim` line means the wrapper is installed, NOT that it fired.
+
+**Camera must be on the USB bus before any camera-path test.** `lsusb | grep
+25fb` empty = "no camera" — check power + cable seat first; a fitted-but-off or
+loose K-1 II produces a pgphoto restart loop (repeated `[stage2] init` blocks in
+Clog) with no PTP traffic at all.
+
+**Provenance now carries `build_id`.** Since o-v9h,
+`/app/openpolaris-libgphoto2-provenance.txt` ends with `build_id=6.0.0.54.N`.
+Always verify BOTH `git_commit=` and `build_id=` against the registry row before
+qualification — patcher-only builds share a libgphoto2 commit (o-v9g vs o-v9h
+both `90736a1ac`), which is how 5 h of K-1 II testing ran on the wrong build
+(2026-09-11, issue #58).
+
+**Reboot trigger reliability.** `scripts/reboot-via-812.sh` (the app's "Reboot"
+wire command) is flaky — it can send the frame without rebooting (observed
+2026-09-12: uptime kept counting). Use `ssh root@192.168.0.1 'sync; /sbin/reboot'`
+as the reliable trigger; if using 812, require a real SSH drop + uptime reset
+within 30 s or fall back.
+
 ## Cross-references
 
 - Patcher issue **#51** — #38 core-only replacement leaves the stock port stale,

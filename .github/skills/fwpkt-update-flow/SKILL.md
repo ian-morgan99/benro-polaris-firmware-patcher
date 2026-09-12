@@ -120,10 +120,21 @@ tar czf - -C /absolute/path/to/registered-build FwPkt |
 
 Recompute every camera/gimbal payload MD5 on `/app/sd/FwPkt` and compare it to
 the on-card `firmwareInfo` before rebooting. Do not merge with or overwrite an
-unknown partial tree. Stop keepalives, then trigger the normal boot watcher with
-`ssh root@192.168.0.1 'sync; /sbin/reboot'`. In that session the TCP `812`
-helper sent a frame but did not reboot, so require a real SSH drop and uptime
-reset. During reconnect, reject the Hitron route and wait for the Polaris BSSID
+unknown partial tree. Stop keepalives, then trigger the normal boot watcher.
+
+**Reboot trigger — use `/sbin/reboot`, treat 812 as best-effort:**
+
+```bash
+ssh root@192.168.0.1 'sync; /sbin/reboot'   # reliable (verified 2026-09-12)
+```
+
+`scripts/reboot-via-812.sh` (TCP 9090, the app's "Reboot" wire command) is
+flaky: on 2026-09-12 it sent the frame but the device did NOT reboot (uptime
+kept counting). If you use 812, poll `uptime` for 30 s and require a real SSH
+drop + uptime reset; if uptime keeps counting, fall back to `/sbin/reboot`
+before starting the 5–10 min reflash wait.
+
+During reconnect, reject the Hitron route and wait for the Polaris BSSID
 plus `wlp8s0` route before checking source provenance, component hashes,
 process/listener ownership, and physical camera behavior.
 
@@ -136,6 +147,17 @@ After the reboot:
 - `/app/FwVer` shows the new version.
 - `/app/bin/polestar_app` and `/app/bin/pgphoto` exist and have the expected
   sizes.
+- **Provenance matches the INTENDED registry row** — read
+  `/app/openpolaris-libgphoto2-provenance.txt` and compare BOTH fields:
+  - `git_commit=` must equal the libgphoto2 commit in the registry row.
+  - `build_id=` (present since 2026-09-12, e.g. `6.0.0.54.1`) must equal the
+    build identifier in the registry row. **This is the only way to tell
+    patcher-only builds apart**: two builds sharing a libgphoto2 commit (e.g.
+    o-v9g vs o-v9h, both `90736a1ac`) are indistinguishable by `git_commit`
+    alone. On 2026-09-11 this gap let ~5 h of K-1 II testing run on the wrong
+    build (issue #58). Builds made before the `--build-id` flag have no
+    `build_id=` line — for those, verify the appfs MD5 in the registry row
+    against the on-card `firmwareInfo` instead.
 
 If any of those are wrong, do **not** attempt a second bypass. Re-stage the
 SD card with a known-good `FwPkt.zip` and repeat from step 1.
@@ -474,7 +496,7 @@ mitigating this, but it's not a guarantee).
 | Action | Allowed? |
 |---|---|
 | Edit `container/` patcher source on PC | ✅ |
-| Build a `FwPkt.zip` on PC via `patch-polaris.sh` | ✅ |
+| Build a `FwPkt.zip` on PC via `patch-polaris.sh` | ✅ (always pass `--build-id N.N.N.N.x` so the on-disk provenance file carries a unique build identifier — see §4) |
 | Validate a built `FwPkt.zip` with `validate_fw_package.py` | ✅ |
 | Pre-extract `FwPkt.zip` → `/FwPkt/` on SD root, verify MD5s, reseat | ✅ (only if it has a provenance-registry row) |
 | Stage a zip with no `docs/FWPKT-PROVENANCE-CONTRACT.md` registry row | ❌ |
