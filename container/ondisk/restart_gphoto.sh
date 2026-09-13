@@ -133,6 +133,36 @@ rm -f "$PIDFILE"
 # crash-loop delay from earlier automatic launches.
 rm -f "$RUN_DIR/openpolaris-pgphoto.backoff"
 
+# --- step 2b: reclaim a stale launch lock (issue #77) -----------------------
+# A wrapper SIGKILLed or power-cycled mid-launch leaves the mkdir-based launch
+# lock behind in persistent /var/run. The wrapper's own stale-lock reclaim only
+# runs if it gets launched at all, so every later launch logs "another pgphoto
+# launch is already in progress; refusing duplicate" and the watchdog restart
+# becomes a permanent no-op (issue #77 candidate root cause 3). Reclaim the lock
+# here, before launching: safe when the recorded owner is gone or no longer a
+# pgphoto process. If the owner is alive AND is pgphoto, a launch is genuinely
+# in progress — refuse to race it (the wrapper would do the same).
+LAUNCH_LOCK="$RUN_DIR/openpolaris-pgphoto.launch.lock"
+if [ -d "$LAUNCH_LOCK" ]; then
+    LOCKPID=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    case "$LOCKPID" in ''|*[!0-9]*) LOCKPID= ;; esac
+    if [ -n "$LOCKPID" ] && [ -d "$PROC_ROOT/$LOCKPID" ] && pid_is_pgphoto "$LOCKPID"; then
+        echo "[restart_gphoto] launch lock owned by live pgphoto (PID $LOCKPID); refusing to race it" >&2
+        exit 1
+    fi
+    # Owner gone, or a non-pgphoto leftover: give a just-created owner one
+    # second to publish its PID, then reclaim.
+    sleep 1
+    LOCKPID=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    case "$LOCKPID" in ''|*[!0-9]*) LOCKPID= ;; esac
+    if [ -n "$LOCKPID" ] && [ -d "$PROC_ROOT/$LOCKPID" ] && pid_is_pgphoto "$LOCKPID"; then
+        echo "[restart_gphoto] launch lock won by live pgphoto (PID $LOCKPID) during grace; refusing to race it" >&2
+        exit 1
+    fi
+    rm -rf "$LAUNCH_LOCK"
+    echo "[restart_gphoto] reclaimed stale pgphoto launch lock (owner ${LOCKPID:-unknown})"
+fi
+
 # --- step 3: start the replacement -----------------------------------------
 
 echo "[restart_gphoto] starting pgphoto via $WRAPPER"

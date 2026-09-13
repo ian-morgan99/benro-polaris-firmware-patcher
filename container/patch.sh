@@ -592,6 +592,18 @@ elif [ -f /in/FwVer ]; then
   log "FwVer: carried stock version through ($(cat /in/FwVer))"
 fi
 
+# Fail-closed FwVer gate (issue #74). The appfs /app/FwVer is asserted above;
+# the package-top-level file Benro Connect actually reads (/app/sd/FwPkt/FwVer)
+# must carry the SAME value or the device mislabels itself. A BUILD_ID build
+# that ships a stock or summed FwVer reproduces the "8.0.0.76" symptom, so fail
+# closed here: the top-level file must start with exactly our build_id.
+if [ -n "${BUILD_ID:-}" ]; then
+  if ! grep -q "^FwVer:$BUILD_ID;" /out/FwPkt/FwVer; then
+    die "post-build assertion failed: /out/FwPkt/FwVer is not '$BUILD_ID' ($(cat /out/FwPkt/FwVer 2>/dev/null))"
+  fi
+  log "  verified /out/FwPkt/FwVer reports '$BUILD_ID'"
+fi
+
 # Fail-closed firmwareInfo gate (re-MD5 + re-size every component against
 # the just-built /out/FwPkt). Catches the "stale firmwareInfo" failure mode
 # described in docs/silent-fwpkt-reject-postmortem.md.
