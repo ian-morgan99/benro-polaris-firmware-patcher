@@ -86,6 +86,11 @@ def list_members_from_dir(root):
     fi = os.path.join(root, "firmwareInfo")
     if os.path.isfile(fi):
         members.append(("FwPkt/firmwareInfo", fi, os.path.getsize(fi), False))
+    # Top-level files (e.g. FwVer) that live directly under FwPkt/
+    for name in sorted(os.listdir(root)):
+        full = os.path.join(root, name)
+        if os.path.isfile(full) and name not in ("firmwareInfo",):
+            members.append(("FwPkt/%s" % name, full, os.path.getsize(full), False))
     return members
 
 

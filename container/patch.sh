@@ -536,6 +536,21 @@ fi
 # ---------------------------------------------------------------------------
 # 8. Repack appfs (geometry read from the stock image) + regenerate firmwareInfo
 # ---------------------------------------------------------------------------
+# FwVer inside the appfs: /app/FwVer is what polestar_app reports as the
+# on-board firmware version after install (SP_GetDeviceVer / boot banner), and
+# it is what Benro Connect displays. The stock appfs carries
+# "FwVer:4.0.0.32;date:...". When BUILD_ID is set, rewrite it in the extracted
+# tree BEFORE repacking so the flashed device reports our build identifier.
+if [ -n "${BUILD_ID:-}" ]; then
+  APP_FWVER="$APP/FwVer"
+  if [ -f "$APP_FWVER" ]; then
+    FWVER_DATE="$(date +%Y.%m.%d)"
+    printf 'FwVer:%s;date:%s;\n' "$BUILD_ID" "$FWVER_DATE" > "$APP_FWVER"
+    log "appfs FwVer override: /app/FwVer will report '$BUILD_ID' (was $(cat /in/FwVer 2>/dev/null || echo 'unknown'))"
+  else
+    warn "no FwVer file in the extracted appfs tree — Benro Connect will keep showing the stock version"
+  fi
+fi
 /opt/patcher/repack_appfs.sh "$STOCK_APPFS" "$APP" "$W/out/appfs.ubifs"
 
 log "assembling custom FwPkt in /out…"
@@ -557,6 +572,25 @@ fi
 cp -p "${gimbal_bins[@]}" /out/FwPkt/gimbal/
 cp "$W/out/appfs.ubifs" /out/FwPkt/camera/appfs.ubifs
 python3 /opt/patcher/gen_firmwareinfo.py /in/firmwareInfo /out/FwPkt > /out/FwPkt/firmwareInfo
+
+# ---------------------------------------------------------------------------
+# FwVer: the top-level version file Benro's polestar_app reads
+# (SP_GetFwVer -> /app/sd/FwPkt/FwVer) and that Benro Connect displays as the
+# firmware version. The stock package carries e.g. "FwVer:4.0.0.32;date:...".
+# When BUILD_ID is set, override it so the running device (and therefore the
+# app) reports OUR build identifier instead of the stock version. FwVer is NOT
+# part of the firmwareInfo manifest (getFwInfo.sh only MD5s config/uImage/
+# rootfs/appfs/gimbal entries), so adding/overriding it cannot trip the
+# on-board CRC gate.
+# ---------------------------------------------------------------------------
+if [ -n "${BUILD_ID:-}" ]; then
+  FWVER_DATE="$(date +%Y.%m.%d)"
+  printf 'FwVer:%s;date:%s;\n' "$BUILD_ID" "$FWVER_DATE" > /out/FwPkt/FwVer
+  log "FwVer override: Benro Connect will report firmware version '$BUILD_ID' (was $(cat /in/FwVer 2>/dev/null || echo 'unknown'))"
+elif [ -f /in/FwVer ]; then
+  cp -p /in/FwVer /out/FwPkt/FwVer
+  log "FwVer: carried stock version through ($(cat /in/FwVer))"
+fi
 
 # Fail-closed firmwareInfo gate (re-MD5 + re-size every component against
 # the just-built /out/FwPkt). Catches the "stale firmwareInfo" failure mode
@@ -610,6 +644,20 @@ if [ ! -f "$PORT_LIB" ]; then
   die "post-repack assertion failed: lib/stage2/libgphoto2_port.so.12 missing from appfs.ubifs"
 fi
 log "  verified Stage-2 runtime files (lib/stage2/pgphoto.stage2ondisk, lib/stage2/libpolaris_stage2.so, lib/stage2/libgphoto2.so.6, lib/stage2/libgphoto2_port.so.12) exist in appfs.ubifs"
+
+# Verify the FwVer override actually landed inside the repacked appfs (the
+# on-board version Benro Connect displays). Fail closed: a BUILD_ID build that
+# silently ships the stock /app/FwVer would mislabel the device.
+if [ -n "${BUILD_ID:-}" ]; then
+  APPFS_FWVER="$APP_VERIFY/FwVer"
+  if [ ! -f "$APPFS_FWVER" ]; then
+    die "post-repack assertion failed: FwVer missing from appfs.ubifs (BUILD_ID build)"
+  fi
+  if ! grep -q "^FwVer:$BUILD_ID;" "$APPFS_FWVER"; then
+    die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
+  fi
+  log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
+fi
 
 # Build the ZIP at a *temp* path so the validator can fail-closed on the
 # *exact* archive we'd ship, and we only atomically rename to the public

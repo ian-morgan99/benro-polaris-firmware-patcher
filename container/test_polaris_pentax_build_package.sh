@@ -101,6 +101,69 @@ test -z "$(sed -n 's/^dirty_diff_hash=//p' "$T/build-source-provenance.txt")" ||
 [ -f "$T/FwPkt/camera/rootfs.ubifs" ] || { echo "missing FwPkt/camera/rootfs.ubifs" >&2; exit 1; }
 [ -f "$T/FwPkt/camera/uImage" ] || { echo "missing FwPkt/camera/uImage" >&2; exit 1; }
 [ -f "$T/FwPkt/firmwareInfo" ] || { echo "missing FwPkt/firmwareInfo" >&2; exit 1; }
+
+# 3a) FwVer: without BUILD_ID the stock version file must be carried through so
+#     Benro Connect still reports a valid firmware version.
+if [ -f "$FW_PKT/FwVer" ]; then
+  [ -f "$T/FwPkt/FwVer" ] || { echo "missing FwPkt/FwVer (stock carry-through)" >&2; exit 1; }
+  test "$(cat "$T/FwPkt/FwVer")" = "$(cat "$FW_PKT/FwVer")" || {
+    echo "FwVer not carried through from stock" >&2; exit 1; }
+fi
+
+# 3b) FwVer override: a BUILD_ID build must rewrite FwVer so the device (and
+#     therefore Benro Connect) reports our build identifier, not the stock one.
+BUILDID_TEST="o-v9j-testbuild"
+if docker run --rm --name polaris-pentax-fwver \
+  -e MODE=full \
+  -e LIBGPHOTO2_VERSION=2.5.34 \
+  -e FIX_R5M2_TYPO=1 \
+  -e SELFTEST=0 \
+  -e SWAP_USB1=1 \
+  -e ALLOW_DIRTY_SOURCE=0 \
+  -e PENTAX=1 \
+  -e BUILD_ID="$BUILDID_TEST" \
+  -v "$SOURCE:/libgphoto2-source-input:ro" \
+  -v "$FW_PKT:/in:ro" \
+  -v "$T:/out-fwver" \
+  "$IMAGE" > "$T/build-fwver.log" 2>&1; then
+  [ -f "$T/out-fwver/FwPkt/FwVer" ] || { echo "missing FwPkt/FwVer (BUILD_ID build)" >&2; exit 1; }
+  grep -q "^FwVer:$BUILDID_TEST;" "$T/out-fwver/FwPkt/FwVer" || {
+    echo "FwVer not overridden by BUILD_ID: $(cat "$T/out-fwver/FwPkt/FwVer")" >&2; exit 1; }
+  # The override must also land inside the shipped zip.
+  python3 - "$T/out-fwver/FwPkt.zip" "$BUILDID_TEST" <<'PY'
+import sys, zipfile
+zp, bid = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(zp) as z:
+    data = z.read("FwPkt/FwVer").decode()
+assert data.startswith("FwVer:%s;" % bid), "zip FwVer wrong: %r" % data
+print("FwVer override verified in FwPkt.zip:", data.strip())
+PY
+  # And the on-board /app/FwVer (what Benro Connect actually displays) must be
+  # overridden inside the repacked appfs. Mount the BUILD output dir at /audit
+  # so /audit/FwPkt/camera/appfs.ubifs resolves, and extract into a sibling dir.
+  FWVER_APPFS_AUDIT="$T/out-fwver/appfs-fwver-audit"
+  rm -rf "$FWVER_APPFS_AUDIT"; mkdir -p "$FWVER_APPFS_AUDIT"
+  docker run --rm --entrypoint bash \
+    -v "$T/out-fwver:/audit" "$IMAGE" -c '
+      set -e
+      ubireader_extract_files -o /audit/appfs-fwver-audit \
+        /audit/FwPkt/camera/appfs.ubifs >/dev/null
+    ' || {
+    # Fallback: extract on the host if ubireader is available there.
+    ubireader_extract_files -o "$FWVER_APPFS_AUDIT" \
+      "$T/out-fwver/FwPkt/camera/appfs.ubifs" >/dev/null 2>&1
+  }
+  APPFS_FWVER_ROOT="$(find "$FWVER_APPFS_AUDIT" -type d -name ubifs | head -1)"
+  [ -n "$APPFS_FWVER_ROOT" ] || { echo "could not extract appfs for FwVer audit" >&2; exit 1; }
+  [ -f "$APPFS_FWVER_ROOT/FwVer" ] || { echo "missing /app/FwVer in repacked appfs" >&2; exit 1; }
+  grep -q "^FwVer:$BUILDID_TEST;" "$APPFS_FWVER_ROOT/FwVer" || {
+    echo "/app/FwVer in appfs not overridden: $(cat "$APPFS_FWVER_ROOT/FwVer")" >&2; exit 1; }
+  echo "appfs /app/FwVer override verified: $(cat "$APPFS_FWVER_ROOT/FwVer")"
+else
+  echo "BUILD_ID FwVer build failed; last 40 log lines:" >&2
+  tail -40 "$T/build-fwver.log" >&2
+  exit 1
+fi
 [ -d "$T/FwPkt/gimbal" ] || { echo "missing FwPkt/gimbal" >&2; exit 1; }
 
 # 4) The patcher's Pentax gates all passed in the build log.
