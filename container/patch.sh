@@ -606,11 +606,11 @@ elif [ -f /in/FwVer ]; then
   log "FwVer: carried stock version through ($(cat /in/FwVer))"
 fi
 
-# Fail-closed FwVer gate (issue #74). The appfs /app/FwVer is asserted above;
-# the package-top-level file Benro Connect actually reads (/app/sd/FwPkt/FwVer)
-# must carry the SAME value or the device mislabels itself. A BUILD_ID build
-# that ships a stock or summed FwVer reproduces the "8.0.0.76" symptom, so fail
-# closed here: the top-level file must start with exactly our build_id.
+# Fail-closed FwVer gate (issue #74). The package-top-level file Benro Connect
+# reads (/app/sd/FwPkt/FwVer) carries our build_id for log identification via
+# SP_GetFwVer. This is a SEPARATE path from the displayed sw: sum (code 780),
+# which is computed by polestar_app as gimbalFwVer + cameraFwVer and is kept at
+# stock by leaving /app/FwVer unmodified (see docs/FWVER-SUM-BEHAVIOR.md).
 if [ -n "${BUILD_ID:-}" ]; then
   if ! grep -q "^FwVer:$BUILD_ID;" /out/FwPkt/FwVer; then
     die "post-build assertion failed: /out/FwPkt/FwVer is not '$BUILD_ID' ($(cat /out/FwPkt/FwVer 2>/dev/null))"
@@ -671,18 +671,27 @@ if [ ! -f "$PORT_LIB" ]; then
 fi
 log "  verified Stage-2 runtime files (lib/stage2/pgphoto.stage2ondisk, lib/stage2/libpolaris_stage2.so, lib/stage2/libgphoto2.so.6, lib/stage2/libgphoto2_port.so.12) exist in appfs.ubifs"
 
-# Verify the FwVer override actually landed inside the repacked appfs (the
-# on-board version Benro Connect displays). Fail closed: a BUILD_ID build that
-# silently ships the stock /app/FwVer would mislabel the device.
+# Verify the FwVer state inside the repacked appfs matches what we intended.
+# Default (OVERRIDE_APPFS_FWVER unset): /app/FwVer stays stock so the displayed
+# sw: sum (gimbalFwVer + cameraFwVer) remains 6.0.0.54 — see docs/FWVER-SUM-BEHAVIOR.md.
+# With OVERRIDE_APPFS_FWVER=1: /app/FwVer carries BUILD_ID (old behaviour).
 if [ -n "${BUILD_ID:-}" ]; then
   APPFS_FWVER="$APP_VERIFY/FwVer"
   if [ ! -f "$APPFS_FWVER" ]; then
     die "post-repack assertion failed: FwVer missing from appfs.ubifs (BUILD_ID build)"
   fi
-  if ! grep -q "^FwVer:$BUILD_ID;" "$APPFS_FWVER"; then
-    die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
+  if [ "${OVERRIDE_APPFS_FWVER:-0}" = "1" ]; then
+    if ! grep -q "^FwVer:$BUILD_ID;" "$APPFS_FWVER"; then
+      die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
+    fi
+    log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
+  else
+    # Stock value expected — just confirm the file exists and is non-empty.
+    if [ ! -s "$APPFS_FWVER" ]; then
+      die "post-repack assertion failed: /app/FwVer in appfs.ubifs is empty"
+    fi
+    log "  verified /app/FwVer in appfs.ubifs keeps stock value ($(cat "$APPFS_FWVER")) — displayed sw: sum stays at stock"
   fi
-  log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
 fi
 
 # Build the ZIP at a *temp* path so the validator can fail-closed on the
