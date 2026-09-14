@@ -536,20 +536,34 @@ fi
 # ---------------------------------------------------------------------------
 # 8. Repack appfs (geometry read from the stock image) + regenerate firmwareInfo
 # ---------------------------------------------------------------------------
-# FwVer inside the appfs: /app/FwVer is what polestar_app reports as the
-# on-board firmware version after install (SP_GetDeviceVer / boot banner), and
-# it is what Benro Connect displays. The stock appfs carries
-# "FwVer:4.0.0.32;date:...". When BUILD_ID is set, rewrite it in the extracted
-# tree BEFORE repacking so the flashed device reports our build identifier.
-if [ -n "${BUILD_ID:-}" ]; then
+# FwVer inside the appfs: /app/FwVer feeds into polestar_app's SP_GetDeviceVer,
+# which computes the `sw:` field in code 780 as the component-wise SUM of
+# gimbalFwVer + cameraFwVer. Benro Connect displays this `sw:` value.
+#
+# Stock: gimbal 2.0.0.22 + camera 4.0.0.32 = sw:6.0.0.54 (what the app expects).
+# If we override /app/FwVer with our build_id (e.g. 6.0.0.54), the sum becomes
+# 2.0.0.22 + 6.0.0.54 = sw:8.0.0.76 — a "mislabel" that looks like a newer
+# Benro version than we actually are (issue #74).
+#
+# Fix: keep /app/FwVer as stock so the displayed `sw:` stays at 6.0.0.54.
+# Our build_id is still carried in the package-top-level FwVer (below), which
+# Benro Connect reads via SP_GetFwVer for log identification — a separate path
+# from the `sw:` sum.
+#
+# Set OVERRIDe_APPFS_FWVER=1 to restore the old behaviour (override /app/FwVer
+# with BUILD_ID) if you want the boot banner / SP_GetFwVer to show our build_id
+# at the cost of the displayed `sw:` sum changing.
+if [ "${OVERRIDE_APPFS_FWVER:-0}" = "1" ] && [ -n "${BUILD_ID:-}" ]; then
   APP_FWVER="$APP/FwVer"
   if [ -f "$APP_FWVER" ]; then
     FWVER_DATE="$(date +%Y.%m.%d)"
     printf 'FwVer:%s;date:%s;\n' "$BUILD_ID" "$FWVER_DATE" > "$APP_FWVER"
-    log "appfs FwVer override: /app/FwVer will report '$BUILD_ID' (was $(cat /in/FwVer 2>/dev/null || echo 'unknown'))"
+    log "appfs FwVer override: /app/FwVer will report '$BUILD_ID' (was $(cat /in/FwVer 2>/dev/null || echo 'unknown')) — NOTE: displayed sw: sum will change"
   else
     warn "no FwVer file in the extracted appfs tree — Benro Connect will keep showing the stock version"
   fi
+else
+  log "appfs FwVer: keeping stock value ($(cat "$APP/FwVer" 2>/dev/null || echo 'unknown')) so displayed sw: sum stays at stock (6.0.0.54)"
 fi
 /opt/patcher/repack_appfs.sh "$STOCK_APPFS" "$APP" "$W/out/appfs.ubifs"
 
