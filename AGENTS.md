@@ -2,6 +2,25 @@
 
 These instructions apply to all automated or human-assisted work in this repository.
 
+## Documented skills are the source of truth — do not improvise
+
+Before doing any operation that a skill under `.github/skills/` covers, **read
+that skill first and follow it exactly**. Do not invent an alternative approach
+"as you go along" (e.g. hand-rolled chunked transfers, ad-hoc HTTP servers,
+custom retry loops) when a documented, proven process exists.
+
+- `fwpkt-update-flow` — the ONLY sanctioned way to stage/install firmware on a
+  device (tar-stream the extracted tree, on-device MD5 verify, `/sbin/reboot`).
+- `fwpkt-private-upload` — publish every built zip to PrivateResearch in the
+  same session it is built.
+- `polaris-debugging` — SSH access, gimbal-vs-router diagnosis, keepalives.
+
+If a documented process fails, diagnose *why* (link drop? device state?) and
+retry the documented process or fall back to its documented fallbacks. Only
+deviate when the skill explicitly allows it, and record the deviation in the
+evidence/registry so the next agent knows. Improvised one-offs that work are a
+trap: they hide the real failure mode and get repeated with new bugs.
+
 ## Mandatory libgphoto2 upgrade contract
 
 Before changing any packaged libgphoto2 component, read and follow `docs/LIBGPHOTO2-UPGRADE-PROCESS.md`.
