@@ -4,12 +4,18 @@
 # sed-substituting the two version placeholders below. See issue #1.
 D=${OPENPOLARIS_STAGE2_DIR:-/app/lib/stage2}
 RUN_DIR=${OPENPOLARIS_RUN_DIR:-/var/run}
+PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
 export CAMLIBS=$D/libgphoto2/@CAMLIBS_VERSION@
 export IOLIBS=$D/libgphoto2_port/@IOLIBS_VERSION@
 export LD_LIBRARY_PATH=$D:/app/lib
 export LD_PRELOAD=$D/libpolaris_stage2.so
 export STAGE2_STORAGE_SHIM=1
 export STAGE2_TETHER_CAPTURE=1
+# Make preview throttling deterministic in release images. The Stage-2 loader
+# defaults to this policy, but exporting it here prevents wrapper/environment
+# drift from reopening the high-rate Pentax preview loop.
+export STAGE2_PENTAX_PREVIEW_BACKOFF=${STAGE2_PENTAX_PREVIEW_BACKOFF:-1}
+export STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS:-2}
 # Pentax capture budget (issue #2). libgphoto2's hard-coded default is 2 GiB,
 # which is unsafe on the Polaris' constrained RAM — a single runaway DNG/RAW
 # request from a K-1 II / K-3 III would exhaust the heap and abort pgphoto
@@ -23,6 +29,11 @@ export LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE=@PENTAX_MAX_CAPTURE_SIZE@
 PIDFILE=$RUN_DIR/openpolaris-pgphoto.pid
 LAUNCH_LOCK=$RUN_DIR/openpolaris-pgphoto.launch.lock
 BACKOFF_FILE=$RUN_DIR/openpolaris-pgphoto.backoff
+pid_is_pgphoto() {
+    [ -n "$1" ] && [ -d "$PROC_ROOT/$1" ] || return 1
+    CMD=$(tr '\0' '\n' < "$PROC_ROOT/$1/cmdline" 2>/dev/null | head -1)
+    [ "$CMD" = "$D/pgphoto.stage2ondisk" ]
+}
 if ! mkdir "$LAUNCH_LOCK" 2>/dev/null; then
     # SIGKILL/power loss can strand the mkdir-based lock.  A permanent stale
     # directory makes every later watchdog launch return success without ever
@@ -36,7 +47,7 @@ if ! mkdir "$LAUNCH_LOCK" 2>/dev/null; then
     case "$LOCKPID" in
         ''|*[!0-9]*) LOCKPID= ;;
     esac
-    if [ -n "$LOCKPID" ] && [ -d "/proc/$LOCKPID" ]; then
+    if pid_is_pgphoto "$LOCKPID"; then
         echo "[stage2] another pgphoto launch is already in progress (PID $LOCKPID); refusing duplicate" >&2
         exit 0
     fi
@@ -63,12 +74,9 @@ trap 'exit 143' HUP INT TERM
 trap 'release_launch_lock' EXIT
 if [ -f "$PIDFILE" ]; then
     OLDPID=$(cat "$PIDFILE" 2>/dev/null)
-    if [ -n "$OLDPID" ] && [ -d "/proc/$OLDPID" ]; then
-        OLDCMD=$(tr '\0' '\n' < "/proc/$OLDPID/cmdline" 2>/dev/null | head -1)
-        if [ "$OLDCMD" = "$D/pgphoto.stage2ondisk" ]; then
-            echo "[stage2] pgphoto already owned by PID $OLDPID; refusing duplicate launch" >&2
-            exit 0
-        fi
+    if pid_is_pgphoto "$OLDPID"; then
+        echo "[stage2] pgphoto already owned by PID $OLDPID; refusing duplicate launch" >&2
+        exit 0
     fi
 fi
 
@@ -113,6 +121,22 @@ fi
 echo $$ > "${PIDFILE}.tmp" 2>/dev/null && mv "${PIDFILE}.tmp" "$PIDFILE"
 release_launch_lock
 trap - EXIT
+# The stock kernel command line exposes a 115200-baud serial console. The
+# bcmdhd driver can emit its TCP bookkeeping diagnostics at a high rate under
+# preview load; synchronously mirroring that flood to the serial console can
+# amplify a driver-pressure event into whole-system starvation. Restrict only
+# console delivery (the ring buffer remains available to dmesg). This is a
+# containment measure, not a claim that printk caused the underlying pool
+# exhaustion. Set OPENPOLARIS_PRINTK_QUIET=0 to retain stock behaviour.
+PRINTK_PATH=${OPENPOLARIS_PRINTK_PATH:-/proc/sys/kernel/printk}
+if [ "${OPENPOLARIS_PRINTK_QUIET:-1}" = "1" ] && [ -w "$PRINTK_PATH" ]; then
+    PRINTK_BEFORE=$(cat "$PRINTK_PATH" 2>/dev/null || true)
+    if echo 1 > "$PRINTK_PATH" 2>/dev/null; then
+        echo "[stage2] console loglevel -> 1 (was: ${PRINTK_BEFORE:-unknown}); kernel ring buffer preserved" >&2
+    else
+        echo "[stage2] warning: could not lower console loglevel via $PRINTK_PATH" >&2
+    fi
+fi
 # pgphoto retains stale CameraAbilities/usb:BUS,DEVICE state across its internal
 # reset path. Keep one process-independent, debounced USB identity supervisor
 # alive so an actual camera detach/reattach/body swap gets a clean restart.
