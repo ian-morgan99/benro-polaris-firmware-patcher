@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "purpose": "Example contract. Agent must replace observed values before running hardware experiments.",
+  "camera": "K-3 III",
+  "attachment": "PC",
+  "layer": "A",
+  "actual_software_path": "direct libgphoto2/gphoto2",
+  "enumeration_verified": false,
+  "observed_usb_identity": null,
+  "old_host_camera_processes_stopped": false,
+  "capture_active": false,
+  "operative_confirmed_move": false,
+  "agent_verified_after_move": false
+}
