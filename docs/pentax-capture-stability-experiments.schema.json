@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pentax stability failure fingerprint",
+  "type": "object",
+  "required": ["experiment", "run_id", "first_abnormal_event", "reproducibility"],
+  "properties": {
+    "experiment": {"type": "string"},
+    "run_id": {"type": "string"},
+    "first_abnormal_ts": {"type": ["integer", "null"]},
+    "first_abnormal_event": {"type": "string"},
+    "camera_state": {"type": ["string", "null"]},
+    "active_command": {"type": ["string", "null"]},
+    "candidate_state": {"type": ["object", "null"]},
+    "pgphoto_state": {"type": ["object", "null"]},
+    "usb_state": {"type": ["object", "null"]},
+    "later_symptom": {"type": ["string", "null"]},
+    "recovery_required": {
+      "enum": ["none", "session-reset", "process-restart", "usb-reconnect", "camera-power-cycle", "polaris-reboot", "unknown"]
+    },
+    "reproducibility": {
+      "type": "object",
+      "required": ["failures", "runs"],
+      "properties": {
+        "failures": {"type": "integer", "minimum": 0},
+        "runs": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}
