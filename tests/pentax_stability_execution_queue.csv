@@ -1,0 +1,10 @@
+order,work,status
+1,validate-plan-scaffolding,READY
+2,timeout-source-audit,READY
+3,command-entrypoint-source-audit,READY
+4,session-state-survival-audit,READY
+5,source-trace-insertion,READY_AFTER_AUDIT
+6,E4-E5-minimum-camera-run,READY_AFTER_INSTRUMENTATION
+7,E1-timeout-boundary,READY_AFTER_E4_E5_BASELINE
+8,E2-E3-concurrency-preview,READY_AFTER_BASELINE
+9,E6-long-mode-characterisation,READY_AFTER_SAFE_PROBES
