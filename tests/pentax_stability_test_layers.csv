@@ -1,0 +1,6 @@
+level,path,role
+1,direct-libgphoto2-gphoto2,control/reference
+2,polaris-pgphoto-staged-libgphoto2,primary-first-cause-diagnostic
+3,benro-facing-protocol-preview,integration-qualification
+4,openpolaris,end-to-end-replay
+5,benro-connect-field,compatibility-real-world-soak
