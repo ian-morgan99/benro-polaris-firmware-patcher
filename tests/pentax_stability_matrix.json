@@ -1,9 +1,21 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "principle": "Mode and shutter duration inform expectations; actual Pentax state plus transport/process health determine liveness and completion.",
+  "physical_execution": {
+    "rule": "The agent chooses the layer, explicitly instructs the physical operative when to move the camera between PC and Polaris, and verifies enumeration after every move.",
+    "one_usb_host_at_a_time": true,
+    "operative_confirmation_is_not_enumeration_proof": true,
+    "layers": [
+      {"id": "A", "attachment": "PC", "path": "direct libgphoto2/gphoto2", "purpose": "camera and Pentax-driver semantics"},
+      {"id": "B", "attachment": "PC", "path": "Benro/pgphoto-compatible PC harness", "purpose": "integration and command-lifecycle semantics"},
+      {"id": "C", "attachment": "POLARIS", "path": "real pgphoto -> staged libgphoto2 -> Pentax", "purpose": "embedded USB/runtime/watchdog/network/recovery"}
+    ]
+  },
+  "body_passes": [
+    {"pass": 1, "camera": "Pentax K-3 III", "purpose": "causal discovery"},
+    {"pass": 2, "camera": "Pentax K-1 II", "purpose": "cross-body validation and divergent-cause discovery"}
+  ],
   "baseline": {
-    "camera": "Pentax K-3 III",
-    "path": "Polaris pgphoto -> staged libgphoto2 -> Pentax",
     "openpolaris": false,
     "preview": false,
     "repeat_consecutive": 2
@@ -13,23 +25,23 @@
   "inter_shot_delay_seconds": [10, 5, 2, 1, 0],
   "formats": ["jpeg", "dng+jpeg"],
   "experiments": [
-    {"id": "E1", "name": "timer-boundary", "priority": 2},
-    {"id": "E2", "name": "foreign-command-by-phase", "priority": 3,
+    {"id": "E1", "name": "timer-boundary", "priority": 2, "preferred_first_layer": "A"},
+    {"id": "E2", "name": "foreign-command-by-phase", "priority": 3, "preferred_first_layer": "B",
       "phases": ["exposing", "nr-dark", "pixel-shift-internal", "processing", "transfer", "reconcile"],
       "commands": ["preview", "config-read", "exposure-read", "focus", "status"]},
-    {"id": "E3", "name": "preview-race", "priority": 3},
-    {"id": "E4", "name": "back-to-back-capture", "priority": 1},
-    {"id": "E5", "name": "candidate-lifecycle", "priority": 1},
-    {"id": "E6", "name": "long-exposure-completion-boundary", "priority": 4},
-    {"id": "E7", "name": "cancel-abort", "priority": 7, "destructive": true},
-    {"id": "E8", "name": "pgphoto-process-interruption", "priority": 7, "destructive": true},
-    {"id": "E9", "name": "usb-disruption", "priority": 7, "destructive": true},
-    {"id": "E10", "name": "camera-side-state-change", "priority": 6},
-    {"id": "E11", "name": "resource-soak", "priority": 6, "short_capture_count": 100},
-    {"id": "E12", "name": "session-history", "priority": 5},
-    {"id": "E13", "name": "overlapping-shutter", "priority": 4},
-    {"id": "E14", "name": "upper-layer-network-isolation", "priority": 5},
-    {"id": "E15", "name": "direct-libgphoto2-control", "priority": 6}
+    {"id": "E3", "name": "preview-race", "priority": 3, "preferred_first_layer": "C"},
+    {"id": "E4", "name": "back-to-back-capture", "priority": 1, "preferred_first_layer": "A"},
+    {"id": "E5", "name": "candidate-lifecycle", "priority": 1, "preferred_first_layer": "A"},
+    {"id": "E6", "name": "long-exposure-completion-boundary", "priority": 4, "preferred_first_layer": "A"},
+    {"id": "E7", "name": "cancel-abort", "priority": 7, "preferred_first_layer": "C", "destructive": true},
+    {"id": "E8", "name": "pgphoto-process-interruption", "priority": 7, "preferred_first_layer": "C", "destructive": true},
+    {"id": "E9", "name": "usb-disruption", "priority": 7, "preferred_first_layer": "C", "destructive": true},
+    {"id": "E10", "name": "camera-side-state-change", "priority": 6, "preferred_first_layer": "A"},
+    {"id": "E11", "name": "resource-soak", "priority": 6, "preferred_first_layer": "A", "short_capture_count": 100},
+    {"id": "E12", "name": "session-history", "priority": 5, "preferred_first_layer": "C"},
+    {"id": "E13", "name": "overlapping-shutter", "priority": 4, "preferred_first_layer": "B"},
+    {"id": "E14", "name": "upper-layer-network-isolation", "priority": 5, "preferred_first_layer": "C"},
+    {"id": "E15", "name": "direct-libgphoto2-control", "priority": 6, "preferred_first_layer": "A"}
   ],
   "capture_modes": [
     {"name": "normal", "duration_is_completion_signal": false},
