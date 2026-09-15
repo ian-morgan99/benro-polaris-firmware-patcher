@@ -1,0 +1,10 @@
+category,examples
+TIMING,"timeout/watchdog/retry action fires first"
+CONCURRENCY,"preview/config/focus/status/shutter overlaps unsafe phase"
+CANDIDATE,"unresolved/misclassified candidate first corrupts lifecycle"
+PROCESS,"pgphoto exit/deadlock/restart/resource failure occurs first"
+SESSION,"session ownership/state itself diverges first without earlier trigger"
+USB,"physical identity/transport failure occurs first"
+NETWORK_PREVIEW,"radio/8080/preview pressure first disrupts path"
+DRIVER_CAMERA,"direct libgphoto2/camera reproduces same first divergence"
+UNKNOWN,"evidence insufficient"
