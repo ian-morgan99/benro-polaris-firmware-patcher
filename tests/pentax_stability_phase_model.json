@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "phases": [
+    {"name": "READY", "terminal": true, "camera_owned": false},
+    {"name": "REQUESTED", "terminal": false, "camera_owned": true},
+    {"name": "CAMERA_ACTIVE", "terminal": false, "camera_owned": true},
+    {"name": "EXPOSING", "terminal": false, "camera_owned": true},
+    {"name": "NR_DARK", "terminal": false, "camera_owned": true, "optional": true},
+    {"name": "PIXEL_SHIFT_INTERNAL", "terminal": false, "camera_owned": true, "optional": true},
+    {"name": "PROCESSING", "terminal": false, "camera_owned": true},
+    {"name": "CANDIDATE_DISCOVERY", "terminal": false, "camera_owned": true},
+    {"name": "TRANSFER", "terminal": false, "camera_owned": true},
+    {"name": "RECONCILE", "terminal": false, "camera_owned": true},
+    {"name": "FAILED", "terminal": true, "camera_owned": true, "note": "Recovery owns lifecycle until fresh READY is proven"}
+  ],
+  "notes": [
+    "Hardware may not expose every internal phase distinctly; do not fabricate observations.",
+    "Mode-specific phases are conceptual until measured on K-3 III.",
+    "Candidate count is discovered, never inferred from physical exposure count."
+  ]
+}
