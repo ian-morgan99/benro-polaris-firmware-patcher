@@ -1,0 +1,21 @@
+# Pentax stability plan checklist
+
+- [x] Causal charter
+- [x] Mode-aware lifecycle design
+- [x] Pixel Shift/NR caveats
+- [x] Candidate/data-safety contract
+- [x] Concurrency workstream
+- [x] Process/session workstream
+- [x] USB/network isolation
+- [x] Adversarial experiment matrix
+- [x] First-divergence trace scaffolding
+- [x] Falsifiable hypotheses
+- [x] Objective metrics
+- [x] Agent handoff
+- [x] Release/definition-of-done criteria
+- [ ] Source static audits completed
+- [ ] Source-level trace integration
+- [ ] Physical K-3 III scenarios executed
+- [ ] Causal fixes/regressions
+- [ ] K-1 II validation
+- [ ] OpenPolaris/Benro E2E requalification
