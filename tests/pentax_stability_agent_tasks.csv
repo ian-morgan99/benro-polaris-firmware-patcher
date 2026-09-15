@@ -1,0 +1,6 @@
+task,owner_role,mutation_allowed,output
+A,timeout-source-audit,no,"completed timing inventory with source paths/functions"
+B,capture-candidate-instrumentation-design,no,"structured event insertion points and patch plan"
+C,command-concurrency-source-map,no,"entry points and provisional arbitration map"
+D,E4-E5-hardware-run,after instrumentation,"traces + result template + focused issue updates"
+E,pgphoto-reset-lifecycle-audit,no,"state-survival map for in-process reset vs process restart"
