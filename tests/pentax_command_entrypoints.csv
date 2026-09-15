@@ -1,0 +1,10 @@
+command_class,source_path,function,thread_or_process,lock_or_gate,can_overlap_capture,current_busy_behavior,notes
+capture,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+preview,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+focus,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+config_read,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+config_write,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+status,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+watchdog,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+candidate_transfer,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
+recovery,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,TO_FIND,
