@@ -1,0 +1,20 @@
+{
+  "experiment": "E4 back-to-back-capture",
+  "run_id": "example-only",
+  "first_abnormal_ts": null,
+  "first_abnormal_event": "EXAMPLE: previous exposure candidate remains pending when next shutter is requested",
+  "camera_state": "example",
+  "active_command": "capture",
+  "candidate_state": {
+    "count": 1,
+    "descriptors": []
+  },
+  "pgphoto_state": null,
+  "usb_state": null,
+  "later_symptom": "next shutter rejected/blocked",
+  "recovery_required": "unknown",
+  "reproducibility": {
+    "failures": 0,
+    "runs": 1
+  }
+}
