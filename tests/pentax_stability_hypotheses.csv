@@ -1,0 +1,8 @@
+id,hypothesis,discriminating_experiment,evidence_if_true,evidence_if_false,status
+H1,Host reports capture complete before all exposure-owned candidates are reconciled,E4/E5,Pending candidate exists at next shutter and failure rate changes with reconciliation,All candidates terminal before host completion across reproductions,OPEN
+H2,A fixed timer/watchdog initiates failures during legitimate long Pentax work,E1/E6,Sharp boundary around timer and timer action precedes session divergence,No timer action precedes failures and boundary sweep is smooth,OPEN
+H3,Preview or another foreign command races the active capture lifecycle,E2/E3,Controlled command injection reproduces first divergence while no-injection baseline survives,Injected commands do not change failure rate/state,OPEN
+H4,Stale session state is primarily aftermath rather than initiating cause,E12,Another event consistently precedes stale-session observation,Stale session appears first from clean baseline without prior divergence,OPEN
+H5,pgphoto accumulates resources/state across successful captures,E11,Resource/state trend correlates with shot number and failure probability,Resources and latency remain bounded across soak,OPEN
+H6,Physical USB failure initiates the common field crash,E9,USB identity/transport diverges before PTP/app state,PTP/app state fails while USB identity/transport remains stable,OPEN
+H7,Embedded pgphoto/runtime integration is required to reproduce the failure,E15,Polaris path fails while equivalent direct libgphoto2 path survives,Direct path reproduces same first divergence,OPEN
