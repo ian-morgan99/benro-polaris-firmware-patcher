@@ -1,0 +1,14 @@
+run_id
+monotonic_timestamp
+lifecycle_phase
+active_command
+camera_condition
+candidate_descriptors
+session_state
+pgphoto_pid
+pgphoto_process_health
+usb_fingerprint
+last_watchdog_action
+last_preview_or_foreign_command
+mlog_tail
+clog_tail
