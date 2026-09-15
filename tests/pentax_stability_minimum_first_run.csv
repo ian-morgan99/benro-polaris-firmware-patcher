@@ -1,0 +1,8 @@
+step,scenario,mode,format,shutter_s,preview,upper_layer,repeats,success_condition
+1,baseline-consecutive,normal,dng+jpeg,1,off,none,5,"both captures reach reconciled READY; no unexplained candidate pending"
+2,zero-gap-consecutive,normal,dng+jpeg,1,off,none,5,"second shutter deterministically succeeds or is safely queued until READY"
+3,timer-95,normal,jpeg,95,off,none,2,"no timer-induced session failure"
+4,timer-99,normal,jpeg,99,off,none,2,"no timer-induced session failure"
+5,timer-100,normal,jpeg,100,off,none,2,"no timer-induced session failure"
+6,timer-101,normal,jpeg,101,off,none,2,"no timer-induced session failure"
+7,timer-105,normal,jpeg,105,off,none,2,"no timer-induced session failure"
