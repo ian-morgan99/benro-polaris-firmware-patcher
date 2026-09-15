@@ -115,6 +115,8 @@ git_commit=$SOURCE_COMMIT
 dirty_diff_hash=$SOURCE_DIRTY_HASH
 input_sha256=$SOURCE_INPUT_SHA256
 vanilla_source_explicit=$VANILLA_SOURCE_EXPLICIT
+patcher_commit=${PATCHER_COMMIT:-unknown}
+patcher_dirty_diff_hash=${PATCHER_DIRTY_HASH:-}
 EOF
 # Optional human-readable build identifier (issue: patcher-only builds share the
 # same libgphoto2 git_commit, so the device cannot tell e.g. o-v9g from o-v9h).
