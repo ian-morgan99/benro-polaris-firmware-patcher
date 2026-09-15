@@ -6,6 +6,25 @@ K-3 III is the discovery body for the current causal stability campaign. K-1 II 
 
 Do not blindly rerun every K-3 III test first. Run the highest-information cross-body tests, compare traces, then expand where behaviour differs.
 
+Execution MUST follow `docs/pentax-physical-operative-runbook.md`. The agent, not the human operative, decides when the K-1 II belongs on the PC versus Polaris and explicitly requests each physical move.
+
+## Physical sequence for Pass 2
+
+Minimise cable/body moves by using this order:
+
+1. Agent asks operative to disconnect the K-3 III only when the current campaign is safely stopped.
+2. Agent asks operative to connect **K-1 II to the test PC**.
+3. Agent verifies K-1 II enumeration on the PC and logs `ATTACHMENT=PC`, `CAMERA=K-1 II`, `LAYER=A`.
+4. Run the high-information direct Layer A batch.
+5. Keep the cable on the PC and run Layer B Benro/pgphoto-compatible tests where applicable; log `LAYER=B` and actual path.
+6. Agent stops all PC camera-owning processes and confirms no capture is active.
+7. Agent explicitly asks operative to move **K-1 II from PC to Polaris**.
+8. Agent verifies fresh/current K-1 II enumeration on Polaris; a cached camera name or old `usb:BUS,DEVICE` is not proof.
+9. Run Layer C embedded comparisons.
+10. Only request power-cycle, USB reconnect, USB Compatibility change or Polaris reboot separately and when evidence requires it.
+
+The operative should never have to infer when to move the camera.
+
 ## Why K-1 II matters
 
 Existing field evidence already shows K-1 II-specific instability around preview/session handling, including the NoUpdateImage family and body-swap/stale runtime state. Its parameter/control capabilities should not be assumed absent merely because a current runtime path fails to expose them; previous Image Transmitter 2 analysis showed the body supports relevant controls.
@@ -17,21 +36,38 @@ The K-1 II pass therefore serves two purposes:
 
 ## Pass ordering
 
-### Pass 2A — cross-body invariants
+### Pass 2A — PC/direct cross-body invariants
 
-Run first:
+Run first with K-1 II attached to PC:
 
 - consecutive DNG+JPEG capture and candidate reconciliation (E4/E5);
 - 99/100/101 s timeout boundary (E1);
-- one preview/status command during exposure (E2);
-- preview/capture race (E3);
 - 120 s normal and NR completion-boundary test (E6);
-- pgphoto restart with body continuously attached and prior-preview history (E12);
-- 100-shot short-capture soak (E11).
+- direct session/capture soak appropriate to Layer A.
 
 Compare K-1 II traces against equivalent K-3 III traces event-by-event rather than only PASS/FAIL.
 
-### Pass 2B — expand divergences
+### Pass 2B — PC Benro-compatible integration
+
+Without moving the camera from the PC, run applicable harness tests:
+
+- one preview/status command during exposure (E2);
+- overlapping/serialized command behaviour;
+- candidate/completion sequencing using Benro/pgphoto-compatible semantics.
+
+Record any ways the PC harness differs from real pgphoto; do not conceal those gaps.
+
+### Pass 2C — real Polaris
+
+Only after the PC batch, ask the operative to move K-1 II to Polaris and verify current enumeration. Then run:
+
+- preview/capture race (E3);
+- pgphoto restart with body continuously attached and prior-preview history (E12);
+- embedded short-capture soak (E11);
+- real watchdog/supervisor/recovery cases;
+- any A/B-clean scenario requiring Layer C differential confirmation.
+
+### Pass 2D — expand divergences
 
 If K-1 II differs, expand only the relevant family to the full K-3 III sweep. Examples:
 
@@ -40,9 +76,9 @@ If K-1 II differs, expand only the relevant family to the full K-3 III sweep. Ex
 - if candidate semantics differ, enumerate descriptors and repeat all safe transfer/reconciliation permutations;
 - if session-history differs, expand fresh/warm/body-reconnect/process-restart combinations.
 
-### Pass 2C — K-1 II-specific stress
+### Pass 2E — K-1 II-specific destructive stress
 
-After non-destructive characterisation, add destructive cancellation/process/USB tests where needed. Do not assume K-3 III recovery behaviour applies.
+After non-destructive characterisation, add cancellation/process/USB tests where needed. Do not assume K-3 III recovery behaviour applies. The agent must arm the experiment and give the operative an exact physical trigger rather than asking them to estimate camera state.
 
 ## Mode handling
 
