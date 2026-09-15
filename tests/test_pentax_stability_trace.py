@@ -2,6 +2,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 def _load_module(name: str, relative: str):
     root = Path(__file__).resolve().parents[1]
@@ -21,15 +23,42 @@ def test_trace_is_jsonl_and_monotonic(tmp_path):
     trace_mod = _load_module("pentax_trace", "tools/pentax_stability_trace.py")
     out = tmp_path / "trace.jsonl"
     trace = trace_mod.Trace(out, "E4", "run-1")
-    first = trace.emit("capture_start", phase="requested", command="264")
-    second = trace.emit("candidate_discovered", phase="candidate_discovery", candidate_count=2)
+    first = trace.emit(
+        "capture_start",
+        camera="K-3 III",
+        attachment="PC",
+        layer="A",
+        software_path="direct libgphoto2/gphoto2",
+        phase="requested",
+        command="264",
+    )
+    second = trace.emit(
+        "candidate_discovered",
+        camera="K-3 III",
+        attachment="PC",
+        layer="A",
+        software_path="direct libgphoto2/gphoto2",
+        phase="candidate_discovery",
+        candidate_count=2,
+    )
 
     rows = [json.loads(line) for line in out.read_text().splitlines()]
     assert len(rows) == 2
     assert rows[0]["run_id"] == "run-1"
     assert rows[0]["experiment"] == "E4"
+    assert rows[0]["attachment"] == "PC"
+    assert rows[0]["layer"] == "A"
     assert rows[1]["candidate_count"] == 2
     assert second.monotonic_ns >= first.monotonic_ns
+
+
+def test_trace_rejects_impossible_layer_host_pair(tmp_path):
+    trace_mod = _load_module("pentax_trace_invalid", "tools/pentax_stability_trace.py")
+    trace = trace_mod.Trace(tmp_path / "bad.jsonl", "E3", "bad-run")
+    with pytest.raises(ValueError):
+        trace.emit("capture_start", attachment="PC", layer="C")
+    with pytest.raises(ValueError):
+        trace.emit("capture_start", attachment="POLARIS", layer="A")
 
 
 def test_mode_matrix_never_treats_duration_as_completion():
