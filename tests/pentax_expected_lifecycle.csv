@@ -1,0 +1,6 @@
+mode,requested_shutter_s,expected_minimum_work,authoritative_completion,candidate_count_policy,notes
+normal,VARIABLE,exposure + camera processing,observed camera terminal state + candidate lifecycle,discover,Do not use elapsed time alone
+long-exposure-nr,VARIABLE,approximately exposure + dark exposure + processing,observed camera terminal state + candidate lifecycle,discover,Approx 2T is expectation only
+pixel-shift,VARIABLE,multiple physical exposures + processing,observed camera terminal state + candidate lifecycle,discover,Do not infer candidate count from physical exposures
+pixel-shift+nr,VARIABLE,hardware measurement required,observed camera terminal state + candidate lifecycle,discover,Do not multiply assumed constants
+bulb,VARIABLE,requested/manual exposure + processing,observed camera terminal state + candidate lifecycle,discover,Multi-minute astro is legitimate
