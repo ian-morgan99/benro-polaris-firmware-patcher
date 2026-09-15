@@ -1,0 +1,3 @@
+pentax-stability-plan-v1
+created=2026-09-15
+scope=K-3-III-first-cause-investigation
