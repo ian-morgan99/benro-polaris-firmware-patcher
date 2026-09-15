@@ -1,0 +1,10 @@
+deliverable,required_before_behavior_change
+completed_timeout_inventory,true
+completed_command_entrypoint_inventory,true
+completed_session_state_inventory,true
+source_trace_insertion_plan,true
+validated_plan_scaffolding,true
+first_hardware_baseline,true
+first_divergence_if_failure,true
+focused_issue_for_reproducible_defect,true
+regression_reproducer,true
