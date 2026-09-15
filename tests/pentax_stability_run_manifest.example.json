@@ -1,0 +1,26 @@
+{
+  "run_id": "E4-001-example",
+  "scenario_id": "E4-001",
+  "provenance": {
+    "patcher_sha": "REQUIRED",
+    "libgphoto2_sha": "REQUIRED",
+    "polaris_build": "REQUIRED",
+    "camera": "Pentax K-3 III",
+    "camera_firmware": "REQUIRED",
+    "lens": "REQUIRED"
+  },
+  "configuration": {
+    "upper_layer": "none",
+    "preview": false,
+    "mode": "normal",
+    "format": "dng+jpeg",
+    "shutter_seconds": 1,
+    "nr": "RECORD_ACTUAL",
+    "pixel_shift": "RECORD_ACTUAL"
+  },
+  "artifacts": {
+    "structured_trace": "REQUIRED",
+    "mlog": "REQUIRED_IF_AVAILABLE",
+    "clog": "REQUIRED_IF_AVAILABLE"
+  }
+}
