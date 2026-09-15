@@ -6,9 +6,32 @@ This programme is intended to find **why the Pentax/Polaris camera path becomes 
 
 Primary field umbrella: #82. Related evidence includes #36, #55, #57, #61, #70, #73, #77, #78, #80 and libgphoto2 issue #73.
 
-Run the first diagnostic campaign **below OpenPolaris**, through the real Polaris `pgphoto -> staged libgphoto2 -> Pentax` path. OpenPolaris is an eventual end-to-end qualification layer, but adds UI/protocol/network/preview variables that make first-cause isolation harder.
+OpenPolaris is an eventual end-to-end qualification layer, but adds UI/protocol/network/preview variables that make first-cause isolation harder.
 
-A desktop/direct `gphoto2` path is useful as a control, not as the principal test path.
+## Primary isolation method: PC A/B -> Polaris C
+
+The camera is real hardware throughout, but the test host changes deliberately to isolate layers. Execution MUST follow `docs/pentax-physical-operative-runbook.md`.
+
+- **Layer A — PC + camera + direct libgphoto2/gphoto2:** first choice for camera/Pentax-driver semantics.
+- **Layer B — PC + camera + Benro/pgphoto-compatible harness:** introduce Benro integration/command-lifecycle semantics without the Polaris embedded environment.
+- **Layer C — real Polaris + camera:** actual pgphoto/staged libgphoto2, embedded USB/runtime, watchdog/supervisor, 8080/Wi-Fi/resource and recovery behaviour.
+
+For a hypothesis that can be exercised at A, start there. If A reproduces, minimise/fix the lower-layer defect rather than needlessly moving to Polaris. If A is clean, run B where applicable. If A/B are clean, move to C. Polaris-specific hypotheses may start at C.
+
+**The testing agent must steer the physical operative.** The agent decides when the camera must be attached to PC versus Polaris, gives an explicit physical instruction, and verifies the expected camera is actually enumerated on the new host before continuing. Human confirmation alone is not enumeration proof.
+
+Batch tests by host to minimise cable moves. One camera USB host at a time.
+
+Every result must record:
+
+```text
+CAMERA=K-3 III|K-1 II
+ATTACHMENT=PC|POLARIS
+LAYER=A|B|C
+PATH=<actual software path>
+```
+
+K-3 III is causal-discovery pass 1. K-1 II is cross-body validation/divergence pass 2 and follows the same A -> B -> C progression.
 
 ## Core rule
 
@@ -64,6 +87,7 @@ Separate three clocks/signals:
 Every test should produce a monotonic, machine-readable event trace containing where available:
 
 - test/run ID;
+- camera, attachment, A/B/C layer and actual path;
 - requested shutter duration;
 - exposure/capture mode;
 - image format;
@@ -77,19 +101,19 @@ Every test should produce a monotonic, machine-readable event trace containing w
 - transfer start/end/result;
 - candidate reconciliation start/end/result;
 - camera READY indication;
-- `pgphoto` PID and restart/exit/signal events;
+- `pgphoto` PID and restart/exit/signal events where applicable;
 - USB VID:PID, bus/device/topology fingerprint;
 - preview/config/focus/status request start/end;
-- watchdog/reset/supervisor actions;
-- 8080/preview health where relevant.
+- watchdog/reset/supervisor actions where applicable;
+- 8080/preview health for Layer C where relevant.
 
-Keep paired Mlog + Clog for field correlation.
+Keep paired Mlog + Clog for Polaris/field correlation.
 
 The important timestamp is the **first abnormal event**, not merely the later stale-session/reset symptom.
 
 ## Baseline characterisation matrix
 
-Start cheaply, then increase duration.
+Start cheaply, then increase duration. Run direct-capable cases at Layer A first.
 
 ### Normal capture
 
@@ -141,11 +165,11 @@ For every important mode, perform at least two consecutive captures without reco
 
 ## Adversarial experiments
 
-Use A/B/A where possible: known-good baseline -> one stressor -> baseline. Change one variable at a time.
+Use baseline/stressor/baseline where possible. Change one variable at a time. `tests/pentax_stability_scenarios.csv` supplies initial host/layer routing; the agent may move a case upward A -> B -> C when differential evidence requires it.
 
 ### E1: timer-boundary sweep
 
-Discover all capture/watchdog/retry timeouts. Sweep immediately below/at/above each threshold. For the known 100 s capture-timeout concern, use approximately:
+Preferred first layer: A. Discover all capture/watchdog/retry timeouts. Sweep immediately below/at/above each threshold. For the known 100 s capture-timeout concern, use approximately:
 
 ```
 95 99 100 101 105 seconds
@@ -154,6 +178,8 @@ Discover all capture/watchdog/retry timeouts. Sweep immediately below/at/above e
 Repeat for normal, NR, Pixel Shift and Bulb as appropriate. A sharp failure cliff around a software constant is high-value causal evidence.
 
 ### E2: foreign-command injection by phase
+
+Preferred first layer: B where the harness faithfully reproduces sequencing; escalate to C for real pgphoto/preview behaviour.
 
 Inject exactly one otherwise-valid command during controlled lifecycle phases:
 
@@ -164,48 +190,27 @@ Inject exactly one otherwise-valid command during controlled lifecycle phases:
 - TRANSFER;
 - RECONCILE.
 
-Try independently:
-
-- preview frame;
-- config read;
-- ISO/shutter read;
-- focus request;
-- status request.
-
-Then repeat using normal polling cadence. Determine which commands are safe and whether pgphoto/libgphoto2 actually serialises camera ownership.
+Try independently preview frame, config read, ISO/shutter read, focus request and status request. Then repeat using normal polling cadence. Determine which commands are safe and whether pgphoto/libgphoto2 actually serialises camera ownership.
 
 ### E3: preview race sweep
 
-Preview OFF is control. Then enable progressively increasing preview cadence. Start capture:
-
-- immediately before preview request;
-- while preview request is outstanding;
-- immediately after preview response;
-- near exposure completion/readout.
+Layer C is authoritative for the embedded preview problem. Preview OFF is control. Then enable progressively increasing preview cadence. Start capture immediately before preview request, while outstanding, immediately after response and near exposure completion/readout.
 
 Look specifically for NoUpdateImage (`0xa008`), restore errors, Wi-Fi/8080 degradation and session contamination.
 
 ### E4: back-to-back capture spacing
 
-Run identical captures with inter-shot delays:
+Preferred first layer: A. Run identical captures with inter-shot delays:
 
 ```
 10 s, 5 s, 2 s, 1 s, 0 s
 ```
 
-Also issue the next shutter as soon as the first host API call reports completion. Run JPEG and DNG+JPEG.
-
-This tests whether host completion precedes true Pentax candidate reconciliation/READY.
+Also issue the next shutter as soon as the first host API call reports completion. Run JPEG and DNG+JPEG. This tests whether host completion precedes true Pentax candidate reconciliation/READY.
 
 ### E5: candidate lifecycle permutations
 
-For multi-output captures, enumerate descriptors first. Safely test:
-
-- transfer JPEG only;
-- transfer both outputs;
-- delayed transfer;
-- query without transfer;
-- retain/delete according to intended ownership policy.
+Preferred first layer: A. For multi-output captures, enumerate descriptors first. Safely test transfer JPEG only, transfer both outputs, delayed transfer, query without transfer and retain/delete according to intended ownership policy.
 
 Do not destroy a user's DNG for convenience. The intended product behaviour is to preserve full DNG on camera SD while transferring the JPEG to Polaris where appropriate.
 
@@ -213,92 +218,43 @@ Determine exactly which candidate handling leaves `GetAllConditions`/capture sta
 
 ### E6: long-exposure completion boundary
 
-For 120/300 s exposures, inject one status/config/preview request:
-
-- shortly before expected exposure end;
-- at expected end;
-- during post-exposure processing/readout.
-
-Repeat with NR ON. The transition out of exposure may be more fragile than the exposure itself.
+Preferred first layer: A. For 120/300 s exposures, inject one safe/controlled status/config/preview request where the selected layer supports it shortly before expected exposure end, at expected end and during post-exposure processing/readout. Repeat with NR ON.
 
 ### E7: cancellation/abort semantics
 
-Where safely supported, cancel/abort at early/mid/late exposure and during processing. Then inspect conditions and attempt a clean next capture.
-
-Characterise camera-native cancellation before using process kill as a substitute.
+Start non-destructively at the lowest layer that faithfully supports native cancellation. Destructive embedded fault injection belongs at C after baseline behaviour is understood. Characterise camera-native cancellation before using process kill as a substitute.
 
 ### E8: pgphoto process interruption
 
-After clean non-destructive baselines, deliberately stop/restart pgphoto separately during:
-
-- READY;
-- EXPOSING;
-- PROCESSING;
-- TRANSFER;
-- RECONCILE.
-
-Observe camera-side state before reconnection and what a fresh process inherits. This identifies when process replacement is a valid recovery boundary.
+Layer C. After clean non-destructive baselines, deliberately stop/restart pgphoto separately during READY, EXPOSING, PROCESSING, TRANSFER and RECONCILE. Observe camera-side state before reconnection and what a fresh process inherits.
 
 ### E9: USB disruption matrix
 
-Separately test camera disconnect/reconnect, camera power cycle and USB compatibility toggle at READY and selected non-READY phases.
-
-Record whether VID:PID remains the same, bus/device changes, and whether the existing USB supervisor notices the transition. Distinguish physical USB disappearance from in-place PTP/session contamination.
+Layer C for authoritative supervisor/embedded behaviour. Separately test camera disconnect/reconnect, camera power cycle and USB compatibility toggle at READY and selected non-READY phases. The agent must arm the test and give the operative the exact physical trigger.
 
 ### E10: camera-side state changes
 
-With a session open, change settings that host code may cache, where practical:
-
-- image format;
-- NR;
-- Pixel Shift;
-- exposure mode.
-
-Capture without host reinitialisation. Look for stale format/config assumptions, including `camera format no include jpg`.
+Preferred first layer: A. With a session open, change settings that host code may cache, where practical: image format, NR, Pixel Shift and exposure mode. Capture without host reinitialisation. Look for stale format/config assumptions, including `camera format no include jpg`.
 
 ### E11: resource/soak trend
 
-Run 100+ short captures plus a smaller long-exposure series. Record per-shot:
-
-- pgphoto RSS;
-- file descriptor count;
-- thread count;
-- USB handles if observable;
-- candidate state;
-- per-shot latency;
-- Wi-Fi/8080 health;
-- restart count.
-
-Analyse trend against shot number. This separates cumulative leaks/exhaustion from isolated races.
+Run a direct Layer A control soak and an embedded Layer C soak. Record per-shot process/resource values available at each layer, candidate state and latency. At C additionally record pgphoto RSS/fds/threads, Wi-Fi/8080 health and restart count. This separates driver/camera cumulative state from Polaris-only resource exhaustion.
 
 ### E12: session-history matrix
 
-Compare:
-
-- fresh Polaris + fresh camera;
-- fresh pgphoto only;
-- camera reconnect without pgphoto restart;
-- pgphoto restart while camera remains attached;
-- preview previously used vs never used;
-- previous failed capture vs previous clean capture.
-
-Determine the minimum history required to produce `session already open ... observing camera state` and whether that message is benign or correlated with failure.
+Layer C is required for the known pgphoto/stale-port history family. Compare fresh Polaris + camera, fresh pgphoto only, camera reconnect without pgphoto restart, pgphoto restart while camera remains attached, prior preview vs never-previewed and previous failed vs clean capture.
 
 ### E13: overlapping shutter requests
 
-Issue a second capture request while the first is definitely active, then separately during processing/reconciliation.
-
-Correct design behaviour is deterministic reject/queue without disturbing active session ownership.
+Preferred first layer: B. Issue a second capture request while the first is definitely active, then during processing/reconciliation. Correct design behaviour is deterministic reject/queue without disturbing active session ownership.
 
 ### E14: upper-layer/network isolation
 
-Repeat selected failures with no Benro Connect/OpenPolaris and no preview consumer, then add one consumer. Establish whether the initiating failure is intrinsic to pgphoto/PTP or induced by upper-layer/network/preview traffic.
+Layer C. Repeat selected failures with no Benro Connect/OpenPolaris and no preview consumer, then add one consumer. Establish whether the initiating failure is intrinsic to pgphoto/PTP or induced by upper-layer/network/preview traffic.
 
-### E15: direct libgphoto2 control
+### E15: direct libgphoto2 differential control
 
-For signatures reproducible on Polaris, run the closest equivalent against the same K-3 III using direct libgphoto2/gphoto2 where possible and the same library SHA/settings.
-
-If direct survives and embedded fails, ownership moves toward pgphoto/runtime/integration rather than the camera/Pentax driver itself.
+Layer A. For signatures reproducible at C, run the closest equivalent against the same camera using direct libgphoto2/gphoto2 and the same library SHA/settings. If A survives but C fails, ownership moves upward toward integration/runtime; if A reproduces the same first divergence, keep investigation at the lower layer.
 
 ## Concurrency invariant
 
@@ -327,36 +283,19 @@ If clean in-process teardown cannot be proven, prefer a fresh pgphoto process ov
 
 ## Failure fingerprint output
 
-Every failure should be represented as a row/object with at least:
+Every failure should include experiment, run ID, camera, attachment, layer, path, first abnormal timestamp/event, camera state, active command, candidate state, process state, USB state, later symptom, recovery required and reproducibility.
 
-| Field | Meaning |
-|---|---|
-| experiment | E1-E15 + parameters |
-| run_id | unique repeat identifier |
-| first_abnormal_ts | monotonic timestamp |
-| first_abnormal_event | first divergence from known-good lifecycle |
-| camera_state | Pentax/PTP condition at divergence |
-| active_command | command in flight |
-| candidate_state | count/descriptors/ownership |
-| pgphoto_state | PID/process/thread/restart information |
-| usb_state | identity/topology/presence |
-| later_symptom | stale session, 0xa008, -1005, disconnect, etc. |
-| recovery_required | none/session reset/process restart/USB/power/Polaris reboot |
-| reproducibility | failures/runs |
-
-Cluster failures by **first abnormal event**, not by eventual symptom.
-
-A later `session already open`, `disconnect`, `0xa008`, `-1005` or reset requirement is aftermath unless it can be demonstrated to be the first divergence.
+Cluster failures by **first abnormal event**, not by eventual symptom. A later `session already open`, `disconnect`, `0xa008`, `-1005` or reset requirement is aftermath unless it can be demonstrated to be the first divergence.
 
 ## Initial priority
 
-1. E4 back-to-back/candidate lifecycle — strong existing evidence.
-2. E1 timeout boundary — fixed 100 s capture timeout is architecturally suspicious for astro.
-3. E2/E3 command concurrency and preview races.
-4. E6 long-exposure completion/readout boundary.
-5. E12 session-history dependency.
-6. E11 soak/resource trend.
-7. E7-E9 destructive fault injection only after normal lifecycle is characterised.
+1. K-3 III on PC: E4/E5 back-to-back/candidate lifecycle.
+2. K-3 III on PC: E1 timeout boundary and E6 long-operation semantics.
+3. K-3 III on PC: Layer B E2/E13 concurrency/ownership where supported.
+4. One deliberate move to Polaris: E3 preview race, E12 history and Layer C differential confirmation.
+5. A and C soak comparison.
+6. E7-E9 destructive fault injection only after normal lifecycle is characterised.
+7. K-1 II second pass using the same PC A -> PC B -> Polaris C progression.
 
 ## Exit criteria
 
@@ -364,7 +303,7 @@ The investigation succeeds when vague "stability poor" behaviour has been reduce
 
 - a known first incorrect transition;
 - a minimal reproducer;
-- layer ownership;
+- earliest reproducing A/B/C layer;
 - a deterministic fix;
 - a regression test;
 - proof that long legitimate Pentax operations are not mistaken for failure;
