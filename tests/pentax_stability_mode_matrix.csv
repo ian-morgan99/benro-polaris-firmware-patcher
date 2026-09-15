@@ -1,0 +1,16 @@
+mode,format,shutter_s,nr,pixel_shift,preview,repeats,purpose
+normal,jpeg,1,off,off,off,2,baseline
+normal,dng+jpeg,1,off,off,off,5,candidate-baseline
+normal,jpeg,30,off,off,off,2,short-baseline
+normal,jpeg,90,off,off,off,2,longer-baseline
+normal,jpeg,120,off,off,off,2,over-100s
+normal,jpeg,300,off,off,off,2,astro-long
+long-exposure-nr,jpeg,30,on,off,off,2,measure-dark-processing
+long-exposure-nr,jpeg,120,on,off,off,2,long-nr
+long-exposure-nr,jpeg,300,on,off,off,2,astro-nr
+pixel-shift,jpeg,1,record, on,off,2,measure-output-semantics
+pixel-shift,dng+jpeg,1,record,on,off,2,measure-candidate-semantics
+pixel-shift,jpeg,30,record,on,off,2,measure-busy-processing
+pixel-shift+nr,dng+jpeg,1,on,on,off,2,measure-combination-if-supported
+bulb,jpeg,120,record,off,off,2,bulb-long
+bulb,jpeg,300,record,off,off,2,bulb-astro
