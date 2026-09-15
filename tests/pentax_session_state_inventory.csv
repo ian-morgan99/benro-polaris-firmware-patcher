@@ -1,0 +1,8 @@
+state,owner,cleared_by_in_process_reset,cleared_by_pgphoto_restart,cleared_by_usb_reconnect,source_path,notes
+CameraAbilities,TO_FIND,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_FIND,
+explicit_usb_port,TO_FIND,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_FIND,
+PTP_session,TO_FIND,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_FIND,
+Pentax_live_view_state,TO_FIND,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_FIND,
+transfer_candidates,TO_FIND,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_FIND,
+capture_context,TO_FIND,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_FIND,
+preview_state,TO_FIND,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_FIND,
