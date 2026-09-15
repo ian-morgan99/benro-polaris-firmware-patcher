@@ -44,21 +44,35 @@ def main() -> int:
         rows.sort(key=lambda r: r["monotonic_ns"])
         first = next((r for r in rows if r["event"] == "first_abnormal"), None)
         final = rows[-1]
+        context = (
+            f"camera={final.get('camera') or '?'} "
+            f"attachment={final.get('attachment') or '?'} "
+            f"layer={final.get('layer') or '?'} "
+            f"path={final.get('software_path') or '?'}"
+        )
         if first is None:
-            print(f"PASS/NO-MARKED-DIVERGENCE {run_id} {final.get('experiment')}")
+            print(
+                f"PASS/NO-MARKED-DIVERGENCE {run_id} "
+                f"{final.get('experiment')} {context}"
+            )
             continue
 
         details = first.get("details") or {}
-        fingerprint = details.get("fingerprint") or (
+        causal = details.get("fingerprint") or (
             f"{first.get('phase') or '?'}:{first.get('command') or '?'}:"
             f"{first.get('camera_state') or '?'}"
         )
+        # Keep layer in the grouping key until cross-layer equivalence has been
+        # demonstrated. The same visible symptom at A and C is not automatically
+        # the same cause.
+        fingerprint = f"{first.get('camera') or '?'}:{first.get('layer') or '?'}:{causal}"
         fingerprints[fingerprint] += 1
         print(
             "FAIL",
             run_id,
             first.get("experiment"),
-            fingerprint,
+            context,
+            f"fingerprint={fingerprint}",
             f"ts={first.get('monotonic_ns')}",
             f"usb={first.get('usb_fingerprint')}",
             f"session={first.get('session_state')}",
@@ -66,7 +80,7 @@ def main() -> int:
         )
 
     if fingerprints:
-        print("\nFailure fingerprints:")
+        print("\nFailure fingerprints (camera + layer + first divergence):")
         for fingerprint, count in fingerprints.most_common():
             print(f"{count:4d}  {fingerprint}")
     return 0
