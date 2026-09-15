@@ -1,0 +1,8 @@
+priority,work,why_now
+1,E4/E5 back-to-back + candidate lifecycle,Hardware evidence already shows pending candidate can block next shutter
+2,E1 timeout boundary,100s fixed capture timeout is incompatible with legitimate multi-minute astro semantics
+3,E2/E3 concurrency + preview race,Existing NoUpdateImage/preview pressure evidence and possible command collision
+4,E6 long-exposure boundary + E13 overlap,Tests real astro transitions and ownership
+5,E12 session history + E14 upper-layer isolation,Separates initiating state from stale aftermath and app/network effects
+6,E11 soak + E15 direct control,Separates accumulation and embedded integration from driver behaviour
+7,E7/E8/E9 destructive fault injection,Run only after normal lifecycle is understood
