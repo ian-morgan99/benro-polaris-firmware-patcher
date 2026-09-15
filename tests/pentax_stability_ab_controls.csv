@@ -1,0 +1,7 @@
+hypothesis,A_control,B_stressor,return_A,measurement
+H1,"DNG+JPEG with proven full reconciliation","host completes after selected candidate only","repeat fully reconciled capture","pending candidate at next shutter + success rate"
+H2,"99s/known-below-threshold capture","100/101s boundary","99s repeat","first timer/watchdog action + failure rate"
+H3,"preview off/no foreign command","controlled preview/status/config injection","preview off repeat","first divergence + failure rate"
+H4,"fresh clean session history","prior failed capture/reinit history","fresh clean history","ordering of stale-session observation"
+H5,"early soak shots","late soak shots","fresh process baseline","resource trend + latency/failure rate"
+H7,"direct libgphoto2 control","embedded pgphoto path","direct repeat","same/different first divergence"
