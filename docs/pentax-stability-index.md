@@ -5,6 +5,7 @@ Start here for the current K-3 III / Pentax stability investigation.
 ## Mandatory execution entry point
 
 - [`pentax-physical-operative-runbook.md`](pentax-physical-operative-runbook.md) — **read first when executing hardware tests**. Defines Layer A (PC direct), Layer B (PC Benro-compatible harness), Layer C (real Polaris), and the mandatory agent/physical-operative handshake for moving the camera between PC and Polaris.
+- [`pentax-agent-operative-prompts.md`](pentax-agent-operative-prompts.md) — copy/paste physical instructions for PC attachment, Polaris attachment, K-1 II substitution, isolated recovery actions and armed fault injection.
 
 The testing agent is responsible for deciding where each test runs, explicitly instructing the physical operative when to move the camera, and verifying the new host actually enumerates the expected camera before continuing.
 
@@ -20,11 +21,13 @@ The testing agent is responsible for deciding where each test runs, explicitly i
 ## Test scaffolding
 
 - [`../tests/pentax_stability_matrix.json`](../tests/pentax_stability_matrix.json) — initial machine-readable experiment matrix.
-- [`../tests/pentax_stability_scenarios.csv`](../tests/pentax_stability_scenarios.csv) — concrete K-3 III pass-1 and K-1 II pass-2 scenarios.
+- [`../tests/pentax_stability_scenarios.csv`](../tests/pentax_stability_scenarios.csv) — concrete K-3 III pass-1 and K-1 II pass-2 scenarios with explicit `attachment` and A/B/C `layer` routing.
+- [`../tests/pentax_attachment_state.example.json`](../tests/pentax_attachment_state.example.json) — explicit pre-run physical attachment state contract.
 - [`../tests/pentax_safe_command_matrix.csv`](../tests/pentax_safe_command_matrix.csv) — hardware-characterised command/phase safety matrix.
 - [`../tools/pentax_stability_trace.py`](../tools/pentax_stability_trace.py) — observation-only JSONL event recorder.
 - [`../tools/analyse_pentax_stability_trace.py`](../tools/analyse_pentax_stability_trace.py) — first-divergence/failure fingerprint summariser.
 - [`../tests/test_pentax_stability_trace.py`](../tests/test_pentax_stability_trace.py) — trace/matrix invariant tests.
+- [`../tests/test_pentax_scenario_routing.py`](../tests/test_pentax_scenario_routing.py) — enforces Layer A/B = PC, Layer C = Polaris and K-1 II = second pass.
 - [`../tests/README-pentax-stability.md`](../tests/README-pentax-stability.md) — quick start.
 
 ## Issue tracking
