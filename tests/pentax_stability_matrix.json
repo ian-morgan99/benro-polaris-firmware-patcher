@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "principle": "Mode and shutter duration inform expectations; actual Pentax state plus transport/process health determine liveness and completion.",
+  "baseline": {
+    "camera": "Pentax K-3 III",
+    "path": "Polaris pgphoto -> staged libgphoto2 -> Pentax",
+    "openpolaris": false,
+    "preview": false,
+    "repeat_consecutive": 2
+  },
+  "normal_seconds": [1, 30, 90, 120, 300],
+  "timer_boundary_seconds": [95, 99, 100, 101, 105],
+  "inter_shot_delay_seconds": [10, 5, 2, 1, 0],
+  "formats": ["jpeg", "dng+jpeg"],
+  "experiments": [
+    {"id": "E1", "name": "timer-boundary", "priority": 2},
+    {"id": "E2", "name": "foreign-command-by-phase", "priority": 3,
+      "phases": ["exposing", "nr-dark", "pixel-shift-internal", "processing", "transfer", "reconcile"],
+      "commands": ["preview", "config-read", "exposure-read", "focus", "status"]},
+    {"id": "E3", "name": "preview-race", "priority": 3},
+    {"id": "E4", "name": "back-to-back-capture", "priority": 1},
+    {"id": "E5", "name": "candidate-lifecycle", "priority": 1},
+    {"id": "E6", "name": "long-exposure-completion-boundary", "priority": 4},
+    {"id": "E7", "name": "cancel-abort", "priority": 7, "destructive": true},
+    {"id": "E8", "name": "pgphoto-process-interruption", "priority": 7, "destructive": true},
+    {"id": "E9", "name": "usb-disruption", "priority": 7, "destructive": true},
+    {"id": "E10", "name": "camera-side-state-change", "priority": 6},
+    {"id": "E11", "name": "resource-soak", "priority": 6, "short_capture_count": 100},
+    {"id": "E12", "name": "session-history", "priority": 5},
+    {"id": "E13", "name": "overlapping-shutter", "priority": 4},
+    {"id": "E14", "name": "upper-layer-network-isolation", "priority": 5},
+    {"id": "E15", "name": "direct-libgphoto2-control", "priority": 6}
+  ],
+  "capture_modes": [
+    {"name": "normal", "duration_is_completion_signal": false},
+    {"name": "long-exposure-nr", "duration_is_completion_signal": false,
+      "note": "~2T plus processing is a test expectation only"},
+    {"name": "pixel-shift", "duration_is_completion_signal": false,
+      "note": "physical exposure count must not be used to infer candidate count"},
+    {"name": "pixel-shift+nr", "duration_is_completion_signal": false,
+      "note": "measure hardware semantics; do not multiply assumed constants"},
+    {"name": "bulb", "duration_is_completion_signal": false}
+  ]
+}
