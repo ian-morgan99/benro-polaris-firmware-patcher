@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Deterministic event recorder for Pentax/Polaris stability experiments.
+"""Deterministic event recorder for Pentax stability experiments.
 
 This deliberately does not implement camera control. It provides a stable JSONL
-schema that a Polaris-side test harness can call around the real pgphoto/libgphoto2
-operations. Keep observation separate from control so instrumentation cannot
-silently alter camera behaviour.
+schema that PC/direct, PC/Benro-compatible, and real-Polaris harnesses can call
+around their real camera operations. Keep observation separate from control so
+instrumentation cannot silently alter camera behaviour.
 """
 
 from __future__ import annotations
@@ -27,6 +27,10 @@ class Event:
     monotonic_ns: int = field(default_factory=time.monotonic_ns)
     wall_time_ns: int = field(default_factory=time.time_ns)
     pid: int = field(default_factory=os.getpid)
+    camera: str | None = None
+    attachment: str | None = None
+    layer: str | None = None
+    software_path: str | None = None
     phase: str | None = None
     command: str | None = None
     camera_state: str | None = None
@@ -50,6 +54,10 @@ class Trace:
             event=event,
             **kwargs,
         )
+        if item.layer in {"A", "B"} and item.attachment not in {None, "PC"}:
+            raise ValueError("Layer A/B events must use attachment=PC")
+        if item.layer == "C" and item.attachment not in {None, "POLARIS"}:
+            raise ValueError("Layer C events must use attachment=POLARIS")
         with self.path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(asdict(item), sort_keys=True) + "\n")
             fh.flush()
@@ -63,6 +71,10 @@ def main() -> int:
     parser.add_argument("--experiment", required=True)
     parser.add_argument("--run-id")
     parser.add_argument("--event", required=True)
+    parser.add_argument("--camera")
+    parser.add_argument("--attachment", choices=["PC", "POLARIS"])
+    parser.add_argument("--layer", choices=["A", "B", "C"])
+    parser.add_argument("--software-path")
     parser.add_argument("--phase")
     parser.add_argument("--command")
     parser.add_argument("--camera-state")
@@ -79,6 +91,10 @@ def main() -> int:
     trace = Trace(args.out, args.experiment, args.run_id)
     event = trace.emit(
         args.event,
+        camera=args.camera,
+        attachment=args.attachment,
+        layer=args.layer,
+        software_path=args.software_path,
         phase=args.phase,
         command=args.command,
         camera_state=args.camera_state,
