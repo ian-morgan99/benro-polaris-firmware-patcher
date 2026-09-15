@@ -650,6 +650,10 @@ fi
 if ! grep -q 'pgphoto.stage2ondisk' "$PG_WRAPPER"; then
   die "post-repack assertion failed: bin/pgphoto does not contain expected wrapper markers"
 fi
+if ! grep -q 'STAGE2_PENTAX_PREVIEW_BACKOFF=' "$PG_WRAPPER" ||
+   ! grep -q 'STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=' "$PG_WRAPPER"; then
+  die "post-repack assertion failed: bin/pgphoto lacks deterministic preview throttle exports"
+fi
 log "  verified bin/pgphoto exists, is executable, and contains wrapper markers"
 
 # Verify Stage-2 runtime files exist in the appfs (extracted paths don't have /app/ prefix)
