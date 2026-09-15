@@ -12,6 +12,11 @@ def _load_module(name: str, relative: str):
     return module
 
 
+def _matrix():
+    root = Path(__file__).resolve().parents[1]
+    return json.loads((root / "tests/pentax_stability_matrix.json").read_text())
+
+
 def test_trace_is_jsonl_and_monotonic(tmp_path):
     trace_mod = _load_module("pentax_trace", "tools/pentax_stability_trace.py")
     out = tmp_path / "trace.jsonl"
@@ -28,7 +33,22 @@ def test_trace_is_jsonl_and_monotonic(tmp_path):
 
 
 def test_mode_matrix_never_treats_duration_as_completion():
-    root = Path(__file__).resolve().parents[1]
-    matrix = json.loads((root / "tests/pentax_stability_matrix.json").read_text())
+    matrix = _matrix()
     assert matrix["capture_modes"]
     assert all(not mode["duration_is_completion_signal"] for mode in matrix["capture_modes"])
+
+
+def test_physical_execution_contract_is_explicit():
+    physical = _matrix()["physical_execution"]
+    assert physical["one_usb_host_at_a_time"] is True
+    assert physical["operative_confirmation_is_not_enumeration_proof"] is True
+    layers = {layer["id"]: layer for layer in physical["layers"]}
+    assert layers["A"]["attachment"] == "PC"
+    assert layers["B"]["attachment"] == "PC"
+    assert layers["C"]["attachment"] == "POLARIS"
+
+
+def test_k1ii_is_explicit_second_pass():
+    passes = {item["camera"]: item["pass"] for item in _matrix()["body_passes"]}
+    assert passes["Pentax K-3 III"] == 1
+    assert passes["Pentax K-1 II"] == 2
