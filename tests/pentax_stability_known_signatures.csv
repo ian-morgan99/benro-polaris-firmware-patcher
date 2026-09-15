@@ -1,0 +1,8 @@
+signature,meaning,status
+session_already_open,"Pentax session already open from a previous connection; observing camera state",AFTERMATH_OR_CONTEXT_UNTIL_PROVEN
+no_update_image_0xa008,"Pentax preview get-frame NoUpdateImage",AFTERMATH_OR_TRIGGER_DEPENDS_ON_FIRST_DIVERGENCE
+app_minus_1005,"Application capture failure state",HIGH_LEVEL_SYMPTOM
+stale_usb_port,"Cached explicit usb:BUS,DEVICE no longer valid",PROVEN_RECOVERY_DEFECT_FOR_REMOVAL_BODY_SWAP
+pending_transfer_candidate,"Previous capture transfer candidate remains pending at next shutter",PROVEN_INITIATING_DEFECT_IN_RELATED_LIBGPHOTO2_EVIDENCE
+ttyusb_failed,"CheckTtyUsbTask failed",DO_NOT_EQUATE_WITH_CAMERA_USB_WITHOUT_CORRELATION
+preview_boundary_only,"HTTP preview response has multipart boundary but no image",DATA_PLANE_SYMPTOM
