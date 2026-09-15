@@ -1,0 +1,6 @@
+level,name,when_allowed,success_condition
+0,none,normal operation,"capture lifecycle reaches READY"
+1,session-reset,"genuine session failure after safe capture/candidate handling","fresh camera/PTP lifecycle and next capture succeeds"
+2,pgphoto-process-restart,"in-process teardown cannot be proven clean","new PID; fresh detection/session; next capture succeeds"
+3,usb-reconnect-or-camera-cycle,"transport/body requires physical re-enumeration","fresh USB identity/session; next capture succeeds"
+4,polaris-reboot,"last resort only","system returns clean but defect remains release-blocking until cause understood"
