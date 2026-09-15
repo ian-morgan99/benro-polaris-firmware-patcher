@@ -2,10 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Pentax stability failure fingerprint",
   "type": "object",
-  "required": ["experiment", "run_id", "first_abnormal_event", "reproducibility"],
+  "required": [
+    "experiment",
+    "run_id",
+    "camera",
+    "attachment",
+    "layer",
+    "actual_software_path",
+    "first_abnormal_event",
+    "reproducibility"
+  ],
   "properties": {
     "experiment": {"type": "string"},
     "run_id": {"type": "string"},
+    "camera": {"enum": ["K-3 III", "K-1 II"]},
+    "attachment": {"enum": ["PC", "POLARIS"]},
+    "layer": {"enum": ["A", "B", "C"]},
+    "actual_software_path": {"type": "string", "minLength": 1},
+    "enumeration_verified": {"type": "boolean"},
     "first_abnormal_ts": {"type": ["integer", "null"]},
     "first_abnormal_event": {"type": "string"},
     "camera_state": {"type": ["string", "null"]},
@@ -25,5 +39,15 @@
         "runs": {"type": "integer", "minimum": 1}
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"layer": {"enum": ["A", "B"]}}},
+      "then": {"properties": {"attachment": {"const": "PC"}}}
+    },
+    {
+      "if": {"properties": {"layer": {"const": "C"}}},
+      "then": {"properties": {"attachment": {"const": "POLARIS"}}}
+    }
+  ]
 }
