@@ -1,0 +1,8 @@
+check,required,method,status,notes
+current_camera_identity,true,TO_DEFINE,TO_MEASURE,
+current_usb_port_not_stale,true,TO_DEFINE,TO_MEASURE,
+known_session_ownership,true,TO_DEFINE,TO_MEASURE,
+no_unresolved_previous_capture_candidate,true,TO_DEFINE,TO_MEASURE,
+preview_capture_state_consistent,true,TO_DEFINE,TO_MEASURE,
+pgphoto_responsive,true,TO_DEFINE,TO_MEASURE,
+next_capture_succeeds,true,actual next shutter,TO_MEASURE,Strong terminal proof
