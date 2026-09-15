@@ -4,14 +4,30 @@
 
 - Experiment:
 - Run IDs:
-- Patcher SHA:
-- libgphoto2 SHA:
-- Polaris firmware/build:
 - Camera/body:
 - Camera firmware:
+- **Attachment: PC / POLARIS**
+- **Layer: A / B / C**
+- **Actual software path:**
+- Observed USB identity:
+- Patcher SHA (if applicable):
+- libgphoto2 SHA:
+- Polaris firmware/build (Layer C):
 - Lens:
 - App/upper layer present: none / Benro Connect / OpenPolaris
 - Preview: on/off + cadence
+
+`Camera + Attachment + Layer + Actual software path` are mandatory. A result without these is not sufficient evidence for layer attribution.
+
+## Physical setup / transitions
+
+- Initial host:
+- Was a physical cable move required?:
+- Agent instruction issued:
+- New-host enumeration verified?:
+- Any physical recovery action during/after run:
+
+Do not combine multiple recovery actions into one entry. Record camera power-cycle, USB reconnect, USB Compatibility change, pgphoto restart and Polaris reboot independently.
 
 ## Camera configuration
 
@@ -52,7 +68,15 @@ List separately. Do not rewrite these as root cause.
 ## Reproducibility
 
 - failures / runs:
-- A/B/A result:
+- baseline/stressor/baseline result:
+
+## A/B/C differential
+
+- Layer A direct result:
+- Layer B Benro-compatible PC result:
+- Layer C Polaris result:
+- Earliest layer reproducing:
+- Lower layer known clean?: yes / no / not testable
 
 ## Layer attribution
 
@@ -68,8 +92,8 @@ No LLM/heuristic runtime control.
 
 ## Regression test
 
-How this failure recipe will be permanently exercised.
+How this failure recipe will be permanently exercised and at which layer(s).
 
 ## Evidence
 
-Trace artifact, Mlog/Clog, relevant excerpts and cross-referenced issues.
+Trace artifact, Mlog/Clog for Polaris runs, relevant excerpts and cross-referenced issues.
