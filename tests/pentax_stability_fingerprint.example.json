@@ -1,6 +1,11 @@
 {
   "experiment": "E4 back-to-back-capture",
   "run_id": "example-only",
+  "camera": "K-3 III",
+  "attachment": "PC",
+  "layer": "A",
+  "actual_software_path": "direct libgphoto2/gphoto2",
+  "enumeration_verified": true,
   "first_abnormal_ts": null,
   "first_abnormal_event": "EXAMPLE: previous exposure candidate remains pending when next shutter is requested",
   "camera_state": "example",
