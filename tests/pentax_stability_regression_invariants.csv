@@ -1,0 +1,11 @@
+invariant,description
+I1,One accepted capture owns the camera lifecycle until terminal READY or FAILED/recovery
+I2,A second capture cannot execute concurrently with an active capture lifecycle
+I3,Elapsed expected duration alone cannot declare the session dead
+I4,Candidate count is discovered from camera state/descriptors not inferred from mode
+I5,Successful host completion requires terminal candidate reconciliation
+I6,User DNG is not blindly deleted to clear capture state
+I7,USB identity and PTP/session health are observed independently
+I8,Automatic recovery records its initiating reason and phase
+I9,Fresh READY is proven by clean state and subsequent operation
+I10,OpenPolaris is not required to reproduce a lower-layer pgphoto/libgphoto2 defect
