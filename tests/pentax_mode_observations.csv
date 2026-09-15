@@ -1,0 +1,8 @@
+camera,mode,format,shutter_s,nr,pixel_shift,physical_exposures_observed,busy_duration_s,candidate_count,candidate_descriptors,ready_duration_s,notes
+K-3 III,normal,jpeg,,,,,,,,,TO_MEASURE
+K-3 III,normal,dng+jpeg,,,,,,,,,TO_MEASURE
+K-3 III,long-exposure-nr,jpeg,,on,,,,,,,TO_MEASURE
+K-3 III,pixel-shift,jpeg,,,on,,,,,,TO_MEASURE
+K-3 III,pixel-shift,dng+jpeg,,,on,,,,,,TO_MEASURE
+K-3 III,pixel-shift+nr,dng+jpeg,,on,on,,,,,,TO_MEASURE
+K-3 III,bulb,jpeg,,,,,,,,,TO_MEASURE
