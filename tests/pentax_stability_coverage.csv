@@ -1,0 +1,8 @@
+area,prevent,detect,contain,recover,experiment
+candidate_finalisation,yes,yes,yes,yes,E4/E5
+long_mode_timing,yes,yes,yes,yes,E1/E6
+command_concurrency,yes,yes,yes,yes,E2/E3/E13
+pgphoto_process_session,yes,yes,yes,yes,E8/E11/E12
+physical_usb,limited,yes,yes,yes,E9
+preview_network,yes,yes,yes,yes,E3/E14
+driver_vs_integration,n/a,yes,n/a,n/a,E15
