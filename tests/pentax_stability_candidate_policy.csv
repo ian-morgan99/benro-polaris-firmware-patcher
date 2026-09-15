@@ -1,0 +1,4 @@
+candidate_type,store_on_camera,transfer_to_polaris,reconcile_action,status,notes
+JPEG,TO_DEFINE,likely_yes,TO_MEASURE,UNCHARACTERISED,
+DNG,yes,product-dependent,TO_MEASURE,UNCHARACTERISED,Preserve full DNG on camera under current requirement
+OTHER,TO_DEFINE,TO_DEFINE,STOP_IF_UNKNOWN,UNCHARACTERISED,
