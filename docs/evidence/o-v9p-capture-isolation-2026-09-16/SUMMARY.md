@@ -65,3 +65,25 @@ cause a qualification failure in this run.
 - Direct-PC Layer A was not rerun because the camera could not be moved.
 - Pentax K-1 II and Canon R5 Mark II were unavailable and are NOT RUN. No
   support claim is made for those cameras from this result.
+
+## Bounded K-3 III focus qualification
+
+- Initial and restored preview state: `1` (on).
+- AF `1&262&1&mod:0;f:0;#`: PASS at the command/widget layer. Logs prove
+  enable, successful response, disable, and `mod:0;f:0;ret:0`. Literal
+  low-level `0x9011` dispatch and physical optical effect are UNKNOWN because
+  normal logging does not expose the opcode and no operator observation exists.
+- MF side A `1&262&1&mod:1;f:6;#`: PASS at the bounded dispatch layer; the
+  device logged the Pentax manual-focus `new` path, raw `0x2001`, internal
+  value `-6`, and protocol `ret:0`.
+- MF side B `1&262&1&mod:1;f:2;#`: PASS at the bounded dispatch layer; the
+  device logged the Pentax manual-focus `new` path, raw `0x2001`, internal
+  value `6`, and protocol `ret:0`.
+- Literal request opcode `0x9017`: UNKNOWN (not printed by normal logging).
+  Physical Near/Far mapping and optical movement: UNKNOWN, not inferred from
+  protocol-side signs.
+- Preview continuity: PASS: 20 Content-Length boundaries, 20 JPEG SOIs and 20
+  JPEG EOIs across 1,422,487 bytes while all three focus actions ran.
+- No shutter command was sent during this bounded run. Final USB, processes,
+  listeners, client count, and DHD counters remained healthy.
+- Evidence: `11-focus-baseline.txt` through `17-focus-persistent-log.txt`.
