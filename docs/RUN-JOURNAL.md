@@ -1,5 +1,41 @@
 # Run journal — Benro Polaris patcher (Pentax + HDMI)
 
+## 2026-09-16 — shutter-2026-09-16 log capture: pgphoto restart loop, camera not on USB bus
+
+- Analyzed the `docs/evidence/shutter-2026-09-16/` capture (Clog.txt, Clog-0102.txt,
+  Mlog.txt). **This is NOT a shutter/capture result.** The camera stack never reached PTP.
+- Clog.txt contains **84** repeated `[stage2] init` loader banners (each ending
+  `slots filled 64/64`) and Clog-0102.txt contains **86** — with **zero** PTP/camera
+  traffic: no `state:` machine, no `captureImage`, no `usb`/`25fb`, no
+  `get_single_config`, no `SP_SET_SHUTTER`/`shutterString`. This is the documented
+  "pgphoto restart loop, camera not on USB bus" signature (fitted-but-off or loose
+  cable / camera powered off), per `.github/skills/polaris-debugging/SKILL.md` §7.
+- Mlog.txt shows app-side keepalive churn only: two `code:266` connect/close cycles
+  ~31 s apart (`id=28` 00:12:04, `id=29` 00:12:35) each followed by
+  `SP_ClientCtxDel not find this is id`, plus a gimbal temperature push
+  (`code:525` / `Tempa509ca361f0000285a`). No camera activity in Mlog.
+- **What this does NOT prove:** that a shutter was set or a capture ran; that the
+  camera is healthy/unhealthy at PTP (it never reached PTP); or that the restart loop
+  is a loader bug (every block completes `slots filled 64/64`).
+- **Next boundary:** confirm `lsusb | grep 25fb` shows the Pentax (`25fb:0189` K-3 III /
+  `25fb:0183` K-1 II) before re-running the shutter test; prove it is the gimbal
+  (`nmcli … | grep 48:E7:DA` + `ip route get 192.168.0.1` → wifi dev + `cat /app/FwVer`).
+  A valid shutter result needs a `state:` machine (e.g. `1 -> 4 -> 2 -> 3 -> 5`) or an
+  explicit `SP_SET_SHUTTER`/`shutterString` line, not just loader banners.
+- Full analysis: `docs/evidence/shutter-2026-09-16/SUMMARY.md`.
+
+## 2026-09-15 — stability history audit and lifecycle fault simulation
+
+- Reviewed simulator-derived fixes on the unmerged upstream astro branch and
+  current mainline launch/restart/USB-supervisor histories. Full analysis:
+  `docs/STABILITY-AUDIT-2026-09-15.md`.
+- Enacted reversible serial-console flood containment at pgphoto startup without
+  claiming it repairs underlying `bcmdhd` TCP bookkeeping exhaustion.
+- Fixed PID-reuse ownership gaps in all three mkdir-lock paths and added fault
+  simulations for dead, unrelated-live, and genuine owners.
+- Focused shell regressions and the fail-closed packaging suite pass. No FwPkt
+  was produced or installed; physical radio/camera status is **UNQUALIFIED**.
+
 > **Audience:** the original repo owner. This is a chronological log of
 > what was done, what was verified, and what was *not* done. Read the
 > **Direct answers to your two questions** up front, then **What you

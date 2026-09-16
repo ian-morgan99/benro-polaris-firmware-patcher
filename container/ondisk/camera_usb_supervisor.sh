@@ -11,6 +11,16 @@ POLL_SECS=${OPENPOLARIS_USB_POLL_SECS:-1}
 STABLE_POLLS=${OPENPOLARIS_USB_STABLE_POLLS:-2}
 MAX_POLLS=${OPENPOLARIS_USB_MAX_POLLS:-0}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
+PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
+
+pid_is_supervisor() {
+    [ -n "$1" ] && [ -d "$PROC_ROOT/$1" ] || return 1
+    cmd=$(tr '\0' '\n' < "$PROC_ROOT/$1/cmdline" 2>/dev/null)
+    case "$cmd" in
+        *camera_usb_supervisor.sh) return 0 ;;
+        *) return 1 ;;
+    esac
+}
 
 camera_vendor() {
     case "$1" in
@@ -34,7 +44,7 @@ fingerprint() {
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
     owner=$(cat "$LOCKDIR/pid" 2>/dev/null)
     case "$owner" in ''|*[!0-9]*) owner= ;; esac
-    if [ -n "$owner" ] && [ -d "/proc/$owner" ]; then
+    if pid_is_supervisor "$owner"; then
         exit 0
     fi
     rm -rf "$LOCKDIR"

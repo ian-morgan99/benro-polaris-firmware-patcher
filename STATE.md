@@ -1089,3 +1089,49 @@ User has authorised building a new 'best build' once SSH is back. Plan:
   + BT-wake and keepalive guidance. This is the only sanctioned way to
   install firmware on the Polaris.
 
+## Session log 2026-09-16 — shutter-2026-09-16 capture: pgphoto restart loop, camera not on USB bus
+
+- Analyzed `docs/evidence/shutter-2026-09-16/` (Clog.txt, Clog-0102.txt,
+  Mlog.txt). **This is NOT a shutter/capture result** — the camera stack
+  never reached PTP. Full analysis:
+  `docs/evidence/shutter-2026-09-16/SUMMARY.md`.
+- Clog.txt = **84** repeated `[stage2] init` loader banners (each ending
+  `slots filled 64/64`); Clog-0102.txt = **86**. **Zero** PTP/camera
+  traffic: no `state:` machine, no `captureImage`, no `usb`/`25fb`, no
+  `get_single_config`, no `SP_SET_SHUTTER`/`shutterString`. This is the
+  documented "pgphoto restart loop, camera not on USB bus" signature
+  (fitted-but-off or loose cable / camera powered off), per
+  `.github/skills/polaris-debugging/SKILL.md` §7.
+- Mlog.txt = app-side keepalive churn only: two `code:266` connect/close
+  cycles ~31 s apart (`id=28` 00:12:04, `id=29` 00:12:35), each followed by
+  `SP_ClientCtxDel not find this is id`, plus a gimbal temperature push
+  (`code:525` / `Tempa509ca361f0000285a`). No camera activity in Mlog.
+- **What this does NOT prove:** that a shutter was set or a capture ran;
+  that the camera is healthy/unhealthy at PTP (it never reached PTP); or
+  that the restart loop is a loader bug (every block completes
+  `slots filled 64/64`).
+- **Next boundary:** confirm `lsusb | grep 25fb` shows the Pentax
+  (`25fb:0189` K-3 III / `25fb:0183` K-1 II) before re-running the shutter
+  test; prove it is the gimbal (`nmcli … | grep 48:E7:DA` +
+  `ip route get 192.168.0.1` → wifi dev + `cat /app/FwVer`). A valid
+  shutter result needs a `state:` machine (e.g. `1 -> 4 -> 2 -> 3 -> 5`)
+  or an explicit `SP_SET_SHUTTER`/`shutterString` line, not just loader
+  banners.
+
+## Session 2026-07-13 — fwpkt update flow (BT-wake + keepalive)
+
+### What was done
+
+- New skill `.github/skills/fwpkt-update-flow/SKILL.md` — the only
+  sanctioned way to install firmware on the Polaris. Hard rule: never
+  `cp`/`dd`/`mv` a `.fwpkt` onto the device; always use the fwpkt
+  update flow (BT-wake → keepalive → transfer → verify).
+- BT-wake + keepalive guidance baked into the skill so the Polaris
+  stays awake during the transfer window.
+
+### Why it matters
+
+- Firmware installs were failing intermittently because the Polaris
+  slept mid-transfer; the skill codifies the wake/keepalive sequence
+  so every install follows the same proven path.
+
