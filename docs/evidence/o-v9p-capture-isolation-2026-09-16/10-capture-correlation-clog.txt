@@ -1,0 +1,20 @@
+[m[m[22:12:38:123 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[264],val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0051.jpg;c:-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 264  data: state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0051.jpg;c:-1   --_isInit 1 
+[m[22:12:38:123 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:1;/app/sd/normal/SP_0051.jpg]
+[m[m[22:12:38:123 [1;32mINFO[m-]:captureImage[1485]:[0;32;31m----will captureImage status:1  focus:-1000  sPath:/app/sd/normal/SP_0051.jpg
+New file is in location /store_00010001/DCIM/472_0916/IMGP3563.DNG on the camera
+--- new file name IMGP3563.DNG
+---isClearEvents new file name IMGP3563.DNG
+New file is in location /IMGP3564.DNG on the camera
+--- new file name IMGP3564.DNG
+[m[22:12:40:723 [1;32mINFO[m-]:captureImageEvent[1339]:[0;32;31m----captureImageEvent:0  Path:IMGP3564.DNG
+[m[22:12:40:724 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:4;IMGP3564.DNG]
+[m[22:12:41:114 [1;32mINFO[m-]:getImageToBuffer[2912]:[0;32;31m----gp_filesystem_get_file /IMGP3564.DNG ret = 0  
+[m[22:12:41:199 [1;32mINFO[m-]:getImageToBuffer[2940]:[0;32;31m----gp_file_get_data_and_size IMGP3564.DNG ret = 0  
+[m[22:12:41:207 [1;32mINFO[m-]:getImageToBuffer[2944]:[0;32;31m----gp_camera_file_delete IMGP3564.DNG ret = 0  
+[m[22:12:41:216 [1;32mINFO[m-]:captureImage[1579]:[0;32;31m----captureImage ret 0  p:  ./IMGP3564.DNG ; 
+[m[22:12:41:216 [1;32mINFO[m-]:saveCaptureImage[1300]:[m[22:12:41:216 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:2;/app/sd/normal/SP_0051.jpg]
+[m[0;32;31m----will saveCaptureImage  sPath:./IMGP3564.DNG
+[m[22:12:41:442 [1;32mINFO[m-]:savePhotoToAblum[1276]:[0;32;31m----savePhotoToAblum  /app/sd/normal/SP_0051.dng  ;ret 0 
+[m[22:12:41:443 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:3;/app/sd/normal/SP_0051.dng]
+[m[m[22:12:41:451 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:5; ]
