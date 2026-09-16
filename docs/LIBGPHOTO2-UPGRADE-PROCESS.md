@@ -146,6 +146,14 @@ known stock FwPkt hash
 
 No runtime/library replacement over SSH counts as a fix or qualification run. SSH may be used for read-only diagnostics. After any direct runtime mutation, reinstall a canonical FwPkt before collecting qualifying evidence.
 
+The patcher tree itself is also a release input. `patch-polaris.sh` must refuse
+release builds when the patcher Git worktree is dirty. A diagnostic dirty build
+may use the explicit `--allow-dirty-patcher` opt-in, but it is not releaseable;
+its dirty-tree hash must be recorded and the resulting FwPkt must not be staged
+or installed. Do not record only the libgphoto2 SHA: the generated wrapper,
+Stage-2 loader, packaging scripts, and patcher-side appfs changes are part of
+the artifact's provenance.
+
 The output must include:
 
 - FwPkt SHA-256;
@@ -156,6 +164,11 @@ The output must include:
 - full build parameters;
 - generated path/version values for CAMLIBS/IOLIBS;
 - expected runtime hashes.
+
+Before handoff, re-extract the produced appfs and assert the generated
+`/app/bin/pgphoto` wrapper contains the exact CAMLIBS/IOLIBS and release preview
+policy expected by the build. Source-template tests alone do not prove the
+packaged appfs contains the intended wrapper.
 
 ## 7. On-device runtime-loader proof before camera claims
 

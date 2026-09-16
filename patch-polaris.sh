@@ -15,6 +15,7 @@
 #                              (required in full mode unless vanilla is explicit)
 #     --allow-vanilla-source explicitly permit a stock release build without a source input
 #     --allow-dirty-source explicitly permit a dirty local Git checkout
+#     --allow-dirty-patcher explicitly permit a dirty patcher tree (diagnostic only)
 #     --out DIR            output directory                       (default ./out)
 #     --ptp2-only          conservative fallback: keep the stock 2.5.27 core, swap
 #                          only the ptp2 camlib + usb1 iolib (+ 14-byte pgphoto patch).
@@ -40,7 +41,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -49,6 +50,7 @@ while [ $# -gt 0 ]; do
     --libgphoto2-port) PORTVER="$2"; shift 2;;
     --libgphoto2-source) LGSRC="$2"; shift 2;;
     --allow-dirty-source) ALLOW_DIRTY=1; shift;;
+    --allow-dirty-patcher) ALLOW_DIRTY_PATCHER=1; shift;;
     --allow-vanilla-source) ALLOW_VANILLA=1; shift;;
     --out) OUT="$2"; shift 2;;
     --ptp2-only) MODE="ptp2only"; shift;;
@@ -67,6 +69,27 @@ done
 [ -n "$FWPKT" ] || { echo "error: --fwpkt is required" >&2; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found. Install Docker Desktop / docker." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
+PATCHER_COMMIT="unknown"
+PATCHER_DIRTY_HASH=""
+if git -C "$HERE" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  PATCHER_COMMIT=$(git -C "$HERE" rev-parse HEAD)
+  PATCHER_STATUS=$(git -C "$HERE" status --porcelain --untracked-files=all)
+  if [ -n "$PATCHER_STATUS" ]; then
+    PATCHER_DIRTY_HASH=$(cd "$HERE" && {
+      git diff --binary HEAD
+      git ls-files --others --exclude-standard -z | sort -z | xargs -0 -r sha256sum
+    } | sha256sum | awk '{print $1}')
+    if [ "$ALLOW_DIRTY_PATCHER" -ne 1 ]; then
+      echo "error: patcher tree is dirty (hash $PATCHER_DIRTY_HASH); refusing release build" >&2
+      echo "       commit/stash all patcher changes, or use --allow-dirty-patcher for diagnostic-only output" >&2
+      exit 1
+    fi
+    echo "warning: dirty patcher tree opted in (hash $PATCHER_DIRTY_HASH); output is diagnostic-only" >&2
+  fi
+else
+  echo "error: patcher directory is not a Git worktree; refusing provenance-unsafe release build" >&2
+  exit 1
+fi
 if [ "$MODE" = "full" ] && [ -z "$LGSRC" ] && [ "$ALLOW_VANILLA" -ne 1 ]; then
   echo "error: full mode requires --libgphoto2-source so a stock release cannot silently replace the project fork." >&2
   echo "       Use --allow-vanilla-source only for an intentional, provenance-marked stock build." >&2
@@ -134,6 +157,8 @@ docker run --rm \
   -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
+  -e PATCHER_COMMIT="$PATCHER_COMMIT" \
+  -e PATCHER_DIRTY_HASH="$PATCHER_DIRTY_HASH" \
   -e ALLOW_VANILLA_SOURCE="$ALLOW_VANILLA" \
   -e SSH_PUBKEY="$SSH_PUBKEY" \
   -e BUILD_ID="$BUILDID" \

@@ -28,16 +28,22 @@ mkdir -p "$PROC/net" "$RUN"
 # --- fake pgphoto wrapper ---------------------------------------------------
 # Publishes its own /proc entry (cmdline == the stage2 binary) so pid_is_pgphoto
 # accepts it, simulates MJPG-Streamer binding :8080 by writing a LISTEN-state
-# (0A) entry to the fake /proc/net/tcp, and tears both down on TERM. $$ is the
-# PID restart_gphoto records as NEWPID.
+# (0A) entry to the fake /proc/net/tcp AND a matching socket fd symlink under
+# /proc/$$/fd so port_owned_by() can resolve the inode match.  Tears both down
+# on TERM.  $$ is the PID restart_gphoto records as NEWPID.
 cat > "$TMP/wrapper" <<'EOF'
 #!/bin/sh
 PR="$OPENPOLARIS_PROC_ROOT"
 BIN="$OPENPOLARIS_PGPHOTO_BINARY"
-mkdir -p "$PR/$$"
+mkdir -p "$PR/$$/fd"
 printf '%s' "$BIN" > "$PR/$$/cmdline"
 # Simulate MJPG-Streamer binding :1F90 (8080) during init.
-printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A\n' > "$PR/net/tcp"
+# The net/tcp entry carries inode 42 in field 10 (the real /proc/net/tcp
+# layout: sl local rem st tx:rx tr:tm retrnsmt uid timeout inode); the
+# matching fd symlink lets port_owned_by() resolve the inode match under
+# /proc/$PID/fd.
+printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 42\n' > "$PR/net/tcp"
+ln -s "socket:[42]" "$PR/$$/fd/3"
 trap 'rm -f "$PR/net/tcp"; rm -rf "$PR/$$"; exit 0' TERM
 while :; do sleep 0.3 & wait $!; done
 EOF
@@ -71,6 +77,10 @@ cleanup_launched() {
 }
 
 # --- Case A: stale launch lock (dead owner) is reclaimed --------------------
+# Seed a stale restart lock too. The restart path must recover from its own
+# prior SIGKILL/power-loss residue before it can repair pgphoto.
+mkdir -p "$RUN/openpolaris-pgphoto.restart.lock"
+echo 888888 > "$RUN/openpolaris-pgphoto.restart.lock/pid"
 mkdir -p "$RUN/openpolaris-pgphoto.launch.lock"
 echo 999999 > "$RUN/openpolaris-pgphoto.launch.lock/pid"   # dead, not in fake /proc
 
@@ -79,6 +89,7 @@ rc=0
 run_restart "$OUTA" || rc=$?
 test "$rc" = "0"
 printf '%s\n' "$(cat "$OUTA")" | grep -q 'reclaimed stale pgphoto launch lock'
+printf '%s\n' "$(cat "$OUTA")" | grep -q 'reclaimed stale restart lock'
 # The stale lock must be gone after a successful restart.
 test ! -e "$RUN/openpolaris-pgphoto.launch.lock"
 cleanup_launched
@@ -91,4 +102,26 @@ test "$rc" = "0"
 ! printf '%s\n' "$(cat "$OUTB")" | grep -q 'reclaimed stale pgphoto launch lock'
 cleanup_launched
 
-echo 'PASS: restart_gphoto reclaims a stale pgphoto launch lock and still restarts cleanly (issue #77)'
+# --- Case C: live unrelated PID reuse does not own the restart lock ---------
+mkdir -p "$RUN/openpolaris-pgphoto.restart.lock" "$PROC/4242"
+echo 4242 > "$RUN/openpolaris-pgphoto.restart.lock/pid"
+printf '%s\0' /bin/unrelated > "$PROC/4242/cmdline"
+OUTC=$TMP/caseC.out
+rc=0
+run_restart "$OUTC" || rc=$?
+test "$rc" = "0"
+printf '%s\n' "$(cat "$OUTC")" | grep -q 'reclaimed stale restart lock'
+cleanup_launched
+
+# --- Case D: genuine concurrent restart remains fail-closed ----------------
+mkdir -p "$RUN/openpolaris-pgphoto.restart.lock" "$PROC/4343"
+echo 4343 > "$RUN/openpolaris-pgphoto.restart.lock/pid"
+printf '%s\0%s\0' /bin/sh /app/restart_gphoto > "$PROC/4343/cmdline"
+OUTD=$TMP/caseD.out
+rc=0
+run_restart "$OUTD" || rc=$?
+test "$rc" = "1"
+grep -q 'another restart owns' "$OUTD"
+rm -rf "$RUN/openpolaris-pgphoto.restart.lock" "$PROC/4343"
+
+echo 'PASS: restart_gphoto validates restart/launch lock ownership and restarts cleanly (issue #77)'
