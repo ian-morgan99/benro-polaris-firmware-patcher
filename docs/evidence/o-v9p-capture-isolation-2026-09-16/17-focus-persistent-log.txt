@@ -1,0 +1,31 @@
+Source: /app/sd/system/log/Clog_000091.log
+Device timestamps are one hour ahead of controller UTC in 13-focus-wire.log.
+
+AF action
+22:21:02.354 recv code[262], val[mod:0;f:0;]
+22:21:02.406 camera_autoFocus_enable 1
+22:21:02.406 updateCameraAutoFocus 1
+22:21:02.692 updateCameraAutoFocus enable:1 ret:0
+22:21:08.099 updateCameraAutoFocus 0
+22:21:08.100 updateCameraAutoFocus enable:0 ret:0
+22:21:08.100 send code[262], val[mod:0;f:0;ret:0;]
+
+MF side A (f:6)
+22:21:11.104 recv code[262], val[mod:1;f:6;]
+22:21:11.104 updateCameraManualFocus
+Pentax manual focus drive (new) returned response 0x2001.
+22:21:11.222 updateCameraManualFocus focus:-6 ret:0
+22:21:11.224 setFocusMode configType 4 value:-6 ret 0 fDelay 2
+22:21:11.224 send code[262], val[mod:1;f:6;ret:0;]
+
+MF side B (f:2)
+22:21:14.236 recv code[262], val[mod:1;f:2;]
+22:21:14.236 updateCameraManualFocus
+Pentax manual focus drive (new) returned response 0x2001.
+22:21:14.344 updateCameraManualFocus focus:6 ret:0
+22:21:14.346 setFocusMode configType 4 value:6 ret 0 fDelay 2
+22:21:14.347 send code[262], val[mod:1;f:2;ret:0;]
+
+Evidence boundary: normal firmware logging names the Pentax manual-focus "new"
+path and prints raw response 0x2001, but not literal request opcode 0x9017.
+Literal 0x9017 observation and physical optical direction/effect are UNKNOWN.
