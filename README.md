@@ -311,6 +311,19 @@ unzipped the same way.
   library), every core/port symbol it imports is in the device's port core, and
   every `libusb_*` symbol it imports is in the device's own `libusb-1.0.so.0`.
 
+## Related Business Central model training
+
+This machine also contains an Unsloth/Qwen3.8-27B LoRA project for a Microsoft
+Dynamics 365 Business Central assistant. That work belongs to the separate
+`/home/ian/Documents/VSCodeProjects/Unsloth` workspace, not to this firmware
+patcher. Unsloth is already installed, the 1,000-row dataset and model cache are
+present, and the corrected configuration passes dataset-format validation; the
+first optimizer-step smoke test and model evaluation remain outstanding.
+
+See [Business Central Unsloth training status](docs/BUSINESS-CENTRAL-UNSLOTH-TRAINING-STATUS.md)
+for exact paths, versions, the prior failure cause, readiness gates, and the safe
+next command.
+
 ## License
 
 This project's own code (launchers, container scripts, `stage2_patch.py`, the

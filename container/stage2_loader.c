@@ -504,6 +504,80 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
     return ret;
 }
 
+/* SHIM #6: gp_camera_capture (the shutter path).  Benro's capture flow calls
+ * gp_camera_capture(GP_CAPTURE_IMAGE, ...) to take a still.  Without this
+ * shim the call goes straight through to the real core, which on Pentax bodies
+ * can trigger the same sustained PTP traffic pattern that the preview loop
+ * causes — and the storage-shim / capture-budget guards only cover the
+ * preview path.  This wrapper mirrors the preview-backoff logic: it gates
+ * consecutive captures behind a cooldown window when the camera is not
+ * cooperating, and returns GP_ERROR_CAMERA_BUSY (non-terminal) instead of
+ * blocking the caller.  Pure pass-through for non-Pentax models or when the
+ * STAGE2_TETHER_CAPTURE gate is off. */
+typedef int (*stage2_gp_camera_capture_fn)(void *camera, int type,
+                                           void *path, void *context);
+static stage2_gp_camera_capture_fn g_real_gp_camera_capture = NULL;
+
+static int stage2_shim_gp_camera_capture(void *camera, int type,
+                                         void *path, void *context)
+{
+    if (!g_real_gp_camera_capture && g_stage2_core)
+        g_real_gp_camera_capture =
+            (stage2_gp_camera_capture_fn)
+                dlsym(g_stage2_core, "gp_camera_capture");
+    if (!g_real_gp_camera_capture) {
+        fprintf(stderr, "[stage2] capture-shim: FATAL real "
+                        "gp_camera_capture unresolved (core handle %p)\n",
+                g_stage2_core);
+        return -1;                                   /* GP_ERROR */
+    }
+
+    const char *gate = getenv("STAGE2_TETHER_CAPTURE");
+    if (!gate || strcmp(gate, "0") == 0 ||
+        !stage2_camera_uses_pentax_keep_lv(camera))
+        return g_real_gp_camera_capture(camera, type, path, context);
+
+    /* Cooldown: after consecutive capture failures, return busy instead of
+     * hitting the camera again.  Non-blocking — no sleep held inside the
+     * intercepted call. */
+    if (g_pentax_preview_backoff_until) {
+        time_t now = time(NULL);
+        if (now < g_pentax_preview_backoff_until) {
+            int remain_s = (int)(g_pentax_preview_backoff_until - now);
+            fprintf(stderr, "[stage2] capture-shim: in cooldown (%ds left) -- "
+                            "returning busy without blocking\n", remain_s);
+            return STAGE2_GP_ERROR_CAMERA_BUSY;
+        }
+    }
+
+    int ret = g_real_gp_camera_capture(camera, type, path, context);
+    if (ret != 0) {
+        const char *maxs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_MAX");
+        const char *secs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_SECS");
+        int max_failures = STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT;
+        int cooldown_s   = STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT;
+        if (maxs && atoi(maxs) > 0)
+            max_failures = atoi(maxs);
+        if (secs && atoi(secs) > 0)
+            cooldown_s = atoi(secs);
+
+        g_pentax_preview_timeouts++;
+        if (g_pentax_preview_timeouts >= max_failures) {
+            g_pentax_preview_backoff_until = time(NULL) + cooldown_s;
+            fprintf(stderr, "[stage2] capture-shim: %d consecutive failures "
+                            "(last ret=%d) -- backing off %ds (issue #93)\n",
+                    g_pentax_preview_timeouts, ret, cooldown_s);
+        }
+    } else {
+        if (g_pentax_preview_timeouts)
+            fprintf(stderr, "[stage2] capture-shim: recovered after %d "
+                            "consecutive failures\n", g_pentax_preview_timeouts);
+        g_pentax_preview_timeouts = 0;
+        g_pentax_preview_backoff_until = 0;
+    }
+    return ret;
+}
+
 /* Loader-internal wrapper installed in gp_camera_init's slot (see the fill loop).
  * Runs in NORMAL context (not a signal handler), so plain fprintf/getenv/free are
  * fine; stderr stays unbuffered like the rest of the loader. */
@@ -1150,6 +1224,21 @@ static void stage2_ondisk_init(void)
             slot_store(STAGE2_SLOTS[i].slot,
                        (void *)&stage2_shim_gp_camera_capture_preview);
             fprintf(stderr, "[stage2] preview-backoff: gp_camera_capture_preview "
+                            "slot -> shim (real core fn cached for pass-through)\n");
+            filled++;
+            continue;
+        }
+        /* SHIM #6: gp_camera_capture (the shutter path) is redirected to the
+         * capture-shim wrapper (stage2_shim_gp_camera_capture).  It reuses the
+         * preview-backoff cooldown state so a failing camera backs off on BOTH
+         * preview and still-capture traffic, bounding the sustained PTP load
+         * that starves the Wi-Fi radio (#55) and keeps the shutter path from
+         * hammering a dead session.  Pure pass-through for non-Pentax models
+         * or STAGE2_TETHER_CAPTURE=0. */
+        if (strcmp(name, "gp_camera_capture") == 0) {
+            slot_store(STAGE2_SLOTS[i].slot,
+                       (void *)&stage2_shim_gp_camera_capture);
+            fprintf(stderr, "[stage2] capture-shim: gp_camera_capture "
                             "slot -> shim (real core fn cached for pass-through)\n");
             filled++;
             continue;
