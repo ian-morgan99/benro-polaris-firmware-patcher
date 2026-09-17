@@ -1,0 +1,5 @@
+{
+    "lmstudio.contextOverflow.preferBridgeCompaction": true,
+    "lmstudio.contextGuardrails.level": "high",
+    "lmstudio.contextOverflow.strategy": "compress-only"
+}
