@@ -85,3 +85,7 @@ container/testdata/fail_closed_stage/
 # keep the README/logs, not the multi-hundred-MB blobs themselves)
 docs/evidence/fwpkt-install/sd-card-snapshot-*.tar
 docs/evidence/fwpkt-install/removed-from-card-*/*.zip.removed-*
+
+# local tool state (LM Studio bridge context, unsloth compile cache)
+.lmstudio-context/
+unsloth_compiled_cache/
