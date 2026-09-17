@@ -89,3 +89,14 @@ docs/evidence/fwpkt-install/removed-from-card-*/*.zip.removed-*
 # local tool state (LM Studio bridge context, unsloth compile cache)
 .lmstudio-context/
 unsloth_compiled_cache/
+
+# Raw hardware evidence is preserved in PrivateResearch. Keep concise public
+# SUMMARY.md files and provenance rows here; do not re-add rotating logs or
+# firmware-derived snapshots to the public repository.
+docs/evidence/**/*.log
+docs/evidence/**/*.bin
+docs/evidence/**/*.stock
+docs/evidence/**/*.tmp
+docs/evidence/**/*.pid
+docs/evidence/**/*.jpg
+docs/evidence/**/*.pyc

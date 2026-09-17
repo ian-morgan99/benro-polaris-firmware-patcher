@@ -1,5 +1,20 @@
 {
     "lmstudio.contextOverflow.preferBridgeCompaction": true,
     "lmstudio.contextGuardrails.level": "high",
-    "lmstudio.contextOverflow.strategy": "compress-only"
+    "lmstudio.contextOverflow.strategy": "compress-only",
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/builds/**": true,
+        "**/out/**": true,
+        "**/container/testdata/fail_closed_stage/**": true,
+        "**/.lmstudio-context/**": true,
+        "**/docs/evidence/**/*.log": true
+    },
+    "search.exclude": {
+        "**/builds/**": true,
+        "**/out/**": true,
+        "**/container/testdata/fail_closed_stage/**": true,
+        "**/.lmstudio-context/**": true,
+        "**/docs/evidence/**/*.log": true
+    }
 }

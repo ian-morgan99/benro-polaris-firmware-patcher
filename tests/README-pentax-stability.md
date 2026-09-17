@@ -2,7 +2,10 @@
 
 **Before executing any hardware scenario, read `../docs/pentax-physical-operative-runbook.md`.** The agent must choose PC vs Polaris, instruct the physical operative when a cable/body move is required, and verify enumeration after the move.
 
-See `../docs/pentax-capture-stability-experiments.md` for experiment design and `../docs/pentax-stability-agent-handoff.md` for execution order. Copy/paste operative instructions are in `../docs/pentax-agent-operative-prompts.md`.
+Start with `../docs/CURRENT-STATE.md`, then see
+`../docs/pentax-capture-stability-experiments.md` for experiment design and
+`../docs/pentax-physical-operative-runbook.md` for execution order. Copy/paste
+operative instructions are in `../docs/pentax-agent-operative-prompts.md`.
 
 ## Mandatory preflight
 

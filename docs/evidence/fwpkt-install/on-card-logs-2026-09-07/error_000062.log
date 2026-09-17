@@ -1,6 +1,0 @@
-2025-05-09 14:37:27: (server.c.1551) server started (lighttpd/1.4.63)
-2025-05-09 14:45:54: (server.c.256) warning: clock jumped 41980294 secs
-2025-05-09 14:45:54: (server.c.262) attempting graceful restart in < ~5 seconds, else hard restart
-2026-09-07 11:57:28: (server.c.1012) [note] graceful shutdown started
-2026-09-07 11:57:28: (server.c.2057) server stopped by UID = 0 PID = 312
-2026-09-07 11:57:29: (server.c.1551) server started (lighttpd/1.4.63)
