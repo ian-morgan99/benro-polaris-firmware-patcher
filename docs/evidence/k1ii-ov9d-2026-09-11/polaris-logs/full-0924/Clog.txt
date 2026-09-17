@@ -1,0 +1,10 @@
+
+*** Error ***              
+Pentax manual focus drive (old) failed with response 0x02fa.
+[m[09:26:30:313 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:-4  ret:-10 
+[m[09:26:30:313 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:-4  ret:-10 
+[m[09:26:30:314 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: -4 ret -10 fDelay 2
+[m[09:26:30:314 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:5;ret:-10;]
+[m[m[09:26:30:315 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+42317342.397095 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2

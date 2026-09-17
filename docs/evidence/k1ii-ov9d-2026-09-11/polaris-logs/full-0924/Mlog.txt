@@ -1,0 +1,4 @@
+[m[m[09:26:28:382 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361a0000235a ;
+[m[09:26:28:382 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361a0000235a ;]
+[m[m[09:26:30:314 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:5;ret:-10;]
+[m[m[09:26:30:314 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:5;ret:-10;]
