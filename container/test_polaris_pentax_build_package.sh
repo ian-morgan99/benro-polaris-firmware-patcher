@@ -113,6 +113,7 @@ fi
 # 3b) FwVer override: a BUILD_ID build must rewrite FwVer so the device (and
 #     therefore Benro Connect) reports our build identifier, not the stock one.
 BUILDID_TEST="o-v9j-testbuild"
+mkdir -p "$T/out-fwver"
 if docker run --rm --name polaris-pentax-fwver \
   -e MODE=full \
   -e LIBGPHOTO2_VERSION=2.5.34 \
@@ -124,7 +125,7 @@ if docker run --rm --name polaris-pentax-fwver \
   -e BUILD_ID="$BUILDID_TEST" \
   -v "$SOURCE:/libgphoto2-source-input:ro" \
   -v "$FW_PKT:/in:ro" \
-  -v "$T:/out-fwver" \
+  -v "$T/out-fwver:/out" \
   "$IMAGE" > "$T/build-fwver.log" 2>&1; then
   [ -f "$T/out-fwver/FwPkt/FwVer" ] || { echo "missing FwPkt/FwVer (BUILD_ID build)" >&2; exit 1; }
   grep -q "^FwVer:$BUILDID_TEST;" "$T/out-fwver/FwPkt/FwVer" || {
@@ -156,9 +157,17 @@ PY
   APPFS_FWVER_ROOT="$(find "$FWVER_APPFS_AUDIT" -type d -name ubifs | head -1)"
   [ -n "$APPFS_FWVER_ROOT" ] || { echo "could not extract appfs for FwVer audit" >&2; exit 1; }
   [ -f "$APPFS_FWVER_ROOT/FwVer" ] || { echo "missing /app/FwVer in repacked appfs" >&2; exit 1; }
-  grep -q "^FwVer:$BUILDID_TEST;" "$APPFS_FWVER_ROOT/FwVer" || {
-    echo "/app/FwVer in appfs not overridden: $(cat "$APPFS_FWVER_ROOT/FwVer")" >&2; exit 1; }
-  echo "appfs /app/FwVer override verified: $(cat "$APPFS_FWVER_ROOT/FwVer")"
+  # Post-#74 default (OVERRIDE_APPFS_FWVER unset): /app/FwVer keeps its stock
+  # value so the displayed sw: sum stays at 6.0.0.54 (docs/FWVER-SUM-BEHAVIOR.md).
+  # The BUILD_ID override lives only in the package-top-level FwPkt/FwVer.
+  if [ -f "$FW_PKT/FwVer" ]; then
+    test "$(cat "$APPFS_FWVER_ROOT/FwVer")" = "$(cat "$FW_PKT/FwVer")" || {
+      echo "/app/FwVer in appfs not kept at stock: $(cat "$APPFS_FWVER_ROOT/FwVer") (stock: $(cat "$FW_PKT/FwVer"))" >&2; exit 1; }
+    echo "appfs /app/FwVer kept stock (sw: sum preserved): $(cat "$APPFS_FWVER_ROOT/FwVer")"
+  else
+    [ -s "$APPFS_FWVER_ROOT/FwVer" ] || { echo "/app/FwVer in appfs is empty" >&2; exit 1; }
+    echo "appfs /app/FwVer present (no stock reference): $(cat "$APPFS_FWVER_ROOT/FwVer")"
+  fi
 else
   echo "BUILD_ID FwVer build failed; last 40 log lines:" >&2
   tail -40 "$T/build-fwver.log" >&2
