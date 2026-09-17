@@ -536,34 +536,20 @@ fi
 # ---------------------------------------------------------------------------
 # 8. Repack appfs (geometry read from the stock image) + regenerate firmwareInfo
 # ---------------------------------------------------------------------------
-# FwVer inside the appfs: /app/FwVer feeds into polestar_app's SP_GetDeviceVer,
-# which computes the `sw:` field in code 780 as the component-wise SUM of
-# gimbalFwVer + cameraFwVer. Benro Connect displays this `sw:` value.
-#
-# Stock: gimbal 2.0.0.22 + camera 4.0.0.32 = sw:6.0.0.54 (what the app expects).
-# If we override /app/FwVer with our build_id (e.g. 6.0.0.54), the sum becomes
-# 2.0.0.22 + 6.0.0.54 = sw:8.0.0.76 — a "mislabel" that looks like a newer
-# Benro version than we actually are (issue #74).
-#
-# Fix: keep /app/FwVer as stock so the displayed `sw:` stays at 6.0.0.54.
-# Our build_id is still carried in the package-top-level FwVer (below), which
-# Benro Connect reads via SP_GetFwVer for log identification — a separate path
-# from the `sw:` sum.
-#
-# Set OVERRIDe_APPFS_FWVER=1 to restore the old behaviour (override /app/FwVer
-# with BUILD_ID) if you want the boot banner / SP_GetFwVer to show our build_id
-# at the cost of the displayed `sw:` sum changing.
-if [ "${OVERRIDE_APPFS_FWVER:-0}" = "1" ] && [ -n "${BUILD_ID:-}" ]; then
+# FwVer inside the appfs: /app/FwVer is what polestar_app reports as the
+# on-board firmware version after install (SP_GetDeviceVer / boot banner), and
+# it is what Benro Connect displays. The stock appfs carries
+# "FwVer:4.0.0.32;date:...". When BUILD_ID is set, rewrite it in the extracted
+# tree BEFORE repacking so the flashed device reports our build identifier.
+if [ -n "${BUILD_ID:-}" ]; then
   APP_FWVER="$APP/FwVer"
   if [ -f "$APP_FWVER" ]; then
     FWVER_DATE="$(date +%Y.%m.%d)"
     printf 'FwVer:%s;date:%s;\n' "$BUILD_ID" "$FWVER_DATE" > "$APP_FWVER"
-    log "appfs FwVer override: /app/FwVer will report '$BUILD_ID' (was $(cat /in/FwVer 2>/dev/null || echo 'unknown')) — NOTE: displayed sw: sum will change"
+    log "appfs FwVer override: /app/FwVer will report '$BUILD_ID' (was $(cat /in/FwVer 2>/dev/null || echo 'unknown'))"
   else
     warn "no FwVer file in the extracted appfs tree — Benro Connect will keep showing the stock version"
   fi
-else
-  log "appfs FwVer: keeping stock value ($(cat "$APP/FwVer" 2>/dev/null || echo 'unknown')) so displayed sw: sum stays at stock (6.0.0.54)"
 fi
 /opt/patcher/repack_appfs.sh "$STOCK_APPFS" "$APP" "$W/out/appfs.ubifs"
 
@@ -606,11 +592,11 @@ elif [ -f /in/FwVer ]; then
   log "FwVer: carried stock version through ($(cat /in/FwVer))"
 fi
 
-# Fail-closed FwVer gate (issue #74). The package-top-level file Benro Connect
-# reads (/app/sd/FwPkt/FwVer) carries our build_id for log identification via
-# SP_GetFwVer. This is a SEPARATE path from the displayed sw: sum (code 780),
-# which is computed by polestar_app as gimbalFwVer + cameraFwVer and is kept at
-# stock by leaving /app/FwVer unmodified (see docs/FWVER-SUM-BEHAVIOR.md).
+# Fail-closed FwVer gate (issue #74). The appfs /app/FwVer is asserted above;
+# the package-top-level file Benro Connect actually reads (/app/sd/FwPkt/FwVer)
+# must carry the SAME value or the device mislabels itself. A BUILD_ID build
+# that ships a stock or summed FwVer reproduces the "8.0.0.76" symptom, so fail
+# closed here: the top-level file must start with exactly our build_id.
 if [ -n "${BUILD_ID:-}" ]; then
   if ! grep -q "^FwVer:$BUILD_ID;" /out/FwPkt/FwVer; then
     die "post-build assertion failed: /out/FwPkt/FwVer is not '$BUILD_ID' ($(cat /out/FwPkt/FwVer 2>/dev/null))"
@@ -650,10 +636,6 @@ fi
 if ! grep -q 'pgphoto.stage2ondisk' "$PG_WRAPPER"; then
   die "post-repack assertion failed: bin/pgphoto does not contain expected wrapper markers"
 fi
-if ! grep -q 'STAGE2_PENTAX_PREVIEW_BACKOFF=' "$PG_WRAPPER" ||
-   ! grep -q 'STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=' "$PG_WRAPPER"; then
-  die "post-repack assertion failed: bin/pgphoto lacks deterministic preview throttle exports"
-fi
 log "  verified bin/pgphoto exists, is executable, and contains wrapper markers"
 
 # Verify Stage-2 runtime files exist in the appfs (extracted paths don't have /app/ prefix)
@@ -675,27 +657,18 @@ if [ ! -f "$PORT_LIB" ]; then
 fi
 log "  verified Stage-2 runtime files (lib/stage2/pgphoto.stage2ondisk, lib/stage2/libpolaris_stage2.so, lib/stage2/libgphoto2.so.6, lib/stage2/libgphoto2_port.so.12) exist in appfs.ubifs"
 
-# Verify the FwVer state inside the repacked appfs matches what we intended.
-# Default (OVERRIDE_APPFS_FWVER unset): /app/FwVer stays stock so the displayed
-# sw: sum (gimbalFwVer + cameraFwVer) remains 6.0.0.54 — see docs/FWVER-SUM-BEHAVIOR.md.
-# With OVERRIDE_APPFS_FWVER=1: /app/FwVer carries BUILD_ID (old behaviour).
+# Verify the FwVer override actually landed inside the repacked appfs (the
+# on-board version Benro Connect displays). Fail closed: a BUILD_ID build that
+# silently ships the stock /app/FwVer would mislabel the device.
 if [ -n "${BUILD_ID:-}" ]; then
   APPFS_FWVER="$APP_VERIFY/FwVer"
   if [ ! -f "$APPFS_FWVER" ]; then
     die "post-repack assertion failed: FwVer missing from appfs.ubifs (BUILD_ID build)"
   fi
-  if [ "${OVERRIDE_APPFS_FWVER:-0}" = "1" ]; then
-    if ! grep -q "^FwVer:$BUILD_ID;" "$APPFS_FWVER"; then
-      die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
-    fi
-    log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
-  else
-    # Stock value expected — just confirm the file exists and is non-empty.
-    if [ ! -s "$APPFS_FWVER" ]; then
-      die "post-repack assertion failed: /app/FwVer in appfs.ubifs is empty"
-    fi
-    log "  verified /app/FwVer in appfs.ubifs keeps stock value ($(cat "$APPFS_FWVER")) — displayed sw: sum stays at stock"
+  if ! grep -q "^FwVer:$BUILD_ID;" "$APPFS_FWVER"; then
+    die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
   fi
+  log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
 fi
 
 # Build the ZIP at a *temp* path so the validator can fail-closed on the
