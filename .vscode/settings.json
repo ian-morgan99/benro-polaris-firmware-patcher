@@ -1,5 +1,5 @@
 {
-    "lmstudio.contextOverflow.preferBridgeCompaction": true,
+    "lmstudio.contextOverflow.preferBridgeCompaction": false,
     "lmstudio.contextGuardrails.level": "high",
     "lmstudio.contextOverflow.strategy": "compress-only",
     "files.watcherExclude": {
@@ -16,5 +16,6 @@
         "**/container/testdata/fail_closed_stage/**": true,
         "**/.lmstudio-context/**": true,
         "**/docs/evidence/**/*.log": true
-    }
+    },
+    "lmstudio.syncChatLm": true
 }
