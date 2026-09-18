@@ -2,6 +2,13 @@
 set -eu
 
 compiler="${1:-arm-linux-gnueabi-gcc}"
+# Prerequisite: an ARM cross-compiler. When absent, signal SKIP (exit 77) so the
+# aggregate harness (tests/run_deterministic.sh, issue #117) classifies this as
+# unavailable rather than a real failure.
+command -v "$compiler" >/dev/null 2>&1 || {
+    echo "SKIP: $compiler not found (ARM cross-toolchain prerequisite)" >&2
+    exit 77
+}
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT HUP INT TERM
 
