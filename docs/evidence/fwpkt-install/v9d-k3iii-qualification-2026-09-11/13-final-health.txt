@@ -1,7 +1,0 @@
-uptime=3772.16 7477.53
-camera=Bus 001 Device 005: ID 25fb:0189
-listeners=tcp        0      0 0.0.0.0:9090            0.0.0.0:*               LISTEN      
-tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      
-tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      
-processes=  248 root       0:03 ./polestar_app
-  249 root       0:41 /app/lib/stage2/pgphoto.stage2ondisk

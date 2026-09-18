@@ -3,7 +3,12 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
-## Protected firmware baseline
+## Installed candidate and protected fallback
+
+The currently installed device candidate is **o-v9q bulb-timeout**, build ID
+`6.0.0.54.8`. Its bounded K-3 III Astro multi-shot run passed, but issues
+`#111`–`#115` and the ISO-cap issue remain open. Treat Q as field-tested with
+known defects, not as a stable successor qualification.
 
 The protected last-known-stable baseline is **o-v9p capture isolation**, build
 ID `6.0.0.54.7`. Its immutable artifact, hashes, source commits and private
@@ -23,28 +28,20 @@ Authoritative public evidence:
 
 - `FWPKT-PROVENANCE-CONTRACT.md`
 - `evidence/o-v9p-capture-isolation-2026-09-16/SUMMARY.md`
-- `RUN-JOURNAL.md`
+- `evidence/o-v9q-bulb-timeout-2026-09-17/SUMMARY.md`
 - `TESTED.md`
 - `LIBGPHOTO2-UPGRADE-PROCESS.md`
 
-## Repository state at context cleanup
+## Repository state at issue #116 cleanup
 
-On 2026-09-17, `main` was synchronized with `origin/main` at `5309bfd`, with
-three pre-existing uncommitted files deliberately left untouched:
+On 2026-09-18, source commit `2b56e8d` recorded the Q build-id behavior. The
+issue #116 hygiene pass restored the final-package assertions for P's preview
+throttling and the isolated output mount used by the package regression test.
+The unrelated `.vscode/settings.json` worktree edit was deliberately untouched.
 
-- `container/patch.sh`
-- `container/test_polaris_pentax_build_package.sh`
-- `docs/FWPKT-PROVENANCE-CONTRACT.md`
-
-Those edits appeared to revert the post-#74 FwVer behavior, remove a packaged
-preview-throttle assertion, and remove the o-v9o/o-v9p registry rows. They are
-not part of this context cleanup and must be resolved separately without
-weakening o-v9p or deleting provenance.
-
-No newer source change is considered deployed without a registered immutable
+No future source change is considered deployed without a registered immutable
 FwPkt, verified hashes, supported install, cold reboot and post-boot runtime
-proof. In particular, local Bulb-related work observed on 2026-09-17 had no
-new registry row or install evidence.
+proof.
 
 ## Hardware and release rules
 
@@ -80,7 +77,9 @@ local LM Studio review ledger were preserved before cleanup in the private
 `archives/BenroPolarisPatcher/2026-09-17-pre-context-cleanup/`
 
 PrivateResearch archive commits: `a3dc491` (documentation and ledger) and
-`8deab7e` (historical session state).
+`8deab7e` (historical session state). Issue #116's second-stage research and
+raw-evidence corpus is preserved at
+`BenroPolaris/repository-hygiene-116/2026-09-18/original/`, commit `a6afa37`.
 
 The archive contains both a commit-exact documentation tarball and a working-
 tree tarball, per-file SHA-256 manifests and the pre-cleanup worktree patch.

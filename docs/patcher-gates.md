@@ -122,7 +122,7 @@ The Pentax / non-Pentax split is enforced **inside the rebuilt ptp2** by
 the model-name string `*Pentax*` match in `container/patch.sh` and
 **inside `stage2_policy.c`** by an explicit allow-list. Neither of
 those is a "gate" in the env-var sense — they are *invariants*. See
-`docs/pentax-patcher-gate-bug.md` for the recent SIGPIPE-pipefail bug
+the PrivateResearch issue #116 archive for the historical SIGPIPE-pipefail bug
 that briefly made the Pentax marker look unguarded, and `stage2_policy.c`
 for the final model-gated check.
 

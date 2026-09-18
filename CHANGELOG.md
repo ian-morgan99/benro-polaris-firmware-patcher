@@ -145,7 +145,7 @@ line was enough to fail the whole update.
   - stock `firmware/FwPkt/FwPkt/` → PASS 6/6
 
 ### Docs
-- New `docs/silent-fwpkt-reject-postmortem.md` documents the
+- The archived silent-FwPkt rejection postmortem documents the
   mechanism, the layered-repack root cause, the fix, the fingerprints,
   and the recommended user flash order. Issues #19 and #20 are
   closed against this work.
@@ -199,7 +199,7 @@ not content-based.
   SIGPIPE (exit 141), `pipefail` propagates 141, and `set -e` turns that
   into a false "marker missing" abort. Replaced with `grep -Fc` (count
   mode, drains the pipe to EOF) and a string compare. See
-  `docs/pentax-patcher-gate-bug.md` for the full analysis.
+  PrivateResearch issue #116 archive for the full analysis.
 
 ### Verified
 - `validate_fw_package.py` run against six packages:
@@ -214,7 +214,7 @@ not content-based.
     expected-vs-actual SHA-256 diff
 
 ### Docs
-- `docs/silent-fwpkt-reject-postmortem.md` addendum documents the
+- The archived silent-FwPkt rejection postmortem addendum documents the
   silent-gimbal-drop root cause, why the firmwareInfo check is
   insufficient, and how the structural validator closes the gap. Issue
   #21 is closed against this work.
@@ -251,7 +251,7 @@ release candidate.
 
 **Round-trip verified only.** The combined FwPkt is at the
 second rung of the 7-rung release-state ladder documented in
-[docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md) §0 — it
+the archived critical review §0 — it
 has NOT been validated on a Polaris device, a Pentax camera,
 or an HDMI display, and the DEAD-site patches (8 sites in
 the VENC / RTSP code paths) are deliberately excluded.
@@ -264,7 +264,7 @@ the VENC / RTSP code paths) are deliberately excluded.
   master. The embedded `libgphoto2.so` is at libgphoto2
   commit `da8c33482` (2026-08-26), not the current
   `ian-morgan99/libgphoto2` master. See
-  [docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md) §8.5
+  the archived critical review §8.5
   for the blocker plan that supersedes the layered build.
 - **LGPL corresponding source is vanilla.** The tarball at
   `builds/2026-08-23/licenses/libgphoto2-2.5.34.tar.xz` is
@@ -280,19 +280,19 @@ the VENC / RTSP code paths) are deliberately excluded.
   `--include-dead=1` is known to fail on the real
   firmware's `polestar_app` offsets.
 - **No device / camera / HDMI validation.** See
-  [docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md) §0
+  the archived critical review §0
   for the 7-rung ladder and §8.5 for the path to a release
   candidate.
 
 ### References
 
 - Operational record:
-  [docs/RUN-JOURNAL.md](docs/RUN-JOURNAL.md)
+  the archived run journal
 - Critical review (with full gap list, 8.5 blocker plan,
   and the next-agent re-check list):
-  [docs/CRITICAL-REVIEW.md](docs/CRITICAL-REVIEW.md)
+  the archived critical review
 - Final state of the build at the time of writing:
-  [docs/FINAL-REPORT.md](docs/FINAL-REPORT.md)
+  the archived final report
 - Docker image used to build / repack:
   [docker/README.md](docker/README.md) (image digest
   `sha256:b475ca01354845358d21e7adbf0eba9fffc3792e8f49a2d548cadf327cc27953`)

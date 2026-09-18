@@ -71,8 +71,7 @@ using the digest listed above.
 | `builds/2026-08-23/` (Pentax only) | Round-trip verified | Source cross-build of `libgphoto2` against the clean `da8c33482` checkout |
 | `builds/2026-08-27-combined-720p60/` (Pentax + HDMI) | Round-trip verified (layered over the 2026-08-23 FwPkt) | Re-pack of `appfs.ubifs` with the HDMI-patched `bin/polestar_app` substituted in |
 
-For the end-to-end rebuild that supersedes the layered
-combined build, see `docs/CRITICAL-REVIEW.md` §8.5.
+For the current HDMI evidence boundary, see `docs/HDMI-CURRENT.md`.
 
 ## Reproducing the layered combined build
 
@@ -87,8 +86,7 @@ The current combined FwPkt was produced by:
    was built with)
 4. Substituting the new UBIFS back into the FwPkt zip
 
-For the exact command sequence and the recorded hashes, see
-`docs/RUN-JOURNAL.md` and the
+For the recorded hashes, see `docs/FWPKT-PROVENANCE-CONTRACT.md` and the
 `builds/2026-08-27-combined-720p60/build-source-provenance.txt`
 file.
 

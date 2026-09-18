@@ -186,7 +186,7 @@ if [ -e /libgphoto2-source-input ]; then
   # the pipeline *as the if condition itself*: 'grep -Fc' reads to EOF
   # (no SIGPIPE), its exit is the test, and an absence naturally falls
   # into the else-branch instead of tripping set -e. See
-  # docs/pentax-patcher-gate-bug.md.
+  # docs/patcher-gates.md.
   if strings "$NEW_PTP2" | grep -Fc 'Pentax vendor mode enabled' >/dev/null; then
     log "local-source Pentax candidate marker: present"
   else
@@ -606,7 +606,7 @@ fi
 
 # Fail-closed firmwareInfo gate (re-MD5 + re-size every component against
 # the just-built /out/FwPkt). Catches the "stale firmwareInfo" failure mode
-# described in docs/silent-fwpkt-reject-postmortem.md.
+# described by the current firmware manifest gates in docs/patcher-gates.md.
 if ! python3 /opt/patcher/verify_firmwareinfo.py /in/firmwareInfo /out/FwPkt; then
   die "firmwareInfo does not match the produced FwPkt -- the Polaris would silently reject this update. Refusing to zip."
 fi
@@ -635,6 +635,10 @@ fi
 # Verify wrapper contains expected markers
 if ! grep -q 'pgphoto.stage2ondisk' "$PG_WRAPPER"; then
   die "post-repack assertion failed: bin/pgphoto does not contain expected wrapper markers"
+fi
+if ! grep -q 'STAGE2_PENTAX_PREVIEW_BACKOFF=' "$PG_WRAPPER" ||
+   ! grep -q 'STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=' "$PG_WRAPPER"; then
+  die "post-repack assertion failed: bin/pgphoto lacks deterministic preview throttle exports"
 fi
 log "  verified bin/pgphoto exists, is executable, and contains wrapper markers"
 

@@ -1,5 +1,0 @@
-time=2026-09-11T08:44:49+01:00
-camera_info=
-live_before=
-live_start=
-live_after=

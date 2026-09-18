@@ -207,10 +207,6 @@ jog-based for now; capture on the Polaris itself remains Canon-verified only
 - [`canonical-pentax-source.md`](canonical-pentax-source.md) — the exact
   upstream libgphoto2 commit the patcher pulls from, the branches to ignore,
   and how the patcher resolves a source input at build time.
-- [`HDMI-IMPLEMENTATION-PLAN.md`](HDMI-IMPLEMENTATION-PLAN.md) — junior-agent
-  targeted plan for the HDMI geometry patcher (Phases A–E). Phase E static
-  slice is implemented in `container/hdmi_geometry_patch.py`; Phase D (TX
-  enablement) is explicitly not started.
-- [`HDMI-INPUT-EXPLORATION.md`](HDMI-INPUT-EXPLORATION.md) — background on
-  the HDMI input chain, safety rules, and the dead-code proof (§12) that
-  gates the 10 `--include-dead` RTSP/VENC sites.
+- [`HDMI-CURRENT.md`](HDMI-CURRENT.md) — current HDMI implementation and
+  qualification boundary. Historical reverse engineering is archived in
+  PrivateResearch.

@@ -287,7 +287,7 @@ Before closing an upgrade issue, update all applicable records:
 - `docs/TESTED.md` — exact firmware/patcher/libgphoto2 provenance and per-camera matrix;
 - `docs/HOW-IT-WORKS.md` — only if loader/path/stack behavior changed;
 - `docs/patcher-gates.md` — any changed environment, model, ABI or build gate;
-- `docs/RUN-JOURNAL.md` — build/install/test run evidence;
+- the current candidate `docs/evidence/.../SUMMARY.md` — concise build/install/test evidence;
 - `docs/LIBGPHOTO2-UPGRADE-PROCESS.md` — if this process itself changes;
 - README — supported/qualified camera and version claims;
 - libgphoto2 fork hardware matrix (`#44` / canonical hardware log) — direct tests only;

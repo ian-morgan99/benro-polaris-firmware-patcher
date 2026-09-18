@@ -1,7 +1,0 @@
-duration_seconds=120
-stream_exit= 124
-bytes= 3871480
-content_lengths= 58
-jpeg_soi= 58
-jpeg_eoi= 58
-complete_pairs= 58

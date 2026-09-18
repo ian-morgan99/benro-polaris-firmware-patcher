@@ -150,8 +150,7 @@ see [docs/canonical-pentax-source.md](docs/canonical-pentax-source.md).
 For the companion HDMI geometry patcher (the input side of the patched
 firmware, complementing the libgphoto2 side above), see
 [`container/hdmi_geometry_patch.py`](container/hdmi_geometry_patch.py)
-plus [docs/HDMI-IMPLEMENTATION-PLAN.md](docs/HDMI-IMPLEMENTATION-PLAN.md)
-and [docs/HDMI-INPUT-EXPLORATION.md](docs/HDMI-INPUT-EXPLORATION.md).
+and [docs/HDMI-CURRENT.md](docs/HDMI-CURRENT.md).
 
 ---
 
@@ -279,8 +278,8 @@ verifies the package (MD5), reboots, and U-Boot writes it.
 > zip. On a plain boot, `polestar_app`'s `0x405 SP_EVENT_SD_SCAN`
 > walks the extracted directory tree at `/app/sd/FwPkt/`; only the
 > Benro-app 810 trigger (the iPhone / Android app) takes the zip. See
-> [docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md](docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md)
-> for the full evidence chain.
+> [.github/skills/fwpkt-update-flow/SKILL.md](.github/skills/fwpkt-update-flow/SKILL.md)
+> for the current verified procedure.
 >
 > Concretely, the SD card root must end up as:
 > ```
@@ -313,19 +312,6 @@ unzipped the same way.
   up, its `DT_NEEDED` is a **subset** of the stock `usb1.so`'s (no new shared
   library), every core/port symbol it imports is in the device's port core, and
   every `libusb_*` symbol it imports is in the device's own `libusb-1.0.so.0`.
-
-## Related Business Central model training
-
-This machine also contains an Unsloth/Qwen3.8-27B LoRA project for a Microsoft
-Dynamics 365 Business Central assistant. That work belongs to the separate
-`/home/ian/Documents/VSCodeProjects/Unsloth` workspace, not to this firmware
-patcher. Unsloth is already installed, the 1,000-row dataset and model cache are
-present, and the corrected configuration passes dataset-format validation; the
-first optimizer-step smoke test and model evaluation remain outstanding.
-
-See [Business Central Unsloth training status](docs/BUSINESS-CENTRAL-UNSLOTH-TRAINING-STATUS.md)
-for exact paths, versions, the prior failure cause, readiness gates, and the safe
-next command.
 
 ## License
 

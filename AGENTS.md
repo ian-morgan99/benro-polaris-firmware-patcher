@@ -115,7 +115,7 @@ Every upgrade issue must identify which of these need updating and update them b
 - `docs/TESTED.md`
 - `docs/HOW-IT-WORKS.md`
 - `docs/patcher-gates.md`
-- `docs/RUN-JOURNAL.md`
+- `docs/CURRENT-STATE.md` and the current candidate's bounded `SUMMARY.md`
 - `docs/LIBGPHOTO2-UPGRADE-PROCESS.md`
 - `docs/FWPKT-PROVENANCE-CONTRACT.md` (registry row for any new/received FwPkt zip)
 - README supported/qualification claims

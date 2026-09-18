@@ -5,7 +5,7 @@
 # issue #14: "end-to-end" overstates what this proves. This script
 # exercises the build + package path only. It does NOT prove runtime
 # behavior on a Polaris device, on a real Pentax camera, or in a
-# QEMU emulation of the firmware userspace. See CRITICAL-REVIEW.md
+# QEMU emulation of the firmware userspace. See docs/patcher-gates.md
 # "Release-state vocabulary" for the full ladder.)
 #
 # This script validates the entire consolidation up to the package
@@ -113,6 +113,7 @@ fi
 # 3b) FwVer override: a BUILD_ID build must rewrite FwVer so the device (and
 #     therefore Benro Connect) reports our build identifier, not the stock one.
 BUILDID_TEST="o-v9j-testbuild"
+mkdir -p "$T/out-fwver"
 if docker run --rm --name polaris-pentax-fwver \
   -e MODE=full \
   -e LIBGPHOTO2_VERSION=2.5.34 \
@@ -124,7 +125,7 @@ if docker run --rm --name polaris-pentax-fwver \
   -e BUILD_ID="$BUILDID_TEST" \
   -v "$SOURCE:/libgphoto2-source-input:ro" \
   -v "$FW_PKT:/in:ro" \
-  -v "$T:/out-fwver" \
+  -v "$T/out-fwver:/out" \
   "$IMAGE" > "$T/build-fwver.log" 2>&1; then
   [ -f "$T/out-fwver/FwPkt/FwVer" ] || { echo "missing FwPkt/FwVer (BUILD_ID build)" >&2; exit 1; }
   grep -q "^FwVer:$BUILDID_TEST;" "$T/out-fwver/FwPkt/FwVer" || {
@@ -217,7 +218,7 @@ PTP2_SO="$T/stage2-ondisk/libgphoto2/2.5.34/ptp2.so"
 [ -f "$PTP2_SO" ] || { echo "missing on-disk ptp2 ($PTP2_SO)" >&2; exit 1; }
 # Use grep -F (no -q) and capture in a temp file to avoid the
 # set -euo pipefail + grep -q SIGPIPE issue documented in
-# BenroPolarisPatcher/docs/pentax-patcher-gate-bug.md.
+# BenroPolarisPatcher/docs/patcher-gates.md.
 PTP2_MARKER_FILE="$(mktemp)"
 strings "$PTP2_SO" > "$PTP2_MARKER_FILE" || true
 grep -F 'Pentax vendor mode enabled' "$PTP2_MARKER_FILE" >/dev/null || {

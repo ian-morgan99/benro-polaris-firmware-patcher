@@ -1,26 +1,17 @@
-# Pentax capability target
+# Camera capability source of truth
 
-The normative, source-reconciled IMAGE Transmitter 2 capability matrix is
-maintained with the driver implementation:
+Camera capability truth is owned by the corresponding libgphoto2 source and
+its hardware evidence. Do not infer current packaged support from a historical
+SHA in this repository.
 
-- local development checkout:
-  `../LibGphoto2/libgphoto2/docs/pentax/IMAGE_TRANSMITTER_CAPABILITY_MATRIX.md`
-- cloud repository:
+- Pentax capability matrix:
   <https://github.com/ian-morgan99/libgphoto2/blob/master/docs/pentax/IMAGE_TRANSMITTER_CAPABILITY_MATRIX.md>
-- retrospective implementation/hardware audit:
+- Pentax audit notes:
   <https://github.com/ian-morgan99/libgphoto2/blob/master/docs/pentax/CAPABILITY_MATRIX_AUDIT.md>
+- The exact libgphoto2 SHA packaged in firmware is defined by
+  `docs/FWPKT-PROVENANCE-CONTRACT.md`.
+- Bounded device qualification claims live in `docs/TESTED.md` and the current
+  candidate's public `SUMMARY.md`.
 
-Polaris packaging must target the exact libgphoto2 commit containing that
-matrix and must not independently redefine camera capabilities. Camera-side
-matrix tiers 0–12 are prerequisites for the corresponding Polaris tier 13
-workflow.
-
-Audited baseline: libgphoto2 commit `c82d19052`. The patcher’s clean-Git,
-dirty-rejection/opt-in, reproducible dirty hash, source-archive, and unsafe
-archive rejection preflight passed against that exact checkout on 2026-08-21.
-
-The earlier 621-line extraction is preserved outside this repository at
-`../LibGphoto2/archive/CameraCapabilities.extracted-obsolete-20260821.md`. It is
-historical material only. It contains superseded claims, including an incorrect
-K-3 Mark III USB identifier and K-1 II model flags, and must not be used as an
-implementation or test target.
+The pre-2026-09-18 version, including the obsolete `c82d19052` baseline, is
+preserved in PrivateResearch under the issue 116 archive.
