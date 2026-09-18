@@ -4,21 +4,21 @@ This document identifies the libgphoto2 source that the Polaris patcher may cons
 
 Normative upgrade process: [`LIBGPHOTO2-UPGRADE-PROCESS.md`](LIBGPHOTO2-UPGRADE-PROCESS.md).
 
-## Current status — 2026-09-07
+## Current status — 2026-09-18
 
-The most recent camera-functional Pentax commit used in the current physical investigation is:
+There are two current provenance points; neither may be replaced by repository
+HEAD implicitly:
 
 | What | Value |
 |---|---|
 | libgphoto2 fork | `ian-morgan99/libgphoto2` |
-| camera-functional SHA | `6aa3e4e66240d4b4d68a65b75631e0f6aadf308a` |
-| commit | `ptp2/pentax: fix K-3 III capture and setting verification` |
-| physical integration evidence | current Polaris candidate reports this exact embedded SHA |
-| current libgphoto2 repository HEAD | may be newer due documentation-only commits; **do not substitute HEAD automatically** |
+| protected stable P source | `121675124e173da1864421acebea8e20c851c827` |
+| installed Q candidate source | `dacfc89868496f0e3d73c44e51b6a20f4559e6fe` |
+| qualification meaning | P remains the last-known-stable fallback; Q is field-tested with open defects |
+| authoritative artifact binding | `FWPKT-PROVENANCE-CONTRACT.md` |
 
-A documentation-only commit after `6aa3e4e66` adds stricter repository ownership/regression instructions but does not constitute a newly qualified camera binary. Firmware provenance must identify the exact source SHA actually built.
-
-The older `da8c33482e674692023fddcf32cb73d1dd4da05d` pointer was a prior canonical point from the August consolidation. It is retained as historical evidence only and must not be described as the current candidate source.
+Older SHAs remain only in immutable provenance rows for the artifacts that used
+them. They are historical inputs, not current build recommendations.
 
 ## Critical packaging lesson
 
@@ -37,7 +37,10 @@ libgphoto2_port/<version>/usb1.so
 active stock-path copies of ptp2.so / usb1.so where the runtime still looks there
 ```
 
-The 2026-09-07 K-3 III investigation demonstrated why this matters: direct `gphoto2` using the embedded `6aa3e4e66` code can return a valid preview, while the packaged `pgphoto` / Stage-2 route fails. That differential is integration evidence against the package/runtime, not evidence that the Pentax source needs another change.
+Prior K-3 III investigation demonstrated why this matters: direct `gphoto2` can
+pass while the packaged `pgphoto` / Stage-2 route fails. That differential is
+integration evidence against the package/runtime, not evidence that the Pentax
+source needs another change.
 
 Therefore the source pointer in this file may be changed only as part of a complete matched-stack upgrade and regression cycle.
 

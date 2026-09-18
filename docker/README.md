@@ -64,7 +64,10 @@ using the digest listed above.
 - `libexif-dev`, `libltdl-dev`, `zlib1g-dev`, `libpopt-dev`,
   `libusb-1.0-0-dev` for libgphoto2's autoconf build
 
-## Builds that depend on this image
+## Historical builds that depend on this image
+
+These rows are provenance history only. They are not current firmware or build
+recommendations; use `docs/CURRENT-STATE.md` and the provenance registry.
 
 | Build | Status | How the image is used |
 |---|---|---|
@@ -73,9 +76,9 @@ using the digest listed above.
 
 For the current HDMI evidence boundary, see `docs/HDMI-CURRENT.md`.
 
-## Reproducing the layered combined build
+## Reproducing the historical layered combined build
 
-The current combined FwPkt was produced by:
+The historical combined FwPkt was produced by:
 
 1. Extracting `appfs.ubifs` from `builds/2026-08-23/FwPkt.zip`
 2. Running `container/hdmi_geometry_patch.py --include-dead=0`
