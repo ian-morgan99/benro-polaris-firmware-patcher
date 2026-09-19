@@ -1,5 +1,42 @@
 # Changelog
 
+## o-v9x-startup-order-20260919 — startup-order crash fix (issue #121)
+
+o-v9r crash: Benro Connect crashed when started with the camera already powered
+on. Root cause: a transient re-enumeration during Benro Connect's own
+initialisation (device-number change) fired a pgphoto restart that raced the
+initial session open. The OFF->ON path worked because the camera appeared after
+the runtime was up.
+
+Patcher fix (commit f525adf, main):
+- container/ondisk/camera_usb_supervisor.sh: bounded startup grace window
+  (OPENPOLARIS_USB_STARTUP_GRACE_POLLS, default 3 polls). Identity changes in
+  that window are absorbed into the baseline instead of restarting pgphoto; a
+  later genuine change is still detected. A bounded readiness condition, not an
+  arbitrary sleep — normal debounce/restart logic resumes after the window.
+- container/test_camera_usb_supervisor.sh: deterministic regression test (startup
+  re-enumeration must NOT restart; a post-grace change still causes exactly one
+  restart). The #57 case is pinned to STARTUP_GRACE_POLLS=0 to keep its original
+  debounce semantics.
+
+Build inputs (clean):
+- libgphoto2 source: b8baf487c10b007edc865c2ebf000806f0264121 (master, same as o-v9w)
+- patcher: f525adf1b00f712d03481255adbae98a79833387 (main, clean tree)
+- stock FwPkt: firmware/FwPkt.zip
+
+Artifact:
+- out/o-v9x-startup-order-20260919/FwPkt.zip
+  sha256 ad99db1ed0c40b6a6453c2dd1f58ea78c5c27b7b81b4041c1f3379b700e7b1b7
+  (md5 c5701675e3c69e319f3785b0b0d8024f)
+
+Verified (documented release process, docs/LIBGPHOTO2-UPGRADE-PROCESS.md):
+- patcher deterministic harness (#117): 6 passed, 0 failed, 3 prerequisite-skipped.
+- container/test_camera_usb_supervisor.sh: PASS (#57 + #121 cases).
+- Built camera_usb_supervisor.sh contains the startup-grace marker.
+
+Not yet done (hardware qualification pending): the #121 A/B matrix (camera ON
+before app launch, repeated launches) to confirm the crash no longer reproduces.
+
 ## o-v9w-bulb-codeql-20260919 — Bulb-cluster fixes + CodeQL cleanup (master)
 
 New release built from clean libgphoto2 master (b8baf487c), which carries the
