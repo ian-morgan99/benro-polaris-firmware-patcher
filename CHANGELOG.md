@@ -1,5 +1,49 @@
 # Changelog
 
+## o-v9u-capture-readiness-20260919 — capture readiness tri-state + gated idle wait (fixes #122)
+
+Shutter release could wedge the K-3 III until a mode toggle + USB reset. Two
+defects in the libgphoto2 Pentax capture path contributed:
+
+- The pre-capture drain and post-capture idle waits initialized activity/
+  candidate to 0, so a FAILED or SHORT conditions read was indistinguishable
+  from a valid idle frame — Benro fired the next shutter while the camera was
+  still busy.
+- The post-capture idle wait ran unconditionally for every capture.
+
+libgphoto2 fix (commit d0419942, master):
+- `pentax_camera_readiness()`: classify a raw conditions frame as IDLE / BUSY /
+  UNKNOWN. Only a VALID frame may prove idle; a failed/short read is UNKNOWN,
+  never IDLE. Both wait sites use it.
+- `pentax_capture_needs_idle_wait()`: gate the post-capture wait to captures
+  that can still be processing after all candidates are consumed (multi-shot,
+  astro shift/tracer, bulb). Ordinary single-shot captures return through the
+  normal completion path so Benro regains control immediately.
+
+Build inputs (clean):
+- libgphoto2 source: d0419942debf20cd1bf26ba69f127101f9661a61 (master)
+- patcher: f7e982b17fe4e107b5a8b686da6e362ab9e88ca1 (main, clean tree)
+- stock FwPkt: firmware/FwPkt.zip
+
+Artifact:
+- out/o-v9u-capture-readiness-20260919/FwPkt.zip
+  sha256 673802720dc18f86566c2ec0698c835367a17c2ce1533edab8a882160f957e7c
+  (md5 a0d313f069ebb1b7bbfb2c16f941d9f4)
+
+Verified (documented release process, docs/LIBGPHOTO2-UPGRADE-PROCESS.md):
+- libgphoto2: clean build + test-pentax-utils passes (tri-state + gate unit tests).
+- patcher deterministic harness (issue #117): 6 passed, 0 failed, 3 skipped
+  (prerequisite-gated: Docker image / source checkout / ARM cross-toolchain).
+- test_polaris_pentax_build_package.sh: PASS (full build + package path).
+- Pre-handoff appfs re-extraction: generated wrapper CAMLIBS=2.5.34,
+  IOLIBS=0.12.2; embedded provenance build_id=o-v9u, git_commit=d0419942.
+- Built ptp2.so contains the new single-shot skip marker (fix present).
+
+Not yet done (hardware qualification pending): A/B/C camera ladder on a K-3 III
+to confirm the wedge no longer reproduces after a shutter release in single-shot
+mode, plus the multi-shot/astro/bulb regression rows.
+
+
 ## Unreleased — firmware-contained Pentax provenance and target-model gate
 
 - Embed the exact clean libgphoto2 source identity at
