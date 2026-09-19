@@ -1,5 +1,45 @@
 # Changelog
 
+## o-v9z-stability-20260919 — stability bundle (issues #119/#120/#121)
+
+New release bundling the recent no-camera stability work. Built from clean inputs;
+the libgphoto2 side adds a documentation-only commit clarifying the Bulb timer
+semantics for issue #120, and the patcher side carries the #119 churn guard and
+#121 startup-order fix.
+
+libgphoto2 (master 35318c1b5):
+- Issue #120: documented that the camera's own conditions report bulb_timer_seconds
+  (offset 272) as whole seconds and offset 276 as the TV denominator (confirmed
+  against IT2), so the capture wait budget correctly sizes to the full timer value.
+  The observed countdown-then-short-exposure symptom is camera/app firmware
+  behaviour outside this budget.
+
+Patcher (main 17ee6e7):
+- Issue #119: bounded restart budget + cooldown in camera_usb_supervisor.sh so a
+  re-enumeration flap cannot keep re-dlopening pgphoto (the live-view churn that
+  drained the battery and dropped the camera off USB).
+- Issue #121: startup grace window so a transient re-enumeration during app launch
+  is absorbed without restarting pgphoto (the startup-order crash).
+
+Build inputs (clean):
+- libgphoto2 source: 35318c1b520b1fc42d2f20be29aea956010b4be2 (master)
+- patcher: 17ee6e77a18ddd9a4d9193ac1d689ae1e9b493ae (main, clean tree)
+- stock FwPkt: firmware/FwPkt.zip
+
+Artifact:
+- out/o-v9z-stability-20260919/FwPkt.zip
+  sha256 5a2755b1710aa8e9f5a63f50d8c5deaddc78d7587fb49a208dcb0364ffaf2198
+  (md5 4f5a2c1251a2b9c86a1df2c7ce0fb01e)
+
+Verified (documented release process, docs/LIBGPHOTO2-UPGRADE-PROCESS.md):
+- patcher deterministic harness (#117): 6 passed, 0 failed, 3 prerequisite-skipped.
+- container/test_camera_usb_supervisor.sh: PASS (#57 + #121 + #119 cases).
+
+Not yet done (hardware qualification pending, camera back Monday): the #119 A/B
+matrix and the #120 Bulb-timer A/B/C ladder to confirm the countdown-then-short-
+exposure behaviour and that 25fb:0189 survives cold boot + idle + config polling +
+preview start/stop + ordinary capture without USB disappearance.
+
 ## o-v9y-churn-guard-20260919 — live-view churn guard (issue #119)
 
 o-v9r/o-v9s regression: the K-3 III session was torn down and re-initialised in a
