@@ -10,6 +10,15 @@ RESTART=${OPENPOLARIS_RESTART_GPHOTO:-/app/restart_gphoto}
 POLL_SECS=${OPENPOLARIS_USB_POLL_SECS:-1}
 STABLE_POLLS=${OPENPOLARIS_USB_STABLE_POLLS:-2}
 MAX_POLLS=${OPENPOLARIS_USB_MAX_POLLS:-0}
+# Issue #121: startup-order crash. When the camera is already powered on at app
+# launch, a transient re-enumeration during Benro Connect's own initialisation
+# (device-number change) can fire a pgphoto restart that races the initial
+# session open and crashes it. Suppress restarts for a bounded number of polls
+# after the supervisor starts: identity changes in that window are absorbed into
+# the baseline (so a later genuine change is still detected) instead of
+# restarting. This is a bounded readiness condition, not an arbitrary sleep —
+# after the window the normal debounce/restart logic resumes unchanged.
+STARTUP_GRACE_POLLS=${OPENPOLARIS_USB_STARTUP_GRACE_POLLS:-3}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
 
@@ -68,6 +77,24 @@ while :; do
     sleep "$POLL_SECS"
     current=$(fingerprint)
     polls=$((polls + 1))
+
+    # Issue #121: during the startup grace window, absorb identity changes into
+    # the baseline without restarting pgphoto. A camera that is already powered
+    # on at app launch can re-enumerate (device-number change) while Benro
+    # Connect is still initialising; a restart there races the initial session
+    # open and crashes it. After the window, adopt the current identity as the
+    # new baseline so a later genuine change is still detected.
+    if [ "$STARTUP_GRACE_POLLS" -gt 0 ] && [ "$polls" -le "$STARTUP_GRACE_POLLS" ]; then
+        if [ "$current" != "$baseline" ]; then
+            echo "[camera-usb] startup grace: absorbing identity change ${baseline:-none} -> ${current:-none} (no restart, poll $polls/$STARTUP_GRACE_POLLS)"
+            baseline=$current
+            candidate=$current
+            stable=0
+        fi
+        [ "$MAX_POLLS" -gt 0 ] && [ "$polls" -ge "$MAX_POLLS" ] && exit 0
+        continue
+    fi
+
     if [ "$current" = "$baseline" ]; then
         candidate=$baseline
         stable=0

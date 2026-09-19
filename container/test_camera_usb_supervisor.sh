@@ -35,10 +35,13 @@ test ! -e "$RESTART_LOG"
 
 # A one-poll transient is debounced; a stable device-address/body change causes
 # exactly one restart, then becomes the new baseline instead of looping.
+# STARTUP_GRACE_POLLS=0: this test exercises post-startup debounce/restart, so
+# disable the #121 startup grace window to preserve the original semantics.
 rm -rf "$TMP/run/openpolaris-camera-usb-supervisor.lock"
 OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_USB_SYSFS=$TMP/sys \
 OPENPOLARIS_PROC_ROOT=$TMP/proc \
 OPENPOLARIS_RESTART_GPHOTO=$TMP/restart OPENPOLARIS_USB_POLL_SECS=0.1 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 \
 OPENPOLARIS_USB_MAX_POLLS=8 sh "$SUPERVISOR" > "$TMP/change.out" &
 pid=$!
 sleep 0.15
@@ -71,4 +74,47 @@ sh "$SUPERVISOR" > "$TMP/genuine-owner.out"
 test ! -s "$TMP/genuine-owner.out"
 test "$(cat "$TMP/run/openpolaris-camera-usb-supervisor.lock/pid")" = "4343"
 
+# Issue #121: startup-order crash. A camera that is already powered on at app
+# launch can re-enumerate (device-number change) while Benro Connect is still
+# initialising; a restart there races the initial session open and crashes it.
+# The supervisor must absorb identity changes during the bounded startup grace
+# window (no restart), then resume normal debounce/restart logic afterwards.
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0183 1 3   # camera already present at supervisor start
+# Polls 1-3 (grace window, default 3): the device re-enumerates to a new
+# devnum on poll 2 — a transient startup flap that must NOT restart pgphoto.
+(
+    sleep 0.05
+    rm -rf "$TMP/sys/1-1"
+    make_usb 1-1 25fb 0183 1 7   # same body, new device number (re-enumeration)
+) &
+FLAP_PID=$!
+OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_USB_SYSFS=$TMP/sys \
+OPENPOLARIS_PROC_ROOT=$TMP/proc \
+OPENPOLARIS_RESTART_GPHOTO=$TMP/restart OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_MAX_POLLS=3 sh "$SUPERVISOR" > "$TMP/grace.out"
+wait "$FLAP_PID" 2>/dev/null || true
+test ! -e "$RESTART_LOG"   # no restart during the startup grace window
+
+# After the grace window, a stable identity change still causes exactly one
+# restart (the normal #57 behaviour is preserved).
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0183 1 3
+(
+    sleep 0.2   # past the 3-poll (0.15s) grace window
+    rm -rf "$TMP/sys/1-1"
+    make_usb 1-1 25fb 0183 1 9   # genuine body/device change after startup
+) &
+LATE_PID=$!
+OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_USB_SYSFS=$TMP/sys \
+OPENPOLARIS_PROC_ROOT=$TMP/proc \
+OPENPOLARIS_RESTART_GPHOTO=$TMP/restart OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_MAX_POLLS=12 sh "$SUPERVISOR" > "$TMP/post-grace.out"
+wait "$LATE_PID" 2>/dev/null || true
+# Exactly one restart after the grace window (file may be absent if none fired).
+test "$(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0)" = "1"
+
 echo 'PASS: camera USB supervisor validates lock ownership and restarts once after a stable camera identity change (issue #57)'
+echo 'PASS: camera USB supervisor absorbs startup re-enumeration without restarting, then resumes normal restart logic (issue #121)'
