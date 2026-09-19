@@ -1,5 +1,55 @@
 # Changelog
 
+## o-v10-quarantine-20260919 — post-budget quarantine state (issue #119 TA follow-up)
+
+The o-v9y churn guard bounded the restart budget, but once exhausted the USB
+supervisor adopted the current identity as healthy and stopped restarting
+forever — a genuinely reconnected camera could be silently accepted while the
+existing pgphoto session was still bound to the old device/session.
+
+Patcher (main 327eeb4):
+- Issue #119: exhausting the restart budget now enters an explicit
+  degraded/quarantine state in `camera_usb_supervisor.sh`: churn is suppressed,
+  `restart_budget_exhausted` is logged, and the current identity is NOT adopted
+  as healthy. Normal operation resumes only after a positive stable-identity
+  condition (the quarantined identity stays unchanged for COOLDOWN consecutive
+  polls) revalidates it, which also resets the budget. A genuinely reconnected
+  camera is therefore never silently accepted while the existing pgphoto session
+  may still be bound to the old device/session.
+- Deterministic tests added to `container/test_camera_usb_supervisor.sh`: a
+  post-budget identity that keeps changing stays quarantined (no 3rd restart),
+  and a stable quarantined identity revalidates and resumes normal restart
+  behaviour. All supervisor test cases pass.
+
+libgphoto2 (master 35318c1b5, same source as o-v9z — no libgphoto2 delta):
+- Issue #120 Bulb-timer semantics documentation and the #121 startup-order fix
+  are carried over from o-v9z.
+
+Build inputs (clean):
+- libgphoto2 source: 35318c1b520b1fc42d2f20be29aea956010b4be2 (master)
+- patcher: 327eeb489d266103ce91ccb2e573d6e36d796b4e (main, clean tree)
+- stock FwPkt: firmware/FwPkt.zip
+
+Artifact:
+- out/o-v10-quarantine-20260919/FwPkt.zip
+  sha256 cbdef460eed547fc533ad739f2e325b15f6ad0e079d05c56f4599f98b6d4515b
+  (md5 b4b953f68e7807956ba7fc3a6a65b2af)
+
+Verified:
+- container/test_camera_usb_supervisor.sh: PASS (#57 + #121 + #119 churn guard +
+  #119 quarantine/revalidation cases).
+- Deployed to the Polaris via `scripts/release/release-fwpkt.sh`; post-boot
+  `/app/FwVer` = `FwVer:o-v10;date:2026.09.19;` and on-disk provenance matches
+  patcher `327eeb4`.
+- Multi-exposure capture test (R5 II, 5 shots): all shots returned PTP `-1002`
+  (camera-side state after the firmware reboot cycle — camera in PTP mode,
+  pgphoto running, but shutter release rejected). Not a patcher regression;
+  re-test once the camera is confirmed in PC-connection/capturable state.
+
+Not yet done: the #119 K-3 III USB-persistence release gate (cold boot + idle +
+config polling + preview start/stop + ordinary capture without USB
+disappearance) and the #120 Bulb-timer A/B/C ladder.
+
 ## o-v9z-stability-20260919 — stability bundle (issues #119/#120/#121)
 
 New release bundling the recent no-camera stability work. Built from clean inputs;
