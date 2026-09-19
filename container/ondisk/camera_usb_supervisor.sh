@@ -19,6 +19,21 @@ MAX_POLLS=${OPENPOLARIS_USB_MAX_POLLS:-0}
 # restarting. This is a bounded readiness condition, not an arbitrary sleep —
 # after the window the normal debounce/restart logic resumes unchanged.
 STARTUP_GRACE_POLLS=${OPENPOLARIS_USB_STARTUP_GRACE_POLLS:-3}
+# Issue #119: live-view churn / USB disappearance. When the camera re-enumerates
+# (device-number change) while previewing, each detected identity change restarts
+# pgphoto -- a full dlopen of core+port plus 64-shim re-registration. If that
+# restart itself triggers another re-enumeration the supervisor loops (~36 dlopen
+# cycles / 20 s observed), draining the battery and churning the PTP/USB link
+# until the camera drops off USB. Two bounded guards break the loop:
+#   RESTART_COOLDOWN_POLLS -- minimum polls between restarts, so a fast flap
+#     cannot restart pgphoto on every poll; and
+#   MAX_RESTARTS           -- a total restart budget. Once exhausted the
+#     supervisor stops restarting and accepts the current identity as the new
+#     baseline (fail-closed against a restart storm), so the dlopen loop ends.
+# Both are bounded readiness conditions, not arbitrary sleeps: after the budget
+# is spent the supervisor still tracks identity, it just no longer re-dlopens.
+RESTART_COOLDOWN_POLLS=${OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS:-5}
+MAX_RESTARTS=${OPENPOLARIS_USB_MAX_RESTARTS:-6}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
 
@@ -71,6 +86,13 @@ baseline=$(fingerprint)
 candidate=$baseline
 stable=0
 polls=0
+restarts=0
+# Issue #119: minimum polls between restarts. The stable-change detector already
+# requires STABLE_POLLS consecutive identical polls; requiring the larger of that
+# and RESTART_COOLDOWN_POLLS spaces out restarts so a fast re-enumeration flap
+# cannot restart pgphoto on every poll (which is what drove the dlopen churn).
+COOLDOWN=$STABLE_POLLS
+[ "$RESTART_COOLDOWN_POLLS" -gt "$COOLDOWN" ] && COOLDOWN=$RESTART_COOLDOWN_POLLS
 echo "[camera-usb] supervisor ready; identity=${baseline:-none}"
 
 while :; do
@@ -105,18 +127,31 @@ while :; do
         stable=1
     fi
 
-    if [ "$stable" -ge "$STABLE_POLLS" ]; then
-        echo "[camera-usb] stable identity change: ${baseline:-none} -> ${candidate:-none}; restarting pgphoto"
-        if "$RESTART"; then
+    if [ "$stable" -ge "$COOLDOWN" ]; then
+        if [ "$MAX_RESTARTS" -gt 0 ] && [ "$restarts" -ge "$MAX_RESTARTS" ]; then
+            # Issue #119: restart budget exhausted. Stop re-dlopening and accept
+            # the current identity as the new baseline so a continuing flap does
+            # not keep restarting pgphoto (the dlopen + 64-shim churn that drains
+            # the battery and drops the camera off USB). A later transition to a
+            # different identity is still tracked; it just no longer restarts.
+            echo "[camera-usb] restart budget ($MAX_RESTARTS) exhausted; accepting identity ${candidate:-none} without restarting (issue #119 churn guard)" >&2
             baseline=$candidate
             stable=0
-            echo "[camera-usb] pgphoto restart complete"
         else
-            # Avoid a tight retry storm. A later identity transition can retry;
-            # the existing restart helper already logs the bounded failure.
-            baseline=$candidate
-            stable=0
-            echo "[camera-usb] pgphoto restart failed; identity accepted to prevent a loop" >&2
+            echo "[camera-usb] stable identity change: ${baseline:-none} -> ${candidate:-none}; restarting pgphoto"
+            if "$RESTART"; then
+                restarts=$((restarts + 1))
+                baseline=$candidate
+                stable=0
+                echo "[camera-usb] pgphoto restart complete (restart $restarts${MAX_RESTARTS:+/$MAX_RESTARTS})"
+            else
+                # Avoid a tight retry storm. A later identity transition can retry;
+                # the existing restart helper already logs the bounded failure.
+                restarts=$((restarts + 1))
+                baseline=$candidate
+                stable=0
+                echo "[camera-usb] pgphoto restart failed; identity accepted to prevent a loop" >&2
+            fi
         fi
     fi
 

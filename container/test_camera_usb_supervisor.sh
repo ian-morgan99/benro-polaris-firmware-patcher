@@ -116,5 +116,42 @@ wait "$LATE_PID" 2>/dev/null || true
 # Exactly one restart after the grace window (file may be absent if none fired).
 test "$(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0)" = "1"
 
+# Issue #119: live-view churn / USB disappearance. A fast re-enumeration flap
+# (device-number keeps changing while previewing) must not restart pgphoto on
+# every poll -- that is the dlopen + 64-shim churn that drains the battery and
+# drops the camera off USB. The bounded restart budget caps the total restarts;
+# once exhausted the supervisor accepts the current identity and stops re-dlopening.
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0183 1 3
+# Keep flapping the device number: each new identity persists for ~10 polls
+# (one flap period) before the next appears, so each is "stable" enough to be a
+# restart candidate. With RESTART_COOLDOWN_POLLS=2 that comfortably exceeds the
+# required stable-poll count, so each identity triggers a restart until the
+# budget is spent.
+(
+    n=4
+    while :; do
+        sleep 0.5
+        rm -rf "$TMP/sys/1-1"
+        make_usb 1-1 25fb 0183 1 "$n"
+        n=$((n + 1))
+    done
+) &
+FLAP2=$!
+OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_USB_SYSFS=$TMP/sys \
+OPENPOLARIS_PROC_ROOT=$TMP/proc \
+OPENPOLARIS_RESTART_GPHOTO=$TMP/restart OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=2 \
+OPENPOLARIS_USB_MAX_RESTARTS=2 OPENPOLARIS_USB_MAX_POLLS=40 \
+sh "$SUPERVISOR" > "$TMP/churn.out" 2>&1
+kill "$FLAP2" 2>/dev/null; wait "$FLAP2" 2>/dev/null || true
+# The restart budget (2) caps the total restarts even though the identity kept
+# changing -- the dlopen loop ends instead of running for the whole window.
+test "$(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0)" = "2"
+grep -q 'restart budget' "$TMP/churn.out"
+
 echo 'PASS: camera USB supervisor validates lock ownership and restarts once after a stable camera identity change (issue #57)'
 echo 'PASS: camera USB supervisor absorbs startup re-enumeration without restarting, then resumes normal restart logic (issue #121)'
+echo 'PASS: camera USB supervisor bounds the restart budget under a re-enumeration flap (issue #119 churn guard)'
