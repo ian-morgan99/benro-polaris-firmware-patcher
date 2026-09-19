@@ -1,5 +1,38 @@
 # Changelog
 
+## o-v9w-bulb-codeql-20260919 — Bulb-cluster fixes + CodeQL cleanup (master)
+
+New release built from clean libgphoto2 master (b8baf487c), which carries the
+Bulb-cluster stability fixes and a CodeQL cleanup, while staying regression-free
+(the o-v9s ISO-extension regression is feature-branch-only, not on master).
+
+libgphoto2 (master b8baf487c):
+- Bulb cluster (#111/#118): phase-specific Bulb capture wait (exposure vs
+  post-exposure processing) and integer-second shutter enumeration so >1-minute
+  Bulb times no longer display as collapsed minutes.
+- CodeQL: Nikon D-series detection now checks `sscanf(...) == 1` (not a boolean,
+  which treated EOF as a match) and initialises `nikond`, fixing the
+  "incorrect return-value check for a scanf-like function" finding on PRs #78/#79.
+
+Build inputs (clean):
+- libgphoto2 source: b8baf487c10b007edc865c2ebf000806f0264121 (master)
+- patcher: 26dba1a7a14197837bcb50f4426899e4e83c5eb4 (main, clean tree)
+- stock FwPkt: firmware/FwPkt.zip
+
+Artifact:
+- out/o-v9w-bulb-codeql-20260919/FwPkt.zip
+  sha256 261b5db4839f5b90a42792a9fdc2d99739c9a9bf2b62eb7b8e18539115833375
+  (md5 6df2130dec9365fa86daf02ba7273fae)
+
+Verified (documented release process, docs/LIBGPHOTO2-UPGRADE-PROCESS.md):
+- libgphoto2: clean build; test-pentax-utils + pentax tests pass.
+- patcher deterministic harness (#117): 6 passed, 0 failed, 3 prerequisite-skipped.
+- test_polaris_pentax_build_package.sh: PASS (full build + package path).
+
+Not yet done (hardware qualification pending): Bulb-cluster A/B/C ladder on a
+K-3 III to confirm #111/#118/#120 behaviour, and the #119 session-churn / USB
+disappearance regression.
+
 ## o-v9v-capture-failclosed-20260919 — pre-capture drain wait fails closed (issue #122 TA follow-up)
 
 TA review of o-v9u (libgphoto2 d0419942) found the tri-state helper fixed the
