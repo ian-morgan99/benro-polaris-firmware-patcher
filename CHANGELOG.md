@@ -1,5 +1,48 @@
 # Changelog
 
+## o-v9y-churn-guard-20260919 — live-view churn guard (issue #119)
+
+o-v9r/o-v9s regression: the K-3 III session was torn down and re-initialised in a
+tight loop (~36 dlopen cycles / 20 s), draining the battery and churning the
+PTP/USB link until the camera dropped off USB (o-v9s: completely unreachable).
+
+Root cause (no-camera analysis): the USB identity-change restart added in 1b021e9
+(present in o-v9s, absent from the known-good o-v9p) restarts pgphoto on every
+detected device-number change. When the camera re-enumerates while previewing,
+each restart (full dlopen of core+port + 64-shim re-registration) can itself
+trigger another re-enumeration, so the supervisor loops.
+
+Patcher fix (commit da12f8f, main):
+- container/ondisk/camera_usb_supervisor.sh: two bounded guards break the loop --
+  OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS (default 5) spaces out restarts so a fast
+  flap cannot restart pgphoto on every poll, and OPENPOLARIS_USB_MAX_RESTARTS
+  (default 6) is a total restart budget; once exhausted the supervisor accepts the
+  current identity as the new baseline and stops re-dlopening (fail-closed against
+  a restart storm). Bounded readiness conditions, not arbitrary sleeps.
+- container/test_camera_usb_supervisor.sh: deterministic regression test -- a
+  sustained re-enumeration flap restarts at most MAX_RESTARTS times, then the
+  supervisor logs 'restart budget' and stops.
+
+Build inputs (clean):
+- libgphoto2 source: b8baf487c10b007edc865c2ebf000806f0264121 (master, same as o-v9w/o-v9x)
+- patcher: da12f8f91d03d1e4bdb099965d7f09f5e8111aff (main, clean tree)
+- stock FwPkt: firmware/FwPkt.zip
+
+Artifact:
+- out/o-v9y-churn-guard-20260919/FwPkt.zip
+  sha256 44fd141004583291da1ba60ba514b263d68abf263c2c9ffc648ad603e8e2d33b
+  (md5 086fd96cf9f5b47f8607b3b364555c6e)
+
+Verified (documented release process, docs/LIBGPHOTO2-UPGRADE-PROCESS.md):
+- patcher deterministic harness (#117): 6 passed, 0 failed, 3 prerequisite-skipped.
+- container/test_camera_usb_supervisor.sh: PASS (#57 + #121 + #119 cases).
+- Built camera_usb_supervisor.sh contains the churn-guard markers.
+
+Not yet done (hardware qualification pending): the #119 A/B matrix (camera ON
+before app launch, repeated launches) to confirm the dlopen churn no longer
+reproduces and 25fb:0189 survives cold boot + idle + config polling + preview
+start/stop + ordinary capture without USB disappearance.
+
 ## o-v9x-startup-order-20260919 — startup-order crash fix (issue #121)
 
 o-v9r crash: Benro Connect crashed when started with the camera already powered
