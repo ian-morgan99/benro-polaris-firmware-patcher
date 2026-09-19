@@ -28,8 +28,14 @@ STARTUP_GRACE_POLLS=${OPENPOLARIS_USB_STARTUP_GRACE_POLLS:-3}
 #   RESTART_COOLDOWN_POLLS -- minimum polls between restarts, so a fast flap
 #     cannot restart pgphoto on every poll; and
 #   MAX_RESTARTS           -- a total restart budget. Once exhausted the
-#     supervisor stops restarting and accepts the current identity as the new
-#     baseline (fail-closed against a restart storm), so the dlopen loop ends.
+#     supervisor enters an explicit degraded/quarantine state (issue #119 TA
+#     release-safety follow-up): it stops restarting, logs
+#     `restart_budget_exhausted`, and does NOT adopt the current identity as
+#     healthy. Normal operation resumes only after a positive stable-identity
+#     condition (the identity stays unchanged for COOLDOWN consecutive polls)
+#     revalidates it, so a genuinely reconnected camera is never silently
+#     accepted while the existing pgphoto session is still bound to the old
+#     device/session.
 # Both are bounded readiness conditions, not arbitrary sleeps: after the budget
 # is spent the supervisor still tracks identity, it just no longer re-dlopens.
 RESTART_COOLDOWN_POLLS=${OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS:-5}
@@ -87,6 +93,20 @@ candidate=$baseline
 stable=0
 polls=0
 restarts=0
+# Issue #119 (TA release-safety follow-up): explicit degraded/quarantine state.
+# When the restart budget is exhausted the supervisor must NOT adopt the current
+# identity as healthy and stop restarting forever -- that can leave the existing
+# pgphoto session bound to the old device/session while a genuinely reconnected
+# camera is silently accepted. Instead it enters a quarantine: churn is
+# suppressed, `restart_budget_exhausted` is logged, and normal operation resumes
+# only after a positive stable-identity/readiness condition (the current identity
+# stays unchanged for COOLDOWN consecutive polls) revalidates it.
+# qcandidate/qstable track the quarantined identity's own stability so a
+# positive revalidation condition is independent of the baseline/candidate
+# tracking (which resets `stable` whenever the identity equals the baseline).
+quarantined=0
+qcandidate=""
+qstable=0
 # Issue #119: minimum polls between restarts. The stable-change detector already
 # requires STABLE_POLLS consecutive identical polls; requiring the larger of that
 # and RESTART_COOLDOWN_POLLS spaces out restarts so a fast re-enumeration flap
@@ -117,40 +137,72 @@ while :; do
         continue
     fi
 
-    if [ "$current" = "$baseline" ]; then
-        candidate=$baseline
-        stable=0
-    elif [ "$current" = "$candidate" ]; then
-        stable=$((stable + 1))
-    else
-        candidate=$current
-        stable=1
-    fi
-
-    if [ "$stable" -ge "$COOLDOWN" ]; then
-        if [ "$MAX_RESTARTS" -gt 0 ] && [ "$restarts" -ge "$MAX_RESTARTS" ]; then
-            # Issue #119: restart budget exhausted. Stop re-dlopening and accept
-            # the current identity as the new baseline so a continuing flap does
-            # not keep restarting pgphoto (the dlopen + 64-shim churn that drains
-            # the battery and drops the camera off USB). A later transition to a
-            # different identity is still tracked; it just no longer restarts.
-            echo "[camera-usb] restart budget ($MAX_RESTARTS) exhausted; accepting identity ${candidate:-none} without restarting (issue #119 churn guard)" >&2
-            baseline=$candidate
-            stable=0
+    if [ "$quarantined" = "1" ]; then
+        # Issue #119 (TA release-safety follow-up): degraded/quarantine state.
+        # The restart budget is exhausted, so churn is suppressed and the current
+        # identity is NOT adopted as healthy. Normal operation resumes only after
+        # a positive stable-identity/readiness condition: the quarantined
+        # identity must stay unchanged for COOLDOWN consecutive polls before it
+        # is revalidated. A further identity change resets that counter, so a
+        # genuinely reconnected camera is never silently accepted while the
+        # existing pgphoto session may still be bound to the old device/session.
+        if [ "$current" = "$qcandidate" ]; then
+            qstable=$((qstable + 1))
         else
-            echo "[camera-usb] stable identity change: ${baseline:-none} -> ${candidate:-none}; restarting pgphoto"
-            if "$RESTART"; then
-                restarts=$((restarts + 1))
-                baseline=$candidate
-                stable=0
-                echo "[camera-usb] pgphoto restart complete (restart $restarts${MAX_RESTARTS:+/$MAX_RESTARTS})"
+            qcandidate=$current
+            qstable=1
+        fi
+        if [ "$qstable" -ge "$COOLDOWN" ]; then
+            echo "[camera-usb] quarantined identity ${qcandidate:-none} revalidated after $qstable stable polls; resuming normal operation (issue #119)"
+            baseline=$qcandidate
+            candidate=$baseline
+            stable=0
+            quarantined=0
+            qcandidate=""
+            qstable=0
+            restarts=0
+        fi
+    else
+        if [ "$current" = "$baseline" ]; then
+            candidate=$baseline
+            stable=0
+        elif [ "$current" = "$candidate" ]; then
+            stable=$((stable + 1))
+        else
+            candidate=$current
+            stable=1
+        fi
+
+        if [ "$stable" -ge "$COOLDOWN" ]; then
+            if [ "$MAX_RESTARTS" -gt 0 ] && [ "$restarts" -ge "$MAX_RESTARTS" ]; then
+                # Issue #119 (TA release-safety follow-up): restart budget
+                # exhausted. Enter the explicit degraded/quarantine state instead
+                # of adopting the new identity as healthy: churn is suppressed,
+                # `restart_budget_exhausted` is logged, and normal operation
+                # resumes only after a positive stable-identity condition
+                # revalidates the quarantined identity (see the quarantine branch
+                # above). This keeps a genuinely reconnected camera from being
+                # silently accepted while the existing pgphoto session is still
+                # bound to the old device/session.
+                echo "[camera-usb] restart_budget_exhausted ($MAX_RESTARTS); quarantining identity ${candidate:-none} -- no further restarts until it revalidates (issue #119)" >&2
+                quarantined=1
+                qcandidate=$candidate
+                qstable=0
             else
-                # Avoid a tight retry storm. A later identity transition can retry;
-                # the existing restart helper already logs the bounded failure.
-                restarts=$((restarts + 1))
-                baseline=$candidate
-                stable=0
-                echo "[camera-usb] pgphoto restart failed; identity accepted to prevent a loop" >&2
+                echo "[camera-usb] stable identity change: ${baseline:-none} -> ${candidate:-none}; restarting pgphoto"
+                if "$RESTART"; then
+                    restarts=$((restarts + 1))
+                    baseline=$candidate
+                    stable=0
+                    echo "[camera-usb] pgphoto restart complete (restart $restarts${MAX_RESTARTS:+/$MAX_RESTARTS})"
+                else
+                    # Avoid a tight retry storm. A later identity transition can retry;
+                    # the existing restart helper already logs the bounded failure.
+                    restarts=$((restarts + 1))
+                    baseline=$candidate
+                    stable=0
+                    echo "[camera-usb] pgphoto restart failed; identity accepted to prevent a loop" >&2
+                fi
             fi
         fi
     fi
