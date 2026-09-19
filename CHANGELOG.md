@@ -1,5 +1,39 @@
 # Changelog
 
+## o-v9v-capture-failclosed-20260919 — pre-capture drain wait fails closed (issue #122 TA follow-up)
+
+TA review of o-v9u (libgphoto2 d0419942) found the tri-state helper fixed the
+false-IDLE read, but the pre-capture post-drain wait still **failed open**: if all
+50 readiness polls stayed BUSY/UNKNOWN the loop ended, logged "drain complete",
+and fired InitiateCapture anyway — proceeding while the camera was unproven-ready.
+
+libgphoto2 fix (commit a46421c8e, master):
+- Track whether the drain wait actually reached IDLE. On bound exhaustion
+  (still BUSY/UNKNOWN) refuse the exposure with GP_ERROR_CAMERA_BUSY, matching
+  the existing "stale candidate still pending" path, instead of firing into a
+  busy camera.
+
+Build inputs (clean):
+- libgphoto2 source: a46421c8e8f8acf13a2cf2a1755f8bbad7d181ef (master)
+- patcher: c2ec6ca58c0a8a7509a973ddf3e7aebdf0d5407b (main, clean tree)
+- stock FwPkt: firmware/FwPkt.zip
+
+Artifact:
+- out/o-v9v-capture-failclosed-20260919/FwPkt.zip
+  sha256 d04d96d31b0747dae4a0cfea239ab00b49d899ee3d1e4be89f63715c95aebe97
+  (md5 eee477efecea9321f63a90a2f6bb03bb)
+
+Verified (documented release process, docs/LIBGPHOTO2-UPGRADE-PROCESS.md):
+- libgphoto2: clean build; test-pentax-utils passes.
+- patcher deterministic harness (#117): 6 passed, 0 failed, 3 prerequisite-skipped.
+- test_polaris_pentax_build_package.sh: PASS (full build + package path).
+- Built ptp2.so contains the new fail-closed marker ("pre-capture drain consumed
+  ... still busy/unknown after bounded wait; refusing new exposure").
+
+Not yet done (hardware qualification pending): A/B/C camera ladder on a K-3 III
+to confirm the wedge no longer reproduces and that the fail-closed path is not
+overly conservative for legitimate multi-shot/astro/bulb drains.
+
 ## o-v9u-capture-readiness-20260919 — capture readiness tri-state + gated idle wait (fixes #122)
 
 Shutter release could wedge the K-3 III until a mode toggle + USB reset. Two
