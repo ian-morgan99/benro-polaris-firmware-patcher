@@ -15,7 +15,14 @@ export STAGE2_TETHER_CAPTURE=1
 # defaults to this policy, but exporting it here prevents wrapper/environment
 # drift from reopening the high-rate Pentax preview loop.
 export STAGE2_PENTAX_PREVIEW_BACKOFF=${STAGE2_PENTAX_PREVIEW_BACKOFF:-1}
-export STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS:-2}
+# On-demand preview gate interval (seconds). Pin it ONLY when the operator
+# explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
+# model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --
+# see stage2_loader.c STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS). Hard-coding
+# 2 here would mask that per-body default in shipped images.
+if [ -n "${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS:-}" ]; then
+    export STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS="${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS}"
+fi
 # Pentax capture budget (issue #2). libgphoto2's hard-coded default is 2 GiB,
 # which is unsafe on the Polaris' constrained RAM — a single runaway DNG/RAW
 # request from a K-1 II / K-3 III would exhaust the heap and abort pgphoto

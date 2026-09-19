@@ -57,3 +57,19 @@ stage2_model_uses_pentax_keep_lv(const char *model)
 	return model_contains_ci(model, "gx10") ||
 	       model_contains_ci(model, "gx-10");
 }
+
+/* K-1 Mark II: the body whose PC live view is measurably slow.  Live 8080
+ * probe (docs/evidence/k1ii-live-test-2026-09-15/stream-probe-8080.md) shows
+ * ~1 frame per 7-8 s, versus the K-3 III's faster cadence.  The generic
+ * 2 s on-demand preview gate therefore returns "busy" for most of each
+ * inter-frame gap and the app cycles between a frame and "stalled".  A
+ * model-specific default (STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS) aligned to
+ * the K-1 II's own frame cadence removes that churn.  Matched by the "K-1 Mark
+ * II" token so it never catches the original K-1 or the K-3 III. */
+int
+stage2_model_is_k1_mark_ii(const char *model)
+{
+	if (!model || !*model)
+		return 0;
+	return model_contains_ci(model, "k-1 mark ii");
+}

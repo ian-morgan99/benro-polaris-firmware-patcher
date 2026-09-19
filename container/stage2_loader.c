@@ -328,6 +328,30 @@ static int stage2_camera_uses_pentax_keep_lv(void *camera)
     return stage2_model_uses_pentax_keep_lv((const char *)abilities.bytes);
 }
 
+/* K-1 Mark II predicate: the body whose PC live view is measurably slow
+ * (~1 frame / 7-8 s, docs/evidence/k1ii-live-test-2026-09-15).  Used to pick a
+ * model-specific on-demand preview minimum interval so the gate does not return
+ * "busy" for most of each inter-frame gap.  Reuses the same abilities read. */
+static int stage2_camera_is_k1_mark_ii(void *camera)
+{
+    union {
+        max_align_t alignment;
+        unsigned char bytes[4096];
+    } abilities;
+
+    if (!g_real_gp_camera_get_abilities && g_stage2_core)
+        g_real_gp_camera_get_abilities = (stage2_gp_camera_get_abilities_fn)
+            dlsym(g_stage2_core, "gp_camera_get_abilities");
+    if (!g_real_gp_camera_get_abilities || !camera)
+        return 0;
+
+    memset(&abilities, 0, sizeof(abilities));
+    if (g_real_gp_camera_get_abilities(camera, &abilities) != 0)
+        return 0;
+    abilities.bytes[127] = '\0';
+    return stage2_model_is_k1_mark_ii((const char *)abilities.bytes);
+}
+
 /* SHIM #4 -- push `pentaxpclvkeep` ON for a Pentax session.  Best-effort: the
  * widget only exists once vendor mode is enabled, so a GP_ERROR_NOT_SUPPORTED
  * (or any non-OK) result is logged and swallowed; it never fails init. */
@@ -420,6 +444,12 @@ static time_t g_pentax_preview_last_fetch = 0;
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT   3
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT  30
 #define STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT 2
+/* K-1 II specific: its PC live view yields ~1 frame / 7-8 s (live probe,
+ * docs/evidence/k1ii-live-test-2026-09-15/stream-probe-8080.md).  A gate
+ * interval aligned to that cadence stops the app from cycling between a frame
+ * and "stalled" for most of each inter-frame gap.  Only used when no explicit
+ * STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS override is set. */
+#define STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS 8
 #define STAGE2_PENTAX_CAPTURE_BACKOFF_MAX_DEFAULT   3
 #define STAGE2_PENTAX_CAPTURE_BACKOFF_SECS_DEFAULT  30
 
@@ -472,12 +502,23 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
      * as "camera busy"/pending and retries later) instead of generating PTP
      * traffic, so preview panes are captured only when specifically needed --
      * not on every internal tick/poll.  STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=0
-     * disables the gate (legacy behavior). */
+     * disables the gate (legacy behavior).
+     *
+     * Model-specific default: the K-1 II's PC live view is measurably slow
+     * (~1 frame / 7-8 s, docs/evidence/k1ii-live-test-2026-09-15), so the
+     * generic 2 s gate returns "busy" for most of each inter-frame gap and the
+     * app cycles between a frame and "stalled".  For a K-1 II with no explicit
+     * override, default to an interval aligned to its own cadence (8 s) so the
+     * gate stops churning.  Other bodies keep the generic 2 s default. */
     {
         const char *mins = getenv("STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS");
-        int min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT;
+        int min_interval_s;
         if (mins && atoi(mins) >= 0)
             min_interval_s = atoi(mins);
+        else if (stage2_camera_is_k1_mark_ii(camera))
+            min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS;
+        else
+            min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT;
         time_t now = time(NULL);
         if ((min_interval_s > 0) && g_pentax_preview_last_fetch &&
             (now - g_pentax_preview_last_fetch < min_interval_s)) {

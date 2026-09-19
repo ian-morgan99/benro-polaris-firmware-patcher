@@ -31,8 +31,16 @@ OUT=$(run_wrapper 2>&1)
 printf '%s\n' "$OUT" | grep -q 'reclaiming stale pgphoto launch lock'
 printf '%s\n' "$OUT" | grep -q '^launched$'
 printf '%s\n' "$OUT" | grep -q '^preview_backoff=1$'
-printf '%s\n' "$OUT" | grep -q '^preview_interval=2$'
+# The on-demand preview interval is pinned ONLY when explicitly set; otherwise
+# it stays unset so the Stage-2 loader applies its model-specific default
+# (8 s for the slow K-1 II live view, 2 s otherwise).
+printf '%s\n' "$OUT" | grep -q '^preview_interval=$'
 test ! -e "$TMP/run/openpolaris-pgphoto.launch.lock"
+
+# An explicitly-set interval must be pinned through to the launched process.
+rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
+OUT=$(STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=5 run_wrapper 2>&1)
+printf '%s\n' "$OUT" | grep -q '^preview_interval=5$'
 
 # A live but unrelated PID is stale ownership (PID reuse); it must not wedge
 # every future launch.

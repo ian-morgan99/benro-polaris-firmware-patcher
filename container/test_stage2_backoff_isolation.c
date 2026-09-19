@@ -9,10 +9,12 @@ static int fake_capture_result;
 static int fake_capture_calls;
 static int fake_capture_last_type;
 
+static const char *fake_model_string = "Pentax K-3 Mark III (PTP mode)";
+
 static int fake_get_abilities(void *camera, void *abilities)
 {
     (void)camera;
-    strcpy((char *)abilities, "Pentax K-3 Mark III (PTP mode)");
+    strcpy((char *)abilities, fake_model_string);
     return 0;
 }
 
@@ -50,6 +52,7 @@ static void reset_fixture(void)
     fake_capture_result = 0;
     fake_capture_calls = 0;
     fake_capture_last_type = -1;
+    fake_model_string = "Pentax K-3 Mark III (PTP mode)";
 }
 
 int main(void)
@@ -96,6 +99,26 @@ int main(void)
     assert(fake_capture_last_type == 1);
     assert(g_pentax_capture_failures == 1);
     assert(g_pentax_capture_backoff_until > time(NULL));
+
+    /* K-1 II model-specific on-demand gate: with no explicit
+     * STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS override, a K-1 II defaults to an
+     * 8 s interval (aligned to its ~1 frame / 7-8 s live-view cadence) instead
+     * of the generic 2 s.  A fetch 3 s ago is therefore still inside the window
+     * for a K-1 II (returns busy, no real call) but outside it for any other
+     * body (real call proceeds). */
+    reset_fixture();
+    unsetenv("STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS");
+    fake_model_string = "Pentax K-1 Mark II (PTP mode)";
+    g_pentax_preview_last_fetch = time(NULL) - 3;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) ==
+           STAGE2_GP_ERROR_CAMERA_BUSY);
+    assert(fake_preview_calls == 0); /* gated: no real fetch */
+
+    reset_fixture();
+    fake_model_string = "Pentax K-3 Mark III (PTP mode)";
+    g_pentax_preview_last_fetch = time(NULL) - 3;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
+    assert(fake_preview_calls == 1); /* 3 s > generic 2 s default: real fetch */
 
     puts("stage2 backoff isolation: PASS");
     return 0;
