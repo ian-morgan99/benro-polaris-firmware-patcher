@@ -40,6 +40,13 @@ STARTUP_GRACE_POLLS=${OPENPOLARIS_USB_STARTUP_GRACE_POLLS:-3}
 # is spent the supervisor still tracks identity, it just no longer re-dlopens.
 RESTART_COOLDOWN_POLLS=${OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS:-5}
 MAX_RESTARTS=${OPENPOLARIS_USB_MAX_RESTARTS:-6}
+# Issue #119 (TA follow-up): the quarantine-exit rebind requires the quarantined
+# identity to stay stable for this many consecutive polls BEFORE the bounded
+# rebind is attempted. Kept separate from COOLDOWN so tests can decouple "when
+# the main loop quarantines" from "when the rebind fires". Defaults to 4 (the
+# same order as the churn cooldown) -- a genuinely stable, reconnected camera
+# clears it quickly; a flapping one never does.
+REBIND_STABLE_POLLS=${OPENPOLARIS_USB_REBIND_STABLE_POLLS:-4}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
 
@@ -152,15 +159,32 @@ while :; do
             qcandidate=$current
             qstable=1
         fi
-        if [ "$qstable" -ge "$COOLDOWN" ]; then
-            echo "[camera-usb] quarantined identity ${qcandidate:-none} revalidated after $qstable stable polls; resuming normal operation (issue #119)"
-            baseline=$qcandidate
-            candidate=$baseline
-            stable=0
-            quarantined=0
-            qcandidate=""
-            qstable=0
-            restarts=0
+        if [ "$qstable" -ge "$REBIND_STABLE_POLLS" ]; then
+            # Issue #119 (TA follow-up): sysfs identity stability alone does NOT
+            # prove a usable pgphoto/PTP session -- the existing process may still
+            # own a stale port/session from before the churn. Before leaving the
+            # degraded/quarantine state, perform one bounded rebind: run the same
+            # restart helper that re-dlopens core+port and re-registers the 64
+            # shims against the current identity. Only if that rebind SUCCEEDS do
+            # we clear quarantine and reset the budget; on failure we stay degraded
+            # (qstable is held at the threshold so the next stable window retries)
+            # rather than silently accepting a possibly-stale session as healthy.
+            if "$RESTART"; then
+                echo "[camera-usb] quarantined identity ${qcandidate:-none} revalidated after $qstable stable polls; bounded rebind succeeded, resuming normal operation (issue #119)"
+                baseline=$qcandidate
+                candidate=$baseline
+                stable=0
+                quarantined=0
+                qcandidate=""
+                qstable=0
+                restarts=0
+            else
+                echo "[camera-usb] quarantined identity ${qcandidate:-none} stable for $qstable polls but bounded rebind failed; remaining degraded (issue #119)" >&2
+                # Stay quarantined. Hold qstable at the threshold so the next poll
+                # that keeps the identity stable immediately retries the rebind,
+                # while any identity change resets qstable to 1 and re-arms it.
+                qstable=$REBIND_STABLE_POLLS
+            fi
         fi
     else
         if [ "$current" = "$baseline" ]; then

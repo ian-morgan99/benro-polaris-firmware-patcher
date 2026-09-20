@@ -392,6 +392,14 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
     if (!g_real_gp_widget_set_value_int && g_stage2_core)
         g_real_gp_widget_set_value_int = (stage2_gp_widget_set_value_int_fn)
             dlsym(g_stage2_core, "gp_widget_set_value");
+    /* Issue #124: resolve gp_widget_get_value before the #121 settle probe uses
+     * it. Without this, the forward-declared pointer is still NULL at camera-init
+     * time (the later SHIM #3/#5 dlsym sites have not run yet), and the probe
+     * calls a NULL function pointer -> crash -> pgphoto exit -> checkGphotoTask
+     * restart loop (844 cycles observed on K-3 III / K-1 II). */
+    if (!g_real_gp_widget_get_value && g_stage2_core)
+        g_real_gp_widget_get_value = (stage2_gp_widget_get_value_fn)
+            dlsym(g_stage2_core, "gp_widget_get_value");
     if (!g_real_gp_camera_get_single_config || !g_real_gp_camera_set_single_config ||
         !g_real_gp_widget_set_value_int) {
         fprintf(stderr, "[stage2] keep-lv: FATAL real get/set_single_config/"
@@ -421,7 +429,12 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
                                                &lvwidget, context) == 0 &&
             lvwidget) {
             int lvval = 0;
-            if (g_real_gp_widget_get_value(lvwidget, &lvval) == 0 && lvval == 1) {
+            /* Issue #124: guard the NULL case -- if gp_widget_get_value could not
+             * be resolved (helper unavailable), skip the optional settle probe
+             * instead of calling a NULL pointer. Camera init must not become
+             * fatal just because this best-effort probe cannot run. */
+            if (g_real_gp_widget_get_value &&
+                g_real_gp_widget_get_value(lvwidget, &lvval) == 0 && lvval == 1) {
                 const char *settle_s = getenv("STAGE2_PENTAX_PREVIEW_SETTLE_SECS");
                 int settle = STAGE2_PENTAX_PREVIEW_SETTLE_SECS_DEFAULT;
                 if (settle_s && atoi(settle_s) >= 0)
