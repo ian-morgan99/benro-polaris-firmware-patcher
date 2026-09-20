@@ -53,6 +53,11 @@ case "$MODE" in full|ptp2only) : ;; *) echo "invalid MODE=$MODE (full|ptp2only)"
 SWAP_USB1="${SWAP_USB1:-1}"
 # Full mode ALWAYS needs usb1 (the fresh 2.5.34 port dlopens usb1 from IOLIBS).
 [ "$MODE" = "full" ] && SWAP_USB1=1
+# Issue #120: zero the polestar_app pre-shot bulb delay (the 264 PHOTO_RECORD
+# handler multiplies the app's bulb seconds by 1000 and uses it as a countdown
+# timer instead of an exposure duration). Opt-in: 1 = apply the 8-byte binary
+# patch to /app/bin/polestar_app in the extracted tree before repacking.
+POLESTAR_BULB_PATCH="${POLESTAR_BULB_PATCH:-0}"
 XT=arm-linux-gnueabi
 W=/work
 mkdir -p "$W"
@@ -551,6 +556,19 @@ if [ -n "${BUILD_ID:-}" ]; then
     warn "no FwVer file in the extracted appfs tree — Benro Connect will keep showing the stock version"
   fi
 fi
+
+# Issue #120: zero the polestar_app pre-shot bulb delay (opt-in).
+if [ "$POLESTAR_BULB_PATCH" = "1" ]; then
+  PA="$APP/bin/polestar_app"
+  if [ -f "$PA" ]; then
+    python3 /opt/patcher/polestar_bulb_patch.py "$PA" --in-place \
+      || die "polestar_app bulb patch failed (issue #120)"
+    log "polestar_app bulb delay zeroed (issue #120): 264 PHOTO_RECORD no longer applies a pre-shot countdown"
+  else
+    warn "polestar_app not found in the extracted appfs tree — bulb patch skipped"
+  fi
+fi
+
 /opt/patcher/repack_appfs.sh "$STOCK_APPFS" "$APP" "$W/out/appfs.ubifs"
 
 log "assembling custom FwPkt in /out…"
