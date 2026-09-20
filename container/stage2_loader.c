@@ -269,6 +269,11 @@ typedef int (*stage2_gp_camera_get_single_config_fn)(void *camera, const char *n
 typedef int (*stage2_gp_widget_set_value_int_fn)(void *widget, const void *value);
 static stage2_gp_camera_get_single_config_fn g_real_gp_camera_get_single_config = NULL;
 static stage2_gp_widget_set_value_int_fn     g_real_gp_widget_set_value_int    = NULL;
+/* Forward-declare the generic widget value getter (defined further down in the
+ * SHIM #3 block) so the #121 preview-settle arming below can read the live-view
+ * mode widget. The later definition carries the `= NULL` initializer. */
+typedef int (*stage2_gp_widget_get_value_fn)(void *widget, void *value);
+static stage2_gp_widget_get_value_fn g_real_gp_widget_get_value;
 /* Reuses Shim #3's `g_real_gp_camera_set_single_config` (defined further down,
  * in the SHIM #3 block) as the put-handler entry that copies the toggle into
  * params->pentax.keep_live_view.  Forward-declare here so this file compiles
@@ -352,6 +357,25 @@ static int stage2_camera_is_k1_mark_ii(void *camera)
     return stage2_model_is_k1_mark_ii((const char *)abilities.bytes);
 }
 
+/* Issue #121: bounded per-session preview-settle window. When the camera is
+ * already powered ON at app launch, the PTP session is in "SessionAlreadyOpened"
+ * state (a previous process left it open) and PC live view may be active. The
+ * app's immediate burst of concurrent preview + config traffic then hits that
+ * unsafe transition and crashes (v10 retest: camera ON at start -> crash with no
+ * user interaction; OFF->ON works because the camera appears after the runtime is
+ * up). We arm a short settle window only when the session was ALREADY open at init
+ * (live view active before we enabled keep-lv), so a fresh OFF->ON connection is
+ * unaffected. While inside the window, preview fetches return GP_ERROR_CAMERA_BUSY
+ * (non-terminal; the app renders it as "camera busy"/pending and retries) instead
+ * of generating PTP traffic, giving the session time to settle before the next
+ * real frame fetch. Bounded, not an arbitrary sleep: after the window the normal
+ * on-demand gate resumes unchanged. */
+static int     g_pentax_session_was_open = 0;
+static time_t  g_pentax_preview_settle_until = 0;
+/* Issue #121: settle window length (seconds) after a session that was already
+ * open at init. Default 5 s; set STAGE2_PENTAX_PREVIEW_SETTLE_SECS=0 to disable. */
+#define STAGE2_PENTAX_PREVIEW_SETTLE_SECS_DEFAULT   5
+
 /* SHIM #4 -- push `pentaxpclvkeep` ON for a Pentax session.  Best-effort: the
  * widget only exists once vendor mode is enabled, so a GP_ERROR_NOT_SUPPORTED
  * (or any non-OK) result is logged and swallowed; it never fails init. */
@@ -383,6 +407,34 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
         fprintf(stderr, "[stage2] keep-lv: pentaxpclvkeep widget unavailable "
                         "(ret=%d) -- leaving default per-frame teardown\n", ret);
         return;
+    }
+
+    /* Issue #121: if PC live view is ALREADY active (the camera was powered on
+     * before this process, so the PTP session was already open), arm a bounded
+     * preview-settle window. The app's immediate preview+config burst would
+     * otherwise hit the SessionAlreadyOpened / live-view-active transition and
+     * crash; returning "camera busy" for a few seconds lets it settle. A fresh
+     * OFF->ON connection has d035=0 here, so it is unaffected. */
+    {
+        void *lvwidget = NULL;
+        if (g_real_gp_camera_get_single_config(camera, "pentaxpclvmode",
+                                               &lvwidget, context) == 0 &&
+            lvwidget) {
+            int lvval = 0;
+            if (g_real_gp_widget_get_value(lvwidget, &lvval) == 0 && lvval == 1) {
+                const char *settle_s = getenv("STAGE2_PENTAX_PREVIEW_SETTLE_SECS");
+                int settle = STAGE2_PENTAX_PREVIEW_SETTLE_SECS_DEFAULT;
+                if (settle_s && atoi(settle_s) >= 0)
+                    settle = atoi(settle_s);
+                if (settle > 0) {
+                    g_pentax_session_was_open = 1;
+                    g_pentax_preview_settle_until = time(NULL) + settle;
+                    fprintf(stderr, "[stage2] keep-lv: PC live view already active "
+                                    "(session was open before this process); arming "
+                                    "%ds preview-settle window (issue #121)\n", settle);
+                }
+            }
+        }
     }
     int on = 1;
     if (g_real_gp_widget_set_value_int(widget, &on) != 0) {
@@ -441,6 +493,21 @@ static time_t g_pentax_preview_backoff_until = 0;
  * app already renders as pending) instead of hitting PTP.  Set =0 to disable. */
 static time_t g_pentax_preview_last_fetch = 0;
 
+/* Issue #121: bounded per-session preview-settle window. When the camera is
+ * already powered ON at app launch, the PTP session is in "SessionAlreadyOpened"
+ * state (a previous process left it open) and PC live view may be active. The
+ * app's immediate burst of concurrent preview + config traffic then hits that
+ * unsafe transition and crashes (v10 retest: camera ON at start -> crash with no
+ * user interaction; OFF->ON works because the camera appears after the runtime is
+ * up). We arm a short settle window only when the session was ALREADY open at init
+ * (live view active before we enabled keep-lv), so a fresh OFF->ON connection is
+ * unaffected. While inside the window, preview fetches return GP_ERROR_CAMERA_BUSY
+ * (non-terminal; the app renders it as "camera busy"/pending and retries) instead
+ * of generating PTP traffic, giving the session time to settle before the next
+ * real frame fetch. Bounded, not an arbitrary sleep: after the window the normal
+ * on-demand gate resumes unchanged.  The state + default are declared above in
+ * the SHIM #4 block (before stage2_pentax_enable_keep_live_view arms them). */
+
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT   3
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT  30
 #define STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT 2
@@ -495,6 +562,25 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
                             "returning busy without blocking\n", remain_s);
             return STAGE2_GP_ERROR_CAMERA_BUSY;
         }
+    }
+
+    /* Issue #121: bounded preview-settle window. Armed only when the PTP session
+     * was ALREADY open at init (camera pre-powered, PC live view active). While
+     * inside it, return "camera busy" instead of generating PTP traffic so the
+     * app's startup preview+config burst does not hit the SessionAlreadyOpened /
+     * live-view-active transition. Non-blocking: the next poll simply finds the
+     * window over and proceeds through the normal on-demand gate. */
+    if (g_pentax_session_was_open && g_pentax_preview_settle_until) {
+        time_t now = time(NULL);
+        if (now < g_pentax_preview_settle_until) {
+            int remain_s = (int)(g_pentax_preview_settle_until - now);
+            fprintf(stderr, "[stage2] preview-settle: session was open at init; "
+                            "%ds left before the first real frame fetch (issue #121)\n",
+                            remain_s);
+            return STAGE2_GP_ERROR_CAMERA_BUSY;
+        }
+        g_pentax_session_was_open = 0;
+        g_pentax_preview_settle_until = 0;
     }
 
     /* On-demand gate: at most one real frame fetch per N seconds.  Calls inside
