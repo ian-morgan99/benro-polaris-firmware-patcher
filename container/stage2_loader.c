@@ -1055,11 +1055,10 @@ static int stage2_shim_gp_camera_set_config(void *camera, void *widget,
         return -1;                                   /* GP_ERROR */
     }
 
-    /* Issue #121: hold back config/status traffic during the preview-settle
-     * window so the app's startup config burst does not hit the
-     * SessionAlreadyOpened / live-view-active transition. */
-    if (stage2_pentax_settle_gate() != 0)
-        return STAGE2_GP_ERROR_CAMERA_BUSY;
+    /* Issue #128 diagnostic: CONFIG writes are deliberately NOT gated by the
+     * preview-settle window. A state-changing write cannot safely be discarded
+     * on the assumption that the caller will retry it. Preview traffic remains
+     * protected by the existing settle gate; config setters pass through. */
 
     /* Gate: default OFF (unset or "0").  When OFF, pure pass-through. */
     {
@@ -1139,11 +1138,10 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
         return -1;                                   /* GP_ERROR */
     }
 
-    /* Issue #121: hold back config/status traffic during the preview-settle
-     * window so the app's startup config burst does not hit the
-     * SessionAlreadyOpened / live-view-active transition. */
-    if (stage2_pentax_settle_gate() != 0)
-        return STAGE2_GP_ERROR_CAMERA_BUSY;
+    /* Issue #128 diagnostic: CONFIG writes are deliberately NOT gated by the
+     * preview-settle window. A state-changing write cannot safely be discarded
+     * on the assumption that the caller will retry it. Preview traffic remains
+     * protected by the existing settle gate; config setters pass through. */
 
     /* Gate: default OFF (unset or "0").  When OFF, pure pass-through. */
     {
