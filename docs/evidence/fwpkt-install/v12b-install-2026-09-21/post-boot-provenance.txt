@@ -1,0 +1,19 @@
+=== post-boot provenance 2026-09-21T18:51:01Z ===
+FwVer:6.0.0.54.13-o-v12b;date:2026.09.21;
+
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=c57a8a3ac083ee77c715e0bd1436e540c0ee8c2a
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=691e034
+patcher_dirty_diff_hash=
+build_id=6.0.0.54.13-o-v12b
+
+afeba59d5aa3957fa630c2d1ea80224e  /app/bin/polestar_app
+
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
