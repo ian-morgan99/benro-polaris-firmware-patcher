@@ -370,8 +370,23 @@ static int stage2_camera_is_k1_mark_ii(void *camera)
  * of generating PTP traffic, giving the session time to settle before the next
  * real frame fetch. Bounded, not an arbitrary sleep: after the window the normal
  * on-demand gate resumes unchanged. */
+/* Issue #125: all Pentax preview/capture timing state is an elapsed-duration /
+ * readiness gate, so it must use a MONOTONIC clock, not wall clock.  Polaris can
+ * acquire/correct time after boot (NTP); a backwards correction would make
+ * `now - last_fetch` negative and satisfy `< min_interval` for far longer than
+ * intended (or extend a cooldown), while a forwards correction would expire a
+ * safety window immediately.  clock_gettime(CLOCK_MONOTONIC) is immune to both.
+ * Wall clock is kept only for human-readable timestamps. */
+static long long stage2_monotonic_secs(void)
+{
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+        return 0;
+    return (long long)ts.tv_sec;
+}
+
 static int     g_pentax_session_was_open = 0;
-static time_t  g_pentax_preview_settle_until = 0;
+static long long g_pentax_preview_settle_until = 0;
 /* Issue #121: settle window length (seconds) after a session that was already
  * open at init. Default 5 s; set STAGE2_PENTAX_PREVIEW_SETTLE_SECS=0 to disable. */
 #define STAGE2_PENTAX_PREVIEW_SETTLE_SECS_DEFAULT   5
@@ -441,7 +456,7 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
                     settle = atoi(settle_s);
                 if (settle > 0) {
                     g_pentax_session_was_open = 1;
-                    g_pentax_preview_settle_until = time(NULL) + settle;
+                    g_pentax_preview_settle_until = stage2_monotonic_secs() + settle;
                     fprintf(stderr, "[stage2] keep-lv: PC live view already active "
                                     "(session was open before this process); arming "
                                     "%ds preview-settle window (issue #121)\n", settle);
@@ -495,7 +510,11 @@ typedef int (*stage2_gp_camera_capture_preview_fn)(void *camera, void *file,
                                                   void *context);
 static stage2_gp_camera_capture_preview_fn g_real_gp_camera_capture_preview = NULL;
 static int  g_pentax_preview_timeouts = 0;
-static time_t g_pentax_preview_backoff_until = 0;
+static long long g_pentax_preview_backoff_until = 0;
+/* Issue #127: capability-disable for a permanent NOT_SUPPORTED preview result.
+ * Once the body/mode reports preview unsupported, stop generating PTP traffic
+ * (return the error directly) instead of retrying forever across cooldowns. */
+static int g_pentax_preview_disabled = 0;
 
 /* On-demand gate (design principle: capture preview panes only when specifically
  * needed, not as a side effect of periodic polling).  Live Clog analysis showed
@@ -504,7 +523,7 @@ static time_t g_pentax_preview_backoff_until = 0;
  * caps real camera traffic at one frame per N seconds; calls inside the window
  * return GP_ERROR_CAMERA_BUSY (-110, "camera busy" -- a non-terminal state the
  * app already renders as pending) instead of hitting PTP.  Set =0 to disable. */
-static time_t g_pentax_preview_last_fetch = 0;
+static long long g_pentax_preview_last_fetch = 0;
 
 /* Issue #121: bounded per-session preview-settle window. When the camera is
  * already powered ON at app launch, the PTP session is in "SessionAlreadyOpened"
@@ -541,6 +560,28 @@ static time_t g_pentax_preview_last_fetch = 0;
  * must remain exact pass-through calls. */
 #define STAGE2_GP_CAPTURE_IMAGE 0
 
+/* Issue #121 (TA follow-up): readiness gate for config/status traffic.  The
+ * preview-settle window (armed only when the PTP session was ALREADY open at
+ * init -- camera pre-powered, PC live view active) must also hold back the
+ * app's startup CONFIG/STATUS burst, not just the first preview frame.  A
+ * config push or status poll that lands on the SessionAlreadyOpened /
+ * live-view-active transition is exactly what crashes Benro Connect in the
+ * "camera already ON" startup order.  While inside the window every gated
+ * traffic class returns GP_ERROR_CAMERA_BUSY (non-terminal; the app retries),
+ * so no PTP traffic is generated until the session has settled.  Returns
+ * STAGE2_GP_ERROR_CAMERA_BUSY when the caller must wait, 0 when it may proceed. */
+static int stage2_pentax_settle_gate(void)
+{
+    if (g_pentax_session_was_open && g_pentax_preview_settle_until) {
+        long long now = stage2_monotonic_secs();
+        if (now < g_pentax_preview_settle_until)
+            return STAGE2_GP_ERROR_CAMERA_BUSY;
+        g_pentax_session_was_open = 0;
+        g_pentax_preview_settle_until = 0;
+    }
+    return 0;
+}
+
 static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
                                                 void *context)
 {
@@ -560,6 +601,16 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
         !stage2_camera_uses_pentax_keep_lv(camera))
         return g_real_gp_camera_capture_preview(camera, file, context);
 
+    /* Issue #127: capability-disable.  A permanent GP_ERROR_NOT_SUPPORTED means
+     * this body/mode cannot do PC live view; stop generating PTP traffic and
+     * surface the error directly instead of retrying forever across cooldowns.
+     * (A fresh session / restart re-arms it, since the flag is per-process.) */
+    if (g_pentax_preview_disabled) {
+        fprintf(stderr, "[stage2] preview: disabled after NOT_SUPPORTED -- "
+                        "returning GP_ERROR_NOT_SUPPORTED without PTP traffic (issue #127)\n");
+        return -6;                                   /* GP_ERROR_NOT_SUPPORTED */
+    }
+
     /* Cooldown (NON-BLOCKING, per TA review of 446fbfd): a previous burst
      * exhausted the failure budget.  While inside the cooldown window we return
      * GP_ERROR_CAMERA_BUSY immediately instead of sleeping -- a blocking sleep
@@ -568,7 +619,7 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
      * caller's next poll (or an explicit restart) simply finds the window over;
      * no thread is held, so lifecycle operations stay responsive. */
     if (g_pentax_preview_backoff_until) {
-        time_t now = time(NULL);
+        long long now = stage2_monotonic_secs();
         if (now < g_pentax_preview_backoff_until) {
             int remain_s = (int)(g_pentax_preview_backoff_until - now);
             fprintf(stderr, "[stage2] preview-backoff: in cooldown (%ds left) -- "
@@ -584,7 +635,7 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
      * live-view-active transition. Non-blocking: the next poll simply finds the
      * window over and proceeds through the normal on-demand gate. */
     if (g_pentax_session_was_open && g_pentax_preview_settle_until) {
-        time_t now = time(NULL);
+        long long now = stage2_monotonic_secs();
         if (now < g_pentax_preview_settle_until) {
             int remain_s = (int)(g_pentax_preview_settle_until - now);
             fprintf(stderr, "[stage2] preview-settle: session was open at init; "
@@ -618,7 +669,7 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
             min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS;
         else
             min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT;
-        time_t now = time(NULL);
+        long long now = stage2_monotonic_secs();
         if ((min_interval_s > 0) && g_pentax_preview_last_fetch &&
             (now - g_pentax_preview_last_fetch < min_interval_s)) {
             return STAGE2_GP_ERROR_CAMERA_BUSY;
@@ -628,13 +679,53 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
 
     int ret = g_real_gp_camera_capture_preview(camera, file, context);
     if (ret != 0) {
-        /* Count ANY failure (timeout -10, not-supported -2, USB busy -53, etc.)
-         * toward the backoff budget.  The K-1 II in PTP mode returns -2 for
-         * unsupported config items and the outer pgphoto loop hammers
-         * gp_camera_capture_preview back-to-back; if only -10 counted, the
-         * cooldown never triggered and the sustained PTP traffic starved the
-         * Wi-Fi radio (#55).  Any non-zero result is a failure that should
-         * contribute to the "camera is not cooperating" budget. */
+        /* Issue #127: classify the result BEFORE applying policy.  Collapsing
+         * every non-zero result into one transient backoff is unsafe: a permanent
+         * NOT_SUPPORTED must disable the operation (no endless retry), an I/O /
+         * no-device / USB error signals a dead session that needs lifecycle
+         * rebind (not a 30 s "camera busy" window), and only genuine transient
+         * failures (timeout / camera-busy) belong in the bounded backoff. */
+        int is_not_supported = (ret == -6);            /* GP_ERROR_NOT_SUPPORTED */
+        int is_io_or_device  = (ret == -7) ||          /* GP_ERROR_IO */
+                               ((ret <= -20) && (ret >= -70)); /* IO_* / USB / lock */
+
+        if (is_not_supported) {
+            g_pentax_preview_disabled = 1;
+            fprintf(stderr, "[stage2] preview: NOT_SUPPORTED -- disabling PC live "
+                            "view for this session/body (no further PTP traffic, issue #127)\n");
+            return ret;
+        }
+
+        if (is_io_or_device) {
+            /* Dead-session signal: surface it so the lifecycle/rebind path can act,
+             * and still count it toward the backoff budget so we do not hammer a
+             * dead port.  The message distinguishes it from a merely-busy camera. */
+            const char *maxs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_MAX");
+            const char *secs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_SECS");
+            int max_failures = STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT;
+            int cooldown_s   = STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT;
+            if (maxs && atoi(maxs) > 0)
+                max_failures = atoi(maxs);
+            if (secs && atoi(secs) > 0)
+                cooldown_s = atoi(secs);
+            g_pentax_preview_timeouts++;
+            fprintf(stderr, "[stage2] preview: I/O / no-device error (ret=%d) -- "
+                            "possible dead session; counted toward backoff, lifecycle "
+                            "rebind may be needed (issue #127)\n", ret);
+            if (g_pentax_preview_timeouts >= max_failures) {
+                g_pentax_preview_backoff_until = stage2_monotonic_secs() + cooldown_s;
+                fprintf(stderr, "[stage2] preview-backoff: %d consecutive I/O failures "
+                                "-- backing off %ds (issue #127)\n",
+                        g_pentax_preview_timeouts, cooldown_s);
+            }
+            return ret;
+        }
+
+        /* Transient failure (timeout -10, camera-busy -110, etc.): bounded backoff.
+         * The K-1 II in PTP mode returns transient errors and the outer pgphoto loop
+         * hammers gp_camera_capture_preview back-to-back; if only -10 counted, the
+         * cooldown never triggered and the sustained PTP traffic starved the Wi-Fi
+         * radio (#55).  Any transient non-zero result contributes to the budget. */
         const char *maxs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_MAX");
         const char *secs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_SECS");
         int max_failures = STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT;
@@ -646,9 +737,9 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
 
         g_pentax_preview_timeouts++;
         if (g_pentax_preview_timeouts >= max_failures) {
-            g_pentax_preview_backoff_until = time(NULL) + cooldown_s;
-            fprintf(stderr, "[stage2] preview-backoff: %d consecutive failures "
-                            "(last ret=%d) -- backing off %ds (issues #36/#55)\n",
+            g_pentax_preview_backoff_until = stage2_monotonic_secs() + cooldown_s;
+            fprintf(stderr, "[stage2] preview-backoff: %d consecutive transient failures "
+                            "(last ret=%d) -- backing off %ds (issues #36/#55/#127)\n",
                     g_pentax_preview_timeouts, ret, cooldown_s);
         }
     } else {
@@ -676,7 +767,7 @@ typedef int (*stage2_gp_camera_capture_fn)(void *camera, int type,
                                            void *path, void *context);
 static stage2_gp_camera_capture_fn g_real_gp_camera_capture = NULL;
 static int g_pentax_capture_failures = 0;
-static time_t g_pentax_capture_backoff_until = 0;
+static long long g_pentax_capture_backoff_until = 0;
 
 static int stage2_shim_gp_camera_capture(void *camera, int type,
                                          void *path, void *context)
@@ -702,7 +793,7 @@ static int stage2_shim_gp_camera_capture(void *camera, int type,
      * hitting the camera again.  Non-blocking — no sleep held inside the
      * intercepted call. */
     if (g_pentax_capture_backoff_until) {
-        time_t now = time(NULL);
+        long long now = stage2_monotonic_secs();
         if (now < g_pentax_capture_backoff_until) {
             int remain_s = (int)(g_pentax_capture_backoff_until - now);
             fprintf(stderr, "[stage2] capture-backoff: in still-capture cooldown "
@@ -725,7 +816,7 @@ static int stage2_shim_gp_camera_capture(void *camera, int type,
 
         g_pentax_capture_failures++;
         if (g_pentax_capture_failures >= max_failures) {
-            g_pentax_capture_backoff_until = time(NULL) + cooldown_s;
+            g_pentax_capture_backoff_until = stage2_monotonic_secs() + cooldown_s;
             fprintf(stderr, "[stage2] capture-backoff: %d consecutive still-"
                             "capture failures (last ret=%d) -- backing off %ds "
                             "(issues #93/#105)\n",
@@ -766,6 +857,13 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     int ret = g_real_gp_camera_init(camera, context);
     if (ret != 0)                                    /* GP_OK == 0 */
         return ret;                                  /* init failed: pass through */
+
+    /* Issue #127: a fresh session re-arms the preview capability.  A previous
+     * session's NOT_SUPPORTED disable must not leak into this one, so clear it
+     * (and any stale backoff) on every successful init. */
+    g_pentax_preview_disabled = 0;
+    g_pentax_preview_timeouts = 0;
+    g_pentax_preview_backoff_until = 0;
 
     /* SHIM #4 -- Pentax keep-live-view (issues #36/#55).  After a successful
      * init on a Pentax model, push `pentaxpclvkeep` ON so camera_capture_preview()
@@ -915,6 +1013,12 @@ static int stage2_shim_gp_camera_set_config(void *camera, void *widget,
         return -1;                                   /* GP_ERROR */
     }
 
+    /* Issue #121: hold back config/status traffic during the preview-settle
+     * window so the app's startup config burst does not hit the
+     * SessionAlreadyOpened / live-view-active transition. */
+    if (stage2_pentax_settle_gate() != 0)
+        return STAGE2_GP_ERROR_CAMERA_BUSY;
+
     /* Gate: default OFF (unset or "0").  When OFF, pure pass-through. */
     {
         const char *tether = getenv("STAGE2_TETHER_CAPTURE");
@@ -992,6 +1096,12 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
                 g_stage2_core);
         return -1;                                   /* GP_ERROR */
     }
+
+    /* Issue #121: hold back config/status traffic during the preview-settle
+     * window so the app's startup config burst does not hit the
+     * SessionAlreadyOpened / live-view-active transition. */
+    if (stage2_pentax_settle_gate() != 0)
+        return STAGE2_GP_ERROR_CAMERA_BUSY;
 
     /* Gate: default OFF (unset or "0").  When OFF, pure pass-through. */
     {

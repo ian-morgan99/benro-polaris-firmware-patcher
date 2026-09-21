@@ -316,6 +316,40 @@ wait "$REBIND_PID" 2>/dev/null || true
 # and did NOT clear quarantine / reset the budget on identity stability alone.
 grep -q 'bounded rebind failed' "$TMP/rebind-fail.out"
 
+# Issue #126: with the selected camera known, an UNRELATED second camera from any
+# supported vendor must not change the fingerprint (no restart), while the
+# selected camera's own re-enumeration still triggers exactly one bounded rebind.
+rm -rf "$TMP/run/openpolaris-camera-usb-supervisor.lock"
+: > "$RESTART_LOG"
+make_usb 1-1 25fb 0183 1 3          # K-3 III (selected)
+make_usb 1-2 04a9 0001 1 7          # unrelated Canon
+(
+    sleep 0.6;  make_usb 1-2 04a9 0001 1 8   # Canon re-enumerates (unrelated)
+    sleep 0.6;  rm -rf "$TMP/sys/1-2"        # Canon removed (unrelated)
+    sleep 0.6;  make_usb 1-1 25fb 0183 1 4   # K-3 III's OWN re-enumeration -> 1 restart
+    sleep 0.6
+) &
+SEL_PID=$!
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_PROC_ROOT="$TMP/proc" OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" \
+OPENPOLARIS_USB_POLL_SECS=0.1 OPENPOLARIS_USB_STABLE_POLLS=2 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=4 \
+OPENPOLARIS_USB_MAX_RESTARTS=6 OPENPOLARIS_USB_MAX_POLLS=200 \
+OPENPOLARIS_USB_SELECTED_VENDOR=25fb OPENPOLARIS_USB_SELECTED_PRODUCT=0183 \
+sh "$SUPERVISOR" > "$TMP/selected.out" 2>&1 &
+SUP_PID=$!
+wait "$SEL_PID" 2>/dev/null || true
+# Give the supervisor a moment to observe the final stable state, then stop it.
+sleep 0.4
+kill "$SUP_PID" 2>/dev/null || true
+wait "$SUP_PID" 2>/dev/null || true
+# Exactly ONE restart: only the K-3 III's own devnum change (3->4) counts; the
+# Canon attach/re-enumerate/remove did not.
+test "$(wc -l < "$RESTART_LOG")" -eq 1
+grep -q 'stable identity change' "$TMP/selected.out"
+
+echo 'PASS: camera USB supervisor keys the fingerprint to the selected camera and ignores unrelated cameras (issue #126)'
 echo 'PASS: camera USB supervisor validates lock ownership and restarts once after a stable camera identity change (issue #57)'
 echo 'PASS: camera USB supervisor absorbs startup re-enumeration without restarting, then resumes normal restart logic (issue #121)'
 echo 'PASS: camera USB supervisor bounds the restart budget under a re-enumeration flap (issue #119 churn guard)'

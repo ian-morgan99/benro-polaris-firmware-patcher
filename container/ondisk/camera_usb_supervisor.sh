@@ -66,12 +66,31 @@ camera_vendor() {
     esac
 }
 
+# Issue #126: when the selected camera is known (OPENPOLARIS_USB_SELECTED_VENDOR /
+# _PRODUCT, set by the pgphoto launcher from the port it actually opened), key the
+# fingerprint to THAT camera only.  An unrelated second camera from any supported
+# vendor (e.g. a Canon plugged in while a K-3 III session is live) must not change
+# the identity and trigger a restart/quarantine of a healthy selected session.
+# When the selection is unset we fall back to the aggregate camera-vendor scan so
+# existing behaviour (and tests) are unchanged.  The selected camera's own
+# re-enumeration (devnum change) still changes its fingerprint -> one bounded
+# rebind; a body replacement (different product) or disappearance (empty) also
+# changes it -> fresh-session / rebind path.
+SELECTED_VENDOR=${OPENPOLARIS_USB_SELECTED_VENDOR:-}
+SELECTED_PRODUCT=${OPENPOLARIS_USB_SELECTED_PRODUCT:-}
+
 fingerprint() {
     for d in "$SYSFS_USB"/*; do
         [ -r "$d/idVendor" ] && [ -r "$d/idProduct" ] || continue
         vendor=$(tr 'A-F' 'a-f' < "$d/idVendor" 2>/dev/null)
-        camera_vendor "$vendor" || continue
         product=$(tr 'A-F' 'a-f' < "$d/idProduct" 2>/dev/null)
+        if [ -n "$SELECTED_VENDOR" ]; then
+            # Selected-camera mode: only the exact selected vendor+product counts.
+            [ "$vendor" = "$(printf '%s' "$SELECTED_VENDOR" | tr 'A-F' 'a-f')" ] || continue
+            [ -z "$SELECTED_PRODUCT" ] || [ "$product" = "$(printf '%s' "$SELECTED_PRODUCT" | tr 'A-F' 'a-f')" ] || continue
+        else
+            camera_vendor "$vendor" || continue
+        fi
         bus=$(cat "$d/busnum" 2>/dev/null)
         dev=$(cat "$d/devnum" 2>/dev/null)
         printf '%s|%s:%s|%s:%s\n' "${d##*/}" "$vendor" "$product" "$bus" "$dev"
