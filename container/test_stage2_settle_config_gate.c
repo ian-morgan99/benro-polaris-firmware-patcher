@@ -1,17 +1,14 @@
-/* Issue #121 regression test: the preview-settle window (armed only when the
- * PTP session was ALREADY open at init) must gate CONFIG/STATUS traffic, not
- * just the first preview frame.  While inside the window, gp_camera_set_config
- * and gp_camera_set_single_config return GP_ERROR_CAMERA_BUSY without reaching
- * the real core, so the app's startup config burst does not hit the
- * SessionAlreadyOpened / live-view-active transition that crashes Benro Connect
- * in the "camera already ON" startup order.  After the window, traffic proceeds.
+/* Issue #128 diagnostic regression test. The preview-settle window may suppress
+ * preview traffic, but must NOT discard state-changing CONFIG writes on the
+ * assumption that Benro retries them. Both config APIs therefore remain exact
+ * pass-through during an armed settle window; preview remains gated.
  *
- * Test cases (per TA spec):
- *   1. settle window armed -> set_single_config returns CAMERA_BUSY, real core NOT called.
- *   2. settle window armed -> set_config returns CAMERA_BUSY, real core NOT called.
- *   3. settle window armed -> capture_preview returns CAMERA_BUSY (existing behaviour).
- *   4. settle window expired -> set_single_config proceeds to the real core.
- *   5. settle window not armed (fresh session) -> set_single_config proceeds immediately.
+ * Test cases:
+ *   1. settle armed -> set_single_config reaches real core and returns its result.
+ *   2. settle armed -> set_config reaches real core and returns its result.
+ *   3. settle armed -> capture_preview still returns CAMERA_BUSY, real preview not called.
+ *   4. settle expired -> set_single_config reaches real core.
+ *   5. fresh session -> set_single_config reaches real core immediately.
  */
 #define STAGE2_NO_CONSTRUCTOR 1
 #include "stage2_loader.c"
@@ -74,25 +71,23 @@ int main(void)
     setenv("STAGE2_PENTAX_PREVIEW_SETTLE_SECS", "5", 1);
     int camera;
 
-    printf("[test_stage2_settle_config_gate] Issue #121 config/status gate\n");
+    printf("[test_stage2_settle_config_gate] Issue #128 config pass-through diagnostic\n");
 
-    /* Case 1: armed window -> set_single_config gated, real core not reached. */
+    /* Case 1: armed window -> set_single_config still reaches real core. */
     reset_fixture();
     g_pentax_session_was_open = 1;
     g_pentax_preview_settle_until = stage2_monotonic_secs() + 5;
-    assert(stage2_shim_gp_camera_set_single_config(&camera, "iso", NULL, NULL)
-           == STAGE2_GP_ERROR_CAMERA_BUSY);
-    assert(fake_set_single_config_calls == 0);
-    printf("  PASS: armed window gates set_single_config (CAMERA_BUSY, no core call)\n");
+    assert(stage2_shim_gp_camera_set_single_config(&camera, "iso", NULL, NULL) == 0);
+    assert(fake_set_single_config_calls == 1);
+    printf("  PASS: armed preview-settle window does not discard set_single_config\n");
 
-    /* Case 2: armed window -> set_config gated. */
+    /* Case 2: armed window -> set_config still reaches real core. */
     reset_fixture();
     g_pentax_session_was_open = 1;
     g_pentax_preview_settle_until = stage2_monotonic_secs() + 5;
-    assert(stage2_shim_gp_camera_set_config(&camera, NULL, NULL)
-           == STAGE2_GP_ERROR_CAMERA_BUSY);
-    assert(fake_set_config_calls == 0);
-    printf("  PASS: armed window gates set_config (CAMERA_BUSY, no core call)\n");
+    assert(stage2_shim_gp_camera_set_config(&camera, NULL, NULL) == 0);
+    assert(fake_set_config_calls == 1);
+    printf("  PASS: armed preview-settle window does not discard set_config\n");
 
     /* Case 3: armed window -> capture_preview gated (existing behaviour). */
     reset_fixture();
