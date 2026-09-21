@@ -1,0 +1,169 @@
+2026-09-21T20:32:42Z START host=192.168.0.1:9090 shots=1 interval=10.0s bind=192.168.0.4
+2026-09-21T20:32:42Z TX 1&284&2&-100#
+2026-09-21T20:32:42Z RX 284@mode:1;state:0;#
+2026-09-21T20:32:42Z TX 1&820&2&-100#
+2026-09-21T20:32:42Z RX 820@ret:-1;#
+2026-09-21T20:32:42Z TX 1&823&2&app:openpolaris-astro-test;ver:1;#
+2026-09-21T20:32:42Z TX 1&292&2&-100#
+2026-09-21T20:32:42Z RX 292@state:1;#
+2026-09-21T20:32:42Z PREVIEW initial_state=1
+2026-09-21T20:32:42Z TX 1&291&2&state:0;#
+2026-09-21T20:32:42Z RX 284@mode:1;state:0;#
+2026-09-21T20:32:42Z RX 517@yaw:1.573079;pitch:0.678969;roll:-0.004028;#
+2026-09-21T20:32:43Z RX 291@state:0;ret:0;#
+2026-09-21T20:32:43Z TX 1&292&2&-100#
+2026-09-21T20:32:43Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:32:43Z RX 292@state:0;#
+2026-09-21T20:32:43Z PREVIEW confirmed_off
+2026-09-21T20:32:43Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-21T20:32:43Z RX 264@state:1#
+2026-09-21T20:32:43Z SHOT 1 state=1 lifecycle=[1]
+2026-09-21T20:32:43Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:43Z RX 517@yaw:1.573075;pitch:0.678968;roll:-0.004027;#
+2026-09-21T20:32:44Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:44Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004029;#
+2026-09-21T20:32:45Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:45Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004026;#
+2026-09-21T20:32:46Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:46Z RX 517@yaw:1.573075;pitch:0.678970;roll:-0.004026;#
+2026-09-21T20:32:47Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:47Z RX 517@yaw:1.573074;pitch:0.678969;roll:-0.004028;#
+2026-09-21T20:32:48Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:48Z RX 517@yaw:1.573075;pitch:0.678966;roll:-0.004027;#
+2026-09-21T20:32:49Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:49Z RX 517@yaw:1.573079;pitch:0.678966;roll:-0.004026;#
+2026-09-21T20:32:50Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:50Z RX 517@yaw:1.573079;pitch:0.678969;roll:-0.004030;#
+2026-09-21T20:32:51Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:51Z RX 517@yaw:1.573075;pitch:0.678968;roll:-0.004031;#
+2026-09-21T20:32:52Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:52Z RX 517@yaw:1.573072;pitch:0.678967;roll:-0.004025;#
+2026-09-21T20:32:53Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:53Z RX 517@yaw:1.573079;pitch:0.678967;roll:-0.004032;#
+2026-09-21T20:32:54Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:54Z RX 517@yaw:1.573075;pitch:0.678967;roll:-0.004029;#
+2026-09-21T20:32:55Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:55Z RX 517@yaw:1.573082;pitch:0.678969;roll:-0.004033;#
+2026-09-21T20:32:56Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:56Z RX 517@yaw:1.573079;pitch:0.678968;roll:-0.004029;#
+2026-09-21T20:32:57Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:57Z RX 517@yaw:1.573081;pitch:0.678967;roll:-0.004029;#
+2026-09-21T20:32:58Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:58Z RX 517@yaw:1.573077;pitch:0.678969;roll:-0.004031;#
+2026-09-21T20:32:59Z RX 284@mode:1;state:1;#
+2026-09-21T20:32:59Z RX 517@yaw:1.573072;pitch:0.678969;roll:-0.004029;#
+2026-09-21T20:33:00Z RX 525@Tempa509ca36200000295a ;#
+2026-09-21T20:33:00Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:00Z RX 517@yaw:1.573081;pitch:0.678969;roll:-0.004029;#
+2026-09-21T20:33:01Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:01Z RX 517@yaw:1.573079;pitch:0.678969;roll:-0.004032;#
+2026-09-21T20:33:03Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:03Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004033;#
+2026-09-21T20:33:04Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:04Z RX 517@yaw:1.573075;pitch:0.678969;roll:-0.004024;#
+2026-09-21T20:33:05Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:05Z RX 517@yaw:1.573075;pitch:0.678966;roll:-0.004026;#
+2026-09-21T20:33:06Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:06Z RX 517@yaw:1.573075;pitch:0.678968;roll:-0.004025;#
+2026-09-21T20:33:07Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:07Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004030;#
+2026-09-21T20:33:08Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:08Z RX 517@yaw:1.573079;pitch:0.678969;roll:-0.004033;#
+2026-09-21T20:33:09Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:09Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004028;#
+2026-09-21T20:33:10Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:10Z RX 517@yaw:1.573079;pitch:0.678970;roll:-0.004030;#
+2026-09-21T20:33:11Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:11Z RX 517@yaw:1.573081;pitch:0.678965;roll:-0.004029;#
+2026-09-21T20:33:12Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:12Z RX 517@yaw:1.573079;pitch:0.678968;roll:-0.004027;#
+2026-09-21T20:33:13Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:13Z RX 517@yaw:1.573082;pitch:0.678970;roll:-0.004031;#
+2026-09-21T20:33:14Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:14Z RX 517@yaw:1.573081;pitch:0.678968;roll:-0.004031;#
+2026-09-21T20:33:15Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:15Z RX 517@yaw:1.573074;pitch:0.678969;roll:-0.004027;#
+2026-09-21T20:33:16Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:16Z RX 517@yaw:1.573075;pitch:0.678973;roll:-0.004028;#
+2026-09-21T20:33:17Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:17Z RX 517@yaw:1.573077;pitch:0.678969;roll:-0.004027;#
+2026-09-21T20:33:18Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:18Z RX 517@yaw:1.573079;pitch:0.678968;roll:-0.004034;#
+2026-09-21T20:33:19Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:19Z RX 517@yaw:1.573077;pitch:0.678969;roll:-0.004026;#
+2026-09-21T20:33:20Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:20Z RX 517@yaw:1.573074;pitch:0.678968;roll:-0.004026;#
+2026-09-21T20:33:21Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:21Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004031;#
+2026-09-21T20:33:22Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:22Z RX 517@yaw:1.573077;pitch:0.678967;roll:-0.004028;#
+2026-09-21T20:33:23Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:23Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004030;#
+2026-09-21T20:33:24Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:24Z RX 517@yaw:1.573079;pitch:0.678969;roll:-0.004029;#
+2026-09-21T20:33:25Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:25Z RX 517@yaw:1.573074;pitch:0.678971;roll:-0.004028;#
+2026-09-21T20:33:26Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:26Z RX 517@yaw:1.573081;pitch:0.678968;roll:-0.004028;#
+2026-09-21T20:33:27Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:27Z RX 517@yaw:1.573081;pitch:0.678967;roll:-0.004030;#
+2026-09-21T20:33:28Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:28Z RX 517@yaw:1.573081;pitch:0.678970;roll:-0.004025;#
+2026-09-21T20:33:29Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:29Z RX 517@yaw:1.573079;pitch:0.678968;roll:-0.004029;#
+2026-09-21T20:33:30Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:30Z RX 517@yaw:1.573074;pitch:0.678967;roll:-0.004029;#
+2026-09-21T20:33:30Z RX 525@Tempa509ca36200000295a ;#
+2026-09-21T20:33:31Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:31Z RX 517@yaw:1.573075;pitch:0.678966;roll:-0.004032;#
+2026-09-21T20:33:32Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:32Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004031;#
+2026-09-21T20:33:33Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:33Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004030;#
+2026-09-21T20:33:34Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:34Z RX 517@yaw:1.573079;pitch:0.678968;roll:-0.004028;#
+2026-09-21T20:33:35Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:35Z RX 517@yaw:1.573075;pitch:0.678967;roll:-0.004027;#
+2026-09-21T20:33:36Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:36Z RX 517@yaw:1.573079;pitch:0.678969;roll:-0.004029;#
+2026-09-21T20:33:37Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:37Z RX 517@yaw:1.573077;pitch:0.678967;roll:-0.004032;#
+2026-09-21T20:33:38Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:38Z RX 517@yaw:1.573079;pitch:0.678965;roll:-0.004032;#
+2026-09-21T20:33:39Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:39Z RX 517@yaw:1.573074;pitch:0.678967;roll:-0.004033;#
+2026-09-21T20:33:40Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:40Z RX 517@yaw:1.573077;pitch:0.678968;roll:-0.004025;#
+2026-09-21T20:33:41Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:41Z RX 517@yaw:1.573072;pitch:0.678973;roll:-0.004030;#
+2026-09-21T20:33:42Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:42Z RX 517@yaw:1.573075;pitch:0.678968;roll:-0.004029;#
+2026-09-21T20:33:43Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:43Z RX 517@yaw:1.573082;pitch:0.678967;roll:-0.004030;#
+2026-09-21T20:33:44Z RX 284@mode:1;state:1;#
+2026-09-21T20:33:44Z RX 517@yaw:1.573075;pitch:0.678968;roll:-0.004027;#
+2026-09-21T20:33:45Z RX 264@state:-1005#
+2026-09-21T20:33:45Z SHOT 1 state=-1005 lifecycle=[1, -1005]
+2026-09-21T20:33:45Z TX 1&291&2&state:1;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-21T20:33:45Z RX 284@mode:1;state:0;#
+2026-09-21T20:33:45Z RX 517@yaw:1.573081;pitch:0.678968;roll:-0.004026;#
+2026-09-21T20:33:46Z RX 291@state:1;ret:0;#
+2026-09-21T20:33:46Z TX 1&292&2&-100#
+2026-09-21T20:33:46Z RX 292@state:1;#
+2026-09-21T20:33:46Z PREVIEW restored_on
+2026-09-21T20:33:46Z FAIL RuntimeError: shot 1: terminal failure state -1005; lifecycle=[1, -1005]
