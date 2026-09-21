@@ -68,16 +68,20 @@ int main(void)
     setenv("STAGE2_PENTAX_CAPTURE_BACKOFF_SECS", "60", 1);
 
     /* A preview failure opens only the preview cooldown.  A still capture must
-     * still reach the real camera call and must not erase preview state. */
+     * still reach the real camera call and must not erase preview state.
+     * (Issue #127: use a KNOWN-TRANSIENT result -- timeout -10 -- which is what
+     * arms the bounded backoff; NOT_SUPPORTED -6 now permanently disables the
+     * capability instead, and I/O / no-device marks the session unhealthy.) */
     reset_fixture();
-    fake_preview_result = -2;
-    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == -2);
-    assert(g_pentax_preview_backoff_until > time(NULL));
+    fake_preview_result = STAGE2_GP_ERROR_TIMEOUT;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) ==
+           STAGE2_GP_ERROR_TIMEOUT);
+    assert(g_pentax_preview_backoff_until > stage2_monotonic_secs());
     assert(g_pentax_capture_backoff_until == 0);
     assert(stage2_shim_gp_camera_capture(&camera, STAGE2_GP_CAPTURE_IMAGE,
                                          NULL, NULL) == 0);
     assert(fake_capture_calls == 1);
-    assert(g_pentax_preview_backoff_until > time(NULL));
+    assert(g_pentax_preview_backoff_until > stage2_monotonic_secs());
 
     /* A still-capture failure opens only the capture cooldown.  Preview must
      * still reach its real call and must not erase capture state. */
@@ -85,11 +89,11 @@ int main(void)
     fake_capture_result = -6;
     assert(stage2_shim_gp_camera_capture(&camera, STAGE2_GP_CAPTURE_IMAGE,
                                          NULL, NULL) == -6);
-    assert(g_pentax_capture_backoff_until > time(NULL));
+    assert(g_pentax_capture_backoff_until > stage2_monotonic_secs());
     assert(g_pentax_preview_backoff_until == 0);
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
     assert(fake_preview_calls == 1);
-    assert(g_pentax_capture_backoff_until > time(NULL));
+    assert(g_pentax_capture_backoff_until > stage2_monotonic_secs());
 
     /* Non-image capture types are exact pass-through, even while the still
      * capture cooldown is active, and do not mutate still-capture state. */
@@ -98,7 +102,7 @@ int main(void)
     assert(fake_capture_calls == 2);
     assert(fake_capture_last_type == 1);
     assert(g_pentax_capture_failures == 1);
-    assert(g_pentax_capture_backoff_until > time(NULL));
+    assert(g_pentax_capture_backoff_until > stage2_monotonic_secs());
 
     /* K-1 II model-specific on-demand gate: with no explicit
      * STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS override, a K-1 II defaults to an
@@ -109,14 +113,14 @@ int main(void)
     reset_fixture();
     unsetenv("STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS");
     fake_model_string = "Pentax K-1 Mark II (PTP mode)";
-    g_pentax_preview_last_fetch = time(NULL) - 3;
+    g_pentax_preview_last_fetch = stage2_monotonic_secs() - 3;
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) ==
            STAGE2_GP_ERROR_CAMERA_BUSY);
     assert(fake_preview_calls == 0); /* gated: no real fetch */
 
     reset_fixture();
     fake_model_string = "Pentax K-3 Mark III (PTP mode)";
-    g_pentax_preview_last_fetch = time(NULL) - 3;
+    g_pentax_preview_last_fetch = stage2_monotonic_secs() - 3;
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
     assert(fake_preview_calls == 1); /* 3 s > generic 2 s default: real fetch */
 

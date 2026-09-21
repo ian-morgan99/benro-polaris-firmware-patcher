@@ -558,15 +558,18 @@ if [ -n "${BUILD_ID:-}" ]; then
 fi
 
 # Issue #120: zero the polestar_app pre-shot bulb delay (opt-in).
+# Fail-closed (TA review): an explicitly requested patch must never be
+# silently skipped. If POLESTAR_BULB_PATCH=1 but the target binary is
+# absent, the package would misrepresent itself as containing the change,
+# so die exactly like anchor/patch failure does.
 if [ "$POLESTAR_BULB_PATCH" = "1" ]; then
   PA="$APP/bin/polestar_app"
-  if [ -f "$PA" ]; then
-    python3 /opt/patcher/polestar_bulb_patch.py "$PA" --in-place \
-      || die "polestar_app bulb patch failed (issue #120)"
-    log "polestar_app bulb delay zeroed (issue #120): 264 PHOTO_RECORD no longer applies a pre-shot countdown"
-  else
-    warn "polestar_app not found in the extracted appfs tree — bulb patch skipped"
+  if [ ! -f "$PA" ]; then
+    die "polestar_app not found in the extracted appfs tree but POLESTAR_BULB_PATCH=1 — refusing to ship a package that claims the #120 bulb patch it does not contain"
   fi
+  python3 /opt/patcher/polestar_bulb_patch.py "$PA" --in-place \
+    || die "polestar_app bulb patch failed (issue #120)"
+  log "polestar_app bulb delay zeroed (issue #120): 264 PHOTO_RECORD no longer applies a pre-shot countdown"
 fi
 
 /opt/patcher/repack_appfs.sh "$STOCK_APPFS" "$APP" "$W/out/appfs.ubifs"
@@ -691,6 +694,29 @@ if [ -n "${BUILD_ID:-}" ]; then
     die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
   fi
   log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
+fi
+
+# Issue #120 release gate: when the bulb patch was requested, prove the
+# replacement marker actually survived repackaging into the shipped appfs.
+# The marker is the 16-byte REPL block (ldr/mov r3,#0/nop/str) written by
+# polestar_bulb_patch.py; its presence in the repacked polestar_app is what
+# makes the package's claim of containing the #120 change true. Fail closed:
+# a requested patch that vanished during repack must not ship silently.
+if [ "$POLESTAR_BULB_PATCH" = "1" ]; then
+  APPFS_PA="$APP_VERIFY/bin/polestar_app"
+  if [ ! -f "$APPFS_PA" ]; then
+    die "post-repack assertion failed: bin/polestar_app missing from appfs.ubifs (POLESTAR_BULB_PATCH=1)"
+  fi
+  if ! python3 - "$APPFS_PA" <<'PYCHK'
+import sys
+REPL = bytes.fromhex("1c301be5" "0030a0e3" "000000e1" "1c300be5")
+data = open(sys.argv[1], "rb").read()
+sys.exit(0 if data.count(REPL) == 1 else 1)
+PYCHK
+  then
+    die "post-repack assertion failed: #120 bulb-patch replacement marker not found (exactly once) in appfs.ubifs bin/polestar_app"
+  fi
+  log "  verified #120 bulb-patch replacement marker present in appfs.ubifs bin/polestar_app"
 fi
 
 # Build the ZIP at a *temp* path so the validator can fail-closed on the

@@ -515,6 +515,16 @@ static long long g_pentax_preview_backoff_until = 0;
  * Once the body/mode reports preview unsupported, stop generating PTP traffic
  * (return the error directly) instead of retrying forever across cooldowns. */
 static int g_pentax_preview_disabled = 0;
+/* Issue #127 (TA follow-up): transport/session failure state, kept SEPARATE from
+ * the transient preview backoff.  A NO_DEVICE / USB / I/O error means the current
+ * session generation is unhealthy and needs a lifecycle rebind -- it must NOT be
+ * folded into the transient "camera busy" cooldown, which would relabel the
+ * terminal transport failure as GP_ERROR_CAMERA_BUSY and delay the rebind path.
+ * While set, preview calls return the original terminal class (not CAMERA_BUSY)
+ * without generating PTP traffic; a fresh/revalidated session generation (init)
+ * clears it so real preview traffic can resume. */
+static int  g_pentax_preview_session_unhealthy = 0;
+static int  g_pentax_preview_last_terminal = 0;   /* the I/O / no-device code to surface */
 
 /* On-demand gate (design principle: capture preview panes only when specifically
  * needed, not as a side effect of periodic polling).  Live Clog analysis showed
@@ -611,6 +621,20 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
         return -6;                                   /* GP_ERROR_NOT_SUPPORTED */
     }
 
+    /* Issue #127 (TA follow-up): transport/session failure state.  A NO_DEVICE /
+     * USB / I/O error marked the current session generation unhealthy.  Until a
+     * fresh/revalidated session generation exists (a successful init clears it),
+     * keep returning the ORIGINAL terminal class -- never GP_ERROR_CAMERA_BUSY --
+     * so the lifecycle/rebind path is not obscured and real preview traffic does
+     * not resume against a dead port. */
+    if (g_pentax_preview_session_unhealthy) {
+        fprintf(stderr, "[stage2] preview: session unhealthy after I/O / no-device "
+                        "(last ret=%d) -- returning the terminal class without PTP "
+                        "traffic until a fresh/revalidated session generation (issue #127)\n",
+                        g_pentax_preview_last_terminal);
+        return g_pentax_preview_last_terminal;
+    }
+
     /* Cooldown (NON-BLOCKING, per TA review of 446fbfd): a previous burst
      * exhausted the failure budget.  While inside the cooldown window we return
      * GP_ERROR_CAMERA_BUSY immediately instead of sleeping -- a blocking sleep
@@ -697,35 +721,48 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
         }
 
         if (is_io_or_device) {
-            /* Dead-session signal: surface it so the lifecycle/rebind path can act,
-             * and still count it toward the backoff budget so we do not hammer a
-             * dead port.  The message distinguishes it from a merely-busy camera. */
-            const char *maxs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_MAX");
-            const char *secs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_SECS");
-            int max_failures = STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT;
-            int cooldown_s   = STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT;
-            if (maxs && atoi(maxs) > 0)
-                max_failures = atoi(maxs);
-            if (secs && atoi(secs) > 0)
-                cooldown_s = atoi(secs);
-            g_pentax_preview_timeouts++;
+            /* Issue #127 (TA follow-up): a NO_DEVICE / USB / I/O error is a
+             * TRANSPORT/SESSION failure, not a transient "camera busy".  Mark the
+             * current session generation unhealthy and remember the terminal class
+             * so subsequent calls keep surfacing it (never CAMERA_BUSY) until a
+             * fresh/revalidated session generation exists.  Do NOT increment or arm
+             * the transient preview backoff -- that would relabel the terminal
+             * failure as busy and delay the lifecycle rebind path this issue was
+             * opened for. */
+            g_pentax_preview_session_unhealthy = 1;
+            g_pentax_preview_last_terminal = ret;
             fprintf(stderr, "[stage2] preview: I/O / no-device error (ret=%d) -- "
-                            "possible dead session; counted toward backoff, lifecycle "
-                            "rebind may be needed (issue #127)\n", ret);
-            if (g_pentax_preview_timeouts >= max_failures) {
-                g_pentax_preview_backoff_until = stage2_monotonic_secs() + cooldown_s;
-                fprintf(stderr, "[stage2] preview-backoff: %d consecutive I/O failures "
-                                "-- backing off %ds (issue #127)\n",
-                        g_pentax_preview_timeouts, cooldown_s);
-            }
+                            "marking session generation unhealthy; will keep returning "
+                            "the terminal class (not CAMERA_BUSY) until a fresh/revalidated "
+                            "session generation (issue #127)\n", ret);
             return ret;
         }
 
-        /* Transient failure (timeout -10, camera-busy -110, etc.): bounded backoff.
+        /* Issue #127 (TA follow-up): only GENUINELY transient results belong in the
+         * bounded backoff.  A timeout (-10) or camera-busy (-110) is a known
+         * transient "try again" state; anything else that is not NOT_SUPPORTED and
+         * not an I/O / no-device transport failure is an UNKNOWN error class.  The
+         * issue's invariant for unknown errors is: SURFACE the original code -- do
+         * NOT silently relabel it as GP_ERROR_CAMERA_BUSY, which would hide a real
+         * (possibly terminal) failure behind a "camera busy" retry and delay the
+         * recovery path.  So: known transient -> bounded backoff; unknown -> surface
+         * the original code without arming the BUSY cooldown. */
+        int is_known_transient = (ret == STAGE2_GP_ERROR_TIMEOUT) ||
+                                 (ret == STAGE2_GP_ERROR_CAMERA_BUSY);
+
+        if (!is_known_transient) {
+            fprintf(stderr, "[stage2] preview: unknown error class (ret=%d) -- "
+                            "surfacing the original code without relabelling as "
+                            "CAMERA_BUSY and without arming the transient backoff "
+                            "(issue #127)\n", ret);
+            return ret;
+        }
+
+        /* Known transient failure (timeout -10, camera-busy -110): bounded backoff.
          * The K-1 II in PTP mode returns transient errors and the outer pgphoto loop
          * hammers gp_camera_capture_preview back-to-back; if only -10 counted, the
          * cooldown never triggered and the sustained PTP traffic starved the Wi-Fi
-         * radio (#55).  Any transient non-zero result contributes to the budget. */
+         * radio (#55).  Any known-transient result contributes to the budget. */
         const char *maxs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_MAX");
         const char *secs = getenv("STAGE2_PENTAX_PREVIEW_BACKOFF_SECS");
         int max_failures = STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT;
@@ -860,10 +897,15 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
 
     /* Issue #127: a fresh session re-arms the preview capability.  A previous
      * session's NOT_SUPPORTED disable must not leak into this one, so clear it
-     * (and any stale backoff) on every successful init. */
+     * (and any stale backoff) on every successful init.  A successful init is also
+     * a FRESH/REVALIDATED session generation: clear the transport/session-unhealthy
+     * mark (set by an I/O / no-device failure in the previous generation) so real
+     * preview traffic can resume against the new session. */
     g_pentax_preview_disabled = 0;
     g_pentax_preview_timeouts = 0;
     g_pentax_preview_backoff_until = 0;
+    g_pentax_preview_session_unhealthy = 0;
+    g_pentax_preview_last_terminal = 0;
 
     /* SHIM #4 -- Pentax keep-live-view (issues #36/#55).  After a successful
      * init on a Pentax model, push `pentaxpclvkeep` ON so camera_capture_preview()

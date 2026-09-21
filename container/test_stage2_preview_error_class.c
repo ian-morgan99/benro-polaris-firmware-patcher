@@ -42,6 +42,8 @@ static void reset_fixture(void)
     g_pentax_preview_last_fetch = 0;
     g_pentax_preview_timeouts = 0;
     g_pentax_preview_disabled = 0;
+    g_pentax_preview_session_unhealthy = 0;
+    g_pentax_preview_last_terminal = 0;
     fake_capture_result = 0;
     fake_capture_calls = 0;
 }
@@ -73,12 +75,41 @@ int main(void)
     assert(fake_capture_calls == 2);
     printf("  PASS: a fresh session re-arms the disabled capability\n");
 
-    /* I/O / no-device (-7): surfaced and counted toward backoff, not relabelled. */
+    /* I/O / no-device (-7): a TRANSPORT/SESSION failure.  It must mark the session
+     * generation unhealthy and NOT be folded into the transient backoff (which would
+     * relabel it as CAMERA_BUSY and delay the rebind path). */
     reset_fixture();
     fake_capture_result = -7;
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == -7);
-    assert(g_pentax_preview_timeouts == 1);
-    printf("  PASS: I/O / no-device error is counted toward backoff (dead-session signal)\n");
+    assert(g_pentax_preview_session_unhealthy == 1);
+    assert(g_pentax_preview_last_terminal == -7);
+    assert(g_pentax_preview_timeouts == 0);   /* NOT counted toward the transient backoff */
+    printf("  PASS: I/O / no-device marks the session unhealthy (not folded into the BUSY backoff)\n");
+
+    /* Repeated calls after an injected NO_DEVICE/I-O must keep surfacing the original
+     * terminal class and NEVER become GP_ERROR_CAMERA_BUSY, and must not resume real
+     * preview traffic until a fresh/revalidated session generation exists. */
+    {
+        int r;
+        for (int i = 0; i < 5; i++) {
+            r = stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL);
+            assert(r == -7);                       /* the original terminal class, not CAMERA_BUSY */
+            assert(r != STAGE2_GP_ERROR_CAMERA_BUSY);
+        }
+        assert(fake_capture_calls == 1);           /* real preview traffic did NOT resume */
+        printf("  PASS: repeated calls after NO_DEVICE/I-O never become CAMERA_BUSY and do not resume traffic\n");
+    }
+
+    /* A fresh/revalidated session generation (init) clears the unhealthy mark so real
+     * preview traffic can resume. */
+    {
+        g_pentax_preview_session_unhealthy = 0;    /* what stage2_shim_gp_camera_init does */
+        g_pentax_preview_last_terminal = 0;
+        fake_capture_result = 0;
+        assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
+        assert(fake_capture_calls == 2);           /* real preview traffic resumed */
+        printf("  PASS: a fresh/revalidated session generation clears the unhealthy mark and resumes traffic\n");
+    }
 
     /* Transient timeout (-10): bounded backoff as before. */
     reset_fixture();
@@ -86,6 +117,17 @@ int main(void)
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == -10);
     assert(g_pentax_preview_timeouts == 1);
     printf("  PASS: transient timeout is counted toward the bounded backoff\n");
+
+    /* Unknown error class (e.g. GP_ERROR_FIXED_LIMIT_EXCEEDED -8): SURFACE the original
+     * code -- do NOT silently relabel it as CAMERA_BUSY and do NOT arm the transient
+     * backoff. */
+    reset_fixture();
+    fake_capture_result = -8;   /* GP_ERROR_FIXED_LIMIT_EXCEEDED: not NOT_SUPPORTED, not I/O, not a known transient */
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == -8);
+    assert(g_pentax_preview_timeouts == 0);          /* not armed into the transient backoff */
+    assert(g_pentax_preview_backoff_until == 0);     /* no BUSY cooldown armed */
+    assert(g_pentax_preview_session_unhealthy == 0); /* not a transport failure either */
+    printf("  PASS: unknown error is surfaced (not relabelled as CAMERA_BUSY, no backoff armed)\n");
 
     printf("[test_stage2_preview_error_class] ALL PASS\n");
     return 0;
