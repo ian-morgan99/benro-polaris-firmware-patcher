@@ -791,10 +791,13 @@ typedef int (*stage2_gp_camera_capture_fn)(void *camera, int type,
 static stage2_gp_camera_capture_fn g_real_gp_camera_capture = NULL;
 static int g_pentax_capture_failures = 0;
 static long long g_pentax_capture_backoff_until = 0;
+static unsigned long long g_pentax_capture_sequence = 0;
 
 static int stage2_shim_gp_camera_capture(void *camera, int type,
                                          void *path, void *context)
 {
+    unsigned long long sequence = __sync_add_and_fetch(&g_pentax_capture_sequence, 1);
+    long long started = stage2_monotonic_secs();
     if (!g_real_gp_camera_capture && g_stage2_core)
         g_real_gp_camera_capture =
             (stage2_gp_camera_capture_fn)
@@ -812,6 +815,9 @@ static int stage2_shim_gp_camera_capture(void *camera, int type,
         !stage2_camera_uses_pentax_keep_lv(camera))
         return g_real_gp_camera_capture(camera, type, path, context);
 
+    fprintf(stderr, "[stage2] capture[%llu]: enter type=%d mono=%lld\n",
+            sequence, type, started);
+
     /* Cooldown: after consecutive capture failures, return busy instead of
      * hitting the camera again.  Non-blocking — no sleep held inside the
      * intercepted call. */
@@ -827,6 +833,9 @@ static int stage2_shim_gp_camera_capture(void *camera, int type,
     }
 
     int ret = g_real_gp_camera_capture(camera, type, path, context);
+    fprintf(stderr, "[stage2] capture[%llu]: real gp_camera_capture returned "
+                    "ret=%d elapsed=%llds\n",
+            sequence, ret, stage2_monotonic_secs() - started);
     if (ret != 0) {
         const char *maxs = getenv("STAGE2_PENTAX_CAPTURE_BACKOFF_MAX");
         const char *secs = getenv("STAGE2_PENTAX_CAPTURE_BACKOFF_SECS");
