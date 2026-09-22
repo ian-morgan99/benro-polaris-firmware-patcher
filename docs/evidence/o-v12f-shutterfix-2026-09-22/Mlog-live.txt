@@ -1,0 +1,25 @@
+[m[m[19:42:06:936 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[785],val[state:0;]
+[m[m[19:42:07:937 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[785],val[state:0;]
+[m[m[19:42:08:937 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[785],val[state:0;]
+[m[m[19:42:09:937 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[785],val[state:0;]
+[m[m[19:42:10:937 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[785],val[state:0;]
+[m[m[19:42:11:738 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:4;code:264;val:state:1;bulb:0;c:-1;
+[m[19:42:11:738 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[264],val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0063.jpg;c:-1]
+[m[m[19:42:11:738 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[264],val[state:1;/app/sd/normal/SP_0063.jpg]
+[m[m[19:42:11:739 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[264],val[state:1]
+[m[m[19:42:11:800 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[264],val[state:-110;/app/sd/normal/SP_0063.jpg]
+[m[m[19:42:11:800 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[264],val[state:-1005]
+[m[m[19:42:11:800 [1;31mERROR[m-]:SP_MsgFromCameraProc[1343]:[0;32;31mPHOTO_RECORD Fail
+[m[19:42:11:808 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:291;val:state:1;
+[m[19:42:11:808 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[2],code[291],val[state:1;]
+[m[m[19:42:11:938 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[785],val[state:0;]
+[m[m[19:42:12:938 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[785],val[state:0;]
+[m[m[19:42:13:012 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[291],val[state:1;ret:0;]
+[m[m[19:42:13:012 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[291],val[state:1;ret:0;]
+[m[m[19:42:13:015 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:292;val:-100
+[m[19:42:13:015 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[292],val[state:1;]
+[m[m[19:42:13:022 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=2] s_u32ClientNum[0]
+[m[19:42:13:022 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[2]
+[m[19:42:13:077 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[19:42:16:362 [1;32mINFO[m-]:SP_SetGimbalSleepState[978]:SP_SetGimbalSleepState,state[1];
+[m[19:42:16:364 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[1]
