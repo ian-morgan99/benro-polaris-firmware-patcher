@@ -70,6 +70,11 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$FWPKT" ] || { echo "error: --fwpkt is required" >&2; exit 1; }
+# Normalise --out to an absolute path BEFORE docker run: a relative path like
+# "out/k3iii-128fix" is parsed by the docker CLI as a *named volume* (invalid
+# characters) instead of a host directory, so the run dies with exit 125.
+mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found. Install Docker Desktop / docker." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
 PATCHER_COMMIT="unknown"

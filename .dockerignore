@@ -1,0 +1,17 @@
+# The Dockerfile only COPYs container/ — everything else is build input or
+# output and must not bloat the docker build context (it used to be 7.5 GB).
+out/
+builds/
+firmware/
+docs/
+tests/
+tools/
+scripts/
+unsloth_compiled_cache/
+.pytest_cache/
+.lmstudio/
+.lmstudio-context/
+.vscode/
+.github/
+.git/
+*.log
