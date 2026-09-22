@@ -570,27 +570,13 @@ static long long g_pentax_preview_last_fetch = 0;
  * must remain exact pass-through calls. */
 #define STAGE2_GP_CAPTURE_IMAGE 0
 
-/* Issue #121 (TA follow-up): readiness gate for config/status traffic.  The
- * preview-settle window (armed only when the PTP session was ALREADY open at
- * init -- camera pre-powered, PC live view active) must also hold back the
- * app's startup CONFIG/STATUS burst, not just the first preview frame.  A
- * config push or status poll that lands on the SessionAlreadyOpened /
- * live-view-active transition is exactly what crashes Benro Connect in the
- * "camera already ON" startup order.  While inside the window every gated
- * traffic class returns GP_ERROR_CAMERA_BUSY (non-terminal; the app retries),
- * so no PTP traffic is generated until the session has settled.  Returns
- * STAGE2_GP_ERROR_CAMERA_BUSY when the caller must wait, 0 when it may proceed. */
-static int stage2_pentax_settle_gate(void)
-{
-    if (g_pentax_session_was_open && g_pentax_preview_settle_until) {
-        long long now = stage2_monotonic_secs();
-        if (now < g_pentax_preview_settle_until)
-            return STAGE2_GP_ERROR_CAMERA_BUSY;
-        g_pentax_session_was_open = 0;
-        g_pentax_preview_settle_until = 0;
-    }
-    return 0;
-}
+/* Issue #128: the preview-settle window (armed only when the PTP session was
+ * ALREADY open at init -- camera pre-powered, PC live view active) gates
+ * PREVIEW traffic only.  CONFIG writes (set_config / set_single_config) are
+ * deliberately NOT gated by the settle window: a state-changing write cannot
+ * safely be discarded on the assumption that the caller will retry it.
+ * Preview remains protected by the inline settle check in
+ * stage2_shim_gp_camera_capture_preview below. */
 
 static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
                                                 void *context)
