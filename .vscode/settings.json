@@ -17,5 +17,11 @@
         "**/.lmstudio-context/**": true,
         "**/docs/evidence/**/*.log": true
     },
-    "lmstudio.syncChatLm": true
+    "lmstudio.syncChatLm": true,
+    "lmstudio.supervision.compactionThreshold": 0.4,
+    "lmstudio.supervision.mode": "active",
+    "lmstudio.secondaryServers": [
+        "192.168.68.89:8000"
+    ],
+    "lmstudio.supervision.liveCompaction": true
 }

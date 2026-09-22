@@ -21,6 +21,11 @@
 			"label": "Document sw: version sum behavior",
 			"type": "shell",
 			"command": "cat >> ~/Documents/VSCodeProjects/BenroPolarisPatcher/docs/FWVER-SUM-BEHAVIOR.md << 'EOF'\n# FwVer Sum Behavior (sw: field)\n\n## Discovery (2026-09-14)\n\nThe `sw:` field in code 780 (device info push) is **NOT** the camera FwVer directly. It is the **component-wise sum of gimbal FwVer + camera FwVer**:\n\n```\nsw: = gimbalFwVer + cameraFwVer  (component-wise, no carry)\n```\n\n### Evidence\n\n| Build | Gimbal FwVer | Camera FwVer | sw: (displayed) |\n|-------|-------------|--------------|-----------------|\n| Stock | 2.0.0.22 | 4.0.0.32 | **6.0.0.54** |\n| o-v7 (no override) | 2.0.0.22 | 4.0.0.32 | **6.0.0.54** |\n| o-v9k (our override) | 2.0.0.22 | 6.0.0.54 | **8.0.0.76** |\n\n### Implication\n\nWhen we override `/app/FwVer` with our build ID (e.g., `6.0.0.54.3`), the displayed `sw:` becomes `2.0.0.22 + 6.0.0.54 = 8.0.0.76`. This is **expected behavior**, not a bug — but it means our build ID choice affects the displayed version.\n\n### Fix Strategy\n\nTo control what Benro Connect displays:\n\n1. **If we want stock-like display (6.0.0.54):** Set camera FwVer to `4.0.0.32` (stock). The app shows `2.0.0.22 + 4.0.0.32 = 6.0.0.54`.\n\n2. **If we want a custom display:** Choose camera FwVer = `desired_display - 2.0.0.22` (component-wise). E.g., to show `7.0.0.10`, set camera FwVer to `5.0.0.88` (since `2+5=7`, `0+0=0`, `0+0=0`, `22+88=110` → but no carry, so `22+88=110` wraps? Need to verify).\n\n3. **If we accept 8.0.0.76:** Document that our builds display as `8.0.0.76` (or whatever the sum is) and use that as the build identifier in the app.\n\n### Open Question\n\nDoes the sum wrap at 256 per component, or is it simple addition? Need to test with a camera FwVer that would cause overflow (e.g., `4.0.0.200` → `2+4=6`, `0+0=0`, `0+0=0`, `22+200=222` → does it show `6.0.0.222` or wrap to `6.0.0.66`?).\n\n## Action Items\n\n- [ ] Decide on display strategy (stock-like vs custom)\n- [ ] Update patch.sh to compute the correct camera FwVer for the desired display\n- [ ] Test overflow behavior if using high component values\nEOF\necho \"Documented sw: sum behavior\""
+		},
+		{
+			"label": "noop",
+			"type": "shell",
+			"command": "echo skip"
 		}
 	]
 }
