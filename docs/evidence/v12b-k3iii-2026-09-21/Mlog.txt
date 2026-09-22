@@ -1,0 +1,2 @@
+[m[m[14:43:48:479 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361f0000285a ;
+[m[14:43:48:479 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361f0000285a ;]

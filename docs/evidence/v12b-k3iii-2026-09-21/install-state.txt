@@ -1,0 +1,22 @@
+=== FwVer ===
+FwVer:6.0.0.54.13-o-v12b;date:2026.09.21;
+=== provenance ===
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=c57a8a3ac083ee77c715e0bd1436e540c0ee8c2a
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=691e034
+patcher_dirty_diff_hash=
+build_id=6.0.0.54.13-o-v12b
+=== polestar_app MD5 ===
+afeba59d5aa3957fa630c2d1ea80224e  /app/bin/polestar_app
+=== uptime ===
+392.98 723.81
+=== services ===
+  247 root       0:01 ./polestar_app
+  738 root       0:04 /app/lib/stage2/pgphoto.stage2ondisk
+=== USB ===
+Bus 001 Device 003: ID 25fb:0189
