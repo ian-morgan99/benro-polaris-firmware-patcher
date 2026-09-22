@@ -1,0 +1,43 @@
+=== identity ===
+FwVer:6.0.0.54.14-o-v12d;date:2026.09.22;
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=c57a8a3ac083ee77c715e0bd1436e540c0ee8c2a
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=c0c18cb50f4dbde12d80d808ca43262a3113b304
+patcher_dirty_diff_hash=
+build_id=6.0.0.54.14-o-v12d
+=== usb ===
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+=== processes ===
+  249 root       0:13 ./polestar_app
+22529 root       2:54 /app/lib/stage2/pgphoto.stage2ondisk
+=== listeners-clients ===
+tcp        1      0 192.168.0.1:8080        192.168.0.4:56698       CLOSE_WAIT  
+tcp        0      0 192.168.0.1:9090        192.168.0.2:64751       ESTABLISHED 
+tcp        1      0 192.168.0.1:8080        192.168.0.4:60154       CLOSE_WAIT  
+tcp        1      0 192.168.0.1:8080        192.168.0.4:60152       CLOSE_WAIT  
+tcp        0      0 192.168.0.1:9090        192.168.0.4:53432       ESTABLISHED 
+=== hashes ===
+5973e8c8999b1f4f01be70a9cafdb7ba  /app/lib/stage2/libgphoto2.so.6
+5973e8c8999b1f4f01be70a9cafdb7ba  /app/lib/libgphoto2.so.6
+ad50e83594397aef48b63ed2375890cc  /app/lib/stage2/libgphoto2_port.so.12
+ad50e83594397aef48b63ed2375890cc  /app/lib/libgphoto2_port.so.12
+=== maps ===
+b6938000-b6941000 r-xp 00000000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6941000-b6950000 ---p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6950000-b6951000 r--p 00008000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6951000-b6952000 rw-p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6952000-b6972000 r-xp 00000000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6972000-b6981000 ---p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6981000-b6982000 r--p 0001f000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6982000-b6983000 rw-p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6f21000-b6f28000 r-xp 00000000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f28000-b6f37000 ---p 00007000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f37000-b6f38000 r--p 00006000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f38000-b6f39000 rw-p 00007000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so

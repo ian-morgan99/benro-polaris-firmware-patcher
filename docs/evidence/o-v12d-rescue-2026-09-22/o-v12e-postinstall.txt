@@ -1,0 +1,31 @@
+FwVer:6.0.0.54.15-o-v12e-diag;date:2026.09.22;
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=38d6e2fcb8b186580ba7bab9924f4fe8b4a81748
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=499505547bfa16882dfedd063e07096523c43d22
+patcher_dirty_diff_hash=
+build_id=6.0.0.54.15-o-v12e-diag
+tcp        0      0 0.0.0.0:9090            0.0.0.0:*               LISTEN      248/polestar_app
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      249/pgphoto.stage2o
+5973e8c8999b1f4f01be70a9cafdb7ba  /app/lib/stage2/libgphoto2.so.6
+5973e8c8999b1f4f01be70a9cafdb7ba  /app/lib/libgphoto2.so.6
+ad50e83594397aef48b63ed2375890cc  /app/lib/stage2/libgphoto2_port.so.12
+ad50e83594397aef48b63ed2375890cc  /app/lib/libgphoto2_port.so.12
+PID=249
+b6976000-b697f000 r-xp 00000000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b697f000-b698e000 ---p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b698e000-b698f000 r--p 00008000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b698f000-b6990000 rw-p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6990000-b69b0000 r-xp 00000000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b69b0000-b69bf000 ---p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b69bf000-b69c0000 r--p 0001f000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b69c0000-b69c1000 rw-p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6f5f000-b6f67000 r-xp 00000000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f67000-b6f76000 ---p 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f76000-b6f77000 r--p 00007000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f77000-b6f78000 rw-p 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+ 19:28:22 up 0 min,  1 users,  load average: 0.84, 0.22, 0.07
