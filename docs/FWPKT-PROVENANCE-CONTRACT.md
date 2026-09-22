@@ -85,6 +85,14 @@ marked otherwise.
 | **o-v12e-shutter-diag-20260922** | `firmware-packets/o-v12e-shutter-diag-20260922/FwPkt.zip` (`ian-morgan99/PrivateResearch`, private) | `716c4e90b39ea4f917946025b3863d7d` | `d2a6024def3c23cc` (full: `d2a6024def3c23cc9ba392bac78497b92feb63fafac99478f3a9fa8b532b3896`) | `b77695dd8816324d8da469f272882611` | [`38d6e2fcb`](https://github.com/ian-morgan99/libgphoto2/commit/38d6e2fcb8b186580ba7bab9924f4fe8b4a81748) | patcher @ [`4995055`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/499505547bfa16882dfedd063e07096523c43d22) (`rescue/shutter-thermal-20260922`, clean tree) | **CANDIDATE (built 2026-09-22, not yet installed)** | Observation-only #122 diagnostic: correlated Stage-2 and libgphoto2 capture entry/return logging, plus correction of the mechanically unreachable candidate-timeout attribution. No capture timing, retry, readiness, CONFIG, preview, USB or Live View policy change. Build id `6.0.0.54.15-o-v12e-diag`; structural and firmwareInfo gates passed; private artifact commit `4ddf550`. |
 | **o-v12f-shutterfix-20260922** | `firmware-packets/o-v12f-shutterfix-20260922/FwPkt.zip` (`ian-morgan99/PrivateResearch`, private) | `9677a50dacc1a29668ea60afc2b54101` | `6727ee628b434093` (full: `6727ee628b434093745da7655fd746db79127ab3e5f47e6f5c81fb4ad471f81d`) | `f5eefa15fb6a78a697e5dcacd116ef68` | [`7c60f8cbd`](https://github.com/ian-morgan99/libgphoto2/commit/7c60f8cbd3c1ee8733588d9a2410402ecd0b47cf) | patcher @ [`4995055`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/499505547bfa16882dfedd063e07096523c43d22) (`rescue/shutter-thermal-20260922`, clean tree) | **CANDIDATE (built 2026-09-22, not yet installed)** | #122 fix derived from o-v12e hardware trace: publish a transferred/finalized capture without waiting on the disproven completion predicate; require the existing fail-closed idle recovery probe before the next shutter; clear candidate ownership after successful finalization so later cleanup cannot delete it twice. Build id `6.0.0.54.16-o-v12f-shutterfix`; structural and firmwareInfo gates passed; private artifact commit `b29197e`. |
 
+Live installation addendum (2026-09-22): o-v12e was installed through the
+sanctioned extracted SD-tree flow, produced the decisive 63-second `-110` trace,
+and was then superseded. o-v12f was installed through the same flow and is the
+current device firmware. Its first K-3 III shot passed with a real 773 JPEG;
+the second shutter was refused fail-closed by the recovery probe. Therefore
+o-v12f remains a candidate and is not release-qualified. See
+`docs/HANDOVER-2026-09-22-SHUTTER-THERMAL.md` and PR #130.
+
 ### Registry rules
 - **One row per artifact.** Never reuse a row for two different byte sets.
 - **Hashes are recomputed, not copied forward.** When you add a row, run
