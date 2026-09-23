@@ -24,7 +24,9 @@ The next source candidate is libgphoto2 `ba206d8af` on
 `rescue/final-shutter-20260923`. It reconstructs the output lifecycle from
 IMAGE Transmitter 2, observes RAW+JPEG mode and candidate ownership after the
 capture, removes destructive pre-capture draining, and checks candidate handle
-`+36` during recovery. Source tests/build pass; no FwPkt or physical result yet.
+`+36` during recovery. Source tests/build pass. The immutable
+`o-v12m-observed-lifecycle-20260923` FwPkt is privately published and
+registered, but is not yet installed and has no physical result.
 The historical ledger and promotion matrix are in
 `PENTAX-CAPTURE-VERSION-LEDGER-2026-09-23.md`.
 
