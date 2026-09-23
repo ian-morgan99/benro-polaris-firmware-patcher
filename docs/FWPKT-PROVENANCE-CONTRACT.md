@@ -89,6 +89,10 @@ marked otherwise.
 - o-v12e was installed through the sanctioned remote SD-tree flow and was then superseded by o-v12d.
 - o-v12f was installed through the same flow and is the current candidate. The second shutter after 10 seconds was refused fail-closed by the recovery probe. Therefore o-v12f remains a candidate and is not release-qualified. See issue #122 and the rescue branch `rescue/shutter-thermal-20260922` for full details.
 
+### Live installation addendum (2026-09-23)
+- o-v12m was installed through the sanctioned remote SD-tree flow, then superseded by o-v12n.
+- o-v12n was staged as a complete extracted `FwPkt/` tree streamed to `/app/sd` (the partial o-v12m tree was removed first), all five payload MD5s verified on-card against `firmwareInfo`, then the boot watcher consumed the tree on reboot. Post-boot identity verified: `FwVer=6.0.0.54.23-o-v12n-companion-ownership`, provenance `git_commit=ab0de090c…` / `patcher_commit=7bcbc39…` / `build_id=6.0.0.54.23-o-v12n-companion-ownership`, and on-device `/app/lib/stage2/libgphoto2/2.5.34/ptp2.so` MD5 `ad48c745…` matches the local build byte-for-byte. Status: installed, runtime identity verified, awaiting first-shot canary (RAW+JPEG companion publication) per `docs/HANDOVER-2026-09-23-O-V12M-COMPANION-UAF.md`.
+
 ### Registry rules
 - **One row per artifact.** Never reuse a row for two different byte sets.
 - **Hashes are recomputed, not copied forward.** When you add a row, run
