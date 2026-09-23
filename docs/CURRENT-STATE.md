@@ -5,12 +5,30 @@ searching historical handovers or raw evidence.
 
 ## Installed candidate and protected fallback
 
-The currently installed device candidate is **o-v9q bulb-timeout**, build ID
-`6.0.0.54.8`. Its bounded K-3 III Astro multi-shot run passed, but issues
-`#111`–`#115` and the ISO-cap issue remain open. Treat Q as field-tested with
-known defects, not as a stable successor qualification.
+As of 2026-09-23 the device has **o-v12k-lvrevert**, build ID
+`6.0.0.54.21-o-v12k-lvrevert`, installed. It is a **failed diagnostic build,
+not a usable candidate**: its first deliberate RAW+JPEG capture entered the
+Stage-2 capture wrapper and then SIGSEGV'd before the real call returned. USB
+remained enumerated, but the PTP session became unopenable and pgphoto entered
+its bounded restart/recovery loop. Do not send another shutter on the current
+camera session; physically reset/reconnect the camera before the next canonical
+firmware qualification. See `evidence/o-v12j-regression-2026-09-23/`.
 
-The protected last-known-stable baseline is **o-v9p capture isolation**, build
+The immutable **o-v12l-recoverybaseline-20260923** artifact preserves
+libgphoto2 `c0592d178`, the last source with physical first-capture Pixel Shift
+RAW+JPEG completion evidence. It is privately published and registered but is
+not installed and is not a final fix: its delayed companion/repeated-capture
+behavior was not qualified.
+
+The next source candidate is libgphoto2 `ba206d8af` on
+`rescue/final-shutter-20260923`. It reconstructs the output lifecycle from
+IMAGE Transmitter 2, observes RAW+JPEG mode and candidate ownership after the
+capture, removes destructive pre-capture draining, and checks candidate handle
+`+36` during recovery. Source tests/build pass; no FwPkt or physical result yet.
+The historical ledger and promotion matrix are in
+`PENTAX-CAPTURE-VERSION-LEDGER-2026-09-23.md`.
+
+The protected last broadly repeated-capture baseline is **o-v9p capture isolation**, build
 ID `6.0.0.54.7`. Its immutable artifact, hashes, source commits and private
 location are recorded in `FWPKT-PROVENANCE-CONTRACT.md`.
 
