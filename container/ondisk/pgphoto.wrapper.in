@@ -15,9 +15,6 @@ export STAGE2_TETHER_CAPTURE=1
 # defaults to this policy, but exporting it here prevents wrapper/environment
 # drift from reopening the high-rate Pentax preview loop.
 export STAGE2_PENTAX_PREVIEW_BACKOFF=${STAGE2_PENTAX_PREVIEW_BACKOFF:-1}
-# Thermal-safe default: camera connection does not retain/start PC Live View.
-# Set to 1 only for an explicitly requested persistent-preview session.
-export STAGE2_PENTAX_KEEP_LV=${STAGE2_PENTAX_KEEP_LV:-0}
 # On-demand preview gate interval (seconds). Pin it ONLY when the operator
 # explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
 # model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --

@@ -216,21 +216,6 @@ int main(void)
     test_probe_skipped_when_lookup_fails();
     test_settle_not_armed_when_d035_0();
     test_settle_armed_when_d035_1();
-
-    /* Thermal-safe default: without an explicit keep-LV opt-in, init writes
-     * both pentaxpclvkeep and pentaxpclvmode OFF. */
-    unsetenv("STAGE2_PENTAX_KEEP_LV");
-    reset_fixture();
-    {
-        int camera;
-        int ret = stage2_shim_gp_camera_init(&camera, NULL);
-        assert(ret == 0);
-        assert(fake_widget_set_value_int_calls == 2);
-        assert(fake_set_single_config_calls == 2);
-        assert(g_pentax_session_was_open == 0);
-        assert(g_pentax_preview_settle_until == 0);
-        printf("  PASS: default init forces keep and PC Live View OFF\n");
-    }
     printf("[test_stage2_init_nullcall] ALL PASS\n");
     return 0;
 }

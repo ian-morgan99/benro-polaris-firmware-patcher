@@ -483,60 +483,6 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
                     "(PC-LV stays running across preview requests)\n");
 }
 
-/* Thermal-safe connection default: leave Pentax PC Live View OFF until a real
- * preview request asks libgphoto2 to start it.  Clear both the keep flag and
- * the current mode because a camera/process reconnect can inherit an already
- * active d035 session.  This is best-effort and never makes camera init fail. */
-static void stage2_pentax_default_live_view_off(void *camera, void *context)
-{
-    const char *widgets[] = {"pentaxpclvkeep", "pentaxpclvmode"};
-    size_t i;
-
-    if (!g_real_gp_camera_get_single_config && g_stage2_core)
-        g_real_gp_camera_get_single_config =
-            (stage2_gp_camera_get_single_config_fn)
-                dlsym(g_stage2_core, "gp_camera_get_single_config");
-    if (!g_real_gp_camera_set_single_config && g_stage2_core)
-        g_real_gp_camera_set_single_config =
-            (stage2_gp_camera_set_single_config_fwd_fn)
-                dlsym(g_stage2_core, "gp_camera_set_single_config");
-    if (!g_real_gp_widget_set_value_int && g_stage2_core)
-        g_real_gp_widget_set_value_int = (stage2_gp_widget_set_value_int_fn)
-            dlsym(g_stage2_core, "gp_widget_set_value");
-    if (!g_real_gp_camera_get_single_config || !g_real_gp_camera_set_single_config ||
-        !g_real_gp_widget_set_value_int) {
-        fprintf(stderr, "[stage2] live-view-default-off: config helpers unresolved; "
-                        "leaving camera state unchanged\n");
-        return;
-    }
-
-    for (i = 0; i < sizeof(widgets) / sizeof(widgets[0]); i++) {
-        void *widget = NULL;
-        int off = 0;
-        int ret = g_real_gp_camera_get_single_config(camera, widgets[i],
-                                                     &widget, context);
-        if (ret != 0 || !widget) {
-            fprintf(stderr, "[stage2] live-view-default-off: %s unavailable "
-                            "(ret=%d)\n", widgets[i], ret);
-            continue;
-        }
-        if (g_real_gp_widget_set_value_int(widget, &off) != 0) {
-            fprintf(stderr, "[stage2] live-view-default-off: could not set %s "
-                            "widget OFF\n", widgets[i]);
-            continue;
-        }
-        ret = g_real_gp_camera_set_single_config(camera, widgets[i], widget,
-                                                 context);
-        if (ret != 0)
-            fprintf(stderr, "[stage2] live-view-default-off: applying %s OFF "
-                            "failed (ret=%d)\n", widgets[i], ret);
-    }
-    g_pentax_session_was_open = 0;
-    g_pentax_preview_settle_until = 0;
-    fprintf(stderr, "[stage2] live-view-default-off: PC Live View OFF; "
-                    "waiting for explicit preview demand\n");
-}
-
 /* ===========================================================================
  * SHIM #5 -- Pentax preview backoff (issue #55).  Gated on STAGE2_PENTAX_PREVIEW_BACKOFF
  * (default ON; set =0 to A/B against the legacy unbounded loop).
@@ -956,22 +902,17 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     g_pentax_preview_session_unhealthy = 0;
     g_pentax_preview_last_terminal = 0;
 
-    /* SHIM #4 -- Pentax keep-live-view (issues #36/#55/#122). After a successful
-     * init on a Pentax model, default PC Live View OFF for thermal safety.
-     * An explicit STAGE2_PENTAX_KEEP_LV=1 restores persistent preview and pushes
-     * `pentaxpclvkeep` ON so camera_capture_preview()
+    /* SHIM #4 -- Pentax keep-live-view (issues #36/#55).  After a successful
+     * init on a Pentax model, push `pentaxpclvkeep` ON so camera_capture_preview()
      * keeps PC live view running across preview requests instead of tearing it
      * down + restarting per request (which re-enters the NoUpdateImage warmup
-     * window and drives the radio-starvation churn). Vendor mode is already
-     * enabled by init, so the widgets are available. */
+     * window and drives the radio-starvation churn).  Vendor mode is already
+     * enabled by init, so the widget is available.  Default ON; set
+     * STAGE2_PENTAX_KEEP_LV=0 to A/B against the legacy per-frame teardown. */
     {
         const char *klv = getenv("STAGE2_PENTAX_KEEP_LV");
-        if (stage2_camera_uses_pentax_keep_lv(camera)) {
-            if (klv && strcmp(klv, "1") == 0)
-                stage2_pentax_enable_keep_live_view(camera, context);
-            else
-                stage2_pentax_default_live_view_off(camera, context);
-        }
+        if ((!klv || strcmp(klv, "0") != 0) && stage2_camera_uses_pentax_keep_lv(camera))
+            stage2_pentax_enable_keep_live_view(camera, context);
     }
 
     /* These tail/config workarounds are supported only by R5 II device traces.
