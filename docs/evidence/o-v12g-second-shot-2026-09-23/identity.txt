@@ -1,0 +1,37 @@
+Connected to 48:e7:da:d4:b5:73 (on wlp8s0)
+	SSID: polaris_d13e86
+	freq: 5180.0
+	RX: 147370984 bytes (1050419 packets)
+	TX: 3113845 bytes (32868 packets)
+	signal: -80 dBm
+	rx bitrate: 30.0 MBit/s VHT-MCS 1 40MHz short GI VHT-NSS 1
+	tx bitrate: 29.3 MBit/s VHT-MCS 0 80MHz VHT-NSS 1
+	bss flags: short-slot-time
+	dtim period: 2
+	beacon int: 15
+192.168.0.1 dev wlp8s0 src 192.168.0.4 uid 1000 
+    cache 
+FwVer:6.0.0.54.17-o-v12g-recoverydiag;date:2026.09.23;
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=252b98d5740480206756c3f1cd39f2302c0b312a
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=769b54b0c0a5ce5c5f1f925c9f7358450fd23746
+patcher_dirty_diff_hash=
+build_id=6.0.0.54.17-o-v12g-recoverydiag
+ 14:35:44 up  3:50,  1 users,  load average: 1.07, 1.09, 1.09
+-rwxr-xr-x    1 root     root      26895931 Sep 23 14:35 /app/sd/system/log/Clog_000132.log
+-rwxr-xr-x    1 root     root       6372090 Sep 23 14:35 /app/sd/system/log/Mlog_000132.log
+-rwxr-xr-x    1 root     root      98489359 Sep 23 10:43 /app/sd/system/log/Clog_000131.log
+-rwxr-xr-x    1 root     root       3426722 Sep 23 10:43 /app/sd/system/log/Mlog_000131.log
+-rwxr-xr-x    1 root     root       1518245 Sep 22 19:39 /app/sd/system/log/Clog_000130.log
+-rwxr-xr-x    1 root     root        388714 Sep 22 19:39 /app/sd/system/log/Mlog_000130.log
+-rwxr-xr-x    1 root     root      48208058 Sep 22 19:26 /app/sd/system/log/Clog_000129.log
+-rwxr-xr-x    1 root     root       5472807 Sep 22 19:26 /app/sd/system/log/Mlog_000129.log
+-rwxr-xr-x    1 root     root      12488316 Sep 22 12:13 /app/sd/system/log/Clog_000128.log
+-rwxr-xr-x    1 root     root       3942221 Sep 22 12:13 /app/sd/system/log/Mlog_000128.log
+-rwxr-xr-x    1 root     root             0 Sep 22 10:41 /app/sd/system/log/Clog_000127.log
+-rwxr-xr-x    1 root     root         68134 Sep 22 10:41 /app/sd/system/log/Mlog_000127.log

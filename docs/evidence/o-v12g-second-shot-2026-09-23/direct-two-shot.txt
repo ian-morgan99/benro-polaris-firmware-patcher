@@ -1,0 +1,13 @@
+
+*** Error ***              
+Could not detect any camera
+*** Error (-105: 'Unknown model') ***       
+
+DEBUG_MATCHES
+[restart_gphoto] stale PID file (PID 18222 is not pgphoto); removing
+[restart_gphoto] no running pgphoto found
+[restart_gphoto] starting pgphoto via /app/bin/pgphoto
+[restart_gphoto] pgphoto running (PID 7544)
+[restart_gphoto] OK: port 8080 listening — owned by pgphoto PID 7544; restart successful
+ 7188 root       0:00 sh -c  set -e pid=$(cat /var/run/openpolaris-pgphoto.pid 2>/dev/null || true) [ -n "$pid" ] && kill -TERM "$pid" 2>/dev/null || true i=0; while [ -n "$pid" ] && [ -d "/proc/$pid" ] && [ "$i" -lt 10 ]; do sleep 1; i=$((i+1)); done D=/app/lib/stage2 export LD_LIBRARY_PATH=$D:/app/lib CAMLIBS=$D/libgphoto2/2.5.34 IOLIBS=$D/libgphoto2_port/0.12.2 LD_PRELOAD=$D/libgphoto2_port.so.12 /app/bin/gphoto2 --debug --debug-logfile=/tmp/o-v12g-direct-debug.log --capture-image-and-download --interval=5 --frames=2 --filename=/tmp/o-v12g-%n.%C >/tmp/o-v12g-direct.out 2>&1 || true cat /tmp/o-v12g-direct.out printf "DEBUG_MATCHES\n" grep -a -E "recovery-probe|field32|field36|field104|recovery-required|pentax-capture" /tmp/o-v12g-direct-debug.log | tail -100 || true /app/restart_gphoto sleep 5 ps | grep [p]gphoto 
+ 7544 root       0:00 /app/lib/stage2/pgphoto.stage2ondisk
