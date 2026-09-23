@@ -5,14 +5,15 @@ searching historical handovers or raw evidence.
 
 ## Installed candidate and protected fallback
 
-As of 2026-09-23 the device has **o-v12k-lvrevert**, build ID
-`6.0.0.54.21-o-v12k-lvrevert`, installed. It is a **failed diagnostic build,
-not a usable candidate**: its first deliberate RAW+JPEG capture entered the
-Stage-2 capture wrapper and then SIGSEGV'd before the real call returned. USB
-remained enumerated, but the PTP session became unopenable and pgphoto entered
-its bounded restart/recovery loop. Do not send another shutter on the current
-camera session; physically reset/reconnect the camera before the next canonical
-firmware qualification. See `evidence/o-v12j-regression-2026-09-23/`.
+As of 2026-09-23 the device has **o-v12m-observed-lifecycle**, build ID
+`6.0.0.54.23-o-v12m-observed-lifecycle`, installed. It is a **failed diagnostic
+build, not release-qualified**. It fixed o-v12j/o-v12k's pre-Initiate crash:
+the first RAW+JPEG Pixel Shift capture returned success and published primary
+`IMGP3592.JPG`. Benro then saw two filesystem entries and SIGSEGV'd in
+`gp_filesystem_get_file` because the newly published companion buffer had been
+freed after ownership transferred to `CameraFile`. No second shutter was sent.
+Do not send another shutter on o-v12m. See
+`HANDOVER-2026-09-23-O-V12M-COMPANION-UAF.md`.
 
 The immutable **o-v12l-recoverybaseline-20260923** artifact preserves
 libgphoto2 `c0592d178`, the last source with physical first-capture Pixel Shift
@@ -20,11 +21,13 @@ RAW+JPEG completion evidence. It is privately published and registered but is
 not installed and is not a final fix: its delayed companion/repeated-capture
 behavior was not qualified.
 
-The next source candidate is libgphoto2 `ba206d8af` on
+The next source candidate is libgphoto2 `ab0de090c` on
 `rescue/final-shutter-20260923`. It reconstructs the output lifecycle from
 IMAGE Transmitter 2, observes RAW+JPEG mode and candidate ownership after the
 capture, removes destructive pre-capture draining, and checks candidate handle
-`+36` during recovery. Source tests/build pass. The immutable
+`+36` during recovery. It also clears the companion transfer pointer after
+`gp_file_set_data_and_size()` takes ownership, fixing the live o-v12m
+use-after-free. Source tests/build pass. The immutable
 `o-v12m-observed-lifecycle-20260923` FwPkt is privately published and
 registered, but is not yet installed and has no physical result.
 The historical ledger and promotion matrix are in
