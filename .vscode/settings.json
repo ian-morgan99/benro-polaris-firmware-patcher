@@ -1,5 +1,5 @@
 {
-    "lmstudio.contextOverflow.preferBridgeCompaction": false,
+    "lmstudio.contextOverflow.preferBridgeCompaction": true,
     "lmstudio.contextGuardrails.level": "high",
     "lmstudio.contextOverflow.strategy": "compress-only",
     "files.watcherExclude": {
@@ -21,7 +21,9 @@
     "lmstudio.supervision.compactionThreshold": 0.4,
     "lmstudio.supervision.mode": "active",
     "lmstudio.secondaryServers": [
-        "192.168.68.89:8000"
+        "192.168.68.89:8000",
+        "localhost:8000"
     ],
-    "lmstudio.supervision.liveCompaction": true
+    "lmstudio.supervision.liveCompaction": true,
+    "lmstudio.supervision.pythonExecutable": "/home/ian/Documents/VSCodeProjects/LMStudio-Bridge/VSCode-LMStudio-Bridge/scripts/decision-sidecar/.venv/bin/python"
 }
