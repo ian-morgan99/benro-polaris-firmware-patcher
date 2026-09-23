@@ -391,34 +391,6 @@ static long long g_pentax_preview_settle_until = 0;
  * open at init. Default 5 s; set STAGE2_PENTAX_PREVIEW_SETTLE_SECS=0 to disable. */
 #define STAGE2_PENTAX_PREVIEW_SETTLE_SECS_DEFAULT   5
 
-/* Demand-owned Live View (issue #123 / scheduler #67): PC-LV is activated
- * only when the app is actively requesting preview and deactivated between
- * requests.  This eliminates persistent Live View residency and the
- * sustained preview traffic that starves the unit's own processing + radios.
- *
- * The previous fix (SHIM #4) pushed `pentaxpclvkeep` ON for the entire
- * session, which keeps PC-LV running continuously even when the app is not
- * requesting frames.  That persistent residency is a real Polaris workload
- * difference that drives thermal buildup and sustained PTP traffic.
- *
- * The demand-owned approach:
- *   - On the first preview request after init (or after a capture), turn
- *     `pentaxpclvkeep` ON so the camera delivers frames.
- *   - After the preview gate serves a frame (or returns busy), start a
- *     short idle timer.  When the timer expires with no new preview
- *     request, turn `pentaxpclvkeep` OFF.
- *   - The next preview request re-arms PC-LV.  This is the "demand-owned"
- *     pattern: Live View is owned by the current demand, not by the session.
- *
- * The idle timeout is short (STAGE2_PENTAX_KEEP_LV_IDLE_SECS, default 3 s)
- * so the app never sees a gap in preview availability during normal polling.
- * A capture request resets the idle timer so PC-LV stays active through the
- * capture cycle.  Set STAGE2_PENTAX_KEEP_LV_IDLE_SECS=0 to disable the
- * demand-owned deactivation and keep the legacy persistent-on behavior. */
-static long long g_pentax_keep_lv_activated_until = 0;
-static int     g_pentax_keep_lv_is_on = 0;
-#define STAGE2_PENTAX_KEEP_LV_IDLE_SECS_DEFAULT 3
-
 /* SHIM #4 -- push `pentaxpclvkeep` ON for a Pentax session.  Best-effort: the
  * widget only exists once vendor mode is enabled, so a GP_ERROR_NOT_SUPPORTED
  * (or any non-OK) result is logged and swallowed; it never fails init. */
@@ -509,118 +481,6 @@ static void stage2_pentax_enable_keep_live_view(void *camera, void *context)
     }
     fprintf(stderr, "[stage2] keep-lv: pentaxpclvkeep ON for this session "
                     "(PC-LV stays running across preview requests)\n");
-}
-
-/* Demand-owned Live View helpers (issue #123 / scheduler #67).
- *
- * stage2_pentax_activate_keep_live_view: turn PC-LV ON now.  Called when the
- * app is actively requesting preview or about to capture.  Idempotent — if
- * already ON, no-op. */
-static void stage2_pentax_activate_keep_live_view(void *camera, void *context)
-{
-    if (g_pentax_keep_lv_is_on)
-        return;
-    /* Resolve the real fn pointers on first use (same pattern as
-     * stage2_pentax_enable_keep_live_view). */
-    if (!g_real_gp_camera_get_single_config && g_stage2_core)
-        g_real_gp_camera_get_single_config =
-            (stage2_gp_camera_get_single_config_fn)
-                dlsym(g_stage2_core, "gp_camera_get_single_config");
-    if (!g_real_gp_camera_set_single_config && g_stage2_core)
-        g_real_gp_camera_set_single_config =
-            (stage2_gp_camera_set_single_config_fwd_fn)
-                dlsym(g_stage2_core, "gp_camera_set_single_config");
-    if (!g_real_gp_widget_set_value_int && g_stage2_core)
-        g_real_gp_widget_set_value_int = (stage2_gp_widget_set_value_int_fn)
-            dlsym(g_stage2_core, "gp_widget_set_value");
-    if (!g_real_gp_camera_get_single_config || !g_real_gp_camera_set_single_config ||
-        !g_real_gp_widget_set_value_int) {
-        fprintf(stderr, "[stage2] demand-lv: FATAL real get/set/widget_unresolved\n");
-        return;
-    }
-    void *widget = NULL;
-    int ret = g_real_gp_camera_get_single_config(camera, "pentaxpclvkeep",
-                                                 &widget, context);
-    if (ret != 0) {
-        fprintf(stderr, "[stage2] demand-lv: pentaxpclvkeep widget unavailable\n");
-        return;
-    }
-    int on = 1;
-    if (g_real_gp_widget_set_value_int(widget, &on) != 0) {
-        fprintf(stderr, "[stage2] demand-lv: widget value set failed\n");
-        return;
-    }
-    ret = g_real_gp_camera_set_single_config(camera, "pentaxpclvkeep", widget,
-                                             context);
-    if (ret != 0) {
-        fprintf(stderr, "[stage2] demand-lv: set_single_config failed (ret=%d)\n", ret);
-        return;
-    }
-    g_pentax_keep_lv_is_on = 1;
-    g_pentax_keep_lv_activated_until = stage2_monotonic_secs() +
-                                       STAGE2_PENTAX_KEEP_LV_IDLE_SECS_DEFAULT;
-    fprintf(stderr, "[stage2] demand-lv: pentaxpclvkeep ON (demand-owned, "
-                    "idle timeout %ds)\n", STAGE2_PENTAX_KEEP_LV_IDLE_SECS_DEFAULT);
-}
-
-/* stage2_pentax_deactivate_keep_live_view: turn PC-LV OFF when demand ends.
- * Called by the preview gate after the idle window expires with no new
- * preview request.  Best-effort — failures are logged and swallowed. */
-static void stage2_pentax_deactivate_keep_live_view(void *camera, void *context)
-{
-    if (!g_pentax_keep_lv_is_on)
-        return;
-    if (!g_real_gp_camera_get_single_config && g_stage2_core)
-        g_real_gp_camera_get_single_config =
-            (stage2_gp_camera_get_single_config_fn)
-                dlsym(g_stage2_core, "gp_camera_get_single_config");
-    if (!g_real_gp_camera_set_single_config && g_stage2_core)
-        g_real_gp_camera_set_single_config =
-            (stage2_gp_camera_set_single_config_fwd_fn)
-                dlsym(g_stage2_core, "gp_camera_set_single_config");
-    if (!g_real_gp_widget_set_value_int && g_stage2_core)
-        g_real_gp_widget_set_value_int = (stage2_gp_widget_set_value_int_fn)
-            dlsym(g_stage2_core, "gp_widget_set_value");
-    if (!g_real_gp_camera_get_single_config || !g_real_gp_camera_set_single_config ||
-        !g_real_gp_widget_set_value_int) {
-        fprintf(stderr, "[stage2] demand-lv: FATAL real get/set/widget_unresolved\n");
-        return;
-    }
-    void *widget = NULL;
-    int ret = g_real_gp_camera_get_single_config(camera, "pentaxpclvkeep",
-                                                 &widget, context);
-    if (ret != 0) {
-        fprintf(stderr, "[stage2] demand-lv: pentaxpclvkeep widget unavailable\n");
-        g_pentax_keep_lv_is_on = 0;
-        return;
-    }
-    int off = 0;
-    if (g_real_gp_widget_set_value_int(widget, &off) != 0) {
-        fprintf(stderr, "[stage2] demand-lv: widget value set failed\n");
-        return;
-    }
-    ret = g_real_gp_camera_set_single_config(camera, "pentaxpclvkeep", widget,
-                                             context);
-    if (ret != 0) {
-        fprintf(stderr, "[stage2] demand-lv: set_single_config failed (ret=%d)\n", ret);
-        return;
-    }
-    g_pentax_keep_lv_is_on = 0;
-    g_pentax_keep_lv_activated_until = 0;
-    fprintf(stderr, "[stage2] demand-lv: pentaxpclvkeep OFF (demand idle)\n");
-}
-
-/* stage2_pentax_refresh_keep_live_view: reset the idle timer when a new
- * preview request or capture arrives.  Keeps PC-LV active through the
- * capture cycle. */
-static void stage2_pentax_refresh_keep_live_view(void *camera, void *context)
-{
-    (void)camera;
-    (void)context;
-    if (!g_pentax_keep_lv_is_on)
-        return;
-    g_pentax_keep_lv_activated_until = stage2_monotonic_secs() +
-                                       STAGE2_PENTAX_KEEP_LV_IDLE_SECS_DEFAULT;
 }
 
 /* ===========================================================================
@@ -822,37 +682,9 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
         long long now = stage2_monotonic_secs();
         if ((min_interval_s > 0) && g_pentax_preview_last_fetch &&
             (now - g_pentax_preview_last_fetch < min_interval_s)) {
-            /* Inside the on-demand gate window: no real frame fetch.  If PC-LV
-             * was activated for a previous demand and the idle timer has
-             * expired, deactivate it now (demand-owned deactivation). */
-            if (g_pentax_keep_lv_is_on && g_pentax_keep_lv_activated_until &&
-                now >= g_pentax_keep_lv_activated_until) {
-                stage2_pentax_deactivate_keep_live_view(camera, context);
-            }
             return STAGE2_GP_ERROR_CAMERA_BUSY;
         }
         g_pentax_preview_last_fetch = now;
-    }
-
-    /* Demand-owned Live View: activate PC-LV on first preview request (or
-     * after it was deactivated).  Refresh the idle timer so PC-LV stays
-     * active through the capture cycle. */
-    {
-        long long now = stage2_monotonic_secs();
-        if (!g_pentax_keep_lv_is_on) {
-            /* First preview request (or PC-LV was deactivated after idle
-             * timeout).  Turn it on now. */
-            stage2_pentax_activate_keep_live_view(camera, context);
-        } else if (g_pentax_keep_lv_activated_until &&
-                   now >= g_pentax_keep_lv_activated_until) {
-            /* PC-LV was on but the idle timer expired between the gate
-             * returning busy and this real request.  Re-activate. */
-            stage2_pentax_activate_keep_live_view(camera, context);
-        } else {
-            /* PC-LV is already on and within the idle window.  Refresh the
-             * timer so it stays active through this capture cycle. */
-            stage2_pentax_refresh_keep_live_view(camera, context);
-        }
     }
 
     int ret = g_real_gp_camera_capture_preview(camera, file, context);
@@ -986,12 +818,6 @@ static int stage2_shim_gp_camera_capture(void *camera, int type,
     fprintf(stderr, "[stage2] capture[%llu]: enter type=%d mono=%lld\n",
             sequence, type, started);
 
-    /* Demand-owned Live View: refresh the idle timer so PC-LV stays active
-     * through the capture cycle.  A capture request is a demand, so keep
-     * PC-LV on and extend the idle window. */
-    if (stage2_camera_uses_pentax_keep_lv(camera))
-        stage2_pentax_refresh_keep_live_view(camera, context);
-
     /* Cooldown: after consecutive capture failures, return busy instead of
      * hitting the camera again.  Non-blocking — no sleep held inside the
      * intercepted call. */
@@ -1076,20 +902,17 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     g_pentax_preview_session_unhealthy = 0;
     g_pentax_preview_last_terminal = 0;
 
-    /* SHIM #4 -- Pentax keep-live-view (issues #36/#55).  The persistent
-     * approach (push pentaxpclvkeep ON for the entire session) keeps PC-LV
-     * running continuously, which drives sustained PTP traffic and thermal
-     * buildup on Polaris.  The demand-owned approach (issue #123 / scheduler
-     * #67) activates PC-LV only when the app is actively requesting preview
-     * and deactivates it between requests.  Default: demand-owned is active;
-     * set STAGE2_PENTAX_KEEP_LV=1 to fall back to the legacy persistent-on
-     * behavior for A/B comparison. */
+    /* SHIM #4 -- Pentax keep-live-view (issues #36/#55).  After a successful
+     * init on a Pentax model, push `pentaxpclvkeep` ON so camera_capture_preview()
+     * keeps PC live view running across preview requests instead of tearing it
+     * down + restarting per request (which re-enters the NoUpdateImage warmup
+     * window and drives the radio-starvation churn).  Vendor mode is already
+     * enabled by init, so the widget is available.  Default ON; set
+     * STAGE2_PENTAX_KEEP_LV=0 to A/B against the legacy per-frame teardown. */
     {
         const char *klv = getenv("STAGE2_PENTAX_KEEP_LV");
-        if (klv && strcmp(klv, "1") == 0 && stage2_camera_uses_pentax_keep_lv(camera))
+        if ((!klv || strcmp(klv, "0") != 0) && stage2_camera_uses_pentax_keep_lv(camera))
             stage2_pentax_enable_keep_live_view(camera, context);
-        /* else: demand-owned LV manages activation/deactivation in the
-         * preview shim; no persistent enable at init time. */
     }
 
     /* These tail/config workarounds are supported only by R5 II device traces.
