@@ -1,0 +1,4 @@
+[stage2] capture[2]: enter type=0 mono=3458
+[pentax] recovery-probe: ptp=0x2001 size=576 field32=0x00000001 field36=0x00000001 field104=0x00000000 unsafe-mask=0x00109a03 accepted=0
+[stage2] capture[2]: real gp_camera_capture returned ret=-110 elapsed=0s
+[m[16:03:16:455 [1;32mINFO[m-]:capture_image[3096]:----ARG_CAPTURE_IMAGE  -110
