@@ -11,7 +11,7 @@ this run.
   present, no fatal signatures in Clog.
 - Ran `scripts/canary-probe.py --shot` (handshake on 9090, camera state read,
   preview confirmed OFF, exactly one code-264 capture, lifecycle watch).
-  Full transcript: `canary-shot.log`.
+  Full transcript: `canary-shot.txt`.
 
 ## Result: PASS (single-shot RAW-only canary)
 

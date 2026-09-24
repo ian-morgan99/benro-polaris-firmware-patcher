@@ -1,0 +1,24 @@
+2026-09-23T22:34:04Z TX 1&284&2&-100#
+2026-09-23T22:34:04Z RX 284@mode:1;state:0;#
+2026-09-23T22:34:04Z TX 1&820&2&-100#
+2026-09-23T22:34:04Z RX 820@ret:-1;#
+2026-09-23T22:34:04Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-09-23T22:34:04Z TX 1&286&2&-100#
+2026-09-23T22:34:04Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-09-23T22:34:04Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-09-23T22:34:04Z SUMMARY model=pentax k-3 mark iii state=1 photoFormat=2
+2026-09-23T22:34:04Z TX 1&292&2&-100#
+2026-09-23T22:34:04Z RX 292@state:0;#
+2026-09-23T22:34:04Z PREVIEW initial_state=0
+2026-09-23T22:34:04Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-23T22:34:04Z RX 264@state:1#
+2026-09-23T22:34:04Z CAPTURE state=1 lifecycle=[1]
+2026-09-23T22:34:07Z RX 264@state:4;#
+2026-09-23T22:34:07Z CAPTURE state=4 lifecycle=[1, 4]
+2026-09-23T22:34:08Z RX 773@type:1;path:/app/sd/normal/SP_0074.dng;size:32900659;cTime:2026-09-23 23:34:09;duration:0;#
+2026-09-23T22:34:08Z FILE /app/sd/normal/SP_0074.dng
+2026-09-23T22:34:08Z RX 775@status:1;totalspace:121866;freespace:119272;usespace:2594;#
+2026-09-23T22:34:08Z RX 264@state:0;#
+2026-09-23T22:34:08Z CAPTURE state=0 lifecycle=[1, 4, 0]
+2026-09-23T22:34:08Z PASS lifecycle=[1, 4, 0] file=/app/sd/normal/SP_0074.dng
+2026-09-23T22:34:08Z DONE states=[1, 4, 0] file=/app/sd/normal/SP_0074.dng

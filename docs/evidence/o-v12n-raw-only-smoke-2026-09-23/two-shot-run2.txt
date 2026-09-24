@@ -1,0 +1,25 @@
+2026-09-23T22:54:15Z TX 1&284&2&-100#
+2026-09-23T22:54:15Z RX 284@mode:1;state:0;#
+2026-09-23T22:54:15Z TX 1&820&2&-100#
+2026-09-23T22:54:15Z RX 820@ret:-1;#
+2026-09-23T22:54:15Z TX 1&823&2&app:openpolaris-canary-two-shot;ver:1;#
+2026-09-23T22:54:15Z TX 1&286&2&-100#
+2026-09-23T22:54:15Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-09-23T22:54:15Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-09-23T22:54:15Z TX 1&292&2&-100#
+2026-09-23T22:54:15Z RX 292@state:0;#
+2026-09-23T22:54:15Z PREVIEW initial_state=0
+2026-09-23T22:54:15Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-23T22:54:15Z SHOT1 capture issued
+2026-09-23T22:54:15Z RX 264@state:1#
+2026-09-23T22:54:15Z SHOT1 CAPTURE state=1 lifecycle=[1]
+2026-09-23T22:54:24Z RX 525@Tempa509ca361f0000285a ;#
+2026-09-23T22:54:28Z RX 778@capacity:81;charge:1;#
+2026-09-23T22:54:45Z RX 286@manufacturer:none;model:none;state:-10;storage:0;photoFormat:0;#
+2026-09-23T22:54:54Z RX 525@Tempa509ca361f0000285a ;#
+2026-09-23T22:55:11Z RX 286@manufacturer:none;model:none;state:-10;storage:0;photoFormat:0;#
+2026-09-23T22:55:24Z RX 525@Tempa509ca361f0000285a ;#
+2026-09-23T22:55:37Z RX 286@manufacturer:none;model:none;state:-10;storage:0;photoFormat:0;#
+2026-09-23T22:55:54Z RX 525@Tempa509ca361f0000285a ;#
+2026-09-23T22:56:04Z RX 286@manufacturer:none;model:none;state:-10;storage:0;photoFormat:0;#
+2026-09-23T22:56:17Z FAIL ConnectionResetError: [Errno 104] Connection reset by peer
