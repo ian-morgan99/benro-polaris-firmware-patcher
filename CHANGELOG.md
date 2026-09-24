@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased — restore direct still-capture dispatch (issue #122)
+
+- Removed the Stage-2 `gp_camera_capture` wrapper and its independent cooldown.
+  The last broad repeated-capture PASS, o-v9p, predates that wrapper; o-v12j,
+  o-v12k and o-v12n all entered it and then faulted at an invalid low program
+  counter before the real core call returned. The exact o-v12n libgphoto2 SHA
+  completes consecutive RAW captures directly on the same K-3 III.
+- `gp_camera_capture` now receives its exact resolved core address in the slot,
+  as it did before o-v9o. Preview traffic remains independently bounded by the
+  existing preview wrapper.
+- Offline coverage asserts that the still-capture slot target is preserved
+  exactly. All five runnable Stage-2 host tests pass; the ARM compiler gate is
+  skipped on this host because `arm-linux-gnueabi-gcc` is not installed.
+- This is a source-reviewed A/B candidate, not yet a hardware-qualified fix.
+  It still requires a clean canonical build, immutable artifact provenance,
+  supported installation, cold reboot and the full capture matrix.
+
 ## o-v10-quarantine-20260919 — post-budget quarantine state (issue #119 TA follow-up)
 
 The o-v9y churn guard bounded the restart budget, but once exhausted the USB
