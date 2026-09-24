@@ -51,7 +51,7 @@ the three repos, measured against the codex session baseline.
 |---|---|---|
 | local `main` | **8** | Unpushed docs/evidence commits (e9061402f…10118e5d7, 2026-09-01→09-08). 0 behind. |
 | `agents/hardware-testing-research-k3iii` | 0 (contained in local main) | Worktree has untracked `HARDWARE_TEST_SUMMARY_2026-09-06.md`. |
-| `feature/pentax-iso-highrange` | 5 | PR #78 OPEN (ISO high-range, issue #77). |
+| `feature/pentax-iso-highrange` | 5 | PR #78 OPEN but **CONFLICTING** (ISO high-range, issue #77) — needs rebase. |
 | `feature/pentax-star-af` | 2 | PR #79 OPEN (Star AF / 0xd038, issue #76). |
 | `rescue/shutter-observability-20260922` (codex) | 2 | PR #80 OPEN. |
 | `rescue/final-shutter-20260923` (codex) | 9 | PR #81 OPEN — includes ab0de090c companion-buffer ownership fix (o-v12n lineage) + regression test 74d9e1f50. **Not in master.** |
