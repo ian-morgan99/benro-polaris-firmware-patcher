@@ -5,15 +5,25 @@ searching historical handovers or raw evidence.
 
 ## Installed candidate and protected fallback
 
-As of 2026-09-23 the device has **o-v12m-observed-lifecycle**, build ID
-`6.0.0.54.23-o-v12m-observed-lifecycle`, installed. It is a **failed diagnostic
-build, not release-qualified**. It fixed o-v12j/o-v12k's pre-Initiate crash:
-the first RAW+JPEG Pixel Shift capture returned success and published primary
-`IMGP3592.JPG`. Benro then saw two filesystem entries and SIGSEGV'd in
-`gp_filesystem_get_file` because the newly published companion buffer had been
-freed after ownership transferred to `CameraFile`. No second shutter was sent.
-Do not send another shutter on o-v12m. See
-`HANDOVER-2026-09-23-O-V12M-COMPANION-UAF.md`.
+As of 2026-09-24 the device has **o-v12n-companion-ownership**, build ID
+`6.0.0.54.23-o-v12n-companion-ownership`, installed. It is a diagnostic
+candidate, **not release-qualified**. Runtime provenance is libgphoto2
+`ab0de090c` plus patcher `7bcbc39`; the registered artifact hashes are in
+`FWPKT-PROVENANCE-CONTRACT.md`.
+
+One K-3 III RAW-only first-shot canary completed with lifecycle `[1,4,0]` and
+published `SP_0074.dng` (32,900,659 bytes). This proves only that one
+single-output capture can complete. The same-session repeat-capture gate did
+not pass: one run completed shot 1 (`SP_0078.dng`) and then lost the camera
+before shot 2 was issued; a later run did not complete shot 1 and reported
+`state:-10`. Do not describe o-v12n as fixing repeated capture.
+
+The currently attached body is K-01 (`25fb:0131`). The normal product path
+initializes it successfully as `pentax/k-01/state:1`; one still request
+returned `-6` immediately, consistent with that separately gated model not
+advertising capture support. This disproves the standalone Stage-2 CLI claim
+that the package has zero supported cameras, but it does not qualify K-01 still
+capture and says nothing about K-1 II. K-1 II remains **NOT TESTED** on o-v12n.
 
 The immutable **o-v12l-recoverybaseline-20260923** artifact preserves
 libgphoto2 `c0592d178`, the last source with physical first-capture Pixel Shift
@@ -21,17 +31,16 @@ RAW+JPEG completion evidence. It is privately published and registered but is
 not installed and is not a final fix: its delayed companion/repeated-capture
 behavior was not qualified.
 
-The next source candidate is libgphoto2 `ab0de090c` on
-`rescue/final-shutter-20260923`. It reconstructs the output lifecycle from
-IMAGE Transmitter 2, observes RAW+JPEG mode and candidate ownership after the
-capture, removes destructive pre-capture draining, and checks candidate handle
-`+36` during recovery. It also clears the companion transfer pointer after
-`gp_file_set_data_and_size()` takes ownership, fixing the live o-v12m
-use-after-free. Source tests/build pass. The immutable
-`o-v12m-observed-lifecycle-20260923` FwPkt is privately published and
-registered, but is not yet installed and has no physical result.
+The current review head is libgphoto2 `62402cc2c` on
+`rescue/final-shutter-20260923`. It retains the o-v12n runtime behavior and
+replaces the self-fulfilling ownership mock with a production helper used by
+the real companion-publication callback. Focused Pentax tests and `ptp2.so`
+compile pass. This is a source/test correction only; it does not justify a new
+FwPkt until the o-v12n repeat-capture failure is understood.
 The historical ledger and promotion matrix are in
 `PENTAX-CAPTURE-VERSION-LEDGER-2026-09-23.md`.
+The current audit and next-action boundary are in
+`HANDOVER-2026-09-24-O-V12N-AUDIT.md`.
 
 The protected last broadly repeated-capture baseline is **o-v9p capture isolation**, build
 ID `6.0.0.54.7`. Its immutable artifact, hashes, source commits and private

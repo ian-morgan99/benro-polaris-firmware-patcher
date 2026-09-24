@@ -21,33 +21,31 @@ those observations implies the next one.
 | o-v12j / `6da9612a6` + unsafe LV init | Added async guard and forced LV settings at init | First deliberate RAW+JPEG call entered Stage-2 then SIGSEGV before return/PTP capture trace; restart loop | Mixed candidate; invalid for causal attribution | Failed; do not install |
 | o-v12k / `6da9612a6`, LV delta reverted | Clean capture A/B | Valid preview, then the first and only deliberate capture SIGSEGV before the real call returned; USB remained enumerated but PTP wedged | Unsafe LV init was not necessary for the synchronous crash; first executed source delta is in `c0592d178..971c8727e` | Failed; do not install |
 | o-v12l / `c0592d178` | Immutable recovery/control artifact | Not installed | Preserves the last first-capture-working bytes for a defined A/B only | Candidate, not final |
-| next / `ba206d8af` | Post-capture observation of format/candidates; no destructive pre-drain; recovery checks `+36` | Source tests pass; hardware not yet run | Corrects the identified ownership/design divergences; physical result still unknown | Review/build candidate |
+| o-v12m / `ba206d8af` | Post-capture observation of format/candidates; no destructive pre-drain; recovery checks `+36` | RAW+JPEG Pixel Shift primary and companion published, then second-file retrieval SIGSEGV | Lifecycle reached both files; companion buffer ownership was wrong | Failed; do not install |
+| o-v12n / `ab0de090c` | Clear companion transfer pointer after successful publication ownership transfer | RAW-only first shot passed `[1,4,0]`; repeat run lost the camera before shot 2; later run reached `state:-10` before completing shot 1 | The o-v12m UAF boundary is fixed for the observed single-output canary; repeated-capture readiness remains unqualified | Installed diagnostic; not release-qualified |
+| review / `62402cc2c` | Production ownership helper plus direct deterministic coverage | Focused tests and full ptp2 build pass; runtime behavior intentionally unchanged | Closes PR #81's self-fulfilling test gap only | Source review; do not build solely for this |
 
 The authoritative hashes and install status remain in
 `docs/FWPKT-PROVENANCE-CONTRACT.md`. Raw evidence remains under
 `docs/evidence/`; especially the o-v9p qualification, o-v12g/o-v12h recovery
 records, and o-v12j/o-v12k crash records.
 
-## Reference lifecycle reconstructed from IMAGE Transmitter 2
+## Interoperability lifecycle inferred from observable protocol behavior
 
-The decompiled reference is under PrivateResearch at
-`openpolaris-research/it2_research/ImageTransmitter2/IMAGETransmitter2/MtpDevice.cs`.
-Its relevant behavior is:
+The relevant independently observable behavior is:
 
-1. A one-shot 100 ms conditions timer disables itself before work
-   (`ConditionRefreshTask`, around lines 3308-3357).
-2. It executes `GetAllConditions` (`0x900f`) and reads the candidate flag and
-   handle at offsets `+32/+36` (`MtpGetAllConditions`, around 5434-5462).
-3. If one candidate is advertised and no transfer is active, it transfers that
-   object (`ExecuteFileTransfer`, around 3856-4316).
-4. It acknowledges/deletes the transferred candidate only after the transfer
-   completes (`MtpDeleteTransferCandidate`, call around 4314).
-5. It clears transfer ownership and rearms the one-shot conditions poll. A
+1. Conditions polling is serialized rather than overlapped.
+2. `GetAllConditions` (`0x900f`) exposes the candidate flag and handle at
+   offsets `+32/+36`.
+3. If one candidate is advertised and no transfer is active, that object is
+   transferred.
+4. The transferred candidate is acknowledged/deleted only after transfer
+   completes.
+5. Transfer ownership is cleared before conditions polling resumes. A
    later RAW+JPEG companion is therefore discovered as a later object; four
    Pixel Shift actuations are not treated as four files.
-6. Live View has its own non-overlapping 33 ms callback, while command methods
-   serialize WPD/MTP access through the shared command lock. Disconnect stops
-   timers before closing the device.
+6. Live View and still-capture operations require non-overlapping serialized
+   access; disconnect must stop active work before closing the device.
 
 The important invariant is observation-driven ownership: initiate one exposure,
 observe one advertised candidate, transfer it, finalize it, then observe again.
@@ -103,4 +101,3 @@ Do not call the next packet fixed unless all rows pass independently:
    stable; no `state:-10`, `state:-1005`, SIGSEGV or restart loop.
 7. K-1 II and Canon R5 Mark II remain unqualified until their physical
    regression rows are rerun; no previous PASS is silently inherited.
-

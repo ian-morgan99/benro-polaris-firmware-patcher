@@ -27,7 +27,7 @@ The operative should never have to infer when to move the camera.
 
 ## Why K-1 II matters
 
-Existing field evidence already shows K-1 II-specific instability around preview/session handling, including the NoUpdateImage family and body-swap/stale runtime state. Its parameter/control capabilities should not be assumed absent merely because a current runtime path fails to expose them; previous Image Transmitter 2 analysis showed the body supports relevant controls.
+Existing field evidence already shows K-1 II-specific instability around preview/session handling, including the NoUpdateImage family and body-swap/stale runtime state. Its parameter/control capabilities should not be assumed absent merely because a current runtime path fails to expose them; prior interoperability evidence showed the body supports relevant controls.
 
 The K-1 II pass therefore serves two purposes:
 

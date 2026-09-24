@@ -102,7 +102,7 @@ The preceding lifecycle commit is `ba206d8af`. Together they:
 
 Patcher public main currently includes:
 
-- `5e05a0e` — version/evidence ledger and IMAGE Transmitter 2 reconstruction;
+- `5e05a0e` — version/evidence ledger and interoperability lifecycle analysis;
 - `03fdb57` — o-v12m provenance row;
 - user's unrelated `.vscode/settings.json` remains modified and untouched.
 
@@ -163,4 +163,3 @@ main SHA. Do not build from the dirty primary checkout.
 - Do not directly replace `/app` binaries to test the fix.
 - Do not install the recovery baseline merely because it produced one file;
   it did not solve repeated RAW+JPEG ownership.
-
