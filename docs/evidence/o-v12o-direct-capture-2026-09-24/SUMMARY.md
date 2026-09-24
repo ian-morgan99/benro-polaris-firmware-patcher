@@ -54,12 +54,21 @@ re-verification.
 ## Deployment status
 
 Installation in progress. At 2026-09-24 the registered extracted `FwPkt` tree
-was being tar-streamed to the empty `/app/sd/FwPkt` target while the 9090
-keepalive remained active. Independent remote `du` checks showed monotonic
-growth (`14.0M`, `18.8M`, `26.3M`, `32.9M`); there was no SSH or tar error.
-Do not reboot until that stream completes and the six payload MD5s match the
-on-card `firmwareInfo`, including appfs
-`ab13820a561201500ef7b8162e782afc`.
+was tar-streamed to the empty `/app/sd/FwPkt` target while the 9090 keepalive
+remained active. Independent remote `du` checks showed monotonic growth and the
+stream exited zero. On-card MD5 verification matched all six `firmwareInfo`
+entries exactly:
+
+- config `1905e2d041be62b679f7dc6c64ab9d3a`;
+- uImage `5f6a0c1861a254371c4a956b57f26685`;
+- rootfs `778b27bcade9ddc6ea4a7cb45254c551`;
+- appfs `ab13820a561201500ef7b8162e782afc`;
+- polaris403 `4facafa7d29c1e6c2a125b8309c9b901`;
+- polaris413 `c0299d06a15f5c2fbecb9a6db76a29c5`.
+
+The staged FwVer is `6.0.0.54.24-o-v12o-direct-capture`. It is now safe for
+the normal watcher/reboot install; post-boot identity and runtime proof remain
+pending.
 
 The working wake handoff starts NetworkManager's
 saved-profile association first, then sends the bare GATT connect while that
@@ -77,8 +86,8 @@ This corrects the earlier failed sequencing: beginning Wi-Fi association eight
 seconds after the short wake connection was too late. No characteristic write
 or BLE pairing was required.
 
-Next: let the active stage finish, verify on-card manifest MD5s, reboot through
-the normal watcher, and prove runtime hashes/maps before camera attachment.
+Next: reboot through the normal watcher and prove runtime hashes/maps before
+camera attachment.
 
 ## Required physical matrix
 
