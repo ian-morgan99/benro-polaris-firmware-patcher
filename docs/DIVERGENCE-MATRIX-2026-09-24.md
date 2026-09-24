@@ -32,9 +32,9 @@ the three repos, measured against the codex session baseline.
 
 ### Patcher unpushed / uncommitted / untracked
 
-- **Local main is 3 commits ahead of origin/main** (all unpushed): e10c776 "test: add
-  mandatory deterministic pre-release gate + codify agent rules", the divergence-matrix
-  commit, and the PR-78 correction commit.
+- **Local main is ahead of origin/main** (4+ commits at time of writing, all unpushed):
+  e10c776 "test: add mandatory deterministic pre-release gate + codify agent rules",
+  the divergence-matrix commit, and its correction commits. Push when ready.
 - PR #138 (`fix/stage2-direct-capture-20260924`, head c474e9c) OPEN + mergeable.
 - Stash@{0} (3 files, −242/+14): removes POLESTAR_BULB_PATCH block from patch.sh,
   trims stage2_loader.c — older experiment; main still ships the bulb patch.
