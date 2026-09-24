@@ -163,8 +163,18 @@ Successor registry id: `o-v12p-mode-contract-20260924`:
 The clean ARM matched-stack build passed architecture/ABI/symbol, wrapper,
 appfs, six-entry manifest and package gates. The pre-release gate reported
 3 PASS, 0 FAIL, 1 stock-path SKIP; private upload independently passed package
-structure and all six manifest hashes. Installation and live qualification are
-pending a handover checkpoint commit.
+structure and all six manifest hashes.
+
+o-v12p was then tar-streamed as the extracted registered tree to the empty
+`/app/sd/FwPkt` target. On-device MD5 verification matched all six
+`firmwareInfo` values: config `1905e2d041be62b679f7dc6c64ab9d3a`, uImage
+`5f6a0c1861a254371c4a956b57f26685`, rootfs
+`778b27bcade9ddc6ea4a7cb45254c551`, appfs
+`d7c7162c4ae0913c29f67ce21a1a0081`, polaris403
+`4facafa7d29c1e6c2a125b8309c9b901`, and polaris413
+`c0299d06a15f5c2fbecb9a6db76a29c5`. Staged FwVer is
+`6.0.0.54.25-o-v12p-mode-contract`. Reboot/install and post-boot proof remain
+pending at this checkpoint.
 
 ## Required physical matrix
 
