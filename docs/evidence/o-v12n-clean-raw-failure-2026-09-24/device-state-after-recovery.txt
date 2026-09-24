@@ -1,0 +1,34 @@
+FwVer:6.0.0.54.23-o-v12n-companion-ownership;date:2026.09.23;
+
+Thu Sep 24 10:14:57 UTC 2026
+ 10:14:57 up 10:03,  1 users,  load average: 1.10, 1.14, 1.11
+
+  251 root       0:56 ./polestar_app
+22662 root       0:08 /app/lib/stage2/pgphoto.stage2ondisk
+28349 root       0:00 sh -c cat /app/FwVer; echo; date; uptime; echo; ps | grep -E "pgphoto|polestar"; echo; netstat -ltnp 2>/dev/null | grep -E ":(8080|9090)"; echo; lsusb; echo; ls -lt /app/sd/system/log | head -16
+28356 root       0:00 grep -E pgphoto|polestar
+
+tcp        0      0 0.0.0.0:9090            0.0.0.0:*               LISTEN      251/polestar_app
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      22662/pgphoto.stage
+
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 004: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+Bus 001 Device 010: ID 25fb:0189
+
+total 715808
+-rwxr-xr-x    1 root     root      93935942 Sep 24 10:14 Clog_000140.log
+-rwxr-xr-x    1 root     root      21094481 Sep 24 10:14 Mlog_000140.log
+-rwxr-xr-x    1 root     root             0 Sep 24 00:11 access_000140.log
+-rwxr-xr-x    1 root     root            70 Sep 24 00:11 error_000140.log
+-rwxr-xr-x    1 root     root       1358082 Sep 24 00:11 Clog_000139.log
+-rwxr-xr-x    1 root     root        323679 Sep 24 00:11 Mlog_000139.log
+-rwxr-xr-x    1 root     root             0 Sep 24 00:03 access_000139.log
+-rwxr-xr-x    1 root     root            70 Sep 24 00:03 error_000139.log
+-rwxr-xr-x    1 root     root      12775445 Sep 24 00:03 Clog_000138.log
+-rwxr-xr-x    1 root     root       4248038 Sep 24 00:03 Mlog_000138.log
+-rwxr-xr-x    1 root     root             0 Sep 23 22:29 access_000138.log
+-rwxr-xr-x    1 root     root            70 Sep 23 22:29 error_000138.log
+-rwxr-xr-x    1 root     root      14103225 Sep 23 22:27 Clog_000137.log
+-rwxr-xr-x    1 root     root       6285391 Sep 23 22:27 Mlog_000137.log
+-rwxr-xr-x    1 root     root             0 Sep 23 20:35 access_000137.log
