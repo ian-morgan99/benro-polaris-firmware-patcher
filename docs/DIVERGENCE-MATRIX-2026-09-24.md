@@ -68,13 +68,61 @@ the three repos, measured against the codex session baseline.
 
 ## Findings requiring action
 
-1. Patcher: push e10c776 (main is 1 ahead of origin).
-2. Patcher: PR #138 mergeable — decision needed (o-v12p head).
-3. Patcher: o-v12e registry entry missing from main ledger (only o-v12f row present).
-4. Patcher: uncommitted stage2_loader.c rate-limiter/backoff in attachment-plan worktree — commit or discard.
+1. Patcher: push e10c776 (main is 1 ahead of origin). **DONE 2026-09-24.**
+2. Patcher: PR #138 mergeable — decision needed (o-v12p head). **Updated:** o-v12o installed, first RAW+JPEG transfer failed (-108, `sd //IMGP3609.JPG` doubled-slash); o-v12p installed, canary pending (camera not enumerated on Polaris after reboot).
+3. Patcher: o-v12e registry entry missing from main ledger (only o-v12f row present). **Still open.**
+4. Patcher: uncommitted stage2_loader.c rate-limiter/backoff in attachment-plan worktree — **COMMITTED** (77ecea1) in worktree branch.
 5. Patcher: stash@{0} is a superseded bulb-patch experiment — keep or drop.
 6. Patcher: 7 untracked ioptron/UVC drafts + o-v12n-clean-raw-failure evidence (4 files) untracked.
 7. LibGphoto2: local main 8 commits ahead of master (unpushed docs).
 8. LibGphoto2: PRs #78/#79/#80/#81 all open; o-v12n companion-ownership fix (ab0de090c) only on PR #81.
 9. LibGphoto2: nested 454M clone dirty with today's K-3 III bulb/EV + ISO evidence (uncommitted).
-10. PrivateResearch: 888M+ of untracked decompiled/JAVA/firmware artifacts; main in sync.
+10. PrivateResearch: 603M pentax_firmware + 519M benro-connect-decompiled + 336M benro-connect-java; main in sync.
+
+## #143 audit results (2026-09-24)
+
+### D1 inventory — complete
+- Patcher main @ 22169e5 (pushed), 5 unpushed docs commits now on origin.
+- PR #138 (fix/stage2-direct-capture-20260924, c474e9c): 17 files, direct Stage-2 capture dispatch + o-v12o/o-v12p registry/docs.
+- Attachment-plan worktree diff COMMITTED (77ecea1): stage2_loader.c rate-limiter + no-camera backoff.
+- Stash@{0}: superseded bulb-patch experiment, unmodified.
+- Uncommitted tracked: patch.sh, restart_gphoto.sh, test script, settings.json (LMStudio bridge config).
+- Untracked: 2 issue drafts, ioptron tests, FUTURE-UVC-SUPPORT.md, o-v12n crash evidence.
+- LibGphoto2: local main 8 commits ahead; PRs #78/#79/#80/#81 open; nested clone dirty with today's K-3 III evidence.
+- PrivateResearch: 888M+ untracked artifacts; main in sync.
+
+### D2 lineage — corrected
+- o-v12h provenance contract says "camera not enumerated after install"; ledger says "last first-capture working baseline" with Pixel Shift RAW+JPEG completion. **Contradiction — ledger overstates o-v12h.** The o-v12h evidence folder exists (docs/evidence/o-v12h-pixelshift-rawjpeg-2026-09-23/) but the contract status must be corrected: o-v12h was installed and the camera did NOT enumerate; no first-capture evidence exists for o-v12h.
+- o-v12o/o-v12p rows exist in provenance contract (PR #138, not merged) but are MISSING from the divergence matrix. o-v12o installed 2026-09-24, first RAW+JPEG shutter reached state:4 but transfer failed (-108, `sd //IMGP3609.JPG` doubled-slash). o-v12p installed, canary pending (camera not enumerated on Polaris after reboot).
+- o-v12n clean RAW-only canary FAILED 2026-09-24: SIGSEGV at pc=0x4e20 (not in slot region), before gp_camera_capture(). Stage-2 callback/slot/ABI boundary is first owning layer.
+
+### D3 first-success boundary
+- Last broad repeated-capture PASS: o-v9p (397c362e1). Confirmed by physical evidence.
+- o-v12h does NOT qualify as first-capture-working — camera did not enumerate after install.
+- o-v12o removed the pre-dispatch SIGSEGV but RAW+JPEG transfer failed (-108).
+- o-v12p canary pending.
+
+### D4 first regression
+- The 9p→9q/r/s/t interval needs source-level bisect. o-v12j/o-v12k/o-v12n all crashed at pc=0x4/0x4e20 before gp_camera_capture(). The crash symbol 0x4e20 is not in the slot region — likely a stale trampoline or misdirected boundary function. Needs symbol resolution against the stage2_loader.c slot table.
+
+### D5 re-grade
+- o-v12n companion-ownership fix (ab0de090c): Grade B (deterministic correctness for single-output; repeated capture unproven).
+- o-v12o direct Stage-2 capture dispatch: Grade C (diagnostic — removed SIGSEGV but exposed -108 transfer divergence; not a behavioral fix yet).
+- o-v12p mode-contract: Grade D (unproven — canary pending, camera not enumerated).
+
+### D6 evidence corrections
+- Ledger overstates o-v12h (claims Pixel Shift RAW+JPEG completion; contract says camera not enumerated).
+- Divergence matrix missing o-v12o/o-v12p rows.
+- o-v12n row status updated: "AWAITING FIRST-SHOT CANARY" → "FIRST-SHOT CANARY FAILED 2026-09-24".
+
+### D7 #142 verdict — NOT YET READ
+#142 must be read after D1-D6 are complete. Current independent evidence:
+- o-v12p (the proposed control) is not yet proven — canary pending, camera not enumerated.
+- The reconstruction base should be o-v9p (last proven broad repeated-capture), not o-v12p.
+- A source bisect from o-v12p toward the first regression is the highest-value next action, targeting the 0x4e20 crash symbol.
+- Later fixes safe to port: o-v12o's direct dispatch principle (once -108 divergence is understood), o-v12n's companion-ownership fix.
+- Changes to NOT port: o-v12j/o-v12k LV policies (disproven by o-v12k clean A/B), o-v12h (unproven first-capture claim).
+- Missing from #142's promotion ladder: the -108 companion transfer divergence (o-v12o), the 0x4e20 crash symbol analysis.
+
+### D8 recommended plan — deferred until D7
+See #143 for the full design template. No firmware candidate proposed.
