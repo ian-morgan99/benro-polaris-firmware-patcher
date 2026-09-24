@@ -35,6 +35,27 @@ same-session capture recovery/liveness after a successful RAW-only shot.
 | PR #81 ownership regression coverage | PASS at `62402cc2c` | focused tests 2/2 plus `ptp2.so` compile |
 | New release packet | NOT BUILT | no runtime fix has yet been justified |
 
+## 2026-09-24 clean RAW-only discriminator
+
+The planned one-client experiment has now run and **FAILED**. With preview
+already OFF, zero persistent competing 8080/9090 clients and the camera
+independently reporting imageformat `RAW`, the first shutter reached:
+
+```
+[stage2] capture[1]: enter type=0 mono=35759
+[stage2] *** CRASH sig=11 (SIGSEGV) si_addr=0x00004e20 pc=0x00004e20
+```
+
+It never logged return from the real `gp_camera_capture()` or any Pentax
+InitiateCapture/reconciliation operation. Twenty-two seconds later the complete
+Broadcom Wi-Fi/SDIO stack was removed and camera-info changed to `state:-10`.
+The AP recovered only after the camera was powered off and a later Bluetooth
+wake. See `evidence/o-v12n-clean-raw-failure-2026-09-24/SUMMARY.md`.
+
+This supersedes the proposed experiment below: the first owning layer is now
+the Stage-2 capture pass-through/callback/ABI boundary, not the Pentax
+post-capture readiness predicate.
+
 ## Corrections to prior work
 
 1. The `74d9e1f50` regression test was self-fulfilling: its mock cleared the
@@ -51,7 +72,7 @@ same-session capture recovery/liveness after a successful RAW-only shot.
 4. Public documentation now describes observable interoperability behavior
    without naming or linking private analysis sources.
 
-## Smallest next experiment
+## Superseded experiment
 
 Use the installed o-v12n unchanged with the K-3 III, preview confirmed OFF, and
 one client only:
