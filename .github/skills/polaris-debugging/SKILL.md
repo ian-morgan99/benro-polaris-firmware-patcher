@@ -321,36 +321,37 @@ wedged boot was doing.
 
 ## 5. Starting the device with Bluetooth, connecting wirelessly (incl. sandbox)
 
-The SoC, Wi-Fi AP, and BLE radio sleep together. When the AP drops, BT
-discovery goes with it — but a **bare GATT connect is the wake pulse** (discovered
-by OpenPolaris; see `BluetoothProbe.kt` `wake()`). BT cannot wake a hard-off
-SoC: confirm at least one LED first (blue = idle-wake; no LEDs = charge or
-power-button it).
+The SoC, Wi-Fi AP, and BLE radio sleep together. A **bare GATT connect is the
+wake pulse**. The normal connection handoff starts Wi-Fi association after the
+GATT connection succeeds, then immediately closes/disconnects GATT. It does not
+pair, discover the vendor service, write a characteristic, or retain BLE.
+BT cannot wake a hard-off SoC: confirm at least one LED first (blue = idle-wake;
+no LEDs = charge or power-button it).
 
-Canonical wake sequence, single piped `bluetoothctl` session:
+Canonical wake pulse, single piped `bluetoothctl` session:
 
 ```bash
 POLARIS_BT="48:E7:DA:D4:B5:72"
 timeout 30 bluetoothctl <<EOF
 power on
-scan on
-pair ${POLARIS_BT}
-trust ${POLARIS_BT}
 connect ${POLARIS_BT}
+disconnect ${POLARIS_BT}
 quit
 EOF
 ```
 
-The `connect` itself is the wake; it settles in ~2 s. Then:
+The `connect` itself is the wake. Start the saved Wi-Fi-profile association
+immediately after the pulse; do not wait for BLE service discovery. Then:
 
 1. The `polaris_d13e86` AP appears on 2.4 GHz (poll
    `nmcli -t -f BSSID,SSID device wifi list | grep -i 48:E7:DA`).
 2. SSH `22`, lighttpd `80`, and `polestar_app` `9090` come up within seconds.
 
-If the AP is not visible within ~60 s: re-run the BT connect (a second pulse
-often finishes a partial wake); after a reflash use `WAIT_AP_SECS=300`. If the
-MAC is unknown to bluez (fresh install, bluez restart), run
-`bluetoothctl --timeout 15 scan on` first.
+If direct connect fails because BlueZ has no cached device, run
+`bluetoothctl --timeout 15 scan on` once and retry. Pair/trust may be used only
+as a cache-recovery fallback; it is not part of the normal wake. If the AP is
+not visible within ~60 s, re-run the direct connect/disconnect pulse; after a
+reflash use `WAIT_AP_SECS=300`.
 
 One-shot wake + AP wait + join + SSH poll + first-look probe:
 
