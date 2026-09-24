@@ -79,6 +79,7 @@
 #include <signal.h>
 #include <ucontext.h>
 #include <errno.h>
+#include <time.h>
 #include <sys/mman.h>
 
 #include "stage2_policy.h"
@@ -124,6 +125,84 @@
  * guaranteed safe, so they use only write(2) and these tiny helpers.
  * ------------------------------------------------------------------------- */
 static volatile const char *g_last_ckpt = "(constructor entry)";
+
+/* ---------------------------------------------------------------------------
+ * Init-log rate-limiter + no-camera backoff.
+ *
+ * pgphoto self-re-execs (execve of self, same PID) every ~0.5 s when no camera
+ * is present.  Each re-exec re-runs this constructor: 14 lines to Clog + a PTP
+ * handshake attempt (beep + heat on the camera).  This section:
+ *
+ *   1. Rate-limits the verbose init logging via a file counter so we only print
+ *      the full block every Nth re-exec (STAGE2_INIT_LOG_EVERY, default 10).
+ *   2. Adds a backoff sleep when no camera USB device is present
+ *      (STAGE2_NO_CAMERA_BACKOFF_SECS, default 5 s) to slow the re-exec cycle.
+ *
+ * The counter file lives in /var/run (tmpfs) so it survives re-execs within a
+ * boot but resets on reboot (first boot always logs fully).
+ * ------------------------------------------------------------------------- */
+#define STAGE2_INIT_COUNT_FILE "/var/run/stage2_init_count"
+
+static int stage2_init_log_should_print(void)
+{
+    /* Read current count, increment, write back.  Returns 1 if we should print.
+     * First call (count=0) always prints.  Then every Nth call prints. */
+    static int log_every = -1;
+    if (log_every < 0) {
+        const char *env = getenv("STAGE2_INIT_LOG_EVERY");
+        log_every = (env && atoi(env) > 0) ? atoi(env) : 10;
+    }
+    int count = 0;
+    FILE *f = fopen(STAGE2_INIT_COUNT_FILE, "r+");
+    if (f) {
+        if (fscanf(f, "%d", &count) != 1) count = 0;
+        count++;
+        fseek(f, 0, SEEK_SET);
+        fprintf(f, "%d", count);
+        fclose(f);
+    } else {
+        count = 1;  /* first time (file doesn't exist yet) */
+        f = fopen(STAGE2_INIT_COUNT_FILE, "w");
+        if (f) { fprintf(f, "%d", count); fclose(f); }
+    }
+    return (count == 1 || (log_every > 1 && count % log_every == 0));
+}
+
+/* Check if a Ricoh/Pentax camera (vendor 0x25fb) is present on USB.
+ * Scans /sys/bus/usb/devices/ for a device with idVendor=0x25fb. */
+static int stage2_camera_present(void)
+{
+    const char *base = "/sys/bus/usb/devices/";
+    char path[256];
+    /* Simple scan: check a few known port paths (USB 1-1, 1-2, 2-1, etc.) */
+    static const char *ports[] = {"1-1", "1-2", "1-3", "2-1", "2-2", NULL};
+    for (int i = 0; ports[i]; i++) {
+        snprintf(path, sizeof(path), "%s%s/idVendor", base, ports[i]);
+        FILE *f = fopen(path, "r");
+        if (!f) continue;
+        char buf[16] = {0};
+        if (fgets(buf, sizeof(buf), f)) {
+            fclose(f);
+            if (strncmp(buf, "25fb", 4) == 0) return 1;
+        } else {
+            fclose(f);
+        }
+    }
+    return 0;
+}
+
+static void stage2_no_camera_backoff(void)
+{
+    if (stage2_camera_present()) return;  /* camera is here, no backoff needed */
+    static int backoff_secs = -1;
+    if (backoff_secs < 0) {
+        const char *env = getenv("STAGE2_NO_CAMERA_BACKOFF_SECS");
+        backoff_secs = (env && atoi(env) > 0) ? atoi(env) : 5;
+    }
+    if (backoff_secs <= 0) return;  /* 0 disables the backoff */
+    struct timespec ts = { .tv_sec = backoff_secs, .tv_nsec = 0 };
+    nanosleep(&ts, NULL);
+}
 
 static void s_write(const char *s)
 {
@@ -787,6 +866,16 @@ static void stage2_ondisk_init(void)
     /* Unbuffered stderr so a crash never hides the last checkpoint. */
     setvbuf(stderr, NULL, _IONBF, 0);
 
+    /* No-camera backoff: if pgphoto is re-exec'ing in a tight loop because no
+     * camera is present, sleep here to slow the cycle (default 5 s).  This is
+     * the CAUSE fix -- it reduces PTP handshake attempts from ~2/s to ~0.2/s. */
+    stage2_no_camera_backoff();
+
+    /* Rate-limit verbose init logging.  Returns 1 on first load or every Nth
+     * re-exec (STAGE2_INIT_LOG_EVERY, default 10).  On suppressed loads we
+     * print a single terse line instead of the full 14-line block. */
+    int log_verbose = stage2_init_log_should_print();
+
     /* (2) Crash handler FIRST -- so a fault anywhere below is pinpointed. */
     install_crash_handler();
 
@@ -806,16 +895,21 @@ static void stage2_ondisk_init(void)
         slot_store(STAGE2_SLOTS[i].slot, (void *)stage2_abort_stub);
     __sync_synchronize();                       /* publish the stub to all threads */
     g_last_ckpt = "init: stubbed slots";
-    fprintf(stderr, "[stage2] init: stubbed %zu slots (fail-closed baseline; "
-                    "slot base %#lx)\n",
-            STAGE2_SLOTS_LEN, (unsigned long)STAGE2_SLOT_LO);
+    if (log_verbose) {
+        fprintf(stderr, "[stage2] init: stubbed %zu slots (fail-closed baseline; "
+                        "slot base %#lx)\n",
+                STAGE2_SLOTS_LEN, (unsigned long)STAGE2_SLOT_LO);
+    } else {
+        fprintf(stderr, "[stage2] re-init (suppressed; see STAGE2_INIT_LOG_EVERY)\n");
+    }
 
     /* Point the self-contained core at the Stage-2 camlib/iolib dirs.
      * overwrite=0: a command-line CAMLIBS/IOLIBS override wins. */
     setenv("CAMLIBS", STAGE2_CAMLIBS_DIR, 0);
     setenv("IOLIBS",  STAGE2_IOLIBS_DIR,  0);
-    fprintf(stderr, "[stage2] on-disk loader: CAMLIBS=%s IOLIBS=%s\n",
-            getenv("CAMLIBS"), getenv("IOLIBS"));
+    if (log_verbose)
+        fprintf(stderr, "[stage2] on-disk loader: CAMLIBS=%s IOLIBS=%s\n",
+                getenv("CAMLIBS"), getenv("IOLIBS"));
 
     maybe_test_early_call();   /* env-gated; no-op in production */
     maybe_test_segv();         /* env-gated; no-op in production */
@@ -829,7 +923,8 @@ static void stage2_ondisk_init(void)
         return;
     }
     g_last_ckpt = "dlopen core ok";
-    fprintf(stderr, "[stage2] dlopen core ok\n");
+    if (log_verbose)
+        fprintf(stderr, "[stage2] dlopen core ok\n");
     g_stage2_core = core;   /* SHIM #1: source handle for the shim's lazy dlsym */
 
     void *port = dlopen_pref("STAGE2_PORT_PATH", STAGE2_PORT_PATH,
@@ -841,7 +936,8 @@ static void stage2_ondisk_init(void)
         return;
     }
     g_last_ckpt = "dlopen port ok";
-    fprintf(stderr, "[stage2] dlopen port ok\n");
+    if (log_verbose)
+        fprintf(stderr, "[stage2] dlopen port ok\n");
 
     /* Resolve each boundary symbol and store it into its slot. */
     unsigned filled = 0, unresolved = 0;
@@ -862,8 +958,9 @@ static void stage2_ondisk_init(void)
          * target.  Match by EXACT boundary symbol name (robust to slot ordering). */
         if (strcmp(name, "gp_camera_init") == 0) {
             slot_store(STAGE2_SLOTS[i].slot, (void *)&stage2_shim_gp_camera_init);
-            fprintf(stderr, "[stage2] storage: gp_camera_init slot -> shim "
-                            "(real core fn cached for pass-through)\n");
+            if (log_verbose)
+                fprintf(stderr, "[stage2] storage: gp_camera_init slot -> shim "
+                                "(real core fn cached for pass-through)\n");
             filled++;
             continue;
         }
@@ -874,8 +971,9 @@ static void stage2_ondisk_init(void)
         if (strcmp(name, "gp_camera_set_config") == 0) {
             slot_store(STAGE2_SLOTS[i].slot,
                        (void *)&stage2_shim_gp_camera_set_config);
-            fprintf(stderr, "[stage2] capturetarget: gp_camera_set_config slot -> "
-                            "shim (real core fn cached for pass-through)\n");
+            if (log_verbose)
+                fprintf(stderr, "[stage2] capturetarget: gp_camera_set_config slot -> "
+                                "shim (real core fn cached for pass-through)\n");
             filled++;
             continue;
         }
@@ -888,8 +986,9 @@ static void stage2_ondisk_init(void)
         if (strcmp(name, "gp_camera_set_single_config") == 0) {
             slot_store(STAGE2_SLOTS[i].slot,
                        (void *)&stage2_shim_gp_camera_set_single_config);
-            fprintf(stderr, "[stage2] capturetarget: gp_camera_set_single_config "
-                            "slot -> shim (real core fn cached for pass-through)\n");
+            if (log_verbose)
+                fprintf(stderr, "[stage2] capturetarget: gp_camera_set_single_config "
+                                "slot -> shim (real core fn cached for pass-through)\n");
             filled++;
             continue;
         }
@@ -897,15 +996,21 @@ static void stage2_ondisk_init(void)
         filled++;
     }
     g_last_ckpt = "resolved slots";
-    fprintf(stderr, "[stage2] resolved %u/%zu\n", filled, STAGE2_SLOTS_LEN);
+    if (log_verbose)
+        fprintf(stderr, "[stage2] resolved %u/%zu\n", filled, STAGE2_SLOTS_LEN);
 
     /* Publish all slot writes before main() (and Benro's first boundary call)
      * can observe them. */
     __sync_synchronize();
     g_last_ckpt = "slots filled";
 
-    fprintf(stderr, "[stage2] slots filled %u/%zu%s\n",
-            filled, STAGE2_SLOTS_LEN,
-            unresolved ? " [some unresolved: left at abort stub, fail-closed]"
-                       : "");
+    if (log_verbose) {
+        fprintf(stderr, "[stage2] slots filled %u/%zu%s\n",
+                filled, STAGE2_SLOTS_LEN,
+                unresolved ? " [some unresolved: left at abort stub, fail-closed]"
+                           : "");
+    } else {
+        fprintf(stderr, "[stage2] slots filled %u/%zu (re-init)\n",
+                filled, STAGE2_SLOTS_LEN);
+    }
 }
