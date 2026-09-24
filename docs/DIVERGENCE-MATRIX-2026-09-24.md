@@ -115,14 +115,80 @@ the three repos, measured against the codex session baseline.
 - Divergence matrix missing o-v12o/o-v12p rows.
 - o-v12n row status updated: "AWAITING FIRST-SHOT CANARY" → "FIRST-SHOT CANARY FAILED 2026-09-24".
 
-### D7 #142 verdict — NOT YET READ
-#142 must be read after D1-D6 are complete. Current independent evidence:
-- o-v12p (the proposed control) is not yet proven — canary pending, camera not enumerated.
-- The reconstruction base should be o-v9p (last proven broad repeated-capture), not o-v12p.
-- A source bisect from o-v12p toward the first regression is the highest-value next action, targeting the 0x4e20 crash symbol.
-- Later fixes safe to port: o-v12o's direct dispatch principle (once -108 divergence is understood), o-v12n's companion-ownership fix.
-- Changes to NOT port: o-v12j/o-v12k LV policies (disproven by o-v12k clean A/B), o-v12h (unproven first-capture claim).
-- Missing from #142's promotion ladder: the -108 companion transfer divergence (o-v12o), the 0x4e20 crash symbol analysis.
+### D7 #142 verdict — VALIDATED WITH CORRECTIONS
+Read #142 after independent reconstruction (D1-D6 complete).
 
-### D8 recommended plan — deferred until D7
-See #143 for the full design template. No firmware candidate proposed.
+**Supported:**
+- o-v9p is the correct behavioural control (last proven broad repeated-capture PASS).
+- Reconstruction base should be o-v9p, not o-v12p.
+- Source bisect from o-v9p toward first regression is the highest-value next action.
+- o-v12o direct Stage-2 capture dispatch principle is strongly supported (removed 0x4e20 SIGSEGV; o-v12n repeated the crash at 0x4e20 — same layer).
+- Companion buffer ownership fix (ab0de090c) is objective UAF fix, retain.
+- Production ownership helper (62402cc2c) is good deterministic structure.
+- Config pass-through (57d4d38) is proven hardware fix, freeze.
+- NULL safety, monotonic accounting, cancellation preservation, Bulb pre-shot delay correction are earned.
+
+**Needs correction:**
+- #142 says o-v12p is the proposed control — but o-v12p canary is PENDING (camera not enumerated on Polaris after reboot). Do not treat o-v12p as proven.
+- #142's promotion ladder omits the -108 companion transfer divergence exposed by o-v12o (gp_filesystem_get_file //IMGP3609.JPG ret=-108, doubled-slash `sd` folder). This is the current first unresolved product boundary.
+- #142's Phase 0 archaeology must correct the o-v12h overstatement (ledger claims Pixel Shift RAW+JPEG completion; contract says camera did not enumerate).
+- The 0x4e20 crash symbol needs resolution against the stage2_loader.c slot table before bisect can proceed — it is not in the slot region, not null, not the abort stub, not a current slot target. Likely stale trampoline or misdirected boundary function.
+
+**Reject:**
+- Do NOT port o-v12j/o-v12k LV policies (disproven by o-v12k clean A/B — crash reproduced without LV init changes).
+- Do NOT port o-v12h (unproven first-capture claim).
+- Do NOT build from o-v12p until canary passes.
+- Do NOT add readiness predicates, timeouts, or recovery loops without the -108 divergence being understood first.
+
+Explicit answers:
+- Is o-v9p really the correct behavioural control? YES — physical evidence supports it; o-v12o/v12n crashes occurred after o-v9p's capture isolation work.
+- Should the reconstruction base be earlier than o-v9p? NO — o-v9p is the last proven broad repeated-capture PASS; earlier candidates (o-v9d/e) had incomplete lifecycles.
+- Is a source bisect from o-v9p toward the first regression the highest-value next action? YES — target the 0x4e20 crash symbol; one behavioural variable per candidate.
+- Which later fixes are safe/necessary to port? ab0de090c ownership fix, 62402cc2c production helper, 57d4d38 config pass-through, direct Stage-2 dispatch principle (once -108 understood).
+- Which apparently successful changes should NOT be ported? o-v12j/o-v12k LV policies, o-v12h (unproven), o-v12o's -108 transfer behaviour (symptom, not fix).
+- Are we missing an issue class from the proposed promotion ladder? YES — the -108 companion transfer divergence (folder path `sd //IMGP3609.JPG` doubled-slash) is not in the ladder.
+- Is any current WIP branch/PR actually closer to a correct minimal solution than reconstruction from the historical control? PR #138 (o-v12o/o-v12p) addresses the Stage-2 dispatch layer but the -108 divergence means it is not yet a complete solution.
+- Would current #142 cause us to repeat any previous mistake? Risk: treating o-v12p as proven before canary passes would repeat the o-v12j/o-v12k pattern of building on unqualified candidates.
+
+### D8 recommended plan
+
+**Baseline:** patcher main @ 574838f (post-#143 audit), libgphoto2 `ab0de090c` (o-v12n runtime), Stage-2 source as installed. o-v9p (`397c362e1`) is the behavioural control to reconstruct from.
+
+**Preserve:**
+- o-v9p capture isolation (preview/still-capture cooldowns, bounded DHD counters) — Grade A hardware proven.
+- ab0de090c companion buffer ownership fix — Grade B deterministic.
+- 62402cc2c production ownership helper — Grade B.
+- 57d4d38 config pass-through — Grade A hardware proven.
+- NULL safety, monotonic accounting, cancellation preservation — Grade B/C.
+- Direct Stage-2 capture dispatch principle — Grade C (removed SIGSEGV; -108 divergence pending).
+
+**Exclude:**
+- o-v12j/o-v12k LV policies (disproven).
+- o-v12h (unproven first-capture claim).
+- CONFIG suppression (disproven by o-v12b).
+- connection-time LV OFF `a710c09` (reverted).
+- process-global LV pseudo-scheduler `c370c4f` (reverted).
+- fixed 5-second quiet-window reconciliation (disproven).
+- arbitrary longer sleeps/timeouts/retries.
+- treating GetAllConditions readiness as proven complete oracle.
+- destructive stale-candidate handling without ownership/generation proof.
+
+**Reimplement rather than cherry-pick:**
+- The -108 companion transfer divergence (folder path construction) — entangled with o-v12o's direct dispatch; needs clean reimplementation against the o-v9p envelope.
+- The 0x4e20 crash fix — needs slot-table resolution first; likely a trampoline/boundary redirect bug introduced after o-v9p.
+
+**Deterministic test suite (before hardware):**
+- Pre-release gate (existing): 3 PASS, 0 FAIL, 1 stock-path SKIP for o-v12p.
+- Focused Pentax tests for companion ownership (62402cc2c pattern).
+- New test: `sd //IMGP3609.JPG` doubled-slash folder path handling.
+- New test: 0x4e20 slot-region fault classification.
+- Stage-2 backoff isolation test (attachment-plan worktree, committed 77ecea1).
+
+**Minimal hardware ladder:**
+1. Unresolved: o-v12p canary pending (camera not enumerated on Polaris after reboot). Why static cannot answer: USB enumeration is hardware-dependent. Observation A: o-v12p installed, runtime identity passed. Observation B: camera not enumerated. Exact one-variable candidate: Polaris AP association / BSSID identity proof before canary.
+2. Unresolved: -108 companion transfer divergence. Why static cannot answer: folder path construction depends on daemon filesystem state. Observation A: o-v12o first shutter `state:4` + `/IMGP3609.JPG`. Observation B: `gp_filesystem_get_file sd //IMGP3609.JPG ret=-108`. Exact one-variable candidate: folder path normalization.
+3. Unresolved: 0x4e20 crash symbol. Why static cannot answer: PC classification needs slot-table resolution. Observation A: o-v12n SIGSEGV pc=0x4e20 not in slot region. Observation B: repeated on clean RAW-only canary. Exact one-variable candidate: boundary function redirect target.
+
+**Promotion matrix:** cold startup, camera already ON, USB/session stability, config read/write/readback, preview start/stop/restart, AF, ordinary JPEG repeated, ordinary RAW repeated, RAW+JPEG repeated and retrieval, Pixel Shift RAW+JPEG, Astro, panorama, timelapse, post-workflow ordinary capture, disconnect/reconnect, app restart without camera power cycle. K-1 II separate qualification family.
+
+**GO/NO-GO recommendation:** GO for the audit phase (D1-D7 complete). NO-GO for any new firmware candidate until: (a) o-v12p canary passes or is re-baselined, (b) -108 divergence is understood, (c) 0x4e20 crash symbol is resolved. The next implementation reset should branch from o-v9p, not current HEAD.
