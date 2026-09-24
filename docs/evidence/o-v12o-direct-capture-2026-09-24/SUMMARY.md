@@ -53,7 +53,15 @@ re-verification.
 
 ## Deployment status
 
-Installation in progress. The working wake handoff starts NetworkManager's
+Installation in progress. At 2026-09-24 the registered extracted `FwPkt` tree
+was being tar-streamed to the empty `/app/sd/FwPkt` target while the 9090
+keepalive remained active. Independent remote `du` checks showed monotonic
+growth (`14.0M`, `18.8M`, `26.3M`, `32.9M`); there was no SSH or tar error.
+Do not reboot until that stream completes and the six payload MD5s match the
+on-card `firmwareInfo`, including appfs
+`ab13820a561201500ef7b8162e782afc`.
+
+The working wake handoff starts NetworkManager's
 saved-profile association first, then sends the bare GATT connect while that
 association is already pending. This produced `ServicesResolved: yes` and the
 Wi-Fi activation completed even though BlueZ later reported no BR/EDR profile.
@@ -69,9 +77,8 @@ This corrects the earlier failed sequencing: beginning Wi-Fi association eight
 seconds after the short wake connection was too late. No characteristic write
 or BLE pairing was required.
 
-Next: prove the SD target is empty, stage the complete extracted registered
-tree, verify on-card manifest MD5s, reboot through the normal watcher, and prove
-runtime hashes/maps before camera attachment.
+Next: let the active stage finish, verify on-card manifest MD5s, reboot through
+the normal watcher, and prove runtime hashes/maps before camera attachment.
 
 ## Required physical matrix
 

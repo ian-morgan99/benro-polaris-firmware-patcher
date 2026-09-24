@@ -322,26 +322,30 @@ wedged boot was doing.
 ## 5. Starting the device with Bluetooth, connecting wirelessly (incl. sandbox)
 
 The SoC, Wi-Fi AP, and BLE radio sleep together. A **bare GATT connect is the
-wake pulse**. The normal connection handoff starts Wi-Fi association after the
-GATT connection succeeds, then immediately closes/disconnects GATT. It does not
-pair, discover the vendor service, write a characteristic, or retain BLE.
+wake pulse**. Start the saved Wi-Fi-profile activation first, overlap it with a
+retained GATT connection, and release GATT only after NetworkManager reports
+that Wi-Fi is active. It does not pair, discover the vendor service, or write a
+characteristic. Disconnecting GATT before starting Wi-Fi can miss the short
+wake window even though the connect itself succeeded.
 BT cannot wake a hard-off SoC: confirm at least one LED first (blue = idle-wake;
 no LEDs = charge or power-button it).
 
-Canonical wake pulse, single piped `bluetoothctl` session:
+Canonical handoff (run the Wi-Fi activation and BLE connect concurrently):
 
 ```bash
 POLARIS_BT="48:E7:DA:D4:B5:72"
-timeout 30 bluetoothctl <<EOF
-power on
-connect ${POLARIS_BT}
-disconnect ${POLARIS_BT}
-quit
-EOF
+nmcli --wait 60 connection up polaris_d13e86 &
+NM_PID=$!
+while kill -0 "$NM_PID" 2>/dev/null; do
+  timeout 12 bluetoothctl connect "$POLARIS_BT" || true
+done
+wait "$NM_PID"
+bluetoothctl disconnect "$POLARIS_BT" || true
 ```
 
-The `connect` itself is the wake. Start the saved Wi-Fi-profile association
-immediately after the pulse; do not wait for BLE service discovery. Then:
+The `connect` itself is the wake; the retained connection keeps the wake window
+open while NetworkManager associates. `ServicesResolved: yes` is useful
+evidence, but do not wait for it before beginning Wi-Fi activation. Then:
 
 1. The `polaris_d13e86` AP appears on 2.4 GHz (poll
    `nmcli -t -f BSSID,SSID device wifi list | grep -i 48:E7:DA`).
@@ -350,7 +354,7 @@ immediately after the pulse; do not wait for BLE service discovery. Then:
 If direct connect fails because BlueZ has no cached device, run
 `bluetoothctl --timeout 15 scan on` once and retry. Pair/trust may be used only
 as a cache-recovery fallback; it is not part of the normal wake. If the AP is
-not visible within ~60 s, re-run the direct connect/disconnect pulse; after a
+not visible within ~60 s, re-run the concurrent association/connect handoff; after a
 reflash use `WAIT_AP_SECS=300`.
 
 One-shot wake + AP wait + join + SSH poll + first-look probe:
