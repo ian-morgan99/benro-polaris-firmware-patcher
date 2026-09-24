@@ -111,8 +111,9 @@ the three repos, measured against the codex session baseline.
 - o-v12p mode-contract: Grade D (unproven — canary pending, camera not enumerated).
 
 ### D6 evidence corrections
-- Ledger overstates o-v12h (claims Pixel Shift RAW+JPEG completion; contract says camera not enumerated).
-- Divergence matrix missing o-v12o/o-v12p rows.
+- Ledger overstates o-v12h: claims "last first-capture working baseline" with Pixel Shift RAW+JPEG completion. Contract says o-v12h-recoverylog "camera not enumerated after install". Actual pixelshift evidence (o-v12h-pixelshift-rawjpeg-2026-09-23): four actuations, one JPEG published (SP_0072.jpg, 413577 B), one pending RAW candidate (+32=1,+36=1,+104=0) — incomplete Pixel Shift (requires two output objects). o-v12l is the last first-capture working baseline. Ledger row needs correction.
+- Provenance contract missing o-v12h-pixelshift-rawjpeg row (evidence folder exists, no registry entry).
+- Divergence matrix missing o-v12o/o-v12p rows (in PR #138, not merged).
 - o-v12n row status updated: "AWAITING FIRST-SHOT CANARY" → "FIRST-SHOT CANARY FAILED 2026-09-24".
 
 ### D7 #142 verdict — VALIDATED WITH CORRECTIONS
