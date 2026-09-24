@@ -559,8 +559,6 @@ static long long g_pentax_preview_last_fetch = 0;
  * and "stalled" for most of each inter-frame gap.  Only used when no explicit
  * STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS override is set. */
 #define STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS 8
-#define STAGE2_PENTAX_CAPTURE_BACKOFF_MAX_DEFAULT   3
-#define STAGE2_PENTAX_CAPTURE_BACKOFF_SECS_DEFAULT  30
 
 /* GP result codes in this libgphoto2 (port-result.h / gphoto2-result.h). */
 #define STAGE2_GP_ERROR_TIMEOUT (-10)   /* GP_ERROR_TIMEOUT */
@@ -771,96 +769,6 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
                             "consecutive failures\n", g_pentax_preview_timeouts);
         g_pentax_preview_timeouts = 0;
         g_pentax_preview_backoff_until = 0;
-    }
-    return ret;
-}
-
-/* SHIM #6: gp_camera_capture (the shutter path).  Benro's capture flow calls
- * gp_camera_capture(GP_CAPTURE_IMAGE, ...) to take a still.  Without this
- * shim the call goes straight through to the real core, which on Pentax bodies
- * can trigger the same sustained PTP traffic pattern that the preview loop
- * causes — and the storage-shim / capture-budget guards only cover the
- * preview path.  This wrapper has an independent still-capture failure budget
- * and cooldown: preview failures must not suppress a valid shutter release,
- * and a failed shutter release must not suppress preview recovery.  It returns
- * GP_ERROR_CAMERA_BUSY (non-terminal) instead of blocking the caller.  Pure
- * pass-through for capture types other than GP_CAPTURE_IMAGE, non-Pentax
- * models, or when the STAGE2_TETHER_CAPTURE gate is off. */
-typedef int (*stage2_gp_camera_capture_fn)(void *camera, int type,
-                                           void *path, void *context);
-static stage2_gp_camera_capture_fn g_real_gp_camera_capture = NULL;
-static int g_pentax_capture_failures = 0;
-static long long g_pentax_capture_backoff_until = 0;
-static unsigned long long g_pentax_capture_sequence = 0;
-
-static int stage2_shim_gp_camera_capture(void *camera, int type,
-                                         void *path, void *context)
-{
-    unsigned long long sequence = __sync_add_and_fetch(&g_pentax_capture_sequence, 1);
-    long long started = stage2_monotonic_secs();
-    if (!g_real_gp_camera_capture && g_stage2_core)
-        g_real_gp_camera_capture =
-            (stage2_gp_camera_capture_fn)
-                dlsym(g_stage2_core, "gp_camera_capture");
-    if (!g_real_gp_camera_capture) {
-        fprintf(stderr, "[stage2] capture-shim: FATAL real "
-                        "gp_camera_capture unresolved (core handle %p)\n",
-                g_stage2_core);
-        return -1;                                   /* GP_ERROR */
-    }
-
-    const char *gate = getenv("STAGE2_TETHER_CAPTURE");
-    if (type != STAGE2_GP_CAPTURE_IMAGE ||
-        !gate || strcmp(gate, "0") == 0 ||
-        !stage2_camera_uses_pentax_keep_lv(camera))
-        return g_real_gp_camera_capture(camera, type, path, context);
-
-    fprintf(stderr, "[stage2] capture[%llu]: enter type=%d mono=%lld\n",
-            sequence, type, started);
-
-    /* Cooldown: after consecutive capture failures, return busy instead of
-     * hitting the camera again.  Non-blocking — no sleep held inside the
-     * intercepted call. */
-    if (g_pentax_capture_backoff_until) {
-        long long now = stage2_monotonic_secs();
-        if (now < g_pentax_capture_backoff_until) {
-            int remain_s = (int)(g_pentax_capture_backoff_until - now);
-            fprintf(stderr, "[stage2] capture-backoff: in still-capture cooldown "
-                            "(%ds left) -- "
-                            "returning busy without blocking\n", remain_s);
-            return STAGE2_GP_ERROR_CAMERA_BUSY;
-        }
-    }
-
-    int ret = g_real_gp_camera_capture(camera, type, path, context);
-    fprintf(stderr, "[stage2] capture[%llu]: real gp_camera_capture returned "
-                    "ret=%d elapsed=%llds\n",
-            sequence, ret, stage2_monotonic_secs() - started);
-    if (ret != 0) {
-        const char *maxs = getenv("STAGE2_PENTAX_CAPTURE_BACKOFF_MAX");
-        const char *secs = getenv("STAGE2_PENTAX_CAPTURE_BACKOFF_SECS");
-        int max_failures = STAGE2_PENTAX_CAPTURE_BACKOFF_MAX_DEFAULT;
-        int cooldown_s   = STAGE2_PENTAX_CAPTURE_BACKOFF_SECS_DEFAULT;
-        if (maxs && atoi(maxs) > 0)
-            max_failures = atoi(maxs);
-        if (secs && atoi(secs) > 0)
-            cooldown_s = atoi(secs);
-
-        g_pentax_capture_failures++;
-        if (g_pentax_capture_failures >= max_failures) {
-            g_pentax_capture_backoff_until = stage2_monotonic_secs() + cooldown_s;
-            fprintf(stderr, "[stage2] capture-backoff: %d consecutive still-"
-                            "capture failures (last ret=%d) -- backing off %ds "
-                            "(issues #93/#105)\n",
-                    g_pentax_capture_failures, ret, cooldown_s);
-        }
-    } else {
-        if (g_pentax_capture_failures)
-            fprintf(stderr, "[stage2] capture-backoff: recovered after %d "
-                            "consecutive still-capture failures\n",
-                    g_pentax_capture_failures);
-        g_pentax_capture_failures = 0;
-        g_pentax_capture_backoff_until = 0;
     }
     return ret;
 }
@@ -1414,6 +1322,16 @@ static void map_slot_page(void)
                     "%u B)\n", (unsigned long)lo, STAGE2_SLOT_PAGE);
 }
 
+/* Still capture must preserve the exact dlsym target.  Keep this decision in a
+ * small testable helper so a future Stage-2 policy cannot silently reintroduce
+ * the extra capture ABI boundary. */
+static void *stage2_capture_slot_target(const char *name, void *resolved)
+{
+    if (name && strcmp(name, "gp_camera_capture") == 0)
+        return resolved;
+    return resolved;
+}
+
 /* STAGE2_NO_CONSTRUCTOR is defined ONLY by the offline unit test that #includes
  * this file to exercise the shims directly; production builds always run the
  * constructor at load. */
@@ -1545,20 +1463,14 @@ static void stage2_ondisk_init(void)
             filled++;
             continue;
         }
-        /* SHIM #6: gp_camera_capture (the shutter path) is redirected to the
-         * capture-shim wrapper (stage2_shim_gp_camera_capture).  Still images
-         * have a dedicated failure budget/cooldown so preview and shutter
-         * recovery cannot suppress one another (#105).  Other capture types,
-         * non-Pentax models, and STAGE2_TETHER_CAPTURE=0 pass through. */
-        if (strcmp(name, "gp_camera_capture") == 0) {
-            slot_store(STAGE2_SLOTS[i].slot,
-                       (void *)&stage2_shim_gp_camera_capture);
-            fprintf(stderr, "[stage2] capture-shim: gp_camera_capture "
-                            "slot -> shim (real core fn cached for pass-through)\n");
-            filled++;
-            continue;
-        }
-        slot_store(STAGE2_SLOTS[i].slot, t);
+        /* Still capture deliberately remains direct-to-core.  The historical
+         * Stage-2 wrapper added a second function-call/ABI boundary around
+         * gp_camera_capture and the first-shot K-3 III failures at o-v12j/k/n
+         * all crashed at that boundary before the core returned.  Capture
+         * readiness, candidate ownership and bounded recovery belong to the
+         * matched libgphoto2 core; Stage-2 must not interpose another policy. */
+        slot_store(STAGE2_SLOTS[i].slot,
+                   stage2_capture_slot_target(name, t));
         filled++;
     }
     g_last_ckpt = "resolved slots";
