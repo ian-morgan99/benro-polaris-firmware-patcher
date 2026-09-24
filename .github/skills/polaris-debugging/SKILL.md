@@ -661,6 +661,8 @@ that camera-side lifecycle state.
 | Wake device | `bluetoothctl connect 48:E7:DA:D4:B5:72` (gimbal powered on, LED lit) → AP appears → join → SSH |
 | Keep awake | 9090 ping loop (`1&266&0&#` every 30 s); BT-keepalive as fallback |
 | Change the device | GitHub issue in owning repo → FwPkt build → SD-card install. Never edit `/app` over SSH as a fix |
+| Pre-release gate (mandatory) | `./tests/run_prerelease_gate.sh [--build out/<cand>/FwPkt] [--canary [--two-shot]]` — fail-closed; RED = do not stage/install; SKIPs are prerequisite gaps, record them. Every verified-working behaviour must have a coded test wired into this gate (see AGENTS.md "Pre-release gate") |
+| Canary after install | Camera ON: `--canary` (probe + one shot, lifecycle completion + 773 file event) or `--two-shot` for the two-distinct-files standard. Camera OFF at deployment: live gates SKIP — candidate is "installed, canary pending", never qualified; run the canary as soon as the camera is attached |
 | Dual-path (#38/#51) check | Stage-2 and stock hashes must match for both `libgphoto2.so.6` and `libgphoto2_port.so.12`; grep `/proc/PID/maps` for active paths |
 
 ## 7. K-1 II deployment hazards (learned 2026-09-11/12, o-v9f → o-v9h)
@@ -712,3 +714,4 @@ within 30 s or fall back.
 - `scripts/resilient-monitor.sh`, `scripts/reboot-via-812.sh` — gimbal-vs-router
   monitor and clean reboot.
 - `docs/FWPKT-PROVENANCE-CONTRACT.md` — the zip registry every handoff must hit.
+- `tests/run_prerelease_gate.sh` + AGENTS.md "Pre-release gate" — the mandatory coded regression gate (offline harness, pytest invariants, FwPkt structural + firmwareInfo manifest gates, live canary/two-shot). Fail-closed; its output is the release evidence.

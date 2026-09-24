@@ -162,6 +162,26 @@ After the reboot:
 If any of those are wrong, do **not** attempt a second bypass. Re-stage the
 SD card with a known-good `FwPkt.zip` and repeat from step 1.
 
+### Pre-release regression gate (before you stage ANY zip — coded, fail-closed)
+
+Run the deterministic gate from `BenroPolarisPatcher` before staging. Its output
+is the release evidence — do not substitute narrative judgement for a red gate:
+
+```bash
+cd BenroPolarisPatcher
+./tests/run_prerelease_gate.sh --build out/<candidate>/FwPkt   # offline + package gates
+# after install, camera ON:  ./tests/run_prerelease_gate.sh --canary [--two-shot]
+# camera OFF at deployment: live gates SKIP — record "installed, canary pending"
+```
+
+- RED (exit 1) → do not stage/install; fix and re-run.
+- SKIPs are prerequisite gaps (e.g. no stock `firmware/FwPkt.zip` for the
+  manifest gate, gimbal off for live gates) — record them in the release
+  evidence; they never silently green the gate.
+- Every behaviour we believe is working must have a coded test wired into this
+  gate (see AGENTS.md "Pre-release gate"). A fix that cannot be expressed as a
+  coded test must say so explicitly, with the reason.
+
 ### Provenance gate (before you stage ANY zip — cross-repo, cross-agent)
 
 Before staging a zip on the SD card, it must have a row in

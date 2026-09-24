@@ -107,6 +107,52 @@ At minimum preserve the known-good Canon R5 Mark II path from the Blaine upstrea
 
 If required hardware is unavailable, mark the candidate unqualified for that camera; do not silently downgrade a previous PASS to untested.
 
+## Pre-release gate (mandatory, coded — no AI interpretation)
+
+Anything we believe is currently working MUST have a coded regression test, and every release candidate passes the deterministic gate before it may be staged or declared ready. The gate is a script; its output is the evidence. Do not substitute narrative judgement for a red gate.
+
+1. **Run the gate** (from repo root):
+   - Offline (always, before any claim of readiness): `./tests/run_prerelease_gate.sh`
+   - With a built package (before SD-card staging / install): `./tests/run_prerelease_gate.sh --build out/<candidate>/FwPkt`
+   - Live device gates (camera ON and attached; see canary rule below): `./tests/run_prerelease_gate.sh --canary [--two-shot]`
+2. **Gate policy.** Fail-closed: any runnable check that fails = RED, do not stage/install. Missing prerequisites report SKIP (never silent green); record skips in the release evidence. Exit 0 = green, 1 = red, 2 = usage error.
+3. **Regression-test rule.** When a fix is verified working (by any means), add or extend a coded test that would have caught the regression, and wire it into the gate:
+   - container/patcher behaviour → `container/test_*.sh` (picked up by `tests/run_deterministic.sh`; exit 2/77 = prerequisite skip)
+   - scenario/routing/trace/contract invariants → `tests/test_*.py` (pytest, picked up by the gate's python suite)
+   - live capture behaviour → `scripts/canary-probe.py` / `canary-two-shot.py` (run via the gate's `--canary` / `--two-shot`)
+
+   A fix that cannot be expressed as a coded test must say so explicitly in the release evidence, with the reason.
+4. **What can be tested WITHOUT a firmware zip installed** (offline gate):
+   - `tests/run_deterministic.sh` — patch/patcher behaviour against fixtures (stage2 gates, fail-closed manifest gate, wrapper locks, settle window)
+   - pytest suite — scenario routing, stability catalogue invariants, trace tooling, astro multi-shot command contract
+   - `container/validate_fw_package.py` + `verify_firmwareinfo.py` on a built package (layout, duplicates, stock SHA-256 cross-check, firmwareInfo manifest self-consistency vs the stock manifest)
+
+   These prove the *package and its invariants*; only the live gates prove the device.
+5. **Canary rule (camera on or off at deployment).** The canary is a single bounded capture proving the installed build actually captures:
+   - Camera **ON** (attached, powered, SD present): run `./tests/run_prerelease_gate.sh --canary` — probe reads camera state, then one shot must show lifecycle completion (`[1,4,…]`) plus a 773 file event. Add `--two-shot` when the evidence standard is two distinct files (fail-closed; no further shutter after a failed shot).
+   - Camera **OFF** at deployment: the live gates SKIP (probe fails to reach a camera-ready state) — that is recorded, not a failure. The canary is owed as soon as the camera is attached; until then the candidate is "installed, canary pending", never "qualified".
+   - Keep the 9090 keepalive running during any multi-minute live gate (see wake/keep-alive below); stop it before rebooting.
+
+## Wake and keep-alive (Polaris) — exact commands
+
+- **Wake:** gimbal must be powered on; BT connect to `48:E7:DA:D4:B5:72` is the wake pulse. If Wi-Fi/SSH is down, use `scripts/polaris-bt-keepalive.sh` (independent BT link + SSH reach path).
+- **Keep alive:** idle timeout is ~5 min of no TCP traffic on 9090. For any job longer than a few minutes run:
+
+  ```sh
+  while :; do printf '1&266&0&#' | timeout 4 nc -q1 192.168.0.1 9090 >/dev/null 2>&1; sleep 30; done &
+  ```
+
+  and kill it before rebooting. `val[-100]` on 266/284/286 = keepalive/no-data.
+- **Identity first:** never trust a session until (a) real `polaris_*` AP association (`nmcli … | grep 48:E7:DA`), (b) `ip route get 192.168.0.1` via the wifi dev, and (c) `cat /app/FwVer` over SSH. Pingability alone proves nothing (the home cable router shares 192.168.0.1).
+
+## Pushing a fix and testing it (locked-down flow)
+
+1. Fix lands in the owning repo (issue → repo routing per the debugging skill), never as a direct `/app` mutation on the device.
+2. Build the FwPkt (`container/build_fullstack.sh` / `patch.sh` flow), then run the gate: `./tests/run_prerelease_gate.sh --build out/<candidate>/FwPkt`.
+3. Stage to SD card and install via the on-board updater (fwpkt-update-flow skill). The on-board crcInfo gate re-MD5s only what firmwareInfo claims — the manifest gate in step 2 is what catches silent no-op installs.
+4. Run the canary per the canary rule above (camera ON → `--canary`/`--two-shot`; camera OFF → record "canary pending").
+5. Commit evidence: gate transcript + canary/two-shot transcripts into `docs/evidence/<candidate>/` (transcripts as `.txt`), update `docs/CURRENT-STATE.md`, and close the issue with the gate output quoted.
+
 ## Documentation obligations
 
 Every upgrade issue must identify which of these need updating and update them before closure:

@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,10 @@ def _load_module(name: str, relative: str):
     spec = importlib.util.spec_from_file_location(name, root / relative)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
+    # Register before exec: the trace tool's @dataclass resolves string
+    # annotations against the owning module, which requires it to be in
+    # sys.modules during exec_module.
+    sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 

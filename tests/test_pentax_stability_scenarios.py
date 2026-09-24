@@ -15,8 +15,18 @@ def test_scenario_ids_are_unique():
     assert len(ids) == len(set(ids))
 
 
-def test_initial_campaign_is_non_destructive():
-    assert all(row["destructive"] == "false" for row in _rows())
+def test_destructive_scenarios_are_last_priority():
+    # Design rule (docs/pentax-capture-stability-experiments.md): run clean
+    # non-destructive baselines first; destructive embedded fault injection
+    # belongs at the end, after baseline behaviour is understood. So every
+    # destructive row must carry the highest priority in the catalogue, and
+    # no lower-priority row may be destructive.
+    rows = _rows()
+    priorities = {int(row["priority"]) for row in rows}
+    top = max(priorities)
+    for row in rows:
+        if row["destructive"] == "true":
+            assert int(row["priority"]) == top, row["id"]
 
 
 def test_timeout_boundary_straddles_100_seconds():
