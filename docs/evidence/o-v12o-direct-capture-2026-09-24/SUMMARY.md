@@ -173,8 +173,29 @@ o-v12p was then tar-streamed as the extracted registered tree to the empty
 `d7c7162c4ae0913c29f67ce21a1a0081`, polaris403
 `4facafa7d29c1e6c2a125b8309c9b901`, and polaris413
 `c0299d06a15f5c2fbecb9a6db76a29c5`. Staged FwVer is
-`6.0.0.54.25-o-v12p-mode-contract`. Reboot/install and post-boot proof remain
-pending at this checkpoint.
+`6.0.0.54.25-o-v12p-mode-contract`.
+
+The keepalive was stopped and `sync; /sbin/reboot` produced a proven SSH drop.
+After rejoining the exact Polaris AP, post-boot deployment proof passed:
+
+- BSSID `48:E7:DA:D4:B5:73`, route via `wlp8s0` from `192.168.0.4`;
+- FwVer `6.0.0.54.25-o-v12p-mode-contract` and staged tree consumed;
+- installed libgphoto2 `d8c0c0026bfcb6ad3f53b828eb4961d73ca4171a`,
+  patcher `4c087156f7c68f5a26c69b93d1d4b57c3085c919`;
+- core pair `5973e8c8999b1f4f01be70a9cafdb7ba`, port pair
+  `ad50e83594397aef48b63ed2375890cc`, ptp2 pair
+  `b9250a08d0b8680303f83e8dda07383d`, usb1 pair
+  `4423bba29bf8c5d899598841ec3e6310`;
+- PID 250 maps the intended Stage-2 core, port and loader; one pgphoto and one
+  polestar process; listeners 22/8080/9090;
+- no still-capture shim registration, SIGSEGV, missing-iolib or `state:-2`
+  signature in the checked startup tail.
+
+The camera did not enumerate on Polaris after this reboot (`lsusb` had no
+`25fb` device). Per the coded canary rule, o-v12p is installed with canary
+pending, not capture-qualified. The next action is a fresh camera power cycle
+and physical USB presence, followed by `run_prerelease_gate.sh --canary`; only
+then may the two-shot gate run.
 
 ## Required physical matrix
 
