@@ -12,11 +12,11 @@ the three repos, measured against the codex session baseline.
 - LibGphoto2 baseline: `master @ c57a8a3ac` (merge-base of codex branches
   `rescue/shutter-observability-20260922` and `rescue/final-shutter-20260923`).
 
-## BenroPolarisPatcher — branch matrix (main @ e10c776)
+## BenroPolarisPatcher — branch matrix (main @ d939513, post-#143 audit)
 
 | Branch | Ahead | Behind | Divergence date | Content / status |
 |---|---|---|---|---|
-| `fix/stage2-direct-capture-20260924` | 9 | 0 | 2026-09-24 | **Live head.** 073f471 direct still-capture fix + o-v12o/o-v12p registry/docs. PR #138 OPEN, mergeable. |
+| `fix/stage2-direct-capture-20260924` | 9 | 0 | 2026-09-24 | **Live head.** 073f471 direct still-capture fix + o-v12o/o-v12p registry/docs. PR #138 OPEN, mergeable. o-v12o installed, first RAW+JPEG transfer failed (-108, `sd //IMGP3609.JPG` doubled-slash). o-v12p installed, canary pending (camera not enumerated on Polaris after reboot). |
 | `rescue/shutter-thermal-20260922` (codex) | 5 | 34 | 2026-09-22 | o-v12e/v12f registry + evidence. 4/5 superseded by main ledger (o-v12f row present); **o-v12e registry entry missing from main**. |
 | `fix/release-safety-gates` | 12 | 325 | 2026-09-14 | 10/12 already in main by subject; unique: 142d5af (provenance doc), d5b2fd8 (gitignore chore). Tracked by issues #101–#107. |
 | `agents/benro-polaris-firmware-docs` | 14 | 478 | 2026-08-21 | HDMI/EDID docs + patch scripts. Missing from main: `container/gen_hdmi_edid.py`, `hdmi_edid_patch.py`, `hdmi_venc_patch.py`, `ondisk/pgphoto.wrapper`. Tracked by #106/#107. |
@@ -24,7 +24,7 @@ the three repos, measured against the codex session baseline.
 | `audit/final-handover-20260924` | 0 | 6 | 2026-09-24 | Pointer only — safe to delete. |
 | `integrate/stability-20260916` | 0 | 79 | 2026-09-16 | Fully merged — safe to delete. |
 | `agents/astro-mode-forks-review` | 0 | 475 | 2026-08-28 | Merged; worktree has untracked `analysis/` (3 md files). |
-| `agents/attachment-plan-follow-up` | 0 | 455 | 2026-08-27 | Merged; **worktree has uncommitted `container/stage2_loader.c`** (init-log rate-limiter + no-camera backoff, STAGE2_INIT_LOG_EVERY / STAGE2_NO_CAMERA_BACKOFF_SECS) — not in main, not in stash. |
+| `agents/attachment-plan-follow-up` | 0 | 455 | 2026-08-27 | Merged; **worktree has committed stage2_loader.c rate-limiter/backoff (77ecea1)** — preserved before cleanup per #143 D1. |
 | `agents/check-connection-status` | 0 | 449 | 2026-09-02 | Merged — safe to delete. |
 | `agents/phase-3-cellular` | 0 | 466 | 2026-08-31 | Merged — safe to delete. |
 | `agents/work-out-why-our-firmware-just-disappears-when` (+ `.live-dup`) | 0 | 460 | 2026-08-30 | Merged; archive worktrees show staged deletions of 3 docs (POLESTAR_APP_REVERSE_ENGINEERING.md, diagnostic-test-card-matrix.md, tools/build_test_cards.py) — all later deleted on main by db1dce9 (issue #116 archive). |
@@ -32,19 +32,14 @@ the three repos, measured against the codex session baseline.
 
 ### Patcher unpushed / uncommitted / untracked
 
-- **Local main is ahead of origin/main** (4+ commits at time of writing, all unpushed):
-  e10c776 "test: add mandatory deterministic pre-release gate + codify agent rules",
-  the divergence-matrix commit, and its correction commits. Push when ready.
+- **Local main is ahead of origin/main** (3+ commits at time of writing, all unpushed):
+  docs(#143) D1-D8 audit commits (ae3e95b, d939513). Push when ready.
 - PR #138 (`fix/stage2-direct-capture-20260924`, head c474e9c) OPEN + mergeable.
 - Stash@{0} (3 files, −242/+14): removes POLESTAR_BULB_PATCH block from patch.sh,
   trims stage2_loader.c — older experiment; main still ships the bulb patch.
   Distinct change-set from the attachment-plan worktree diff (verified by patch diff).
-- Untracked in main worktree: `GITHUB_ISSUE_ORION_STARSHOOT.md`,
-  `GITHUB_ISSUE_UVC_SUPPORT.md` (drafts behind #137/#135),
-  `IOPTRON_IPOLAR_TEST_SUMMARY.md`, `docs/FUTURE-UVC-SUPPORT.md`,
-  `test_ioptron.py`, `test_ioptron_v1.py`, and
-  `docs/evidence/o-v12n-clean-raw-failure-2026-09-24/` (Clog/Mlog/dmesg/device-state;
-  only SUMMARY.md is tracked).
+- Uncommitted tracked: patch.sh (bulb patch removed, gate ref changed), restart_gphoto.sh, test script, settings.json (LMStudio bridge config).
+- Untracked: 2 issue drafts, ioptron tests, FUTURE-UVC-SUPPORT.md, o-v12n crash evidence.
 
 ## LibGphoto2 — branch matrix (remote master @ c57a8a3ac)
 
