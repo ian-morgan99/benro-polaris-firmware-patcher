@@ -1,0 +1,2 @@
+pgphoto_before=3840
+pgphoto_after=3840

@@ -1,0 +1,28 @@
+2026-09-24T15:24:08Z TX 1&284&2&-100#
+2026-09-24T15:24:08Z RX 284@mode:1;state:0;#
+2026-09-24T15:24:08Z TX 1&820&2&-100#
+2026-09-24T15:24:08Z RX 820@ret:-1;#
+2026-09-24T15:24:08Z TX 1&823&2&app:openpolaris-canary-two-shot;ver:1;#
+2026-09-24T15:24:08Z TX 1&286&2&-100#
+2026-09-24T15:24:08Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-09-24T15:24:08Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-09-24T15:24:08Z TX 1&292&2&-100#
+2026-09-24T15:24:08Z RX 292@state:1;#
+2026-09-24T15:24:08Z PREVIEW initial_state=1
+2026-09-24T15:24:08Z TX 1&291&2&state:0;#
+2026-09-24T15:24:09Z RX 291@state:0;ret:0;#
+2026-09-24T15:24:09Z PREVIEW stop_ack=state:0;ret:0;
+2026-09-24T15:24:09Z TX 1&292&2&-100#
+2026-09-24T15:24:09Z RX 292@state:0;#
+2026-09-24T15:24:09Z PREVIEW confirmed=state:0;
+2026-09-24T15:24:09Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-24T15:24:09Z SHOT1 capture issued
+2026-09-24T15:24:09Z RX 264@state:1#
+2026-09-24T15:24:09Z SHOT1 CAPTURE state=1 lifecycle=[1]
+2026-09-24T15:24:13Z RX 525@Tempa509ca361d0000265a ;#
+2026-09-24T15:24:13Z RX 264@state:4;#
+2026-09-24T15:24:13Z SHOT1 CAPTURE state=4 lifecycle=[1, 4]
+2026-09-24T15:24:15Z RX 264@state:-108#
+2026-09-24T15:24:15Z SHOT1 CAPTURE state=-108 lifecycle=[1, 4, -108]
+2026-09-24T15:24:15Z SHOT1 FAIL states=[1, 4, -108] files=[] idle=False stale=None term=state:-108
+2026-09-24T15:24:15Z STOP after SHOT1 (fail-closed; no further shutter)

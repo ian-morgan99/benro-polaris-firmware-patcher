@@ -1,0 +1,500 @@
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[m[16:24:06:976 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 0  ret 0 
+[m[16:24:06:976 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[16:24:06:998 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 1  ret 0 
+[m[16:24:06:998 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[16:24:07:032 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 2  ret 0 
+[m[16:24:07:033 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[16:24:07:046 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 8  ret 0 
+[m[16:24:07:047 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[m[16:24:12:448 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[2],code[291],val[state:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 291  data: state:0;   --_isInit 1 
+[m[16:24:12:548 [1;32mINFO[m-]:updateCameraViewFinder[3564]:[0;32;31m----updateViewFinder 
+24.499469 gp_camera_get_single_config [gphoto2-camera.c:925](0): 'camera->functions->get_single_config ( camera, name, widget, context)' failed: -2
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[m[16:24:13:570 [1;32mINFO[m-]:updateCameraViewFinder[3625]:----updateViewFinder enable:0  ret:-1 
+[m[16:24:13:771 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[291],val[state:0;ret:0;]
+[m[m[16:24:13:787 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[264],val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0080.jpg;c:-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 264  data: state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0080.jpg;c:-1   --_isInit 1 
+[m[16:24:13:788 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:1;/app/sd/normal/SP_0080.jpg]
+[m[m[16:24:13:788 [1;32mINFO[m-]:captureImage[1485]:[0;32;31m----will captureImage status:1  focus:-1000  sPath:/app/sd/normal/SP_0080.jpg
+[m[16:24:13:788 [1;32mINFO[m-]:current_shutter[1719]:[0;32;31m----get_current_shutter 111  0 
+[m[16:24:13:789 [1;32mINFO[m-]:print_widget[1702]:Label: Shutter Speed
+[m[16:24:13:789 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[16:24:13:789 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[16:24:13:789 [1;32mINFO[m-]:print_widget[1783]:Current: 1/20
+[m[16:24:13:789 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 1/8000
+[m[16:24:13:789 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 1/6400
+[m[16:24:13:789 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 1/5000
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 1/4000
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 1/3200
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 1/2500
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 1/2000
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 1/1600
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 1/1250
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 1/1000
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 1/800
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 1/640
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 1/500
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 1/400
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 1/320
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 1/250
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 1/200
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 1/160
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 1/125
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 1/100
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 1/80
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 1/60
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 1/50
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 1/40
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 1/30
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 1/25
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 1/20
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 1/15
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 1/13
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 1/10
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 1/8
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 1/6
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 1/5
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 1/4
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 3/10
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 4/10
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 5/10
+[m[16:24:13:790 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 6/10
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 8/10
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 1s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 13/10
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 16/10
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 2s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 25/10
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 3s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 4s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 5s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 6s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 8s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 10s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 13s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 15s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 52 20s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 53 25s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1787]:Choice: 54 30s
+[m[16:24:13:791 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[16:24:13:791 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret 0 
+[m[16:24:13:791 [1;32mINFO[m-]:updateCaptureInfo[622]:[0;32;31m----shutter speed  0.050000  
+[m[16:24:13:791 [1;32mINFO[m-]:current_shutter[1724]:[0;32;31m----get_current_shutter 22 0
+[m[16:24:13:791 [1;32mINFO[m-]:current_shutter[1735]:[0;32;31m----current_shutter  configInfo:s:1/20;  ret:0  sValue 1/20 
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1702]:Label: Image Format
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1783]:Current: RAW+JPEG
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 JPEG
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 RAW
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 RAW+JPEG
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 TIFF
+[m[16:24:13:799 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[16:24:13:799 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info imageformat ret 0 
+[m[16:24:13:799 [1;32mINFO[m-]:numOfCaptureImage[3018]:----numOfCaptureImage  2
+[m[16:24:13:799 [1;32mINFO[m-]:capture_image[3076]:----capture
+[m[16:24:13:799 [1;32mINFO[m-]:clearCameraEvent[3026]:----clearCameraEvent  
+[m[16:24:13:830 [1;32mINFO[m-]:capture_image[3092]:---- will CAPTURE_IMAGE  
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+New file is in location /IMGP3609.JPG on the camera
+--- new file name IMGP3609.JPG
+[m[16:24:17:182 [1;32mINFO[m-]:captureImageEvent[1339]:[0;32;31m----captureImageEvent:0  Path:IMGP3609.JPG
+[m[16:24:17:182 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:4;IMGP3609.JPG]
+[m[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[m[16:24:18:994 [1;32mINFO[m-]:capture_image[3096]:----ARG_CAPTURE_IMAGE  0
+[m[16:24:19:094 [1;32mINFO[m-]:capture_image[3164]:----capture end   -5295 ms
+[m[16:24:19:095 [1;32mINFO[m-]:getImageToBuffer[2889]:[0;32;31m----gp_list_count  0  
+[m[16:24:19:095 [1;32mINFO[m-]:getImageToBuffer[2961]:[0;32;31m----gp_filesystem_get_file111 sd  
+[m[16:24:19:095 [1;32mINFO[m-]:getImageToBuffer[2963]:[0;32;31m----gp_filesystem_get_file from sd //IMGP3609.JPG ret = -108  
+[m[16:24:19:095 [1;32mINFO[m-]:capture_image[3171]:----get file to buffer   0 ms
+[m[16:24:19:096 [1;32mINFO[m-]:capture_image[3176]:----capture out    
+[m[16:24:19:097 [1;32mINFO[m-]:captureImage[1579]:[0;32;31m----captureImage ret -108  p:   ; 
+[m[16:24:19:097 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:-108;/app/sd/normal/SP_0080.jpg]
+[m

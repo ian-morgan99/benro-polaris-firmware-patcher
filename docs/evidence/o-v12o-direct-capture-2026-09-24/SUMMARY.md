@@ -90,6 +90,29 @@ The camera is still attached to the PC, so the camlib/iolib are not expected in
 the daemon maps yet. Physical capture qualification remains pending camera
 power-cycle and attachment to Polaris.
 
+### First attached-camera canary
+
+The K-3 III was subsequently power-cycled and attached to Polaris as USB
+`25fb:0189`. Code 286 reported the expected model and `state:1`, but incorrectly
+reported `photoFormat:2`. The daemon's authoritative `imageformat` widget read
+showed `Current: RAW+JPEG` and `numOfCaptureImage 2`.
+
+The fail-closed two-shot canary stopped after its first shutter. Exposure
+initiation passed (`state:1`) and the camera emitted the first object event,
+`/IMGP3609.JPG` (`state:4`). Transfer then failed before any 773 file event:
+
+```
+gp_filesystem_get_file from sd //IMGP3609.JPG ret = -108
+captureImage ret -108
+```
+
+The client consequently received lifecycle `[1, 4, -108]`; it did not issue a
+second shutter. pgphoto PID remained 3840 across the attempt. This proves the
+o-v12n pre-dispatch SIGSEGV is removed and exposes the next first divergence:
+the legacy daemon supplies folder `sd` and doubled-slash filename to the
+filesystem transfer for the first RAW+JPEG object. No timeout workaround is
+justified. Raw evidence is under this directory's `raw/` subtree.
+
 The working wake handoff starts NetworkManager's
 saved-profile association first, then sends the bare GATT connect while that
 association is already pending. This produced `ServicesResolved: yes` and the
@@ -106,8 +129,11 @@ This corrects the earlier failed sequencing: beginning Wi-Fi association eight
 seconds after the short wake connection was too late. No characteristic write
 or BLE pairing was required.
 
-Next: power-cycle the camera to clear the retained Pentax vendor owner, attach
-it to Polaris, then run the required physical matrix below.
+Next: compare this exact path construction with the last working packaged
+capture and with direct libgphoto2 at the installed SHA; correct the owning
+source boundary, rebuild/install canonically, then restart the matrix. Do not
+issue another shutter on o-v12o until the `sd //IMGP3609.JPG` divergence is
+understood.
 
 ## Required physical matrix
 

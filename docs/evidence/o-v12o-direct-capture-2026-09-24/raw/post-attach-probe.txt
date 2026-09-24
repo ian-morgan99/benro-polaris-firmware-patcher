@@ -1,0 +1,10 @@
+2026-09-24T15:23:57Z TX 1&284&2&-100#
+2026-09-24T15:23:57Z RX 284@mode:1;state:0;#
+2026-09-24T15:23:57Z TX 1&820&2&-100#
+2026-09-24T15:23:57Z RX 820@ret:-1;#
+2026-09-24T15:23:57Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-09-24T15:23:57Z TX 1&286&2&-100#
+2026-09-24T15:23:57Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-09-24T15:23:57Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-09-24T15:23:57Z SUMMARY model=pentax k-3 mark iii state=1 photoFormat=2
+2026-09-24T15:23:57Z PROBE-DONE
