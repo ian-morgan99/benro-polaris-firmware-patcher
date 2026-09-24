@@ -135,6 +135,37 @@ source boundary, rebuild/install canonically, then restart the matrix. Do not
 issue another shutter on o-v12o until the `sd //IMGP3609.JPG` divergence is
 understood.
 
+### Successor fix and artifact
+
+The first divergence is now understood. Reconciliation initially required
+zero companions and only increased that obligation from post-primary
+GetAllConditions samples. The same required pre-shutter readiness sample had
+already reported RAW+JPEG, but that value could disappear/change after primary
+finalization. The loop therefore returned with zero extras, leaving Benro's
+legacy `sd` listing empty.
+
+libgphoto2 commit [`d8c0c0026`](https://github.com/ian-morgan99/libgphoto2/commit/d8c0c0026bfcb6ad3f53b828eb4961d73ca4171a)
+preserves the output obligation from the existing pre-shutter readiness sample
+and passes it as reconciliation's minimum count. Later samples may increase,
+but never erase, that count. This is camera-mode-driven one-versus-two-object
+waiting, not a fixed delay. Focused Pentax tests and host `ptp2.so` compile
+passed.
+
+Successor registry id: `o-v12p-mode-contract-20260924`:
+
+- build id `6.0.0.54.25-o-v12p-mode-contract`;
+- zip MD5 `dd5c0615e36f1f7c92773936422dcddf`;
+- zip SHA-256
+  `7223f7b4cf3abd53ed0da98abddb5d15a9b6d38b6f0371e8ded1bb141fda428a`;
+- appfs MD5 `d7c7162c4ae0913c29f67ce21a1a0081`;
+- PrivateResearch commit `161aaf5`.
+
+The clean ARM matched-stack build passed architecture/ABI/symbol, wrapper,
+appfs, six-entry manifest and package gates. The pre-release gate reported
+3 PASS, 0 FAIL, 1 stock-path SKIP; private upload independently passed package
+structure and all six manifest hashes. Installation and live qualification are
+pending a handover checkpoint commit.
+
 ## Required physical matrix
 
 1. JPEG-only: three captures.
