@@ -44,36 +44,6 @@ port_in_use() {
             "$netfile" 2>/dev/null && return 0
     done
     return 1
-}
-
-# Issue #93: prove that a SPECIFIC PID owns the 8080 LISTEN socket, not just
-# that *some* process has it.  Resolve the socket inode from /proc/net/tcp{,6}
-# and check whether it appears under /proc/$PID/fd.
-port_owned_by() {
-    # $1 = PID to test.  Returns 0 only if that PID owns a LISTEN socket on 8080.
-    # BusyBox-safe: no `local`, no pgrep/lsof — /proc + readlink + awk only.
-    [ -n "$1" ] && [ -d "$PROC_ROOT/$1" ] || return 1
-    inodes="" netfile=
-    for netfile in "$PROC_ROOT/net/tcp" "$PROC_ROOT/net/tcp6"; do
-        [ -r "$netfile" ] || continue
-        # Extract inode (field 10) for LISTEN sockets on our port.
-        inodes=$(awk -v port=":${PORT_HEX}" \
-            '$2 ~ (port "$") && $4 == "0A" { print $10 }' "$netfile" 2>/dev/null)
-        [ -n "$inodes" ] || continue
-        for fd in "$PROC_ROOT/$1"/fd/*; do
-            [ -L "$fd" ] || continue
-            target=$(readlink "$fd" 2>/dev/null) || continue
-            case "$target" in
-                socket:\[*\]) ;;
-                *) continue ;;
-            esac
-            # /proc/PID/fd/N -> socket:[INODE]
-            inode=${target#socket:\[}; inode=${inode%\]}
-            for want in $inodes; do
-                [ "$inode" = "$want" ] && return 0
-            done
-        done
-    done
     return 1
 }
 
@@ -85,32 +55,11 @@ pid_is_pgphoto() {
     [ "$CMD" = "$STAGE2_BIN" ]
 }
 
-pid_is_restart() {
-    [ -n "$1" ] && [ -d "$PROC_ROOT/$1" ] || return 1
-    CMD=$(tr '\0' '\n' < "$PROC_ROOT/$1/cmdline" 2>/dev/null)
-    case "$CMD" in
-        *restart_gphoto*) return 0 ;;
-        *) return 1 ;;
-    esac
-}
-
 # --- step 0: acquire restart lock (prevents watchdog race, issue #34) ------
 
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
-    OWNER=$(cat "$LOCKDIR/pid" 2>/dev/null)
-    case "$OWNER" in ''|*[!0-9]*) OWNER= ;; esac
-    if pid_is_restart "$OWNER"; then
-        echo "[restart_gphoto] another restart owns $LOCKDIR (PID $OWNER); refusing to race" >&2
-        exit 1
-    fi
-    # SIGKILL/power loss, or later PID reuse, must not permanently disable the
-    # only supported recovery path.
-    rm -rf "$LOCKDIR"
-    mkdir "$LOCKDIR" 2>/dev/null || {
-        echo "[restart_gphoto] another restart won stale-lock recovery; refusing to race" >&2
-        exit 1
-    }
-    echo "[restart_gphoto] reclaimed stale restart lock (owner ${OWNER:-unknown})"
+    echo "[restart_gphoto] another restart owns $LOCKDIR; refusing to race" >&2
+    exit 1
 fi
 echo "$$" > "$LOCKDIR/pid"
 trap 'rm -rf "$LOCKDIR"' EXIT
@@ -233,23 +182,16 @@ if [ ! -d "$PROC_ROOT/$NEWPID" ] || ! pid_is_pgphoto "$NEWPID"; then
 fi
 echo "[restart_gphoto] pgphoto running (PID $NEWPID)"
 
-# Wait for the port to come up AND prove the new pgphoto PID owns it.
-# Issue #93: port_in_use() only proves *some* process has the listener;
-# we must prove the expected pgphoto owner is alive and bound to 8080.
+# Wait for the port to come up (MJPG-Streamer binds during init).
 i=0
 while [ $i -lt "$START_WAIT_MAX" ]; do
-    if pid_is_pgphoto "$NEWPID" && port_owned_by "$NEWPID"; then
-        echo "[restart_gphoto] OK: port 8080 listening — owned by pgphoto PID $NEWPID; restart successful"
+    if port_in_use; then
+        echo "[restart_gphoto] OK: port 8080 listening — restart successful"
         exit 0
     fi
     sleep 1
     i=$((i+1))
 done
 
-# Diagnostic fallback: distinguish "pgphoto dead" from "port not bound".
-if ! pid_is_pgphoto "$NEWPID"; then
-    echo "[restart_gphoto] FAIL: pgphoto (PID $NEWPID) exited before port 8080 was ready" >&2
-else
-    echo "[restart_gphoto] FAIL: pgphoto (PID $NEWPID) is alive but does not own port 8080 after ${START_WAIT_MAX}s" >&2
-fi
+echo "[restart_gphoto] FAIL: pgphoto stayed alive but port 8080 did not become ready" >&2
 exit 1

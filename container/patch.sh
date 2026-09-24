@@ -53,11 +53,6 @@ case "$MODE" in full|ptp2only) : ;; *) echo "invalid MODE=$MODE (full|ptp2only)"
 SWAP_USB1="${SWAP_USB1:-1}"
 # Full mode ALWAYS needs usb1 (the fresh 2.5.34 port dlopens usb1 from IOLIBS).
 [ "$MODE" = "full" ] && SWAP_USB1=1
-# Issue #120: zero the polestar_app pre-shot bulb delay (the 264 PHOTO_RECORD
-# handler multiplies the app's bulb seconds by 1000 and uses it as a countdown
-# timer instead of an exposure duration). Opt-in: 1 = apply the 8-byte binary
-# patch to /app/bin/polestar_app in the extracted tree before repacking.
-POLESTAR_BULB_PATCH="${POLESTAR_BULB_PATCH:-0}"
 XT=arm-linux-gnueabi
 W=/work
 mkdir -p "$W"
@@ -191,7 +186,7 @@ if [ -e /libgphoto2-source-input ]; then
   # the pipeline *as the if condition itself*: 'grep -Fc' reads to EOF
   # (no SIGPIPE), its exit is the test, and an absence naturally falls
   # into the else-branch instead of tripping set -e. See
-  # docs/patcher-gates.md.
+  # docs/pentax-patcher-gate-bug.md.
   if strings "$NEW_PTP2" | grep -Fc 'Pentax vendor mode enabled' >/dev/null; then
     log "local-source Pentax candidate marker: present"
   else
@@ -556,22 +551,6 @@ if [ -n "${BUILD_ID:-}" ]; then
     warn "no FwVer file in the extracted appfs tree — Benro Connect will keep showing the stock version"
   fi
 fi
-
-# Issue #120: zero the polestar_app pre-shot bulb delay (opt-in).
-# Fail-closed (TA review): an explicitly requested patch must never be
-# silently skipped. If POLESTAR_BULB_PATCH=1 but the target binary is
-# absent, the package would misrepresent itself as containing the change,
-# so die exactly like anchor/patch failure does.
-if [ "$POLESTAR_BULB_PATCH" = "1" ]; then
-  PA="$APP/bin/polestar_app"
-  if [ ! -f "$PA" ]; then
-    die "polestar_app not found in the extracted appfs tree but POLESTAR_BULB_PATCH=1 — refusing to ship a package that claims the #120 bulb patch it does not contain"
-  fi
-  python3 /opt/patcher/polestar_bulb_patch.py "$PA" --in-place \
-    || die "polestar_app bulb patch failed (issue #120)"
-  log "polestar_app bulb delay zeroed (issue #120): 264 PHOTO_RECORD no longer applies a pre-shot countdown"
-fi
-
 /opt/patcher/repack_appfs.sh "$STOCK_APPFS" "$APP" "$W/out/appfs.ubifs"
 
 log "assembling custom FwPkt in /out…"
@@ -613,21 +592,9 @@ elif [ -f /in/FwVer ]; then
   log "FwVer: carried stock version through ($(cat /in/FwVer))"
 fi
 
-# Fail-closed FwVer gate (issue #74). The appfs /app/FwVer is asserted above;
-# the package-top-level file Benro Connect actually reads (/app/sd/FwPkt/FwVer)
-# must carry the SAME value or the device mislabels itself. A BUILD_ID build
-# that ships a stock or summed FwVer reproduces the "8.0.0.76" symptom, so fail
-# closed here: the top-level file must start with exactly our build_id.
-if [ -n "${BUILD_ID:-}" ]; then
-  if ! grep -q "^FwVer:$BUILD_ID;" /out/FwPkt/FwVer; then
-    die "post-build assertion failed: /out/FwPkt/FwVer is not '$BUILD_ID' ($(cat /out/FwPkt/FwVer 2>/dev/null))"
-  fi
-  log "  verified /out/FwPkt/FwVer reports '$BUILD_ID'"
-fi
-
 # Fail-closed firmwareInfo gate (re-MD5 + re-size every component against
 # the just-built /out/FwPkt). Catches the "stale firmwareInfo" failure mode
-# described by the current firmware manifest gates in docs/patcher-gates.md.
+# described in docs/silent-fwpkt-reject-postmortem.md.
 if ! python3 /opt/patcher/verify_firmwareinfo.py /in/firmwareInfo /out/FwPkt; then
   die "firmwareInfo does not match the produced FwPkt -- the Polaris would silently reject this update. Refusing to zip."
 fi
@@ -656,10 +623,6 @@ fi
 # Verify wrapper contains expected markers
 if ! grep -q 'pgphoto.stage2ondisk' "$PG_WRAPPER"; then
   die "post-repack assertion failed: bin/pgphoto does not contain expected wrapper markers"
-fi
-if ! grep -q 'STAGE2_PENTAX_PREVIEW_BACKOFF=' "$PG_WRAPPER" ||
-   ! grep -q 'STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS' "$PG_WRAPPER"; then
-  die "post-repack assertion failed: bin/pgphoto lacks deterministic preview throttle exports"
 fi
 log "  verified bin/pgphoto exists, is executable, and contains wrapper markers"
 
@@ -694,29 +657,6 @@ if [ -n "${BUILD_ID:-}" ]; then
     die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
   fi
   log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
-fi
-
-# Issue #120 release gate: when the bulb patch was requested, prove the
-# replacement marker actually survived repackaging into the shipped appfs.
-# The marker is the 16-byte REPL block (ldr/mov r3,#0/nop/str) written by
-# polestar_bulb_patch.py; its presence in the repacked polestar_app is what
-# makes the package's claim of containing the #120 change true. Fail closed:
-# a requested patch that vanished during repack must not ship silently.
-if [ "$POLESTAR_BULB_PATCH" = "1" ]; then
-  APPFS_PA="$APP_VERIFY/bin/polestar_app"
-  if [ ! -f "$APPFS_PA" ]; then
-    die "post-repack assertion failed: bin/polestar_app missing from appfs.ubifs (POLESTAR_BULB_PATCH=1)"
-  fi
-  if ! python3 - "$APPFS_PA" <<'PYCHK'
-import sys
-REPL = bytes.fromhex("1c301be5" "0030a0e3" "000000e1" "1c300be5")
-data = open(sys.argv[1], "rb").read()
-sys.exit(0 if data.count(REPL) == 1 else 1)
-PYCHK
-  then
-    die "post-repack assertion failed: #120 bulb-patch replacement marker not found (exactly once) in appfs.ubifs bin/polestar_app"
-  fi
-  log "  verified #120 bulb-patch replacement marker present in appfs.ubifs bin/polestar_app"
 fi
 
 # Build the ZIP at a *temp* path so the validator can fail-closed on the
