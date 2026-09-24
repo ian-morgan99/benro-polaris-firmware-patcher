@@ -66,9 +66,29 @@ entries exactly:
 - polaris403 `4facafa7d29c1e6c2a125b8309c9b901`;
 - polaris413 `c0299d06a15f5c2fbecb9a6db76a29c5`.
 
-The staged FwVer is `6.0.0.54.24-o-v12o-direct-capture`. It is now safe for
-the normal watcher/reboot install; post-boot identity and runtime proof remain
-pending.
+The staged FwVer was `6.0.0.54.24-o-v12o-direct-capture`. After stopping the
+keepalive, `sync; /sbin/reboot` produced a proven SSH drop and the normal
+watcher consumed `/app/sd/FwPkt`. Post-boot identity and runtime proof passed:
+
+- active SSID/BSSID/interface: `polaris_d13e86`, `48:E7:DA:D4:B5:73`,
+  `wlp8s0`; route source `192.168.0.4`;
+- `/app/FwVer`: `6.0.0.54.24-o-v12o-direct-capture`;
+- installed provenance: libgphoto2
+  `ab0de090c63e707afccc6d425c1c596799952341`, patcher
+  `073f4718eaaded48eb9d1ebcc695d0bbd97554a3`;
+- stage2/legacy core MD5 pair both `5973e8c8999b1f4f01be70a9cafdb7ba`;
+- stage2/legacy port MD5 pair both `ad50e83594397aef48b63ed2375890cc`;
+- stage2/legacy `ptp2.so` both `ad48c745594640a35e09a398fe2572b5`;
+- stage2/legacy `usb1.so` both `4423bba29bf8c5d899598841ec3e6310`;
+- PID 250 maps the stage2 core, port and `libpolaris_stage2.so`; it remained
+  unchanged across four samples spanning 31 seconds;
+- one polestar and one pgphoto process; listeners 22/8080/9090 present;
+- no `capture-shim: gp_camera_capture`, SIGSEGV, `No iolibs`, or `state:-2`
+  signature in Clog.
+
+The camera is still attached to the PC, so the camlib/iolib are not expected in
+the daemon maps yet. Physical capture qualification remains pending camera
+power-cycle and attachment to Polaris.
 
 The working wake handoff starts NetworkManager's
 saved-profile association first, then sends the bare GATT connect while that
@@ -86,8 +106,8 @@ This corrects the earlier failed sequencing: beginning Wi-Fi association eight
 seconds after the short wake connection was too late. No characteristic write
 or BLE pairing was required.
 
-Next: reboot through the normal watcher and prove runtime hashes/maps before
-camera attachment.
+Next: power-cycle the camera to clear the retained Pentax vendor owner, attach
+it to Polaris, then run the required physical matrix below.
 
 ## Required physical matrix
 
