@@ -53,14 +53,25 @@ re-verification.
 
 ## Deployment status
 
-Not installed. The Polaris AP was absent, all saved Wi-Fi profiles reported the
-network unavailable, and the route to `192.168.0.1` remained through the home
-router. Two documented BLE wake attempts reached a transient GATT connection
-but did not raise the AP. No staging was attempted against an unverified route.
+Installation in progress. The working wake handoff starts NetworkManager's
+saved-profile association first, then sends the bare GATT connect while that
+association is already pending. This produced `ServicesResolved: yes` and the
+Wi-Fi activation completed even though BlueZ later reported no BR/EDR profile.
+Identity was then proven independently:
 
-Once the powered-on Polaris AP is available: prove BSSID/route/FwVer, stage the
-complete extracted registered tree, verify on-card manifest MD5s, reboot through
-the normal watcher, and prove runtime hashes/maps before camera attachment.
+- SSID `polaris_d13e86`, BSSID `48:E7:DA:D4:B5:73`, interface `wlp8s0`;
+- `192.168.0.1 dev wlp8s0 src 192.168.0.4`;
+- installed FwVer `6.0.0.54.23-o-v12n-companion-ownership`;
+- installed provenance `ab0de090c` / patcher `7bcbc39`;
+- one polestar PID and one pgphoto PID; listeners 22/8080/9090 present.
+
+This corrects the earlier failed sequencing: beginning Wi-Fi association eight
+seconds after the short wake connection was too late. No characteristic write
+or BLE pairing was required.
+
+Next: prove the SD target is empty, stage the complete extracted registered
+tree, verify on-card manifest MD5s, reboot through the normal watcher, and prove
+runtime hashes/maps before camera attachment.
 
 ## Required physical matrix
 
