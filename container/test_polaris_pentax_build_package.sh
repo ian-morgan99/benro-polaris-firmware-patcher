@@ -227,9 +227,30 @@ grep -F 'Pentax:K-1 Mark II (PTP mode)' "$PTP2_MARKER_FILE" >/dev/null || {
   echo "K-1 II model not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
 grep -F 'Pentax:K-3 Mark III (MTP mode)' "$PTP2_MARKER_FILE" >/dev/null || {
   echo "K-3 III model not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
+for marker in \
+  'boundary=camlib-enter' \
+  'boundary=preconditions-enter' \
+  'boundary=preconditions-return' \
+  'boundary=initiate-enter' \
+  'boundary=initiate-return'
+do
+  grep -F "$marker" "$PTP2_MARKER_FILE" >/dev/null || {
+    echo "capture checkpoint not in on-disk ptp2: $marker" >&2
+    rm -f "$PTP2_MARKER_FILE"
+    exit 1
+  }
+done
 rm -f "$PTP2_MARKER_FILE"
 # And the trampolined on-disk core binary is shipped.
 [ -f "$T/stage2-ondisk/libgphoto2.so.6" ] || { echo "missing on-disk libgphoto2.so.6" >&2; exit 1; }
+CORE_MARKER_FILE="$(mktemp)"
+strings "$T/stage2-ondisk/libgphoto2.so.6" > "$CORE_MARKER_FILE" || true
+grep -F '[libgphoto2] gp_camera_capture: enter' "$CORE_MARKER_FILE" >/dev/null || {
+  echo "direct-capture entry checkpoint not in on-disk core" >&2
+  rm -f "$CORE_MARKER_FILE"
+  exit 1
+}
+rm -f "$CORE_MARKER_FILE"
 
 # 7) The stage-2 loader compiles with the same cross-toolchain the image uses.
 #    The generated slot table (stage2_ondisk_table.h) and stage2_policy.h

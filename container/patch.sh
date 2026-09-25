@@ -289,6 +289,25 @@ if [ "$MODE" = "full" ]; then
     case "$CMAX" in GLIBC_2.4|GLIBC_2.5|GLIBC_2.6|GLIBC_2.7|GLIBC_2.8|GLIBC_2.9|GLIBC_2.1[0-9]|GLIBC_2.2[0-4]) : ;;
       *) die "$L glibc ceiling $CMAX exceeds device glibc 2.24";; esac
   done
+  # The current hardware discriminator depends on unconditional stderr
+  # checkpoints at the generic core entry and Pentax transaction boundaries.
+  # Fail closed here so a provenance-correct build cannot silently ship an
+  # unobservable camlib/core pair again.
+  strings "$NEW_CORE" >"$W/core_strings.txt" || true
+  strings "$NEW_PTP2" >"$W/ptp2_strings.txt" || true
+  grep -F '[libgphoto2] gp_camera_capture: enter' "$W/core_strings.txt" >/dev/null \
+    || die "rebuilt core lacks direct-capture entry checkpoint"
+  for marker in \
+    'boundary=camlib-enter' \
+    'boundary=preconditions-enter' \
+    'boundary=preconditions-return' \
+    'boundary=initiate-enter' \
+    'boundary=initiate-return'
+  do
+    grep -F "$marker" "$W/ptp2_strings.txt" >/dev/null \
+      || die "rebuilt ptp2 lacks capture checkpoint: $marker"
+  done
+  log "  direct-capture boundary checkpoints present in core + ptp2 ✓"
   # Every one of the 64 boundary symbols the loader dlsym's must be exported by the
   # new core or port, else the loader would leave that slot at the abort stub.
   $XT-nm -D --defined-only "$NEW_CORE" | awk '{print $3}'  >"$W/newexp.txt"
