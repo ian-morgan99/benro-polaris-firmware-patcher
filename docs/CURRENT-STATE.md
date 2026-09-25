@@ -30,6 +30,12 @@ the attached K-3 III RAW+JPEG mode. Remaining physical qualification is scoped
 to cancellation, Live View interaction, external mode/config changes, other
 bodies/modes and soak; do not generalise this bounded pass to those paths.
 
+A subsequent bounded Preview/Astro-equivalent check also passed: Preview was
+started, suspended for three consecutive RAW+JPEG captures (`SP_0097` through
+`SP_0099`, all `[1,4,0]`), then restored and confirmed ON. This qualifies the
+Benro control-plane suspend/capture/restore transition, not sustained preview
+JPEG delivery or the native OpenPolaris Astro UI.
+
 ## Installed candidate and protected fallback
 
 As of 2026-09-24 the device has **o-v12n-companion-ownership**, build ID

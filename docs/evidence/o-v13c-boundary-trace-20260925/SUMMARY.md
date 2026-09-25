@@ -68,3 +68,25 @@ minimum physical acceptance question for this observed RAW+JPEG path: the next
 ordinary shutter was issued only after exposure completion, both owned outputs
 were published, and the prior operation reported idle. Broader body/mode,
 cancellation, Live View interaction and soak qualification remain separate.
+
+## Preview suspension/restoration and bounded Astro-equivalent sequence
+
+The Astro multi-shot probe had the same stale single-output assumption as the
+original two-shot gate. It now derives the output obligation from
+`photoFormat`, waits for state 4 + idle state 0 + the complete same-stem output
+set, and rejects stale/excess/mismatched outputs. The offline gate increased to
+12 container + 21 Python PASS.
+
+With Preview explicitly started and confirmed `state:1`, a three-shot run then:
+
+- stopped Preview and confirmed `state:0`;
+- completed `SP_0097`, `SP_0098`, and `SP_0099`, each with lifecycle
+  `[1,4,0]` and a same-stem DNG+JPEG pair;
+- restored Preview and confirmed `state:1`;
+- required no reconnect, USB intervention or pgphoto restart.
+
+The transcript is `preview-astro-three-shot-20260925.txt`. This proves the
+Benro control-plane Preview suspend/capture/restore sequence and a bounded
+three-shot Astro-equivalent workload. It does not prove sustained JPEG preview
+data-plane delivery to OpenPolaris, native Astro UI workflow, long soak, or
+camera-side cancellation.

@@ -11,6 +11,7 @@ on a negative state, ambiguous completion, disconnect, or timeout.
 from __future__ import annotations
 
 import argparse
+import posixpath
 import socket
 import sys
 import time
@@ -126,49 +127,52 @@ def restore_preview(p: Polaris, was_on: bool) -> None:
     print(f"{stamp()} PREVIEW restored_on", flush=True)
 
 
-def capture(p: Polaris, number: int, timeout: float) -> None:
+def expected_file_count(photo_format: str | None) -> int:
+    return 2 if photo_format == "2" else 1
+
+
+def capture(p: Polaris, number: int, timeout: float,
+            expected_files: int = 1, seen_paths: set[str] | None = None) -> list[str]:
+    if seen_paths is None:
+        seen_paths = set()
     p.send(264, subtype=4, payload="state:1;bulb:0;c:-1;")
     deadline = time.monotonic() + timeout
     states: list[int] = []
-    file_path: str | None = None
+    files: list[str] = []
     while True:
         code, payload = p.frame(deadline)
         if code == 773:
             path = field(payload, "path")
             if path:
-                if file_path is not None and path != file_path:
+                if path in seen_paths:
+                    raise RuntimeError(f"shot {number}: stale file event {path!r}")
+                if path not in files:
+                    files.append(path)
+                    print(f"{stamp()} SHOT {number} file={path}", flush=True)
+        elif code == 264:
+            value = field(payload, "state")
+            if value is not None:
+                try:
+                    state = int(value)
+                except ValueError:
+                    raise RuntimeError(f"shot {number}: invalid state {value!r}")
+                states.append(state)
+                print(f"{stamp()} SHOT {number} state={state} lifecycle={states}", flush=True)
+                if state < 0:
                     raise RuntimeError(
-                        f"shot {number}: multiple file events before completion: "
-                        f"{file_path!r}, {path!r}"
+                        f"shot {number}: terminal failure state {state}; lifecycle={states}"
                     )
-                file_path = path
-                print(f"{stamp()} SHOT {number} file={file_path}", flush=True)
-            if states and file_path:
-                print(
-                    f"{stamp()} SHOT {number} PASS lifecycle={states} file={file_path}",
-                    flush=True,
-                )
-                return
-            continue
-        if code != 264:
-            continue
-        value = field(payload, "state")
-        if value is None:
-            continue
-        try:
-            state = int(value)
-        except ValueError:
-            raise RuntimeError(f"shot {number}: invalid state {value!r}")
-        states.append(state)
-        print(f"{stamp()} SHOT {number} state={state} lifecycle={states}", flush=True)
-        if state < 0:
-            raise RuntimeError(f"shot {number}: terminal failure state {state}; lifecycle={states}")
-        if file_path:
+        if len(files) > expected_files:
+            raise RuntimeError(f"shot {number}: excess file events {files!r}")
+        if len(files) == expected_files and len({posixpath.splitext(f)[0] for f in files}) != 1:
+            raise RuntimeError(f"shot {number}: files do not share an exposure stem: {files!r}")
+        if 4 in states and 0 in states and len(files) == expected_files:
             print(
-                f"{stamp()} SHOT {number} PASS lifecycle={states} file={file_path}",
+                f"{stamp()} SHOT {number} PASS lifecycle={states} files={files}",
                 flush=True,
             )
-            return
+            seen_paths.update(files)
+            return files
 
 
 def main() -> int:
@@ -196,9 +200,16 @@ def main() -> int:
     preview_was_on = False
     try:
         authenticate(p)
+        p.send(286)
+        camera = p.wait_code(286, 10)
+        if field(camera, "state") != "1":
+            raise RuntimeError(f"camera not ready: {camera}")
+        expected_files = expected_file_count(field(camera, "photoFormat"))
+        print(f"{stamp()} OUTPUT expected_files={expected_files}", flush=True)
         preview_was_on = suspend_preview(p)
+        seen_paths: set[str] = set()
         for number in range(1, args.shots + 1):
-            capture(p, number, args.shot_timeout)
+            capture(p, number, args.shot_timeout, expected_files, seen_paths)
             if number != args.shots:
                 print(f"{stamp()} INTERVAL sleeping={args.interval}s", flush=True)
                 time.sleep(args.interval)

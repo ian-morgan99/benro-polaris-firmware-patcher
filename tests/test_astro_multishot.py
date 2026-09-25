@@ -33,6 +33,7 @@ class CaptureContractTest(unittest.TestCase):
             (264, "state:1;bulb:0;c:-1;"),
             (264, "state:4;bulb:0;c:-1;"),
             (773, "path:/app/sd/normal/SP_0043.dng;"),
+            (264, "state:0;bulb:0;c:-1;"),
         ])
         MODULE.capture(device, 1, 1)
         self.assertEqual(device.sent, [(264, 4, "state:1;bulb:0;c:-1;")])
@@ -42,13 +43,31 @@ class CaptureContractTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "terminal failure"):
             MODULE.capture(device, 1, 1)
 
-    def test_rejects_two_different_files_for_one_shot(self):
+    def test_raw_jpeg_requires_same_stem_and_idle(self):
+        device = FakePolaris([
+            (264, "state:4;"),
+            (773, "path:/app/sd/normal/SP_0043.dng;"),
+            (773, "path:/app/sd/normal/SP_0043.jpg;"),
+            (264, "state:0;"),
+        ])
+        self.assertEqual(
+            MODULE.capture(device, 1, 1, expected_files=2),
+            ["/app/sd/normal/SP_0043.dng", "/app/sd/normal/SP_0043.jpg"],
+        )
+
+    def test_rejects_two_different_exposure_stems(self):
         device = FakePolaris([
             (773, "path:/app/sd/normal/SP_0043.dng;"),
-            (773, "path:/app/sd/normal/SP_0044.dng;"),
+            (773, "path:/app/sd/normal/SP_0044.jpg;"),
         ])
-        with self.assertRaisesRegex(RuntimeError, "multiple file events"):
-            MODULE.capture(device, 1, 1)
+        with self.assertRaisesRegex(RuntimeError, "exposure stem"):
+            MODULE.capture(device, 1, 1, expected_files=2)
+
+    def test_rejects_stale_file_from_prior_shot(self):
+        path = "/app/sd/normal/SP_0043.dng"
+        device = FakePolaris([(773, f"path:{path};")])
+        with self.assertRaisesRegex(RuntimeError, "stale file"):
+            MODULE.capture(device, 2, 1, seen_paths={path})
 
 
 if __name__ == "__main__":
