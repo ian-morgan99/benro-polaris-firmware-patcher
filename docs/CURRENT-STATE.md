@@ -3,6 +3,24 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
+## 2026-09-25 convergence candidate
+
+`o-v13-admission-convergence-20260925` is the current **BUILD-VALIDATED,
+NOT-INSTALLED** convergence candidate. It embeds libgphoto2 `50ba50415` from
+the pushed `convergence/pentax-admission-20260925` branch and patcher
+`1c1d386`; the deterministic harness contract is `a8b6581`. The artifact is
+registered and privately published. It returns a capture after owned output is
+transferred/finalized/published, moves the broad readiness decision to the next
+shutter, and logs strict versus output-safe admission from the same conditions
+sample. Default behavior remains strict; `PENTAX_ADMISSION_MODE=output-safe`
+is a diagnostic hardware discriminator, not an approved release policy.
+
+The next physical spend is deliberately one question: whether no active
+exposure (+32) and no pending candidate (+36) safely admit a second ordinary
+`InitiateCapture` while broad activity (+104) still reports unsafe. Exact
+hashes, extracted component proof, test results and the bounded acceptance run
+are in `evidence/o-v13-admission-convergence-20260925/SUMMARY.md`.
+
 ## Installed candidate and protected fallback
 
 As of 2026-09-24 the device has **o-v12n-companion-ownership**, build ID
