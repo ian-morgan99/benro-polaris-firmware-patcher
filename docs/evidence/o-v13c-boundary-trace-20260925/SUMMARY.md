@@ -26,6 +26,7 @@ timing. It emits unconditional stderr checkpoints at:
 - zip SHA-256: `ff5a3be41e776b781c7fce004761f09e6a52e6c2c57a8bf4122a6f29b8ed8333`
 - appfs MD5: `954934c8146b8bba1a40dfad3cb47c62`
 - appfs SHA-256: `3f84195d7bc337ac3a458cbbd36642697fd98a9235b42c46ab9a141bdc537ef9`
+- private artifact commit: `d92b1d094`
 
 ## Gates
 
