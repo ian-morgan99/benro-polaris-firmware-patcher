@@ -1,6 +1,6 @@
 # o-v13b direct-admission replacement
 
-Status: **BUILD-VALIDATED; NOT INSTALLED; CAMERA ACCEPTANCE PENDING**
+Status: **INSTALLED; RUNTIME PROVENANCE VERIFIED; CAMERA CANARY PENDING**
 
 ## Why o-v13 was superseded
 
@@ -46,6 +46,9 @@ remain in libgphoto2.
 
 ## Remaining minimum physical acceptance
 
-Install by the sanctioned FwPkt updater, cold boot, verify hashes/maps, then run
-one canary. Only after lifecycle completion and one 773 file may the two-shot
-admission test run. Stop on any first-shot failure.
+The complete tree was staged and all six on-card sizes/MD5s matched
+`firmwareInfo`. After the sanctioned reboot, `/app/FwVer` reported the expected
+build ID and embedded provenance reported libgphoto2 `50ba504152...` and patcher
+`28c1a78bec...`; uptime reset proved the reboot. Run one canary next. Only after
+lifecycle completion and one 773 file may the two-shot admission test run.
+Stop on any first-shot failure.

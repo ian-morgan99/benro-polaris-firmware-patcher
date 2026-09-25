@@ -5,11 +5,13 @@ searching historical handovers or raw evidence.
 
 ## 2026-09-25 convergence candidate
 
-`o-v13b-direct-admission-20260925` is the current **BUILD-VALIDATED,
-NOT-INSTALLED** replacement candidate. It embeds libgphoto2 `50ba50415`,
+`o-v13b-direct-admission-20260925` is the current **INSTALLED, RUNTIME-VERIFIED,
+CANARY-PENDING** replacement candidate. It embeds libgphoto2 `50ba50415`,
 patcher `28c1a78`, and harness contract `a8b6581`; artifact bytes are privately
 published at PrivateResearch `138ff20f7`. It retains the lower-layer admission
 instrumentation and restores exact direct-to-core `gp_camera_capture` dispatch.
+The sanctioned install verified all six staged manifest entries before reboot;
+post-boot FwVer and embedded source provenance match the registered candidate.
 
 The preceding o-v13 artifact was installed and failed two bounded first-shot
 canaries: preview stopped and code 264 was accepted, but no shutter/completion/
