@@ -1,0 +1,19 @@
+[m[m[20:25:35:392 [1;31mERROR[m-]:checkGphotoTask[3315]:[0;32;31mpgphoto is exit,reboot it
+[restart_gphoto] stale PID file (PID 3907 is not pgphoto); removing
+[restart_gphoto] no running pgphoto found
+[restart_gphoto] starting pgphoto via /app/bin/pgphoto
+[m[20:25:36:431 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[291],val[state:0;ret:0;]
+[m[m[20:25:36:431 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[291],val[state:0;ret:0;]
+[m[m[20:25:36:450 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[17]:type:2;code:292;val:-100
+[m[20:25:36:451 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[292],val[state:0;]
+[m[m[20:25:36:473 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[17]:type:4;code:264;val:state:1;bulb:0;c:-1;
+[m[20:25:36:473 [1;31mERROR[m-]:SP_MakeNormalPhoto[143]:SP_PHOTO_STA_RECODING,need wait photo finish
+[m[20:25:36:473 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[264],val[state:-1005;]
+[m[m[20:25:36:483 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=17] s_u32ClientNum[1]
+[m[20:25:36:483 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[17]
+[restart_gphoto] pgphoto running (PID 5889)
+[m[20:25:38:341 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361b0000245a ;
+[m[20:25:38:341 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361b0000245a ;]
+[m[m[20:25:40:522 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:264;val:state:1;bulb:0;c:-1;
+[m[20:25:40:523 [1;31mERROR[m-]:SP_MakeNormalPhoto[143]:SP_PHOTO_STA_RECODING,need wait photo finish
+[m[20:25:40:523 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[264],val[state:-1005;]

@@ -1,0 +1,9 @@
+=== Polaris pre-release gate (2026-09-24T19:24:27Z) ===
+PASS: container deterministic harness (11 passed)
+PASS: python regression suite (15 passed)
+INFO: no --build given; package gates skipped (offline gate only)
+PASS: canary probe (device reachable, camera state=1)
+FAIL: canary shot (log: /tmp/prerelease-canary-shot.log)
+=== Pre-release gate summary: 3 passed, 1 failed, 0 skipped ===
+Failed: canary shot (log: /tmp/prerelease-canary-shot.log)
+GATE: RED — do not stage/install the FwPkt until the failed checks pass.
