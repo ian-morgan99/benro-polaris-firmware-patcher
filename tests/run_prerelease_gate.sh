@@ -76,6 +76,7 @@ if python3 -m pytest -q \
     tests/test_pentax_scenario_routing.py \
     tests/test_pentax_stability_scenarios.py \
     tests/test_pentax_stability_trace.py \
+    tests/test_canary_two_shot.py \
     tests/test_astro_multishot.py > /tmp/prerelease-pytest.log 2>&1; then
     ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
 else

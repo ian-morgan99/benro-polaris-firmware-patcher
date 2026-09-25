@@ -1,6 +1,6 @@
 # o-v13c boundary-trace candidate
 
-Status: **BUILD-VALIDATED; NOT INSTALLED**
+Status: **INSTALLED; RUNTIME-VERIFIED; K-3 III TWO-SHOT CANARY PASS**
 
 o-v13b proved that direct-to-core Stage-2 dispatch alone does not restore the
 first shutter: after a clean `state=1` start and confirmed preview stop, one
@@ -37,6 +37,34 @@ timing. It emits unconditional stderr checkpoints at:
 - package stock-manifest subgate skipped because the clean worktree has no
   stock bytes
 
-Minimum physical action after sanctioned installation: one camera-on canary.
-The last emitted checkpoint identifies the owning boundary. Do not send a
-second shutter unless completion plus a 773 file occurs.
+## Installed and physical evidence
+
+The sanctioned complete-tree update installed o-v13c and a cold reboot proved
+FwVer, embedded provenance, all matched-stack runtime hashes, and pgphoto maps
+loading the intended `/app/lib/stage2` core and port libraries. The trace
+markers were present in the installed core and ptp2 camlib.
+
+The first bounded K-3 III canary passed and published both DNG and JPEG. Its
+trace reached generic core entry, Pentax camlib entry, conditions return
+`0x2001`, and InitiateCapture return `0x2001`.
+
+The original two-shot gate then stopped after shot 1 despite receiving
+`[1,4,0]`, DNG and JPEG. It had two test defects: completion was evaluated
+only on state frames, and it assumed exactly one output despite
+`photoFormat:2` (RAW+JPEG). No second shutter was sent in that red run.
+
+The corrected fail-closed gate models the two-output obligation, accepts event
+ordering only when state 4, idle state 0, and same-stem DNG+JPEG are all seen,
+and rejects stale paths. Four deterministic regressions pass. The live rerun
+passed two captures in one unchanged session with no reconnect:
+
+- shot 1: `[1,4,0]`, `SP_0086.dng` + `SP_0086.jpg`;
+- shot 2: `[1,4,0]`, `SP_0087.dng` + `SP_0087.jpg`;
+- offline gate: 12 container + 19 Python PASS;
+- live gate: probe + two-shot PASS, 0 failures, 0 skips.
+
+The full protocol transcript is `two-shot-20260925.txt`. This answers the
+minimum physical acceptance question for this observed RAW+JPEG path: the next
+ordinary shutter was issued only after exposure completion, both owned outputs
+were published, and the prior operation reported idle. Broader body/mode,
+cancellation, Live View interaction and soak qualification remain separate.

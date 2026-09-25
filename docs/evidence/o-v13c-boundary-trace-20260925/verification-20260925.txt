@@ -1,0 +1,31 @@
+Candidate: 6.0.0.54.27-o-v13c-boundary-trace
+Verification UTC: 2026-09-25T22:44:10Z through 2026-09-25T23:51:00Z
+
+Offline pre-release gate:
+PASS: container deterministic harness (12 passed)
+PASS: python regression suite (19 passed)
+Pre-release gate summary: 2 passed, 0 failed, 0 skipped
+GATE: GREEN
+
+Live pre-release gate:
+PASS: container deterministic harness (12 passed)
+PASS: python regression suite (19 passed)
+PASS: canary probe (device reachable, camera state=1)
+PASS: two-shot gate (two distinct exposures, fail-closed)
+Pre-release gate summary: 4 passed, 0 failed, 0 skipped
+GATE: GREEN
+
+Live two-shot result:
+SHOT1 PASS states=[1, 4, 0] files=SP_0086.dng,SP_0086.jpg
+SHOT2 PASS states=[1, 4, 0] files=SP_0087.dng,SP_0087.jpg
+No reconnect, pgphoto restart, USB replug or user intervention occurred between shots.
+The complete wire transcript is two-shot-20260925.txt.
+
+Battery evidence during that run:
+RX 778@capacity:100;charge:2;
+
+Non-shutter status probe at 2026-09-25T23:51:00Z:
+AP polaris_d13e86, BSSID 48:E7:DA:D4:B5:73, route via wlp8s0
+RX 286 manufacturer=ricoh imaging company, ltd.; model=pentax k-3 mark iii;
+state=1; storage=2; photoFormat=2
+PROBE-DONE

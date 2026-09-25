@@ -5,13 +5,19 @@ searching historical handovers or raw evidence.
 
 ## 2026-09-25 convergence candidate
 
-`o-v13b-direct-admission-20260925` is the current **INSTALLED, RUNTIME-VERIFIED,
-CANARY-PENDING** replacement candidate. It embeds libgphoto2 `50ba50415`,
-patcher `28c1a78`, and harness contract `a8b6581`; artifact bytes are privately
-published at PrivateResearch `138ff20f7`. It retains the lower-layer admission
-instrumentation and restores exact direct-to-core `gp_camera_capture` dispatch.
-The sanctioned install verified all six staged manifest entries before reboot;
-post-boot FwVer and embedded source provenance match the registered candidate.
+`o-v13c-boundary-trace-20260925` is the current **INSTALLED, RUNTIME-VERIFIED,
+K-3 III TWO-SHOT CANARY PASS** candidate. It embeds libgphoto2 `4868d3649`,
+patcher build `8b075f5`, and harness contract `a8b6581`; artifact bytes are
+privately published at PrivateResearch `d92b1d094`. The sanctioned install
+verified all six staged manifest entries before reboot; post-boot FwVer,
+matched-stack hashes, loader maps and embedded provenance match the registry.
+
+One RAW+JPEG canary and the corrected same-session two-shot gate passed. The
+two shots each reported `[1,4,0]` and distinct same-stem DNG+JPEG pairs
+(`SP_0086`, `SP_0087`) with no reconnect. The second shutter was not issued
+until the first exposure completed, both output obligations were published,
+and idle was observed. Exact transcript and remaining qualification limits are
+in `evidence/o-v13c-boundary-trace-20260925/SUMMARY.md`.
 
 The preceding o-v13 artifact was installed and failed two bounded first-shot
 canaries: preview stopped and code 264 was accepted, but no shutter/completion/
@@ -19,11 +25,10 @@ canaries: preview stopped and code 264 was accepted, but no shutter/completion/
 artifact still interposed the unsafe Stage-2 capture shim and never reached the
 libgphoto2 admission trace. It is superseded; no second shutter was sent.
 
-The next physical spend is deliberately one question: whether no active
-exposure (+32) and no pending candidate (+36) safely admit a second ordinary
-`InitiateCapture` while broad activity (+104) still reports unsafe. Exact
-hashes, test results and the bounded acceptance run are in
-`evidence/o-v13b-direct-admission-20260925/SUMMARY.md`.
+The minimum repeated ordinary-shutter acceptance question is now answered for
+the attached K-3 III RAW+JPEG mode. Remaining physical qualification is scoped
+to cancellation, Live View interaction, external mode/config changes, other
+bodies/modes and soak; do not generalise this bounded pass to those paths.
 
 ## Installed candidate and protected fallback
 
