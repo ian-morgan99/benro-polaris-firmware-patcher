@@ -5,21 +5,23 @@ searching historical handovers or raw evidence.
 
 ## 2026-09-25 convergence candidate
 
-`o-v13-admission-convergence-20260925` is the current **BUILD-VALIDATED,
-NOT-INSTALLED** convergence candidate. It embeds libgphoto2 `50ba50415` from
-the pushed `convergence/pentax-admission-20260925` branch and patcher
-`1c1d386`; the deterministic harness contract is `a8b6581`. The artifact is
-registered and privately published. It returns a capture after owned output is
-transferred/finalized/published, moves the broad readiness decision to the next
-shutter, and logs strict versus output-safe admission from the same conditions
-sample. Default behavior remains strict; `PENTAX_ADMISSION_MODE=output-safe`
-is a diagnostic hardware discriminator, not an approved release policy.
+`o-v13b-direct-admission-20260925` is the current **BUILD-VALIDATED,
+NOT-INSTALLED** replacement candidate. It embeds libgphoto2 `50ba50415`,
+patcher `28c1a78`, and harness contract `a8b6581`; artifact bytes are privately
+published at PrivateResearch `138ff20f7`. It retains the lower-layer admission
+instrumentation and restores exact direct-to-core `gp_camera_capture` dispatch.
+
+The preceding o-v13 artifact was installed and failed two bounded first-shot
+canaries: preview stopped and code 264 was accepted, but no shutter/completion/
+773 followed and the session ended at `state:-10`. Runtime logs proved that
+artifact still interposed the unsafe Stage-2 capture shim and never reached the
+libgphoto2 admission trace. It is superseded; no second shutter was sent.
 
 The next physical spend is deliberately one question: whether no active
 exposure (+32) and no pending candidate (+36) safely admit a second ordinary
 `InitiateCapture` while broad activity (+104) still reports unsafe. Exact
-hashes, extracted component proof, test results and the bounded acceptance run
-are in `evidence/o-v13-admission-convergence-20260925/SUMMARY.md`.
+hashes, test results and the bounded acceptance run are in
+`evidence/o-v13b-direct-admission-20260925/SUMMARY.md`.
 
 ## Installed candidate and protected fallback
 
