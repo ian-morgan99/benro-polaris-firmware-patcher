@@ -37,6 +37,15 @@ replaces the self-fulfilling ownership mock with a production helper used by
 the real companion-publication callback. Focused Pentax tests and `ptp2.so`
 compile pass. This is a source/test correction only; it does not justify a new
 FwPkt until the o-v12n repeat-capture failure is understood.
+
+## Pre-upgrade baseline (2026-09-25)
+
+Before the 2026-09-25 upgrade work, **o-v12s-preupgrade-20260925** was built
+and registered as the rollback reference: libgphoto2 `50ba504` (latest fork
+head, clean checkout) + patcher main `1c1d386`, build id
+`6.0.0.54.26-o-v12s-preupgrade`, pre-release gate green (4/4). It is privately
+published and registered in `FWPKT-PROVENANCE-CONTRACT.md`. The earlier
+attempts o-v12q and o-v12r are superseded by it (see the registry addendum).
 The historical ledger and promotion matrix are in
 `PENTAX-CAPTURE-VERSION-LEDGER-2026-09-23.md`.
 The current audit and next-action boundary are in
