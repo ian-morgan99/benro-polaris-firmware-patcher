@@ -90,3 +90,15 @@ Benro control-plane Preview suspend/capture/restore sequence and a bounded
 three-shot Astro-equivalent workload. It does not prove sustained JPEG preview
 data-plane delivery to OpenPolaris, native Astro UI workflow, long soak, or
 camera-side cancellation.
+
+## Configuration settle observation
+
+A reversible ISO 0→1→0 probe found that `258 ret:0` precedes observable value
+publication. Immediate code-265 reads returned the old value; the delayed
+`V:1` event arrived only after the restore request had begun. A final bounded
+recovery confirmed ISO `V:0`, Preview `state:1`, and camera `state:1`.
+
+This is a test-oracle finding, not evidence that configuration is broken or
+that Preview blocks writes. `config-settle-observation-20260925.txt` records
+the event order. Parameter qualification needs a coded bounded-poll round-trip
+which always restores the original value and rejects stale generations.

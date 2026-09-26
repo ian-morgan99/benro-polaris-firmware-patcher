@@ -1,0 +1,36 @@
+Configuration settle observation, K-3 III, o-v13c
+UTC 2026-09-25T23:58:31Z to 2026-09-25T23:59:35Z
+
+Initial state:
+- Preview state:1
+- camera state:1
+- ISO info code 265: RD:0;V:0;R:100,200,...
+
+Preview-ON attempt:
+- TX 258 type 1 iso:1
+- RX 258 iso:1;ret:0
+- immediate code-265 response still reported V:0
+- restore TX 258 iso:0 was issued
+
+Preview-OFF discriminator:
+- Preview stop acknowledged and confirmed state:0
+- initial code 265 V:0
+- TX 258 iso:1; RX ret:0
+- first requested code-265 response still reported V:0
+- after restore TX was already sent, a delayed code-265 event reported V:1
+- restore RX 258 iso:0;ret:0
+- first requested post-restore response still reported delayed V:1
+
+Recovery/final proof:
+- TX 258 iso:0; RX ret:0
+- bounded follow-up code 265 reported V:0
+- Preview start RX ret:0; query confirmed state:1
+- camera query confirmed K-3 III state:1, photoFormat:2
+
+Conclusion:
+The write acknowledgement is not synchronous with observable configuration
+publication. An immediate single read is not a valid round-trip oracle. This
+run does not prove Preview blocks configuration writes and does not qualify the
+parameter-write matrix. The next coded test must poll to a bounded deadline,
+correlate requested and observed values, restore the original value in all
+paths, and distinguish stale/delayed events from failure.
