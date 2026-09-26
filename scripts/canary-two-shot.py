@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""o-v12n two-shot RAW canary: one 9090 session, two consecutive code-264
+"""Two-shot canary: one 9090 session, two consecutive code-264
 captures with no reconnect, no pgphoto restart, and no USB re-plug.
 
-Gate per shot (RAW-only expectation):
+Gate per shot:
   - capture ack state:1 -> completion state:4;
-  - exactly one NEW file event (773) for that shot;
+  - all expected NEW file events (773) for that exposure;
   - camera returns to idle state:0 before the next shutter is issued;
   - no negative state (e.g. -10, -1005), no stale candidate (a 773 repeating
-    a previous shot's path), no second file event within one shot.
+    a previous shot's path), and companion files share one exposure stem.
 
 Usage:
   canary-two-shot.py            # handshake + preview off + TWO captures
@@ -17,6 +17,8 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import os
+import posixpath
+import socket
 import sys
 import time
 
@@ -28,8 +30,27 @@ _spec.loader.exec_module(_cp_mod)
 Polaris, field, stamp = _cp_mod.Polaris, _cp_mod.field, _cp_mod.stamp
 
 
+def expected_file_count(photo_format: str | None) -> int:
+    """Benro photoFormat 2 is RAW+JPEG; other modes publish one file."""
+    return 2 if photo_format == "2" else 1
+
+
+def exposure_stem(path: str) -> str:
+    return posixpath.splitext(path)[0]
+
+
+def shot_satisfied(rec: dict, seen_paths: list[str], expected_files: int) -> bool:
+    new_files = [path for path in rec["files"] if path not in seen_paths]
+    return (
+        4 in rec["states"]
+        and 0 in rec["states"]
+        and len(new_files) == expected_files
+        and len({exposure_stem(path) for path in new_files}) == 1
+    )
+
+
 def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
-             shot_timeout: float) -> dict:
+             shot_timeout: float, expected_files: int) -> dict:
     """Issue one code-264 capture and watch its lifecycle. Returns a record."""
     rec = {
         "shot": shot_no,
@@ -42,17 +63,20 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
     p.send(264, subtype=4, payload="state:1;bulb:0;c:-1;")
     print(f"{stamp()} SHOT{shot_no} capture issued", flush=True)
     deadline = time.monotonic() + shot_timeout
-    completed = False
     while True:
-        code, payload = p.frame(deadline)
+        try:
+            code, payload = p.frame(deadline)
+        except (TimeoutError, socket.timeout) as exc:
+            rec["terminal_failure"] = f"timeout:{exc}"
+            break
         if code == 773:
             path = field(payload, "path")
             if path:
-                rec["files"].append(path)
                 if path in seen_paths:
                     rec["stale_candidate"] = path
                     print(f"{stamp()} SHOT{shot_no} STALE-CANDIDATE {path!r}", flush=True)
-                else:
+                elif path not in rec["files"]:
+                    rec["files"].append(path)
                     print(f"{stamp()} SHOT{shot_no} FILE {path}", flush=True)
         elif code == 775:
             print(f"{stamp()} SHOT{shot_no} STORAGE {payload}", flush=True)
@@ -71,40 +95,12 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
             if st < 0:
                 rec["terminal_failure"] = f"state:{st}"
                 break
-            # completion gate: state 4 seen and at least one new file event
-            if 4 in rec["states"] and any(f not in seen_paths for f in rec["files"]):
-                completed = True
-                break
         # ignore other codes
-
-    if not completed:
-        return rec
-
-    # idle gate: camera must reach state:0 before the next shutter is allowed
-    idle_deadline = time.monotonic() + 20.0
-    while True:
-        code, payload = p.frame(idle_deadline)
-        if code == 264:
-            value = field(payload, "state")
-            if value is not None:
-                try:
-                    st = int(value)
-                except ValueError:
-                    continue
-                rec["states"].append(st)
-                print(f"{stamp()} SHOT{shot_no} CAPTURE state={st} lifecycle={rec['states']}", flush=True)
-                if st < 0 and not rec["terminal_failure"]:
-                    rec["terminal_failure"] = f"state:{st}"
-                    break
-                if st == 0:
-                    rec["idle_confirmed"] = True
-                    print(f"{stamp()} SHOT{shot_no} IDLE confirmed", flush=True)
-                    break
-        elif code == 773:
-            path = field(payload, "path")
-            if path and path not in seen_paths and path not in rec["files"]:
-                rec["files"].append(path)
-                print(f"{stamp()} SHOT{shot_no} LATE-FILE {path}", flush=True)
+        if 0 in rec["states"]:
+            rec["idle_confirmed"] = True
+        if shot_satisfied(rec, seen_paths, expected_files):
+            print(f"{stamp()} SHOT{shot_no} IDLE and output obligation confirmed", flush=True)
+            break
     return rec
 
 
@@ -134,6 +130,9 @@ def main() -> int:
         if field(cam, "state") != "1":
             print(f"{stamp()} FAIL camera not ready (state != 1)", flush=True)
             return 1
+        photo_format = field(cam, "photoFormat")
+        expected_files = expected_file_count(photo_format)
+        print(f"{stamp()} OUTPUT photoFormat={photo_format} expected_files={expected_files}", flush=True)
 
         # preview off
         p.send(292)
@@ -151,7 +150,7 @@ def main() -> int:
         seen_paths: list[str] = []
         records = []
         for shot_no in (1, 2):
-            rec = run_shot(p, shot_no, seen_paths, args.shot_timeout)
+            rec = run_shot(p, shot_no, seen_paths, args.shot_timeout, expected_files)
             records.append(rec)
             new_files = [f for f in rec["files"] if f not in seen_paths]
             seen_paths.extend(new_files)
@@ -161,7 +160,8 @@ def main() -> int:
                 and rec["idle_confirmed"]
                 and not rec["terminal_failure"]
                 and not rec["stale_candidate"]
-                and len(new_files) == 1
+                and len(new_files) == expected_files
+                and len({exposure_stem(path) for path in new_files}) == 1
             )
             print(f"{stamp()} SHOT{shot_no} {'PASS' if ok else 'FAIL'} "
                   f"states={rec['states']} files={new_files} "

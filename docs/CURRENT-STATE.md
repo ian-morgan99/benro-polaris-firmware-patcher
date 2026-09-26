@@ -3,6 +3,39 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
+## 2026-09-25 convergence candidate
+
+`o-v13c-boundary-trace-20260925` is the current **INSTALLED, RUNTIME-VERIFIED,
+K-3 III TWO-SHOT CANARY PASS** candidate. It embeds libgphoto2 `4868d3649`,
+patcher build `8b075f5`, and harness contract `a8b6581`; artifact bytes are
+privately published at PrivateResearch `d92b1d094`. The sanctioned install
+verified all six staged manifest entries before reboot; post-boot FwVer,
+matched-stack hashes, loader maps and embedded provenance match the registry.
+
+One RAW+JPEG canary and the corrected same-session two-shot gate passed. The
+two shots each reported `[1,4,0]` and distinct same-stem DNG+JPEG pairs
+(`SP_0086`, `SP_0087`) with no reconnect. The second shutter was not issued
+until the first exposure completed, both output obligations were published,
+and idle was observed. Exact transcript and remaining qualification limits are
+in `evidence/o-v13c-boundary-trace-20260925/SUMMARY.md`.
+
+The preceding o-v13 artifact was installed and failed two bounded first-shot
+canaries: preview stopped and code 264 was accepted, but no shutter/completion/
+773 followed and the session ended at `state:-10`. Runtime logs proved that
+artifact still interposed the unsafe Stage-2 capture shim and never reached the
+libgphoto2 admission trace. It is superseded; no second shutter was sent.
+
+The minimum repeated ordinary-shutter acceptance question is now answered for
+the attached K-3 III RAW+JPEG mode. Remaining physical qualification is scoped
+to cancellation, Live View interaction, external mode/config changes, other
+bodies/modes and soak; do not generalise this bounded pass to those paths.
+
+A subsequent bounded Preview/Astro-equivalent check also passed: Preview was
+started, suspended for three consecutive RAW+JPEG captures (`SP_0097` through
+`SP_0099`, all `[1,4,0]`), then restored and confirmed ON. This qualifies the
+Benro control-plane suspend/capture/restore transition, not sustained preview
+JPEG delivery or the native OpenPolaris Astro UI.
+
 ## Installed candidate and protected fallback
 
 As of 2026-09-24 the device has **o-v12n-companion-ownership**, build ID

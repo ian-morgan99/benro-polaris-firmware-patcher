@@ -1,0 +1,174 @@
+2026-09-25T23:56:17Z START host=192.168.0.1:9090 shots=3 interval=2.0s bind=192.168.0.4
+2026-09-25T23:56:17Z TX 1&284&2&-100#
+2026-09-25T23:56:17Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:17Z TX 1&820&2&-100#
+2026-09-25T23:56:17Z RX 820@ret:-1;#
+2026-09-25T23:56:17Z TX 1&823&2&app:openpolaris-astro-test;ver:1;#
+2026-09-25T23:56:17Z TX 1&286&2&-100#
+2026-09-25T23:56:17Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:17Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:17Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-09-25T23:56:17Z OUTPUT expected_files=2
+2026-09-25T23:56:17Z TX 1&292&2&-100#
+2026-09-25T23:56:17Z RX 292@state:1;#
+2026-09-25T23:56:17Z PREVIEW initial_state=1
+2026-09-25T23:56:17Z TX 1&291&2&state:0;#
+2026-09-25T23:56:17Z RX 265@RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;#
+2026-09-25T23:56:18Z RX 291@state:0;ret:0;#
+2026-09-25T23:56:18Z TX 1&292&2&-100#
+2026-09-25T23:56:18Z RX 268@RD:0;V:28;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;#
+2026-09-25T23:56:18Z RX 275@RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;#
+2026-09-25T23:56:18Z RX 267@RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;#
+2026-09-25T23:56:18Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:18Z RX 292@state:0;#
+2026-09-25T23:56:18Z PREVIEW confirmed_off
+2026-09-25T23:56:18Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-25T23:56:18Z RX 264@state:1#
+2026-09-25T23:56:18Z SHOT 1 state=1 lifecycle=[1]
+2026-09-25T23:56:18Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:18Z RX 517@yaw:-0.227412;pitch:0.592687;roll:0.031123;#
+2026-09-25T23:56:18Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:18Z RX 517@yaw:-0.227413;pitch:0.592686;roll:0.031123;#
+2026-09-25T23:56:19Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:19Z RX 517@yaw:-0.227410;pitch:0.592686;roll:0.031124;#
+2026-09-25T23:56:19Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:19Z RX 517@yaw:-0.227406;pitch:0.592686;roll:0.031124;#
+2026-09-25T23:56:20Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:20Z RX 517@yaw:-0.227413;pitch:0.592685;roll:0.031120;#
+2026-09-25T23:56:20Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:20Z RX 517@yaw:-0.227413;pitch:0.592684;roll:0.031120;#
+2026-09-25T23:56:20Z RX 264@state:4;#
+2026-09-25T23:56:20Z SHOT 1 state=4 lifecycle=[1, 4]
+2026-09-25T23:56:21Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:21Z RX 517@yaw:-0.227413;pitch:0.592687;roll:0.031127;#
+2026-09-25T23:56:21Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:21Z RX 517@yaw:-0.227413;pitch:0.592687;roll:0.031127;#
+2026-09-25T23:56:22Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:22Z RX 517@yaw:-0.227414;pitch:0.592689;roll:0.031123;#
+2026-09-25T23:56:22Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:22Z RX 517@yaw:-0.227412;pitch:0.592687;roll:0.031123;#
+2026-09-25T23:56:23Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:23Z RX 517@yaw:-0.227412;pitch:0.592685;roll:0.031124;#
+2026-09-25T23:56:23Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:23Z RX 517@yaw:-0.227413;pitch:0.592684;roll:0.031124;#
+2026-09-25T23:56:24Z RX 773@type:1;path:/app/sd/normal/SP_0097.dng;size:28175662;cTime:2026-09-26 00:56:23;duration:0;#
+2026-09-25T23:56:24Z SHOT 1 file=/app/sd/normal/SP_0097.dng
+2026-09-25T23:56:24Z RX 775@status:1;totalspace:121866;freespace:118633;usespace:3232;#
+2026-09-25T23:56:24Z RX 773@type:1;path:/app/sd/normal/SP_0097.jpg;size:138957;cTime:2026-09-26 00:56:23;duration:0;#
+2026-09-25T23:56:24Z SHOT 1 file=/app/sd/normal/SP_0097.jpg
+2026-09-25T23:56:24Z RX 775@status:1;totalspace:121866;freespace:118633;usespace:3233;#
+2026-09-25T23:56:24Z RX 264@state:0;#
+2026-09-25T23:56:24Z SHOT 1 state=0 lifecycle=[1, 4, 0]
+2026-09-25T23:56:24Z SHOT 1 PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0097.dng', '/app/sd/normal/SP_0097.jpg']
+2026-09-25T23:56:24Z INTERVAL sleeping=2.0s
+2026-09-25T23:56:26Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-25T23:56:26Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:26Z RX 517@yaw:-0.227411;pitch:0.592687;roll:0.031127;#
+2026-09-25T23:56:26Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:26Z RX 517@yaw:-0.227412;pitch:0.592689;roll:0.031127;#
+2026-09-25T23:56:26Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:26Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:26Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:26Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:26Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:26Z RX 517@yaw:-0.227415;pitch:0.592691;roll:0.031124;#
+2026-09-25T23:56:26Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:26Z RX 517@yaw:-0.227415;pitch:0.592687;roll:0.031124;#
+2026-09-25T23:56:26Z RX 264@state:1#
+2026-09-25T23:56:26Z SHOT 2 state=1 lifecycle=[1]
+2026-09-25T23:56:26Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:26Z RX 517@yaw:-0.227414;pitch:0.592686;roll:0.031124;#
+2026-09-25T23:56:26Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:26Z RX 517@yaw:-0.227412;pitch:0.592688;roll:0.031124;#
+2026-09-25T23:56:27Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:27Z RX 517@yaw:-0.227414;pitch:0.592688;roll:0.031124;#
+2026-09-25T23:56:27Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:27Z RX 517@yaw:-0.227412;pitch:0.592683;roll:0.031124;#
+2026-09-25T23:56:28Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:28Z RX 517@yaw:-0.227416;pitch:0.592686;roll:0.031129;#
+2026-09-25T23:56:28Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:28Z RX 517@yaw:-0.227412;pitch:0.592687;roll:0.031129;#
+2026-09-25T23:56:29Z RX 264@state:4;#
+2026-09-25T23:56:29Z SHOT 2 state=4 lifecycle=[1, 4]
+2026-09-25T23:56:29Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:29Z RX 517@yaw:-0.227413;pitch:0.592688;roll:0.031125;#
+2026-09-25T23:56:29Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:29Z RX 517@yaw:-0.227413;pitch:0.592686;roll:0.031125;#
+2026-09-25T23:56:30Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:30Z RX 517@yaw:-0.227413;pitch:0.592689;roll:0.031125;#
+2026-09-25T23:56:30Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:30Z RX 517@yaw:-0.227413;pitch:0.592690;roll:0.031125;#
+2026-09-25T23:56:31Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:31Z RX 517@yaw:-0.227413;pitch:0.592690;roll:0.031131;#
+2026-09-25T23:56:31Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:31Z RX 517@yaw:-0.227414;pitch:0.592684;roll:0.031131;#
+2026-09-25T23:56:31Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:31Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:31Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:31Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:31Z RX 773@type:1;path:/app/sd/normal/SP_0098.dng;size:28310115;cTime:2026-09-26 00:56:31;duration:0;#
+2026-09-25T23:56:31Z SHOT 2 file=/app/sd/normal/SP_0098.dng
+2026-09-25T23:56:31Z RX 775@status:1;totalspace:121866;freespace:118606;usespace:3260;#
+2026-09-25T23:56:31Z RX 773@type:1;path:/app/sd/normal/SP_0098.jpg;size:138965;cTime:2026-09-26 00:56:31;duration:0;#
+2026-09-25T23:56:31Z SHOT 2 file=/app/sd/normal/SP_0098.jpg
+2026-09-25T23:56:31Z RX 775@status:1;totalspace:121866;freespace:118606;usespace:3260;#
+2026-09-25T23:56:31Z RX 264@state:0;#
+2026-09-25T23:56:31Z SHOT 2 state=0 lifecycle=[1, 4, 0]
+2026-09-25T23:56:31Z SHOT 2 PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0098.dng', '/app/sd/normal/SP_0098.jpg']
+2026-09-25T23:56:31Z INTERVAL sleeping=2.0s
+2026-09-25T23:56:33Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-25T23:56:33Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:33Z RX 517@yaw:-0.227412;pitch:0.592687;roll:0.031125;#
+2026-09-25T23:56:33Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:33Z RX 517@yaw:-0.227416;pitch:0.592686;roll:0.031125;#
+2026-09-25T23:56:33Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:33Z RX 517@yaw:-0.227411;pitch:0.592689;roll:0.031121;#
+2026-09-25T23:56:33Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:33Z RX 517@yaw:-0.227413;pitch:0.592685;roll:0.031121;#
+2026-09-25T23:56:33Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:33Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:33Z RX 264@state:1#
+2026-09-25T23:56:33Z SHOT 3 state=1 lifecycle=[1]
+2026-09-25T23:56:34Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:34Z RX 517@yaw:-0.227411;pitch:0.592685;roll:0.031123;#
+2026-09-25T23:56:34Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:34Z RX 517@yaw:-0.227415;pitch:0.592684;roll:0.031123;#
+2026-09-25T23:56:35Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:35Z RX 517@yaw:-0.227415;pitch:0.592683;roll:0.031124;#
+2026-09-25T23:56:35Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:35Z RX 517@yaw:-0.227412;pitch:0.592686;roll:0.031124;#
+2026-09-25T23:56:36Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:36Z RX 517@yaw:-0.227413;pitch:0.592685;roll:0.031129;#
+2026-09-25T23:56:36Z RX 284@mode:1;state:1;#
+2026-09-25T23:56:36Z RX 517@yaw:-0.227412;pitch:0.592684;roll:0.031129;#
+2026-09-25T23:56:36Z RX 264@state:4;#
+2026-09-25T23:56:36Z SHOT 3 state=4 lifecycle=[1, 4]
+2026-09-25T23:56:37Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:37Z RX 517@yaw:-0.227411;pitch:0.592689;roll:0.031120;#
+2026-09-25T23:56:37Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:37Z RX 517@yaw:-0.227411;pitch:0.592685;roll:0.031120;#
+2026-09-25T23:56:38Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:38Z RX 517@yaw:-0.227415;pitch:0.592686;roll:0.031125;#
+2026-09-25T23:56:38Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:38Z RX 517@yaw:-0.227411;pitch:0.592686;roll:0.031133;#
+2026-09-25T23:56:39Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:39Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-25T23:56:39Z RX 773@type:1;path:/app/sd/normal/SP_0099.dng;size:28318494;cTime:2026-09-26 00:56:38;duration:0;#
+2026-09-25T23:56:39Z SHOT 3 file=/app/sd/normal/SP_0099.dng
+2026-09-25T23:56:39Z RX 775@status:1;totalspace:121866;freespace:118578;usespace:3287;#
+2026-09-25T23:56:39Z RX 773@type:1;path:/app/sd/normal/SP_0099.jpg;size:138951;cTime:2026-09-26 00:56:39;duration:0;#
+2026-09-25T23:56:39Z SHOT 3 file=/app/sd/normal/SP_0099.jpg
+2026-09-25T23:56:39Z RX 775@status:1;totalspace:121866;freespace:118578;usespace:3287;#
+2026-09-25T23:56:39Z RX 264@state:0;#
+2026-09-25T23:56:39Z SHOT 3 state=0 lifecycle=[1, 4, 0]
+2026-09-25T23:56:39Z SHOT 3 PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0099.dng', '/app/sd/normal/SP_0099.jpg']
+2026-09-25T23:56:39Z TX 1&291&2&state:1;#
+2026-09-25T23:56:39Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:39Z RX 517@yaw:-0.227413;pitch:0.592687;roll:0.031127;#
+2026-09-25T23:56:39Z RX 284@mode:1;state:0;#
+2026-09-25T23:56:39Z RX 517@yaw:-0.227413;pitch:0.592684;roll:0.031123;#
+2026-09-25T23:56:40Z RX 291@state:1;ret:0;#
+2026-09-25T23:56:40Z TX 1&292&2&-100#
+2026-09-25T23:56:40Z RX 292@state:1;#
+2026-09-25T23:56:40Z PREVIEW restored_on
+2026-09-25T23:56:40Z PASS shots=3
