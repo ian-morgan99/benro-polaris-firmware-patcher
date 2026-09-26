@@ -12,6 +12,14 @@ families must remain present and must be regression-tested when hardware is
 available. A deliberately reduced camlib build is diagnostic-only and must be
 labelled as such.
 
+The launcher exposes the exact set as `--camlibs` (default `ptp2,pentax`) and
+records it as `selected_camlibs` in build provenance. `ptp2` is the production
+floor because it carries the qualified Canon and modern Pentax PTP paths. Every
+selected module must be present in `camlibs.manifest`, hash-verified, installed
+into both active lookup directories, included in the reversible bundle, and
+covered by rollback. A configure selection that is not present in the final
+appfs is a package failure.
+
 This rule does not make UVC astronomy cameras libgphoto2 devices. USB Video
 Class cameras belong to a separate capture stack:
 
@@ -34,10 +42,15 @@ V4L2 capture device. The installed Polaris o-v13c image exposed no `/dev/video*`
 support therefore requires an explicit UVC/V4L2 (or proven userspace libuvc)
 work package and is not achieved by widening `--with-camlibs`.
 
-“Orion StarShoot” covers multiple incompatible product families. Record the
-exact model, USB VID:PID and interface descriptors before choosing UVC/V4L2,
-QHY/INDI, vendor-libUSB, or another backend. Never assume all StarShoot models
-are UVC.
+The model in scope is the Orion StarShoot All-in-One, USB `16c0:29a0`; the
+owner-supplied enumeration classifies it as UVC. The iOptron iPolar is USB
+`1233:1455` and is also UVC. Local development commits `2f6d36eae` and
+`9180bb334` list those IDs in `camlibs/uvc/uvc-devices.c`, but that directory
+contains only the eight-line device table: it has no camlib implementation,
+Makefile integration, or installed module, and those commits are not on the
+authoritative `ian-morgan99/libgphoto2` GitHub `main` branch. The table is
+useful classification evidence, not functional support. Do not merge or
+package it as if it were a working libgphoto2 UVC backend.
 
 This document exists because a libgphoto2 build can work correctly when invoked directly with `gphoto2` and still fail when used through the Polaris `pgphoto` / Stage-2 runtime. The upstream `blaineam/benro-polaris-firmware-patcher` implementation already demonstrates this class of integration risk: its hardware-validated full mode treats libgphoto2 as a matched stack (core + port + camlib + iolib), redirects `pgphoto` through an on-disk Stage-2 trampoline, and deliberately installs camlib/iolib components into both Stage-2 and stock lookup locations.
 

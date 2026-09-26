@@ -127,10 +127,6 @@ def restore_preview(p: Polaris, was_on: bool) -> None:
     print(f"{stamp()} PREVIEW restored_on", flush=True)
 
 
-def expected_file_count(photo_format: str | None) -> int:
-    return 2 if photo_format == "2" else 1
-
-
 def capture(p: Polaris, number: int, timeout: float,
             expected_files: int = 1, seen_paths: set[str] | None = None) -> list[str]:
     if seen_paths is None:
@@ -184,6 +180,8 @@ def main() -> int:
     parser.add_argument("--interval", type=float, default=10.0,
                         help="seconds after a completed shot before the next shutter")
     parser.add_argument("--shot-timeout", type=float, default=120.0)
+    parser.add_argument("--expected-files", type=int, choices=(1, 2), required=True,
+                        help="authoritative output obligation; never inferred from photoFormat")
     parser.add_argument("--execute", action="store_true",
                         help="required acknowledgement that shutters will be released")
     args = parser.parse_args()
@@ -204,8 +202,9 @@ def main() -> int:
         camera = p.wait_code(286, 10)
         if field(camera, "state") != "1":
             raise RuntimeError(f"camera not ready: {camera}")
-        expected_files = expected_file_count(field(camera, "photoFormat"))
-        print(f"{stamp()} OUTPUT expected_files={expected_files}", flush=True)
+        expected_files = args.expected_files
+        print(f"{stamp()} OUTPUT contract=explicit expected_files={expected_files} "
+              f"photoFormat_hint={field(camera, 'photoFormat')}", flush=True)
         preview_was_on = suspend_preview(p)
         seen_paths: set[str] = set()
         for number in range(1, args.shots + 1):
