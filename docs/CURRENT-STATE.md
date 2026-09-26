@@ -29,6 +29,13 @@ No new FwPkt has been built: the changes so far affect qualification tooling
 and documentation, not the installed runtime, so an identical reflash would
 add no evidence.
 
+A live canary on 2026-09-26 08:41 UTC completed a RAW exposure (state 4) and
+then published the known late `-108`; the updated gate stopped after exactly
+one shutter with `DONE states=[1, 4, -108] files=[]`. This is the first
+physical observation of the negative-state stop path, not a pass: recovery,
+Preview recovery, and post-failure idle remain owed. See
+`evidence/o-v13c-canary-path-failure-2026-09-26/SUMMARY.md`.
+
 The requested iOptron iPolar (`1233:1455`) and Orion StarShoot All-in-One
 (`16c0:29a0`) are UVC devices, not PTP. Their local `uvc-devices.c` entries are
 an unintegrated table, absent from the authoritative GitHub fork and with no
