@@ -232,6 +232,8 @@ grep -F 'Pentax:K-1 Mark II (PTP mode)' "$PTP2_MARKER_FILE" >/dev/null || {
   echo "K-1 II model not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
 grep -F 'Pentax:K-3 Mark III (MTP mode)' "$PTP2_MARKER_FILE" >/dev/null || {
   echo "K-3 III model not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
+grep -F 'Serving retained Pentax capture publication generation' "$PTP2_MARKER_FILE" >/dev/null || {
+  echo "Pentax retained-publication fix not in on-disk ptp2" >&2; rm -f "$PTP2_MARKER_FILE"; exit 1; }
 for marker in \
   'boundary=camlib-enter' \
   'boundary=preconditions-enter' \
