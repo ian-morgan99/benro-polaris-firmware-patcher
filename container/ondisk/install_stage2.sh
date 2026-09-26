@@ -43,7 +43,8 @@ LOADER=$(find_one ondisk/libpolaris_stage2.so libpolaris_stage2.so)
 STG2BIN=$(find_one ondisk/pgphoto.stage2ondisk pgphoto.stage2ondisk)
 CORE=$(find_one libgphoto2.so.6)
 PORT=$(find_one libgphoto2_port.so.12)
-PTP2=$(find_one "libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so")
+CAMLIB_SRC="$SRC/libgphoto2/$LIBGPHOTO2_VERSION"
+[ -s "$CAMLIB_SRC/camlibs.manifest" ] || { echo "[install] MISSING camlibs.manifest" >&2; exit 1; }
 USB1=$(find_one "libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so")
 WRAP=$(find_one ondisk/pgphoto.wrapper pgphoto.wrapper)
 USB_SUPERVISOR=$(find_one ondisk/camera_usb_supervisor.sh camera_usb_supervisor.sh)
@@ -75,10 +76,14 @@ cp "$LOADER"  "$STAGE2/libpolaris_stage2.so"
 cp "$STG2BIN" "$STAGE2/pgphoto.stage2ondisk";  chmod +x "$STAGE2/pgphoto.stage2ondisk"
 cp "$CORE"    "$STAGE2/libgphoto2.so.6"
 cp "$PORT"    "$STAGE2/libgphoto2_port.so.12"
-cp "$PTP2"    "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
+(cd "$CAMLIB_SRC" && sha256sum -c camlibs.manifest)
+while read -r _hash camlib_file; do
+    cp "$CAMLIB_SRC/$camlib_file" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/$camlib_file"
+done < "$CAMLIB_SRC/camlibs.manifest"
+cp "$CAMLIB_SRC/camlibs.manifest" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/camlibs.manifest"
 cp "$USB1"    "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
 cp "$USB_SUPERVISOR" "$STAGE2/camera_usb_supervisor.sh"; chmod +x "$STAGE2/camera_usb_supervisor.sh"
-echo "[install] populated $STAGE2 (loader + core/port + ptp2/usb1 + stage2 binary)"
+echo "[install] populated $STAGE2 (loader + core/port + selected camlibs + usb1 + stage2 binary)"
 
 # --- 2b. also place fresh ptp2/usb1 at the STOCK camlib/iolib paths -----------
 # The swapped 2.5.34 core dlopens its camlib from the stock on-disk layout
@@ -87,11 +92,20 @@ echo "[install] populated $STAGE2 (loader + core/port + ptp2/usb1 + stage2 binar
 # So the fresh driver must live there too or the core loads the stale stock one.
 # Back up the stock files once so restore_stock.sh can reverse this.
 STOCK_PTP2=$(ls /app/lib/libgphoto2/*/ptp2.so 2>/dev/null | head -1 || true)
+STOCK_CAMLIB_DIR=
+[ -n "$STOCK_PTP2" ] && STOCK_CAMLIB_DIR=$(dirname "$STOCK_PTP2")
 STOCK_USB1=$(ls /app/lib/libgphoto2_port/*/usb1.so 2>/dev/null | head -1 || true)
-if [ -n "$STOCK_PTP2" ]; then
-    [ -e "$STOCK_PTP2.prestage2.bak" ] || cp "$STOCK_PTP2" "$STOCK_PTP2.prestage2.bak"
-    cp "$PTP2" "$STOCK_PTP2"
-    echo "[install] placed fresh ptp2 at stock camlib path $STOCK_PTP2 (backup kept)"
+if [ -d "$STOCK_CAMLIB_DIR" ]; then
+    while read -r _hash camlib_file; do
+        stock_camlib="$STOCK_CAMLIB_DIR/$camlib_file"
+        if [ -e "$stock_camlib" ]; then
+            [ -e "$stock_camlib.prestage2.bak" ] || cp "$stock_camlib" "$stock_camlib.prestage2.bak"
+        else
+            : > "$stock_camlib.prestage2.absent"
+        fi
+        cp "$CAMLIB_SRC/$camlib_file" "$stock_camlib"
+        echo "[install] placed selected camlib at stock path $stock_camlib"
+    done < "$CAMLIB_SRC/camlibs.manifest"
 fi
 if [ -n "$STOCK_USB1" ]; then
     [ -e "$STOCK_USB1.prestage2.bak" ] || cp "$STOCK_USB1" "$STOCK_USB1.prestage2.bak"

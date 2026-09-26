@@ -30,6 +30,10 @@ mkdir -p "$SRC" /work/out
 #     Benro code -- nothing proprietary is introduced.  ABI-inert for the library
 #     (upstream never reads the tail).  See docs/HOW-IT-WORKS.md.
 FULLSTACK="${FULLSTACK:-0}"
+POLARIS_CAMLIBS="${POLARIS_CAMLIBS:-ptp2,pentax}"
+case "$POLARIS_CAMLIBS" in
+  *[!a-zA-Z0-9_,-]*|,*|*,|*,,*) echo "[build] ERROR: invalid POLARIS_CAMLIBS=$POLARIS_CAMLIBS"; exit 1;;
+esac
 
 echo "[build] preparing libgphoto2 $VER"
 cd "$SRC"
@@ -117,6 +121,7 @@ input_sha256=$SOURCE_INPUT_SHA256
 vanilla_source_explicit=$VANILLA_SOURCE_EXPLICIT
 patcher_commit=${PATCHER_COMMIT:-unknown}
 patcher_dirty_diff_hash=${PATCHER_DIRTY_HASH:-}
+selected_camlibs=$POLARIS_CAMLIBS
 EOF
 # Optional human-readable build identifier (issue: patcher-only builds share the
 # same libgphoto2 git_commit, so the device cannot tell e.g. o-v9g from o-v9h).
@@ -254,7 +259,7 @@ fi
 CONF_ARGS=(--host="$XT" --prefix=/opt/lg
   --disable-static --disable-nls --disable-rpath --disable-docs
   --disable-dependency-tracking
-  --with-camlibs=ptp2,pentax --without-libxml-2.0 --without-jpeg --without-libcurl
+  --with-camlibs="$POLARIS_CAMLIBS" --without-libxml-2.0 --without-jpeg --without-libcurl
   CC="${XT}-gcc" CXX="${XT}-g++" AR="${XT}-ar" RANLIB="${XT}-ranlib"
   STRIP="${XT}-strip" LD="${XT}-ld"
   LIBEXIF_CFLAGS="-I/usr/include" LIBEXIF_LIBS="-L$DEV -lexif")
@@ -276,6 +281,24 @@ BUILT="$(find camlibs -name ptp2.so | head -1)"
 [ -n "$BUILT" ] || { echo "[build] ptp2.so not produced"; exit 1; }
 cp "$BUILT" /work/out/ptp2.so
 echo "[build] ptp2.so built: $(stat -c %s /work/out/ptp2.so) bytes"
+
+# Harvest every explicitly selected camlib. The named set, installed filenames,
+# and hashes are release provenance; silently building but dropping a selected
+# family is forbidden.
+rm -rf /work/out/camlibs
+mkdir -p /work/out/camlibs
+: > /work/out/camlibs.manifest
+OLD_IFS=$IFS; IFS=,
+for camlib in $POLARIS_CAMLIBS; do
+  IFS=$OLD_IFS
+  built_camlib="$(find camlibs -path '*/.libs/'"$camlib"'.so' | sort | head -1)"
+  [ -n "$built_camlib" ] || { echo "[build] ERROR: selected camlib $camlib.so not produced"; exit 1; }
+  cp "$built_camlib" "/work/out/camlibs/$camlib.so"
+  printf '%s  %s\n' "$(sha256sum "/work/out/camlibs/$camlib.so" | awk '{print $1}')" "$camlib.so" >> /work/out/camlibs.manifest
+  IFS=,
+done
+IFS=$OLD_IFS
+echo "[build] selected camlibs harvested: $POLARIS_CAMLIBS"
 
 # Harvest the usb1 iolib (from libgphoto2_port). Non-fatal here — patch.sh
 # requires it only when the usb1 swap is enabled, and verifies it fully.
@@ -326,7 +349,12 @@ if [ "$FULLSTACK" = "1" ]; then
   fi
   # Strip core, ptp2, usb1, but DO NOT strip libgphoto2_port.so.12 - it needs LIBGPHOTO2_5_0 symbols for the new core
   "$XT-strip" /work/out/libgphoto2.so.6 \
-              /work/out/ptp2.so /work/out/usb1.so
+              /work/out/ptp2.so /work/out/camlibs/*.so /work/out/usb1.so
+  # Refresh hashes after stripping.
+  : > /work/out/camlibs.manifest
+  for built_camlib in /work/out/camlibs/*.so; do
+    printf '%s  %s\n' "$(sha256sum "$built_camlib" | awk '{print $1}')" "$(basename "$built_camlib")" >> /work/out/camlibs.manifest
+  done
   echo "[build] FULLSTACK: core libgphoto2.so.6 built (stripped): $(stat -c %s /work/out/libgphoto2.so.6) bytes"
   echo "[build] FULLSTACK: port libgphoto2_port.so.12 built (NOT stripped, retains LIBGPHOTO2_5_0 symbols): $(stat -c %s /work/out/libgphoto2_port.so.12) bytes"
 fi

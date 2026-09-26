@@ -71,6 +71,7 @@ trap cleanup EXIT
 if ! docker run --rm --name polaris-pentax-e2e \
   -e MODE=full \
   -e LIBGPHOTO2_VERSION=2.5.34 \
+  -e POLARIS_CAMLIBS=ptp2,pentax \
   -e FIX_R5M2_TYPO=1 \
   -e SELFTEST=0 \
   -e SWAP_USB1=1 \
@@ -94,6 +95,8 @@ test "$ACTUAL_SHA" = "$EXPECTED_SHA" || {
   echo "source SHA mismatch: build=$ACTUAL_SHA source=$EXPECTED_SHA" >&2; exit 1; }
 test -z "$(sed -n 's/^dirty_diff_hash=//p' "$T/build-source-provenance.txt")" || {
   echo "dirty source was not rejected" >&2; exit 1; }
+test "$(sed -n 's/^selected_camlibs=//p' "$T/build-source-provenance.txt")" = ptp2,pentax || {
+  echo "selected camlib provenance missing or wrong" >&2; exit 1; }
 
 # 3) Firmware bundle is rebuilt (these are the FwPkt files the patcher ships).
 [ -f "$T/FwPkt.zip" ] || { echo "missing FwPkt.zip" >&2; exit 1; }
@@ -205,6 +208,8 @@ for mapping in \
   'lib/stage2/libgphoto2.so.6:libgphoto2.so.6' \
   'lib/stage2/libgphoto2_port.so.12:libgphoto2_port.so.12' \
   'lib/stage2/libgphoto2/2.5.34/ptp2.so:libgphoto2/2.5.34/ptp2.so' \
+  'lib/stage2/libgphoto2/2.5.34/pentax.so:libgphoto2/2.5.34/pentax.so' \
+  'lib/stage2/libgphoto2/2.5.34/camlibs.manifest:libgphoto2/2.5.34/camlibs.manifest' \
   'lib/stage2/libgphoto2_port/0.12.2/usb1.so:libgphoto2_port/0.12.2/usb1.so'
 do
   embedded=${mapping%%:*}
@@ -241,6 +246,10 @@ do
   }
 done
 rm -f "$PTP2_MARKER_FILE"
+[ -f "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" ] || {
+  echo "selected pentax camlib was built but not packaged" >&2; exit 1; }
+(cd "$T/stage2-ondisk/libgphoto2/2.5.34" && sha256sum -c camlibs.manifest) || {
+  echo "packaged selected-camlib manifest failed" >&2; exit 1; }
 # And the trampolined on-disk core binary is shipped.
 [ -f "$T/stage2-ondisk/libgphoto2.so.6" ] || { echo "missing on-disk libgphoto2.so.6" >&2; exit 1; }
 CORE_MARKER_FILE="$(mktemp)"
