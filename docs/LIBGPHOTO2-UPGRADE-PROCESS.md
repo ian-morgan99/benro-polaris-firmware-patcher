@@ -2,6 +2,43 @@
 
 Status: **normative** for every future libgphoto2 change consumed by this firmware patcher.
 
+## Camera-family scope: do not ship a Pentax-only production build
+
+Production firmware builds must not treat `ptp2,pentax` as the complete camera
+support set merely because Pentax motivated a change. The build configuration,
+package manifest and provenance record must name every camlib that was built and
+every camlib that was actually installed. Previously qualified non-Pentax
+families must remain present and must be regression-tested when hardware is
+available. A deliberately reduced camlib build is diagnostic-only and must be
+labelled as such.
+
+This rule does not make UVC astronomy cameras libgphoto2 devices. USB Video
+Class cameras belong to a separate capture stack:
+
+```text
+UVC device -> uvcvideo/V4L2 or a validated userspace libusb/libuvc path
+           -> Polaris camera-source adapter
+           -> OpenPolaris preview/alignment consumer
+```
+
+Do not add sleeps or a synthetic libgphoto2 camlib to disguise that ownership
+boundary. A UVC-capable candidate must separately prove USB descriptors and
+VID:PID, kernel-module or userspace-driver availability, device-node/stream
+creation, supported pixel formats/resolutions, bounded frame capture, and
+coexistence with the still-camera/pgphoto USB owner.
+
+The iOptron iPolar observed during the 2026-09-26 audit is USB `1233:1455` and
+advertises USB Video Class interfaces; on the development host it binds as a
+V4L2 capture device. The installed Polaris o-v13c image exposed no `/dev/video*`,
+`uvcvideo`/V4L2 module, or V4L2 capture tool during the read-only audit. iPolar
+support therefore requires an explicit UVC/V4L2 (or proven userspace libuvc)
+work package and is not achieved by widening `--with-camlibs`.
+
+“Orion StarShoot” covers multiple incompatible product families. Record the
+exact model, USB VID:PID and interface descriptors before choosing UVC/V4L2,
+QHY/INDI, vendor-libUSB, or another backend. Never assume all StarShoot models
+are UVC.
+
 This document exists because a libgphoto2 build can work correctly when invoked directly with `gphoto2` and still fail when used through the Polaris `pgphoto` / Stage-2 runtime. The upstream `blaineam/benro-polaris-firmware-patcher` implementation already demonstrates this class of integration risk: its hardware-validated full mode treats libgphoto2 as a matched stack (core + port + camlib + iolib), redirects `pgphoto` through an on-disk Stage-2 trampoline, and deliberately installs camlib/iolib components into both Stage-2 and stock lookup locations.
 
 A future upgrade is therefore **not** complete when the new `ptp2.so` builds, nor when direct `gphoto2` works. It is complete only when the complete packaged runtime is proven and the previously supported camera matrix has not regressed.
