@@ -11,9 +11,10 @@ SPEC.loader.exec_module(MOD)
 class FakePolaris:
     def __init__(self, frames):
         self.frames = iter(frames)
+        self.sends = []
 
     def send(self, *args, **kwargs):
-        pass
+        self.sends.append((args, kwargs))
 
     def frame(self, deadline):
         try:
@@ -47,6 +48,17 @@ def test_file_after_completion_state_is_not_lost():
     assert MOD.shot_satisfied(rec, [], 1)
 
 
+def test_photo_format_hint_cannot_override_explicit_raw_only_obligation():
+    """Regression for #155: photoFormat:2 may coexist with one authoritative DNG."""
+    frames = [
+        (264, "state:4;"),
+        (773, "path:/app/sd/normal/SP_RAW_ONLY.dng;"),
+        (264, "state:0;"),
+    ]
+    rec = MOD.run_shot(FakePolaris(frames), 1, [], 1.0, expected_files=1)
+    assert MOD.shot_satisfied(rec, [], 1)
+
+
 def test_raw_jpeg_companions_must_share_exposure_stem():
     rec = {
         "states": [1, 4, 0],
@@ -61,3 +73,25 @@ def test_stale_file_fails_closed():
     rec = MOD.run_shot(FakePolaris(frames), 2, [path], 1.0, 1)
     assert rec["stale_candidate"] == path
     assert rec["terminal_failure"].startswith("timeout:")
+
+
+def test_terminal_failure_exhausts_budget_without_retry_or_second_shutter():
+    p = FakePolaris([(264, "state:1;"), (264, "state:-1005;")])
+    ok, records, paths = MOD.run_sequence(p, 2, 1.0, 1)
+    capture_sends = [call for call in p.sends if call[0][0] == 264]
+    assert not ok
+    assert len(records) == 1
+    assert records[0]["terminal_failure"] == "state:-1005"
+    assert paths == []
+    assert len(capture_sends) == 1
+
+
+def test_timeout_exhausts_budget_without_retry_or_second_shutter():
+    p = FakePolaris([])
+    ok, records, paths = MOD.run_sequence(p, 2, 1.0, 1)
+    capture_sends = [call for call in p.sends if call[0][0] == 264]
+    assert not ok
+    assert len(records) == 1
+    assert records[0]["terminal_failure"].startswith("timeout:")
+    assert paths == []
+    assert len(capture_sends) == 1

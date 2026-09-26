@@ -9,6 +9,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import posixpath
 import socket
 import sys
 import time
@@ -86,7 +87,11 @@ def main() -> int:
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--shot", action="store_true")
     ap.add_argument("--shot-timeout", type=float, default=180.0)
+    ap.add_argument("--expected-files", type=int, choices=(1, 2),
+                    help="authoritative output obligation required with --shot")
     args = ap.parse_args()
+    if args.shot and args.expected_files is None:
+        ap.error("--shot requires --expected-files 1 or 2; photoFormat is not authoritative")
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
     try:
@@ -130,17 +135,18 @@ def main() -> int:
             p.send(264, subtype=4, payload="state:1;bulb:0;c:-1;")
             deadline = time.monotonic() + args.shot_timeout
             states: list[int] = []
-            file_path: str | None = None
+            files: list[str] = []
             while True:
                 code, payload = p.frame(deadline)
                 if code == 773:
                     path = field(payload, "path")
                     if path:
-                        if file_path is not None and path != file_path:
-                            print(f"{stamp()} AMBIGUOUS second file event {path!r}", flush=True)
+                        if path not in files:
+                            files.append(path)
+                            print(f"{stamp()} FILE {path}", flush=True)
+                        if len(files) > args.expected_files:
+                            print(f"{stamp()} EXCESS outputs={files}", flush=True)
                             break
-                        file_path = path
-                        print(f"{stamp()} FILE {file_path}", flush=True)
                 elif code == 264:
                     value = field(payload, "state")
                     if value is None:
@@ -155,12 +161,20 @@ def main() -> int:
                     if st < 0:
                         print(f"{stamp()} TERMINAL-FAILURE state={st}", flush=True)
                         break
-                    if file_path and (4 in states or len(states) >= 2):
-                        print(f"{stamp()} PASS lifecycle={states} file={file_path}", flush=True)
+                if len(files) == args.expected_files:
+                    stems = {posixpath.splitext(path)[0] for path in files}
+                    if len(stems) != 1:
+                        print(f"{stamp()} MISMATCHED output stems files={files}", flush=True)
                         break
+                if 4 in states and 0 in states and len(files) == args.expected_files:
+                    print(f"{stamp()} PASS lifecycle={states} files={files}", flush=True)
+                    break
                 # ignore other codes
-            print(f"{stamp()} DONE states={states} file={file_path}", flush=True)
-            return 0 if (file_path and not any(s < 0 for s in states)) else 1
+            valid_stem = len({posixpath.splitext(path)[0] for path in files}) == 1
+            ok = (4 in states and 0 in states and len(files) == args.expected_files
+                  and valid_stem and not any(s < 0 for s in states))
+            print(f"{stamp()} DONE states={states} files={files}", flush=True)
+            return 0 if ok else 1
     finally:
         p.close()
 

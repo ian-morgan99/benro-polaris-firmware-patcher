@@ -10,7 +10,8 @@ Gate per shot:
     a previous shot's path), and companion files share one exposure stem.
 
 Usage:
-  canary-two-shot.py            # handshake + preview off + TWO captures
+  canary-two-shot.py --expected-files 1  # independently established RAW-only/JPEG-only
+  canary-two-shot.py --expected-files 2  # independently established RAW+JPEG
 """
 from __future__ import annotations
 
@@ -28,11 +29,6 @@ _spec = importlib.util.spec_from_file_location(
 _cp_mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_cp_mod)
 Polaris, field, stamp = _cp_mod.Polaris, _cp_mod.field, _cp_mod.stamp
-
-
-def expected_file_count(photo_format: str | None) -> int:
-    """Benro photoFormat 2 is RAW+JPEG; other modes publish one file."""
-    return 2 if photo_format == "2" else 1
 
 
 def exposure_stem(path: str) -> str:
@@ -104,12 +100,40 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
     return rec
 
 
+def run_sequence(p: Polaris, shot_count: int, shot_timeout: float,
+                 expected_files: int) -> tuple[bool, list[dict], list[str]]:
+    """Run captures fail-closed: a failed shot consumes the whole failure budget."""
+    seen_paths: list[str] = []
+    records: list[dict] = []
+    for shot_no in range(1, shot_count + 1):
+        rec = run_shot(p, shot_no, seen_paths, shot_timeout, expected_files)
+        records.append(rec)
+        new_files = [path for path in rec["files"] if path not in seen_paths]
+        ok = (
+            shot_satisfied(rec, seen_paths, expected_files)
+            and not rec["terminal_failure"]
+            and not rec["stale_candidate"]
+        )
+        seen_paths.extend(new_files)
+        print(f"{stamp()} SHOT{shot_no} {'PASS' if ok else 'FAIL'} "
+              f"states={rec['states']} files={new_files} "
+              f"idle={rec['idle_confirmed']} stale={rec['stale_candidate']} "
+              f"term={rec['terminal_failure']}", flush=True)
+        if not ok:
+            print(f"{stamp()} STOP after SHOT{shot_no} "
+                  "(failure budget exhausted; no retry or further shutter)", flush=True)
+            return False, records, seen_paths
+    return True, records, seen_paths
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="192.168.0.1")
     ap.add_argument("--port", type=int, default=9090)
     ap.add_argument("--bind", default="192.168.0.4")
     ap.add_argument("--shot-timeout", type=float, default=180.0)
+    ap.add_argument("--expected-files", type=int, choices=(1, 2), required=True,
+                    help="authoritative per-exposure output obligation; never inferred from photoFormat")
     args = ap.parse_args()
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
@@ -130,9 +154,9 @@ def main() -> int:
         if field(cam, "state") != "1":
             print(f"{stamp()} FAIL camera not ready (state != 1)", flush=True)
             return 1
-        photo_format = field(cam, "photoFormat")
-        expected_files = expected_file_count(photo_format)
-        print(f"{stamp()} OUTPUT photoFormat={photo_format} expected_files={expected_files}", flush=True)
+        expected_files = args.expected_files
+        print(f"{stamp()} OUTPUT contract=explicit expected_files={expected_files} "
+              f"photoFormat_hint={field(cam, 'photoFormat')}", flush=True)
 
         # preview off
         p.send(292)
@@ -147,29 +171,11 @@ def main() -> int:
             confirmed = p.wait_code(292, 10)
             print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
-        seen_paths: list[str] = []
-        records = []
-        for shot_no in (1, 2):
-            rec = run_shot(p, shot_no, seen_paths, args.shot_timeout, expected_files)
-            records.append(rec)
-            new_files = [f for f in rec["files"] if f not in seen_paths]
-            seen_paths.extend(new_files)
-            ok = (
-                bool(new_files)
-                and 4 in rec["states"]
-                and rec["idle_confirmed"]
-                and not rec["terminal_failure"]
-                and not rec["stale_candidate"]
-                and len(new_files) == expected_files
-                and len({exposure_stem(path) for path in new_files}) == 1
-            )
-            print(f"{stamp()} SHOT{shot_no} {'PASS' if ok else 'FAIL'} "
-                  f"states={rec['states']} files={new_files} "
-                  f"idle={rec['idle_confirmed']} stale={rec['stale_candidate']} "
-                  f"term={rec['terminal_failure']}", flush=True)
-            if not ok:
-                print(f"{stamp()} STOP after SHOT{shot_no} (fail-closed; no further shutter)", flush=True)
-                return 1
+        ok, _records, seen_paths = run_sequence(
+            p, shot_count=2, shot_timeout=args.shot_timeout,
+            expected_files=expected_files)
+        if not ok:
+            return 1
 
         print(f"{stamp()} TWO-SHOT PASS files={seen_paths}", flush=True)
         return 0

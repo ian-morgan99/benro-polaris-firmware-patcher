@@ -3,6 +3,40 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
+## 2026-09-26 post-merge release review
+
+Main is `688437b`, containing the o-v13c convergence work. Review follow-up is
+on `release/o-v13d-review-convergence-20260926`; it is not yet a firmware
+candidate. The review corrected the live-gate oracle: code 286 `photoFormat`
+is only a hint and cannot determine whether one or two output files are owed.
+Every shuttering gate now requires an explicit independently established
+`--expected-files 1|2`; RAW+JPEG still requires an exact same-stem pair. A
+regression covers the physically observed `photoFormat:2` plus independently
+RAW-only contract and one DNG.
+
+The two-shot gate now gives each failed operation a failure budget of exactly
+one shutter command. A timeout, negative state, stale output, missing output,
+or mismatched companion stops the sequence without retry or a second shutter.
+This proves the test client does not hammer a failed camera; it does not prove
+physical recovery, Preview recovery, or post-failure idle on a real body.
+
+Offline evidence on this review branch: patcher pre-release gate 12 container
++ 24 Python PASS; test-harness `a8b658173` 62 PASS. The exact libgphoto2
+candidate `4868d3649` was regenerated with Meson: the three focused Pentax
+tests and both selected camlibs (`ptp2`, `pentax`) built and passed. The
+already-qualified o-v13c physical evidence remains unchanged.
+No new FwPkt has been built: the changes so far affect qualification tooling
+and documentation, not the installed runtime, so an identical reflash would
+add no evidence.
+
+The requested iOptron iPolar (`1233:1455`) and Orion StarShoot All-in-One
+(`16c0:29a0`) are UVC devices, not PTP. Their local `uvc-devices.c` entries are
+an unintegrated table, absent from the authoritative GitHub fork and with no
+camlib/build implementation. The installed Polaris also exposed no UVC/V4L2
+device path during the read-only audit. They must not be claimed in a release
+until a real UVC backend, Polaris adapter, packaging and frame/reconnect tests
+exist. See issue #151.
+
 ## 2026-09-25 convergence candidate
 
 `o-v13c-boundary-trace-20260925` is the current **INSTALLED, RUNTIME-VERIFIED,
@@ -36,9 +70,9 @@ started, suspended for three consecutive RAW+JPEG captures (`SP_0097` through
 Benro control-plane suspend/capture/restore transition, not sustained preview
 JPEG delivery or the native OpenPolaris Astro UI.
 
-## Installed candidate and protected fallback
+## Historical installed candidates and protected fallback
 
-As of 2026-09-24 the device has **o-v12n-companion-ownership**, build ID
+As of 2026-09-24 the device had **o-v12n-companion-ownership**, build ID
 `6.0.0.54.23-o-v12n-companion-ownership`, installed. It is a diagnostic
 candidate, **not release-qualified**. Runtime provenance is libgphoto2
 `ab0de090c` plus patcher `7bcbc39`; the registered artifact hashes are in
