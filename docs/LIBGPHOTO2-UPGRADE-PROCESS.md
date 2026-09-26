@@ -12,6 +12,14 @@ families must remain present and must be regression-tested when hardware is
 available. A deliberately reduced camlib build is diagnostic-only and must be
 labelled as such.
 
+The launcher exposes the exact set as `--camlibs` (default `ptp2,pentax`) and
+records it as `selected_camlibs` in build provenance. `ptp2` is the production
+floor because it carries the qualified Canon and modern Pentax PTP paths. Every
+selected module must be present in `camlibs.manifest`, hash-verified, installed
+into both active lookup directories, included in the reversible bundle, and
+covered by rollback. A configure selection that is not present in the final
+appfs is a package failure.
+
 This rule does not make UVC astronomy cameras libgphoto2 devices. USB Video
 Class cameras belong to a separate capture stack:
 

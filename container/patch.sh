@@ -32,6 +32,7 @@ die(){ printf '\033[1;31m[abort]\033[0m %s\n' "$*" >&2; exit 1; }
 
 LIBGPHOTO2_VERSION="${LIBGPHOTO2_VERSION:-2.5.34}"
 LIBGPHOTO2_PORT_VERSION="${LIBGPHOTO2_PORT_VERSION:-0.12.2}"
+POLARIS_CAMLIBS="${POLARIS_CAMLIBS:-ptp2,pentax}"
 # Pentax capture file-size budget in bytes (issue #2). libgphoto2's hard-coded
 # default is 2 GiB which is unsafe on the Polaris' constrained RAM; a runaway
 # DNG/RAW request from a K-1 II / K-3 III would exhaust heap and abort pgphoto
@@ -71,6 +72,7 @@ TESTED_PGPHOTO_MD5="a0"  # informational only; verified structurally below
 
 STOCK_APPFS=/in/camera/appfs.ubifs
 log "libgphoto2 target : $LIBGPHOTO2_VERSION"
+log "selected camlibs  : $POLARIS_CAMLIBS"
 log "Pentax capture cap: $PENTAX_MAX_CAPTURE_SIZE bytes  (override with PENTAX_MAX_CAPTURE_SIZE=…; issue #2)"
 log "stock appfs.ubifs : $(stat -c %s "$STOCK_APPFS") bytes  md5=$(md5sum "$STOCK_APPFS"|cut -d' ' -f1)"
 
@@ -174,8 +176,12 @@ else
   /opt/patcher/build_fullstack.sh "$LIBGPHOTO2_VERSION" "$TRAMP_ADDR" "$FIX_R5M2_TYPO"
 fi
 NEW_PTP2="$W/out/ptp2.so"
+NEW_CAMLIB_DIR="$W/out/camlibs"
+NEW_CAMLIB_MANIFEST="$W/out/camlibs.manifest"
 NEW_CORE="$W/out/libgphoto2.so.6"; NEW_PORT="$W/out/libgphoto2_port.so.12"
 [ -f "$NEW_PTP2" ] || die "ptp2.so build failed"
+[ -s "$NEW_CAMLIB_MANIFEST" ] || die "selected camlib manifest missing"
+(cd "$NEW_CAMLIB_DIR" && sha256sum -c "$NEW_CAMLIB_MANIFEST") || die "selected camlib hashes do not verify"
 if [ -e /libgphoto2-source-input ]; then
   # NOTE: under 'set -euo pipefail', a '$(strings ... | grep -Fc ...)' command
   # substitution aborts the whole script on the *first* missing marker
@@ -417,6 +423,10 @@ else
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CORE"                   "$STAGE2/libgphoto2.so.6"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PORT"                   "$STAGE2/libgphoto2_port.so.12"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
+  while read -r _hash camlib_file; do
+    install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CAMLIB_DIR/$camlib_file" \
+      "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/$camlib_file"
+  done < "$NEW_CAMLIB_MANIFEST"
   install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
   install -m 755 -o "$P_UID" -g "$P_GID" /opt/patcher/ondisk/camera_usb_supervisor.sh "$STAGE2/camera_usb_supervisor.sh"
   # Generate the wrapper from its template (CAMLIBS_VERSION/IOLIBS_VERSION +
@@ -460,6 +470,10 @@ else
   O_UID="$(stat -c %u "$STOCK_PTP2")"; O_GID="$(stat -c %g "$STOCK_PTP2")"; O_MODE="$(stat -c %a "$STOCK_PTP2")"
   install -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2" "$STOCK_PTP2"
   log "  placed fresh ptp2 at stock camlib path: /app/lib/libgphoto2/$(basename "$CAMLIB_DIR")/ptp2.so"
+  while read -r _hash camlib_file; do
+    install -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_CAMLIB_DIR/$camlib_file" "$CAMLIB_DIR/$camlib_file"
+  done < "$NEW_CAMLIB_MANIFEST"
+  cp "$NEW_CAMLIB_MANIFEST" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/camlibs.manifest"
   if [ "$SWAP_USB1" = "1" ]; then
     U_UID="$(stat -c %u "$STOCK_USB1")"; U_GID="$(stat -c %g "$STOCK_USB1")"; U_MODE="$(stat -c %a "$STOCK_USB1")"
     install -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1" "$STOCK_USB1"
@@ -745,7 +759,10 @@ if [ "$MODE" = "full" ]; then
   cp /opt/patcher/ondisk/camera_usb_supervisor.sh "$BUN/ondisk/"
   cp "$NEW_CORE" "$BUN/libgphoto2.so.6"
   cp "$NEW_PORT" "$BUN/libgphoto2_port.so.12"
-  cp "$NEW_PTP2" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
+  while read -r _hash camlib_file; do
+    cp "$NEW_CAMLIB_DIR/$camlib_file" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION/$camlib_file"
+  done < "$NEW_CAMLIB_MANIFEST"
+  cp "$NEW_CAMLIB_MANIFEST" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION/camlibs.manifest"
   cp "$NEW_USB1" "$BUN/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
   chmod +x "$BUN/ondisk/"*.sh "$BUN/ondisk/pgphoto.wrapper" 2>/dev/null || true
 

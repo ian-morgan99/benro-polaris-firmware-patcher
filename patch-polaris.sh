@@ -11,6 +11,7 @@
 #     --fwpkt PATH         stock FwPkt folder (has firmwareInfo) or FwPkt.zip  [required]
 #     --libgphoto2 VER     libgphoto2 release to build            (default 2.5.34)
 #     --libgphoto2-port VER  libgphoto2_port release tag         (default 0.12.2)
+#     --camlibs LIST        explicit comma-separated camlibs      (default ptp2,pentax)
 #     --libgphoto2-source PATH  local libgphoto2 checkout/archive to build
 #                              (required in full mode unless vanilla is explicit)
 #     --allow-vanilla-source explicitly permit a stock release build without a source input
@@ -43,13 +44,14 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; POLESTAR_BULB_PATCH=0
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; CAMLIBS="ptp2,pentax"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; POLESTAR_BULB_PATCH=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --fwpkt) FWPKT="$2"; shift 2;;
     --libgphoto2) VER="$2"; VER_SET=1; shift 2;;
     --libgphoto2-port) PORTVER="$2"; shift 2;;
+    --camlibs) CAMLIBS="$2"; shift 2;;
     --libgphoto2-source) LGSRC="$2"; shift 2;;
     --allow-dirty-source) ALLOW_DIRTY=1; shift;;
     --allow-dirty-patcher) ALLOW_DIRTY_PATCHER=1; shift;;
@@ -70,6 +72,13 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$FWPKT" ] || { echo "error: --fwpkt is required" >&2; exit 1; }
+case "$CAMLIBS" in
+  *[!a-zA-Z0-9_,-]*|,*|*,|*,,*) echo "error: invalid --camlibs list: $CAMLIBS" >&2; exit 1;;
+esac
+case ",$CAMLIBS," in
+  *,ptp2,*) : ;;
+  *) echo "error: production Polaris builds require ptp2 (Canon/Pentax PTP path)" >&2; exit 1;;
+esac
 # Normalise --out to an absolute path BEFORE docker run: a relative path like
 # "out/k3iii-128fix" is parsed by the docker CLI as a *named volume* (invalid
 # characters) instead of a host directory, so the run dies with exit 125.
@@ -161,6 +170,7 @@ if [ -n "$LGSRC" ]; then set -- -v "$LGSRC:/libgphoto2-source-input:ro"; fi
 docker run --rm \
   -e MODE="$MODE" \
   -e LIBGPHOTO2_VERSION="$VER" -e LIBGPHOTO2_PORT_VERSION="$PORTVER" \
+  -e POLARIS_CAMLIBS="$CAMLIBS" \
   -e PENTAX_MAX_CAPTURE_SIZE="$PENTAX_MAX_CAPTURE_SIZE" \
   -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
