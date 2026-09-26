@@ -10,6 +10,8 @@ Date: 2026-09-26
 - libgphoto2: `4868d3649b4a363679ea7ed9d695fbd153063827`
 - patcher: `8b075f50d36f6b6f0ba3c0815b7c8478fdbc60f4`
 - camera: Pentax K-3 III, USB `25fb:0189`
+- Benro camera report: `photoFormat:2` (observed RAW-only mode; not used as the
+  output-count contract)
 - Stage-2 and stock `libgphoto2.so.6` MD5:
   `390194dd561de4bde4eb7ed701401507`
 
@@ -24,6 +26,11 @@ Command:
 Result: 36 deterministic checks passed and the camera-ready probe passed. The
 physical canary failed, so the overall gate was RED. No second shutter was sent
 after that failure during this run.
+
+This also physically proves the new fail-closed canary behaviour: after the
+late negative state it stopped after exactly one shutter, without retrying or
+mistaking state 4 alone for full operation success. The deterministic analogue
+is covered by `tests/test_canary_two_shot.py`.
 
 ## First divergent boundary
 
