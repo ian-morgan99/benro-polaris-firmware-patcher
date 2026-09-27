@@ -241,6 +241,12 @@ $XT-nm -D --undefined-only "$NEW_PTP2" | awk '{print $2}' | grep -E '^(gp_|gpi_)
 MISSING="$(comm -23 "$W/need.txt" "$W/prov.txt" || true)"
 [ -z "$MISSING" ] || die "rebuilt driver needs core symbols missing from the target core:\n$MISSING"
 log "  all core symbols resolve against $PROV_DESC ✓"
+# Pentax helper functions are private to ptp2.so.  An unresolved one means a
+# source file was omitted from the selected build system; the dynamic loader
+# otherwise defers the failure until the first camera operation that calls it.
+UNRESOLVED_PENTAX="$($XT-nm -D --undefined-only "$NEW_PTP2" | awk '{print $2}' | grep -E '^pentax_' || true)"
+[ -z "$UNRESOLVED_PENTAX" ] || die "rebuilt driver has unresolved internal Pentax symbols:\n$UNRESOLVED_PENTAX"
+log "  no unresolved internal Pentax symbols ✓"
 
 # ---------------------------------------------------------------------------
 # 5b. Verify the rebuilt usb1 iolib (fail-safe, same rigour as ptp2).

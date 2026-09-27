@@ -221,6 +221,12 @@ done
 # 6) The on-disk ptp2 is the freshly-cross-built 2.5.34 with Pentax marker.
 PTP2_SO="$T/stage2-ondisk/libgphoto2/2.5.34/ptp2.so"
 [ -f "$PTP2_SO" ] || { echo "missing on-disk ptp2 ($PTP2_SO)" >&2; exit 1; }
+UNRESOLVED_PENTAX="$(nm -D --undefined-only "$PTP2_SO" | awk '{print $2}' | grep -E '^pentax_' || true)"
+[ -z "$UNRESOLVED_PENTAX" ] || {
+  echo "on-disk ptp2 has unresolved internal Pentax symbols:" >&2
+  echo "$UNRESOLVED_PENTAX" >&2
+  exit 1
+}
 # Use grep -F (no -q) and capture in a temp file to avoid the
 # set -euo pipefail + grep -q SIGPIPE issue documented in
 # BenroPolarisPatcher/docs/patcher-gates.md.
