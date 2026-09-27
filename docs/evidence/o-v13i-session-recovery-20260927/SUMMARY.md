@@ -1,6 +1,6 @@
 # o-v13i session-recovery candidate
 
-Status: **installed; runtime verified; camera canary pending because the camera is not enumerated**.
+Status: **installed; runtime verified; stale-session rebind observed working; capture canary FAILED**.
 
 ## Failure isolated on v13g
 
@@ -30,6 +30,16 @@ The owning fix is libgphoto2 commit `e6cc1f8c8eeb95e4a9cb1652e804b9488167c4a4`: 
 - Runtime matched-ptp2 hashes: Stage-2 equals stock lookup path (`25ad3be49f7b5aa169281236f0d901ae`).
 - Camera-on canary: SKIP. After the firmware reboot, `lsusb` did not list Pentax `25fb:0189`; therefore no shutter was sent.
 
+## 2026-09-28 physical result
+
+After a fresh camera battery was fitted, the K-3 III enumerated as `25fb:0189` on bus 1 device 3. The supervisor encountered the retained-session condition, rebound the camera, and code 286 reached camera-ready state 1. This qualifies only the observed stale-session/rebind path; it does not qualify the provisional `0x02fd`/`0x02ff` classifications.
+
+One bounded RAW+JPEG canary was then issued. Preview was stopped and confirmed state 0, and code 264 accepted exactly one shutter command at 22:58:29Z. No lifecycle state 4 or code-773 file event followed. The operation timed out at 23:01:29Z; the fail-closed client sent no second shutter.
+
+The Pentax remained electrically present as the same `25fb:0189`, bus 1 device 3 throughout. However, the active camera service changed from PID 8264 to PID 9342 during the operation. Kernel evidence records USB resets without a disconnect/re-enumeration. The replacement process recovered to code-286 state 1 and the matched runtime hashes remained intact.
+
+This separates two defects: v13i recovers the replacement process from the stale Pentax session, but it does not prevent the original capture owner from being terminated/replaced after an operation that fails to complete. The next investigation boundary is the pgphoto/polestar watchdog decision and the first blocked/failed production operation before replacement. Do not add another USB retry or claim the capture fixed.
+
 ## Remaining physical acceptance
 
-With the camera powered and enumerated, run one Benro Connect still capture, wait beyond the prior 30-second failure point, and run a second capture. Acceptance requires both files to publish and the session to remain usable. Capture logs must show either uninterrupted ownership or the new bounded close/reset/reopen recovery.
+After the active-owner failure is corrected, run one Benro Connect still capture, wait beyond the prior watchdog boundary, and run a second capture. Acceptance requires both files to publish and the session to remain usable without replacement of the active pgphoto owner. Capture logs must show either uninterrupted ownership or an explicitly safe generation transition; recovery after killing a blocked operation is not capture success.
