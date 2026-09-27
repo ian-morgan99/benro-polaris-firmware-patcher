@@ -80,6 +80,7 @@
 #include <signal.h>
 #include <ucontext.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/mman.h>
 
 #include "stage2_policy.h"
@@ -1131,6 +1132,23 @@ static void stage2_crash_handler(int sig, siginfo_t *si, void *uc)
     }
 #else
     (void)uc; /* Native offline shim test: ARM program counter is unavailable. */
+#endif
+
+#ifndef STAGE2_NO_CONSTRUCTOR
+    /* The stock launcher truncates /app/Clog.txt when its watchdog replaces a
+     * dead pgphoto process.  Preserve the crash boundary independently before
+     * re-raising: open/dup2/write/close are async-signal-safe, and this changes
+     * no recovery or capture policy.  The next process appends rather than
+     * erasing the previous owner's final fault record. */
+    {
+        int trace_fd = open("/app/stage2-crash.log",
+                            O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (trace_fd >= 0) {
+            (void)dup2(trace_fd, 2);
+            if (trace_fd != 2)
+                (void)close(trace_fd);
+        }
+    }
 #endif
 
     s_write("\n[stage2] *** CRASH sig=");
