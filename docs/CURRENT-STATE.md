@@ -9,6 +9,8 @@ searching historical handovers or raw evidence.
 K-3 III RAW+JPEG TWO-SHOT PASS**. In plain English: the package crash found in
 version F is fixed; one bounded capture passed, then two consecutive captures
 also passed with distinct outputs and without issuing the next shutter early.
+The bounded Preview-on, suspend, capture, and Preview-restore sequence also
+passed with a complete RAW+JPEG output pair.
 
 The installed build embeds libgphoto2 `8601460b3` and patcher `93e1898`, build
 id `6.0.0.54.31-o-v13g-linked-publication`. Version F had omitted

@@ -59,9 +59,16 @@ The second observed operation crossed `camlib-enter`, preconditions and
 returned state 0. `pgphoto` remained alive; the version-F symbol-lookup crash
 did not recur.
 
+The Preview workload boundary also passed. Preview was explicitly started and
+confirmed at state 1; the Astro path stopped and confirmed it at state 0,
+captured one RAW+JPEG operation with lifecycle `[1,4,0]`, published
+`SP_0108.dng` plus `SP_0108.jpg`, then restored and reconfirmed Preview state
+1. No reconnect or process restart was required.
+
 ## Qualification boundary
 
 This proves ordinary RAW+JPEG completion, publication, and safe subsequent
-shutter admission on the K-3 III. It does not by itself close the separate
-session/rebind, external mode-change, Preview interaction, long-exposure and
-cancellation matrices, nor qualify unavailable Canon/K-1 II hardware.
+shutter admission on the K-3 III, plus the bounded Preview suspend/capture/
+restore boundary. It does not by itself close sustained Preview data delivery
+or soak, the separate session/rebind and external mode-change matrix, the
+long-exposure/cancellation matrix, or unavailable Canon/K-1 II hardware.
