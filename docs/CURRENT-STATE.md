@@ -3,6 +3,45 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
+## 2026-09-27 restored-fixes candidate
+
+`o-v13e-restored-fixes-20260927` is **BUILT, PRIVATELY PUBLISHED AND
+PACKAGE-GATED; NOT INSTALLED; LIVE CANARY PENDING**. In plain English: the
+missing Pentax fixes have been restored into one clean libgphoto2 line and the
+resulting firmware package is internally consistent, but this exact package
+has not yet been put on the Polaris or exercised against a camera.
+
+The candidate embeds libgphoto2
+[`564bdd070`](https://github.com/ian-morgan99/libgphoto2/commit/564bdd070cec3f4a366444a7d7e95605f90e30f3)
+from PR [libgphoto2#94](https://github.com/ian-morgan99/libgphoto2/pull/94),
+patcher `96b75902aae4473bfb7be56195fb3f9a079d73a9`, and harness
+`a8b65817354dae04f997d1357d7d4914e396c42f`. It restores strict-only
+pre-shutter admission, production-path publication ownership and deletion
+semantics, exact long-exposure labels (for example 80s/90s rather than 1m/2m),
+timeout restoration on every abnormal exit, and timeout-phase diagnostics.
+It packages both `ptp2` and legacy `pentax` camlibs; this does not provide the
+separate V4L2/UVC implementation needed by iPolar or Orion StarShoot.
+
+Deterministic results: four focused Pentax production-path tests PASS;
+firmware-patcher offline gate PASS (13 container + 24 Python); test harness
+PASS (62/62); built-package gate PASS (13 container + 24 Python + structure +
+firmwareInfo). The broader libgphoto2 Meson run was 10/13: the three failures
+are existing environment/baseline failures (`test-gp-port`, generic-model
+`test-gphoto2`, and `test-filesys` SIGSEGV), not suppressed green results.
+
+Artifact: `out/o-v13e-restored-fixes-20260927/FwPkt.zip`; MD5
+`5a3ae51583b4a46c02fd8120314a2bca`; SHA-256
+`4b7982e28e361f0669eedc61103e75f16a3101af0e47d79c3fdf500a65631c8d`;
+appfs MD5 `f8e70314b4bf9c25d12ff4eaba16a4b9`. Private artifact commit:
+`ac518690b`. Exact evidence and remaining gates are in
+`evidence/o-v13e-restored-fixes-20260927/SUMMARY.md`.
+
+This candidate is not release-qualified until the supported install flow,
+cold-boot loader/hash proof and bounded physical canary complete. The
+session/rebind atomic-lock work tracked by #146 also remains independent of
+these recovered libgphoto2 fixes and must not be described as solved by this
+build.
+
 ## 2026-09-26 post-merge release review
 
 Main is `688437b`, containing the o-v13c convergence work. Review follow-up is
