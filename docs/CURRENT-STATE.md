@@ -3,6 +3,108 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
+## 2026-09-27 current candidate: o-v13g
+
+`o-v13g-linked-publication-20260927` is **INSTALLED, RUNTIME-VERIFIED, AND
+K-3 III RAW+JPEG TWO-SHOT PASS**. In plain English: the package crash found in
+version F is fixed; one bounded capture passed, then two consecutive captures
+also passed with distinct outputs and without issuing the next shutter early.
+The bounded Preview-on, suspend, capture, and Preview-restore sequence also
+passed with a complete RAW+JPEG output pair.
+
+The installed build embeds libgphoto2 `8601460b3` and patcher `93e1898`, build
+id `6.0.0.54.31-o-v13g-linked-publication`. Version F had omitted
+`pentax-publication.c` from the Automake build and therefore crashed before
+`InitiateCapture` on an unresolved helper. The source inclusion is corrected
+and the patcher now rejects any package with unresolved internal `pentax_*`
+symbols. Full provenance, hashes, install proof and physical results are in
+`evidence/o-v13g-linked-publication-20260927/SUMMARY.md`.
+
+This is a convergence candidate, not yet a blanket release qualification.
+The separate #146 reconnect/rebind and external-change matrix, #147 Preview
+interactions, #148 long-exposure/cancellation work, and unavailable regression
+cameras remain explicit follow-on gates.
+
+## 2026-09-27 restored-fixes candidate
+
+`o-v13e-restored-fixes-20260927` is **BUILT, PRIVATELY PUBLISHED AND
+PACKAGE-GATED; NOT INSTALLED; LIVE CANARY PENDING**. In plain English: the
+missing Pentax fixes have been restored into one clean libgphoto2 line and the
+resulting firmware package is internally consistent, but this exact package
+has not yet been put on the Polaris or exercised against a camera.
+
+The candidate embeds libgphoto2
+[`564bdd070`](https://github.com/ian-morgan99/libgphoto2/commit/564bdd070cec3f4a366444a7d7e95605f90e30f3)
+from PR [libgphoto2#94](https://github.com/ian-morgan99/libgphoto2/pull/94),
+patcher `96b75902aae4473bfb7be56195fb3f9a079d73a9`, and harness
+`a8b65817354dae04f997d1357d7d4914e396c42f`. It restores strict-only
+pre-shutter admission, production-path publication ownership and deletion
+semantics, exact long-exposure labels (for example 80s/90s rather than 1m/2m),
+timeout restoration on every abnormal exit, and timeout-phase diagnostics.
+It packages both `ptp2` and legacy `pentax` camlibs; this does not provide the
+separate V4L2/UVC implementation needed by iPolar or Orion StarShoot.
+
+Deterministic results: four focused Pentax production-path tests PASS;
+firmware-patcher offline gate PASS (13 container + 24 Python); test harness
+PASS (62/62); built-package gate PASS (13 container + 24 Python + structure +
+firmwareInfo). The broader libgphoto2 Meson run was 10/13: the three failures
+are existing environment/baseline failures (`test-gp-port`, generic-model
+`test-gphoto2`, and `test-filesys` SIGSEGV), not suppressed green results.
+
+Artifact: `out/o-v13e-restored-fixes-20260927/FwPkt.zip`; MD5
+`5a3ae51583b4a46c02fd8120314a2bca`; SHA-256
+`4b7982e28e361f0669eedc61103e75f16a3101af0e47d79c3fdf500a65631c8d`;
+appfs MD5 `f8e70314b4bf9c25d12ff4eaba16a4b9`. Private artifact commit:
+`ac518690b`. Exact evidence and remaining gates are in
+`evidence/o-v13e-restored-fixes-20260927/SUMMARY.md`.
+
+This candidate is not release-qualified until the supported install flow,
+cold-boot loader/hash proof and bounded physical canary complete. The
+session/rebind atomic-lock work tracked by #146 also remains independent of
+these recovered libgphoto2 fixes and must not be described as solved by this
+build.
+
+## 2026-09-26 post-merge release review
+
+Main is `688437b`, containing the o-v13c convergence work. Review follow-up is
+on `release/o-v13d-review-convergence-20260926`; it is not yet a firmware
+candidate. The review corrected the live-gate oracle: code 286 `photoFormat`
+is only a hint and cannot determine whether one or two output files are owed.
+Every shuttering gate now requires an explicit independently established
+`--expected-files 1|2`; RAW+JPEG still requires an exact same-stem pair. A
+regression covers the physically observed `photoFormat:2` plus independently
+RAW-only contract and one DNG.
+
+The two-shot gate now gives each failed operation a failure budget of exactly
+one shutter command. A timeout, negative state, stale output, missing output,
+or mismatched companion stops the sequence without retry or a second shutter.
+This proves the test client does not hammer a failed camera; it does not prove
+physical recovery, Preview recovery, or post-failure idle on a real body.
+
+Offline evidence on this review branch: patcher pre-release gate 12 container
++ 24 Python PASS; test-harness `a8b658173` 62 PASS. The exact libgphoto2
+candidate `4868d3649` was regenerated with Meson: the three focused Pentax
+tests and both selected camlibs (`ptp2`, `pentax`) built and passed. The
+already-qualified o-v13c physical evidence remains unchanged.
+No new FwPkt has been built: the changes so far affect qualification tooling
+and documentation, not the installed runtime, so an identical reflash would
+add no evidence.
+
+A live canary on 2026-09-26 08:41 UTC completed a RAW exposure (state 4) and
+then published the known late `-108`; the updated gate stopped after exactly
+one shutter with `DONE states=[1, 4, -108] files=[]`. This is the first
+physical observation of the negative-state stop path, not a pass: recovery,
+Preview recovery, and post-failure idle remain owed. See
+`evidence/o-v13c-canary-path-failure-2026-09-26/SUMMARY.md`.
+
+The requested iOptron iPolar (`1233:1455`) and Orion StarShoot All-in-One
+(`16c0:29a0`) are UVC devices, not PTP. Their local `uvc-devices.c` entries are
+an unintegrated table, absent from the authoritative GitHub fork and with no
+camlib/build implementation. The installed Polaris also exposed no UVC/V4L2
+device path during the read-only audit. They must not be claimed in a release
+until a real UVC backend, Polaris adapter, packaging and frame/reconnect tests
+exist. See issue #151.
+
 ## 2026-09-25 convergence candidate
 
 `o-v13c-boundary-trace-20260925` is the current **INSTALLED, RUNTIME-VERIFIED,
@@ -36,9 +138,9 @@ started, suspended for three consecutive RAW+JPEG captures (`SP_0097` through
 Benro control-plane suspend/capture/restore transition, not sustained preview
 JPEG delivery or the native OpenPolaris Astro UI.
 
-## Installed candidate and protected fallback
+## Historical installed candidates and protected fallback
 
-As of 2026-09-24 the device has **o-v12n-companion-ownership**, build ID
+As of 2026-09-24 the device had **o-v12n-companion-ownership**, build ID
 `6.0.0.54.23-o-v12n-companion-ownership`, installed. It is a diagnostic
 candidate, **not release-qualified**. Runtime provenance is libgphoto2
 `ab0de090c` plus patcher `7bcbc39`; the registered artifact hashes are in

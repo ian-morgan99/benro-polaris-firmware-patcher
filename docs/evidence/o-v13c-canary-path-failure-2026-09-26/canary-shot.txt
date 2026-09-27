@@ -1,0 +1,64 @@
+2026-09-26T08:41:47Z TX 1&284&2&-100#
+2026-09-26T08:41:47Z RX 284@mode:1;state:0;#
+2026-09-26T08:41:47Z TX 1&820&2&-100#
+2026-09-26T08:41:47Z RX 820@ret:-1;#
+2026-09-26T08:41:47Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-09-26T08:41:47Z TX 1&286&2&-100#
+2026-09-26T08:41:47Z RX 268@RD:0;V:28;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;#
+2026-09-26T08:41:47Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-09-26T08:41:47Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-09-26T08:41:47Z SUMMARY model=pentax k-3 mark iii state=1 photoFormat=2
+2026-09-26T08:41:47Z TX 1&292&2&-100#
+2026-09-26T08:41:47Z RX 292@state:1;#
+2026-09-26T08:41:47Z PREVIEW initial_state=1
+2026-09-26T08:41:47Z TX 1&291&2&state:0;#
+2026-09-26T08:41:47Z RX 275@RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;#
+2026-09-26T08:41:47Z RX 267@RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;#
+2026-09-26T08:41:47Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-26T08:41:48Z RX 284@mode:1;state:0;#
+2026-09-26T08:41:48Z RX 517@yaw:-0.227419;pitch:0.592685;roll:0.031123;#
+2026-09-26T08:41:48Z RX 284@mode:1;state:0;#
+2026-09-26T08:41:48Z RX 517@yaw:-0.227413;pitch:0.592686;roll:0.031123;#
+2026-09-26T08:41:49Z RX 291@state:0;ret:0;#
+2026-09-26T08:41:49Z PREVIEW stop_ack=state:0;ret:0;
+2026-09-26T08:41:49Z TX 1&292&2&-100#
+2026-09-26T08:41:49Z RX 292@state:0;#
+2026-09-26T08:41:49Z PREVIEW confirmed=state:0;
+2026-09-26T08:41:49Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-09-26T08:41:49Z RX 265@RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;#
+2026-09-26T08:41:49Z RX 268@RD:0;V:28;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;#
+2026-09-26T08:41:49Z RX 275@RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;#
+2026-09-26T08:41:49Z RX 267@RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;#
+2026-09-26T08:41:49Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-26T08:41:49Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-26T08:41:49Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-09-26T08:41:49Z RX 264@state:1#
+2026-09-26T08:41:49Z CAPTURE state=1 lifecycle=[1]
+2026-09-26T08:41:49Z RX 284@mode:1;state:1;#
+2026-09-26T08:41:49Z RX 517@yaw:-0.227415;pitch:0.592685;roll:0.031123;#
+2026-09-26T08:41:49Z RX 284@mode:1;state:1;#
+2026-09-26T08:41:49Z RX 517@yaw:-0.227415;pitch:0.592686;roll:0.031125;#
+2026-09-26T08:41:50Z RX 284@mode:1;state:1;#
+2026-09-26T08:41:50Z RX 517@yaw:-0.227411;pitch:0.592686;roll:0.031129;#
+2026-09-26T08:41:50Z RX 284@mode:1;state:1;#
+2026-09-26T08:41:50Z RX 517@yaw:-0.227415;pitch:0.592688;roll:0.031126;#
+2026-09-26T08:41:51Z RX 284@mode:1;state:1;#
+2026-09-26T08:41:51Z RX 517@yaw:-0.227413;pitch:0.592688;roll:0.031123;#
+2026-09-26T08:41:51Z RX 284@mode:1;state:1;#
+2026-09-26T08:41:51Z RX 517@yaw:-0.227415;pitch:0.592689;roll:0.031120;#
+2026-09-26T08:41:52Z RX 284@mode:1;state:1;#
+2026-09-26T08:41:52Z RX 517@yaw:-0.227413;pitch:0.592685;roll:0.031127;#
+2026-09-26T08:41:52Z RX 264@state:4;#
+2026-09-26T08:41:52Z CAPTURE state=4 lifecycle=[1, 4]
+2026-09-26T08:41:52Z RX 284@mode:1;state:0;#
+2026-09-26T08:41:52Z RX 517@yaw:-0.227412;pitch:0.592682;roll:0.031123;#
+2026-09-26T08:41:53Z RX 284@mode:1;state:0;#
+2026-09-26T08:41:53Z RX 517@yaw:-0.227414;pitch:0.592687;roll:0.031124;#
+2026-09-26T08:41:53Z RX 284@mode:1;state:0;#
+2026-09-26T08:41:53Z RX 517@yaw:-0.227412;pitch:0.592687;roll:0.031125;#
+2026-09-26T08:41:54Z RX 284@mode:1;state:0;#
+2026-09-26T08:41:54Z RX 517@yaw:-0.227412;pitch:0.592687;roll:0.031125;#
+2026-09-26T08:41:54Z RX 264@state:-108#
+2026-09-26T08:41:54Z CAPTURE state=-108 lifecycle=[1, 4, -108]
+2026-09-26T08:41:54Z TERMINAL-FAILURE state=-108
+2026-09-26T08:41:54Z DONE states=[1, 4, -108] files=[]
