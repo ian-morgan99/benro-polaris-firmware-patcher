@@ -3,6 +3,26 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
+## 2026-09-27 current candidate: o-v13g
+
+`o-v13g-linked-publication-20260927` is **INSTALLED, RUNTIME-VERIFIED, AND
+K-3 III RAW+JPEG TWO-SHOT PASS**. In plain English: the package crash found in
+version F is fixed; one bounded capture passed, then two consecutive captures
+also passed with distinct outputs and without issuing the next shutter early.
+
+The installed build embeds libgphoto2 `8601460b3` and patcher `93e1898`, build
+id `6.0.0.54.31-o-v13g-linked-publication`. Version F had omitted
+`pentax-publication.c` from the Automake build and therefore crashed before
+`InitiateCapture` on an unresolved helper. The source inclusion is corrected
+and the patcher now rejects any package with unresolved internal `pentax_*`
+symbols. Full provenance, hashes, install proof and physical results are in
+`evidence/o-v13g-linked-publication-20260927/SUMMARY.md`.
+
+This is a convergence candidate, not yet a blanket release qualification.
+The separate #146 reconnect/rebind and external-change matrix, #147 Preview
+interactions, #148 long-exposure/cancellation work, and unavailable regression
+cameras remain explicit follow-on gates.
+
 ## 2026-09-27 restored-fixes candidate
 
 `o-v13e-restored-fixes-20260927` is **BUILT, PRIVATELY PUBLISHED AND
