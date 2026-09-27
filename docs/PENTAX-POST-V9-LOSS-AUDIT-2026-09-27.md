@@ -24,7 +24,7 @@ patcher: PR #156 head `734b19a`. Harness target: PR #13 head `a8b658173`.
 | Restore the normal PTP port timeout on every abnormal capture exit | libgphoto2 PR #78, commit `983373767`, mixed with rejected high-ISO work | Missing from PR #90; isolated and corrected in PR #92 head `27b6c3314` | A cancel, conditions error or timeout can leave later PTP operations with a minutes/hours timeout and appear hung | Retain PR #92; include it in the final convergence SHA |
 | Restore normal timeout before metadata/transfer after a normal exposure wait | Original pre-review capture path; fresh PR #92 review | Corrected in PR #92 head `27b6c3314` | A stalled transfer could inherit the exposure timeout and defeat bounded transfer/cancellation checks | Retain PR #92 corrected head |
 | Preserve strict next-shutter admission as the sole runtime authority | libgphoto2 PR #89, commit `0a23d07f9` | **Not an ancestor of PR #90 head** | `PENTAX_ADMISSION_MODE=output-safe` can authorize an unproven shutter predicate | Merge/rebase PR #89 before constructing the convergence SHA; add an ancestry gate |
-| Attribute capture timeout using the last camera activity flags | libgphoto2 PR #78, commit `983373767` | Missing from PR #90 and not yet isolated | Processing timeout is mislabeled as exposure timeout, obscuring the first failing phase | Isolate without the high-ISO change and add deterministic phase-classification coverage |
+| Attribute capture timeout using the last camera activity flags | libgphoto2 PR #78, commit `983373767` | Missing from PR #90; isolated in PR #93 head `23023c2be` | Processing timeout is mislabeled as exposure timeout, obscuring the first failing phase | Retain PR #93 after review; it excludes high ISO and adds deterministic phase classification |
 | Exact long-duration shutter labels and reverse mapping | Behaviour request after the v9 line; initial minute support in `dacfc8986` handled only exact minute values | Implemented in PR #91 head `957b5ab58`; overflow review fixed | 80/90 second choices remain hard to scan without exact `1m20s`/`1m30s` labels | Retain PR #91; preserve exact reversible values rather than rounding |
 | Atomic stale launch/supervisor lock takeover | patcher issue #104 / PR #100 review | **Still absent** although #104 was closed as superseded by open #146 | Concurrent reclaimers can delete a replacement live lock and launch/restart duplicate owners | Implement under #146 with generation identity and deterministic replacement-race coverage |
 | Dirty diagnostic artifact mechanically barred from release | patcher PR #100 review | Warning/hash exist, but no explicit source-policy field or package/release rejection was found | A dirty diagnostic build can look like a normal candidate after handoff | Add explicit `clean`/`dirty-diagnostic` provenance and fail the release/registry gate on the latter |
@@ -102,7 +102,7 @@ These are not losses and must not be silently restored:
 Before the next firmware build:
 
 1. Create one immutable libgphoto2 convergence commit containing the reviewed
-   PR #90 result plus PR #89, PR #91, PR #92 and the isolated activity-phase
+   PR #90 result plus PR #89, PR #91, PR #92 and PR #93's activity-phase
    fix. Do not build from a moving PR branch.
 2. Add a machine-readable required-commit/semantic-feature manifest to the
    patcher build. Fail unless every required commit is an ancestor of the source
@@ -118,6 +118,6 @@ Before the next firmware build:
 ## Current release decision
 
 **Do not build or install another candidate yet.** PR #91/#92 are corrected and
-tested, but PR #89 is absent from PR #90 ancestry, the activity-phase fix is
-still unisolated, PR #90's production-path test/analysis work is incomplete,
+tested, and PR #93 is source-tested, but PR #89 is absent from PR #90
+ancestry, PR #90's production-path test/analysis work is incomplete,
 and the patcher lock takeover remains nondeterministic.
