@@ -19,8 +19,15 @@ From the patcher repository root:
 ```
 
 The script refuses a missing/dirty/detached/non-`main` libgphoto2 checkout.
-It builds from the supplied stock FwPkt, runs the deterministic pre-release
-gate, recomputes hashes, and uploads the exact ZIP to PrivateResearch.
+It first runs the libgphoto2 Meson deterministic regression pack, then builds
+from the supplied stock FwPkt, runs the patcher/package deterministic
+pre-release gate, recomputes hashes, and uploads the exact ZIP to
+PrivateResearch. A failure at either layer stops the release.
+
+The regression order is therefore: libgphoto2 unit/production-path tests,
+patcher and Stage-2 tests, package/manifest validation, then (only after
+installation) the live canary and physical camera matrix. No hardware claim
+is inferred from the offline pack.
 
 ## Required handoff
 

@@ -21,6 +21,13 @@ BRANCH="$(git -C "$SRC" branch --show-current)"
 SRC_SHA="$(git -C "$SRC" rev-parse HEAD)"
 echo "Building $ID from libgphoto2 main $SRC_SHA and stock base $BASE"
 
+command -v meson >/dev/null || { echo "ERROR: meson is required for libgphoto2 regression tests" >&2; exit 2; }
+TEST_BUILD="$(mktemp -d "${TMPDIR:-/tmp}/libgphoto2-regression.XXXXXX")"
+trap 'rm -rf "$TEST_BUILD"' EXIT
+echo "Running libgphoto2 deterministic regression pack"
+meson setup "$TEST_BUILD" "$SRC" --buildtype=debugoptimized -Dcamlibs=ptp2,pentax >/dev/null
+meson test -C "$TEST_BUILD" --print-errorlogs
+
 BUILD_ID="$BUILD_ID" "$ROOT/patch-polaris.sh" --fwpkt "$(realpath "$BASE")" \
   --libgphoto2-source "$(realpath "$SRC")" --out "$OUT"
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
