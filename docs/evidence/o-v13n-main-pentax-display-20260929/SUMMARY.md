@@ -2,9 +2,10 @@
 
 ## Status
 
-**BUILT, PRIVATELY PUBLISHED, PACKAGE-GATED; NOT INSTALLED.** The package has
-not been physically tested. The app-visible version construction and capture
-scenarios remain pending Polaris/Connect acceptance.
+**BUILT, PRIVATELY PUBLISHED, PACKAGE-GATED; NOT INSTALLED.** The exact bytes
+are ready for independent review. Per the release process, physical staging
+must wait for that independent review. No camera or Polaris behavior is
+qualified by these offline checks.
 
 ## Exact inputs
 
@@ -48,10 +49,23 @@ scenarios remain pending Polaris/Connect acceptance.
   manifest PASS**.
 - FwPkt structural validation: PASS; all six `firmwareInfo` payload entries
   match their shipped sizes and MD5 values.
+- Re-ran the package gate against this candidate on 2026-09-29: **4 passed,
+  0 failed, 0 skipped**. Raw output: `package-gate.txt`.
+- Re-ran the libgphoto2 deterministic suite from clean source SHA
+  `4bdbc75ebcea816a7ab47f81771f2efb53ca4f2f`: **12/12 PASS**. The test build
+  is tied to that source directory; `test-gp-port` is tagged `no-ci` and is
+  intentionally excluded because it requires serial DTR/CTS hardware.
+  Transcript: `libgphoto2-meson.txt`.
+- Re-ran the test harness at SHA `0355f6f643ae7c154ea42a2f751d14fa1dbcb135`:
+  **62/62 PASS**. Transcript: `harness-pytest.txt`.
 - Extracted appfs content was byte-compared against the build's Stage-2 bundle:
   `bin/pgphoto`, restart helper, USB supervisor, Stage-2 loader, `libpolaris_stage2.so`,
   libgphoto2 core/port, `ptp2.so`, `pentax.so`, camlib manifest and `usb1.so`
   all match exactly.
+- Repeated the appfs-vs-bundle byte comparison from the appfs extracted out of
+  this exact ZIP: **11/11 runtime components byte-identical**. Transcript:
+  `package-content-audit.txt`. The local ZIP and PrivateResearch ZIP also
+  recompute to identical MD5/SHA-256 values.
 - ZIP appfs SHA-256 and standalone built appfs SHA-256 match:
   `295689e6000d25d2641e5d16d5686f0f7434c37830873641210c08bc07306910`.
 - `camlibs.manifest` SHA-256 entries:
@@ -70,9 +84,38 @@ scenarios remain pending Polaris/Connect acceptance.
 
 ## Remaining acceptance
 
-Install only via the documented update flow, then cold-boot and verify runtime
-provenance/loader hashes before the bounded camera canary. Confirm the actual
-Benro Connect version display. Ordinary JPEG-only, RAW-only repeatability,
-native Astro, Panorama/Pro Panorama, Pixel Shift completeness, cancellation,
-reconnect/rebind and non-Pentax qualified-camera regression are not established
-by this offline build and remain separate acceptance work.
+### Scope blocker: QHY/iPolar are not ready
+
+The green 13n package gates are **not** QHY or iPolar driver gates. At the
+exact patcher source SHA recorded above, direct ARM cross-compilation fails:
+
+- QHY (`stage2_qhy5lii_adapter.c`): SDK headers require C++ `<functional>`;
+  the C compile also reports `bool` undefined. Exit 1.
+- iPolar (`stage2_ipolar_adapter.c`): `uvc.h` is unavailable. Exit 1.
+
+Reproduction is saved in `uvc-adapter-compile-audit.txt`. The build script does
+not compile the QHY adapter; the iPolar compile is conditional on libuvc headers
+being present and otherwise only logs that its check is pending. The 13n
+runtime manifest selects `ptp2,pentax`, and its packaged Stage-2 runtime has no
+QHY/iPolar adapter objects. Thus these failures do **not** disprove the
+Pentax-only candidate, but 13n must not be installed or represented as a QHY or
+iPolar test candidate. Those drivers need their own correct language/runtime
+integration, explicit fail-closed compile/link gates, and package-content proof
+before any UVC acceptance test.
+
+The Benro Connect source was adversarially checked: its `UgradeUtils` version
+comparison splits on dots and proceeds only when **both** versions have
+exactly four numeric components. With this candidate's five-component display
+value (`6.0.0.54.22`), that comparison returns the no-update result. This does
+not block the SD-card firmware updater, but app-based update availability is
+not behavior-neutral and must not be represented as tested. Confirm the
+displayed value on Connect and avoid using Connect's firmware-update flow for
+this candidate.
+
+After independent review, install only via the documented update flow, then
+cold-boot and verify runtime provenance/loader hashes before a bounded
+physical canary. Ordinary JPEG-only, RAW-only repeatability, native Astro,
+Panorama/Pro Panorama, Pixel Shift completeness, cancellation, reconnect/rebind
+and non-Pentax qualified-camera regression are not established by this offline
+build and remain separate acceptance work. The candidate is a Pentax-focused
+test packet, not a UVC/iPolar/StarShoot qualification build.

@@ -1,0 +1,19 @@
+Candidate: o-v13n-main-pentax-display-20260929
+libgphoto2 source: 4bdbc75ebcea816a7ab47f81771f2efb53ca4f2f
+Appfs extracted from exact candidate FwPkt.zip
+
+PASS byte-identical bin/pgphoto
+PASS byte-identical restart_gphoto
+PASS byte-identical lib/stage2/camera_usb_supervisor.sh
+PASS byte-identical lib/stage2/libpolaris_stage2.so
+PASS byte-identical lib/stage2/pgphoto.stage2ondisk
+PASS byte-identical lib/stage2/libgphoto2.so.6
+PASS byte-identical lib/stage2/libgphoto2_port.so.12
+PASS byte-identical lib/stage2/libgphoto2/2.5.34/ptp2.so
+PASS byte-identical lib/stage2/libgphoto2/2.5.34/pentax.so
+PASS byte-identical lib/stage2/libgphoto2/2.5.34/camlibs.manifest
+PASS byte-identical lib/stage2/libgphoto2_port/0.12.2/usb1.so
+
+ZIP hashes (local and PrivateResearch independently matched):
+f98c2aff47ab3c3a2a8bdccb6f709086  out/o-v13n-main-pentax-display-20260929/FwPkt.zip
+97c1212da5aa35447da6494d516dfc050b8478d2b67b7778d3ea10760502be76  out/o-v13n-main-pentax-display-20260929/FwPkt.zip

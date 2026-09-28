@@ -3,7 +3,8 @@
 ## 2026-09-29 candidate: o-v13n
 
 `o-v13n-main-pentax-display-20260929` is **BUILT, PRIVATELY PUBLISHED, AND
-PACKAGE-GATED; NOT INSTALLED OR PHYSICALLY QUALIFIED**. It uses patcher
+PACKAGE-GATED; AWAITING INDEPENDENT REVIEW BEFORE STAGING; NOT INSTALLED OR
+PHYSICALLY QUALIFIED**. It uses patcher
 `7c514e328` and libgphoto2 `4bdbc75eb`. The package and appfs FwVer are set to
 `6.0.0.54.22`; the build identity `6.0.0.54.38-o-v13n-main-pentax-display`
 is separately recorded in provenance. Connect's actual displayed version is
@@ -17,6 +18,23 @@ DTR/CTS test remains an explicit `no-ci` hardware prerequisite skip. Results:
 libgphoto2 12/12 deterministic tests, patcher 13 container + 24 Python tests,
 and package structure/firmwareInfo gates all PASS. Package contents were
 extracted and byte-compared with the built Stage-2 bundle.
+
+Adversarial recheck on 2026-09-29 reproduced the package gate (4/4), libgphoto2
+tests (12/12), and harness (62/62), and verified all 11 embedded Stage-2 files
+against the candidate build bundle and the PrivateResearch ZIP hashes. Raw
+transcripts are in the candidate evidence directory. Caveat: Benro Connect's
+version comparator handles exactly four dot-separated numeric fields; this
+five-field display value returns “no update” in that comparator. This is an
+experimental version-display candidate, not verified as neutral to app-based
+upgrade checks. Do not use Connect's firmware-update flow for it.
+
+Scope audit: the QHY and iPolar adapter sources at the recorded patcher commit
+both fail standalone ARM cross-compilation (QHY C/C++ SDK header mismatch;
+iPolar `uvc.h` missing). Neither adapter is part of 13n's packaged runtime.
+Therefore 13n is not a combined Pentax+UVC candidate and must not be installed
+for QHY/iPolar testing. See `evidence/o-v13n-main-pentax-display-20260929/
+uvc-adapter-compile-audit.txt`. No installation is planned until the intended
+test scope and the compile gates are resolved.
 
 Artifact hashes and the remaining physical acceptance matrix are in
 `evidence/o-v13n-main-pentax-display-20260929/SUMMARY.md`; the registry entry

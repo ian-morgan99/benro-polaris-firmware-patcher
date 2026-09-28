@@ -1,0 +1,21 @@
+Adapter compile audit against exact 13n patcher commit 7c514e32851b478dc962455a78fb193f0caf423c
+Cross compiler: arm-linux-gnueabi-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+
+--- QHY adapter ---
+In file included from Temp/qhy_ref.h:4,
+                 from <stdin>:14:
+Temp/qhyccdstruct.h:273:3: error: unknown type name ‘bool’
+  273 |   bool HaveImgData;
+      |   ^~~~
+Temp/qhy_ref.h:7:10: fatal error: functional: No such file or directory
+    7 | #include <functional>
+      |          ^~~~~~~~~~~~
+compilation terminated.
+QHY exit status: 1
+
+--- iPolar adapter ---
+<stdin>:9:10: fatal error: uvc.h: No such file or directory
+compilation terminated.
+iPolar exit status: 1
+
+Result: both adapter compile checks fail; these objects are not packaged in 13n runtime.

@@ -1,0 +1,7 @@
+=== Polaris pre-release gate (2026-09-28T23:25:57Z) ===
+PASS: container deterministic harness (13 passed)
+PASS: python regression suite (24 passed)
+PASS: FwPkt structural validation (out/o-v13n-main-pentax-display-20260929/FwPkt)
+PASS: firmwareInfo manifest gate (stock manifest vs out/o-v13n-main-pentax-display-20260929/FwPkt)
+=== Pre-release gate summary: 4 passed, 0 failed, 0 skipped ===
+GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence).

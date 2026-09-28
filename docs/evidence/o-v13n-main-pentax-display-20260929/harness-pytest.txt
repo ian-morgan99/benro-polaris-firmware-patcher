@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/ian/Documents/VSCodeProjects/BenroHardwareValidator/benro-polaris-test-harness
+configfile: pyproject.toml
+plugins: anyio-4.14.2, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 62 items
+
+tests/test_basic_functionality.py ...........                            [ 17%]
+tests/test_camera_generation_lifecycle.py .                              [ 19%]
+tests/test_evidence_validation.py ................                       [ 45%]
+tests/test_integration.py ................                               [ 70%]
+tests/test_smoke.py ..................                                   [100%]
+
+============================== 62 passed in 1.27s ==============================
