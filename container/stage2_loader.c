@@ -78,6 +78,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <stdatomic.h>
 #include <ucontext.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -1343,10 +1344,37 @@ static void map_slot_page(void)
 /* Still capture must preserve the exact dlsym target.  Keep this decision in a
  * small testable helper so a future Stage-2 policy cannot silently reintroduce
  * the extra capture ABI boundary. */
+typedef int (*stage2_gp_camera_capture_fn)(void *camera, int type,
+                                           void *path, void *context);
+static stage2_gp_camera_capture_fn g_real_gp_camera_capture = NULL;
+static _Atomic unsigned long g_capture_trace_seq = 0;
+
+/* Diagnostic-only pass-through wrapper.  It is opt-in so production builds
+ * retain the exact direct-to-core capture boundary. */
+static int stage2_trace_gp_camera_capture(void *camera, int type,
+                                          void *path, void *context)
+{
+    if (!g_real_gp_camera_capture && g_stage2_core)
+        g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)
+            dlsym(g_stage2_core, "gp_camera_capture");
+    unsigned long seq = atomic_fetch_add(&g_capture_trace_seq, 1) + 1;
+    fprintf(stderr, "[stage2-trace] capture-enter seq=%lu pid=%ld type=%d\n",
+            seq, (long)getpid(), type);
+    if (!g_real_gp_camera_capture)
+        return -1;
+    int ret = g_real_gp_camera_capture(camera, type, path, context);
+    fprintf(stderr, "[stage2-trace] capture-return seq=%lu ret=%d\n", seq, ret);
+    return ret;
+}
+
 static void *stage2_capture_slot_target(const char *name, void *resolved)
 {
-    if (name && strcmp(name, "gp_camera_capture") == 0)
-        return resolved;
+    if (name && strcmp(name, "gp_camera_capture") == 0 &&
+        getenv("STAGE2_CAPTURE_TRACE") &&
+        strcmp(getenv("STAGE2_CAPTURE_TRACE"), "0") != 0) {
+        g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
+        return (void *)&stage2_trace_gp_camera_capture;
+    }
     return resolved;
 }
 
