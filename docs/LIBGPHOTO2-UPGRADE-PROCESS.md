@@ -58,6 +58,26 @@ A future upgrade is therefore **not** complete when the new `ptp2.so` builds, no
 
 ## 1. Scope
 
+## Standard build command
+
+Use the patcher wrapper below for every new candidate. It requires a clean
+libgphoto2 checkout on `main`, builds from the supplied stock FwPkt, runs the
+fail-closed package gate, fingerprints the actual ZIP, and uploads it to
+PrivateResearch with a provenance row prompt:
+
+```sh
+./scripts/build-release-candidate.sh \
+  o-vNN-description-YYYYMMDD \
+  firmware/FwPkt.zip \
+  /path/to/clean/libgphoto2-main \
+  6.0.0.XX-build-description
+```
+
+Do not build from a detached commit, side branch, dirty checkout, or an
+already-patched appfs. If a historical comparison is required, make it a
+separate explicitly labelled diagnostic build. The script is deliberately
+fail-closed before Docker/build work so source identity cannot be ambiguous.
+
 This process is mandatory for any change to:
 
 - the libgphoto2 source SHA/tag;
