@@ -1,0 +1,23 @@
+Bus 001 Device 003: ID 25fb:0189
+ 10:34:35 up  8:05,  1 users,  load average: 1.00, 1.00, 1.00
+FwVer:6.0.0.54.28-o-v13d-pubfix;date:2026.09.26;
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
