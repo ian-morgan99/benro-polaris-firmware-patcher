@@ -14,6 +14,8 @@ custom retry loops) when a documented, proven process exists.
 - `fwpkt-private-upload` — publish every built zip to PrivateResearch in the
   same session it is built.
 - `polaris-debugging` — SSH access, gimbal-vs-router diagnosis, keepalives.
+- `polaris-release` — the shared fail-closed source-to-candidate build and
+  provenance process. Use `scripts/build-release-candidate.sh` for releases.
 
 If a documented process fails, diagnose *why* (link drop? device state?) and
 retry the documented process or fall back to its documented fallbacks. Only
