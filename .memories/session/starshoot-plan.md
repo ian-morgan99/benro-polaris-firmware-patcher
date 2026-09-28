@@ -5,3 +5,4 @@ Remaining: confirm model/protocol; validate libusb; define adapter contract; pro
 Next: identify QHY5L-II SDK / INDI protocol version for 16c0:29a0
 #158 Orion StarShoot (16c0:29a0): adapter skeleton present (stage2_ipolar_adapter.c is iPolar; starshoot adapter MISSING — subagent only produced iPolar). Vendor-protocol libusb backend + QHY5L-II protocol identification still required. Source: existing LibGphoto2/libgphoto2 repo (no new clone). Pentax mods preserved (POLARIS_CAMLIBS=ptp2,pentax).
 #151 ownership layer: vendor-protocol requires separate libusb adapter (not produced by subagent)
+Next: complete link + confirm model/protocol before FwPkt --build
