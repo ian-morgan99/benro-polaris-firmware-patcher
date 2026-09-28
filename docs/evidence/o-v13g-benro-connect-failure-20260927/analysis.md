@@ -167,3 +167,97 @@ The `[pentax] capture=N boundary=camlib-enter transfer=0 recovery=1` lines confi
 - All 4 astro captures succeeded without triggering recovery (session stayed healthy)
 
 The o-v13i fix is working as designed. The earlier 0x02fa/0x02ff stuck loop was from the older build; under o-v13i the session recovered cleanly.
+
+## Manufacturer Comparison: Long-Exposure Timeout Handling
+
+### The 30s "waiting for a response" is NOT a camera/PTP limit
+
+The message comes from **Eclipse Paho MQTT** (error code 32000: "Timed out waiting
+for a response from the server"). Benro Connect (`com.snoppa.libra`) communicates
+with Polaris over MQTT, not directly over PTP. The 30s is the app's MQTT token
+timeout — an application-layer concern, not a camera firmware limit.
+
+### How other manufacturers handle long exposures (PTP layer)
+
+All PTP cameras use **event-driven completion**, not fixed timeouts:
+
+| Manufacturer | Completion Signal | libgphoto2 Timeout Budget |
+|---|---|---|
+| Canon | `PTP_EC_CaptureComplete` (0x400d) | 100s default (`USB_TIMEOUT_CAPTURE`) |
+| Nikon | `PTP_EC_Nikon_CaptureCompleteRecInSdram` / `PTP_EC_ObjectAdded` | 70s wait loop |
+| Olympus | `PTP_EC_Olympus_CaptureComplete` | event-driven, no fixed cap |
+| **Pentax (ours)** | `PTP_EC_CaptureComplete` + `PTP_EC_ObjectAdded` | **Exposure-aware** (see below) |
+
+None of them have a hard 30s limit. The PTP layer waits for the camera's
+completion event with a generous budget. The camera tells the host "I'm done"
+via an interrupt endpoint event — the host just needs to keep listening.
+
+### Our Pentax camlib already does this correctly
+
+`pentax_capture_timeout_ms()` in `camlibs/ptp2/pentax-utils.c` computes:
+- **Base:** 60s
+- **Astro shift:** camera-reported limit + processing margin
+- **Bulb:** timer value + 1s + margin
+- **Multi-shot (pixel shift):** base × 4 + 30s margin = 270s
+- **Ceiling:** 24 hours
+
+This means the PTP layer will wait as long as needed for a long exposure.
+The camera sends `CaptureComplete` when done, and the host picks it up.
+
+### Where the 30s actually bites
+
+```
+Benro Connect (app)          Polaris (PolarisOS)           Camera (PTP)
+     |                            |                           |
+     |-- MQTT: "capture" ------->|                           |
+     |                            |-- PTP: InitiateCapture ->|
+     |                            |                           |--- exposing (minutes)
+     |  [MQTT token timer: 30s]  |                           |
+     |  "waiting for response"   |                           |
+     |  ...still waiting...      |                           |--- done, writes file
+     |                            |<-- PTP: CaptureComplete --|
+     |                            |<-- PTP: ObjectAdded -----|
+     |                            |-- download DNG+JPG ------|
+     |<-- MQTT: "done" ---------|                           |
+```
+
+The app's MQTT token times out at ~30s while the camera is still exposing.
+Polaris is working fine — it's just that the **app doesn't know to wait longer**.
+
+### What other manufacturers' apps do
+
+- **Canon EOS Utility / Camera Connect:** Sets a per-exposure timeout based on
+  the configured shutter speed. A 30s exposure gets a 60s+ app timeout.
+- **Nikon Imaging Edge / Wireless Mobile Utility:** Same pattern — the app
+  knows the exposure duration and extends its wait accordingly.
+- **Olympus IRIS / Olympus Viewer:** Uses a "busy" indicator that persists
+  until the camera reports completion; no fixed app-side timeout.
+- **Pentax DNG Player / Pentax for Android:** Similar — the app tracks the
+  expected exposure and waits.
+
+**None of them use a fixed 30s timeout regardless of exposure.** They all
+scale the wait with the configured exposure duration.
+
+### What Benro Connect should do (or what Polaris can do)
+
+**Option A (app-side, preferred):** Benro Connect knows the configured exposure
+duration (it set it). It should extend its MQTT token timeout to
+`exposure_duration + transfer_time + margin`. This is what every other
+manufacturer's app does.
+
+**Option B (Polaris-side, heartbeat):** During a long exposure, Polaris sends
+periodic MQTT "still working" pings (e.g., every 10s) so the app's token
+timer resets. This is less standard but works without an app change.
+
+**Option C (Polaris-side, state reporting):** Polaris reports `state:4`
+(exposing) with an estimated completion time. The app can then set its
+timeout to that value. This is closest to what Canon/Nikon do.
+
+### Conclusion
+
+Polaris does **not** have a hard 30s limit for any manufacturer. The PTP layer
+waits for events with exposure-aware budgets (up to 24h). The 30s is purely
+Benro Connect's MQTT application-layer timeout, which doesn't account for the
+configured exposure duration. This is an app-side gap, not a firmware gap.
+The fix belongs in Benro Connect (scale the MQTT timeout with exposure), or
+Polaris can add a heartbeat during long exposures as a workaround.
