@@ -40,6 +40,10 @@ The Pentax remained electrically present as the same `25fb:0189`, bus 1 device 3
 
 This separates two defects: v13i recovers the replacement process from the stale Pentax session, but it does not prevent the original capture owner from being terminated/replaced after an operation that fails to complete. The next investigation boundary is the pgphoto/polestar watchdog decision and the first blocked/failed production operation before replacement. Do not add another USB retry or claim the capture fixed.
 
+## v13j diagnostic canary result
+
+The installed crash-boundary diagnostic build `6.0.0.54.34-o-v13j-crash-boundary` then completed two consecutive direct bounded RAW+JPEG operations: `SP_0114.dng/.jpg` and `SP_0115.dng/.jpg`, both with lifecycle `[1,4,0]`. The K-3 III remained `25fb:0189` on the same USB identity, the active `pgphoto` PID remained `29865` across the second operation and the >40-second post-first-shot observation, and `/app/stage2-crash.log` was absent. This does not close the Benro Connect failure: it proves the exact lower-level direct path can complete and remain owned, so the next reproduction must include Benro Connect's concurrent session/Live View/mode traffic. No libgphoto2 behaviour was changed by v13j; it only preserved crash evidence.
+
 ## Remaining physical acceptance
 
 After the active-owner failure is corrected, run one Benro Connect still capture, wait beyond the prior watchdog boundary, and run a second capture. Acceptance requires both files to publish and the session to remain usable without replacement of the active pgphoto owner. Capture logs must show either uninterrupted ownership or an explicitly safe generation transition; recovery after killing a blocked operation is not capture success.
