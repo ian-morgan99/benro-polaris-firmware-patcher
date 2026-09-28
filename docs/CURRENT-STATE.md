@@ -1,5 +1,18 @@
 # Current repository state
 
+## 2026-09-28 one-off scenario audit
+
+The latest source-main package `o-v13m-main-pentax-uvc-20260928` is build and
+offline-gate valid but remains **NOT INSTALLED / NOT PHYSICALLY QUALIFIED**.
+Evidence in `evidence/o-v13m-main-pentax-uvc-20260928/SCENARIO-AUDIT.md`
+shows earlier K-3 III RAW+JPEG and limited Astro-equivalent passes, but no
+current-package proof for JPEG-only, RAW-only repeatability, native Astro,
+Panorama/Pro Panorama, or a successful complete Pixel Shift output set.
+Pixel Shift remains specifically unqualified: the recorded v12h experiment
+was incomplete and v12m crashed after publishing its two outputs. Do not claim
+the current package works across all scenarios or formats until that matrix is
+run against an identified installed build.
+
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
