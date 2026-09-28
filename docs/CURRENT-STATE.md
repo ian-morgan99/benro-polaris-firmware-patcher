@@ -1,5 +1,28 @@
 # Current repository state
 
+## 2026-09-29 candidate: o-v13n
+
+`o-v13n-main-pentax-display-20260929` is **BUILT, PRIVATELY PUBLISHED, AND
+PACKAGE-GATED; NOT INSTALLED OR PHYSICALLY QUALIFIED**. It uses patcher
+`7c514e328` and libgphoto2 `4bdbc75eb`. The package and appfs FwVer are set to
+`6.0.0.54.22`; the build identity `6.0.0.54.38-o-v13n-main-pentax-display`
+is separately recorded in provenance. Connect's actual displayed version is
+not yet verified.
+
+The test failures encountered during packaging were addressed at their owners:
+NULL directory append no longer crashes libgphoto2, its filesystem regression
+test now passes in the deterministic suite, and the host Meson setup includes
+the Directory Browse camlib required by its generic camera test. The serial
+DTR/CTS test remains an explicit `no-ci` hardware prerequisite skip. Results:
+libgphoto2 12/12 deterministic tests, patcher 13 container + 24 Python tests,
+and package structure/firmwareInfo gates all PASS. Package contents were
+extracted and byte-compared with the built Stage-2 bundle.
+
+Artifact hashes and the remaining physical acceptance matrix are in
+`evidence/o-v13n-main-pentax-display-20260929/SUMMARY.md`; the registry entry
+is in `FWPKT-PROVENANCE-CONTRACT.md`. v14 is unchanged. Earlier scenario gaps
+remain open until exercised against this identified candidate.
+
 ## 2026-09-28 one-off scenario audit
 
 The latest source-main package `o-v13m-main-pentax-uvc-20260928` is build and
