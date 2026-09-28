@@ -25,8 +25,10 @@ command -v meson >/dev/null || { echo "ERROR: meson is required for libgphoto2 r
 TEST_BUILD="$(mktemp -d "${TMPDIR:-/tmp}/libgphoto2-regression.XXXXXX")"
 trap 'rm -rf "$TEST_BUILD"' EXIT
 echo "Running libgphoto2 deterministic regression pack"
-meson setup "$TEST_BUILD" "$SRC" --buildtype=debugoptimized -Dcamlibs=ptp2,pentax >/dev/null
-meson test -C "$TEST_BUILD" --print-errorlogs
+meson setup "$TEST_BUILD" "$SRC" --buildtype=debugoptimized -Dcamlibs=ptp2,pentax,directory >/dev/null
+meson compile -C "$TEST_BUILD"
+echo "SKIP: libgphoto2:test-gp-port (no-ci serial control-line test; host has no supported DTR/CTS fixture)"
+meson test -C "$TEST_BUILD" --no-suite no-ci --print-errorlogs
 
 PATCH_ARGS=(--fwpkt "$(realpath "$BASE")" \
   --libgphoto2-source "$(realpath "$SRC")" --out "$OUT" --build-id "$BUILD_ID")
