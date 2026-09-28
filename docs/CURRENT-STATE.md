@@ -3,6 +3,23 @@
 This is the concise entry point for agents and maintainers. Read it before
 searching historical handovers or raw evidence.
 
+## 2026-09-28 current candidate: o-v13i (session-recovery)
+
+`o-v13i-session-recovery-20260927` is **INSTALLED, RUNTIME-VERIFIED; stale-session
+rebind works; capture canary FAILED (active-owner defect)**. In plain English: the
+replacement `pgphoto` process now recovers from a retained Pentax session
+(`0x02fa`/`0x02fd`/`0x02ff` -> ordered close/reset/reopen, libgphoto2
+`e6cc1f8c8`), but the ORIGINAL capture owner is still terminated/replaced after an
+operation that fails to complete. Next investigation boundary: the
+pgphoto/polestar watchdog decision and the first blocked/failed production
+operation before replacement. Do not add another USB retry or claim the capture
+fixed.
+
+Provenance: build id `6.0.0.54.33-o-v13i-session-recovery`, patcher `0746ed3`,
+libgphoto2 `e6cc1f8c8`, harness `0355f6f64`. Full evidence and the remaining
+physical acceptance (two-capture test after the active-owner fix) are in
+`evidence/o-v13i-session-recovery-20260927/SUMMARY.md`.
+
 ## 2026-09-27 current candidate: o-v13g
 
 `o-v13g-linked-publication-20260927` is **INSTALLED, RUNTIME-VERIFIED, AND
