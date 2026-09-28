@@ -7,3 +7,4 @@ Next: verify uvcvideo module availability on Hi3559V200
 #159 iPolar (1233:1455): adapter skeleton present (stage2_ipolar_adapter.c, 692 B); libuvc built (/work/src/libuvc/build/libuvc.so.0.0.8, 105312 B); source verified (existing LibGphoto2/libgphoto2 repo, no new clone). Note: 2.5.34 source has no uvc/ camlib — userspace libuvc/uvcvideo path per #151. Starshoot adapter MISSING (subagent only produced iPolar adapter).
 Full link requires host config/libusb (expected)
 Next: complete adapter link (host config/libusb) before FwPkt --build
+#159 iPolar: source input set (existing LibGphoto2/libgphoto2 repo, no clone); adapter skeleton + libuvc built; full link MISSING; 2.5.34 has no uvc/ camlib (#151 userspace)
