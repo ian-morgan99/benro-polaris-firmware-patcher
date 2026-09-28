@@ -26,6 +26,11 @@
 			"label": "noop",
 			"type": "shell",
 			"command": "echo skip"
+		},
+		{
+			"label": "noop",
+			"type": "shell",
+			"command": "true"
 		}
 	]
 }
