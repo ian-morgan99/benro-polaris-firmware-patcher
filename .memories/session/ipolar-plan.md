@@ -8,3 +8,4 @@ Next: verify uvcvideo module availability on Hi3559V200
 Full link requires host config/libusb (expected)
 Next: complete adapter link (host config/libusb) before FwPkt --build
 #159 iPolar: source input set (existing LibGphoto2/libgphoto2 repo, no clone); adapter skeleton + libuvc built; full link MISSING; 2.5.34 has no uvc/ camlib (#151 userspace)
+#159 iPolar: source input fixed (workspace-local /work/src/libgphoto2-source, existing repo, no clone)
