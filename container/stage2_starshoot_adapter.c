@@ -16,7 +16,7 @@
  * SDK -> adapter -> libusb bulk(alt1)/isochronous(alt3) -> OpenPolaris (#151).
  * The libusb backend (open, claim interface, set alt setting, bulk/iso transfer)
  * is the next step; this layer defines the command surface and VID/PID. */
-#include <usb.h>  /* libusb — vendor-protocol backend */
+#include <libusb-1.0/libusb.h>  /* libusb — vendor-protocol backend */
 
 void starshoot_adapter_init(void) { libusb_init(NULL); }
 

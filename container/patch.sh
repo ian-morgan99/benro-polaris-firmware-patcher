@@ -419,6 +419,29 @@ else
   fi
   log "  loader: md5=$LOADER_MD5 ABI=$LFLAGS (R5-II gate present, issue #27)"
 
+  # #158/#159 adapter compile-check: prove the camera adapters build with the
+  # same cross toolchain + soft-float ABI as the loader. These are NOT yet
+  # linked into libpolaris_stage2.so (full link is the next step); this gate
+  # catches header/ABI breakage at build time instead of on-device.
+  if [ -f /opt/patcher/stage2_starshoot_adapter.c ]; then
+    ( cd "$W/s2" && $XT-gcc -c -fPIC -O2 -std=gnu11 -mfloat-abi=soft -Wall \
+        -I/opt/patcher -I/usr/include/libusb-1.0 \
+        /opt/patcher/stage2_starshoot_adapter.c -o starshoot_adapter.o ) \
+      || die "starshoot adapter compile-check failed (#158)"
+    log "  starshoot adapter: compiles (libusb backend, #158)"
+  fi
+  if [ -f /opt/patcher/stage2_ipolar_adapter.c ]; then
+    if [ -d /work/src/libuvc/include ]; then
+      ( cd "$W/s2" && $XT-gcc -c -fPIC -O2 -std=gnu11 -mfloat-abi=soft -Wall \
+          -I/opt/patcher -I/work/src/libuvc/include \
+          /opt/patcher/stage2_ipolar_adapter.c -o ipolar_adapter.o ) \
+        || die "ipolar adapter compile-check failed (#159)"
+      log "  ipolar adapter: compiles (libuvc backend, #159)"
+    else
+      log "  ipolar adapter: libuvc headers absent (/work/src/libuvc/include) — compile-check pending (#159)"
+    fi
+  fi
+
   # d) assemble /app/lib/stage2 and install the wrapper as /app/bin/pgphoto.
   STAGE2="$APP/lib/stage2"
   rm -rf "$STAGE2"
