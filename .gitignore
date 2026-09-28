@@ -52,6 +52,10 @@ Thumbs.db
 # rotated reviews live in docs/evidence/ledger-archive-*.md which IS tracked)
 LMStudioLogEnhancements.md
 
+# External SDK / binary downloads (e.g., QHY5L-II SDK for #158 protocol research)
+# Proprietary binaries — never commit; fetched per-session, not authoritative.
+Temp/
+
 # Session workspace state (rebuilt every session; never authoritative).
 # Per issue #30, this is a per-session scratch file for the agent host, not
 # repo content; the canonical FwPkt-install investigation log lives in the
