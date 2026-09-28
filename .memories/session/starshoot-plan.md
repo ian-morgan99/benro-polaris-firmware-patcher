@@ -7,3 +7,4 @@ Next: identify QHY5L-II SDK / INDI protocol version for 16c0:29a0
 #151 ownership layer: vendor-protocol requires separate libusb adapter (not produced by subagent)
 Next: complete link + confirm model/protocol before FwPkt --build
 #158 Orion StarShoot: source input set (existing LibGphoto2/libgphoto2 repo, no clone); adapter skeleton present; full link MISSING
+#158 Orion StarShoot: source input fixed (workspace-local /work/src/libgphoto2-source, existing repo, no clone)
