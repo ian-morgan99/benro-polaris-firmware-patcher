@@ -4,11 +4,11 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> [build-id]" >&2
+  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> [build-id] [display-fwver]" >&2
   exit 2
 }
-[ $# -ge 3 ] && [ $# -le 4 ] || usage
-ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="${4:-$ID}"
+[ $# -ge 3 ] && [ $# -le 5 ] || usage
+ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="${4:-$ID}"; DISPLAY_FWVER="${5:-}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
 
@@ -28,8 +28,12 @@ echo "Running libgphoto2 deterministic regression pack"
 meson setup "$TEST_BUILD" "$SRC" --buildtype=debugoptimized -Dcamlibs=ptp2,pentax >/dev/null
 meson test -C "$TEST_BUILD" --print-errorlogs
 
-BUILD_ID="$BUILD_ID" "$ROOT/patch-polaris.sh" --fwpkt "$(realpath "$BASE")" \
-  --libgphoto2-source "$(realpath "$SRC")" --out "$OUT"
+PATCH_ARGS=(--fwpkt "$(realpath "$BASE")" \
+  --libgphoto2-source "$(realpath "$SRC")" --out "$OUT" --build-id "$BUILD_ID")
+if [ -n "$DISPLAY_FWVER" ]; then
+  PATCH_ARGS+=(--display-fwver "$DISPLAY_FWVER")
+fi
+"$ROOT/patch-polaris.sh" "${PATCH_ARGS[@]}"
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
 bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
   --build "$OUT" --id "$ID" --status candidate \

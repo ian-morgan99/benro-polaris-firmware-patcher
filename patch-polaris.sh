@@ -36,6 +36,9 @@
 #                          "6.0.0.54.1") into /app/openpolaris-libgphoto2-provenance.txt
 #                          so patcher-only builds (same libgphoto2 commit, different
 #                          patcher) are distinguishable at runtime. OFF by default.
+#     --display-fwver VER  override the camera's four-part base plus optional
+#                          numeric build suffix used in the app-visible code-780
+#                          version (e.g. 4.0.0.32.22). Independent of --build-id.
 #     --image NAME         docker image tag              (default polaris-patcher)
 #
 #  READ THE README AND DISCLAIMERS FIRST.  Tested ONLY against FwVer 4.0.0.32
@@ -44,7 +47,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; CAMLIBS="ptp2,pentax"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; POLESTAR_BULB_PATCH=0
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; CAMLIBS="ptp2,pentax"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; DISPLAY_FWVER=""; POLESTAR_BULB_PATCH=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -65,6 +68,7 @@ while [ $# -gt 0 ]; do
     --pentax-max-capture-size) PENTAX_MAX_CAPTURE_SIZE="$2"; shift 2;;
     --ssh-key) SSHKEY="$2"; shift 2;;
     --build-id) BUILDID="$2"; shift 2;;
+    --display-fwver) DISPLAY_FWVER="$2"; shift 2;;
     --image) IMG="$2"; shift 2;;
     -h|--help) sed -n '2,26p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
@@ -72,6 +76,15 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$FWPKT" ] || { echo "error: --fwpkt is required" >&2; exit 1; }
+if [ -n "$DISPLAY_FWVER" ]; then
+  case "$DISPLAY_FWVER" in *[!0-9.]*|.*|*..*|*.)
+    echo "error: --display-fwver must be dotted numeric components, e.g. 4.0.0.32.22" >&2
+    exit 1;;
+  esac
+  DISPLAY_FWVER_PARTS=$(printf '%s' "$DISPLAY_FWVER" | awk -F. '{print NF}')
+  [ "$DISPLAY_FWVER_PARTS" -eq 4 ] || [ "$DISPLAY_FWVER_PARTS" -eq 5 ] || {
+    echo "error: --display-fwver must have four components plus an optional build counter" >&2; exit 1; }
+fi
 case "$CAMLIBS" in
   *[!a-zA-Z0-9_,-]*|,*|*,|*,,*) echo "error: invalid --camlibs list: $CAMLIBS" >&2; exit 1;;
 esac
@@ -181,6 +194,7 @@ docker run --rm \
   -e ALLOW_VANILLA_SOURCE="$ALLOW_VANILLA" \
   -e SSH_PUBKEY="$SSH_PUBKEY" \
   -e BUILD_ID="$BUILDID" \
+  -e DISPLAY_FWVER="$DISPLAY_FWVER" \
   "$@" \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"

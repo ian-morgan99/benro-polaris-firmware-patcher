@@ -131,6 +131,9 @@ EOF
 if [ -n "${BUILD_ID:-}" ]; then
   printf 'build_id=%s\n' "$BUILD_ID" >> /work/out/source-provenance.env
 fi
+if [ -n "${DISPLAY_FWVER:-}" ]; then
+  printf 'display_fwver=%s\n' "$DISPLAY_FWVER" >> /work/out/source-provenance.env
+fi
 if [ "${SOURCE_PREFLIGHT_ONLY:-0}" = "1" ]; then
   cat /work/out/source-provenance.env
   exit 0

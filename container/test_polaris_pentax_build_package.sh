@@ -113,9 +113,11 @@ if [ -f "$FW_PKT/FwVer" ]; then
     echo "FwVer not carried through from stock" >&2; exit 1; }
 fi
 
-# 3b) FwVer override: a BUILD_ID build must rewrite FwVer so the device (and
-#     therefore Benro Connect) reports our build identifier, not the stock one.
+# 3b) Version/display override stays separate from provenance: the app-visible
+#     camera version can carry a fifth component while build identity remains
+#     available in the provenance file.
 BUILDID_TEST="o-v9j-testbuild"
+DISPLAY_FWVER_TEST="6.0.0.54.22"
 mkdir -p "$T/out-fwver"
 if docker run --rm --name polaris-pentax-fwver \
   -e MODE=full \
@@ -126,20 +128,25 @@ if docker run --rm --name polaris-pentax-fwver \
   -e ALLOW_DIRTY_SOURCE=0 \
   -e PENTAX=1 \
   -e BUILD_ID="$BUILDID_TEST" \
+  -e DISPLAY_FWVER="$DISPLAY_FWVER_TEST" \
   -v "$SOURCE:/libgphoto2-source-input:ro" \
   -v "$FW_PKT:/in:ro" \
   -v "$T/out-fwver:/out" \
   "$IMAGE" > "$T/build-fwver.log" 2>&1; then
   [ -f "$T/out-fwver/FwPkt/FwVer" ] || { echo "missing FwPkt/FwVer (BUILD_ID build)" >&2; exit 1; }
-  grep -q "^FwVer:$BUILDID_TEST;" "$T/out-fwver/FwPkt/FwVer" || {
-    echo "FwVer not overridden by BUILD_ID: $(cat "$T/out-fwver/FwPkt/FwVer")" >&2; exit 1; }
+  grep -q "^FwVer:$DISPLAY_FWVER_TEST;" "$T/out-fwver/FwPkt/FwVer" || {
+    echo "FwVer not overridden by DISPLAY_FWVER: $(cat "$T/out-fwver/FwPkt/FwVer")" >&2; exit 1; }
+  grep -q "^build_id=$BUILDID_TEST$" "$T/out-fwver/build-source-provenance.txt" || {
+    echo "release build identity missing from provenance" >&2; exit 1; }
+  grep -q "^display_fwver=$DISPLAY_FWVER_TEST$" "$T/out-fwver/build-source-provenance.txt" || {
+    echo "display firmware version missing from provenance" >&2; exit 1; }
   # The override must also land inside the shipped zip.
-  python3 - "$T/out-fwver/FwPkt.zip" "$BUILDID_TEST" <<'PY'
+  python3 - "$T/out-fwver/FwPkt.zip" "$DISPLAY_FWVER_TEST" <<'PY'
 import sys, zipfile
-zp, bid = sys.argv[1], sys.argv[2]
+zp, display_fwver = sys.argv[1], sys.argv[2]
 with zipfile.ZipFile(zp) as z:
     data = z.read("FwPkt/FwVer").decode()
-assert data.startswith("FwVer:%s;" % bid), "zip FwVer wrong: %r" % data
+assert data.startswith("FwVer:%s;" % display_fwver), "zip FwVer wrong: %r" % data
 print("FwVer override verified in FwPkt.zip:", data.strip())
 PY
   # And the on-board /app/FwVer (what Benro Connect actually displays) must be
@@ -160,7 +167,7 @@ PY
   APPFS_FWVER_ROOT="$(find "$FWVER_APPFS_AUDIT" -type d -name ubifs | head -1)"
   [ -n "$APPFS_FWVER_ROOT" ] || { echo "could not extract appfs for FwVer audit" >&2; exit 1; }
   [ -f "$APPFS_FWVER_ROOT/FwVer" ] || { echo "missing /app/FwVer in repacked appfs" >&2; exit 1; }
-  grep -q "^FwVer:$BUILDID_TEST;" "$APPFS_FWVER_ROOT/FwVer" || {
+  grep -q "^FwVer:$DISPLAY_FWVER_TEST;" "$APPFS_FWVER_ROOT/FwVer" || {
     echo "/app/FwVer in appfs not overridden: $(cat "$APPFS_FWVER_ROOT/FwVer")" >&2; exit 1; }
   echo "appfs /app/FwVer override verified: $(cat "$APPFS_FWVER_ROOT/FwVer")"
 else
