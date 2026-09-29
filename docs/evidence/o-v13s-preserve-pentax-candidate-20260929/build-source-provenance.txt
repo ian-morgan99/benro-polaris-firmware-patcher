@@ -1,0 +1,11 @@
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=204c2a95a0da78135ad3c6dc244c230d5d16d2e9
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=d11bc748f917a1705988596aa6acf565a7131c9a
+patcher_dirty_diff_hash=
+selected_camlibs=ptp2,pentax
+build_id=6.0.0.54.35-o-v13s-preserve-pending

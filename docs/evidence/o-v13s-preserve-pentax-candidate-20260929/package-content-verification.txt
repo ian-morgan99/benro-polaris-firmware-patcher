@@ -1,0 +1,30 @@
+FwPkt package content verification
+Date: 2026-09-29
+Candidate: o-v13s-preserve-pentax-candidate-20260929
+ZIP SHA-256: 6f02b20cb1d3e5f27ed99cb4b3f800adb4827dd65396d39fda7c188bb7d70b7b
+Method: extracted FwPkt/camera/appfs.ubifs with ubireader_extract_files, then byte-compared packaged runtime paths with stage2-ondisk bundle from this same build.
+
+MATCH bin/pgphoto == ondisk/pgphoto.wrapper
+MATCH restart_gphoto == ondisk/restart_gphoto.sh
+MATCH lib/stage2/libpolaris_stage2.so == ondisk/libpolaris_stage2.so
+MATCH lib/stage2/pgphoto.stage2ondisk == ondisk/pgphoto.stage2ondisk
+MATCH lib/stage2/libgphoto2.so.6 == libgphoto2.so.6
+MATCH lib/stage2/libgphoto2_port.so.12 == libgphoto2_port.so.12
+MATCH lib/stage2/libgphoto2/2.5.34/ptp2.so == libgphoto2/2.5.34/ptp2.so
+MATCH lib/stage2/libgphoto2/2.5.34/pentax.so == libgphoto2/2.5.34/pentax.so
+MATCH lib/stage2/libgphoto2/2.5.34/camlibs.manifest == libgphoto2/2.5.34/camlibs.manifest
+MATCH lib/stage2/libgphoto2_port/0.12.2/usb1.so == libgphoto2_port/0.12.2/usb1.so
+MATCH embedded source provenance
+
+Selected camera libraries: ptp2,pentax
+Embedded source commit: 204c2a95a0da78135ad3c6dc244c230d5d16d2e9
+Embedded patcher commit: d11bc748f917a1705988596aa6acf565a7131c9a
+
+Component SHA-256 values from extracted appfs:
+pgphoto: 42f75eb04710eb280d2b714dfdf9dcade9052586eb4758fdfdf2bfabc76fc76b
+pgphoto.stage2ondisk: 00d8e9e80e2813ddf2c89d28f219de33a09b1fde17dd20f7f2590793fb6df81d
+libgphoto2.so.6: a51a813cb5e241cf9e5d6d8da1a2c29592a5ca98d2ffa56524f8760a763b73f9
+libgphoto2_port.so.12: e9e979be616eebd93551e58c9ced1a99d7a247a195bf5b6a57a819358c482b67
+ptp2.so: d81ea8d295573a7965b831d3fcb05f37323fe54048ae71547c10ff14688ff7a1
+pentax.so: 81fa3778f6d6a1daa4ee90d4ffe9ebeb31b01d1e620de0b77631771575780e36
+usb1.so: 4d4bfe4863508dd33aeb1276c5eb1c887845aa7fdf1644299853a760a097dd0e
