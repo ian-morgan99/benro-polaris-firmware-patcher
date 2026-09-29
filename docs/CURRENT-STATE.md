@@ -26,11 +26,33 @@
   `400d417c90a486ec15b9830b9773b8320b3693f0aa5a69259db126f92d428904`; appfs
   MD5 is `c658bd37c3e70a13ea5f8b4535d8ff97`. Exact extracted-package component
   hashes match the generated runtime bundle. Full deterministic gates and the
-  harness pass. **Independent review is still required; do not install yet.**
+  harness pass. Independent review remains pending, but the operator explicitly
+  authorized installation/testing and o-v13v has now been installed through
+  the documented SD `FwPkt/` flow. Post-reboot `FwVer`, embedded provenance,
+  and matched core/port runtime hashes verify the intended candidate. The live
+  canary is currently blocked: no Pentax USB device is enumerated, control
+  port 9090 refuses connections, and `polestar_app` is absent. No shutter was
+  sent. Do not mark physically qualified; see the candidate evidence for the
+  exact checks and observed Clog errors.
   Details: [candidate evidence](evidence/o-v13v-stage2-direct-20260929/SUMMARY.md).
 - Restart-durable ownership for an accepted capture whose output is not yet
   visible is still an explicit design/test gap. Do not treat strict current-
   session libgphoto2 guards as durable across pgphoto process restart.
+
+## 2026-09-29 o-v13v installation / live canary blocked
+
+- Installed from the registered ZIP after verifying every staged camera and
+  gimbal payload size/MD5 against `firmwareInfo`. Polaris rejoined on its
+  verified BSSID and the installed build id, patcher SHA, and libgphoto2 SHA
+  exactly matched the registry row.
+- Both stock and Stage-2 copies of libgphoto2 core and port have matching MD5s;
+  pgphoto maps the Stage-2 core and port. This proves runtime component
+  selection, not successful Pentax capture.
+- The canonical read-only canary probe returned `ConnectionRefusedError` for
+  TCP 9090. At the same observation, USB had no `25fb` camera, `polestar_app`
+  was not running, and Clog repeatedly logged `SP_sendMsg Fail ... code[295]`.
+  No shutter was issued. Physical camera/control-path recovery is required
+  before retrying any canary. Full evidence: `docs/evidence/o-v13v-stage2-direct-20260929/SUMMARY.md`.
 
 ## 2026-09-29 latest artifact review: o-v13u BLOCKED; follow-up source work underway
 

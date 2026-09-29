@@ -9,10 +9,12 @@ and regression test require capture to call the resolved libgphoto2 core
 directly. The trace wrapper remains available only when explicitly enabled.
 
 This is a plausible contributor to the reported failure, not a proven root
-cause. The candidate has not been installed or physically tested. The known
-restart-durability gap for an accepted capture whose output is not visible
-remains open. Do not install until independent review approves the exact source
-and artifact; do not call this Pentax-qualified.
+cause. The candidate is installed and its source/artifact/runtime identity is
+verified, but the physical capture canary is blocked: after reboot the camera
+is no longer enumerated on USB, the Benro control probe cannot connect to port
+9090, and the `polestar_app` process is absent. Do not call this Pentax-
+qualified. The known restart-durability gap for an accepted capture whose
+output is not visible remains open.
 
 ## Source and artifact identity
 
@@ -63,7 +65,7 @@ and artifact; do not call this Pentax-qualified.
   compile was skipped because libuvc headers are absent; its frame-store
   component compiled. This does not claim functional UVC camera support.
 
-## Physical state after camera was turned on
+## Physical state before installation
 
 Read-only checks confirmed Polaris identity/route, current o-v13s runtime, and
 Pentax USB `25fb:0189`. The first Benro probe during reinitialisation returned
@@ -74,7 +76,43 @@ was staged. Full interpretation and raw-log hashes are in
 [`live-read-only-20260929-1430`](live-read-only-20260929-1430/README.md).
 
 Independent review is still pending, and restart-durable output ownership is
-still open. Do not install or shoot yet. Once review clears and the restart gap
-is explicitly dispositioned, physical testing requires sanctioned FwPkt
-installation, cold reboot, runtime-loader/provenance verification, and a
-bounded canary. The first canary must stop on any nonzero result; no blind retry.
+still open. The operator explicitly authorized installation and testing. The
+candidate was installed through the sanctioned SD-card `FwPkt/` path on
+2026-09-29. All six staged payload sizes and MD5s matched the candidate's
+`firmwareInfo` before reboot. Post-reboot Polaris identity and provenance
+matched the intended registry row:
+
+- FwVer: `6.0.0.54.41` (build id
+  `6.0.0.54.41-o-v13v-stage2-direct-20260929`).
+- libgphoto2: `718019fa0bb579cc5e8277ff2fa1f998a0fd37b4`.
+- patcher: `24f64f5f6ce25fd7bba35cd597e0e3d43e96373f`.
+- Core and port MD5s match between `/app/lib/stage2` and `/app/lib`.
+- `/proc/250/maps` confirms the running pgphoto loads both core and port from
+  `/app/lib/stage2`; pgphoto listens on 8080.
+
+The physical canary did not run. `scripts/canary-probe.py --probe` failed with
+`ConnectionRefusedError` to port 9090. At the same check, `lsusb` showed no
+Pentax `25fb` device, `/app/bin/polestar_app` was not running, and Clog
+contained repeated `SP_sendMsg Fail ... code[295]`. The gimbal remains
+reachable over its verified AP/SSH route, so this is not a router-identity
+confusion. No shutter was sent. Collect fresh logs and restore camera/control
+service before any physical capture attempt; do not retry a shutter blindly.
+
+The post-install `./tests/run_prerelease_gate.sh --canary --expected-files 1`
+run completed with 2 passed (14 container, 24 Python), 0 failed, and the live
+device gate skipped. The skip reflects the 9090 probe failure; it is not a
+physical canary pass. Clog had `SP_sendMsg Fail ... code[295]` repeating, while
+`polestar_app` and Pentax USB were absent. Dmesg showed only the hub
+enumeration, not a camera attach. I did not restart/kill device processes or
+send a shutter. A physical camera reconnect alone may not restore the missing
+9090 service; inspect fresh boot logs before attempting a canary.
+
+Post-install matched-stack hashes observed on Polaris:
+
+| Component | MD5 | Path |
+| --- | --- | --- |
+| libgphoto2 core | `4ef64d8950eee70d9200093286fb0f3b` | `/app/lib/stage2/libgphoto2.so.6` and `/app/lib/libgphoto2.so.6` |
+| libgphoto2 port | `ad50e83594397aef48b63ed2375890cc` | `/app/lib/stage2/libgphoto2_port.so.12` and `/app/lib/libgphoto2_port.so.12` |
+| ptp2 camlib | `1d94dfe84203b7210cb014267228a4af` | `/app/lib/stage2/libgphoto2/2.5.34/ptp2.so` |
+| Pentax camlib | `151750bae93f58801cd02176c6b38df9` | `/app/lib/stage2/libgphoto2/2.5.34/pentax.so` |
+| usb1 port driver | `4423bba29bf8c5d899598841ec3e6310` | `/app/lib/stage2/libgphoto2_port/0.12.2/usb1.so` |
