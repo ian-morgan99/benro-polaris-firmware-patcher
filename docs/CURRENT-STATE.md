@@ -2,9 +2,16 @@
 
 ## 2026-09-29 latest candidate: o-v13s preserve unresolved Pentax candidate
 
-- **Not installed.** The device remains on its previously identified
-  `6.0.0.54.34-o-v13j-crash-boundary` until independent review and the supported
-  install flow are completed.
+- **Installed 2026-09-29; runtime identity verified; physical capture
+  qualification pending.** The registered FwPkt was staged as the complete
+  extracted tree on `/app/sd/FwPkt/`, every camera/gimbal payload MD5 matched
+  on-device `firmwareInfo`, then the documented `/sbin/reboot` path was used.
+  After the Polaris AP returned, `/app/FwVer` reported
+  `6.0.0.54.35-o-v13s-preserve-pending` and the embedded provenance reported
+  libgphoto2 `204c2a95a0da78135ad3c6dc244c230d5d16d2e9` and patcher
+  `d11bc748f917a1705988596aa6acf565a7131c9a`. The Pentax K-3 III was present
+  on USB; a non-capture probe returned the K-3 Mark III with `state=1`,
+  `storage=2`, and `photoFormat=2`. **No shutter was fired.**
 - Patcher source used: `d11bc748f917a1705988596aa6acf565a7131c9a` (`main`, clean
   at build). Embedded libgphoto2 source: `204c2a95a0da78135ad3c6dc244c230d5d16d2e9`
   (`main`, clean). Build selected `ptp2,pentax`.
@@ -32,7 +39,18 @@
   error/recovery path; an ordinary successful capture alone will not validate
   this change.
 - Plan/status cross-posted to patcher #149 and libgphoto2 #73. No camera action
-  or runtime mutation was performed for this build.
+  or runtime mutation was performed for this build before installation. Install
+  verification also confirmed that the wrapper's Stage-2 core/port and the
+  stock-path core/port/PTP/USB modules have matching hashes; the process maps
+  showing stock path names therefore refer to byte-identical candidate modules.
+  The post-update read-only probe transcript is in the OpenPolaris workspace at
+  `docs/evidence/firmware-update-2026-08-31/post-update-probes-20260929-123825/`.
+  An unrelated older `/app/sd/FwPkt.zip` remains untouched; only the extracted
+  tree is consumed by the updater.
+- Physical acceptance is still owed: run the bounded capture canary, inspect
+  completion/publication and logs, and only then attempt a second capture if
+  the first completes cleanly. Installed/runtime-verified is not equivalent
+  to capture-qualified.
 
 ## 2026-09-29 USB compatibility mode OFF capture failure — physical evidence
 
