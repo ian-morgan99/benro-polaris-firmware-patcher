@@ -33,11 +33,9 @@
   port, ptp2, Pentax camlib, usb1 and provenance to the build bundle; all
   matched. Detailed transcript and hashes:
   [candidate evidence](evidence/o-v13s-preserve-pentax-candidate-20260929/SUMMARY.md).
-- **Next gate:** independent review of the exact source SHAs, evidence and
-  private ZIP hashes is required before device installation. After that, run
-  the supported updater flow and a physical test designed to exercise the
-  error/recovery path; an ordinary successful capture alone will not validate
-  this change.
+- **Install completed:** documented extracted-tree install, all firmwareInfo
+  MD5s verified before reboot, and runtime identity verified after reboot.
+  Physical qualification is not complete; see the failed live canary below.
 - Plan/status cross-posted to patcher #149 and libgphoto2 #73. No camera action
   or runtime mutation was performed for this build before installation. Install
   verification also confirmed that the wrapper's Stage-2 core/port and the
@@ -47,10 +45,9 @@
   `docs/evidence/firmware-update-2026-08-31/post-update-probes-20260929-123825/`.
   An unrelated older `/app/sd/FwPkt.zip` remains untouched; only the extracted
   tree is consumed by the updater.
-- Physical acceptance is still owed: run the bounded capture canary, inspect
-  completion/publication and logs, and only then attempt a second capture if
-  the first completes cleanly. Installed/runtime-verified is not equivalent
-  to capture-qualified.
+- Installed/runtime-verified is not equivalent to capture-qualified. The first
+  bounded live canary is recorded below as failed; do not retry until its
+  unresolved camera-side state and missing diagnostic logs are handled safely.
 
 ### 2026-09-29 12:48 BST live canary — FAIL; no retry
 
@@ -70,9 +67,20 @@
   postcheck 8 seconds later; no USB disconnect was observed during the test.
   Mlog had rotated/cleared by postcheck. Clog did not expose the lower-level
   PTP cause, so the exact first failing camera transaction remains unknown.
+- A later read-only probe at 12:52 BST still reported model K-3 Mark III and
+  `state=1`; USB `25fb:0189`, pgphoto PID 250 and polestar_app PID 249 remained.
+  This camera state is not proof that Pentax's stricter pre-shutter conditions
+  (+32/+36/+104) permit another exposure. Kernel `dmesg` contains a USB reset
+  entry but lacks a usable timestamp tying it to this canary; no disconnect
+  entry occurred in the inspected interval.
 - **No retry or second shutter was sent.** Preserve camera power/USB state and
-  collect fuller camera/PTP logs before another physical capture. Full trace
-  and interpretation: [o-v13s live canary evidence](evidence/o-v13s-preserve-pentax-candidate-20260929/live-canary-20260929-1248.md).
+  collect fuller camera/PTP logs before another physical capture. The
+  source-supported leading hypothesis is a fail-closed recovery/admission guard
+  refusing the request before exposure; a camera PTP DeviceBusy response is
+  still possible. The captured trace does not distinguish them. Direct CLI
+  ownership transfer or power cycling could erase a camera-side candidate, so
+  neither is attempted without first securing logs and accepting that risk.
+  Full trace and interpretation: [o-v13s live canary evidence](evidence/o-v13s-preserve-pentax-candidate-20260929/live-canary-20260929-1248.md).
 
 ## 2026-09-29 USB compatibility mode OFF capture failure — physical evidence
 

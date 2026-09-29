@@ -1,6 +1,6 @@
 # o-v13s candidate — preserve unresolved Pentax transfer candidate
 
-Status: **built and package-gated; not installed; independent review and physical test pending.**
+Status: **installed 2026-09-29; runtime identity verified; one-shot live canary failed; no retry sent.**
 
 ## Plain-English change
 
@@ -53,14 +53,27 @@ the generated Stage-2 runtime bundle; the bundle includes `ptp2.so`,
   (`Unknown model` with that local build configured without the research-only
   camera model). Neither test was disabled or weakened; the canonical release
   script's clean selected regression build passed.
-- No physical test has been run on this candidate. No claims are made for
-  Benro Connect, Astro, Panorama, RAW-only, JPEG-only, RAW+JPEG, or Pixel Shift.
+- One diagnostic one-shot canary was run after installation and failed with
+  terminal `state:-1005` / `GP_ERROR_CAMERA_BUSY (-110)`; no completed lifecycle
+  or file publication was observed. The camera stayed enumerated in the short
+  postcheck. This does not qualify the candidate for captures. No claims are
+  made for Benro Connect, Astro, Panorama, RAW-only, JPEG-only, RAW+JPEG, or
+  Pixel Shift.
 
 ## Required next validation
 
-Independent review must inspect the exact two source SHAs, package test
-evidence, registry row and PrivateResearch ZIP hashes before any install.
-After review, install only through the documented FwPkt update procedure and
-test an intentional failure/recovery case only if the camera/operator can
-observe the corresponding candidate state. A normal capture pass alone will
-not test this error-path change.
+The candidate is installed; do not install another package or retry capture
+based on this failed canary. The strongest source-level explanation is that an
+existing Pentax recovery/admission guard returned busy before a new exposure:
+the driver returns `GP_ERROR_CAMERA_BUSY` if the recovery conditions sample is
+not strictly safe, or if a stale candidate is present. A camera-side PTP
+DeviceBusy response remains possible. Current retained logs do not distinguish
+these, so this is a hypothesis, not a confirmed root cause. See
+`live-canary-20260929-1248.md`.
+
+The next evidence-gathering action must preserve a possible camera-side orphan:
+collect the complete `Clog.txt`/`Mlog.txt` immediately after a bounded attempt
+and enable/confirm capture-boundary stderr markers. Direct CLI ownership transfer
+or camera power-cycle could reset the unresolved camera session and lose a
+candidate, so do not do either until logs are secured and that risk is accepted.
+A second shutter is not authorized by the current evidence.
