@@ -29,14 +29,21 @@
   harness 62/62, package-content and firmwareInfo checks all pass. Registry row
   is in `docs/FWPKT-PROVENANCE-CONTRACT.md`; private artifact commit
   `83664a9d3`.
-- **Not installed or physically qualified yet.** The documented extracted-tree
-  staging procedure is underway; after all on-device payload hashes match, the
-  only permitted install trigger is the normal reboot path. Acceptance requires
-  a successful RAW+JPEG capture publishing both files, API completion and
-  returned control, followed by a second successful capture with pgphoto alive.
-  Harness/source success is not camera proof. Full crash trace and raw-log
-  hashes are recorded in the `o-v13v-stage2-direct-20260929` evidence folder;
-  raw device logs/core are kept out of public git.
+- **Installed and runtime-verified; physical test pending.** The extracted
+  `FwPkt/` tree was staged by the documented tar stream, all six on-device
+  camera/gimbal payload MD5s matched `firmwareInfo`, and `/sbin/reboot` invoked
+  the normal watcher. After reboot `/app/FwVer` reports `6.0.0.54.42`, embedded
+  provenance reports the exact intended source and build IDs, pgphoto and
+  `polestar_app` are alive, Stage-2 resolves 64/64 slots, and `/proc/250/maps`
+  shows the Stage-2 core/port. Stock and Stage-2 core/port and ptp2 copies have
+  matching MD5s. The read-only probe reached 9090 but reports no camera
+  (`state=-5`; no `25fb` USB device), so no shutter has been sent on this build.
+  Physical acceptance requires a successful RAW+JPEG capture publishing both
+  files, API completion and returned control, followed by a second successful
+  capture with pgphoto alive. Harness/source success is not camera proof. Full
+  crash trace and raw-log hashes are recorded in the
+  `o-v13v-stage2-direct-20260929` evidence folder; raw device logs/core remain
+  out of public git.
 - The generated package build reports that the iPolar adapter compile check was
   skipped because this build image lacks libuvc headers; this Pentax stability
   candidate does not claim iPolar compile qualification. Track separately under
