@@ -85,8 +85,9 @@ when checked)
   published candidate.
 - Every firmware packet must follow the release skill and provenance registry.
   A successful source build is not proof that intended binaries are linked in
-  the packet. Do not install anything from this checkpoint; no artifact has
-  passed the required build/package gates.
+  the packet. This checkpoint produced no firmware artifact; do not install a
+  packet for the combined camera-support objective until the required
+  build/package and runtime-consumer gates pass.
 
 Plan and status cross-posted to #149 in comment
 [`5886879450`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5886879450).
