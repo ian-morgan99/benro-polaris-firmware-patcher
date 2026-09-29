@@ -1,0 +1,4 @@
+PASS: python regression suite (24 passed)
+INFO: no --build given; package gates skipped (offline gate only)
+=== Pre-release gate summary: 2 passed, 0 failed, 0 skipped ===
+GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence).

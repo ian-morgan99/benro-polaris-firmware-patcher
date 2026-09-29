@@ -1,0 +1,4 @@
+  PASS: fresh session (no settle window) lets set_single_config through
+[test_stage2_settle_config_gate] ALL PASS
+=== Summary: 14 passed, 0 failed, 2 skipped ===
+Skipped (prerequisite unavailable): test_polaris_pentax_build_package.sh test_source_input.sh
