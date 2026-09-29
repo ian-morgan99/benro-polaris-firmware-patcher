@@ -1,5 +1,35 @@
 # Current repository state
 
+## 2026-09-29 recovery-path candidate: o-v13t
+
+- **Built and package-gated; not installed.** This is one instrumented candidate
+  to mitigate the distinct Pentax failure paths, not a declaration that the
+  camera defect is fixed. The immediately preceding installed o-v13s canary
+  failed and may have left camera-side output unresolved; do not install or
+  fire another shutter until the prior physical session is safely resolved.
+- Libgphoto2 source: `f05f6582662997975676d434015b08e20e83100e` (`main`, clean).
+  Patcher source: `94c4882721607460242dffb2e49286c9b81bf21c` (`main`, clean).
+  Build id `6.0.0.54.39-o-v13t-strict-admission`; selected camlibs `ptp2,pentax`.
+- Per-path behavior: every shutter now passes the same strict pre-shutter
+  admission check; unsafe activity, active exposure, unresolved candidate and
+  unreadable PTP conditions have distinct reasons/actions; failed initiation
+  is reported and never replayed; candidate output is preserved when ownership
+  is unresolved. Recovery guidance is in `docs/PENTAX-CAPTURE-RECOVERY.md` and
+  libgphoto2 `docs/pentax/CAPTURE-RECOVERY.md`.
+- Tests: fresh libgphoto2 production/regression build 13/13 (the no-CI
+  serial-control fixture is excluded); patcher full offline gate 14 container
+  + 24 Python checks; package gate 4/4; production `ptp2.so` build passed.
+  Final ZIP appfs was extracted and `ptp2.so`, both libgphoto2 cores and
+  `pgphoto` byte-hash matched the generated runtime bundle. StarShoot adapter
+  compiled; iPolar adapter compile-check was skipped because libuvc headers are
+  unavailable. These tests do not prove Pentax camera behavior.
+- Artifact: `out/o-v13t-strict-admission-20260929/FwPkt.zip`; MD5
+  `1d49a01b8289db8811c75768b0224f7c`; SHA-256
+  `e023d4e2b5f79946f2a3ee0173c7d067a4fdfe9ff4073ae0729383e3bb2a3cb9`;
+  appfs MD5 `8a6ced8f9b78f5f1005c66ff9d12895e`. Uploaded to private
+  `ian-morgan99/PrivateResearch` in commit `4a27c8b29`. Full row in
+  `docs/FWPKT-PROVENANCE-CONTRACT.md`.
+
 ## 2026-09-29 latest candidate: o-v13s preserve unresolved Pentax candidate
 
 - **Installed 2026-09-29; runtime identity verified; physical capture
