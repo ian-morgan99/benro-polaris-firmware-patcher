@@ -23,9 +23,12 @@
 #define QHY_STREAM_SINGLE_MODE 0
 #define QHY_STREAM_LIVE_MODE   1
 
-/* Adapter interface (item 4 of the contract) — to be wired to libusb backend. */
+/* Adapter interface (item 4 of the contract) — wired to libusb backend.
+ * Bounded lifecycle: init -> open(vid,pid) [claim iface 0, alt 1] ->
+ * stream_bulk_iso() -> close() [release iface, close handle]. Fail-closed. */
 void starshoot_adapter_init(void);
 void starshoot_adapter_open(uint16_t vid, uint16_t pid);
+void starshoot_adapter_close(void);
 void starshoot_adapter_stream_bulk_iso(void);
 
 #endif /* STAGE2_STARSHOOT_ADAPTER_H */

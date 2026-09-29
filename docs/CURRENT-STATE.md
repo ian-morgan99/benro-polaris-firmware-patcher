@@ -1,5 +1,38 @@
 # Current repository state
 
+## 2026-09-29 TA review response: adapter consolidation + bounded lifecycle
+
+Technical architect comments on #158/#159 (2026-09-28) were addressed in the
+working tree:
+
+- **Consolidation:** removed the duplicate `container/stage2_qhy5lii_adapter.{h,c}`
+  created earlier this session. The canonical #158 adapter is
+  `container/stage2_starshoot_adapter.{h,c}` (build-wired via
+  `container/patch.sh:426`; the file the TA reviewed by name). Both targeted
+  `16c0:29a0`; only starshoot was referenced by any build path.
+- **#158 bounded lifecycle (TA requirement):** `starshoot_adapter_open(vid,pid)`
+  now enumerates, matches VID/PID, opens, claims interface 0 and selects alt
+  setting 1; new `starshoot_adapter_close()` releases the claimed interface +
+  handle; `ss_transfer_opcode()` provides bounded vendor control transfers with
+  libusb error codes; `stream_bulk_iso()` issues the `IS_CAMARA_INIT` handshake.
+  All paths fail-closed. Still owed per TA: hardware discriminator (handshake +
+  one frame from the attached 16c0:29a0) — needs the device on the bench.
+- **#159 per TA direction:** iPolar adapter now has a bounded Y16 frame sink
+  (fixed buffer, monotonic generation identity), `reconnect()`,
+  `set_exposure()`/`set_gain()` controls and `latest_frame()` for the common
+  camera-source interface. No iPolar-specific polar-solving stack; the solver
+  stays source-agnostic (`iPolar -> UVC/libuvc frame -> common camera-source
+  frame -> plate solve -> polar-axis error`).
+- **Compile status (patch.sh flags, zero warnings):** starshoot
+  (`gcc -c -fPIC -O2 -std=gnu11 -Wall -Icontainer -I/usr/include/libusb-1.0`)
+  and iPolar (`... -I/work/src/libuvc/include -I/work/src/libuvc/build/include`)
+  both PASS. `patch.sh` iPolar check updated to include the CMake-generated
+  `libuvc_config.h` root. libuvc 0.0.8 notes: Y16 = `UVC_FRAME_FORMAT_GRAY16`;
+  device lookup via `uvc_find_device` (opaque `uvc_device_t`).
+- **Classification:** both adapters remain skeleton/interface work until the
+  hardware discriminator passes and the adapters are linked into the stage2
+  build. o-v13n is still NOT a combined Pentax+UVC candidate.
+
 ## 2026-09-29 candidate: o-v13n
 
 `o-v13n-main-pentax-display-20260929` is **BUILT, PRIVATELY PUBLISHED, AND
@@ -28,13 +61,14 @@ five-field display value returns “no update” in that comparator. This is an
 experimental version-display candidate, not verified as neutral to app-based
 upgrade checks. Do not use Connect's firmware-update flow for it.
 
-Scope audit: the QHY and iPolar adapter sources at the recorded patcher commit
-both fail standalone ARM cross-compilation (QHY C/C++ SDK header mismatch;
-iPolar `uvc.h` missing). Neither adapter is part of 13n's packaged runtime.
-Therefore 13n is not a combined Pentax+UVC candidate and must not be installed
-for QHY/iPolar testing. See `evidence/o-v13n-main-pentax-display-20260929/
-uvc-adapter-compile-audit.txt`. No installation is planned until the intended
-test scope and the compile gates are resolved.
+Scope audit: the adapter sources at the recorded 13n patcher commit fail the
+standalone compile checks, and neither adapter is part of 13n's packaged
+runtime. Newer, still-uncommitted working-tree edits pass ARM object compilation
+when local QHY SDK/libuvc inputs are mounted, but the QHY object exports no
+symbols and iPolar retains an unresolved `uvc_init`; open/stream remain stubs.
+The trace is in `evidence/o-v13n-main-pentax-display-20260929/`. Therefore 13n
+is not a combined Pentax+UVC candidate and must not be installed for QHY/iPolar
+testing. No installation is planned on this evidence.
 
 Artifact hashes and the remaining physical acceptance matrix are in
 `evidence/o-v13n-main-pentax-display-20260929/SUMMARY.md`; the registry entry

@@ -431,14 +431,16 @@ else
     log "  starshoot adapter: compiles (libusb backend, #158)"
   fi
   if [ -f /opt/patcher/stage2_ipolar_adapter.c ]; then
-    if [ -d /work/src/libuvc/include ]; then
+    # libuvc_config.h is CMake-generated into the build tree; both include
+    # roots are required (source headers + generated config).
+    if [ -d /work/src/libuvc/include ] && [ -d /work/src/libuvc/build/include ]; then
       ( cd "$W/s2" && $XT-gcc -c -fPIC -O2 -std=gnu11 -mfloat-abi=soft -Wall \
-          -I/opt/patcher -I/work/src/libuvc/include \
+          -I/opt/patcher -I/work/src/libuvc/include -I/work/src/libuvc/build/include \
           /opt/patcher/stage2_ipolar_adapter.c -o ipolar_adapter.o ) \
         || die "ipolar adapter compile-check failed (#159)"
       log "  ipolar adapter: compiles (libuvc backend, #159)"
     else
-      log "  ipolar adapter: libuvc headers absent (/work/src/libuvc/include) — compile-check pending (#159)"
+      log "  ipolar adapter: libuvc headers absent (/work/src/libuvc/{include,build/include}) — compile-check pending (#159)"
     fi
   fi
 

@@ -103,6 +103,25 @@ iPolar test candidate. Those drivers need their own correct language/runtime
 integration, explicit fail-closed compile/link gates, and package-content proof
 before any UVC acceptance test.
 
+### Follow-up compile check: current uncommitted adapter sources
+
+The working-tree edits now pass ARM EABI object compilation when supplied with
+the local external inputs (QHY SDK headers and libuvc 0.0.8 headers): QHY via
+`arm-linux-gnueabi-g++`, iPolar via `arm-linux-gnueabi-gcc`. This is a syntax/
+object-build result only, not a link or runtime result. The QHY object exports
+no symbols; the iPolar object has an unresolved `uvc_init`, and its open/stream
+functions remain stubs. These dirty edits and external dependencies are not in
+the 13n package or its provenance. Transcript: `current-adapter-cross-compile.txt`.
+
+The proposed follow-up (“add both to `build_fullstack.sh`”) also names the wrong
+source-list owner: that file only delegates to `build_ptp2.sh`; the Stage-2
+shared library is linked in `container/patch.sh`. Moreover, these Stage-2
+adapters are not libgphoto2 camlibs. Before linking or packaging them, resolve
+the documented UVC classification for both devices against the QHY
+vendor-protocol claim, implement real open/stream/frame publication rather
+than compile-only stubs, and define the Polaris caller/ownership contract. A
+compile-only object added to the firmware would not constitute camera support.
+
 The Benro Connect source was adversarially checked: its `UgradeUtils` version
 comparison splits on dots and proceeds only when **both** versions have
 exactly four numeric components. With this candidate's five-component display

@@ -1,0 +1,34 @@
+]633;E;echo "Adapter cross-compile audit (post TA-review fixes, 2026-09-29)";3688bada-629b-43db-ae16-4800ef1b4222]633;CAdapter cross-compile audit (post TA-review fixes, 2026-09-29)
+Current patcher HEAD: 35dd40af98f2592b7ddfd62fede0bdd03716c540
+Working tree: consolidation + bounded-lifecycle upgrades (uncommitted at capture time)
+
+=== starshoot (#158, libusb) — patch.sh flags ===
+PASS (exit 0, zero warnings)
+
+=== ipolar (#159, libuvc) — patch.sh flags ===
+PASS (exit 0, zero warnings)
+
+=== exported symbols ===
+--- starshoot ---
+00000000000001b0 T starshoot_adapter_close
+0000000000000000 T starshoot_adapter_init
+0000000000000040 T starshoot_adapter_open
+0000000000000210 T starshoot_adapter_stream_bulk_iso
+--- ipolar ---
+0000000000000180 T ipolar_adapter_close
+00000000000001d0 T ipolar_adapter_exit
+0000000000000080 T ipolar_adapter_init
+0000000000000320 T ipolar_adapter_latest_frame
+00000000000000e0 T ipolar_adapter_open
+0000000000000220 T ipolar_adapter_reconnect
+00000000000002d0 T ipolar_adapter_set_exposure
+00000000000002f0 T ipolar_adapter_set_gain
+0000000000000250 T ipolar_adapter_stream_y16
+
+=== consolidation ===
+Removed duplicate: container/stage2_qhy5lii_adapter.{h,c} (canonical #158 adapter = stage2_starshoot_adapter.*)
+
+=== offline gate ===
+INFO: no --build given; package gates skipped (offline gate only)
+=== Pre-release gate summary: 2 passed, 0 failed, 0 skipped ===
+GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence).
