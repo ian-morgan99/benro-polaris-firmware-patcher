@@ -81,6 +81,16 @@
   ownership transfer or power cycling could erase a camera-side candidate, so
   neither is attempted without first securing logs and accepting that risk.
   Full trace and interpretation: [o-v13s live canary evidence](evidence/o-v13s-preserve-pentax-candidate-20260929/live-canary-20260929-1248.md).
+- Code-side mitigation is now committed on libgphoto2 `main` as
+  [`f05f65826`](https://github.com/ian-morgan99/libgphoto2/commit/f05f65826):
+  every Pentax capture now passes the strict +32/+36/+104 admission gate;
+  refusal reasons include a safe recovery action, and any failed
+  `InitiateCapture` arms recovery without replay. Focused deterministic tests
+  pass 3/3 and production `ptp2.so` builds. Full Meson: 12/14; the two failures
+  remain host `test-gp-port` enumeration and this build's missing research-only
+  model in `test-gphoto2`. **This commit is not packaged or installed.** The
+  cross-layer per-path response is documented in
+  [PENTAX-CAPTURE-RECOVERY.md](PENTAX-CAPTURE-RECOVERY.md).
 
 ## 2026-09-29 USB compatibility mode OFF capture failure — physical evidence
 
