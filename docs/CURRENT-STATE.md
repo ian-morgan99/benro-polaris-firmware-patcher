@@ -1,5 +1,43 @@
 # Current repository state
 
+## 2026-09-29 USB compatibility mode OFF capture failure — physical evidence
+
+- Operator reports broad M-mode RAW+JPEG testing passed with the camera's USB
+  compatibility mode ON. After switching it OFF, shots initially appeared OK,
+  then Benro Connect reported shot failure / pause timeout / reconnect.
+- Read-only Polaris logs show the nearby app connection transition at 11:02:15
+  (`code 297 mode:1`, CableRelease; camera absent/state 0), then 11:02:22
+  (`code 297 mode:0`, USB) and camera returned as K-3 III by 11:02:29. This is
+  an app camera-control/connection transition, **not a direct readback of the
+  camera's USB compatibility menu setting**. The operator should confirm
+  whether this timestamp matches the OFF change.
+- Captures `SP_0125`–`SP_0133` did complete as RAW+JPEG pairs; the prior
+  snapshot saying a second shot was not confirmed is superseded by these
+  subsequently flushed persistent logs and files. Last confirmed pair
+  `SP_0133` published at about 11:02:38.
+- First failure: request for `SP_0134` at 11:03:55. At 11:03:59 PTP
+  `InitiateCapture` returned `0x2001` (accepted), but there is no subsequent
+  completion event or output transfer/publication. At 11:04:11 Polaris logged
+  pgphoto exit and restarted it. The app capture window was cancelled at
+  11:04:28 and reported failure. Lighttpd starting at 11:04:39 plus uptime
+  near three minutes at 11:07:58 indicates a Polaris OS reboot around then;
+  the exact trigger is not established by retained logs.
+- Retries `SP_0134`/`SP_0135` were rejected before another shutter because an
+  unclaimed transfer candidate remained (`GP_ERROR_CAMERA_BUSY`, -110, mapped
+  by Polaris to -1005). This is the safety guard working: it avoids deleting
+  an unresolved possible output or issuing an unsafe next exposure. A later
+  `SP_0136` InitiateCapture was accepted but again produced no confirmed pair,
+  followed by another pgphoto exit/restart at 11:05:44.
+- **Conclusion:** the direct observed failure is after shutter-command
+  acceptance but before capture completion/output reconciliation; it is not
+  evidence that `InitiateCapture` itself was rejected. USB compatibility OFF
+  is temporally correlated, not proven causal: the menu bit is not logged, and
+  this trace alone cannot distinguish camera/PTP behavior from Polaris session
+  supervision. No code, configuration, or camera state was changed for this
+  diagnostic pass; no shutter was sent by the investigator.
+- Detailed raw-log analysis is in patcher issue #149 comment
+  [`5888131739`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5888131739).
+
 ## 2026-09-29 authoritative alignment checkpoint
 
 This entry supersedes older "current" labels and adapter status statements
