@@ -20,15 +20,18 @@ any process restart, USB reset, power cycle, or second shutter.
 
 libgphoto2 `f05f65826` makes the Pentax strict +32/+36/+104 admission sample
 unconditional before every `InitiateCapture`, emits reason/action diagnostics
-to stderr, and arms recovery after any failed InitiateCapture. It is committed
-on libgphoto2 `main` but is **not in the installed o-v13s FwPkt**. The Stage-2
-wrapper already defaults `STAGE2_CAPTURE_TRACE=1`; future canaries must preserve
-the complete Clog/Mlog immediately after a failure, before any app reconnect
-can rotate those logs.
+to stderr, and arms recovery after any failed InitiateCapture. It is embedded
+in candidate `o-v13t-strict-admission-20260929`, not the currently installed
+o-v13s FwPkt. The Stage-2 wrapper defaults `STAGE2_CAPTURE_TRACE=1`; a live
+failure must be followed by immediate preservation of complete Clog/Mlog and
+capture-boundary stderr before reconnect can rotate the logs.
 
-Patcher offline gate after recording this response: 14 container checks and 24
-Python checks passed; package/live gates were not run because no new package was
-built and this work did not send another shutter.
+Candidate validation: libgphoto2 fresh deterministic regression 13/13;
+patcher offline 14 container + 24 Python; package gate 4/4; harness 62/62; and
+the final appfs payload's `ptp2.so`, both libgphoto2 cores and pgphoto matched
+the generated bundle by SHA-256. Candidate is not installed and no new live
+shutter was sent. The iPolar adapter compile-check remains untested here because
+the libuvc headers are unavailable.
 
 ## Recovery limitation
 
