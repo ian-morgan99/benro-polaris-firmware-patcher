@@ -1,5 +1,42 @@
 # o-v13v Stage-2 direct-capture candidate — 2026-09-29
 
+## Superseding instability finding — 2026-09-29 15:18–15:26 UTC
+
+The earlier statement that the camera was absent was true only before it was
+powered on. With the camera attached and configured RAW+JPEG, one actual
+capture request reached the Pentax `InitiateCapture` operation and received
+PTP `0x2001`, but the operation did not complete: no DNG/JPEG for SP_0134 was
+published, pgphoto segfaulted about two seconds after the request, and the
+Benro app later timed out. This is a confirmed failed physical canary, not a
+successful capture. A subsequent request was correctly rejected as camera busy
+by the pre-shutter admission gate, so it did not send another shutter.
+
+The core dump shows the crash in a progress-callback indirect call from the
+PTP camlib. The callback pointer came from `PTPData.context`, a mutable field
+shared by calls using the same camera; its value at the crash was not the
+valid GPContext passed to the capture operation. The evidence strongly points
+to concurrent/stale operation-context replacement as the crash cause. This is
+an evidence-backed diagnosis, but hardware confirmation of the fix remains
+required.
+
+Fix: libgphoto2 `main` commit
+[`fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd`](https://github.com/ian-morgan99/libgphoto2/commit/fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd)
+removes the shared PTPData context and binds each operation's GPContext to the
+calling thread instead. The regression test proves that two threads using the
+same camera owner retain separate contexts. The source build and all 14
+deterministic libgphoto2 tests passed. A clean-source firmware release build
+has not completed yet: the first attempt correctly refused to build because
+this patcher checkout contained this updated evidence and local raw logs.
+
+The failed-shot core is retained outside git at
+`/tmp/pentax-core.glo9tv/core` (SHA-256
+`865d355351d9b58f6dc81dbbe114bff7bda447319e02a3f6d299deb3df5a2c5c`). Raw
+device logs remain local and ignored/untracked; their current hashes are
+recorded in the work session rather than published because they contain
+device/runtime identifiers. Do not send another shutter until the fix is
+packaged, installed through the supported update path, and the camera/session
+has been cleanly recovered.
+
 ## Plain-English result
 
 One new firmware candidate was built from clean `main` sources. It fixes an
@@ -131,3 +168,15 @@ canary probe returned `manufacturer:none;model:none;state:-5;storage:0;photoForm
 Dmesg has no camera attach event. No shutter was sent. Physical test remains
 blocked on the camera being powered on and reconnecting to USB while Polaris
 stays powered on.
+
+## Camera-absent stability spot check — 2026-09-29 15:14–15:15 UTC
+
+After the operator reboot, I observed Polaris twice about 38 seconds apart,
+then made one read-only 9090 probe. Across this short window the verified AP
+and route remained available; `polaris_wifi_bt`, `polestar_app`, pgphoto and
+the camera USB supervisor kept the same PIDs (`248`, `249`, `250`, `271`);
+ports 8080/9090 remained listening; firmware/provenance remained o-v13v; and
+Clog's `SP_sendMsg Fail` count remained zero. The 9090 probe completed and
+reported no camera / `state=-5`, consistent with `lsusb` showing no Pentax.
+This is a short post-reboot camera-absent stability spot check only, not a soak
+test, capture test, or physical qualification.
