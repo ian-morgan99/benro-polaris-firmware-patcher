@@ -1,5 +1,25 @@
 # Current repository state
 
+## 2026-09-29 adapter hardening (o-v13p) — post-release fixes, awaiting TA guidance
+
+Follow-up audit of the o-v13o adapter work found and fixed:
+
+- **iPolar (#159):** `uvc_find_device` takes a reference on the returned device
+  (verified in libuvc 0.0.8 source; upstream example calls `uvc_unref_device`
+  after `uvc_open`) — the adapter now releases it, so no ref leak per open.
+  Frame callback guards a missing sink buffer; streaming state is tracked so
+  `close()` only stops an active stream and `stream_y16()` is idempotent.
+- **StarShoot (#158):** `starshoot_adapter_stream_bulk_iso()` now returns the
+  bounded handshake transfer result (0 / negative libusb code) instead of void,
+  making the TA's hardware discriminator observable without a device on the bench.
+  Opcode values re-verified against `Temp/qhyccdcamdef.h`.
+- Both adapters compile clean with patch.sh flags (zero warnings); full symbol
+  export verified via `nm`; offline gate GREEN.
+
+Awaiting TA guidance on next step: hardware discriminator for #158 (handshake +
+one frame from the attached 16c0:29a0) and linking the adapters into the stage2
+build for a combined Pentax+UVC candidate.
+
 ## 2026-09-29 TA review response: adapter consolidation + bounded lifecycle
 
 Technical architect comments on #158/#159 (2026-09-28) were addressed in the

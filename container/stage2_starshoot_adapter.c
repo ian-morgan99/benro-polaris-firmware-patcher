@@ -127,14 +127,16 @@ void starshoot_adapter_close(void)
     }
 }
 
-void starshoot_adapter_stream_bulk_iso(void)
+/* Stream-mode command surface. Issues the IS_CAMARA_INIT handshake and
+ * returns its bounded transfer result: 0 on success, negative libusb error
+ * code otherwise (fail-closed). The live isochronous loop (alt 3) is wired
+ * when the hardware discriminator passes. */
+int starshoot_adapter_stream_bulk_iso(void)
 {
     /* bulk (alt 1) for commands + isochronous (alt 3) for live frames.
      * Command surface (SDK opcode table):
      *   SS_OP_IS_CAMARA_INIT -> handshake (hardware discriminator, owed)
      *   SS_OP_GET_SINGLEPICTURE / SS_OP_GET_LIVEPICTURE -> frame capture
-     *   SS_OP_RESET_USB_PIPE -> reconnect path
-     * Transfer error paths are bounded via ss_transfer_opcode(); the live
-     * isochronous loop is wired when the hardware discriminator passes. */
-    (void)ss_transfer_opcode(&g_ss, SS_OP_IS_CAMARA_INIT);
+     *   SS_OP_RESET_USB_PIPE -> reconnect path */
+    return ss_transfer_opcode(&g_ss, SS_OP_IS_CAMARA_INIT);
 }

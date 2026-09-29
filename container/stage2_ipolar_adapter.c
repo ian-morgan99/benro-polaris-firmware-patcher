@@ -24,6 +24,7 @@ static struct {
     uvc_context_t *ctx;
     uvc_device_handle_t *devh;
     uvc_stream_ctrl_t ctrl;
+    int streaming;          /* 1 = Y16 stream active */
     struct ipolar_frame_sink sink;
 } g_ip;
 
@@ -31,8 +32,8 @@ static struct {
 static void ipolar_frame_cb(struct uvc_frame *frame, void *user_ptr)
 {
     (void)user_ptr;
-    if (frame == NULL || frame->data == NULL) {
-        return; /* fail-closed: drop malformed frame */
+    if (frame == NULL || frame->data == NULL || g_ip.sink.data == NULL) {
+        return; /* fail-closed: drop malformed frame or missing sink buffer */
     }
     uint32_t need = (uint32_t)frame->width * (uint32_t)frame->height * 2u;
     if (need > IPOLAR_MAX_FRAME_BYTES) {
@@ -74,12 +75,16 @@ void ipolar_adapter_open(uint16_t vid, uint16_t pid)
     if (uvc_open(dev, &g_ip.devh) < 0) {
         g_ip.devh = NULL; /* fail-closed */
     }
+    uvc_unref_device(dev); /* uvc_find_device takes a ref; release after open */
 }
 
 void ipolar_adapter_close(void)
 {
     if (g_ip.devh != NULL) {
-        uvc_stop_streaming(g_ip.devh);
+        if (g_ip.streaming) {
+            uvc_stop_streaming(g_ip.devh);
+            g_ip.streaming = 0;
+        }
         uvc_close(g_ip.devh);
         g_ip.devh = NULL;
     }
@@ -107,11 +112,12 @@ void ipolar_adapter_reconnect(uint16_t vid, uint16_t pid)
     ipolar_adapter_open(vid, pid);
 }
 
-/* Start bounded Y16 streaming (640x960 default; 1280x960 supported). */
+/* Start bounded Y16 streaming (640x960 default; 1280x960 supported).
+ * Idempotent: a second call while streaming is active is a no-op. */
 void ipolar_adapter_stream_y16(void)
 {
-    if (g_ip.devh == NULL) {
-        return; /* fail-closed: no stream without an open device */
+    if (g_ip.devh == NULL || g_ip.streaming) {
+        return; /* fail-closed: no stream without an open device / already on */
     }
     /* Y16 = 16-bit greyscale (UVC_FRAME_FORMAT_GRAY16 in libuvc 0.0.8). */
     uvc_error_t rc = uvc_get_stream_ctrl_format_size(
@@ -122,7 +128,9 @@ void ipolar_adapter_stream_y16(void)
     rc = uvc_start_streaming(g_ip.devh, &g_ip.ctrl, ipolar_frame_cb, NULL, 0);
     if (rc < 0) {
         g_ip.sink.have_frame = 0;
+        return; /* fail-closed: stream not started */
     }
+    g_ip.streaming = 1;
 }
 
 /* Exposure/gain controls for obtaining solvable stars (TA #159). */

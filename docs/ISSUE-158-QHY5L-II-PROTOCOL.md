@@ -69,6 +69,9 @@ Parse `qhyccdcamdef.h` for opcode/command table; document adapter interface; the
   - `libuvc_config.h` is CMake-generated into the build tree (`/work/src/libuvc/build/include`) — both include roots required; `patch.sh` updated accordingly.
   - libuvc 0.0.8 API notes: `uvc_init(ctx, usb_ctx)` (2 args); `uvc_find_device(ctx,&dev,vid,pid,sn)` for lookup (opaque `uvc_device_t`); Y16 = `UVC_FRAME_FORMAT_GRAY16` (no `Y16` constant in 0.0.8).
 - **iPolar upgrade per TA #159 direction:** bounded Y16 frame sink (fixed buffer, monotonic generation identity), `reconnect()`, `set_exposure()`/`set_gain()` controls, `latest_frame()` for the common camera-source interface. No iPolar-specific polar-solving stack (solver stays source-agnostic).
+- **Post-release hardening (o-v13p):**
+  - iPolar: `uvc_unref_device(dev)` after `uvc_open` (`uvc_find_device` takes a ref — verified against libuvc 0.0.8 source + upstream example); frame callback guards a missing sink buffer; streaming state tracked so `close()` only stops an active stream and `stream_y16()` is idempotent (no double-start).
+  - StarShoot: `starshoot_adapter_stream_bulk_iso()` now returns the bounded handshake transfer result (0 / negative libusb code) instead of void, making the hardware discriminator observable. Opcode values re-verified against `Temp/qhyccdcamdef.h` (IS_CAMARA_INIT=1, OPEN=2, CLOSE=3, GET_IMAGE_TIMEOUT=6, SINGLEPICTURE=7, LIVEPICTURE=8, RESET_USB_PIPE=1).
 
 ## Why these errors did NOT surface in the build script earlier
 1. **The build script never compiled these files.** `patch-polaris.sh` → `container/build_fullstack.sh` builds libgphoto2 + camlibs (ptp2, pentax). The stage2 adapter files are new this session and are not yet in the build's source list — no script has ever compiled them.

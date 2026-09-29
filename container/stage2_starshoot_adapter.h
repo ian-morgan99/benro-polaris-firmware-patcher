@@ -25,10 +25,12 @@
 
 /* Adapter interface (item 4 of the contract) — wired to libusb backend.
  * Bounded lifecycle: init -> open(vid,pid) [claim iface 0, alt 1] ->
- * stream_bulk_iso() -> close() [release iface, close handle]. Fail-closed. */
+ * stream_bulk_iso() -> close() [release iface, close handle]. Fail-closed.
+ * stream_bulk_iso() returns the bounded handshake transfer result:
+ * 0 on success, negative libusb error code otherwise. */
 void starshoot_adapter_init(void);
 void starshoot_adapter_open(uint16_t vid, uint16_t pid);
 void starshoot_adapter_close(void);
-void starshoot_adapter_stream_bulk_iso(void);
+int  starshoot_adapter_stream_bulk_iso(void);
 
 #endif /* STAGE2_STARSHOOT_ADAPTER_H */
