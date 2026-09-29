@@ -1,6 +1,6 @@
 # Current repository state
 
-## 2026-09-29 Stage-2 still-capture dispatch correction — source change in progress
+## 2026-09-29 Stage-2 still-capture dispatch correction — committed, build next
 
 - Read-only device identity after the camera battery replacement confirms the
   Polaris AP (`48:E7:DA:D4:B5:73`), route via `wlp8s0`, installed o-v13s FwVer,
@@ -9,8 +9,10 @@
 - The o-v13s wrapper sets `STAGE2_CAPTURE_TRACE=1` by default. That routes every
   still capture through an extra Stage-2 function-call boundary, despite the
   Stage-2 loader policy and existing regression test saying still capture must
-  remain direct-to-core by default. The trace wrapper is now opt-in (`=1`); the
-  wrapper default is direct (`=0`). Focused Stage-2 test and offline gate pass.
+  remain direct-to-core by default. Patcher main [`b43fd40`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/b43fd40)
+  makes the trace wrapper opt-in (`=1`) and direct dispatch the wrapper default
+  (`=0`). Both the loader-slot and actual wrapper-default tests pass; the full
+  offline gate is green (14 container + 24 Python checks).
 - This corrects a concrete cross-layer integration mismatch and is a plausible
   contributor to the observed capture failure, **not a proven root cause**.
   The current o-v13s artifact remains unqualified. Build one new candidate from
