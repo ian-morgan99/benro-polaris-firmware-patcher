@@ -13,12 +13,12 @@
 #define IPOLAR_VID 0x1233
 #define IPOLAR_PID 0x1455
 
-void ipolar_adapter_init(void);
-void ipolar_adapter_exit(void);
-void ipolar_adapter_open(uint16_t vid, uint16_t pid);
+int  ipolar_adapter_init(void);
+int  ipolar_adapter_exit(void);
+int  ipolar_adapter_open(uint16_t vid, uint16_t pid);
 void ipolar_adapter_close(void);
-void ipolar_adapter_reconnect(uint16_t vid, uint16_t pid);
-void ipolar_adapter_stream_y16(void);
+int  ipolar_adapter_reconnect(uint16_t vid, uint16_t pid);
+int  ipolar_adapter_stream_y16(void);
 int  ipolar_adapter_set_exposure(uint32_t time_100us);
 int  ipolar_adapter_set_gain(uint16_t gain);
 int  ipolar_adapter_acquire_latest(struct ipolar_frame_view *view);

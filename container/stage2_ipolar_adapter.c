@@ -12,6 +12,7 @@
  */
 #include "stage2_ipolar_adapter.h"
 #include <libuvc/libuvc.h>  /* libuvc (built /work/src/libuvc/build/libuvc.so) */
+#include <errno.h>
 
 /* Bounded packed-Y16 frame store. Three leased slots prevent the libuvc
  * callback from mutating pixels while the alignment consumer is reading them. */
@@ -46,35 +47,42 @@ static void ipolar_frame_cb(struct uvc_frame *frame, void *user_ptr)
                                      frame->height, frame->step);
 }
 
-void ipolar_adapter_init(void)
+int ipolar_adapter_init(void)
 {
     if (g_ip.ctx != NULL) {
-        return; /* idempotent */
+        return 0; /* idempotent */
     }
-    if (ipolar_frame_store_init(&g_ip.frames, IPOLAR_MAX_FRAME_BYTES) < 0)
-        return;
+    int result = ipolar_frame_store_init(&g_ip.frames, IPOLAR_MAX_FRAME_BYTES);
+    if (result < 0)
+        return result;
     g_ip.frames_initialized = 1;
-    if (uvc_init(&g_ip.ctx, NULL) < 0) {
+    uvc_error_t rc = uvc_init(&g_ip.ctx, NULL);
+    if (rc < 0) {
         g_ip.ctx = NULL; /* fail-closed: no partial state */
         (void)ipolar_frame_store_destroy(&g_ip.frames);
         g_ip.frames_initialized = 0;
-        return;
+        return rc;
     }
+    return 0;
 }
 
-void ipolar_adapter_open(uint16_t vid, uint16_t pid)
+int ipolar_adapter_open(uint16_t vid, uint16_t pid)
 {
-    if (g_ip.ctx == NULL || g_ip.devh != NULL) {
-        return; /* not initialized, or already open — bounded single handle */
-    }
+    if (vid != IPOLAR_VID || pid != IPOLAR_PID) return -EINVAL;
+    if (g_ip.ctx == NULL) return -ENODEV;
+    if (g_ip.devh != NULL) return -EBUSY;
     uvc_device_t *dev = NULL;
-    if (uvc_find_device(g_ip.ctx, &dev, (int)vid, (int)pid, NULL) < 0 || dev == NULL) {
-        return; /* fail-closed: device not found */
-    }
-    if (uvc_open(dev, &g_ip.devh) < 0) {
+    uvc_error_t rc = uvc_find_device(g_ip.ctx, &dev, (int)vid, (int)pid, NULL);
+    if (rc < 0 || dev == NULL)
+        return (rc < 0) ? rc : -ENODEV;
+    rc = uvc_open(dev, &g_ip.devh);
+    if (rc < 0 || g_ip.devh == NULL) {
         g_ip.devh = NULL; /* fail-closed */
+        uvc_unref_device(dev);
+        return (rc < 0) ? rc : -ENODEV;
     }
     uvc_unref_device(dev); /* uvc_find_device takes a ref; release after open */
+    return 0;
 }
 
 void ipolar_adapter_close(void)
@@ -92,7 +100,7 @@ void ipolar_adapter_close(void)
 }
 
 /* Release the context + sink buffer (call once at teardown). */
-void ipolar_adapter_exit(void)
+int ipolar_adapter_exit(void)
 {
     if (g_ip.devh != NULL) {
         ipolar_adapter_close();
@@ -101,37 +109,46 @@ void ipolar_adapter_exit(void)
         uvc_exit(g_ip.ctx);
         g_ip.ctx = NULL;
     }
-    if (g_ip.frames_initialized && ipolar_frame_store_destroy(&g_ip.frames) == 0)
-        g_ip.frames_initialized = 0; /* outstanding leases keep their storage alive */
+    if (g_ip.frames_initialized) {
+        int rc = ipolar_frame_store_destroy(&g_ip.frames);
+        if (rc < 0) return rc; /* preserve state while consumers still lease */
+        g_ip.frames_initialized = 0;
+    }
+    return 0;
 }
 
 /* Reconnect path: bounded close + reopen (identity resets via generation). */
-void ipolar_adapter_reconnect(uint16_t vid, uint16_t pid)
+int ipolar_adapter_reconnect(uint16_t vid, uint16_t pid)
 {
     ipolar_adapter_close();
-    ipolar_adapter_open(vid, pid);
+    return ipolar_adapter_open(vid, pid);
 }
 
 /* Start bounded Y16 streaming (640x960 default; 1280x960 supported).
  * Idempotent: a second call while streaming is active is a no-op. */
-void ipolar_adapter_stream_y16(void)
+int ipolar_adapter_stream_y16(void)
 {
-    if (g_ip.devh == NULL || g_ip.streaming) {
-        return; /* fail-closed: no stream without an open device / already on */
-    }
-    /* Y16 = 16-bit greyscale (UVC_FRAME_FORMAT_GRAY16 in libuvc 0.0.8). */
+    if (g_ip.devh == NULL) return -ENODEV;
+    if (g_ip.streaming) return 0; /* idempotent */
+    if (!g_ip.frames_initialized) return -EINVAL;
+    /* Y16 = 16-bit greyscale (UVC_FRAME_FORMAT_GRAY16 in libuvc 0.0.8).
+     * The measured iPolar descriptor interval is about 1.8 fps at 640x960;
+     * requesting 30 fps cannot match its discrete frame-interval descriptor.
+     * libuvc 0.0.8 defines fps=0 as "accept first rate available" for exactly
+     * this case, so let the device advertise its supported cadence. */
     uvc_error_t rc = uvc_get_stream_ctrl_format_size(
-        g_ip.devh, &g_ip.ctrl, UVC_FRAME_FORMAT_GRAY16, 640, 960, 30);
+        g_ip.devh, &g_ip.ctrl, UVC_FRAME_FORMAT_GRAY16, 640, 960, 0);
     if (rc < 0) {
-        return; /* fail-closed: format not available */
+        return rc; /* fail-closed: format not available */
     }
     rc = uvc_start_streaming(g_ip.devh, &g_ip.ctrl, ipolar_frame_cb, NULL, 0);
     if (rc < 0) {
         if (g_ip.frames_initialized)
             ipolar_frame_store_invalidate(&g_ip.frames);
-        return; /* fail-closed: stream not started */
+        return rc; /* fail-closed: stream not started */
     }
     g_ip.streaming = 1;
+    return 0;
 }
 
 /* Exposure/gain controls for obtaining solvable stars (TA #159). */

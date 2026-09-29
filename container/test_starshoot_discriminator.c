@@ -1,16 +1,16 @@
 /* #158 StarShoot hardware discriminator — host-side harness.
- * Proves (or bounds) the expected device handshake against the attached
- * 16c0:29a0 camera using the adapter's exact transfer encoding
+ * Bounds the expected device handshake against the attached
+ * 16c0:29a0 camera using the adapter's proposed transfer encoding
  * (stage2_starshoot_adapter.c ss_transfer_opcode): a 4-byte opcode word
  * over a class OUT control request (bRequest 0x41, value = opcode).
  *
  * Steps (all fail-closed, bounded timeouts):
  *   1. enumerate + open 16c0:29a0, claim iface 0, select alt 1 (bulk)
- *   2. IS_CAMARA_INIT handshake (opcode 1) — the TA's discriminator
- *   3. probe alternate encodings if the primary fails (evidence only)
- *   4. bounded bulk IN on EP 0x81 to look for one frame
- * Exit codes: 0 = handshake + frame observed, 1 = handshake only,
- *             2 = open/claim only, 3 = device not found, 4 = open failed.
+ *   2. IS_CAMARA_INIT handshake (opcode 1), only with explicit --probe-init
+ * No guessed commands or bulk reads are issued: without a validated stream
+ * command, arbitrary payload bytes cannot be classified as a camera frame.
+ * Exit codes: 0 = proposed init request transferred, 2 = open/claim only,
+ *             3 = device not found, 4 = open failed.
  */
 #include <libusb-1.0/libusb.h>
 #include <stdio.h>
@@ -29,12 +29,18 @@ static int probe_control(libusb_device_handle *dev, uint8_t reqtype,
     int rc = libusb_control_transfer(dev, reqtype, brequest, value, 0,
                                      buf, sizeof(buf), 2000);
     printf("  probe %-46s rc=%d (%s)\n", label, rc,
-           rc == 0 ? "accepted" : libusb_error_name(rc));
+           rc == (int)sizeof(buf) ? "accepted (4-byte command sent)"
+           : rc >= 0 ? "short command transfer" : libusb_error_name(rc));
     return rc;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    int probe_init = argc == 2 && strcmp(argv[1], "--probe-init") == 0;
+    if (argc > 1 && !probe_init) {
+        fprintf(stderr, "usage: %s [--probe-init]\n", argv[0]);
+        return 4;
+    }
     libusb_context *ctx = NULL;
     if (libusb_init(&ctx) != LIBUSB_SUCCESS) {
         printf("DISCRIMINATOR: FAIL — libusb_init\n");
@@ -73,46 +79,19 @@ int main(void)
     }
     int alt = libusb_set_interface_alt_setting(dev, 0, 1);
     printf("open+claim OK; alt 1 (bulk) rc=%d (%s)\n", alt, libusb_error_name(alt));
-
-    /* Step 2: the adapter's exact handshake encoding. */
-    int rc = probe_control(dev, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS,
-                           0x41, 1, "IS_CAMARA_INIT class OUT bReq=0x41");
-    int handshake = (rc == 0);
-
-    if (!handshake) {
-        /* Evidence probes: alternate encodings the SDK might use. */
-        probe_control(dev, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR,
-                      0x41, 1, "IS_CAMARA_INIT vendor OUT bReq=0x41");
-        probe_control(dev, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR,
-                      0x00, 1, "IS_CAMARA_INIT vendor OUT bReq=0x00");
-        probe_control(dev, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS,
-                      0x41, 2, "IS_CAMARA_OPEN class OUT bReq=0x41");
+    int result = 2;
+    if (probe_init && alt == LIBUSB_SUCCESS) {
+        /* This request remains a hypothesis, not a validated protocol. */
+        int rc = probe_control(dev, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS,
+                               0x41, 1, "proposed IS_CAMARA_INIT class OUT");
+        if (rc == 4) result = 0;
     }
-
-    /* Step 4: bounded bulk IN on EP 0x81 — look for one frame. */
-    unsigned char *frame = (unsigned char *)malloc(65536);
-    int transferred = 0;
-    if (frame != NULL) {
-        rc = libusb_bulk_transfer(dev, EP_BULK_IN, frame, 65536, &transferred, 5000);
-        printf("bulk IN EP 0x81: rc=%d (%s), %d bytes\n", rc,
-               rc == 0 ? "ok" : libusb_error_name(rc), transferred);
-        if (rc == 0 && transferred > 0) {
-            unsigned long sum = 0;
-            for (int i = 0; i < transferred; i++) sum += frame[i];
-            printf("frame evidence: %d bytes, byte-sum %lu (non-zero payload: %s)\n",
-                   transferred, sum, (sum != 0) ? "yes" : "no");
-        }
-    }
-
-    int result = (handshake && rc == 0 && transferred > 0) ? 0
-               : handshake ? 1 : 2;
-    printf("DISCRIMINATOR: %s\n",
-           result == 0 ? "PASS — handshake + frame observed"
-           : result == 1 ? "PARTIAL — handshake accepted, no frame yet"
-           : "PARTIAL — open/claim only, handshake not accepted");
+    printf("DISCRIMINATOR: %s\n", result == 0
+           ? "PROVISIONAL — four request bytes transferred; camera acceptance unproven"
+           : "PARTIAL — device opened; no validated frame protocol");
 
     libusb_release_interface(dev, 0);
     libusb_close(dev);
     libusb_exit(ctx);
-    return result;
+    return (alt != LIBUSB_SUCCESS && result == 2) ? 4 : result;
 }

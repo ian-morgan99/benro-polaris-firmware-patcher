@@ -22,3 +22,12 @@ Open items (separate from #158):
 1. Confirm uvcvideo/videodev module on Polaris kernel (or package libuvc userspace)
 2. Add device entry to uvc-devices.c (only if UVC camlib included; current 2.5.34 source has no uvc/ — requires newer source or userspace path per #151)
 3. Prove on device: /dev/video* creation, Y16 format, bounded frames, reconnect, coexistence with PTP, packaging/provenance/rollback
+
+Implementation status (2026-09-30): the local userspace prototype requests
+640x960 Y16 using libuvc's device-advertised discrete cadence (fps=0), and a
+deterministic mock exercises open/stream/frame publication/reconnect. This
+does not make the adapter part of the Polaris application: `patch.sh` only
+compile-checks the adapter and frame store, and no runtime camera-source
+consumer calls them. No packaged or hardware support claim is justified until
+the common camera-source interface is implemented and linked, then exercised
+on Polaris with a real iPolar.

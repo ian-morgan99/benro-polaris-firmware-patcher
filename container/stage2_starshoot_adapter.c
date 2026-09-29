@@ -31,7 +31,7 @@ struct starshoot_adapter {
     int claimed_iface;      /* -1 = not claimed */
 };
 
-static struct starshoot_adapter g_ss;
+static struct starshoot_adapter g_ss = { .claimed_iface = -1 };
 
 /* Vendor-protocol command opcodes (SDK opcode table, qhyccdcamdef.h). */
 enum ss_opcode {
@@ -60,31 +60,46 @@ static int ss_transfer_opcode(struct starshoot_adapter *a, uint16_t opcode)
                                      LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS,
                                      0x41, /* vendor request (SDK-style) */
                                      opcode, 0, buf, (uint16_t)sizeof(buf), 2000);
-    return (rc < 0) ? rc : 0;
+    if (rc < 0)
+        return rc;
+    /* libusb returns the number of payload bytes transferred. A zero-byte
+     * status is not proof that this four-byte command reached the camera. */
+    return (rc == (int)sizeof(buf)) ? 0 : LIBUSB_ERROR_IO;
 }
 
-void starshoot_adapter_init(void)
+int starshoot_adapter_init(void)
 {
     if (g_ss.ctx != NULL) {
-        return; /* idempotent */
+        return 0; /* idempotent */
     }
     int rc = libusb_init(&g_ss.ctx);
     if (rc != LIBUSB_SUCCESS) {
+        if (g_ss.ctx != NULL)
+            libusb_exit(g_ss.ctx);
         g_ss.ctx = NULL; /* fail-closed: no partial state */
+        return rc;
     }
+    g_ss.claimed_iface = -1;
+    return 0;
 }
 
-void starshoot_adapter_open(uint16_t vid, uint16_t pid)
+int starshoot_adapter_open(uint16_t vid, uint16_t pid)
 {
-    if (g_ss.ctx == NULL || g_ss.dev != NULL) {
-        return; /* not initialized, or already open — bounded single handle */
-    }
+    if (g_ss.ctx == NULL)
+        return LIBUSB_ERROR_OTHER;
+    if (g_ss.dev != NULL)
+        return LIBUSB_ERROR_BUSY; /* bounded single handle */
+    if (vid != STARSHOOT_VID || pid != STARSHOOT_PID)
+        return LIBUSB_ERROR_INVALID_PARAM;
+
     struct libusb_device **list = NULL;
-    ssize_t count = 0;
-    count = libusb_get_device_list(g_ss.ctx, &list);
+    ssize_t count = libusb_get_device_list(g_ss.ctx, &list);
     if (count < 0 || list == NULL) {
-        return; /* fail-closed: no device enumeration */
+        if (list != NULL)
+            libusb_free_device_list(list, 1);
+        return (count < 0) ? (int)count : LIBUSB_ERROR_OTHER;
     }
+    int result = LIBUSB_ERROR_NO_DEVICE;
     for (ssize_t i = 0; i < count && g_ss.dev == NULL; i++) {
         struct libusb_device_descriptor desc;
         if (libusb_get_device_descriptor(list[i], &desc) != LIBUSB_SUCCESS) {
@@ -94,49 +109,66 @@ void starshoot_adapter_open(uint16_t vid, uint16_t pid)
             int rc = libusb_open(list[i], &g_ss.dev);
             if (rc != LIBUSB_SUCCESS) {
                 g_ss.dev = NULL; /* fail-closed */
-            } else {
-                /* Claim interface 0, select the bulk alternate setting (alt 1).
-                 * Isochronous streaming uses alt 3 when live mode is selected. */
-                rc = libusb_claim_interface(g_ss.dev, 0);
-                if (rc == LIBUSB_SUCCESS) {
-                    g_ss.claimed_iface = 0;
-                    rc = libusb_set_interface_alt_setting(g_ss.dev, 0, 1);
-                    if (rc != LIBUSB_SUCCESS) {
-                        /* Alt-setting failure is non-fatal for the command pipe;
-                         * live streaming will retry at stream start. */
-                    }
-                } else {
-                    g_ss.claimed_iface = -1;
-                }
+                result = rc;
+                break;
             }
+
+            /* Commands require the measured bulk alternate setting. Fail
+             * closed if either ownership or interface selection fails. */
+            rc = libusb_claim_interface(g_ss.dev, 0);
+            if (rc != LIBUSB_SUCCESS) {
+                result = rc;
+                libusb_close(g_ss.dev);
+                g_ss.dev = NULL;
+                break;
+            }
+            g_ss.claimed_iface = 0;
+            rc = libusb_set_interface_alt_setting(g_ss.dev, 0, 1);
+            if (rc != LIBUSB_SUCCESS) {
+                result = rc;
+                (void)libusb_release_interface(g_ss.dev, g_ss.claimed_iface);
+                g_ss.claimed_iface = -1;
+                libusb_close(g_ss.dev);
+                g_ss.dev = NULL;
+                break;
+            }
+            result = LIBUSB_SUCCESS;
         }
     }
     libusb_free_device_list(list, 1);
+    return result;
 }
 
-void starshoot_adapter_close(void)
+int starshoot_adapter_close(void)
 {
+    int result = LIBUSB_SUCCESS;
     if (g_ss.dev != NULL) {
         /* Bounded cleanup: release the claimed interface, then the handle. */
         if (g_ss.claimed_iface >= 0) {
-            libusb_release_interface(g_ss.dev, g_ss.claimed_iface);
+            result = libusb_release_interface(g_ss.dev, g_ss.claimed_iface);
             g_ss.claimed_iface = -1;
         }
         libusb_close(g_ss.dev);
         g_ss.dev = NULL;
     }
+    return result;
 }
 
-/* Stream-mode command surface. Issues the IS_CAMARA_INIT handshake and
- * returns its bounded transfer result: 0 on success, negative libusb error
- * code otherwise (fail-closed). The live isochronous loop (alt 3) is wired
- * when the hardware discriminator passes. */
-int starshoot_adapter_stream_bulk_iso(void)
+int starshoot_adapter_exit(void)
 {
-    /* bulk (alt 1) for commands + isochronous (alt 3) for live frames.
-     * Command surface (SDK opcode table):
-     *   SS_OP_IS_CAMARA_INIT -> handshake (hardware discriminator, owed)
-     *   SS_OP_GET_SINGLEPICTURE / SS_OP_GET_LIVEPICTURE -> frame capture
-     *   SS_OP_RESET_USB_PIPE -> reconnect path */
+    int result = starshoot_adapter_close();
+    if (g_ss.ctx != NULL) {
+        libusb_exit(g_ss.ctx);
+        g_ss.ctx = NULL;
+    }
+    g_ss.claimed_iface = -1;
+    return result;
+}
+
+/* Provisional protocol probe. A full 4-byte transfer only proves that the
+ * host sent the proposed request; device acceptance and image capture remain
+ * unproven until a response and validated frame are implemented. */
+int starshoot_adapter_probe_init(void)
+{
     return ss_transfer_opcode(&g_ss, SS_OP_IS_CAMARA_INIT);
 }

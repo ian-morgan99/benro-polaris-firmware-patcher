@@ -23,14 +23,14 @@
 #define QHY_STREAM_SINGLE_MODE 0
 #define QHY_STREAM_LIVE_MODE   1
 
-/* Adapter interface (item 4 of the contract) — wired to libusb backend.
- * Bounded lifecycle: init -> open(vid,pid) [claim iface 0, alt 1] ->
- * stream_bulk_iso() -> close() [release iface, close handle]. Fail-closed.
- * stream_bulk_iso() returns the bounded handshake transfer result:
- * 0 on success, negative libusb error code otherwise. */
-void starshoot_adapter_init(void);
-void starshoot_adapter_open(uint16_t vid, uint16_t pid);
-void starshoot_adapter_close(void);
-int  starshoot_adapter_stream_bulk_iso(void);
+/* Prototype API only: this is not yet wired to an application camera-source
+ * consumer, and the device handshake/frame protocol remains unqualified.
+ * Lifecycle calls return zero or a negative libusb error. */
+int  starshoot_adapter_init(void);
+int  starshoot_adapter_open(uint16_t vid, uint16_t pid);
+int  starshoot_adapter_close(void);
+int  starshoot_adapter_exit(void);
+/* Provisional control-request probe only; this does not capture a frame. */
+int  starshoot_adapter_probe_init(void);
 
 #endif /* STAGE2_STARSHOOT_ADAPTER_H */
