@@ -52,6 +52,28 @@
   the first completes cleanly. Installed/runtime-verified is not equivalent
   to capture-qualified.
 
+### 2026-09-29 12:48 BST live canary — FAIL; no retry
+
+- On the installed o-v13s, the official diagnostic canary was run once with
+  the prior RAW+JPEG two-output contract. Identity and readiness preflight
+  passed; the camera was enumerated as Pentax `25fb:0189`, and the installed
+  FwVer/provenance matched the registry. The diagnostic request turned
+  preview off successfully and sent exactly one capture request.
+- Trace: lifecycle `state:1`, then terminal `state:-1005`; Mlog showed
+  candidate path `/app/sd/normal/SP_0134.jpg`, then `state:-110` and
+  `PHOTO_RECORD Fail`. No state 4/0 completion, code-773 publication, or
+  `SP_0134` file was observed. The current mode/output count was not verified,
+  so do not infer RAW-only vs RAW+JPEG from `photoFormat:2` or the single
+  candidate name. The explicit terminal error makes this canary a FAIL
+  independent of that ambiguity.
+- Camera remained attached and process IDs unchanged in the read-only
+  postcheck 8 seconds later; no USB disconnect was observed during the test.
+  Mlog had rotated/cleared by postcheck. Clog did not expose the lower-level
+  PTP cause, so the exact first failing camera transaction remains unknown.
+- **No retry or second shutter was sent.** Preserve camera power/USB state and
+  collect fuller camera/PTP logs before another physical capture. Full trace
+  and interpretation: [o-v13s live canary evidence](evidence/o-v13s-preserve-pentax-candidate-20260929/live-canary-20260929-1248.md).
+
 ## 2026-09-29 USB compatibility mode OFF capture failure — physical evidence
 
 - Operator reports broad M-mode RAW+JPEG testing passed with the camera's USB
