@@ -1,0 +1,332 @@
+=== Deterministic test harness ===
+--- test_analyze_pgphoto_focus_wait.sh ---
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+--- test_camera_usb_supervisor.sh ---
+PASS: camera USB supervisor keys the fingerprint to the selected camera and ignores unrelated cameras (issue #126)
+PASS: camera USB supervisor validates lock ownership and restarts once after a stable camera identity change (issue #57)
+PASS: camera USB supervisor absorbs startup re-enumeration without restarting, then resumes normal restart logic (issue #121)
+PASS: camera USB supervisor bounds the restart budget under a re-enumeration flap (issue #119 churn guard)
+PASS: camera USB supervisor quarantines post-budget identity changes and requires revalidation before resuming (issue #119 TA follow-up)
+PASS: camera USB supervisor stays degraded when the quarantine-exit rebind fails, then resumes on a successful rebind (issue #119 TA follow-up)
+--- test_camlib_selection.sh ---
+camlib selection contract: PASS
+--- test_ipolar_frame_store.sh ---
+iPolar frame store bounds, immutable leases, and reconnect generation PASS
+--- test_patch_fail_closed.sh ---
+== positive control (mode: zip): valid FwPkt should leave /out/FwPkt.zip ==
+OK: 6 entries verified, firmwareInfo matches shipped files
+=== FwPkt manifest ===
+  FwPkt/
+  FwPkt/camera/
+  FwPkt/camera/rootfs.ubifs                            13 B
+  FwPkt/camera/uImage                                   7 B
+  FwPkt/camera/appfs.ubifs                             12 B
+  FwPkt/camera/config                                   7 B
+  FwPkt/gimbal/
+  FwPkt/gimbal/polaris413_2.0.0.22.bin                 11 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin                 11 B
+  FwPkt/firmwareInfo                                  372 B
+
+gimbal binaries: 2
+stock components cross-checked: 0
+layout: OK
+duplicates: none
+OK: FwPkt package is structurally sound.
+=== FwPkt manifest ===
+  FwPkt/
+  FwPkt/camera/
+  FwPkt/camera/rootfs.ubifs                            13 B
+  FwPkt/camera/uImage                                   7 B
+  FwPkt/camera/appfs.ubifs                             12 B
+  FwPkt/camera/config                                   7 B
+  FwPkt/gimbal/
+  FwPkt/gimbal/polaris413_2.0.0.22.bin                 11 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin                 11 B
+  FwPkt/firmwareInfo                                  372 B
+
+gimbal binaries: 2
+stock components cross-checked: 0
+layout: OK
+duplicates: none
+OK: FwPkt package is structurally sound.
+OK: 6 entries verified, firmwareInfo matches shipped files
+  OK: /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out/FwPkt.zip exists, both gates passed (mode zip)
+FAIL: 1 mismatch(es) across 5 entries
+  uImage     MISSING   -
+    size: 7
+    md5:  00000000000000000000000000000000
+
+The on-board updater would silently reject this FwPkt.
+Rebuild with gen_firmwareinfo.py (or container/patch.sh) so the
+manifest is regenerated from the actual file contents, then re-run
+this verifier. Do not put this FwPkt on an SD card.
+  firmwareInfo gate failed (mode zip)
+  OK: gate exit=2, no FwPkt.zip, no FwPkt.zip.tmp (mode zip)
+FAIL: 1 mismatch(es) across 5 entries
+  polaris413 MISSING   -
+    size: 11
+    md5:  00000000000000000000000000000000
+
+The on-board updater would silently reject this FwPkt.
+Rebuild with gen_firmwareinfo.py (or container/patch.sh) so the
+manifest is regenerated from the actual file contents, then re-run
+this verifier. Do not put this FwPkt on an SD card.
+  firmwareInfo gate failed (mode zip)
+  OK: gate exit=2, no FwPkt.zip (mode zip)
+/usr/lib/python3.12/zipfile/__init__.py:1620: UserWarning: Duplicate name: 'FwPkt/firmwareInfo'
+  return self._open_to_write(zinfo, force_zip64=force_zip64)
+=== FwPkt manifest ===
+  firmware/
+  FwPkt/firmwareInfo                                  372 B
+  FwPkt/firmwareInfo                                  372 B
+  FwPkt/camera/rootfs.ubifs                            13 B
+  FwPkt/camera/uImage                                   7 B
+  FwPkt/camera/appfs.ubifs                             12 B
+  FwPkt/camera/config                                   7 B
+  FwPkt/gimbal/polaris413_2.0.0.22.bin                 11 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin                 11 B
+
+gimbal binaries: 2
+stock components cross-checked: 0
+layout: BAD
+duplicates: PRESENT
+
+FAIL: 2 structural error(s)
+  - top-level layout must contain exactly one entry, 'FwPkt/'; found: ['FwPkt', 'firmware']
+  - duplicate member: FwPkt/firmwareInfo
+
+The on-board updater would silently reject this FwPkt.
+Do NOT put it on an SD card. Rebuild and re-run this validator.
+  OK: structural validator rejected defective archive (exit=1, mode zip)
+FAIL: 6 mismatch(es) across 6 entries
+  config     MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_zip/FwPkt/camera/config
+    size: 7 (claimed 7)
+    md5:  c71c9c5c45b37cdeda0702e35fc8dd26 (claimed 00000000000000000000000000000000)
+  uImage     MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_zip/FwPkt/camera/uImage
+    size: 7 (claimed 7)
+    md5:  acc208e66ef4472d271e38786f6d3125 (claimed 00000000000000000000000000000000)
+  rootfs     MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_zip/FwPkt/camera/rootfs.ubifs
+    size: 13 (claimed 11)
+    md5:  707e45c60a0aa781d7471f48d4e066b5 (claimed 00000000000000000000000000000000)
+  appfs      MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_zip/FwPkt/camera/appfs.ubifs
+    size: 12 (claimed 999)
+    md5:  2f5f4c64a17705e8c5ff35c610c37c0c (claimed 00000000000000000000000000000000)
+  polaris403 MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_zip/FwPkt/gimbal/polaris403_2.0.0.22.bin
+    size: 11 (claimed 11)
+    md5:  0d930f2321665ed3f2e0c0ae98b694be (claimed 00000000000000000000000000000000)
+  polaris413 MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_zip/FwPkt/gimbal/polaris413_2.0.0.22.bin
+    size: 11 (claimed 11)
+    md5:  fd3ae8ea1693428a3104a3e58edfbd98 (claimed 00000000000000000000000000000000)
+
+The on-board updater would silently reject this FwPkt.
+Rebuild with gen_firmwareinfo.py (or container/patch.sh) so the
+manifest is regenerated from the actual file contents, then re-run
+this verifier. Do not put this FwPkt on an SD card.
+  firmwareInfo gate failed (mode zip)
+  OK: firmwareInfo gate exit=2, no archive written (mode zip)
+== positive control (mode: python): valid FwPkt should leave /out/FwPkt.zip ==
+OK: 6 entries verified, firmwareInfo matches shipped files
+=== FwPkt manifest ===
+  FwPkt/
+  FwPkt/firmwareInfo                                  372 B
+  FwPkt/camera/
+  FwPkt/camera/rootfs.ubifs                            13 B
+  FwPkt/camera/uImage                                   7 B
+  FwPkt/camera/appfs.ubifs                             12 B
+  FwPkt/camera/config                                   7 B
+  FwPkt/gimbal/
+  FwPkt/gimbal/polaris413_2.0.0.22.bin                 11 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin                 11 B
+
+gimbal binaries: 2
+stock components cross-checked: 0
+layout: OK
+duplicates: none
+OK: FwPkt package is structurally sound.
+=== FwPkt manifest ===
+  FwPkt/
+  FwPkt/firmwareInfo                                  372 B
+  FwPkt/camera/
+  FwPkt/camera/rootfs.ubifs                            13 B
+  FwPkt/camera/uImage                                   7 B
+  FwPkt/camera/appfs.ubifs                             12 B
+  FwPkt/camera/config                                   7 B
+  FwPkt/gimbal/
+  FwPkt/gimbal/polaris413_2.0.0.22.bin                 11 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin                 11 B
+
+gimbal binaries: 2
+stock components cross-checked: 0
+layout: OK
+duplicates: none
+OK: FwPkt package is structurally sound.
+OK: 6 entries verified, firmwareInfo matches shipped files
+  OK: /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out/FwPkt.zip exists, both gates passed (mode python)
+FAIL: 1 mismatch(es) across 5 entries
+  uImage     MISSING   -
+    size: 7
+    md5:  00000000000000000000000000000000
+
+The on-board updater would silently reject this FwPkt.
+Rebuild with gen_firmwareinfo.py (or container/patch.sh) so the
+manifest is regenerated from the actual file contents, then re-run
+this verifier. Do not put this FwPkt on an SD card.
+  firmwareInfo gate failed (mode python)
+  OK: gate exit=2, no FwPkt.zip, no FwPkt.zip.tmp (mode python)
+FAIL: 1 mismatch(es) across 5 entries
+  polaris413 MISSING   -
+    size: 11
+    md5:  00000000000000000000000000000000
+
+The on-board updater would silently reject this FwPkt.
+Rebuild with gen_firmwareinfo.py (or container/patch.sh) so the
+manifest is regenerated from the actual file contents, then re-run
+this verifier. Do not put this FwPkt on an SD card.
+  firmwareInfo gate failed (mode python)
+  OK: gate exit=2, no FwPkt.zip (mode python)
+/usr/lib/python3.12/zipfile/__init__.py:1620: UserWarning: Duplicate name: 'FwPkt/firmwareInfo'
+  return self._open_to_write(zinfo, force_zip64=force_zip64)
+=== FwPkt manifest ===
+  firmware/
+  FwPkt/firmwareInfo                                  372 B
+  FwPkt/firmwareInfo                                  372 B
+  FwPkt/camera/rootfs.ubifs                            13 B
+  FwPkt/camera/uImage                                   7 B
+  FwPkt/camera/appfs.ubifs                             12 B
+  FwPkt/camera/config                                   7 B
+  FwPkt/gimbal/polaris413_2.0.0.22.bin                 11 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin                 11 B
+
+gimbal binaries: 2
+stock components cross-checked: 0
+layout: BAD
+duplicates: PRESENT
+
+FAIL: 2 structural error(s)
+  - top-level layout must contain exactly one entry, 'FwPkt/'; found: ['FwPkt', 'firmware']
+  - duplicate member: FwPkt/firmwareInfo
+
+The on-board updater would silently reject this FwPkt.
+Do NOT put it on an SD card. Rebuild and re-run this validator.
+  OK: structural validator rejected defective archive (exit=1, mode python)
+FAIL: 6 mismatch(es) across 6 entries
+  config     MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_python/FwPkt/camera/config
+    size: 7 (claimed 7)
+    md5:  c71c9c5c45b37cdeda0702e35fc8dd26 (claimed 00000000000000000000000000000000)
+  uImage     MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_python/FwPkt/camera/uImage
+    size: 7 (claimed 7)
+    md5:  acc208e66ef4472d271e38786f6d3125 (claimed 00000000000000000000000000000000)
+  rootfs     MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_python/FwPkt/camera/rootfs.ubifs
+    size: 13 (claimed 11)
+    md5:  707e45c60a0aa781d7471f48d4e066b5 (claimed 00000000000000000000000000000000)
+  appfs      MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_python/FwPkt/camera/appfs.ubifs
+    size: 12 (claimed 999)
+    md5:  2f5f4c64a17705e8c5ff35c610c37c0c (claimed 00000000000000000000000000000000)
+  polaris403 MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_python/FwPkt/gimbal/polaris403_2.0.0.22.bin
+    size: 11 (claimed 11)
+    md5:  0d930f2321665ed3f2e0c0ae98b694be (claimed 00000000000000000000000000000000)
+  polaris413 MISMATCH  /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/container/testdata/fail_closed_stage/out_neg3_python/FwPkt/gimbal/polaris413_2.0.0.22.bin
+    size: 11 (claimed 11)
+    md5:  fd3ae8ea1693428a3104a3e58edfbd98 (claimed 00000000000000000000000000000000)
+
+The on-board updater would silently reject this FwPkt.
+Rebuild with gen_firmwareinfo.py (or container/patch.sh) so the
+manifest is regenerated from the actual file contents, then re-run
+this verifier. Do not put this FwPkt on an SD card.
+  firmwareInfo gate failed (mode python)
+  OK: firmwareInfo gate exit=2, no archive written (mode python)
+== gimbal pre-flight nullglob test ==
+  OK: nullglob array length 0 reached the die() path (no set -e abort)
+== regression: confirm the OLD ls|wc -l pattern still aborts early ==
+  unexpected: reached count=0
+  (note: the old pattern happened to not abort in this env; behaviour is shell-impl-dependent)
+
+ALL CHECKS PASSED
+--- test_pgphoto_wrapper_lock.sh ---
+PASS: pgphoto wrapper validates lock ownership, contains console log floods, and exits safely during backoff (issue #34)
+--- test_polaris_pentax_build_package.sh ---
+usage: ./test_polaris_pentax_build_package.sh DOCKER_IMAGE FW_PKT_DIR CLEAN_LIBGPHOTO2_GIT_CHECKOUT
+SKIP: test_polaris_pentax_build_package.sh (prerequisite unavailable, exit 2)
+--- test_polestar_bulb_patch.sh ---
+  PASS: 0 anchors -> fatal exit 1
+  PASS: 2 anchors -> fatal exit 1
+  PASS: 2 anchors -> binary unchanged (anchor still present)
+  PASS: unrelated REPL elsewhere -> fatal exit 1 (mixed state)
+  PASS: 1 anchor -> patched exit 0
+  PASS: 1 anchor -> REPL present exactly once
+  PASS: 1 anchor -> ANCHOR gone
+  PASS: idempotent re-run -> exit 0 'already patched'
+  PASS: idempotent re-run -> bytes unchanged
+  PASS: REPL present 2x on re-run -> fatal exit 1
+[test_polestar_bulb_patch] ALL PASS
+--- test_restart_gphoto_launch_lock.sh ---
+PASS: restart_gphoto reclaims a stale pgphoto launch lock and still restarts cleanly (issue #77)
+--- test_source_input.sh ---
+usage: ./test_source_input.sh DOCKER_IMAGE CLEAN_LIBGPHOTO2_GIT_CHECKOUT
+SKIP: test_source_input.sh (prerequisite unavailable, exit 2)
+--- test_stage2_backoff_isolation.sh ---
+[stage2] preview-backoff: 1 consecutive transient failures (last ret=-10) -- backing off 60s (issues #36/#55/#127)
+stage2 backoff isolation: PASS
+--- test_stage2_init_nullcall.sh ---
+[stage2] keep-lv: PC live view already active (session was open before this process); arming 5s preview-settle window (issue #121)
+[stage2] keep-lv: pentaxpclvkeep ON for this session (PC-LV stays running across preview requests)
+[stage2] compatibility shims: bypassed for non-R5-II camera
+[stage2] keep-lv: pentaxpclvkeep ON for this session (PC-LV stays running across preview requests)
+[stage2] compatibility shims: bypassed for non-R5-II camera
+[stage2] keep-lv: pentaxpclvkeep ON for this session (PC-LV stays running across preview requests)
+[stage2] compatibility shims: bypassed for non-R5-II camera
+[stage2] keep-lv: pentaxpclvkeep ON for this session (PC-LV stays running across preview requests)
+[stage2] compatibility shims: bypassed for non-R5-II camera
+[stage2] keep-lv: PC live view already active (session was open before this process); arming 5s preview-settle window (issue #121)
+[stage2] keep-lv: pentaxpclvkeep ON for this session (PC-LV stays running across preview requests)
+[stage2] compatibility shims: bypassed for non-R5-II camera
+[test_stage2_init_nullcall] Issue #124 regression tests
+  PASS: probe runs when resolved, d035=1 -> settle armed
+  PASS: probe skipped when gp_widget_get_value missing, no crash
+  PASS: probe skipped when pentaxpclvmode lookup returns no widget
+  PASS: settle not armed when d035=0
+  PASS: settle armed when d035=1
+[test_stage2_init_nullcall] ALL PASS
+--- test_stage2_loader_compile.sh ---
+/tmp/tmp.iY8dYrZ2sm/libpolaris_stage2.so: ELF 32-bit LSB shared object, ARM, EABI5 version 1 (SYSV), dynamically linked, BuildID[sha1]=063edf4e7239e2ce4e2d488c537e70a58e5facac, not stripped
+--- test_stage2_monotonic_clock.sh ---
+[test_stage2_monotonic_clock] Issue #125 monotonic clock gates
+  PASS: first fetch proceeds and records a monotonic last_fetch
+  PASS: fetch inside the 2 s monotonic interval returns CAMERA_BUSY
+  PASS: a wall-clock step does not bypass the monotonic interval
+  PASS: advancing the monotonic clock past the interval re-arms the fetch
+[test_stage2_monotonic_clock] ALL PASS
+--- test_stage2_preview_error_class.sh ---
+[stage2] preview: NOT_SUPPORTED -- disabling PC live view for this session/body (no further PTP traffic, issue #127)
+[stage2] preview: disabled after NOT_SUPPORTED -- returning GP_ERROR_NOT_SUPPORTED without PTP traffic (issue #127)
+[stage2] preview: I/O / no-device error (ret=-7) -- marking session generation unhealthy; will keep returning the terminal class (not CAMERA_BUSY) until a fresh/revalidated session generation (issue #127)
+[stage2] preview: session unhealthy after I/O / no-device (last ret=-7) -- returning the terminal class without PTP traffic until a fresh/revalidated session generation (issue #127)
+[stage2] preview: session unhealthy after I/O / no-device (last ret=-7) -- returning the terminal class without PTP traffic until a fresh/revalidated session generation (issue #127)
+[stage2] preview: session unhealthy after I/O / no-device (last ret=-7) -- returning the terminal class without PTP traffic until a fresh/revalidated session generation (issue #127)
+[stage2] preview: session unhealthy after I/O / no-device (last ret=-7) -- returning the terminal class without PTP traffic until a fresh/revalidated session generation (issue #127)
+[stage2] preview: session unhealthy after I/O / no-device (last ret=-7) -- returning the terminal class without PTP traffic until a fresh/revalidated session generation (issue #127)
+[stage2] preview: unknown error class (ret=-8) -- surfacing the original code without relabelling as CAMERA_BUSY and without arming the transient backoff (issue #127)
+[test_stage2_preview_error_class] Issue #127 error classification
+  PASS: NOT_SUPPORTED disables preview (no endless PTP traffic)
+  PASS: a fresh session re-arms the disabled capability
+  PASS: I/O / no-device marks the session unhealthy (not folded into the BUSY backoff)
+  PASS: repeated calls after NO_DEVICE/I-O never become CAMERA_BUSY and do not resume traffic
+  PASS: a fresh/revalidated session generation clears the unhealthy mark and resumes traffic
+  PASS: transient timeout is counted toward the bounded backoff
+  PASS: unknown error is surfaced (not relabelled as CAMERA_BUSY, no backoff armed)
+[test_stage2_preview_error_class] ALL PASS
+--- test_stage2_settle_config_gate.sh ---
+[stage2] preview-settle: session was open at init; 5s left before the first real frame fetch (issue #121)
+[test_stage2_settle_config_gate] Issue #128 config pass-through diagnostic
+  PASS: armed preview-settle window does not discard set_single_config
+  PASS: armed preview-settle window does not discard set_config
+  PASS: armed window gates capture_preview (CAMERA_BUSY, no core call)
+  PASS: expired window lets set_single_config reach the real core
+  PASS: fresh session (no settle window) lets set_single_config through
+[test_stage2_settle_config_gate] ALL PASS
+=== Summary: 14 passed, 0 failed, 2 skipped ===
+Skipped (prerequisite unavailable): test_polaris_pentax_build_package.sh test_source_input.sh

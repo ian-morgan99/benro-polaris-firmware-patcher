@@ -1,0 +1,18 @@
+=== FwPkt manifest ===
+  FwPkt/
+  FwPkt/camera/
+  FwPkt/gimbal/
+  FwPkt/camera/appfs.ubifs                       64356352 B
+  FwPkt/camera/config                                 326 B
+  FwPkt/camera/rootfs.ubifs                      21102592 B
+  FwPkt/camera/uImage                             4188435 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin              84328 B
+  FwPkt/gimbal/polaris413_2.0.0.22.bin              84284 B
+  FwPkt/firmwareInfo                                  399 B
+  FwPkt/FwVer                                          59 B
+
+gimbal binaries: 2
+stock components cross-checked: 5
+layout: OK
+duplicates: none
+OK: FwPkt package is structurally sound.
