@@ -1,5 +1,96 @@
 # Current repository state
 
+## 2026-09-29 authoritative alignment checkpoint
+
+This entry supersedes older "current" labels and adapter status statements
+below. Historical evidence remains intact; do not treat old headings as a
+statement of today's installed firmware or source state.
+
+### Decision
+
+- **General firmware release: NO-GO.** The production Benro Connect matrix is
+  incomplete and Astro/other workflows have failed in field reports.
+- **Next step: scoped Pentax diagnosis/qualification only.** Do not roll back
+  the codebase wholesale to v10 and do not combine iPolar/StarShoot, version
+  display experiments, or new default-on instrumentation into this test.
+- Keep v13j's direct-owner two-shot PASS as a narrow reference only. It does
+  not prove Benro Connect, Astro, Panorama, timelapse, Bulb, reconnect, or
+  cross-tester reliability. The device's currently installed firmware has NOT
+  been re-identified in this checkpoint.
+- **No firmware ZIP was built** from this checkpoint. The astronomy adapters
+  are not linked to a working Polaris camera-source runtime, so a combined
+  packet would overstate support.
+
+### Canonical source heads (all local worktrees clean and equal to origin/main
+when checked)
+
+- Firmware patcher: `e1502e083e0d7c4eeb62bb5143e4c3b7b5234acd`
+- libgphoto2: `f7425744004edff3bb33fe4b7d955ee907a24ac3`
+- benro-polaris-test-harness: `0355f6f643ae7c154ea42a2f751d14fa1dbcb135`
+- OpenPolaris: `161ac2d9c661ff24397f49646fab5ea0c61a4378`
+
+### What is fixed vs what is still unproven
+
+- libgphoto2 main removes the measured StarShoot `16c0:29a0` from the UVC
+  inventory and tests the classification. This is not a StarShoot driver.
+- Patcher `e1502e0` hardens iPolar frame publication (validated lengths,
+  immutable leased slots, reconnect generation invalidation) with a passing
+  deterministic test. This fixes the buffer-safety review finding, not the
+  complete iPolar camera-source integration.
+- StarShoot is measured as vendor-specific USB, not UVC. Available QHY SDK
+  enumeration did not find the attached unit; the available ARM SDK binary is
+  ABI-incompatible with Polaris. No StarShoot frame has been proved.
+- Neither astronomy adapter is linked into the shipped Polaris camera runtime
+  or connected to a working common frame consumer. Do not claim support or
+  include them as functioning features in a release.
+
+### Immediate execution plan — one owner at a time
+
+1. **Read-only identity preflight before any physical test:** record installed
+   `FwVer`, package/provenance identity, active camera USB identity, process
+   identity and current logs. Never infer installed state from a filename or
+   prior chat. Preserve logs before restarting anything.
+2. **Reproduce the smallest Benro Connect failure** on that exact installed
+   build: one ordinary capture, then only the minimal Astro sequence known to
+   trigger the fault. Keep capture trace observational/default-off unless the
+   exact diagnostic candidate and its provenance are already identified. On
+   any incomplete capture, process replacement, USB loss, or missing output,
+   stop: send no subsequent shutter. Save app logs, Clog/Mlog, Stage-2 crash
+   record, PIDs, USB identity, and timestamps.
+3. **Classify the first divergence** as Connect/client, Stage-2/pgphoto, or
+   libgphoto2/PTP before editing. Implement one minimal fix in that owning repo
+   and add a deterministic regression before rebuilding.
+4. **Run in order:** libgphoto2 suite; patcher deterministic/release gate;
+   harness contract tests; package/link/ABI/provenance assertions; only then
+   the bounded physical reproduction. No later layer may mask a lower-layer
+   failure.
+5. **Expand physical qualification only after the first failure is repaired:**
+   startup already-on and OFF->ON; config/AF; repeat JPEG, RAW, RAW+JPEG;
+   Live View->capture->restore; Astro 5x1s; Panorama; timelapse 5s x10; then
+   Bulb and battery/power-cycle rebind. Record PASS/FAIL/NOT TESTED separately.
+6. **Keep astronomy support independent:** iPolar requires attached-device
+   Y16 frame proof and common frame-consumer/solver/package integration.
+   StarShoot requires a compatible protocol/driver, handshake and real-frame
+   proof. Only after both pass their own hardware and package gates may a
+   combined candidate be built.
+
+### Preservation / handoff rules
+
+- This file plus patcher issue [#149](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149)
+  are the shared plan for Codex, the local AI and external reviewer. Start
+  there; append evidence rather than replacing previous conclusions.
+- Before changing source, verify branch/status and save unrelated work in a
+  named, recoverable commit or stash. Never drop stashes, archive tags, old
+  candidates or raw evidence as cleanup. Do not force-push or rewrite a
+  published candidate.
+- Every firmware packet must follow the release skill and provenance registry.
+  A successful source build is not proof that intended binaries are linked in
+  the packet. Do not install anything from this checkpoint; no artifact has
+  passed the required build/package gates.
+
+Plan and status cross-posted to #149 in comment
+[`5886879450`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5886879450).
+
 ## 2026-09-29 adapter hardening (o-v13p) — post-release fixes, awaiting TA guidance
 
 Follow-up audit of the o-v13o adapter work found and fixed:
