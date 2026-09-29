@@ -15,11 +15,39 @@ statement of today's installed firmware or source state.
   display experiments, or new default-on instrumentation into this test.
 - Keep v13j's direct-owner two-shot PASS as a narrow reference only. It does
   not prove Benro Connect, Astro, Panorama, timelapse, Bulb, reconnect, or
-  cross-tester reliability. The device's currently installed firmware has NOT
-  been re-identified in this checkpoint.
+  cross-tester reliability. The initially unknown installed state was later
+  identified in the live preflight below.
 - **No firmware ZIP was built** from this checkpoint. The astronomy adapters
   are not linked to a working Polaris camera-source runtime, so a combined
   packet would overstate support.
+
+### Latest physical/device preflight (2026-09-29; no capture attempted)
+
+- User held the Polaris awake with an Apple device. The host joined the exact
+  Polaris AP (`48:E7:DA:D4:B5:73`, `polaris_d13e86`); route to `192.168.0.1`
+  was verified over Wi-Fi (`wlp8s0`), and SSH confirmed the gimbal identity.
+- Installed firmware is `6.0.0.54.34-o-v13j-crash-boundary`; on-device
+  provenance identifies libgphoto2 `e6cc1f8c8eeb95e4a9cb1652e804b9488167c4a4`,
+  clean, and build-time patcher `890d29d69fef7042875fbb58ba67215d7b696f24`.
+  The active pgphoto process maps the Stage-2 core/port; stock and Stage-2
+  core MD5s match (`390194dd561de4bde4eb7ed701401507`).
+- **Camera is absent from the Polaris USB bus:** on-device enumeration shows
+  only root hub + hub, no Pentax `25fb:*`, StarShoot `16c0:29a0`, or iPolar
+  `1233:1455`. The StarShoot seen on host `lsusb` is attached to the PC, not the
+  gimbal. No shutter/capture canary is allowed until the intended camera is
+  connected and seen on-device.
+- Persistent logs exist as `Clog_000168.log` (~5.1 MB) and `Mlog_000168.log`
+  (~162 KB). The inspected tail has repeated Stage-2 loader-init records; the
+  searched tail had no SIGSEGV/crash marker. Mlog records an Apple device named
+  `iPad` disconnecting at 10:11:09; do not assume it is the iPhone the user
+  mentioned. One read-only 9090 camera-info request returned no response, so
+  it is not a state/READY result.
+- Detailed host route, firmware provenance, component hashes, process IDs,
+  USB list and observations are recorded in patcher issue #149 comment
+  [`5887230099`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887230099).
+- **Next user action:** connect and power the intended Pentax camera directly
+  to the Polaris. Then repeat USB identity and camera-state checks; no shutter
+  until the camera is enumerated and ready.
 
 ### Canonical source heads (all local worktrees clean and equal to origin/main
 when checked)
