@@ -15,9 +15,14 @@
   offline gate is green (14 container + 24 Python checks).
 - This corrects a concrete cross-layer integration mismatch and is a plausible
   contributor to the observed capture failure, **not a proven root cause**.
-  The current o-v13s artifact remains unqualified. Build one new candidate from
-  clean main, prove all packaged libgphoto2/pgphoto/Stage-2 hashes, obtain
-  independent review, then test physically only after review clears it.
+  The current o-v13s artifact remains unqualified. One candidate,
+  `o-v13v-stage2-direct-20260929`, is now built from the exact clean main SHAs
+  and uploaded privately. ZIP SHA-256 is
+  `400d417c90a486ec15b9830b9773b8320b3693f0aa5a69259db126f92d428904`; appfs
+  MD5 is `c658bd37c3e70a13ea5f8b4535d8ff97`. Exact extracted-package component
+  hashes match the generated runtime bundle. Full deterministic gates and the
+  harness pass. **Independent review is still required; do not install yet.**
+  Details: [candidate evidence](evidence/o-v13v-stage2-direct-20260929/SUMMARY.md).
 - Restart-durable ownership for an accepted capture whose output is not yet
   visible is still an explicit design/test gap. Do not treat strict current-
   session libgphoto2 guards as durable across pgphoto process restart.
