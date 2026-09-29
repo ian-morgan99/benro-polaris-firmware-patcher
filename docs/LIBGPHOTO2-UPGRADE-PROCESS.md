@@ -42,15 +42,17 @@ V4L2 capture device. The installed Polaris o-v13c image exposed no `/dev/video*`
 support therefore requires an explicit UVC/V4L2 (or proven userspace libuvc)
 work package and is not achieved by widening `--with-camlibs`.
 
-The model in scope is the Orion StarShoot All-in-One, USB `16c0:29a0`; the
-owner-supplied enumeration classifies it as UVC. The iOptron iPolar is USB
-`1233:1455` and is also UVC. Local development commits `2f6d36eae` and
-`9180bb334` list those IDs in `camlibs/uvc/uvc-devices.c`, but that directory
-contains only the eight-line device table: it has no camlib implementation,
-Makefile integration, or installed module, and those commits are not on the
-authoritative `ian-morgan99/libgphoto2` GitHub `main` branch. The table is
-useful classification evidence, not functional support. Do not merge or
-package it as if it were a working libgphoto2 UVC backend.
+The iOptron iPolar (`1233:1455`) is measured as a composite UVC device. The
+Orion StarShoot All-in-One currently attached for this programme (`16c0:29a0`)
+is measured as USB class 255 vendor-specific, not UVC; this later descriptor
+evidence in patcher issue #158 supersedes the earlier family-level UVC
+assumption. The libgphoto2 fork's `camlibs/uvc/uvc-devices.c` is only an
+inventory table, not a functional camera driver. A regression test keeps the
+iPolar identity in that inventory and rejects the measured StarShoot ID.
+Neither table entry nor compiling a Polaris adapter alone constitutes camera
+support. Keep the UVC and vendor-protocol source paths in the separate
+Polaris/OpenPolaris camera-source stack, and link/package them only when there
+is a real runtime consumer and the target hardware gates pass.
 
 This document exists because a libgphoto2 build can work correctly when invoked directly with `gphoto2` and still fail when used through the Polaris `pgphoto` / Stage-2 runtime. The upstream `blaineam/benro-polaris-firmware-patcher` implementation already demonstrates this class of integration risk: its hardware-validated full mode treats libgphoto2 as a matched stack (core + port + camlib + iolib), redirects `pgphoto` through an on-disk Stage-2 trampoline, and deliberately installs camlib/iolib components into both Stage-2 and stock lookup locations.
 
