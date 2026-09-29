@@ -4,8 +4,13 @@
 
 - Read-only device identity after the camera battery replacement confirms the
   Polaris AP (`48:E7:DA:D4:B5:73`), route via `wlp8s0`, installed o-v13s FwVer,
-  and a running pgphoto. The camera was **not** enumerated on USB in this check;
-  no physical capture or camera-state claim is made.
+  and a running pgphoto. The first check had no camera enumerated. After the
+  user turned it on, USB `25fb:0189` appeared; the first no-capture probe saw
+  transient `state=-5`, and one later no-capture probe returned K-3 Mark III
+  `state=1`, storage 2, photoFormat 2. The USB supervisor logged a `none` to
+  `1-1.2` identity transition and a pgphoto restart (budget `4/6`). No shutter
+  was sent. Redacted summary and hashes of the locally preserved raw logs are in
+  `docs/evidence/o-v13v-stage2-direct-20260929/live-read-only-20260929-1430/`.
 - The o-v13s wrapper sets `STAGE2_CAPTURE_TRACE=1` by default. That routes every
   still capture through an extra Stage-2 function-call boundary, despite the
   Stage-2 loader policy and existing regression test saying still capture must

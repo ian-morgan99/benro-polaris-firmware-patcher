@@ -63,11 +63,18 @@ and artifact; do not call this Pentax-qualified.
   compile was skipped because libuvc headers are absent; its frame-store
   component compiled. This does not claim functional UVC camera support.
 
-## Physical state at build handoff
+## Physical state after camera was turned on
 
-Read-only checks confirmed the Polaris AP and route, installed firmware still
-o-v13s, and pgphoto alive. No Pentax `25fb` USB device was enumerated, so no
-shutter was sent. No package was staged. After independent review, physical
-testing requires the camera powered and enumerated, then sanctioned FwPkt
+Read-only checks confirmed Polaris identity/route, current o-v13s runtime, and
+Pentax USB `25fb:0189`. The first Benro probe during reinitialisation returned
+`state=-5`; a later single read-only probe reported K-3 Mark III `state=1`,
+storage 2, photoFormat 2. The supervisor logged a `none -> 1-1.2` USB identity
+change and a pgphoto restart (`4/6` budget). No shutter was sent and no package
+was staged. Full interpretation and raw-log hashes are in
+[`live-read-only-20260929-1430`](live-read-only-20260929-1430/README.md).
+
+Independent review is still pending, and restart-durable output ownership is
+still open. Do not install or shoot yet. Once review clears and the restart gap
+is explicitly dispositioned, physical testing requires sanctioned FwPkt
 installation, cold reboot, runtime-loader/provenance verification, and a
 bounded canary. The first canary must stop on any nonzero result; no blind retry.
