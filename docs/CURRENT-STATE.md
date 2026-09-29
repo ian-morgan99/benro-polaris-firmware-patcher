@@ -152,10 +152,19 @@ statement of today's installed firmware or source state.
   still reported disconnected; the measured continuity used Wi-Fi. Full
   evidence is in [issue #149 comment
   5887882260](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887882260).
-- **Next physical step:** test a second ordinary Benro Connect shot after the
-  completed first operation, leaving the camera attached. This specifically
-  exercises next-shutter admission/re-admission through the production app
-  path; the operator must trigger it.
+- **Second-shot report, not yet confirmed by Polaris evidence:** the operator
+  reported taking a second Benro Connect shot. At device time 10:58:02, however,
+  neither live nor persistent Mlog contained a new type-2/code-264 capture
+  request after the 10:54:36 request, and `/app/sd/normal` contained only the
+  `SP_0123` and `SP_0124` pairs (no `SP_0125`). The newest persistent Mlog
+  entries were periodic status events through 10:57:13. This does not establish
+  whether the physical shutter fired or what Benro Connect displayed; classify
+  the reported second shot as NOT CONFIRMED, not as a proven camera failure.
+  Camera stayed USB `001:005`, pgphoto PID `11103`, and Wi-Fi/SSH remained
+  reachable. No additional shutter was sent. Await the operator's observation
+  of the app result / physical shutter before attempting another capture.
+- This evidence is recorded in [issue #149 comment
+  5887921040](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887921040).
 
 ### Canonical source heads (all local worktrees clean and equal to origin/main
 when checked)
