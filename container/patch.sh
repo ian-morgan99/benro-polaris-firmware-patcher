@@ -443,6 +443,16 @@ else
       log "  ipolar adapter: libuvc headers absent (/work/src/libuvc/{include,build/include}) — compile-check pending (#159)"
     fi
   fi
+  # The iPolar frame store (immutable leased slots, #159 buffer-safety fix) is
+  # a plain C+pthread unit with no libuvc dependency; compile-check it too so
+  # the adapter's frame-publication backend cannot break silently.
+  if [ -f /opt/patcher/stage2_ipolar_frames.c ]; then
+    ( cd "$W/s2" && $XT-gcc -c -fPIC -O2 -std=gnu11 -mfloat-abi=soft -Wall \
+        -I/opt/patcher \
+        /opt/patcher/stage2_ipolar_frames.c -o ipolar_frames.o ) \
+      || die "ipolar frame store compile-check failed (#159)"
+    log "  ipolar frame store: compiles (immutable leased slots, #159)"
+  fi
 
   # d) assemble /app/lib/stage2 and install the wrapper as /app/bin/pgphoto.
   STAGE2="$APP/lib/stage2"
