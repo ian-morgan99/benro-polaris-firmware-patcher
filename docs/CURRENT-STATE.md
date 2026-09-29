@@ -1,6 +1,26 @@
 # Current repository state
 
-## 2026-09-29 recovery-path candidate: o-v13t
+## 2026-09-29 latest artifact review: o-v13u BLOCKED; follow-up source work underway
+
+- Do not install `o-v13u-output-obligation-20260929`. Independent review found
+  unresolved output ownership across an ambiguous `InitiateCapture` response and
+  pgphoto restart, plus missing production-lifecycle/restart tests. Its complete
+  audit row and exact hashes are recorded in
+  `docs/FWPKT-PROVENANCE-CONTRACT.md`; review details are in
+  `docs/evidence/o-v13u-review-blocked-20260929/SUMMARY.md`.
+- After review, the Pentax output-mode gate was tightened to require the full
+  known `+524` format field before shutter, and the obligation is now latched
+  before sending `InitiateCapture`. Focused Pentax tests and the host `ptp2.so`
+  build pass. These edits are still uncommitted in the libgphoto2 working tree
+  and are **not** in o-v13u. Restart durability and production-path testing
+  remain open; no candidate is cleared for installation.
+- Camera battery replaced by user. At 2026-09-29 13:39 UTC, Polaris identity was
+  verified by BSSID `48:e7:da:d4:b5:73`, Wi-Fi route via `wlp8s0`, and FwVer
+  `6.0.0.54.35-o-v13s-preserve-pending`; the K-3 III was enumerated as USB
+  `25fb:0189`. No shutter was issued after that check. The current installed
+  build is still the previously captured o-v13s, whose canary failed.
+
+## 2026-09-29 recovery-path candidate: o-v13t (SUPERSEDED; do not install)
 
 - **Built and package-gated; not installed.** This is one instrumented candidate
   to mitigate the distinct Pentax failure paths, not a declaration that the
