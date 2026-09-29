@@ -21,7 +21,7 @@ statement of today's installed firmware or source state.
   are not linked to a working Polaris camera-source runtime, so a combined
   packet would overstate support.
 
-### Latest physical/device preflight (2026-09-29; no capture attempted)
+### Initial physical/device preflight before Pentax connection (2026-09-29)
 
 - User held the Polaris awake with an Apple device. The host joined the exact
   Polaris AP (`48:E7:DA:D4:B5:73`, `polaris_d13e86`); route to `192.168.0.1`
@@ -45,9 +45,30 @@ statement of today's installed firmware or source state.
 - Detailed host route, firmware provenance, component hashes, process IDs,
   USB list and observations are recorded in patcher issue #149 comment
   [`5887230099`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887230099).
-- **Next user action:** connect and power the intended Pentax camera directly
-  to the Polaris. Then repeat USB identity and camera-state checks; no shutter
-  until the camera is enumerated and ready.
+
+### 2026-09-29 live recheck — Pentax attached, one-shot canary pending
+
+- After the user powered the camera, the Polaris enumerated `25fb:0189`
+  (Pentax K-3 Mark III). Current FwVer remains
+  `6.0.0.54.34-o-v13j-crash-boundary`.
+- A fresh official probe-only run (`scripts/canary-probe.py --probe`) passed:
+  model `pentax k-3 mark iii`, `state:1`, `storage:2`, `photoFormat:2`.
+  The latest Clog records preview `get-frame returned 0x2001` with 66,919 bytes
+  in 17 ms; latest Mlog reports camera `state:1` and refreshed ISO/shutter/
+  aperture/EV/WB controls. This is a readiness/probe result, not a capture.
+- The first attempted release-gate command omitted `--expected-files`; it
+  exited 2 during argument validation **before tests or shutter dispatch**.
+  The canary script explicitly says `photoFormat` is not authoritative for
+  output count, so do not guess from `photoFormat:2` or older RAW+JPEG runs.
+- **Next step:** get the currently selected Benro Connect output mode from the
+  user without changing it (JPEG-only, RAW-only, or RAW+JPEG), map that to the
+  declared one/two-file obligation, then run exactly one bounded
+  `--canary --expected-files N` with the documented 9090 keepalive. Stop on
+  incomplete lifecycle, missing/extra publication, disconnect or process
+  replacement; do not send a second shutter.
+- The probe/no-shot result and current question are documented in issue #149
+  comment [`5887230099`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887230099)
+  and its follow-up; update this section after the canary outcome.
 
 ### Canonical source heads (all local worktrees clean and equal to origin/main
 when checked)
