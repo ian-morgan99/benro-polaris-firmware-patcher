@@ -53,10 +53,24 @@ unavailable camera model. The four focused Pentax tests passed.
 5. The provenance registry/evidence row was missing at initial review; this
    document and registry row backfill that audit gap.
 
-The camera battery has since been replaced. At 2026-09-29 13:39 UTC, Polaris
-identity checks passed (BSSID `48:e7:da:d4:b5:73`, route via `wlp8s0`, FwVer
-`6.0.0.54.35-o-v13s-preserve-pending`) and the Pentax was enumerated as USB
-`25fb:0189`. No shutter was issued and o-v13u was not staged.
+Follow-up source fix: libgphoto2 commit
+[`718019fa0bb579cc5e8277ff2fa1f998a0fd37b4`](https://github.com/ian-morgan99/libgphoto2/commit/718019fa0bb579cc5e8277ff2fa1f998a0fd37b4)
+adds the complete/known output-mode preflight, latches the obligation before
+dispatch and preserves it for ambiguous transport errors. Companion transfer
+now fails closed unless it has a filename and has been published before camera
+candidate deletion. Focused Pentax suite: 4/4 passed; production host
+`ptp2.so` build passed. A full Meson run after these changes: 12/14 passed; the
+two failures were `test-gp-port` (host USB fixture invalid) and `test-gphoto2`
+(test requests an unavailable camera model). These changes are **not** in
+o-v13u. Durable restart recovery and production lifecycle/restart tests remain
+open, so review status stays blocked.
+
+The camera battery has since been replaced. At 2026-09-29 12:47 UTC, a fresh
+read-only canary probe returned Pentax K-3 III, `state=1`, `storage=2`, and
+`photoFormat=2`; this reports Polaris/camera readiness only and is not evidence
+for Pentax `+524` output mode or output ownership. The current device remained
+on FwVer `6.0.0.54.35-o-v13s-preserve-pending`; USB `25fb:0189` was enumerated.
+No shutter was issued and o-v13u was not staged.
 
 ## Required before a physical candidate
 
