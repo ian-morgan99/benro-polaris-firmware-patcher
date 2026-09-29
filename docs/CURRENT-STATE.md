@@ -46,7 +46,7 @@ statement of today's installed firmware or source state.
   USB list and observations are recorded in patcher issue #149 comment
   [`5887230099`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887230099).
 
-### 2026-09-29 live recheck — Pentax attached, one-shot canary pending
+### 2026-09-29 live recheck — Pentax attached, pre-canary
 
 - After the user powered the camera, the Polaris enumerated `25fb:0189`
   (Pentax K-3 Mark III). Current FwVer remains
@@ -60,15 +60,47 @@ statement of today's installed firmware or source state.
   exited 2 during argument validation **before tests or shutter dispatch**.
   The canary script explicitly says `photoFormat` is not authoritative for
   output count, so do not guess from `photoFormat:2` or older RAW+JPEG runs.
-- **Next step:** get the currently selected Benro Connect output mode from the
-  user without changing it (JPEG-only, RAW-only, or RAW+JPEG), map that to the
-  declared one/two-file obligation, then run exactly one bounded
-  `--canary --expected-files N` with the documented 9090 keepalive. Stop on
-  incomplete lifecycle, missing/extra publication, disconnect or process
-  replacement; do not send a second shutter.
-- The probe/no-shot result and current question are documented in issue #149
-  comment [`5887230099`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887230099)
-  and its follow-up; update this section after the canary outcome.
+- The initial gate invocation omitted `--expected-files` and exited 2 before
+  tests or shutter dispatch. User then independently confirmed Benro Connect
+  was set to RAW+JPEG, allowing a two-output canary contract.
+
+### 2026-09-29 one-shot RAW+JPEG canary — output PASS, stability inconclusive
+
+- Ran `./tests/run_prerelease_gate.sh --canary --expected-files 2` with the
+  documented 9090 keepalive. Deterministic gate: 14 container + 24 Python
+  checks passed. Device probe reported Pentax K-3 III `state=1`. The canary
+  command returned PASS with capture lifecycle `[1,4,0]` and two distinct
+  publications sharing stem `SP_0121`: `/app/sd/normal/SP_0121.dng` (34,047,294
+  bytes) and `/app/sd/normal/SP_0121.jpg` (398,175 bytes). Clog confirms the
+  original `IMGP3664.DNG` and `.JPG` were fetched and deleted from the camera
+  after successful transfer; Mlog confirms both Polaris album saves returned
+  `ret 0`. This proves one RAW+JPEG capture/publication on the diagnostic 9090
+  path, not Benro Connect workflow qualification. No package gates ran (no
+  `--build` supplied).
+- The subsequent kernel log records `usb 1-1.2: USB disconnect, device number
+  3`, then the same Pentax `25fb:0189` re-enumerating as device 4; `pgphoto`
+  changed PID from 31853 to 3416. The operator clarified that they deliberately
+  unplugged/reconnected the camera to inspect it, and that the camera battery
+  is low. Therefore these observations are consistent with that manual
+  reconnect / low battery and are **not evidence of a capture-induced crash or
+  firmware instability**. The timing does not isolate whether a battery drop
+  also occurred. No SIGSEGV or crash artifact was found, but no uninterrupted
+  post-capture stability interval was established either.
+- Kernel log also records Broadcom `Out of tdata_disc_grp` and `No more free
+  tdata_psh_info!!` around this period. Their relationship, if any, to the
+  manual reconnect or low battery is unknown; do not attribute them to the
+  capture from this run.
+- **Interpretation / next step:** one RAW+JPEG capture and publication passed
+  on the diagnostic 9090 path. Benro Connect end-to-end behavior and stability
+  while the camera remains continuously attached are still untested. Avoid
+  another shutter while battery is low; when convenient, use a charged battery
+  and leave the camera connected for one bounded post-capture observation.
+- Gate transcript was `/tmp/prerelease-canary-shot.log` on the host for this
+  session. The initial pre-canary state is in issue #149 comments
+  [`5887230099`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887230099)
+  and [`5887296032`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887296032);
+  the operator clarification and corrected interpretation are recorded in
+  [comment 5887409720](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887409720).
 
 ### Canonical source heads (all local worktrees clean and equal to origin/main
 when checked)
