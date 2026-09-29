@@ -102,6 +102,38 @@ statement of today's installed firmware or source state.
   the operator clarification and corrected interpretation are recorded in
   [comment 5887409720](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887409720).
 
+### 2026-09-29 post-battery-change RAW+JPEG canary — PASS, short continuity PASS
+
+- Operator replaced the camera battery and performed their normal camera
+  power cycle. The resulting new USB enumeration/PID is expected and is not
+  classified as a crash. Polaris identity was freshly verified (AP BSSID
+  `48:E7:DA:D4:B5:73`, route via `wlp8s0`, expected FwVer); camera appeared as
+  USB `001:005`, Pentax `25fb:0189`, and `pgphoto` PID `11103`.
+- Probe-only state was K-3 III `state=1`, `storage=2`, `photoFormat=2`; the
+  operator's established RAW+JPEG selection supplied the two-file obligation.
+- Ran `./tests/run_prerelease_gate.sh --canary --expected-files 2` with the
+  documented 9090 keepalive. Result: 14/14 container checks and 24/24 Python
+  checks passed; probe and one-shot canary passed; summary `4 passed, 0 failed,
+  0 skipped`. Lifecycle `[1,4,0]`; outputs were
+  `/app/sd/normal/SP_0122.dng` (34,439,136 bytes) and
+  `/app/sd/normal/SP_0122.jpg` (382,354 bytes). This validates the diagnostic
+  9090 path, not a Benro Connect app-path capture. No `--build` package gates
+  ran.
+- Without any camera unplug/power action after this capture, a read-only check
+  about 86 seconds later still saw USB device `001:005` and the same pgphoto
+  PID `11103`; Polaris AP/route and SSH remained available. This is a short
+  post-capture continuity PASS, not a long soak or full production-app
+  qualification.
+- Host `bluetoothctl info 48:E7:DA:D4:B5:72` reported `Connected: no`. Thus
+  the observed keepalive/continuity used Wi-Fi/9090, and PC-side Bluetooth
+  keepawake remains unproven. Do not confuse a one-shot BT wake pulse with a
+  retained BT connection.
+- **Next test:** one ordinary Benro Connect capture with the camera left
+  attached, then correlate app completion with Clog/Mlog and recheck USB/session
+  continuity. This requires the operator to trigger that app action. The
+  evidence is cross-posted to [issue #149 comment
+  5887707654](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887707654).
+
 ### Canonical source heads (all local worktrees clean and equal to origin/main
 when checked)
 
