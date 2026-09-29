@@ -50,6 +50,39 @@ wait "$pid"
 test "$(wc -l < "$RESTART_LOG")" -eq 1
 grep -q 'stable identity change' "$TMP/change.out"
 
+# If another owner holds the restart_gphoto lock during a camera re-enumeration,
+# the supervisor must retain the stale baseline and retry once the lock clears.
+# It must not accept the new identity merely because the first helper call lost
+# the race (the exact failure observed in the 2026-09-29 Polaris Clog).
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0189 1 3
+RETRY_LOG=$TMP/retry-attempts
+export RETRY_LOG
+cat > "$TMP/restart-once-busy" <<'EOF'
+#!/bin/sh
+n=0
+[ ! -r "$RETRY_LOG" ] || n=$(cat "$RETRY_LOG")
+n=$((n + 1))
+printf '%s\n' "$n" > "$RETRY_LOG"
+[ "$n" -ge 2 ]
+EOF
+chmod +x "$TMP/restart-once-busy"
+OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_USB_SYSFS=$TMP/sys \
+OPENPOLARIS_PROC_ROOT=$TMP/proc \
+OPENPOLARIS_RESTART_GPHOTO=$TMP/restart-once-busy OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 OPENPOLARIS_USB_STABLE_POLLS=2 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=2 OPENPOLARIS_USB_RESTART_RETRY_POLLS=3 \
+OPENPOLARIS_USB_MAX_POLLS=18 sh "$SUPERVISOR" > "$TMP/retry.out" 2>&1 &
+pid=$!
+sleep 0.15
+printf '4\n' > "$TMP/sys/1-1/devnum"
+wait "$pid"
+test "$(cat "$RETRY_LOG")" = 2
+grep -q 'identity remains pending' "$TMP/retry.out"
+grep -q 'pgphoto restart complete (restart 2/' "$TMP/retry.out"
+! grep -q 'identity accepted to prevent a loop' "$TMP/retry.out"
+
 # A stale lock whose PID was reused by an unrelated live process must be
 # reclaimed; existence alone is not ownership.
 rm -rf "$TMP/run/openpolaris-camera-usb-supervisor.lock"
@@ -351,6 +384,7 @@ grep -q 'stable identity change' "$TMP/selected.out"
 
 echo 'PASS: camera USB supervisor keys the fingerprint to the selected camera and ignores unrelated cameras (issue #126)'
 echo 'PASS: camera USB supervisor validates lock ownership and restarts once after a stable camera identity change (issue #57)'
+echo 'PASS: camera USB supervisor preserves pending identity and retries after a competing restart lock clears'
 echo 'PASS: camera USB supervisor absorbs startup re-enumeration without restarting, then resumes normal restart logic (issue #121)'
 echo 'PASS: camera USB supervisor bounds the restart budget under a re-enumeration flap (issue #119 churn guard)'
 echo 'PASS: camera USB supervisor quarantines post-budget identity changes and requires revalidation before resuming (issue #119 TA follow-up)'

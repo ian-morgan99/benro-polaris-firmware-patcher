@@ -40,6 +40,10 @@ STARTUP_GRACE_POLLS=${OPENPOLARIS_USB_STARTUP_GRACE_POLLS:-3}
 # is spent the supervisor still tracks identity, it just no longer re-dlopens.
 RESTART_COOLDOWN_POLLS=${OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS:-5}
 MAX_RESTARTS=${OPENPOLARIS_USB_MAX_RESTARTS:-6}
+# If a restart is already in progress, restart_gphoto refuses to race it. Do
+# not accept the new USB identity as healthy in that case: preserve the old
+# baseline and retry the rebind after a short poll-based backoff.
+RESTART_RETRY_POLLS=${OPENPOLARIS_USB_RESTART_RETRY_POLLS:-5}
 # Issue #119 (TA follow-up): the quarantine-exit rebind requires the quarantined
 # identity to stay stable for this many consecutive polls BEFORE the bounded
 # rebind is attempted. Kept separate from COOLDOWN so tests can decouple "when
@@ -133,6 +137,7 @@ restarts=0
 quarantined=0
 qcandidate=""
 qstable=0
+retry_after_poll=0
 # Issue #119: minimum polls between restarts. The stable-change detector already
 # requires STABLE_POLLS consecutive identical polls; requiring the larger of that
 # and RESTART_COOLDOWN_POLLS spaces out restarts so a fast re-enumeration flap
@@ -178,7 +183,7 @@ while :; do
             qcandidate=$current
             qstable=1
         fi
-        if [ "$qstable" -ge "$REBIND_STABLE_POLLS" ]; then
+        if [ "$qstable" -ge "$REBIND_STABLE_POLLS" ] && [ "$polls" -ge "$retry_after_poll" ]; then
             # Issue #119 (TA follow-up): sysfs identity stability alone does NOT
             # prove a usable pgphoto/PTP session -- the existing process may still
             # own a stale port/session from before the churn. Before leaving the
@@ -197,12 +202,15 @@ while :; do
                 qcandidate=""
                 qstable=0
                 restarts=0
+                retry_after_poll=0
             else
                 echo "[camera-usb] quarantined identity ${qcandidate:-none} stable for $qstable polls but bounded rebind failed; remaining degraded (issue #119)" >&2
                 # Stay quarantined. Hold qstable at the threshold so the next poll
                 # that keeps the identity stable immediately retries the rebind,
                 # while any identity change resets qstable to 1 and re-arms it.
                 qstable=$REBIND_STABLE_POLLS
+                retry_after_poll=$((polls + RESTART_RETRY_POLLS))
+                echo "[camera-usb] rebind retry deferred until poll $retry_after_poll" >&2
             fi
         fi
     else
@@ -216,7 +224,7 @@ while :; do
             stable=1
         fi
 
-        if [ "$stable" -ge "$COOLDOWN" ]; then
+        if [ "$stable" -ge "$COOLDOWN" ] && [ "$polls" -ge "$retry_after_poll" ]; then
             if [ "$MAX_RESTARTS" -gt 0 ] && [ "$restarts" -ge "$MAX_RESTARTS" ]; then
                 # Issue #119 (TA release-safety follow-up): restart budget
                 # exhausted. Enter the explicit degraded/quarantine state instead
@@ -237,14 +245,18 @@ while :; do
                     restarts=$((restarts + 1))
                     baseline=$candidate
                     stable=0
+                    retry_after_poll=0
                     echo "[camera-usb] pgphoto restart complete (restart $restarts${MAX_RESTARTS:+/$MAX_RESTARTS})"
                 else
-                    # Avoid a tight retry storm. A later identity transition can retry;
-                    # the existing restart helper already logs the bounded failure.
+                    # A competing watchdog/app restart may hold restart_gphoto's
+                    # lock exactly when USB identity changes (observed on device:
+                    # helper returned "another restart owns ... lock"). Keep the
+                    # previous baseline so this identity remains pending, but back
+                    # off before retrying; do not silently call it healthy.
                     restarts=$((restarts + 1))
-                    baseline=$candidate
-                    stable=0
-                    echo "[camera-usb] pgphoto restart failed; identity accepted to prevent a loop" >&2
+                    stable=$COOLDOWN
+                    retry_after_poll=$((polls + RESTART_RETRY_POLLS))
+                    echo "[camera-usb] pgphoto restart failed; identity remains pending; retry deferred until poll $retry_after_poll" >&2
                 fi
             fi
         fi
