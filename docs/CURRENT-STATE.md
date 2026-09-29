@@ -1,5 +1,47 @@
 # Current repository state
 
+## 2026-09-29 latest failure and candidate — o-v13w context isolation
+
+- **Confirmed physical failure on o-v13v:** with the Pentax attached and set to
+  RAW+JPEG, the canary's first shutter was accepted by Pentax
+  `InitiateCapture` (PTP `0x2001`), then pgphoto segfaulted about two seconds
+  later in PTP progress-callback dispatch. Neither expected SP_0134 file was
+  published. A retry was blocked by pre-shutter admission; it sent no shutter.
+  This is the actual cause of the current `camera busy` symptom, not just an
+  unexplained readiness timeout.
+- The ARM core shows an invalid progress-callback context read from the shared
+  per-camera `PTPData.context` while a capture was in flight. This strongly
+  implicates context replacement across concurrent camera calls. It is a
+  source-level diagnosis supported by the core, not yet physically confirmed by
+  a passing retry.
+- Fix is committed and pushed to libgphoto2 `main` at
+  [`fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd`](https://github.com/ian-morgan99/libgphoto2/commit/fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd).
+  The shared pointer is removed; operation contexts are bound per thread and
+  camera-data owner. Its regression test, clean production build, and full
+  deterministic libgphoto2 set pass (14/14; host DTR/CTS-only no-ci test
+  excluded by the canonical script).
+- One candidate is built and privately uploaded: `o-v13w-context-isolation-20260929`
+  (Benro display `6.0.0.54.42`). Provenance: patcher build SHA
+  `aaa557f0764cc029672f63c159e953a9f8a6ee3b`, libgphoto2 SHA above, harness
+  `0355f6f643ae7c154ea42a2f751d14fa1dbcb135`; ZIP SHA-256
+  `ef10cb69bd288de091ce91431203f52925a8836960c0b6463a84e2e9211b199f`, appfs
+  MD5 `121114c8c58090bfa97fb8024bc31e4c`. Patcher gate 14 container + 24 Python,
+  harness 62/62, package-content and firmwareInfo checks all pass. Registry row
+  is in `docs/FWPKT-PROVENANCE-CONTRACT.md`; private artifact commit
+  `83664a9d3`.
+- **Not installed or physically qualified yet.** The documented extracted-tree
+  staging procedure is underway; after all on-device payload hashes match, the
+  only permitted install trigger is the normal reboot path. Acceptance requires
+  a successful RAW+JPEG capture publishing both files, API completion and
+  returned control, followed by a second successful capture with pgphoto alive.
+  Harness/source success is not camera proof. Full crash trace and raw-log
+  hashes are recorded in the `o-v13v-stage2-direct-20260929` evidence folder;
+  raw device logs/core are kept out of public git.
+- The generated package build reports that the iPolar adapter compile check was
+  skipped because this build image lacks libuvc headers; this Pentax stability
+  candidate does not claim iPolar compile qualification. Track separately under
+  #159.
+
 ## 2026-09-29 Stage-2 still-capture dispatch correction — committed, build next
 
 - Read-only device identity after the camera battery replacement confirms the
