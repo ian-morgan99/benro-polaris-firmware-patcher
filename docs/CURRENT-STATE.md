@@ -1,5 +1,39 @@
 # Current repository state
 
+## 2026-09-29 latest candidate: o-v13s preserve unresolved Pentax candidate
+
+- **Not installed.** The device remains on its previously identified
+  `6.0.0.54.34-o-v13j-crash-boundary` until independent review and the supported
+  install flow are completed.
+- Patcher source used: `d11bc748f917a1705988596aa6acf565a7131c9a` (`main`, clean
+  at build). Embedded libgphoto2 source: `204c2a95a0da78135ad3c6dc244c230d5d16d2e9`
+  (`main`, clean). Build selected `ptp2,pentax`.
+- Change: on an error path, libgphoto2 now preserves a Pentax transfer candidate
+  if it has actually discovered one and marks recovery required, instead of
+  deleting that candidate as generic cleanup. The pre-shutter admission guard
+  continues to refuse another capture while output ownership is unresolved.
+- Limitation: this does not deliver a preserved image into Benro Connect, and
+  it does not explain SP_0136, where no candidate/completion was observed after
+  accepted `InitiateCapture`. The original failure cause remains unknown.
+- ZIP MD5 `744815412b9acc51fba01fc0b01a782f`; SHA-256
+  `6f02b20cb1d3e5f27ed99cb4b3f800adb4827dd65396d39fda7c188bb7d70b7b`; appfs MD5
+  `889a34781e04edcfd11af38a432a46ee`. PrivateResearch commit
+  `3b4693748244636ffe2aaaddd5be30893f790f0a` at
+  `firmware-packets/o-v13s-preserve-pentax-candidate-20260929/FwPkt.zip`.
+- Tests: canonical libgphoto2 regression build passed (no-CI serial fixture
+  skipped); patcher gate 4/4 green; harness suite 62/62. Extracted appfs from
+  the exact ZIP and byte-compared the pgphoto wrapper, Stage-2 runtime, core,
+  port, ptp2, Pentax camlib, usb1 and provenance to the build bundle; all
+  matched. Detailed transcript and hashes:
+  [candidate evidence](evidence/o-v13s-preserve-pentax-candidate-20260929/SUMMARY.md).
+- **Next gate:** independent review of the exact source SHAs, evidence and
+  private ZIP hashes is required before device installation. After that, run
+  the supported updater flow and a physical test designed to exercise the
+  error/recovery path; an ordinary successful capture alone will not validate
+  this change.
+- Plan/status cross-posted to patcher #149 and libgphoto2 #73. No camera action
+  or runtime mutation was performed for this build.
+
 ## 2026-09-29 USB compatibility mode OFF capture failure — physical evidence
 
 - Operator reports broad M-mode RAW+JPEG testing passed with the camera's USB
