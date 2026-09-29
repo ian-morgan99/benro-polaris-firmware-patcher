@@ -41,11 +41,25 @@ int main(void)
     int camera;
     int direct_capture_target;
 
-    /* Regression for o-v12j/k/n: still capture is installed as the exact
-     * resolved core target, never through a Stage-2 wrapper. */
+    /* Regression for o-v12j/k/n: normal still capture is installed as the
+     * exact resolved core target, never through a Stage-2 wrapper. */
+    unsetenv("STAGE2_CAPTURE_TRACE");
     assert(stage2_capture_slot_target("gp_camera_capture",
                                       &direct_capture_target) ==
            &direct_capture_target);
+    setenv("STAGE2_CAPTURE_TRACE", "0", 1);
+    assert(stage2_capture_slot_target("gp_camera_capture",
+                                      &direct_capture_target) ==
+           &direct_capture_target);
+    /* The additional call boundary is available only when explicitly selected
+     * for boundary diagnostics; it must never be silently enabled by default. */
+    setenv("STAGE2_CAPTURE_TRACE", "1", 1);
+    assert(stage2_capture_slot_target("gp_camera_capture",
+                                      &direct_capture_target) !=
+           &direct_capture_target);
+    assert(g_real_gp_camera_capture ==
+           (stage2_gp_camera_capture_fn)&direct_capture_target);
+    unsetenv("STAGE2_CAPTURE_TRACE");
 
     setenv("STAGE2_TETHER_CAPTURE", "1", 1);
     setenv("STAGE2_PENTAX_PREVIEW_BACKOFF", "1", 1);

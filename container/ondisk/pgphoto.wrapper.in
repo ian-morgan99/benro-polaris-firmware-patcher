@@ -15,9 +15,10 @@ export STAGE2_TETHER_CAPTURE=1
 # defaults to this policy, but exporting it here prevents wrapper/environment
 # drift from reopening the high-rate Pentax preview loop.
 export STAGE2_PENTAX_PREVIEW_BACKOFF=${STAGE2_PENTAX_PREVIEW_BACKOFF:-1}
-# Diagnostic candidate: preserve capture entry/return boundaries across a
-# watchdog restart. Override to 0 for a non-tracing local build.
-export STAGE2_CAPTURE_TRACE=${STAGE2_CAPTURE_TRACE:-1}
+# Still-capture dispatch must remain direct by default: the Stage-2 trace shim
+# adds an extra ABI/call boundary around gp_camera_capture. Enable it explicitly
+# only for a diagnostic build/run that needs the outer entry/return markers.
+export STAGE2_CAPTURE_TRACE=${STAGE2_CAPTURE_TRACE:-0}
 # On-demand preview gate interval (seconds). Pin it ONLY when the operator
 # explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
 # model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --

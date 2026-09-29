@@ -22,7 +22,9 @@ libgphoto2 `f05f65826` makes the Pentax strict +32/+36/+104 admission sample
 unconditional before every `InitiateCapture`, emits reason/action diagnostics
 to stderr, and arms recovery after any failed InitiateCapture. It is embedded
 in candidate `o-v13t-strict-admission-20260929`, not the currently installed
-o-v13s FwPkt. The Stage-2 wrapper defaults `STAGE2_CAPTURE_TRACE=1`; a live
+o-v13s FwPkt. The Stage-2 capture trace adds an outer call boundary and is now
+explicitly opt-in; normal builds default to direct-to-core capture dispatch.
+Pentax's own lower-layer markers remain available without that wrapper. A live
 failure must be followed by immediate preservation of complete Clog/Mlog and
 capture-boundary stderr before reconnect can rotate the logs.
 

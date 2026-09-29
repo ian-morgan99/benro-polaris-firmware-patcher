@@ -1,5 +1,25 @@
 # Current repository state
 
+## 2026-09-29 Stage-2 still-capture dispatch correction — source change in progress
+
+- Read-only device identity after the camera battery replacement confirms the
+  Polaris AP (`48:E7:DA:D4:B5:73`), route via `wlp8s0`, installed o-v13s FwVer,
+  and a running pgphoto. The camera was **not** enumerated on USB in this check;
+  no physical capture or camera-state claim is made.
+- The o-v13s wrapper sets `STAGE2_CAPTURE_TRACE=1` by default. That routes every
+  still capture through an extra Stage-2 function-call boundary, despite the
+  Stage-2 loader policy and existing regression test saying still capture must
+  remain direct-to-core by default. The trace wrapper is now opt-in (`=1`); the
+  wrapper default is direct (`=0`). Focused Stage-2 test and offline gate pass.
+- This corrects a concrete cross-layer integration mismatch and is a plausible
+  contributor to the observed capture failure, **not a proven root cause**.
+  The current o-v13s artifact remains unqualified. Build one new candidate from
+  clean main, prove all packaged libgphoto2/pgphoto/Stage-2 hashes, obtain
+  independent review, then test physically only after review clears it.
+- Restart-durable ownership for an accepted capture whose output is not yet
+  visible is still an explicit design/test gap. Do not treat strict current-
+  session libgphoto2 guards as durable across pgphoto process restart.
+
 ## 2026-09-29 latest artifact review: o-v13u BLOCKED; follow-up source work underway
 
 - Do not install `o-v13u-output-obligation-20260929`. Independent review found

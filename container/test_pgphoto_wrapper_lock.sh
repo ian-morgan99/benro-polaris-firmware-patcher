@@ -12,6 +12,7 @@ cat > "$TMP/stage2/pgphoto.stage2ondisk" <<'EOF'
 echo launched
 echo "preview_backoff=$STAGE2_PENTAX_PREVIEW_BACKOFF"
 echo "preview_interval=$STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS"
+echo "capture_trace=$STAGE2_CAPTURE_TRACE"
 EOF
 chmod +x "$TMP/stage2/pgphoto.stage2ondisk"
 
@@ -31,6 +32,7 @@ OUT=$(run_wrapper 2>&1)
 printf '%s\n' "$OUT" | grep -q 'reclaiming stale pgphoto launch lock'
 printf '%s\n' "$OUT" | grep -q '^launched$'
 printf '%s\n' "$OUT" | grep -q '^preview_backoff=1$'
+printf '%s\n' "$OUT" | grep -q '^capture_trace=0$'
 # The on-demand preview interval is pinned ONLY when explicitly set; otherwise
 # it stays unset so the Stage-2 loader applies its model-specific default
 # (8 s for the slow K-1 II live view, 2 s otherwise).
@@ -41,6 +43,11 @@ test ! -e "$TMP/run/openpolaris-pgphoto.launch.lock"
 rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
 OUT=$(STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=5 run_wrapper 2>&1)
 printf '%s\n' "$OUT" | grep -q '^preview_interval=5$'
+
+# Tracing remains available only through an explicit runtime override.
+rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
+OUT=$(STAGE2_CAPTURE_TRACE=1 run_wrapper 2>&1)
+printf '%s\n' "$OUT" | grep -q '^capture_trace=1$'
 
 # A live but unrelated PID is stale ownership (PID reuse); it must not wedge
 # every future launch.
