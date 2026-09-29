@@ -53,6 +53,12 @@
   was not running, and Clog repeatedly logged `SP_sendMsg Fail ... code[295]`.
   No shutter was issued. Physical camera/control-path recovery is required
   before retrying any canary. Full evidence: `docs/evidence/o-v13v-stage2-direct-20260929/SUMMARY.md`.
+- Operator then rebooted Polaris. Bluetooth wake and identity checks confirmed
+  the same installed build on the Polaris AP; `polestar_app`, pgphoto, and
+  ports 9090/8080 returned. The Pentax remains absent from USB and a read-only
+  9090 probe reports `manufacturer:none;model:none;state:-5;storage:0;photoFormat:0`.
+  No shutter has been sent; the remaining physical prerequisite is camera
+  power/USB reconnection while Polaris stays on.
 
 ## 2026-09-29 latest artifact review: o-v13u BLOCKED; follow-up source work underway
 

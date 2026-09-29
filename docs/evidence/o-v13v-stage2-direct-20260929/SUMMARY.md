@@ -116,3 +116,18 @@ Post-install matched-stack hashes observed on Polaris:
 | ptp2 camlib | `1d94dfe84203b7210cb014267228a4af` | `/app/lib/stage2/libgphoto2/2.5.34/ptp2.so` |
 | Pentax camlib | `151750bae93f58801cd02176c6b38df9` | `/app/lib/stage2/libgphoto2/2.5.34/pentax.so` |
 | usb1 port driver | `4423bba29bf8c5d899598841ec3e6310` | `/app/lib/stage2/libgphoto2_port/0.12.2/usb1.so` |
+
+## Operator reboot follow-up — 2026-09-29 15:13 UTC
+
+The operator reported getting Polaris to reboot after it initially would not
+turn off. Bluetooth wake restored its AP, and identity checks again confirmed
+SSID `polaris_d13e86`, BSSID `48:E7:DA:D4:B5:73`, route via `wlp8s0`, and
+FwVer/build provenance above. This time `polestar_app`, pgphoto, and TCP 9090
+and 8080 were all present, so the earlier missing-control-service condition
+was transient across the reboot.
+
+The Pentax is still absent: `lsusb` shows no `25fb` device and the read-only
+canary probe returned `manufacturer:none;model:none;state:-5;storage:0;photoFormat:0`.
+Dmesg has no camera attach event. No shutter was sent. Physical test remains
+blocked on the camera being powered on and reconnecting to USB while Polaris
+stays powered on.
