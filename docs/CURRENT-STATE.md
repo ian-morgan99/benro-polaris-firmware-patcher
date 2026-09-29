@@ -37,6 +37,22 @@
   diagnostic pass; no shutter was sent by the investigator.
 - Detailed raw-log analysis is in patcher issue #149 comment
   [`5888131739`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5888131739).
+- A later monitored Benro Connect request `SP_0137` (11:21:35) failed before
+  shutter dispatch because the unresolved candidate from the prior operation
+  remained: Clog says `unclaimed transfer candidate (1)` and `captureImage ret
+  -110`; Mlog says `PHOTO_RECORD Fail`. There is no `InitiateCapture` for
+  `SP_0137` and no output file. At the post-request check the camera was still
+  USB `25fb:0189`, pgphoto PID `1585`, and uptime was advancing. This attempt
+  therefore does **not** independently reproduce USB-compatibility-OFF camera
+  semantics; no retry was sent.
+- Monitoring caveat: an investigator's first polling loop opened SSH every
+  five seconds for about two minutes. Broadcom Wi-Fi pool errors in `dmesg`
+  rose from 864 matching lines in the earlier snapshot to 1668 afterward.
+  The correlation is strong but does not prove causality; high-frequency
+  polling was stopped and must not be treated as neutral test instrumentation.
+  See issue #149 comment
+  [`5888297233`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5888297233)
+  and local evidence folder `docs/evidence/usb-compat-off-2026-09-29/`.
 
 ## 2026-09-29 authoritative alignment checkpoint
 
