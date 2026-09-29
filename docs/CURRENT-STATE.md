@@ -128,11 +128,34 @@ statement of today's installed firmware or source state.
   the observed keepalive/continuity used Wi-Fi/9090, and PC-side Bluetooth
   keepawake remains unproven. Do not confuse a one-shot BT wake pulse with a
   retained BT connection.
-- **Next test:** one ordinary Benro Connect capture with the camera left
-  attached, then correlate app completion with Clog/Mlog and recheck USB/session
-  continuity. This requires the operator to trigger that app action. The
-  evidence is cross-posted to [issue #149 comment
+- The next Benro Connect test was completed below; the original checkpoint is
+  cross-posted to [issue #149 comment
   5887707654](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887707654).
+
+### 2026-09-29 Benro Connect single RAW+JPEG shot — PASS, short continuity PASS
+
+- Operator triggered one ordinary shot in Benro Connect with the camera left
+  attached. Mlog shows the normal app/client request (`type 2 code 264`) at
+  10:54:36 device time, `numOfCaptureImage 2`, and libgphoto2 `InitiateCapture`
+  returning PTP `0x2001` success. Lifecycle progressed to state 4
+  (`IMGP3667.JPG`), state 2, both state 3 file publications, and terminal state
+  0 at 10:54:43.
+- Polaris published matching stem `/app/sd/normal/SP_0124.dng` (34,256,105
+  bytes) and `/app/sd/normal/SP_0124.jpg` (381,093 bytes). This is a
+  Benro-Connect-path single-shot RAW+JPEG output PASS.
+- At 10:55:40, without unplug/power action, Polaris Wi-Fi route remained on
+  BSSID `48:E7:DA:D4:B5:73` via `wlp8s0`; Pentax remained USB `001:005`,
+  `polestar_app` PID `248`, and pgphoto PID `11103`. This gives approximately
+  57 seconds of post-completion continuity, not a long soak or repeated-shot
+  qualification.
+- No `--build` package gates were part of this physical test. PC-side Bluetooth
+  still reported disconnected; the measured continuity used Wi-Fi. Full
+  evidence is in [issue #149 comment
+  5887882260](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149#issuecomment-5887882260).
+- **Next physical step:** test a second ordinary Benro Connect shot after the
+  completed first operation, leaving the camera attached. This specifically
+  exercises next-shutter admission/re-admission through the production app
+  path; the operator must trigger it.
 
 ### Canonical source heads (all local worktrees clean and equal to origin/main
 when checked)
