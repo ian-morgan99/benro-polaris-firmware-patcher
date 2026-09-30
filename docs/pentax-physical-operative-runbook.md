@@ -206,6 +206,31 @@ The agent records the first abnormal event and decides whether to:
 - stop because cause is already isolated;
 - request a physical recovery action.
 
+## Capture-source attribution and M→B→M failure branch (#145)
+
+Every physical PASS row must identify its source (`Benro Connect` or
+`scripted gate`), exact outgoing code-264 request, expected Polaris output
+target/prefix, required output count, returned `SP_` path(s), and the terminal
+capture event being credited. A scripted gate now prints a run ID and a
+per-shot request label, and requires `--expected-sp-prefix`; that label is
+client-side correlation, not a firmware request ID. Pair it with the exact
+Mlog/Clog timestamps and libgphoto2 capture ID before calling it cross-layer
+correlation. If an app/manual/script capture overlaps, or the credited
+request-to-output mapping is ambiguous, invalidate the whole run and repeat
+with one controlling client. Do not attribute a file merely because it
+appeared near the expected time.
+
+For a post-#148 M→B→M test, if Bulb is accepted but no candidate/output is
+published, stop immediately: issue no later M shutter. Preserve and record the
+output-pending state, camera/USB identity, process PID and session/generation
+identity, the #145 next-shutter admission result/reason, and whether any
+reconnect/restart/config refresh occurred. Classify the unresolved exposure
+as #148 until a distinct transport/session transition is demonstrated; classify
+rebind/recovery as #146 only when that boundary is evidenced. Later M captures
+count as post-Bulb proof only after an explicit, generation-safe recovery/reset
+boundary; a process restart or reconnect must not silently erase the pending
+operation in the ledger.
+
 ## Physical recovery requests
 
 Recovery must also be explicit. Examples:

@@ -22,6 +22,7 @@ import posixpath
 import socket
 import sys
 import time
+import uuid
 
 _here = os.path.dirname(os.path.abspath(__file__))
 _spec = importlib.util.spec_from_file_location(
@@ -35,21 +36,25 @@ def exposure_stem(path: str) -> str:
     return posixpath.splitext(path)[0]
 
 
-def shot_satisfied(rec: dict, seen_paths: list[str], expected_files: int) -> bool:
+def shot_satisfied(rec: dict, seen_paths: list[str], expected_files: int,
+                   expected_sp_prefix: str) -> bool:
     new_files = [path for path in rec["files"] if path not in seen_paths]
     return (
         4 in rec["states"]
         and 0 in rec["states"]
         and len(new_files) == expected_files
         and len({exposure_stem(path) for path in new_files}) == 1
+        and all(path.startswith(expected_sp_prefix) for path in new_files)
     )
 
 
 def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
-             shot_timeout: float, expected_files: int) -> dict:
+             shot_timeout: float, expected_files: int,
+             expected_sp_prefix: str, run_id: str) -> dict:
     """Issue one code-264 capture and watch its lifecycle. Returns a record."""
     rec = {
         "shot": shot_no,
+        "request_id": f"{run_id}-{shot_no}",
         "states": [],
         "files": [],
         "stale_candidate": None,
@@ -57,7 +62,8 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
         "terminal_failure": None,
     }
     p.send(264, subtype=4, payload="state:1;bulb:0;c:-1;")
-    print(f"{stamp()} SHOT{shot_no} capture issued", flush=True)
+    print(f"{stamp()} SHOT{shot_no} source=scripted request_id={rec['request_id']} "
+          f"expected_sp_prefix={expected_sp_prefix!r} capture issued", flush=True)
     deadline = time.monotonic() + shot_timeout
     while True:
         try:
@@ -94,28 +100,31 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
         # ignore other codes
         if 0 in rec["states"]:
             rec["idle_confirmed"] = True
-        if shot_satisfied(rec, seen_paths, expected_files):
+        if shot_satisfied(rec, seen_paths, expected_files, expected_sp_prefix):
             print(f"{stamp()} SHOT{shot_no} IDLE and output obligation confirmed", flush=True)
             break
     return rec
 
 
 def run_sequence(p: Polaris, shot_count: int, shot_timeout: float,
-                 expected_files: int) -> tuple[bool, list[dict], list[str]]:
+                 expected_files: int, expected_sp_prefix: str,
+                 run_id: str) -> tuple[bool, list[dict], list[str]]:
     """Run captures fail-closed: a failed shot consumes the whole failure budget."""
     seen_paths: list[str] = []
     records: list[dict] = []
     for shot_no in range(1, shot_count + 1):
-        rec = run_shot(p, shot_no, seen_paths, shot_timeout, expected_files)
+        rec = run_shot(p, shot_no, seen_paths, shot_timeout, expected_files,
+                       expected_sp_prefix, run_id)
         records.append(rec)
         new_files = [path for path in rec["files"] if path not in seen_paths]
         ok = (
-            shot_satisfied(rec, seen_paths, expected_files)
+            shot_satisfied(rec, seen_paths, expected_files, expected_sp_prefix)
             and not rec["terminal_failure"]
             and not rec["stale_candidate"]
         )
         seen_paths.extend(new_files)
-        print(f"{stamp()} SHOT{shot_no} {'PASS' if ok else 'FAIL'} "
+        print(f"{stamp()} SHOT{shot_no} source=scripted request_id={rec['request_id']} "
+              f"{'PASS' if ok else 'FAIL'} "
               f"states={rec['states']} files={new_files} "
               f"idle={rec['idle_confirmed']} stale={rec['stale_candidate']} "
               f"term={rec['terminal_failure']}", flush=True)
@@ -134,6 +143,8 @@ def main() -> int:
     ap.add_argument("--shot-timeout", type=float, default=180.0)
     ap.add_argument("--expected-files", type=int, choices=(1, 2), required=True,
                     help="authoritative per-exposure output obligation; never inferred from photoFormat")
+    ap.add_argument("--expected-sp-prefix", required=True,
+                    help="expected Polaris SP output path prefix, e.g. /app/sd/normal/SP_")
     args = ap.parse_args()
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
@@ -145,7 +156,10 @@ def main() -> int:
         auth = p.wait_code(820, 12)
         if field(auth, "needed") == "1":
             raise RuntimeError("device requires a password")
-        p.send(823, payload="app:openpolaris-canary-two-shot;ver:1;")
+        run_id = uuid.uuid4().hex
+        p.send(823, payload=f"app:openpolaris-canary-two-shot-{run_id};ver:1;")
+        print(f"{stamp()} RUN source=scripted run_id={run_id}; any overlapping "
+              "manual/app/script capture invalidates this run", flush=True)
 
         # camera state
         p.send(286)
@@ -156,6 +170,7 @@ def main() -> int:
             return 1
         expected_files = args.expected_files
         print(f"{stamp()} OUTPUT contract=explicit expected_files={expected_files} "
+              f"expected_sp_prefix={args.expected_sp_prefix!r} "
               f"photoFormat_hint={field(cam, 'photoFormat')}", flush=True)
 
         # preview off
@@ -173,7 +188,8 @@ def main() -> int:
 
         ok, _records, seen_paths = run_sequence(
             p, shot_count=2, shot_timeout=args.shot_timeout,
-            expected_files=expected_files)
+            expected_files=expected_files,
+            expected_sp_prefix=args.expected_sp_prefix, run_id=run_id)
         if not ok:
             return 1
 

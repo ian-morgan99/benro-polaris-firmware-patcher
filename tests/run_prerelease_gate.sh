@@ -12,7 +12,8 @@
 #   ./tests/run_prerelease_gate.sh                 # all offline checks
 #   ./tests/run_prerelease_gate.sh --build out/<name>/FwPkt   # + package gates
 #   ./tests/run_prerelease_gate.sh --canary --expected-files 1
-#   ./tests/run_prerelease_gate.sh --two-shot --expected-files 2
+#   ./tests/run_prerelease_gate.sh --two-shot --expected-files 2 \
+#       --expected-sp-prefix /app/sd/normal/SP_
 #   ./tests/run_prerelease_gate.sh --host 192.168.0.1 --port 9090 --bind 192.168.0.4
 #
 # Exit codes: 0 = gate green (skips allowed), 1 = a runnable check failed,
@@ -30,6 +31,7 @@ HOST="192.168.0.1"
 PORT="9090"
 BIND="192.168.0.4"
 EXPECTED_FILES=""
+EXPECTED_SP_PREFIX=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -40,6 +42,7 @@ while [ $# -gt 0 ]; do
         --port) PORT="${2:?}"; shift 2 ;;
         --bind) BIND="${2:?}"; shift 2 ;;
         --expected-files) EXPECTED_FILES="${2:?}"; shift 2 ;;
+        --expected-sp-prefix) EXPECTED_SP_PREFIX="${2:?}"; shift 2 ;;
         -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
         *) echo "unknown arg: $1" >&2; exit 2 ;;
     esac
@@ -48,6 +51,10 @@ done
 if { [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; } &&
    [ "$EXPECTED_FILES" != "1" ] && [ "$EXPECTED_FILES" != "2" ]; then
     echo "--canary/--two-shot requires --expected-files 1 or 2 from an independent mode contract" >&2
+    exit 2
+fi
+if [ "$TWO_SHOT" = "1" ] && [ -z "$EXPECTED_SP_PREFIX" ]; then
+    echo "--two-shot requires --expected-sp-prefix from the selected Polaris output target" >&2
     exit 2
 fi
 
@@ -152,6 +159,7 @@ if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
         if [ "$TWO_SHOT" = "1" ]; then
             if python3 scripts/canary-two-shot.py --host "$HOST" --port "$PORT" --bind "$BIND" \
                 --expected-files "$EXPECTED_FILES" \
+                --expected-sp-prefix "$EXPECTED_SP_PREFIX" \
                 > /tmp/prerelease-twoshot.log 2>&1; then
                 ok "two-shot gate (two distinct files, fail-closed)"
             else
