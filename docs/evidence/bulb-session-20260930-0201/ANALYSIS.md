@@ -94,15 +94,20 @@ specific unclosed workload paths relevant to issue #90:
    path waits on `shotCompleted.receive()` without a deadline. Thus astro /
    interval sequences keep preview and camera-info polling active and can
    remain Running indefinitely if correlated events are absent.
-4. `PreviewController` enforces one stream only inside one OpenPolaris process.
+4. The ordinary single-shot watchdog transitions to `OutcomeUnknown` and then
+   calls `restoreCaptureWorkloads()`, which restarts 8080 preview and resumes
+   polling even though the camera operation is still unresolved. Expiring the
+   app timer is not evidence that the camera is safe for more camera I/O.
+5. `PreviewController` enforces one stream only inside one OpenPolaris process.
    The source has no cross-process/device lease that can arbitrate its 8080
    stream or 9090 control session against Benro Connect. `MountSession`'s
    mutex serializes writes only within that one app instance.
-5. Existing tests prove code 266 is not polled, capture completion requires
+6. Existing tests prove code 266 is not polled, capture completion requires
    correlated 264+773, and happy-path interval shots advance one at a time.
    The reviewed tests do not prove that code 286/preview are quiesced during
    single/sequence capture, that interval shots have a bounded unknown-outcome
-   watchdog, or the reported three-way physical client comparison.
+   watchdog, that preview remains off on unknown outcome, or the reported
+   three-way physical client comparison.
 
 These code-review findings are not needed to establish app-level attribution;
 the operator's client A/B already establishes that. The source findings narrow
@@ -144,9 +149,10 @@ specific OpenPolaris-owned corrective work and candidates for the mechanism.
 - **OpenPolaris #94 app-side contention:** the client comparison confirms
   OpenPolaris + Benro Connect is the failing pairing; OpenPolaris is the app
   responsible for this incompatibility. Fix/test automatic competing preview,
-  code-286 polling, intervalometer workload bypass and the missing per-shot
-  watchdog. Instrumentation is for selecting the exact internal mechanism,
-  not for deciding whether OpenPolaris is implicated.
+  code-286 polling, intervalometer workload bypass, the missing per-shot
+  watchdog, and preview restart after an unknown outcome. Instrumentation is
+  for selecting the exact internal mechanism, not for deciding whether
+  OpenPolaris is implicated.
 - **#147 patcher preview/camera behavior:** separately track the Polaris-side
   repeated transient preview failures and cooldown. Those firmware/Stage-2
   observations do not negate the OpenPolaris A/B result and do not prove
