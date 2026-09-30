@@ -11569,3 +11569,456 @@ usb_connect ++++++++++++++++++++
 [m[02:11:50:556 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=87] s_u32ClientNum[2]
 [m[02:11:50:556 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[87]
 [m[02:11:50:556 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:12:00:270 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[02:12:00:271 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[02:12:00:271 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[282],val[urer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[02:12:00:278 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[282],val[format:3;]
+[m[m[02:12:00:278 [1;32mINFO[m-]:SP_MsgFromCameraProc[1461]:camera img format:3
+[m[02:12:00:279 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[282],val[format:3;]
+[m[m[02:12:00:301 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:265;val:-1
+[m[02:12:00:301 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[02:12:00:303 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:12:00:303 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:12:00:303 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[02:12:00:303 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 1
+[m[02:12:00:303 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[1] para 200
+[m[02:12:00:303 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 200
+[m[02:12:00:304 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[02:12:00:310 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:268;val:-1
+[m[02:12:00:310 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:275;val:-1
+[m[02:12:00:310 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:267;val:-1
+[m[02:12:00:310 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:266;val:-1
+[m[02:12:00:310 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:265;val:-1
+[m[02:12:00:310 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[02:12:00:310 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[02:12:00:310 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[02:12:00:310 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[02:12:00:310 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[02:12:00:314 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:12:00:314 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:12:00:314 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,]
+[m[02:12:00:315 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 9
+[m[02:12:00:315 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[9] para 1/1000
+[m[02:12:00:315 [1;32mINFO[m-]:SP_GetCameraShutter[389]:1/1000
+[m[02:12:00:315 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 1000 
+[m[02:12:00:315 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 9 
+[m[02:12:00:315 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[02:12:00:317 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:268;val:-1
+[m[02:12:00:317 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:275;val:-1
+[m[02:12:00:317 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:267;val:-1
+[m[02:12:00:317 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[02:12:00:317 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[02:12:00:317 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[02:12:00:318 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:12:00:318 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:12:00:318 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[02:12:00:318 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 18
+[m[02:12:00:318 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[18] para f/2.8
+[m[02:12:00:318 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 2.800000 
+[m[02:12:00:318 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 18 
+[m[02:12:00:318 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[02:12:00:319 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:266;val:-1
+[m[02:12:00:319 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[02:12:00:322 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:12:00:322 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:12:00:322 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,]
+[m[02:12:00:322 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 15
+[m[02:12:00:322 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[15] para 0
+[m[02:12:00:322 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[02:12:00:322 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 15 
+[m[02:12:00:325 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:12:00:325 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:12:00:327 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:12:00:327 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:12:00:327 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[02:12:00:328 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 1
+[m[02:12:00:328 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[1] para 200
+[m[02:12:00:328 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 200
+[m[02:12:00:328 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[02:12:00:332 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:12:00:332 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:12:00:332 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,]
+[m[02:12:00:332 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 9
+[m[02:12:00:332 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[9] para 1/1000
+[m[02:12:00:332 [1;32mINFO[m-]:SP_GetCameraShutter[389]:1/1000
+[m[02:12:00:332 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 1000 
+[m[02:12:00:332 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 9 
+[m[02:12:00:333 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[02:12:00:335 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:12:00:335 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:12:00:335 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[02:12:00:335 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 18
+[m[02:12:00:335 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[18] para f/2.8
+[m[02:12:00:335 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 2.800000 
+[m[02:12:00:335 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 18 
+[m[02:12:00:335 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[02:12:00:340 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:12:00:340 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:12:00:340 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,]
+[m[02:12:00:340 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 15
+[m[02:12:00:340 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[15] para 0
+[m[02:12:00:340 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[02:12:00:340 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 15 
+[m[02:12:00:344 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:12:00:344 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[restart_gphoto] OK: port 8080 listening — restart successful
+[m[m[02:12:17:881 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:12:17:882 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:12:21:573 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=88 192.168.0.4:54316] from [1] s_u32ClientNum[3]
+[m[02:12:21:573 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:12:21:573 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:12:21:573 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=88] start
+[m[02:12:21:573 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[88]:type:0;code:266;val:
+[m[02:12:21:573 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=88] s_u32ClientNum[2]
+[m[02:12:21:573 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[88]
+[m[02:12:33:147 [1;31mERROR[m-]:CheckPhotoTimeOutTask[876]:photo timeOut
+[m[02:12:47:967 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:12:47:967 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:12:52:595 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=89 192.168.0.4:34500] from [1] s_u32ClientNum[3]
+[m[02:12:52:595 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:12:52:596 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=89] start
+[m[02:12:52:596 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[89]:type:0;code:266;val:
+[m[02:12:52:596 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=89] s_u32ClientNum[2]
+[m[02:12:52:596 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[89]
+[m[02:12:52:596 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:13:07:180 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:265;val:-1
+[m[02:13:07:180 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[02:13:07:196 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:07:196 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:07:196 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[02:13:07:196 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 1
+[m[02:13:07:196 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[1] para 200
+[m[02:13:07:196 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 200
+[m[02:13:07:196 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[02:13:07:205 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:268;val:-1
+[m[02:13:07:205 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:275;val:-1
+[m[02:13:07:205 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:267;val:-1
+[m[02:13:07:205 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:266;val:-1
+[m[02:13:07:205 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[02:13:07:206 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[02:13:07:206 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[02:13:07:206 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[02:13:07:223 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:07:223 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:07:223 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,]
+[m[02:13:07:223 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 9
+[m[02:13:07:223 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[9] para 1/1000
+[m[02:13:07:223 [1;32mINFO[m-]:SP_GetCameraShutter[389]:1/1000
+[m[02:13:07:223 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 1000 
+[m[02:13:07:223 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 9 
+[m[02:13:07:223 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[02:13:07:248 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:07:248 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:07:248 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[02:13:07:248 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 18
+[m[02:13:07:248 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[18] para f/2.8
+[m[02:13:07:248 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 2.800000 
+[m[02:13:07:248 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 18 
+[m[02:13:07:248 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[02:13:07:262 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:07:262 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:07:262 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,]
+[m[02:13:07:262 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 15
+[m[02:13:07:263 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[15] para 0
+[m[02:13:07:263 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[02:13:07:263 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 15 
+[m[02:13:07:285 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:07:285 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:09:413 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:265;val:-1
+[m[02:13:09:413 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[02:13:09:434 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:09:434 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:09:434 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[02:13:09:434 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 1
+[m[02:13:09:434 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[1] para 200
+[m[02:13:09:434 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 200
+[m[02:13:09:435 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[02:13:09:443 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:268;val:-1
+[m[02:13:09:443 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:275;val:-1
+[m[02:13:09:443 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[m[02:13:09:443 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:267;val:-1
+[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[02:13:09:443 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:266;val:-1
+[m[02:13:09:443 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[02:13:09:443 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[02:13:09:443 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[02:13:09:459 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:09:459 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:09:459 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,]
+[m[02:13:09:459 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 9
+[m[02:13:09:459 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[9] para 1/1000
+[m[02:13:09:459 [1;32mINFO[m-]:SP_GetCameraShutter[389]:1/1000
+[m[02:13:09:459 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 1000 
+[m[02:13:09:459 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 9 
+[m[02:13:09:460 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[02:13:09:478 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:09:478 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:09:478 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[02:13:09:478 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 18
+[m[02:13:09:478 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[18] para f/2.8
+[m[02:13:09:478 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 2.800000 
+[m[02:13:09:478 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 18 
+[m[02:13:09:478 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[02:13:09:501 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:09:501 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:09:501 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,]
+[m[02:13:09:501 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 15
+[m[02:13:09:501 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[15] para 0
+[m[02:13:09:501 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[02:13:09:501 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 15 
+[m[02:13:09:520 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:09:520 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:13:706 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:2;code:297;val:mode:1;
+[m[02:13:13:706 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[274],val[state:0;]
+[m[m[02:13:13:706 [1;32mINFO[m-]:SP_MsgCameraFromAppProc[552]:[0;35mCamera control mode is CableRelease
+[m[02:13:13:706 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[297],val[ret:0;]
+[m[m[02:13:15:861 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:none;model:none;state:0;storage:0;photoFormat:0;]
+[m[m[02:13:15:861 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:none;model:none;state:0;storage:0;photoFormat:0;]
+[m[m[02:13:18:053 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:13:18:053 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:13:19:243 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:2;code:297;val:mode:0;
+[m[02:13:19:243 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[274],val[state:1;]
+[m[m[02:13:19:243 [1;32mINFO[m-]:SP_MsgCameraFromAppProc[546]:[0;35mCamera control mode is USB
+[m[02:13:19:243 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[297],val[ret:0;]
+[m[m[02:13:23:614 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=90 192.168.0.4:44558] from [1] s_u32ClientNum[3]
+[m[02:13:23:614 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:13:23:614 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=90] start
+[m[02:13:23:614 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[90]:type:0;code:266;val:
+[m[02:13:23:615 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=90] s_u32ClientNum[2]
+[m[02:13:23:615 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[90]
+[m[02:13:23:615 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:13:26:234 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[02:13:26:234 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[02:13:26:234 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[282],val[urer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[02:13:26:243 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[282],val[format:3;]
+[m[m[02:13:26:243 [1;32mINFO[m-]:SP_MsgFromCameraProc[1461]:camera img format:3
+[m[02:13:26:243 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[282],val[format:3;]
+[m[m[02:13:26:277 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:265;val:-1
+[m[02:13:26:277 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[02:13:26:279 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:26:279 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:26:279 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[02:13:26:279 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 1
+[m[02:13:26:279 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[1] para 200
+[m[02:13:26:279 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 200
+[m[02:13:26:279 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[02:13:26:282 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:268;val:-1
+[m[02:13:26:282 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:275;val:-1
+[m[02:13:26:282 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:267;val:-1
+[m[02:13:26:282 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[5]:type:1;code:266;val:-1
+[m[02:13:26:282 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[02:13:26:282 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[02:13:26:282 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[02:13:26:282 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[02:13:26:286 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:26:286 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:26:286 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,]
+[m[02:13:26:287 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 9
+[m[02:13:26:287 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[9] para 1/1000
+[m[02:13:26:287 [1;32mINFO[m-]:SP_GetCameraShutter[389]:1/1000
+[m[02:13:26:287 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 1000 
+[m[02:13:26:287 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 9 
+[m[02:13:26:287 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[02:13:26:301 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:26:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:26:301 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[02:13:26:302 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 18
+[m[02:13:26:302 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[18] para f/2.8
+[m[02:13:26:302 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 2.800000 
+[m[02:13:26:302 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 18 
+[m[02:13:26:302 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[02:13:26:305 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:26:305 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:26:305 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,]
+[m[02:13:26:305 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 15
+[m[02:13:26:306 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[15] para 0
+[m[02:13:26:306 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:265;val:-1
+[m[02:13:26:306 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[02:13:26:306 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[02:13:26:306 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 15 
+[m[02:13:26:308 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:268;val:-1
+[m[02:13:26:308 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:275;val:-1
+[m[02:13:26:309 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[m[02:13:26:309 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[02:13:26:309 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[0;32;32mrcv msg from App[60]:type:1;code:267;val:-1
+[m[02:13:26:310 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[60]:type:1;code:266;val:-1
+[m[02:13:26:310 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[02:13:26:310 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[02:13:26:322 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:26:322 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:26:325 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:26:325 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[02:13:26:325 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[02:13:26:325 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 1
+[m[02:13:26:325 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[1] para 200
+[m[02:13:26:325 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 200
+[m[02:13:26:325 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[02:13:26:330 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:26:330 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:9;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[02:13:26:330 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,]
+[m[02:13:26:330 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 9
+[m[02:13:26:330 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[9] para 1/1000
+[m[02:13:26:331 [1;32mINFO[m-]:SP_GetCameraShutter[389]:1/1000
+[m[02:13:26:331 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 1000 
+[m[02:13:26:331 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 9 
+[m[02:13:26:331 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[02:13:26:347 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:26:347 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[02:13:26:348 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[02:13:26:348 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 18
+[m[02:13:26:348 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[18] para f/2.8
+[m[02:13:26:348 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 2.800000 
+[m[02:13:26:348 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 18 
+[m[02:13:26:348 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[02:13:26:702 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:26:702 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[02:13:26:702 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,]
+[m[02:13:26:702 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 15
+[m[02:13:26:702 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[15] para 0
+[m[02:13:26:702 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[02:13:26:702 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 15 
+[m[02:13:26:730 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:26:730 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[02:13:48:138 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:13:48:138 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:13:54:635 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=91 192.168.0.4:44514] from [1] s_u32ClientNum[3]
+[m[02:13:54:635 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:13:54:635 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=91] start
+[m[02:13:54:635 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:13:54:642 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[91]:type:0;code:266;val:
+[m[02:13:54:643 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=91] s_u32ClientNum[2]
+[m[02:13:54:643 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[91]
+[m[02:14:18:224 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:14:18:224 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:14:25:661 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=92 192.168.0.4:40174] from [1] s_u32ClientNum[3]
+[m[02:14:25:661 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:14:25:661 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:14:25:661 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=92] start
+[m[02:14:25:661 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[92]:type:0;code:266;val:
+[m[02:14:25:662 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=92] s_u32ClientNum[2]
+[m[02:14:25:662 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[92]
+[m[02:14:39:436 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=5] s_u32ClientNum[1]
+[m[02:14:39:436 [1;32mINFO[m-]:SP_ClientCtxDel[390]:[0;35mSP_ClientCtxDel:id[5],type[wifi];WifiCount[1],CellCount[0];
+[m[02:14:48:310 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:14:48:310 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:14:56:680 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=93 192.168.0.4:55888] from [1] s_u32ClientNum[2]
+[m[02:14:56:680 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:14:56:680 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:14:56:680 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=93] start
+[m[02:14:56:681 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[93]:type:0;code:266;val:
+[m[02:14:56:681 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=93] s_u32ClientNum[1]
+[m[02:14:56:681 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[93]
+[m[02:15:04:612 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100e0000.xhci_0/usb1/1-1/1-1.2/1-1.2:1.0
+[m[02:15:04:612 [1;32mINFO[m-]:NetlinkUeventTask[93]:
+usb_disconnect ------------------
+[m[02:15:04:612 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[274],val[state:0;]
+[m[m[02:15:04:644 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100e0000.xhci_0/usb1/1-1/1-1.2
+[m[02:15:04:644 [1;32mINFO[m-]:NetlinkUeventTask[93]:
+usb_disconnect ------------------
+[m[02:15:04:644 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[274],val[state:0;]
+[m[m[02:15:05:619 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:none;model:none;state:0;storage:0;photoFormat:0;]
+[m[m[02:15:05:619 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:none;model:none;state:0;storage:0;photoFormat:0;]
+[m[m[02:15:11:694 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[m[02:15:11:694 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[m[m[02:15:18:395 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:15:18:395 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:15:27:699 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=94 192.168.0.4:51046] from [1] s_u32ClientNum[2]
+[m[02:15:27:699 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:15:27:699 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:15:27:699 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=94] start
+[m[02:15:27:699 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[94]:type:0;code:266;val:
+[m[02:15:27:700 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=94] s_u32ClientNum[1]
+[m[02:15:27:700 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[94]
+[m[02:15:48:481 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:15:48:481 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:15:58:726 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=95 192.168.0.4:47666] from [1] s_u32ClientNum[2]
+[m[02:15:58:726 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:15:58:726 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:15:58:726 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=95] start
+[m[02:15:58:726 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[95]:type:0;code:266;val:
+[m[02:15:58:726 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=95] s_u32ClientNum[1]
+[m[02:15:58:726 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[95]
+[m[02:16:18:566 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:16:18:567 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:16:29:743 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=96 192.168.0.4:56486] from [1] s_u32ClientNum[2]
+[m[02:16:29:743 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:16:29:743 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=96] start
+[m[02:16:29:743 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[96]:type:0;code:266;val:
+[m[02:16:29:744 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=96] s_u32ClientNum[1]
+[m[02:16:29:744 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[96]
+[m[02:16:29:744 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:16:48:652 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[02:16:48:652 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[02:17:00:771 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=97 192.168.0.4:36060] from [1] s_u32ClientNum[2]
+[m[02:17:00:771 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:17:00:771 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=97] start
+[m[02:17:00:771 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[97]:type:0;code:266;val:
+[m[02:17:00:771 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=97] s_u32ClientNum[1]
+[m[02:17:00:772 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[97]
+[m[02:17:00:772 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:17:18:738 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:17:18:738 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+[m[m[02:17:31:791 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=98 192.168.0.4:56802] from [1] s_u32ClientNum[2]
+[m[02:17:31:791 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:17:31:791 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=98] start
+[m[02:17:31:791 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[98]:type:0;code:266;val:
+[m[02:17:31:792 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=98] s_u32ClientNum[1]
+[m[02:17:31:792 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[98]
+[m[02:17:31:792 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:17:32:671 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:10.84;capacity:49;ChargeState:1;
+[m[02:17:32:672 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:49;charge:1;]
+[m[m[02:17:48:823 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:17:48:824 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+[m[m[02:18:02:805 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=99 192.168.0.4:42310] from [1] s_u32ClientNum[2]
+[m[02:18:02:806 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:18:02:806 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=99] start
+[m[02:18:02:806 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[99]:type:0;code:266;val:
+[m[02:18:02:806 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=99] s_u32ClientNum[1]
+[m[02:18:02:806 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[99]
+[m[02:18:02:806 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:18:18:909 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:18:18:909 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+[m[m[02:18:33:823 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=100 192.168.0.4:55702] from [1] s_u32ClientNum[2]
+[m[02:18:33:823 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:18:33:824 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=100] start
+[m[02:18:33:824 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[100]:type:0;code:266;val:
+[m[02:18:33:824 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=100] s_u32ClientNum[1]
+[m[02:18:33:824 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[100]
+[m[02:18:33:824 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:18:48:995 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:18:48:995 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+[m[m[02:19:04:841 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=101 192.168.0.4:58030] from [1] s_u32ClientNum[2]
+[m[02:19:04:841 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:19:04:841 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=101] start
+[m[02:19:04:841 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[101]:type:0;code:266;val:
+[m[02:19:04:842 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=101] s_u32ClientNum[1]
+[m[02:19:04:842 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[101]
+[m[02:19:04:842 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:19:19:080 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:19:19:080 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+[m[m[02:19:35:860 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=102 192.168.0.4:51400] from [1] s_u32ClientNum[2]
+[m[02:19:35:860 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:19:35:860 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=102] start
+[m[02:19:35:860 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[102]:type:0;code:266;val:
+[m[02:19:35:861 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=102] s_u32ClientNum[1]
+[m[02:19:35:861 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[102]
+[m[02:19:35:861 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:19:49:166 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:19:49:166 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+[m[m[02:20:06:873 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=103 192.168.0.4:53222] from [1] s_u32ClientNum[2]
+[m[02:20:06:873 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:20:06:873 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=103] start
+[m[02:20:06:874 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[103]:type:0;code:266;val:
+[m[02:20:06:874 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=103] s_u32ClientNum[1]
+[m[02:20:06:874 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[103]
+[m[02:20:06:874 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:20:19:251 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:20:19:252 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
+[m[m[02:20:37:888 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=104 192.168.0.4:54020] from [1] s_u32ClientNum[2]
+[m[02:20:37:888 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[02:20:37:888 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=104] start
+[m[02:20:37:888 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[104]:type:0;code:266;val:
+[m[02:20:37:888 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=104] s_u32ClientNum[1]
+[m[02:20:37:888 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[104]
+[m[02:20:37:888 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[02:20:49:337 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+[m[02:20:49:337 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]

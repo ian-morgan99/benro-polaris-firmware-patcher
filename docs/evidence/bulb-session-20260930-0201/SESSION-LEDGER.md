@@ -7,7 +7,9 @@ device-log events. It intentionally records events, not a root-cause conclusion.
 
 - Date: 2026-09-30.
 - Polaris reported `FwVer:6.0.0.54.43;date:2026.09.30;`.
-- Device `date -u` at final collection: `Wed Sep 30 02:13:06 UTC 2026`.
+- Device `date -u` at first collection: `Wed Sep 30 02:13:06 UTC 2026`.
+- Rotated logs were subsequently refreshed while the device remained up; the
+  latest persistent-log activity is through approximately 02:20 UTC.
 - Mlog identifies a Pentax K-3 Mark III (`25fb:0189`); `photoFormat:2` and the
   camera configuration log spells that value `RAW+JPEG`.
 - User-reported setup for this sequence: switched to Bulb, selected a 1-second
@@ -40,8 +42,13 @@ device-log events. It intentionally records events, not a root-cause conclusion.
 | 02:10:43–02:10:44 | Mlog | An additional `SP_0155.jpg` request appears in the device log without a corresponding user observation in this record. Mlog shows request field `b:5000`, then capture state `-1` and `PHOTO_RECORD Fail`. Origin is not assigned here. |
 | 02:10:56–02:10:57 | Mlog | An additional `SP_0156.jpg` request appears without a corresponding user observation in this record. Mlog records state `1`, then `-110` and `PHOTO_RECORD Fail`. Origin is not assigned here. |
 | 02:11:05 | Mlog | Camera-info reports `manufacturer:none`, `model:none`, `state:0`. |
-| 02:11:29–02:11:56 | Mlog | An additional `SP_0157.jpg` request appears without a corresponding user observation in this record. The archived Mlog ends without a terminal result for this request. Origin is not assigned here. |
-| 02:13:06 | Collection record | Device UTC time was read; current `/app/Clog.txt` and `/app/Mlog.txt` were snapshotted. Active Mlog was zero bytes at collection. Rotated logs 177–180 are included in full. |
+| 02:11:29 | Clog + Mlog | Additional `SP_0157.jpg` request. Mlog reports `bulb:0`; Clog reads shutter `1/1000s`, RAW+JPEG, then Pentax `InitiateCapture` returns PTP `0x2001`. |
+| 02:12:33 | Clog + Mlog | The SP_0157 operation reaches `photo timeOut`; no camera files are listed or published for it in the log. |
+| 02:13:13–02:13:26 | Clog + Mlog | Camera-facing state changes to 0, then app command 274 requests state 1; by 02:13:26 the camera is reported present again as Pentax K-3 Mark III, state 1. This precedes the later kernel USB-removal record. |
+| 02:15:04 | Clog + Mlog | Linux netlink records USB `remove@.../1-1.2:1.0` and then device removal at `.../1-1.2`; firmware logs `usb_disconnect` and reports camera state 0. This is an actual USB detach event, unlike camera-info `state:0` alone. The user transcript does not establish whether this detach was intentional. |
+| 02:15:11 | Clog + Mlog | Camera initialization reports `sp_Gphoto_Init ret -5` and “set the port prior to initialization”; this occurs after the recorded USB removal. No subsequent camera recovery is visible in the collected interval. |
+| 02:13:06 | Collection record | First collection timestamp. Active `/app/Clog.txt` and `/app/Mlog.txt` were snapshotted; active Mlog was zero bytes. Rotated logs 177–180 are included in full. |
+| ~02:20 | Collection record | Persistent rotated Clog/Mlog files were refreshed after the device continued running; Clog includes short client connect/disconnect traffic through ~02:20. |
 
 ## Related log observations (not interpreted here)
 
@@ -52,9 +59,11 @@ device-log events. It intentionally records events, not a root-cause conclusion.
 - Mlog contains short-lived TCP client connections from `192.168.0.4` that send
   code `266` and close; the client count returns from 3 to 2. The logs do not
   identify those clients as Benro Connect or OpenPolaris.
-- No USB kernel disconnect evidence is asserted by this ledger. The camera-info
-  `state:0` / `state:-5` events above are reproduced as logged; they are not
-  relabelled as physical USB detach events.
+- USB events are distinguished by evidence type: the 02:15:04 netlink `remove@`
+  and `usb_disconnect` records prove an actual USB detach. Earlier camera-info
+  `state:0` / `state:-5` records alone do not prove detach. User-reported
+  unplug/reconnect steps at ~02:03 and ~02:06 are operator-directed and are not
+  classified as spontaneous faults.
 - No shutter request was issued by the log-collection commands.
 
 ## Raw files and integrity
@@ -69,4 +78,6 @@ events for this test window.
 The archive contains complete rotated Clog/Mlog files 000177–000180, including
 preceding same-session context, rather than excerpts. Logs 000176 and earlier
 are outside this session's selected rotation window and are not represented as
-part of this bundle.
+part of this bundle. The refreshed 000180 files supersede the earlier snapshot
+of those rotating logs; the active Clog remains a point-in-time snapshot and
+can change while the device runs.
