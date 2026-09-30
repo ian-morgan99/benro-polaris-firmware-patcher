@@ -160,6 +160,42 @@ static void s_write_dec(int v)
     (void)rc;
 }
 
+/* A bad return/callback address is not attributable from PC alone on the
+ * Polaris: shared objects are ASLR-mapped and the watchdog replaces pgphoto
+ * quickly. Dump /proc/self/maps directly with signal-safe syscalls so the
+ * saved PC/LR can be resolved against the exact packaged ELF after restart.
+ * Keep the diagnostic bounded and avoid stdio/heap use in the signal path. */
+static void s_dump_process_maps(void)
+{
+    char buf[1024];
+    size_t total = 0;
+    int fd = open("/proc/self/maps", O_RDONLY);
+
+    if (fd < 0) {
+        s_write("[stage2] maps: unavailable\n");
+        return;
+    }
+    s_write("[stage2] process maps begin\n");
+    while (total < 32768) {
+        ssize_t n = read(fd, buf, sizeof(buf));
+        if (n <= 0)
+            break;
+        ssize_t off = 0;
+        while (off < n) {
+            ssize_t written = write(2, buf + off, (size_t)(n - off));
+            if (written <= 0) {
+                close(fd);
+                s_write("\n[stage2] maps: write failed\n");
+                return;
+            }
+            off += written;
+        }
+        total += (size_t)n;
+    }
+    close(fd);
+    s_write("[stage2] process maps end\n");
+}
+
 /* Look up a slot's symbol name by its slot vaddr (for the fail-closed message). */
 static const char *slot_name(uintptr_t slot)
 {
@@ -1126,10 +1162,18 @@ static void stage2_crash_handler(int sig, siginfo_t *si, void *uc)
 {
     uintptr_t fault = (uintptr_t)(si ? si->si_addr : 0);
     uintptr_t pc = 0;
+    uintptr_t lr = 0, sp = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0, r12 = 0;
 #ifndef STAGE2_NO_CONSTRUCTOR
     if (uc) {
         ucontext_t *u = (ucontext_t *)uc;
         pc = (uintptr_t)u->uc_mcontext.arm_pc;   /* ARM EABI */
+        lr = (uintptr_t)u->uc_mcontext.arm_lr;
+        sp = (uintptr_t)u->uc_mcontext.arm_sp;
+        r0 = (uintptr_t)u->uc_mcontext.arm_r0;
+        r1 = (uintptr_t)u->uc_mcontext.arm_r1;
+        r2 = (uintptr_t)u->uc_mcontext.arm_r2;
+        r3 = (uintptr_t)u->uc_mcontext.arm_r3;
+        r12 = (uintptr_t)u->uc_mcontext.arm_ip;
     }
 #else
     (void)uc; /* Native offline shim test: ARM program counter is unavailable. */
@@ -1162,6 +1206,17 @@ static void stage2_crash_handler(int sig, siginfo_t *si, void *uc)
     s_write(" pc=");
     s_write_hex(pc);
     s_write("\n");
+
+#ifndef STAGE2_NO_CONSTRUCTOR
+    s_write("[stage2]   arm lr="); s_write_hex(lr);
+    s_write(" sp="); s_write_hex(sp);
+    s_write(" r0="); s_write_hex(r0);
+    s_write(" r1="); s_write_hex(r1);
+    s_write(" r2="); s_write_hex(r2);
+    s_write(" r3="); s_write_hex(r3);
+    s_write(" r12="); s_write_hex(r12);
+    s_write("\n");
+#endif
 
     /* Classify the fault address vs the slot region. */
     s_write("[stage2]   slot region [");
@@ -1202,6 +1257,10 @@ static void stage2_crash_handler(int sig, siginfo_t *si, void *uc)
     s_write("[stage2]   last checkpoint reached: ");
     s_write((const char *)g_last_ckpt);
     s_write("\n");
+
+#ifndef STAGE2_NO_CONSTRUCTOR
+    s_dump_process_maps();
+#endif
 
     /* Restore default disposition and re-raise so the real exit code (139/…)
      * remains visible to the launcher. */

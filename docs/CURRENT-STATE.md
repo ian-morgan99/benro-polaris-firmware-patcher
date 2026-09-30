@@ -1,5 +1,42 @@
 # Current repository state
 
+## 2026-09-30 14:43 operator/device-time shutter-owner crash (o-v13x)
+
+- User reported the camera battery was replaced at 14:40 and that OpenPolaris
+  plus two Benro Connect clients were connected without a crash before the
+  manual shot. The subsequent M-mode request `SP_0152` was logged at 14:43:03
+  with `bulb:0`; Clog read `1/1000s`, RAW+JPEG, entered `gp_camera_capture`,
+  passed Pentax preconditions (`PTP 0x2001`, 576 bytes), and got accepted
+  `InitiateCapture` (`PTP 0x2001`). No candidate/transfer/publication completion
+  is logged for that request.
+- At 14:43:15 the firmware watchdog reported `pgphoto is exit,reboot it`. The
+  persistent Stage-2 crash file's newest record is SIGSEGV PC/fault
+  `0xb5600af0`. Mlog remained in capture state until `photo timeOut` at
+  14:44:07. At 14:44:38 the camera still enumerated as `25fb:0189` and pgphoto
+  was running again; no camera USB detach is established for this event.
+- The full log bundle and integrity hashes are in
+  [`pentax-shutter-crash-20260930-1443`](evidence/pentax-shutter-crash-20260930-1443/SUMMARY.md).
+  The capture is credited to the user's manual request, not an agent canary.
+  The three-client no-crash report applies to the interval before the shot; it
+  does not explain the accepted-shot crash.
+- The existing crash handler saves PC and fault address but omits ARM LR/SP,
+  general registers, and the process maps, so this incident cannot be resolved
+  to an exact function from the archived data. A crash-only Stage-2 diagnostic
+  change now records those values and a bounded `/proc/self/maps` dump. It does
+  not alter shutter/capture policy. ARM Stage-2 compilation and full offline
+  patcher gate pass (16 deterministic container checks + 24 Python checks).
+- This diagnostic change is not yet built, installed, reviewed, or physically
+  tested. Preserve strict Pentax pre-shutter admission and unresolved-output
+  blocking. Next: commit this evidence and diagnostic source on clean `main`,
+  build one provenance-complete instrumented candidate, obtain independent
+  review, then repeat one request-attributed M-mode shot and use the registers
+  and mappings to identify/fix the actual crash before claiming shutter-cycle
+  completion.
+
+Clock note: operator/log times are preserved as device wall-clock labels.
+At collection the device's `date -u` was about one hour ahead of host UTC, so
+the device's UTC label is not treated as independently verified UTC.
+
 ## 2026-09-30 o-v13x-camlib-prep installed; physical capture pending
 
 - Candidate `o-v13x-camlib-prep-20260930` is installed through the registered

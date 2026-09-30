@@ -1,0 +1,130 @@
+Wed Sep 30 14:44:38 UTC 2026
+FwVer:6.0.0.54.43;date:2026.09.30;
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+Bus 001 Device 005: ID 25fb:0189
+  248 root       0:04 ./polestar_app
+22144 root       0:01 /app/lib/stage2/pgphoto.stage2ondisk
+23302 root       0:00 sh -c date -u; cat /app/FwVer; lsusb; ps | grep -E "pgphoto|polestar_app"; echo ---device; dmesg | tail -100; echo ---logs; ls -lt /app/sd/system/log | head -15; ls -l /app/Clog.txt /app/Mlog.txt /app/stage2-crash.log
+23307 root       0:00 grep -E pgphoto|polestar_app
+---device
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+_tdata_psh_info_pool_deq 200: Out of tdata_disc_grp
+dhd_tcpdata_info_get 1056: No more free tdata_psh_info!!
+---logs
+total 268608
+-rwxr-xr-x    1 root     root      12119362 Sep 30 14:44 Clog_000182.log
+-rwxr-xr-x    1 root     root        826314 Sep 30 14:44 Mlog_000182.log
+-rwxr-xr-x    1 root     root           454 Sep 30 12:49 error_000182.log
+-rwxr-xr-x    1 root     root      43855293 Sep 30 08:23 Clog_000180.log
+-rwxr-xr-x    1 root     root       2132176 Sep 30 08:23 Mlog_000180.log
+-rwxr-xr-x    1 root     root           998 Sep 30 01:59 access_000180.log
+-rwxr-xr-x    1 root     root            70 Sep 30 01:35 error_000180.log
+-rwxr-xr-x    1 root     root        105982 Sep 30 01:35 Clog_000179.log
+-rwxr-xr-x    1 root     root         48905 Sep 30 01:35 Mlog_000179.log
+-rwxr-xr-x    1 root     root             0 Sep 30 01:35 access_000179.log
+-rwxr-xr-x    1 root     root            70 Sep 30 01:35 error_000179.log
+-rwxr-xr-x    1 root     root        164692 Sep 30 01:35 Clog_000178.log
+-rwxr-xr-x    1 root     root         59509 Sep 30 01:35 Mlog_000178.log
+-rwxr-xr-x    1 root     root             0 Sep 30 01:35 access_000178.log
+-rw-r--r--    1 root     root         50808 Sep 30 14:44 /app/Clog.txt
+-rw-r--r--    1 root     root         19837 Sep 30 14:44 /app/Mlog.txt
+-rw-r--r--    1 root     root          1100 Sep 30 14:43 /app/stage2-crash.log
