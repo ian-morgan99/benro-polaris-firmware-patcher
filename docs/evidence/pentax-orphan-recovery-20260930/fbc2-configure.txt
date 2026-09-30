@@ -1,0 +1,1646 @@
+Build started at 2026-09-30T19:35:13.439279
+Main binary: /home/ian/.local/share/uv/tools/meson/bin/python
+Build Options: -Dcamlibs=ptp2,directory -Diolibs=libusb1,usbscsi -Dpentax_research_capture=true -Dprefix=/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_prefix
+Python system: Linux
+The Meson build system
+Version: 1.12.0
+Source dir: /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930
+Build dir: /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build
+Build type: native build
+Project name: libgphoto2
+Project version: 2.5.34
+-----------
+Detecting compiler via: `cc --version` -> 0
+stdout:
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-----------
+Running command: -cpp -x c -E -dM -
+-----
+-----------
+Detecting linker via: `cc -Wl,--version` -> 0
+stdout:
+GNU ld (GNU Binutils for Ubuntu) 2.42
+Copyright (C) 2024 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or (at your option) a later version.
+This program has absolutely no warranty.
+-----------
+stderr:
+collect2 version 13.3.0
+/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-linux-gnu/13/lto-wrapper -plugin-opt=-fresolution=/tmp/ccleKhNp.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/13/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/13 -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/13/../../.. --version -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/13/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/crtn.o
+-----------
+Sanity check compiler command line: cc -D_FILE_OFFSET_BITS=64 -o sanity_check_for_c.exe sanity_check_for_c.c -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Sanity check built target output for host machine c compiler
+ -- Running test binary command:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/sanity_check_for_c.exe
+-----------
+Sanity check: `/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/sanity_check_for_c.exe` -> 0
+ -- stdout:
+ 
+ -- stderr:
+ 
+ -- returncode: 0
+C compiler for the host machine: cc (gcc 13.3.0 "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0")
+C linker for the host machine: cc ld.bfd 2.42
+-----------
+Detecting archiver via: `gcc-ar --version` -> 0
+stdout:
+GNU ar (GNU Binutils for Ubuntu) 2.42
+Copyright (C) 2024 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or (at your option) any later version.
+This program has absolutely no warranty.
+-----------
+-----------
+Detecting compiler via: `cc --version` -> 0
+stdout:
+cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-----------
+Running command: -cpp -x c -E -dM -
+-----
+-----------
+Detecting linker via: `cc -Wl,--version` -> 0
+stdout:
+GNU ld (GNU Binutils for Ubuntu) 2.42
+Copyright (C) 2024 Free Software Foundation, Inc.
+This program is free software; you may redistribute it under the terms of
+the GNU General Public License version 3 or (at your option) a later version.
+This program has absolutely no warranty.
+-----------
+stderr:
+collect2 version 13.3.0
+/usr/bin/ld -plugin /usr/libexec/gcc/x86_64-linux-gnu/13/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-linux-gnu/13/lto-wrapper -plugin-opt=-fresolution=/tmp/cc8rAnIa.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/13/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/13 -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/13/../../.. --version -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/13/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/crtn.o
+-----------
+Sanity check compiler command line: cc -D_FILE_OFFSET_BITS=64 -o sanity_check_for_c.exe sanity_check_for_c.c -D_FILE_OFFSET_BITS=64
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Sanity check built target output for build machine c compiler
+ -- Running test binary command:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/sanity_check_for_c.exe
+-----------
+Sanity check: `/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/sanity_check_for_c.exe` -> 0
+ -- stdout:
+ 
+ -- stderr:
+ 
+ -- returncode: 0
+C compiler for the build machine: cc (gcc 13.3.0 "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0")
+C linker for the build machine: cc ld.bfd 2.42
+Build machine cpu family: x86_64
+Build machine cpu: x86_64
+Host machine cpu family: x86_64
+Host machine cpu: x86_64
+Target machine cpu family: x86_64
+Target machine cpu: x86_64
+Program python3 found: YES (/home/ian/.local/share/uv/tools/meson/bin/python)
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp3pwizuxl
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp3pwizuxl/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp3pwizuxl/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Werror=unknown-warning-option` -> 1
+stderr:
+cc1: error: '-Werror=unknown-warning-option': no option '-Wunknown-warning-option'
+-----------
+Compiler for C supports arguments -Werror=unknown-warning-option: NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpoi7t44x6
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpoi7t44x6/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpoi7t44x6/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Werror=incompatible-pointer-types` -> 0
+Compiler for C supports arguments -Werror=incompatible-pointer-types: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpnp7c6u9w
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpnp7c6u9w/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpnp7c6u9w/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Werror=implicit` -> 0
+Compiler for C supports arguments -Werror=implicit: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpghcecqgz
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpghcecqgz/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpghcecqgz/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Werror=int-conversion` -> 0
+Compiler for C supports arguments -Werror=int-conversion: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp45tj33sf
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp45tj33sf/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp45tj33sf/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Werror=reserved-identifier -Wno-error=reserved-identifier` -> 1
+stderr:
+cc1: error: '-Werror=reserved-identifier': no option '-Wreserved-identifier'; did you mean '-fextended-identifiers'?
+cc1: error: '-Wno-error=reserved-identifier': no option '-Wreserved-identifier'; did you mean '-fextended-identifiers'?
+-----------
+Compiler for C supports arguments -Wno-error=reserved-identifier: NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpamhbqbcm
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpamhbqbcm/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpamhbqbcm/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Werror=documentation-deprecated-sync -Wno-error=documentation-deprecated-sync` -> 1
+stderr:
+cc1: error: '-Werror=documentation-deprecated-sync': no option '-Wdocumentation-deprecated-sync'
+cc1: error: '-Wno-error=documentation-deprecated-sync': no option '-Wdocumentation-deprecated-sync'
+-----------
+Compiler for C supports arguments -Wno-error=documentation-deprecated-sync: NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpykeq1wby
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpykeq1wby/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpykeq1wby/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Wunused-parameter -Wno-unused-parameter` -> 0
+Compiler for C supports arguments -Wno-unused-parameter: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpz11lrdtz
+Code:
+extern int i;
+int i;
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpz11lrdtz/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpz11lrdtz/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Wunused -Wno-unused` -> 0
+Compiler for C supports arguments -Wno-unused: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpj8fh765b
+Code:
+int main(void) { return 0; }
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpj8fh765b/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpj8fh765b/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -lm -Wl,--allow-shlib-undefined` -> 0
+Library m found: YES
+Pkg-config binary missing from cross or native file, or env var undefined.
+Trying a default Pkg-config fallback at pkg-config
+Found pkg-config: YES (/usr/bin/pkg-config) 1.8.1
+Determining dependency 'libxml-2.0' with pkg-config executable '/usr/bin/pkg-config'
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --modversion libxml-2.0` -> 0
+stdout:
+2.9.14
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --cflags libxml-2.0` -> 0
+stdout:
+-I/usr/include/libxml2
+-----------
+env[PKG_CONFIG_ALLOW_SYSTEM_LIBS]: 1
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libxml-2.0` -> 0
+stdout:
+-L/usr/lib/x86_64-linux-gnu -lxml2
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libxml-2.0` -> 0
+stdout:
+-lxml2
+-----------
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpf7abqw_h
+Code:
+
+        #include<stddef.h>
+        #include<stdio.h>
+        int main(void) {
+            printf("%ld\n", (long)(sizeof(void *)));
+            return 0;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpf7abqw_h/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpf7abqw_h/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE` -> 0
+Program stdout:
+
+8
+
+Program stderr:
+
+
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmploluw_t5
+Code:
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmploluw_t5/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmploluw_t5/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE --print-search-dirs` -> 0
+stdout:
+install: /usr/lib/gcc/x86_64-linux-gnu/13/
+programs: =/usr/libexec/gcc/x86_64-linux-gnu/13/:/usr/libexec/gcc/x86_64-linux-gnu/13/:/usr/libexec/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/13/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/bin/x86_64-linux-gnu/13/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/bin/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/bin/
+libraries: =/usr/lib/gcc/x86_64-linux-gnu/13/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/13/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/13/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../lib/:/lib/x86_64-linux-gnu/13/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/13/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../../x86_64-linux-gnu/lib/:/usr/lib/gcc/x86_64-linux-gnu/13/../../../:/lib/:/usr/lib/
+-----------
+Run-time dependency libxml-2.0 found: YES 2.9.14
+Determining dependency 'libcurl' with pkg-config executable '/usr/bin/pkg-config'
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --modversion libcurl` -> 0
+stdout:
+8.5.0
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --cflags libcurl` -> 0
+stdout:
+-I/usr/include/x86_64-linux-gnu
+-----------
+env[PKG_CONFIG_ALLOW_SYSTEM_LIBS]: 1
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libcurl` -> 0
+stdout:
+-L/usr/lib/x86_64-linux-gnu -lcurl
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libcurl` -> 0
+stdout:
+-lcurl
+-----------
+Run-time dependency libcurl found: YES 8.5.0
+Determining dependency 'gdlib' with pkg-config executable '/usr/bin/pkg-config'
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --modversion gdlib` -> 0
+stdout:
+2.3.3
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --cflags gdlib` -> 0
+stdout:
+-I/usr/include/libpng16 -I/usr/include/freetype2 -I/usr/include/x86_64-linux-gnu -I/usr/include/webp
+-----------
+env[PKG_CONFIG_ALLOW_SYSTEM_LIBS]: 1
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs gdlib` -> 0
+stdout:
+-L/usr/lib/x86_64-linux-gnu -lgd
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs gdlib` -> 0
+stdout:
+-lgd
+-----------
+Run-time dependency gdlib found: YES 2.3.3
+Determining dependency 'libexif' with pkg-config executable '/usr/bin/pkg-config'
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --modversion libexif` -> 0
+stdout:
+0.6.24
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --cflags libexif` -> 0
+env[PKG_CONFIG_ALLOW_SYSTEM_LIBS]: 1
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libexif` -> 0
+stdout:
+-L/usr/lib/x86_64-linux-gnu -lexif
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libexif` -> 0
+stdout:
+-lexif
+-----------
+Run-time dependency libexif found: YES 0.6.24
+Determining dependency 'libjpeg' with pkg-config executable '/usr/bin/pkg-config'
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --modversion libjpeg` -> 0
+stdout:
+2.1.5
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --cflags libjpeg` -> 0
+env[PKG_CONFIG_ALLOW_SYSTEM_LIBS]: 1
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libjpeg` -> 0
+stdout:
+-L/usr/lib/x86_64-linux-gnu -ljpeg
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libjpeg` -> 0
+stdout:
+-ljpeg
+-----------
+Run-time dependency libjpeg found: YES 2.1.5
+Determining dependency 'libtiff-4' with pkg-config executable '/usr/bin/pkg-config'
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --modversion libtiff-4` -> 0
+stdout:
+4.5.1
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --cflags libtiff-4` -> 0
+stdout:
+-I/usr/include/x86_64-linux-gnu -I/usr/include/webp
+-----------
+env[PKG_CONFIG_ALLOW_SYSTEM_LIBS]: 1
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libtiff-4` -> 0
+stdout:
+-L/usr/lib/x86_64-linux-gnu -ltiff
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libtiff-4` -> 0
+stdout:
+-ltiff
+-----------
+Run-time dependency libtiff-4 found: YES 4.5.1
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpq4bnx2tx
+Code:
+#include <libintl.h>
+
+int main() {
+    gettext("Hello world");
+}
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpq4bnx2tx/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpq4bnx2tx/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE` -> 0
+Run-time dependency intl found: YES
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp5hmyfxer
+Code:
+#include <stdarg.h>
+#include <limits.h>
+
+        #if defined __stub_va_copy || defined __stub___va_copy
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &va_copy;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp5hmyfxer/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp5hmyfxer/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp5hmyfxer/testfile.c: In function 'main':
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp5hmyfxer/testfile.c:9:32: error: 'va_copy' undeclared (first use in this function)
+    9 |             void *a = (void*) &va_copy;
+      |                                ^~~~~~~
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp5hmyfxer/testfile.c:9:32: note: each undeclared identifier is reported only once for each function it appears in
+-----------
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdj0djwit
+Code:
+#include <stdarg.h>
+        int main(void) {
+
+        /* With some toolchains (MSYS2/mingw for example) the compiler
+         * provides various builtins which are not really implemented and
+         * fall back to the stdlib where they aren't provided and fail at
+         * build/link time. In case the user provides a header, including
+         * the header didn't lead to the function being defined, and the
+         * function we are checking isn't a builtin itself we assume the
+         * builtin is not functional and we just error out. */
+        #if !0 && !defined(va_copy) && !0
+            #error "No definition for __builtin_va_copy found in the prefix"
+        #endif
+
+        #ifdef __has_builtin
+            #if !__has_builtin(__builtin_va_copy)
+                #error "__builtin_va_copy not found"
+            #endif
+        #elif ! defined(va_copy)
+            __builtin_va_copy;
+        #endif
+        return 0;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdj0djwit/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdj0djwit/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "va_copy" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0xvbxtds
+Code:
+#include <string.h>
+#include <limits.h>
+
+        #if defined __stub_strncpy || defined __stub___strncpy
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &strncpy;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0xvbxtds/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0xvbxtds/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "strncpy" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpi719u6v4
+Code:
+#include <stdio.h>
+#include <limits.h>
+
+        #if defined __stub_snprintf || defined __stub___snprintf
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &snprintf;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpi719u6v4/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpi719u6v4/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "snprintf" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpk82ra4r9
+Code:
+#include <sys/statvfs.h>
+#include <limits.h>
+
+        #if defined __stub_statvfs || defined __stub___statvfs
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &statvfs;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpk82ra4r9/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpk82ra4r9/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "statvfs" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0ps_8ls4
+Code:
+#include <time.h>
+#include <limits.h>
+
+        #if defined __stub_localtime_r || defined __stub___localtime_r
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &localtime_r;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0ps_8ls4/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0ps_8ls4/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "localtime_r" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp9rc6u058
+Code:
+#include <sys/stat.h>
+#include <limits.h>
+
+        #if defined __stub_lstat || defined __stub___lstat
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &lstat;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp9rc6u058/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp9rc6u058/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "lstat" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbtozh7y9
+Code:
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <limits.h>
+
+        #if defined __stub_inet_aton || defined __stub___inet_aton
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &inet_aton;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbtozh7y9/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbtozh7y9/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "inet_aton" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmphbcj2n7i
+Code:
+#include <stdlib.h>
+#include <limits.h>
+
+        #if defined __stub_setenv || defined __stub___setenv
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &setenv;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmphbcj2n7i/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmphbcj2n7i/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "setenv" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp_eyqzvel
+Code:
+#include <time.h>
+        void bar(void) {
+            struct tm foo;
+            (void) ( foo.tm_gmtoff );
+
+            (void) foo;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp_eyqzvel/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp_eyqzvel/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking whether type "struct tm" has member "tm_gmtoff" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpqp1a3dz1
+Code:
+#include <libexif/exif-data.h>
+        void bar(void) {
+            ExifData foo;
+            (void) ( foo.ifd );
+
+            (void) foo;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpqp1a3dz1/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpqp1a3dz1/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking whether type "ExifData" has member "ifd" with dependency libexif: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbmrbu0em
+Code:
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+/* jpeglib.h fails to include all required system headers, so jpeglib.h
+ * must be included after stddef.h (size_t) and stdio.h (FILE).
+ */
+#include <jpeglib.h>
+
+int main(int argc, char **argv)
+{
+  j_decompress_ptr cinfo = NULL;
+  (void) argc;
+  (void) argv;
+  /* Running this will give a segfault */
+  if (jpeg_start_decompress(cinfo)) {
+    printf("true\n");
+  } else {
+    printf("false\n");
+  }
+  return 0;
+}
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbmrbu0em/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbmrbu0em/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99 /usr/lib/x86_64-linux-gnu/libjpeg.so` -> 0
+Checking if "Make sure we can actually compile and link against libjpeg." with dependency libjpeg links: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpem4h0243
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("iconv.h")
+          #error "Header 'iconv.h' could not be found"
+         #endif
+        #else
+         #include <iconv.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpem4h0243/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "iconv.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmphomv8jjq
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/param.h")
+          #error "Header 'sys/param.h' could not be found"
+         #endif
+        #else
+         #include <sys/param.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmphomv8jjq/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sys/param.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpaaf_5eas
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/mman.h")
+          #error "Header 'sys/mman.h' could not be found"
+         #endif
+        #else
+         #include <sys/mman.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpaaf_5eas/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sys/mman.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp6t67fx_a
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/select.h")
+          #error "Header 'sys/select.h' could not be found"
+         #endif
+        #else
+         #include <sys/select.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp6t67fx_a/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sys/select.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpizs6vqu_
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("locale.h")
+          #error "Header 'locale.h' could not be found"
+         #endif
+        #else
+         #include <locale.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpizs6vqu_/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "locale.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmprqpxaka8
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("memory.h")
+          #error "Header 'memory.h' could not be found"
+         #endif
+        #else
+         #include <memory.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmprqpxaka8/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "memory.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpoffb8i_6
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("getopt.h")
+          #error "Header 'getopt.h' could not be found"
+         #endif
+        #else
+         #include <getopt.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpoffb8i_6/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "getopt.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpzwbjinzw
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("unistd.h")
+          #error "Header 'unistd.h' could not be found"
+         #endif
+        #else
+         #include <unistd.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpzwbjinzw/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "unistd.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmph3xliykw
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("mcheck.h")
+          #error "Header 'mcheck.h' could not be found"
+         #endif
+        #else
+         #include <mcheck.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmph3xliykw/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "mcheck.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpn5qhi3ej
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("limits.h")
+          #error "Header 'limits.h' could not be found"
+         #endif
+        #else
+         #include <limits.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpn5qhi3ej/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "limits.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdzw56hg5
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/time.h")
+          #error "Header 'sys/time.h' could not be found"
+         #endif
+        #else
+         #include <sys/time.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdzw56hg5/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sys/time.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp571zubji
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("langinfo.h")
+          #error "Header 'langinfo.h' could not be found"
+         #endif
+        #else
+         #include <langinfo.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp571zubji/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "langinfo.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpn6d0_azn
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("stdio.h")
+          #error "Header 'stdio.h' could not be found"
+         #endif
+        #else
+         #include <stdio.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpn6d0_azn/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "stdio.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp642vs41l
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("stdlib.h")
+          #error "Header 'stdlib.h' could not be found"
+         #endif
+        #else
+         #include <stdlib.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp642vs41l/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "stdlib.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpya6pkzpr
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("string.h")
+          #error "Header 'string.h' could not be found"
+         #endif
+        #else
+         #include <string.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpya6pkzpr/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "string.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0w7uoqq2
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/statvfs.h")
+          #error "Header 'sys/statvfs.h' could not be found"
+         #endif
+        #else
+         #include <sys/statvfs.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0w7uoqq2/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sys/statvfs.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpi88grmh9
+Code:
+#include <sys/mman.h>
+#include <limits.h>
+
+        #if defined __stub_mmap || defined __stub___mmap
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &mmap;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpi88grmh9/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpi88grmh9/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking for function "mmap" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmppvao4kwy
+Code:
+int main(void) { return 0; }
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmppvao4kwy/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmppvao4kwy/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -Wl,--fatal-warnings -Wl,--version-script=/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/libgphoto2_port/libgphoto2_port/libgphoto2_port.ver` -> 0
+Compiler for C supports link arguments -Wl,--version-script=/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/libgphoto2_port/libgphoto2_port/libgphoto2_port.ver: YES 
+meson.build:231: DEPRECATION: configuration_data.set10 with number. The `set10` method should only be used with booleans
+Configuring config.h using configuration
+Configuring gphoto2-config using configuration
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp8r9lt6kq
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("ltdl.h")
+          #error "Header 'ltdl.h' could not be found"
+         #endif
+        #else
+         #include <ltdl.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp8r9lt6kq/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "ltdl.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpm510gf5y
+Code:
+int main(void) { return 0; }
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpm510gf5y/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpm510gf5y/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -lltdl -Wl,--allow-shlib-undefined` -> 0
+Library ltdl found: YES
+Determining dependency 'libusb-1.0' with pkg-config executable '/usr/bin/pkg-config'
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --modversion libusb-1.0` -> 0
+stdout:
+1.0.27
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --cflags libusb-1.0` -> 0
+stdout:
+-I/usr/include/libusb-1.0
+-----------
+env[PKG_CONFIG_ALLOW_SYSTEM_LIBS]: 1
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libusb-1.0` -> 0
+stdout:
+-L/usr/lib/x86_64-linux-gnu -lusb-1.0
+-----------
+env[PKG_CONFIG_PATH]: 
+env[PKG_CONFIG]: /usr/bin/pkg-config
+-----------
+Called: `/usr/bin/pkg-config --libs libusb-1.0` -> 0
+stdout:
+-lusb-1.0
+-----------
+Run-time dependency libusb-1.0 found: YES 1.0.27
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmplm9j45zl
+Code:
+#include<libusb.h>
+#include <limits.h>
+
+        #if defined __stub_libusb_strerror || defined __stub___libusb_strerror
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &libusb_strerror;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc -I/usr/include/libusb-1.0 /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmplm9j45zl/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmplm9j45zl/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99 /usr/lib/x86_64-linux-gnu/libusb-1.0.so` -> 0
+Checking for function "libusb_strerror" with dependency libusb-1.0: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpe7wteecz
+Code:
+#include<libusb.h>
+#include <limits.h>
+
+        #if defined __stub_libusb_wrap_sys_device || defined __stub___libusb_wrap_sys_device
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &libusb_wrap_sys_device;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc -I/usr/include/libusb-1.0 /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpe7wteecz/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpe7wteecz/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99 /usr/lib/x86_64-linux-gnu/libusb-1.0.so` -> 0
+Checking for function "libusb_wrap_sys_device" with dependency libusb-1.0: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpql9tldv0
+Code:
+
+#include<libusb.h>
+enum libusb_option opt = LIBUSB_OPTION_NO_DEVICE_DISCOVERY;
+
+-----------
+Command line: `cc -I/usr/include/libusb-1.0 /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpql9tldv0/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpql9tldv0/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Checking if "Has LIBUSB_OPTION_NO_DEVICE_DISCOVERY" with dependency libusb-1.0 compiles: YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyrplsrzp
+Code:
+int main(void) { return 0; }
+
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyrplsrzp/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyrplsrzp/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -llockdev -Wl,--allow-shlib-undefined` -> 1
+stderr:
+/usr/bin/ld: cannot find -llockdev: No such file or directory
+collect2: error: ld returned 1 exit status
+-----------
+Library lockdev found: NO
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpx01g_lxj
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("ttylock.h")
+          #error "Header 'ttylock.h' could not be found"
+         #endif
+        #else
+         #include <ttylock.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpx01g_lxj/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpx01g_lxj/testfile.c:4:12: error: #error "Header 'ttylock.h' could not be found"
+    4 |           #error "Header 'ttylock.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "ttylock.h" : NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpm9fc0yar
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("regex.h")
+          #error "Header 'regex.h' could not be found"
+         #endif
+        #else
+         #include <regex.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpm9fc0yar/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "regex.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyzb8fp_2
+Code:
+#include <regex.h>
+#include <limits.h>
+
+        #if defined __stub_re_compile_pattern || defined __stub___re_compile_pattern
+        fail fail fail this function is not going to work
+        #endif
+        
+int main(void) {
+            void *a = (void*) &re_compile_pattern;
+            long long b = (long long) a;
+            return (int) b;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyzb8fp_2/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyzb8fp_2/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyzb8fp_2/testfile.c: In function 'main':
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyzb8fp_2/testfile.c:9:32: error: 're_compile_pattern' undeclared (first use in this function)
+    9 |             void *a = (void*) &re_compile_pattern;
+      |                                ^~~~~~~~~~~~~~~~~~
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpyzb8fp_2/testfile.c:9:32: note: each undeclared identifier is reported only once for each function it appears in
+-----------
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa270us1e
+Code:
+#include <regex.h>
+        int main(void) {
+
+        /* With some toolchains (MSYS2/mingw for example) the compiler
+         * provides various builtins which are not really implemented and
+         * fall back to the stdlib where they aren't provided and fail at
+         * build/link time. In case the user provides a header, including
+         * the header didn't lead to the function being defined, and the
+         * function we are checking isn't a builtin itself we assume the
+         * builtin is not functional and we just error out. */
+        #if !0 && !defined(re_compile_pattern) && !0
+            #error "No definition for __builtin_re_compile_pattern found in the prefix"
+        #endif
+
+        #ifdef __has_builtin
+            #if !__has_builtin(__builtin_re_compile_pattern)
+                #error "__builtin_re_compile_pattern not found"
+            #endif
+        #elif ! defined(re_compile_pattern)
+            __builtin_re_compile_pattern;
+        #endif
+        return 0;
+        }
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa270us1e/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa270us1e/output.exe -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa270us1e/testfile.c: In function 'main':
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa270us1e/testfile.c:12:14: error: #error "No definition for __builtin_re_compile_pattern found in the prefix"
+   12 |             #error "No definition for __builtin_re_compile_pattern found in the prefix"
+      |              ^~~~~
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa270us1e/testfile.c:17:18: error: #error "__builtin_re_compile_pattern not found"
+   17 |                 #error "__builtin_re_compile_pattern not found"
+      |                  ^~~~~
+-----------
+Checking for function "re_compile_pattern" : NO 
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp642vs41l/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("stdlib.h")
+          #error "Header 'stdlib.h' could not be found"
+         #endif
+        #else
+         #include <stdlib.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "stdlib.h" : YES (cached)
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpzwbjinzw/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("unistd.h")
+          #error "Header 'unistd.h' could not be found"
+         #endif
+        #else
+         #include <unistd.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "unistd.h" : YES (cached)
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpn6d0_azn/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("stdio.h")
+          #error "Header 'stdio.h' could not be found"
+         #endif
+        #else
+         #include <stdio.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "stdio.h" : YES (cached)
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmposk8dw7l
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("errno.h")
+          #error "Header 'errno.h' could not be found"
+         #endif
+        #else
+         #include <errno.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmposk8dw7l/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "errno.h" : YES 
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdzw56hg5/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("sys/time.h")
+          #error "Header 'sys/time.h' could not be found"
+         #endif
+        #else
+         #include <sys/time.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "sys/time.h" : YES (cached)
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmphomv8jjq/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("sys/param.h")
+          #error "Header 'sys/param.h' could not be found"
+         #endif
+        #else
+         #include <sys/param.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "sys/param.h" : YES (cached)
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp6t67fx_a/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("sys/select.h")
+          #error "Header 'sys/select.h' could not be found"
+         #endif
+        #else
+         #include <sys/select.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "sys/select.h" : YES (cached)
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdjhvbrb2
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("termios.h")
+          #error "Header 'termios.h' could not be found"
+         #endif
+        #else
+         #include <termios.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdjhvbrb2/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "termios.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpzp_7vowd
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sgetty.h")
+          #error "Header 'sgetty.h' could not be found"
+         #endif
+        #else
+         #include <sgetty.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpzp_7vowd/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpzp_7vowd/testfile.c:4:12: error: #error "Header 'sgetty.h' could not be found"
+    4 |           #error "Header 'sgetty.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "sgetty.h" : NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp7tsqvsed
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("ttold.h")
+          #error "Header 'ttold.h' could not be found"
+         #endif
+        #else
+         #include <ttold.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp7tsqvsed/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp7tsqvsed/testfile.c:4:12: error: #error "Header 'ttold.h' could not be found"
+    4 |           #error "Header 'ttold.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "ttold.h" : NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpd6bcjgjb
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("ioctl-types.h")
+          #error "Header 'ioctl-types.h' could not be found"
+         #endif
+        #else
+         #include <ioctl-types.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpd6bcjgjb/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpd6bcjgjb/testfile.c:4:12: error: #error "Header 'ioctl-types.h' could not be found"
+    4 |           #error "Header 'ioctl-types.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "ioctl-types.h" : NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp41p6athm
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("fcntl.h")
+          #error "Header 'fcntl.h' could not be found"
+         #endif
+        #else
+         #include <fcntl.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp41p6athm/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "fcntl.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa5l4ba5a
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sgtty.h")
+          #error "Header 'sgtty.h' could not be found"
+         #endif
+        #else
+         #include <sgtty.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpa5l4ba5a/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sgtty.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpavc7amtg
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/ioctl.h")
+          #error "Header 'sys/ioctl.h' could not be found"
+         #endif
+        #else
+         #include <sys/ioctl.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpavc7amtg/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sys/ioctl.h" : YES 
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpdzw56hg5/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("sys/time.h")
+          #error "Header 'sys/time.h' could not be found"
+         #endif
+        #else
+         #include <sys/time.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "sys/time.h" : YES (cached)
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp8scqq638
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("termio.h")
+          #error "Header 'termio.h' could not be found"
+         #endif
+        #else
+         #include <termio.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp8scqq638/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "termio.h" : YES 
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpzwbjinzw/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("unistd.h")
+          #error "Header 'unistd.h' could not be found"
+         #endif
+        #else
+         #include <unistd.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "unistd.h" : YES (cached)
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp1gdepvdo
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("endian.h")
+          #error "Header 'endian.h' could not be found"
+         #endif
+        #else
+         #include <endian.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp1gdepvdo/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "endian.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpp0nsqryb
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("byteswap.h")
+          #error "Header 'byteswap.h' could not be found"
+         #endif
+        #else
+         #include <byteswap.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpp0nsqryb/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "byteswap.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0q3u6dup
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("asm/io.h")
+          #error "Header 'asm/io.h' could not be found"
+         #endif
+        #else
+         #include <asm/io.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0q3u6dup/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0q3u6dup/testfile.c:4:12: error: #error "Header 'asm/io.h' could not be found"
+    4 |           #error "Header 'asm/io.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "asm/io.h" : NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpkbamsbfk
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("mntent.h")
+          #error "Header 'mntent.h' could not be found"
+         #endif
+        #else
+         #include <mntent.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpkbamsbfk/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "mntent.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbhh2bji2
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/mntent.h")
+          #error "Header 'sys/mntent.h' could not be found"
+         #endif
+        #else
+         #include <sys/mntent.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbhh2bji2/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpbhh2bji2/testfile.c:4:12: error: #error "Header 'sys/mntent.h' could not be found"
+    4 |           #error "Header 'sys/mntent.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "sys/mntent.h" : NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmprx13sokd
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/mnttab.h")
+          #error "Header 'sys/mnttab.h' could not be found"
+         #endif
+        #else
+         #include <sys/mnttab.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmprx13sokd/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmprx13sokd/testfile.c:4:12: error: #error "Header 'sys/mnttab.h' could not be found"
+    4 |           #error "Header 'sys/mnttab.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "sys/mnttab.h" : NO 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp8m5j33zi
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("scsi/sg.h")
+          #error "Header 'scsi/sg.h' could not be found"
+         #endif
+        #else
+         #include <scsi/sg.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp8m5j33zi/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "scsi/sg.h" : YES 
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpn5qhi3ej/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("limits.h")
+          #error "Header 'limits.h' could not be found"
+         #endif
+        #else
+         #include <limits.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ 
+Has header "limits.h" : YES (cached)
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmprk_nj3op
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("sys/file.h")
+          #error "Header 'sys/file.h' could not be found"
+         #endif
+        #else
+         #include <sys/file.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmprk_nj3op/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Has header "sys/file.h" : YES 
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0ed2_p6l
+Code:
+
+        #ifdef __has_include
+         #if !__has_include("lockdev.h")
+          #error "Header 'lockdev.h' could not be found"
+         #endif
+        #else
+         #include <lockdev.h>
+        #endif
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0ed2_p6l/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmp0ed2_p6l/testfile.c:4:12: error: #error "Header 'lockdev.h' could not be found"
+    4 |           #error "Header 'lockdev.h' could not be found"
+      |            ^~~~~
+-----------
+Has header "lockdev.h" : NO 
+Using cached compile:
+Cached command line:  cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpx01g_lxj/testfile.c -E -P -D_FILE_OFFSET_BITS=64 -P -O0 -U_FORTIFY_SOURCE -std=gnu99 
+
+Code:
+ 
+        #ifdef __has_include
+         #if !__has_include("ttylock.h")
+          #error "Header 'ttylock.h' could not be found"
+         #endif
+        #else
+         #include <ttylock.h>
+        #endif
+Cached compiler stdout:
+ 
+Cached compiler stderr:
+ /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpx01g_lxj/testfile.c:4:12: error: #error "Header 'ttylock.h' could not be found"
+    4 |           #error "Header 'ttylock.h' could not be found"
+      |            ^~~~~
+
+Has header "ttylock.h" : NO (cached)
+Pkg-config binary missing from cross or native file, or env var undefined.
+Trying a default Pkg-config fallback at pkg-config
+Found pkg-config: YES (/usr/bin/pkg-config) 1.8.1
+Adding test "test-gp-port"
+Adding test "test-port-list"
+Program msgfmt found: YES (/usr/bin/msgfmt)
+Program msginit found: YES (/usr/bin/msginit)
+Program msgmerge found: YES (/usr/bin/msgmerge)
+Program xgettext found: YES (/usr/bin/xgettext)
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpssv0cr9w
+Code:
+
+  #include <machine/endian.h>
+  int main() { le32toh(0); return 0; }
+  
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpssv0cr9w/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpssv0cr9w/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 1
+stderr:
+/home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpssv0cr9w/testfile.c:2:12: fatal error: machine/endian.h: No such file or directory
+    2 |   #include <machine/endian.h>
+      |            ^~~~~~~~~~~~~~~~~~
+compilation terminated.
+-----------
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpz8y0duzi
+Code:
+
+  #include <arpa/inet.h>
+  int main() { ntohl(0); return 0; }
+  
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpz8y0duzi/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpz8y0duzi/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Running compile:
+Working directory:  /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpw0_cwk26
+Code:
+
+  #include <byteswap.h>
+  int main() { bswap_32(0); return 0; }
+  
+-----------
+Command line: `cc /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpw0_cwk26/testfile.c -o /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_build/meson-private/tmpw0_cwk26/output.obj -c -D_FILE_OFFSET_BITS=64 -O0 -U_FORTIFY_SOURCE -std=gnu99` -> 0
+Configuring gphoto2-endian.h using configuration
+Run-time dependency threads found: YES
+Adding test "test-ptp-context"
+Adding test "test-pentax-utils"
+Adding test "test-pentax-reconcile"
+Adding test "test-pentax-publication"
+Adding test "test-uvc-device-table"
+Adding test "test-pentax-aperture-alias"
+Adding test "test-i18n"
+Adding test "test-endian"
+Adding test "print-libgphoto2-version"
+Adding test "test-gphoto2"
+Adding test "test-filesys"
+Adding test "test-camera-list"
+Adding test "test-init-localedir"
+Build targets in project: 89
+
+libgphoto2 2.5.34
+
+  User defined options
+    camlibs                : ptp2,directory
+    iolibs                 : libusb1,usbscsi
+    pentax_research_capture: true
+    prefix                 : /home/ian/Documents/VSCodeProjects/LibGphoto2.worktrees/pentax-installed-baseline-20260930/_prefix
+
+Found ninja-1.13.0.git.kitware.jobserver-pipe-1 at /home/ian/.local/bin/ninja
