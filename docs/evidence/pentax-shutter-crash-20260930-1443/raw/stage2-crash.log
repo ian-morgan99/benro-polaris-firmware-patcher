@@ -1,0 +1,20 @@
+
+[stage2] *** CRASH sig=11 (SIGSEGV) si_addr=0x2e676e68 pc=0x2e676e68
+[stage2]   slot region [0x30000000,0x30000100)  si_addr is NOT in the slot region
+[stage2]   pc classify: not null, not the stub, not a current slot target
+[stage2]   last checkpoint reached: slots filled
+
+[stage2] *** CRASH sig=11 (SIGSEGV) si_addr=0x00004e20 pc=0x00004e20
+[stage2]   slot region [0x30000000,0x30000100)  si_addr is NOT in the slot region
+[stage2]   pc classify: not null, not the stub, not a current slot target
+[stage2]   last checkpoint reached: slots filled
+
+[stage2] *** CRASH sig=11 (SIGSEGV) si_addr=0x00000004 pc=0x00000004
+[stage2]   slot region [0x30000000,0x30000100)  si_addr is NOT in the slot region
+[stage2]   pc classify: not null, not the stub, not a current slot target
+[stage2]   last checkpoint reached: slots filled
+
+[stage2] *** CRASH sig=11 (SIGSEGV) si_addr=0xb5600af0 pc=0xb5600af0
+[stage2]   slot region [0x30000000,0x30000100)  si_addr is NOT in the slot region
+[stage2]   pc classify: not null, not the stub, not a current slot target
+[stage2]   last checkpoint reached: slots filled
