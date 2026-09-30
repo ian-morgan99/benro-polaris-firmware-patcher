@@ -1,0 +1,35 @@
+Candidate: o-v13x-camlib-prep-20260930
+Date: 2026-09-30
+Installed FwVer: 6.0.0.54.43
+
+IDENTITY
+Active Wi-Fi: polaris_d13e86
+BSSID: 48:E7:DA:D4:B5:73
+Route to 192.168.0.1: dev wlp8s0
+SSH FwVer confirmed before camera query.
+No attached Pentax (25fb), iPolar (1233:1455), or StarShoot (16c0:29a0) found.
+
+READ-ONLY CANARY PREFLIGHT
+Command: python3 scripts/canary-probe.py --host 192.168.0.1 --port 9090 \
+         --bind 192.168.0.4 --probe
+This mode performs the Benro session handshake and camera-info query only; it
+does not send the still-capture command (264).
+
+2026-09-30T00:28:50Z TX 1&284&2&-100#
+2026-09-30T00:28:50Z RX 284@mode:1;state:0;#
+2026-09-30T00:28:50Z TX 1&820&2&-100#
+2026-09-30T00:28:50Z RX 820@ret:-1;#
+2026-09-30T00:28:50Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-09-30T00:28:50Z TX 1&286&2&-100#
+2026-09-30T00:28:50Z RX 286@manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;#
+2026-09-30T00:28:50Z PROBE-DONE
+
+RESULT: session/query path reachable; camera absent; no shutter requested.
+Live capture canary: NOT RUN (camera prerequisite unavailable).
+
+OFFLINE REGRESSION GATE
+Command: ./tests/run_prerelease_gate.sh
+PASS: container deterministic harness (16 passed)
+PASS: python regression suite (24 passed)
+Summary: 2 passed, 0 failed, 0 skipped. Package gates not requested by this
+offline-only invocation; package validation results are in INSTALL-VERIFICATION.txt.

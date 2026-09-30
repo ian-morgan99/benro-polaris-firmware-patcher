@@ -24,6 +24,13 @@
   state report. No shutter was sent. Once the camera is attached and powered,
   run the bounded canary; do not interpret successful install/runtime checks as
   capture qualification.
+- The no-camera canary preflight was subsequently run read-only on the verified
+  Polaris route. 284/820 session handshake and 286 camera query completed;
+  response was `manufacturer:none;model:none;state:-5;storage:0;photoFormat:0`.
+  Probe ended normally and issued no 264 capture request. The full offline
+  pre-release gate also passed (16 container checks, 24 Python tests; no package
+  or live-shot gate was requested). Transcript:
+  `docs/evidence/o-v13x-camlib-prep-20260930/NO-CAMERA-CANARY.txt`.
 - This is not an iPolar or StarShoot enablement build: the iPolar compile check
   was skipped because libuvc headers were absent, StarShoot only had a prototype
   compile check, and neither is linked into libgphoto2. Plans and constraints
