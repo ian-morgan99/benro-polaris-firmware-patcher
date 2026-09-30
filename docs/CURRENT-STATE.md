@@ -1,5 +1,22 @@
 # Current repository state
 
+## 2026-09-30 o-v15a diagnostic candidate deployed (no shutter test)
+
+- User-authorized deployment of `o-v15a-pentax-crash-registers-20260930` used
+  the documented extracted `/app/sd/FwPkt/` update path and `/sbin/reboot`.
+  Polaris identity was verified before staging; all six SD payload files
+  matched the registered `firmwareInfo` sizes and MD5s before reboot.
+- After reboot, Polaris identity, `FwVer:6.0.0.54.44`, embedded libgphoto2 and
+  patcher commits/build id, live process startup, Stage-2 environment, matched
+  core/port/ptp2/usb1 hashes, loader diagnostic markers, and Pentax
+  `25fb:0189` were verified.
+- Read-only canary probe reports K-3 III `state=1`, `photoFormat=2`. No shutter
+  was sent. This is deployment/runtime verification, **not a capture pass**;
+  the candidate only adds crash diagnostics. Independent review is pending
+  before a capture reproduction.
+- Complete install transcript:
+  `docs/evidence/o-v15a-pentax-crash-registers-20260930/INSTALL-VERIFICATION.md`.
+
 ## 2026-09-30 14:43 operator/device-time shutter-owner crash (o-v13x)
 
 - User reported the camera battery was replaced at 14:40 and that OpenPolaris
@@ -25,13 +42,12 @@
   change now records those values and a bounded `/proc/self/maps` dump. It does
   not alter shutter/capture policy. ARM Stage-2 compilation and full offline
   patcher gate pass (16 deterministic container checks + 24 Python checks).
-- This diagnostic change is not yet built, installed, reviewed, or physically
-  tested. Preserve strict Pentax pre-shutter admission and unresolved-output
-  blocking. Next: commit this evidence and diagnostic source on clean `main`,
-  build one provenance-complete instrumented candidate, obtain independent
-  review, then repeat one request-attributed M-mode shot and use the registers
-  and mappings to identify/fix the actual crash before claiming shutter-cycle
-  completion.
+- This diagnostic change was built and installed as o-v15a after the initial
+  evidence capture. It has not been independently reviewed or capture-tested.
+  Preserve strict Pentax pre-shutter admission and unresolved-output blocking.
+  Next: obtain independent review, then repeat one request-attributed M-mode
+  shot and use the registers/mappings to identify and fix the actual crash
+  before claiming shutter-cycle completion.
 
 Clock note: operator/log times are preserved as device wall-clock labels.
 At collection the device's `date -u` was about one hour ahead of host UTC, so

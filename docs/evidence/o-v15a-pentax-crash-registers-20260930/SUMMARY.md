@@ -1,6 +1,8 @@
 # o-v15a Pentax crash-register diagnostic candidate
 
-Status: built and privately uploaded; **not installed or physically qualified**.
+Status: **installed and boot/runtime/provenance verified; no shutter test or
+physical qualification**. Independent review of the diagnostic change is
+pending before a capture reproduction.
 
 ## Why this candidate exists
 
@@ -54,15 +56,40 @@ making a behavior change.
 
 ## Next proof
 
-After independent review of the diagnostic-only change, install only through
-the registered extracted `FwPkt/` update flow. Do not send another shutter
-until device identity, version, embedded provenance, component hashes, and
-process ownership have been rechecked. Capture a bounded reproduction with the
-same log evidence as the 14:43 event. The minimum intended result is a crash
-record whose PC/LR resolve against the matching runtime maps and packaged
-objects, followed by a separate root-cause fix and its deterministic tests.
+After independent review of the diagnostic-only change, capture a bounded
+reproduction with the same log evidence as the 14:43 event. The minimum
+intended result is a crash record whose PC/LR resolve against the matching
+runtime maps and packaged objects, followed by a separate root-cause fix and
+its deterministic tests.
 
 The physical camera reported a long shutter interval at 14:43, but this
 candidate intentionally does not claim it resolves that symptom or makes
 capture safe. See patcher issue #145 and its evidence comment for the original
 Clog/Mlog/crash-log bundle.
+
+## Installation and read-only runtime verification
+
+Installed on 2026-09-30 through `/app/sd/FwPkt/` and the normal `/sbin/reboot`
+watcher path. Before staging, the verified Polaris was on `polaris_d13e86`
+(BSSID `48:E7:DA:D4:B5:73`), route `192.168.0.1` via `wlp8s0`, and reported
+`6.0.0.54.43` / build `6.0.0.54.43-o-v13x-camlib-prep-20260930`. The SD
+`FwPkt/` target was absent. The registered ZIP hash and appfs MD5 matched this
+registry row; after transfer all six payload byte sizes and MD5s matched the
+package `firmwareInfo` before reboot.
+
+After reboot, device identity was rechecked by Polaris BSSID and Wi-Fi route.
+`/app/FwVer` reports `6.0.0.54.44`; embedded provenance reports libgphoto2
+`fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd`, patcher
+`9a2c1396f4a77b85b0f8e8f3f2ce16f3238e0980`, and the exact o-v15a build id.
+`polestar_app` and `pgphoto.stage2ondisk` are alive. Environment paths select
+the intended Stage-2 tree; core, port, ptp2 and usb1 Stage-2/stock-path hashes
+match pairwise. The running loader contains the new `arm lr=` and `process maps
+begin` diagnostic strings. Pentax `25fb:0189` is enumerated.
+
+The read-only canary probe reported K-3 Mark III `state=1`, `storage=2`,
+`photoFormat=2`; it did not send capture request 264. No physical shutter test
+was performed. The reboot's kernel log includes a USB bus reset and then the
+camera enumerated; this does not establish a post-install capture result. The
+Mlog reported that the SD card had not been properly unmounted before reboot;
+firmware files nevertheless passed all six manifest checks before reboot.
+Full transcript: `INSTALL-VERIFICATION.md`.
