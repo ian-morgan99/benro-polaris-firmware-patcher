@@ -47,8 +47,15 @@ checksums are in `raw/` and `SHA256SUMS`; timestamps are Polaris log time (UTC).
    with a busy/unavailable camera, not proof that preview caused capture failure.
 9. **Short-lived network clients are visible but not identifiable.** Clients
    from `192.168.0.4` connect, send code 266, and close; connection records do
-   not identify Benro Connect versus OpenPolaris. This dataset cannot establish
-   that a second client caused the capture failures.
+   not identify Benro Connect versus OpenPolaris. Separately, the operator
+   reported a direct physical comparison during this session: repeated flicker
+   occurred with Benro Connect and OpenPolaris connected together; it did not
+   persist with Benro Connect alone; adding a second Benro Connect produced at
+   most a brief flicker before stabilizing. This is user-reported A/B hardware
+   evidence, not something the socket logs identify. It makes OpenPolaris's
+   distinct connection/session behavior the app-side lead; the exact mechanism
+   (control polling, keepalive, preview ownership, or another lifecycle
+   difference) still needs instrumentation.
 
 ## Ownership and next discriminating work
 
@@ -63,9 +70,12 @@ checksums are in `raw/` and `SHA256SUMS`; timestamps are Polaris log time (UTC).
 - **#146 session lifecycle:** use the 02:15:04 netlink removal as an actual USB
   detach/rebind case, while preserving uncertainty about who initiated it.
   Camera state 0 at 02:13 is not itself evidence of physical removal.
-- **#147 preview/workload:** examine the repeated transient preview failures and
-  cooldown, but do not claim preview contention as the capture root cause from
-  this log alone.
+- **#147 preview/workload:** examine the repeated transient preview failures
+  and cooldown alongside the reported A/B result. OpenPolaris + Benro Connect
+  is the failing combination; two Benro Connect clients are the reported
+  stable comparator. This points ownership to OpenPolaris's
+  connection/workload path, although the logs do not isolate whether
+  keepalive, preview, or control traffic is the mechanism.
 - **Layer attribution remains open.** There is no directly attached-camera
   reproduction against the exact libgphoto2 SHA in this evidence bundle. The
   current evidence therefore does not justify assigning the failure to generic
@@ -81,5 +91,8 @@ resulting files and eventually timed those operations out. It correctly
 refused to send one more shutter while an earlier file result was unresolved.
 One five-second Bulb request was logged while the camera still reported a
 1/10-second shutter setting. There is also a real USB unplug event later, but
-the logs do not tell us who or what caused it. We have strong failure evidence,
-but not yet enough to name one software layer as the root cause.
+the logs do not tell us who or what caused it. The operator's client-combination
+test points specifically to OpenPolaris's different connection/workload
+behavior as the source of the app contention; the exact network/camera
+operation causing it is not yet isolated. The raw device logs alone cannot
+identify client ownership.
