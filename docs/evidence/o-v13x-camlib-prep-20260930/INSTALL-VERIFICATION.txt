@@ -1,0 +1,61 @@
+Candidate: o-v13x-camlib-prep-20260930
+Install date: 2026-09-30
+Registry location: ian-morgan99/PrivateResearch/firmware-packets/o-v13x-camlib-prep-20260930/FwPkt.zip
+Registry artifact commit: b0d13ec82
+Patcher source: 575d5d8b7e31ef2d82c9a8354e6e6a517a87576c (main, clean at build)
+libgphoto2 source: fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd (main, clean)
+Build id: 6.0.0.54.43-o-v13x-camlib-prep-20260930
+Displayed FwVer: 6.0.0.54.43
+ZIP MD5: f8a3748d4146b1e29f7bbe6e19cfab82
+ZIP SHA-256: 8d0baba6b40744a65a1cc8f6d519a02fd178c2dd960d0178fa5ab3a090905132
+appfs MD5: b97620dd421329ed2d8dd5f9d3e697a8
+
+PRE-INSTALL IDENTITY
+SSID: polaris_d13e86
+BSSID: 48:E7:DA:D4:B5:73
+Route: 192.168.0.1 dev wlp8s0
+Installed FwVer before install: 6.0.0.54.42
+
+STAGING AND MANIFEST
+The SD card was mounted at /app/sd and had no existing /app/sd/FwPkt tree.
+The registered candidate's extracted FwPkt/ tree was streamed by the documented
+tar-over-SSH flow. On-device payload sizes and MD5s matched firmwareInfo:
+
+camera/config       size 326       md5 1905e2d041be62b679f7dc6c64ab9d3a
+camera/uImage       size 4188435   md5 5f6a0c1861a254371c4a956b57f26685
+camera/rootfs.ubifs size 21102592 md5 778b27bcade9ddc6ea4a7cb45254c551
+camera/appfs.ubifs  size 64356352 md5 b97620dd421329ed2d8dd5f9d3e697a8
+gimbal/polaris403_2.0.0.22.bin
+                    size 84328    md5 4facafa7d29c1e6c2a125b8309c9b901
+gimbal/polaris413_2.0.0.22.bin
+                    size 84284    md5 c0299d06a15f5c2fbecb9a6db76a29c5
+
+The normal /sbin/reboot path was triggered after sync.
+
+POST-BOOT IDENTITY AND RUNTIME
+SSID/BSSID and Wi-Fi route were re-confirmed before trusting SSH results.
+/app/FwVer: FwVer:6.0.0.54.43;date:2026.09.30;
+Embedded provenance:
+  git_commit=fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd
+  patcher_commit=575d5d8b7e31ef2d82c9a8354e6e6a517a87576c
+  selected_camlibs=ptp2,pentax
+  build_id=6.0.0.54.43-o-v13x-camlib-prep-20260930
+  display_fwver=6.0.0.54.43
+polestar_app and pgphoto.stage2ondisk are running.
+Stage-2 core and port are present in /proc/250/maps.
+Core MD5, both /app/lib/stage2 and /app/lib: 4ef64d8950eee70d9200093286fb0f3b
+Port MD5, both /app/lib/stage2 and /app/lib: ad50e83594397aef48b63ed2375890cc
+
+PHYSICAL TEST STATUS
+No Pentax (25fb) or listed UVC camera was visible on USB at the check.
+No shutter was sent. Camera physical capture acceptance is pending.
+This image does not include a functional/linked iPolar or StarShoot camlib.
+
+GATES
+Libgphoto2 deterministic suite: 14 passed; serial-control no-CI prerequisite
+test skipped.
+Patcher: 16 container checks passed; 24 Python tests passed; FwPkt structural
+validation passed; build-time firmwareInfo-vs-payload validation passed.
+Separate pre-release manifest gate skipped because the clean source worktree
+does not contain the stock firmware/FwPkt.zip prerequisite.
+No Benro harness run is claimed for this candidate.

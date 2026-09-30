@@ -1,5 +1,39 @@
 # Current repository state
 
+## 2026-09-30 o-v13x-camlib-prep installed; physical capture pending
+
+- Candidate `o-v13x-camlib-prep-20260930` is installed through the registered
+  extracted `FwPkt/` SD tree and normal `/sbin/reboot` updater path. Device
+  identity was confirmed before staging: active SSID `polaris_d13e86`, BSSID
+  `48:E7:DA:D4:B5:73`, route to `192.168.0.1` via `wlp8s0`; pre-install
+  `/app/FwVer` was `6.0.0.54.42`.
+- The on-device SD tree began empty. Every one of the six payloads (camera
+  config, uImage, rootfs, appfs, and both gimbal images) was recomputed after
+  transfer; byte sizes and MD5s matched the candidate's `firmwareInfo`. After
+  reboot, `/app/FwVer` is `6.0.0.54.43` and embedded provenance matches libgphoto2
+  `fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd`, patcher
+  `575d5d8b7e31ef2d82c9a8354e6e6a517a87576c`, and build id
+  `6.0.0.54.43-o-v13x-camlib-prep-20260930` exactly.
+- Runtime checks: `polestar_app` and `pgphoto.stage2ondisk` are alive;
+  Stage-2 core and port are mapped from `/app/lib/stage2`; stock and Stage-2
+  core MD5s both equal `4ef64d8950eee70d9200093286fb0f3b`, and port MD5s both
+  equal `ad50e83594397aef48b63ed2375890cc`. The package's selected camlibs are
+  only `ptp2,pentax`.
+- Physical camera test is **pending, not passed**. At verification no Pentax
+  (`25fb`) or listed UVC adapter was visible on USB, and Clog had no camera
+  state report. No shutter was sent. Once the camera is attached and powered,
+  run the bounded canary; do not interpret successful install/runtime checks as
+  capture qualification.
+- This is not an iPolar or StarShoot enablement build: the iPolar compile check
+  was skipped because libuvc headers were absent, StarShoot only had a prototype
+  compile check, and neither is linked into libgphoto2. Plans and constraints
+  are tracked on libgphoto2 #85/#86 and patcher #158/#159. The corresponding
+  detailed install transcript is in
+  `docs/evidence/o-v13x-camlib-prep-20260930/INSTALL-VERIFICATION.txt`.
+- Artifact registry row is in `docs/FWPKT-PROVENANCE-CONTRACT.md`; candidate
+  ZIP SHA-256 is
+  `8d0baba6b40744a65a1cc8f6d519a02fd178c2dd960d0178fa5ab3a090905132`.
+
 ## 2026-09-29 latest failure and candidate — o-v13w context isolation
 
 - **Confirmed physical failure on o-v13v:** with the Pentax attached and set to
