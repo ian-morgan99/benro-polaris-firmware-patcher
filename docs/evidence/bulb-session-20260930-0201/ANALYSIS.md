@@ -1,10 +1,12 @@
 # Analysis of the 2026-09-30 capture session
 
-This analysis uses the complete rotated logs 000177–000180 and separates what
-they prove from what still needs a discriminating test. The raw evidence and
-checksums are in `raw/` and `SHA256SUMS`; timestamps are Polaris log time (UTC).
+This analysis uses the complete rotated logs 000177–000180, the operator's
+controlled client-combination comparison, and current OpenPolaris source. It
+separates those evidence types because the raw device logs cannot identify an
+app by name. The raw evidence and checksums are in `raw/`; timestamps are
+Polaris log time (UTC).
 
-## Findings supported by the logs
+## Findings supported by the device logs
 
 1. **The earlier ordinary RAW+JPEG captures worked.** SP_0147–SP_0150 each
    completed with two camera objects (DNG and JPG), both transferred and
@@ -47,15 +49,84 @@ checksums are in `raw/` and `SHA256SUMS`; timestamps are Polaris log time (UTC).
    with a busy/unavailable camera, not proof that preview caused capture failure.
 9. **Short-lived network clients are visible but not identifiable.** Clients
    from `192.168.0.4` connect, send code 266, and close; connection records do
-   not identify Benro Connect versus OpenPolaris. Separately, the operator
-   reported a direct physical comparison during this session: repeated flicker
-   occurred with Benro Connect and OpenPolaris connected together; it did not
-   persist with Benro Connect alone; adding a second Benro Connect produced at
-   most a brief flicker before stabilizing. This is user-reported A/B hardware
-   evidence, not something the socket logs identify. It makes OpenPolaris's
-   distinct connection/session behavior the app-side lead; the exact mechanism
-   (control polling, keepalive, preview ownership, or another lifecycle
-   difference) still needs instrumentation.
+   not identify Benro Connect versus OpenPolaris. Do not use these lines alone
+   to attribute a socket to either app.
+
+## Operator-reported controlled app comparison
+
+The operator explicitly states 100% certainty in this repeated physical A/B
+result: **Benro Connect + OpenPolaris connected together caused repeated
+camera/app flicker and contention; Benro Connect alone was stable; two Benro
+Connect clients caused at most a brief flicker and then stabilized.** This
+confirms an OpenPolaris-specific app interoperability/contention defect. Do not
+soften the app-level attribution to generic “multiple clients” or “unknown
+which app.”
+
+The comparison identifies the app as the differentiating cause. The exact
+OpenPolaris implementation path (connection lifetime, keepalive, background
+polling, automatic preview ownership, cleanup, or interaction among them) is
+still to be isolated. The tested OpenPolaris build identity was not recorded;
+the source review below is of current `main`, not a claim that this exact SHA
+was the binary in the physical comparison.
+
+The separate later capture sequence is not the same controlled A/B: it
+includes failed Bulb/capture attempts and a kernel USB detach. Do not attribute
+those capture failures or the USB detach to OpenPolaris without matching them
+to a known OpenPolaris-connected interval.
+
+## Current OpenPolaris source review (main `161ac2d9c661ff24397f49646fab5ea0c61a4378`)
+
+The user-reported attribution is app-side, and the current code contains
+specific unclosed workload paths relevant to issue #90:
+
+1. `AppViewModel.suspendCaptureWorkloads()` suspends the 284/517 loop through
+   `cameraPollingSuspended` and stops this process's 8080 preview stream, but
+   `startCameraAttachmentPolling()` continues sending camera-info code 286
+   every five seconds during a capture. That is a concrete camera-backed poll
+   not covered by the claimed capture suspension.
+2. Every successful connection starts the 8080 preview stream automatically.
+   Preview ownership is local to the OpenPolaris process; it cannot see or
+   arbitrate a Benro Connect preview/control session. This is a strong
+   code-level candidate for the app-combination-specific conflict.
+3. The intervalometer invokes `CameraController.capture()` directly. Unlike
+   `AppViewModel.capture()`, that path does not call
+   `suspendCaptureWorkloads()` or start `captureWatchdogJob`. Its completion
+   path waits on `shotCompleted.receive()` without a deadline. Thus astro /
+   interval sequences keep preview and camera-info polling active and can
+   remain Running indefinitely if correlated events are absent.
+4. `PreviewController` enforces one stream only inside one OpenPolaris process.
+   The source has no cross-process/device lease that can arbitrate its 8080
+   stream or 9090 control session against Benro Connect. `MountSession`'s
+   mutex serializes writes only within that one app instance.
+5. Existing tests prove code 266 is not polled, capture completion requires
+   correlated 264+773, and happy-path interval shots advance one at a time.
+   The reviewed tests do not prove that code 286/preview are quiesced during
+   single/sequence capture, that interval shots have a bounded unknown-outcome
+   watchdog, or the reported three-way physical client comparison.
+
+These code-review findings are not needed to establish app-level attribution;
+the operator's client A/B already establishes that. The source findings narrow
+specific OpenPolaris-owned corrective work and candidates for the mechanism.
+
+## Review of prior OpenPolaris capture fixes
+
+- Commit `a65f636` added periodic code-266 capture-state polling;
+  `22a1a33` then based the capture state machine on that response. Live K-3 III
+  evidence showed 266 returns white-balance/config data, not capture state.
+- Commit `57dd1a0` removed that polling model and replaced it with correlated
+  unsolicited 264 lifecycle plus positive 773 file evidence. Current main has
+  the no-266 regression test. This earlier code-266 defect is corrected in
+  source; it is not the present cross-app flicker cause.
+- Commit `f2772d1` wired interval shooting, but did not route each shot through
+  the single-shot workload suspension/watchdog. The 2026-09-26 #90 request for
+  a bounded per-shot unknown-outcome deadline remains unmet: the intervalometer
+  awaits `shotCompleted` indefinitely, and the current source comment says no
+  per-shot watchdog is needed. The happy-path sequence tests do not cover this
+  timeout case.
+- Review validation: `./gradlew :composeApp:jvmTest :shared:jvmTest` passed at
+  OpenPolaris main `161ac2d9c661ff24397f49646fab5ea0c61a4378`. These tests do
+  not exercise the reported app-combination matrix or the identified workload
+  gaps.
 
 ## Ownership and next discriminating work
 
@@ -70,12 +141,16 @@ checksums are in `raw/` and `SHA256SUMS`; timestamps are Polaris log time (UTC).
 - **#146 session lifecycle:** use the 02:15:04 netlink removal as an actual USB
   detach/rebind case, while preserving uncertainty about who initiated it.
   Camera state 0 at 02:13 is not itself evidence of physical removal.
-- **#147 preview/workload:** examine the repeated transient preview failures
-  and cooldown alongside the reported A/B result. OpenPolaris + Benro Connect
-  is the failing combination; two Benro Connect clients are the reported
-  stable comparator. This points ownership to OpenPolaris's
-  connection/workload path, although the logs do not isolate whether
-  keepalive, preview, or control traffic is the mechanism.
+- **OpenPolaris #94 app-side contention:** the client comparison confirms
+  OpenPolaris + Benro Connect is the failing pairing; OpenPolaris is the app
+  responsible for this incompatibility. Fix/test automatic competing preview,
+  code-286 polling, intervalometer workload bypass and the missing per-shot
+  watchdog. Instrumentation is for selecting the exact internal mechanism,
+  not for deciding whether OpenPolaris is implicated.
+- **#147 patcher preview/camera behavior:** separately track the Polaris-side
+  repeated transient preview failures and cooldown. Those firmware/Stage-2
+  observations do not negate the OpenPolaris A/B result and do not prove
+  firmware caused the cross-client flicker.
 - **Layer attribution remains open.** There is no directly attached-camera
   reproduction against the exact libgphoto2 SHA in this evidence bundle. The
   current evidence therefore does not justify assigning the failure to generic
@@ -90,9 +165,11 @@ camera acknowledged several shutter commands, but Polaris never found the
 resulting files and eventually timed those operations out. It correctly
 refused to send one more shutter while an earlier file result was unresolved.
 One five-second Bulb request was logged while the camera still reported a
-1/10-second shutter setting. There is also a real USB unplug event later, but
-the logs do not tell us who or what caused it. The operator's client-combination
-test points specifically to OpenPolaris's different connection/workload
-behavior as the source of the app contention; the exact network/camera
-operation causing it is not yet isolated. The raw device logs alone cannot
-identify client ownership.
+1/10-second shutter setting. Separately, the operator's controlled comparison
+confirms that OpenPolaris paired with Benro Connect causes the sustained
+flicker; Benro Connect alone was stable, and a second Benro Connect caused only
+transient flicker. Current OpenPolaris code has unclosed preview/polling/
+sequence workload paths that dedicated issue #94 now tracks. The exact
+internal OpenPolaris mechanism remains to be isolated. The later Bulb capture
+failures and actual USB detach are distinct observations; the evidence does
+not establish that OpenPolaris caused those.

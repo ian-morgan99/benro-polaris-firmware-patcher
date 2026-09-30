@@ -21,6 +21,20 @@ device-log events. It intentionally records events, not a root-cause conclusion.
 
 ## Test ledger
 
+### Separate client-combination A/B (operator report; times as displayed by operator, timezone not established)
+
+| Approx. displayed time | Source | Observation |
+| --- | --- | --- |
+| ~01:44–01:52 | User | Repeated camera/app flicker when OpenPolaris and Benro Connect were connected together. The operator explicitly reported that the flicker occurred with both apps and not with a single app. |
+| ~01:52 | User | With Benro Connect connected and OpenPolaris not connected, the setup was reported stable; subsequent captures returned control to the app. |
+| ~01:52–01:56 | User | Connecting a second Benro Connect could produce one brief flicker, after which the system stabilized. The operator contrasted this with continued flicker for Benro Connect + OpenPolaris. |
+
+This client-combination comparison is direct operator-reported physical A/B
+evidence and is the basis for assigning the flicker/interoperability defect to
+OpenPolaris's differing connection/workload behavior. The Clog/Mlog socket
+records do not identify app names and are not the basis for that attribution.
+The OpenPolaris build identity used for this comparison was not recorded.
+
 | Time (device UTC) | Source | Recorded event |
 | --- | --- | --- |
 | 01:52:57–01:53:13 | Clog + Mlog | Capture requested as `SP_0147.jpg`; Pentax `InitiateCapture` returned `0x2001`; libgphoto2 listed two camera files (`IMGP3695.DNG`, `IMGP3695.JPG`); Polaris logged DNG and JPG file events and terminal capture state. |
