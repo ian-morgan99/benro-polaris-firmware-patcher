@@ -1,0 +1,617 @@
+umount: can't unmount /app/sd: Invalid argument
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+Bus 001 Device 003: ID 25fb:0189
+[m[01:34:59:353 [1;32mINFO[m-Init]:main[94]:[0;35mFwVer v4.0.0.32 20250509
+[m[01:34:59:353 [1;32mINFO[m-Init]:main[95]:+++++++++++++++++++++
+[m[01:34:59:375 [1;32mINFO[m-Init]:main[97]:+++++++++++++++++++++
+[m[01:34:59:375 [1;32mINFO[m-]:HI_SYSTEM_GetStartupWakeupSource[75]:[0;35mHI_SYSTEM_STARTUP_SRC_STARTUP
+[m[01:34:59:377 [1;32mINFO[m-]:SP_GpioInit[37]:[0;32;32mHAL_GPIO_Init OK
+[m[m[01:34:59:377 [1;31mERROR[m-]:SP_GpioUnexport[226]:Failed to unexport gpio![m[01:34:59:379 [1;31mERROR[m-]:SP_GpioUnexport[226]:Failed to unexport gpio![m[01:34:59:390 [1;32mINFO[m-]:CameraGpioTask[116]:camera gpio value = 1
+[m[01:34:59:398 [1;32mINFO[m-]:SP_UserParamInit[198]:SP_UserParamInit success,s8ParamFd = 1;
+[m[01:34:59:398 [1;32mINFO[m-]:SP_UserParamInit[207]:SettlingTime[5];
+[m[01:34:59:398 [1;32mINFO[m-]:SP_SetAutoOffSw[329]:SP_SetAutoOffSw:0;
+[m[01:34:59:398 [1;32mINFO[m-]:SP_UserParamInit[214]:s32AutoOffSw[0];
+[m[01:34:59:398 [1;32mINFO[m-]:SP_UserParamInit[219]:s32AutoLevelEn[1];
+[m[01:34:59:398 [1;32mINFO[m-]:SP_UserParamInit[225]:s32TimeIntervalType[0];
+[m[01:34:59:500 [1;32mINFO[m-]:SP_GetFactoryParam[56]:[0;32;34mfactoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[01:34:59:500 [1;32mINFO[m-]:SP_GetFactoryParam[63]:hw:1.1
+[m[01:34:59:500 [1;32mINFO[m-]:SP_GetFactoryParam[67]:date:2021.11.29
+[m[01:34:59:500 [1;32mINFO[m-]:SP_GetFactoryParam[71]:pcb:1.20
+[m[01:34:59:500 [1;33mWARN[m-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
+ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+[m[01:34:59:500 [1;32mINFO[m-]:SP_GetFactoryParam[75]:CellHwVer:0
+[m[01:34:59:500 [1;32mINFO[m-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
+[m[01:34:59:502 [1;32mINFO[m-]:SP_GetFwVer[286]:fwVerinfo[FwVer:6.0.0.54.43;date:2026.09.30;
+];len:[35];
+[m[01:34:59:502 [1;32mINFO[m-]:SP_GetFwVer[293]:FwVer[6.0.0.54.43];
+[m[01:34:59:580 [1;32mINFO[m-]:SP_SetSysInitTime[134]:RTC DateTime: 2026/09/30-01:34:59
+[m[01:34:59:580 [1;32mINFO[m-]:SP_SetSysInitTime[142]:[0;35mBuild DateTime: 2025/05/09-14:37:27
+[m[01:34:59:169 [1;32mINFO[m-SYSTEM]:HI_SYSTEM_SetDateTime[402]:Wed Sep 30 01:34:59 2026
+
+[m[01:34:59:170 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1001],id[131076]
+[m[m[01:34:59:170 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1002],id[98307]
+[m[m[01:34:59:170 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1003],id[65538]
+[m[m[01:34:59:170 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1004],id[163845]
+[m[m[01:34:59:170 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1006],id[32769]
+[m[m[01:34:59:170 [1;32mINFO[m-sp_msgComm]:SP_MsgQueueCreate[39]:[0;32;32mcreate msg queue success,key[1005],id[0]
+[m[m[01:34:59:173 [1;32mINFO[m-]:SP_CreateBtRcvMsgProcTask[186]:SP_CreateBtRcvMsgProcTask success
+[m[01:34:59:173 [1;32mINFO[m-]:SP_CreateBtSendMsgProcTask[244]:SP_CreateBtSendMsgProcTask success
+[m[01:34:59:423 [1;32mINFO[m-]:SP_NetInit[217]:INIT WEB SERVER OK 
+[m[01:34:59:428 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=1] start
+[m[01:34:59:431 [1;32mINFO[m-]:Uart3Open[52]:open uart3 success,fd[13]
+[m[01:34:59:494 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0
+[m[01:34:59:494 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/rx-0
+[m[01:34:59:494 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/10020000.himci.SD/mmc_host/mmc1/mmc1:0001/mmc1:0001:2/net/wlan0/queues/tx-0
+[m[01:34:59:494 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/sdio/drivers/bcmsdh_sdmmc
+[m[01:34:59:494 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/bus/pConfiguration file: /app/wifi/hostapd.conf
+rfkill: Cannot open RFKILL control device
+Using interface wlan0 with hwaddr 48:e7:da:d4:b5:73 and ssid "polaris_d13e86"
+wlan0: interface state UNINITIALIZED->ENABLED
+wlan0: AP-ENABLED 
+latform/drivers/bcmdhd_wlan
+[m[01:34:59:864 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:0;]
+[m[m[01:35:00:429 [1;32mINFO[m-]:SP_CreateSensorMngTask[276]:SP_CreateSensorMngTask success
+[m[01:35:00:433 [1;32mINFO[m-]:SP_MpuInit[133]:SP_MpuInit success
+[m[01:35:00:433 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:0;sta:1;Use:1;
+[m[01:35:00:434 [1;31mERROR[m-]:SP_I2cRead[78]:SP_I2cRead error
+[m[01:35:00:434 [1;32mINFO[m-]:MagIdentityChipID[49]:QMC6310U_STA
+[m[01:35:00:434 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:1;sta:1;Use:1;
+[m[01:35:00:435 [1;32mINFO[m-]:SP_GetGyroCalInfo[186]:[0;35mNO Gyro calibrate info
+[m[01:35:00:435 [1;32mINFO[m-]:SP_GetGyroCalInfo[189]:GyroOffset x[0.0];y[0.0];z[0.0];
+[m[01:35:00:437 [1;32mINFO[m-]:SP_GetAcceCalInfo[628]:[0;35mNO Acce calibrate info
+[m[01:35:00:437 [1;32mINFO[m-]:SP_GetAcceCalInfo[634]:AcceOffset x[0.0];y[0.0];z[0.0];
+[m[01:35:00:437 [1;32mINFO[m-]:SP_GetMagCalinfo[573]:[0;35mNO Mag calibrate info
+[m[01:35:00:437 [1;32mINFO[m-]:SP_GetMagCalinfo[576]:mag Offset x[0];y[0];z[0];
+[m[01:35:00:437 [1;32mINFO[m-]:SP_GetMagCalinfo[579]:mag Bias x[0.0];y[0.0];z[0.0];
+[m[01:35:00:437 [1;32mINFO[m-]:SP_GetMagCalinfo[582]:mag scale x[1.0];y[1.0];z[1.0];
+[m[01:35:00:441 [1;32mINFO[m-]:SensorMngTask[115]:SP_SENSOR_STA_GIMBAL_ANGLE_INIT Box0Yaw:2.1731;Box0Pitch:-0.5845;
+[m[01:35:00:441 [1;32mINFO[m-]:SP_MpiSysInit[59]:SP_MpiSysInit success
+[m[01:35:00:442 [1;32mINFO[m-]:SP_CreateCheckPhotoTimeOutTask[901]:SP_CreateCheckPhotoTimeOutTask success
+[m[01:35:00:442 [1;32mINFO[m-]:SP_CreateCableReleaseTask[1009]:SP_CreateCableReleaseTask success
+
+[m[01:35:00:444 [1;31mERROR[m-]:SP_CheckHdmiId[643]:HDMI Hw no Support
+[m[01:35:00:444 [1;32mINFO[m-]:SendHwToGimbalTask[82]:SendHwToGimbal hw[11],ubootVer[0]
+[m[01:35:00:444 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:2;sta:0;Use:1;
+[m[01:35:00:446 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[433]:bSendHwAck
+[m[01:35:00:682 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=2 192.168.0.2:55389] from [1] s_u32ClientNum[1]
+[m[01:35:00:682 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[01:35:00:682 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[01:35:00:682 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=2] start
+[m[01:35:00:732 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:780;val:-1
+[m[01:35:00:733 [1;32mINFO[m-]:SP_GetDeviceVer[322]:stFatoryInfo HwVer[1.1]
+[m[01:35:00:733 [1;32mINFO[m-]:SP_GetDeviceVer[327]:mFwVer[6.0.0.54.43]
+[m[01:35:00:792 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:818;val:-1
+[m[01:35:00:792 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:284;val:-1
+[m[01:35:00:793 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
+[m[01:35:00:793 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
+[m[m[01:35:00:991 [1;32mINFO[m-]:AcceAttitudeInit[596]:xMean[0.57],yMean[0.02],zMean[0.82]
+[m[01:35:00:992 [1;32mINFO[m-]:AcceAttitudeInit[619]:[0;35mxVar[0.000716],yVar[0.000652],zVar[0.000678]
+[m[01:35:00:992 [1;32mINFO[m-]:SP_BoxAhraInit[890]:[0;35maAcce:x[0.5712],y[0.0237],z[0.8244]
+[m[01:35:00:994 [1;32mINFO[m-]:SP_BoxAhraInit[896]:++++++acce init ok +++++++++++
+[m[01:35:00:994 [1;32mINFO[m-]:SP_BoxAhraInit[898]:aAcce:x[1.6445],y[-34.7037],z[0.0000]
+[m[01:35:00:994 [1;32mINFO[m-]:SensorMngTask[85]:SP_SENSOR_STA_BOX_AHRS_INIT SUCCESS
+[m[01:35:01:264 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:808;val:type:0;
+[m[01:35:01:264 [1;32mINFO[m-]:SP_MsgSysFromAppProc[897]:[0;35mclient type[0];id[2];
+[m[01:35:01:264 [1;32mINFO[m-]:SP_ClientCtxAdd[376]:[0;35mSP_ClientCtxAdd:id[2];type[wifi];WifiCount[1],CellCount[0];
+[m[01:35:01:264 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[808],val[ret:0;]
+[m[m[01:35:01:299 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa
+[m[01:35:01:300 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/virtual/bdi/179:0
+[m[01:35:01:302 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0
+[m[01:35:01:302 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/100f0000.himci.SD/mmc_host/mmc0/mmc0:aaaa/block/mmcblk0/mmcblk0p1
+[m[01:35:01:303 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1026],val[1]
+[m[m[01:35:01:303 [1;32mINFO[m-]:EventMsgProc[2615]:SP_EVENT_SD_PLUGED
+[m[01:35:01:321 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1027],val[1]
+[m[m[01:35:01:321 [1;32mINFO[m-]:EventMsgProc[2641]:SP_EVENT_SD_MOUNTED
+[m[01:35:01:337 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0
+[m[01:35:01:445 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:5;sta:0;Use:0;
+[m[01:35:01:445 [1;32mINFO[m-]:SP_GimbalGetExAxsiSate[913]:uart send:SP_GimbalGetExAxsiSate
+[m[01:35:01:445 [1;31mERROR[m-]:SP_CheckTtyUsbOk[2319]:SP_CheckTtyUsbOk
+[m[01:35:01:447 [1;32mINFO[m-]:SP_CreateOmsTask[218]:SP_CreateOmsTask success
+[m[01:35:01:447 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:0;]
+[m[m[01:35:01:447 [1;32mINFO[m-]:OmsTask[171]:_____OMS_STEP_NONE
+[m[01:35:01:447 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[01:35:01:447 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[358]:UART_GIMBAL_FW_VER 2.0.0.22
+[m[01:35:01:449 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[364]:UART_GIMBAL_HW_VER 1.2
+[m[01:35:01:451 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[370]:UART_GIMBAL_IAP_VER 1.3
+[m[01:35:01:453 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:11.00;capacity:62;ChargeState:1;
+[m[01:35:01:453 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:62;charge:1;]
+[m[m[01:35:01:455 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[319]:[0;35mExAxsiOn = 1
+[m[01:35:01:455 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:1;]
+[m[m[01:35:01:459 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[606]:[0;35mUART_EX_FW_VER 1.0.2.14
+[m[01:35:01:461 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[448]:ExAngle:-172.729
+[m[01:35:01:758 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[01:35:01:762 [1;32mINFO[m-]:SP_BlueInit[2986]:[0;35mSP_BlueInit start
+[m[01:35:01:765 [1;32mINFO[m-]:SP_BlueInit[3009]:[0;35mg_main_loop_new
+[m[01:35:01:838 [1;32mINFO[m-]:SP_BlueInit[3046]:-------------main loop running -------
+[m[01:35:01:846 [1;32mINFO[m-]:connect_handler[121]:connect_handler
+[m[01:35:01:862 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Adapter1]
+[[0;92mNEW[0m] Controller 48:E7:DA:D4:B5:72 polaris_d13e86 [default]
+[m[01:35:01:866 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattManager1]
+[m[01:35:01:869 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Media1]
+[m[01:35:01:871 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.NetworkServer1]
+[m[01:35:01:873 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.LEAdvertisingManager1]
+[m[01:35:01:875 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.AgentManager1]
+[m[01:35:01:881 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.ProfileManager1]
+[m[01:35:01:883 [1;32mINFO[m-]:client_ready[2875]:client_ready
+Agent registered
+[m[01:35:01:975 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001801-0000-1000-8000-00805f9b34fb
+[m[01:35:01:975 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[m[01:35:01:975 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+[m[01:35:01:975 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001800-0000-1000-8000-00805f9b34fb
+[m[01:35:01:975 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+[m[01:35:01:988 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Alias: polaris_d13e86
+[m[01:35:01:989 [1;32mINFO[m-]:parse_iter[288]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Pairable: yes
+[m[01:35:02:001 [1;32mINFO[m-]:parse_iter[288]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 Discoverable: yes
+[m[01:35:02:245 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:45
+[m[01:35:02:399 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:02:445 [1;32mINFO[m-]:SP_GetDeviceVer[309]:gimbal HwVer[1.2]
+[m[01:35:02:445 [1;32mINFO[m-]:SP_GetDeviceVer[316]:gimbal FwVer[2.0.0.22]
+[m[01:35:02:445 [1;32mINFO[m-]:SP_GetDeviceVer[322]:stFatoryInfo HwVer[1.1]
+[m[01:35:02:445 [1;32mINFO[m-]:SP_GetDeviceVer[327]:mFwVer[6.0.0.54.43]
+[m[01:35:02:446 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[780],val[hw:1.1.1.2;sw:8.0.0.76;exAxis:1.0.2.14;sv:1;ov: ;]
+[m[m[01:35:02:448 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1005],type[6],code[1282],val[]
+[m[m[01:35:02:448 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:4;sta:1;Use:1;
+[m[01:35:02:448 [1;32mINFO[m-]:SP_SetHwCode[3258]:[0;35mHwCode:3;sta:1;Use:1;
+[m[01:35:02:758 [1;32mINFO[m-]:SP_SetUpBt[106]:------------------
+[m[01:35:02:758 [1;32mINFO[m-]:SP_BlueSlaveConfig[2968]:[0;35mBT Name,polaris_d13e86
+[m[01:35:02:758 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+Changing discoverable on succeeded
+[m[01:35:02:765 [1;32mINFO[m-]:gatt_register_service[1147]:gatt_register_service
+
+(polestar_app:249): GLib-CRITICAL **: Source ID 35 was not found when attempting to remove it
+[[0;92mNEW[0m] Primary Service
+	/org/bluez/app/service0xe14300
+	0000fff0-0000-1000-8000-00805f9b34fb
+	Unknown
+Changing polaris_d13e86 succeeded
+Changing pairable on succeeded
+[m[01:35:02:771 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xe14300/chrc0xe14318
+	0xfff1
+[m[01:35:02:772 [1;32mINFO[m-]:gatt_register_chrc[1433]:gatt_register_chrc
+[[0;92mNEW[0m] Characteristic
+	/org/bluez/app/service0xe14300/chrc0xe15dd0
+	0xfff2
+[m[01:35:02:777 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+Failed to register advertising object
+[m[01:35:02:777 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+[m[01:35:02:777 [1;32mINFO[m-]:SP_BlueSetDiscoverState[2958]:[0;35mDiscover on
+[m[01:35:02:778 [1;32mINFO[m-]:SP_SetBleState[81]:ble slave on
+Changing discoverable on succeeded
+[m[01:35:02:814 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001801-0000-1000-8000-00805f9b34fb
+[m[01:35:02:814 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110e-0000-1000-8000-00805f9b34fb
+[m[01:35:02:814 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+[m[01:35:02:814 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 00001800-0000-1000-8000-00805f9b34fb
+[m[01:35:02:814 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000fff0-0000-1000-8000-00805f9b34fb
+[m[01:35:02:814 [1;32mINFO[m-]:parse_iter[283]:[[0;93mCHG[0m] Controller 48:E7:DA:D4:B5:72 UUIDs: 0000110c-0000-1000-8000-00805f9b34fb
+Application registered
+Advertising object registered
+[m[01:35:02:863 [1;32mINFO[m-]:SP_GetSdInfo[2483]:u64TotalSize:121866;u64FreeSize::117240;u64UsedSize:4625
+[m[01:35:02:863 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1029],val[1]
+[m[m[01:35:02:863 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[279],val[state:1;]
+[m[m[01:35:02:863 [1;32mINFO[m-]:EventMsgProc[2657]:SP_EVENT_SD_SCAN
+[m[01:35:02:866 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0001.jpg
+[m[01:35:02:866 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0005.jpg
+[m[01:35:02:866 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0008.jpg
+[m[01:35:02:866 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0011.jpg
+[m[01:35:02:866 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0012.jpg
+[m[01:35:02:866 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0013.jpg
+[m[01:35:02:867 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0014.jpg
+[m[01:35:02:867 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0015.jpg
+[m[01:35:02:867 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0017.jpg
+[m[01:35:02:867 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0018.jpg
+[m[01:35:02:867 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0019.jpg
+[m[01:35:02:867 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0020.dng
+[m[01:35:02:867 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0021.dng
+[m[01:35:02:868 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0022.dng
+[m[01:35:02:868 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0024.jpg
+[m[01:35:02:868 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0025.jpg
+[m[01:35:02:868 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0026.jpg
+[m[01:35:02:868 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0027.jpg
+[m[01:35:02:868 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0028.jpg
+[m[01:35:02:869 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0029.jpg
+[m[01:35:02:869 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0030.jpg
+[m[01:35:02:869 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0031.jpg
+[m[01:35:02:869 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0032.jpg
+[m[01:35:02:869 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0033.jpg
+[m[01:35:02:870 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0034.jpg
+[m[01:35:02:870 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0035.jpg
+[m[01:35:02:870 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0036.jpg
+[m[01:35:02:870 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0037.dng
+[m[01:35:02:870 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0038.dng
+[m[01:35:02:870 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0039.dng
+[m[01:35:02:870 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0040.dng
+[m[01:35:02:871 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0041.dng
+[m[01:35:02:871 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0042.dng
+[m[01:35:02:871 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0043.dng
+[m[01:35:02:871 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0044.dng
+[m[01:35:02:871 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0045.dng
+[m[01:35:02:872 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0046.dng
+[m[01:35:02:872 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0047.dng
+[m[01:35:02:872 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0048.dng
+[m[01:35:02:872 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0049.dng
+[m[01:35:02:872 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0050.dng
+[m[01:35:02:873 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0051.dng
+[m[01:35:02:873 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0052.dng
+[m[01:35:02:873 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0053.dng
+[m[01:35:02:873 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0056.dng
+[m[01:35:02:873 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0057.dng
+[m[01:35:02:873 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0060.dng
+[m[01:35:02:874 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0061.dng
+[m[01:35:02:874 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0062.jpg
+[m[01:35:02:874 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0069.jpg
+[m[01:35:02:874 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0072.jpg
+[m[01:35:02:874 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0074.dng
+[m[01:35:02:875 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0075.dng
+[m[01:35:02:875 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0076.dng
+[m[01:35:02:875 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0077.dng
+[m[01:35:02:875 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0078.dng
+[m[01:35:02:876 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0079.dng
+[m[01:35:02:876 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0081.dng
+[m[01:35:02:876 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0081.jpg
+[m[01:35:02:876 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0082.dng
+[m[01:35:02:876 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0082.jpg
+[m[01:35:02:877 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0083.dng
+[m[01:35:02:877 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0083.jpg
+[m[01:35:02:877 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0084.dng
+[m[01:35:02:877 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0084.jpg
+[m[01:35:02:878 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0085.dng
+[m[01:35:02:878 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0085.jpg
+[m[01:35:02:878 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0086.dng
+[m[01:35:02:879 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0086.jpg
+[m[01:35:02:879 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0087.dng
+[m[01:35:02:879 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0087.jpg
+[m[01:35:02:880 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0088.dng
+[m[01:35:02:880 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0088.jpg
+[m[01:35:02:880 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0089.dng
+[m[01:35:02:880 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0089.jpg
+[m[01:35:02:881 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0090.dng
+[m[01:35:02:881 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0090.jpg
+[m[01:35:02:881 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0091.dng
+[m[01:35:02:882 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0091.jpg
+[m[01:35:02:882 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0092.dng
+[m[01:35:02:882 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0092.jpg
+[m[01:35:02:882 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0093.dng
+[m[01:35:02:883 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0093.jpg
+[m[01:35:02:883 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0094.dng
+[m[01:35:02:883 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0094.jpg
+[m[01:35:02:884 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0095.dng
+[m[01:35:02:884 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0095.jpg
+[m[01:35:02:884 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0096.dng
+[m[01:35:02:884 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0096.jpg
+[m[01:35:02:885 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0097.dng
+[m[01:35:02:885 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0097.jpg
+[m[01:35:02:885 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0098.dng
+[m[01:35:02:886 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0098.jpg
+[m[01:35:02:886 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0099.dng
+[m[01:35:02:886 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0099.jpg
+[m[01:35:02:887 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0101.dng
+[m[01:35:02:887 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0101.jpg
+[m[01:35:02:887 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0102.dng
+[m[01:35:02:888 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0102.jpg
+[m[01:35:02:888 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0103.dng
+[m[01:35:02:888 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0103.jpg
+[m[01:35:02:888 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0104.dng
+[m[01:35:02:889 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0104.jpg
+[m[01:35:02:889 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0105.dng
+[m[01:35:02:890 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0105.jpg
+[m[01:35:02:890 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0106.dng
+[m[01:35:02:890 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0106.jpg
+[m[01:35:02:891 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0107.dng
+[m[01:35:02:891 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0107.jpg
+[m[01:35:02:891 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0108.dng
+[m[01:35:02:892 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0108.jpg
+[m[01:35:02:892 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0110.dng
+[m[01:35:02:892 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0110.jpg
+[m[01:35:02:893 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0111.dng
+[m[01:35:02:893 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0111.jpg
+[m[01:35:02:893 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0112.dng
+[m[01:35:02:894 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0112.jpg
+[m[01:35:02:894 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0113.dng
+[m[01:35:02:895 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0113.jpg
+[m[01:35:02:895 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0114.dng
+[m[01:35:02:895 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0114.jpg
+[m[01:35:02:896 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0115.dng
+[m[01:35:02:896 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0115.jpg
+[m[01:35:02:897 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0116.dng
+[m[01:35:02:897 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0116.jpg
+[m[01:35:02:897 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0117.dng
+[m[01:35:02:898 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0117.jpg
+[m[01:35:02:898 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0118.dng
+[m[01:35:02:899 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0118.jpg
+[m[01:35:02:899 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0119.dng
+[m[01:35:02:900 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0119.jpg
+[m[01:35:02:900 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0120.dng
+[m[01:35:02:901 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0120.jpg
+[m[01:35:02:901 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0121.dng
+[m[01:35:02:901 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0121.jpg
+[m[01:35:02:902 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0122.dng
+[m[01:35:02:902 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0122.jpg
+[m[01:35:02:903 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0123.dng
+[m[01:35:02:903 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0123.jpg
+[m[01:35:02:903 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0124.dng
+[m[01:35:02:904 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0124.jpg
+[m[01:35:02:904 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0125.dng
+[m[01:35:02:905 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0125.jpg
+[m[01:35:02:905 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0126.dng
+[m[01:35:02:906 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0126.jpg
+[m[01:35:02:906 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0127.dng
+[m[01:35:02:907 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0127.jpg
+[m[01:35:02:907 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0128.dng
+[m[01:35:02:908 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0128.jpg
+[m[01:35:02:908 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0129.dng
+[m[01:35:02:909 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0129.jpg
+[m[01:35:02:909 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0130.dng
+[m[01:35:02:910 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0130.jpg
+[m[01:35:02:910 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0131.dng
+[m[01:35:02:911 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0131.jpg
+[m[01:35:02:911 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0132.dng
+[m[01:35:02:912 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0132.jpg
+[m[01:35:02:912 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0133.dng
+[m[01:35:02:912 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0133.jpg
+[m[01:35:02:913 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0135.dng
+[m[01:35:02:913 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0135.jpg
+[m[01:35:02:914 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0136.dng
+[m[01:35:02:914 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0136.jpg
+[m[01:35:02:915 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0137.dng
+[m[01:35:02:915 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0137.jpg
+[m[01:35:02:916 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0138.dng
+[m[01:35:02:916 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0138.jpg
+[m[01:35:02:917 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0139.dng
+[m[01:35:02:917 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0139.jpg
+[m[01:35:02:918 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0140.dng
+[m[01:35:02:918 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0140.jpg
+[m[01:35:02:919 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0141.dng
+[m[01:35:02:920 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0141.jpg
+[m[01:35:02:920 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0142.dng
+[m[01:35:02:921 [1;32mINFO[m-]:SP_FileListAddFile[180]:add /app/sd/normal/SP_0142.jpg
+[m[01:35:02:921 [1;32mINFO[m-]:SP_GetNomalFileList[90]: PhotoMaxNum 142;FileCount 175
+[m[01:35:02:924 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/focusStack/],ClassCount[0],maxCalss[0]
+[m[01:35:02:924 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/focusStack/],IspClassCount[0]
+[m[01:35:02:925 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/panorama/],ClassCount[0],maxCalss[0]
+[m[01:35:02:925 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/panorama/],IspClassCount[0]
+[m[01:35:02:925 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[01:35:02:927 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_1/ create success
+[m[01:35:02:929 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_1/
+[m[01:35:02:930 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_2/ create success
+[m[01:35:02:931 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_2/
+[m[01:35:02:931 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_3/ create success
+[m[01:35:02:933 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_3/
+[m[01:35:02:933 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_4/ create success
+[m[01:35:02:935 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_4/
+[m[01:35:02:935 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_46/ create success
+[m[01:35:02:937 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_46/
+[m[01:35:02:937 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_45/ create success
+[m[01:35:02:939 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_45/
+[m[01:35:02:939 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_47/ create success
+[m[01:35:02:941 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_47/
+[m[01:35:02:941 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_8/ create success
+[m[01:35:02:943 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_8/
+[m[01:35:02:943 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_9/ create success
+[m[01:35:02:945 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_9/
+[m[01:35:02:945 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_10/ create success
+[m[01:35:02:947 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_10/
+[m[01:35:02:947 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_48/ create success
+[m[01:35:02:949 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_48/
+[m[01:35:02:949 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_12/ create success
+[m[01:35:02:951 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_12/
+[m[01:35:02:951 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_13/ create success
+[m[01:35:02:953 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_13/
+[m[01:35:02:953 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_14/ create success
+[m[01:35:02:955 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_14/
+[m[01:35:02:955 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_15/ create success
+[m[01:35:02:957 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_15/
+[m[01:35:02:957 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_16/ create success
+[m[01:35:02:959 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_16/
+[m[01:35:02:959 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_17/ create success
+[m[01:35:02:961 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_17/
+[m[01:35:02:961 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_18/ create success
+[m[01:35:02:963 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_18/
+[m[01:35:02:963 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_19/ create success
+[m[01:35:02:965 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_19/
+[m[01:35:02:965 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_20/ create success
+[m[01:35:02:967 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_20/
+[m[01:35:02:967 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_49/ create success
+[m[01:35:02:969 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_49/
+[m[01:35:02:969 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_22/ create success
+[m[01:35:02:971 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_22/
+[m[01:35:02:971 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_23/ create success
+[m[01:35:02:973 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_23/
+[m[01:35:02:973 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_24/ create success
+[m[01:35:02:975 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_24/
+[m[01:35:02:975 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_25/ create success
+[m[01:35:02:977 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_25/
+[m[01:35:02:977 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_26/ create success
+[m[01:35:02:979 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_26/
+[m[01:35:02:979 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_27/ create success
+[m[01:35:02:981 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_27/
+[m[01:35:02:981 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_28/ create success
+[m[01:35:02:983 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_28/
+[m[01:35:02:983 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_29/ create success
+[m[01:35:02:985 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_29/
+[m[01:35:02:985 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_30/ create success
+[m[01:35:02:987 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_30/
+[m[01:35:02:987 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_31/ create success
+[m[01:35:02:989 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_31/
+[m[01:35:02:989 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_32/ create success
+[m[01:35:02:991 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_32/
+[m[01:35:02:991 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_33/ create success
+[m[01:35:02:993 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_33/
+[m[01:35:02:993 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_34/ create success
+[m[01:35:02:995 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_34/
+[m[01:35:02:995 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_35/ create success
+[m[01:35:02:998 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_35/
+[m[01:35:02:998 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_36/ create success
+[m[01:35:03:000 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_36/
+[m[01:35:03:000 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_37/ create success
+[m[01:35:03:002 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_37/
+[m[01:35:03:002 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_38/ create success
+[m[01:35:03:004 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_38/
+[m[01:35:03:004 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_39/ create success
+[m[01:35:03:005 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_39/
+[m[01:35:03:006 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_40/ create success
+[m[01:35:03:007 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_40/
+[m[01:35:03:007 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_41/ create success
+[m[01:35:03:009 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_41/
+[m[01:35:03:010 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_42/ create success
+[m[01:35:03:012 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_42/
+[m[01:35:03:012 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_43/ create success
+[m[01:35:03:013 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_43/
+[m[01:35:03:014 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_50/ create success
+[m[01:35:03:016 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_50/
+[m[01:35:03:016 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_51/ create success
+[m[01:35:03:018 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_51/
+[m[01:35:03:018 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_52/ create success
+[m[01:35:03:021 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_52/
+[m[01:35:03:021 [1;32mINFO[m-]:SP_NestFileClassCreate[417]:/app/sd/Lapse/class_53/ create success
+[m[01:35:03:023 [1;32mINFO[m-]:SP_NestFileClassFree[614]:free class /app/sd/Lapse/class_53/
+[m[01:35:03:023 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/Lapse/],ClassCount[47],maxCalss[53]
+[m[01:35:03:024 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[01:35:03:025 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/sun/],ClassCount[0],maxCalss[0]
+[m[01:35:03:027 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/HDR/],ClassCount[0],maxCalss[0]
+[m[01:35:03:027 [1;32mINFO[m-]:SP_GetNestFileList[781]:DirPath[/app/sd/HDR/],IspClassCount[0]
+[m[01:35:03:027 [1;32mINFO[m-]:SP_GetNestFileList[662]:bIspListUse=HI_FALSE
+[m[01:35:03:029 [1;32mINFO[m-]:SP_GetNestFileList[760]:DirPath[/app/sd/starskyStack/],ClassCount[0],maxCalss[0]
+[m[01:35:03:029 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[777],val[hintId:3;]
+[m[m[01:35:03:029 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespace:117240;usespace:4625;]
+[m[m[01:35:03:046 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:44
+[m[01:35:03:168 [1;32mINFO[m-]:SP_LogPathInit[2979]:[0;35mClogCnt[21],minNun[158],maxNum[178]
+[m[01:35:03:168 [1;32mINFO[m-]:SP_LogPathInit[2982]:[0;35mMlogCnt[21],minNun[158],maxNum[178]
+[m[01:35:03:168 [1;32mINFO[m-]:SP_LogPathInit[2985]:[0;35mAlogCnt[21],minNun[158],maxNum[178]
+[m[01:35:03:168 [1;32mINFO[m-]:SP_LogPathInit[2988]:[0;35mElogCnt[21],minNun[158],maxNum[178]
+[m[01:35:03:168 [1;32mINFO[m-]:SP_LogPathInit[2995]:rm -rf /app/sd/system/log/Clog_000158.log
+[m[01:35:03:279 [1;32mINFO[m-]:SP_MsgFromWifiBtProc[1540]:[0;35mMsgFromWifiBt-->type[6],code[1282],val[wifi:1;bt:1;]
+[m[m[01:35:03:308 [1;31mERROR[m-]:SP_SrchExdevNewPkt[324]:[0;32;31mopendir /app/sd/ExDevFwPkt/ fail
+[m[m[01:35:03:308 [1;32mINFO[m-]:SP_ExdevUpgradeFromSD[478]:[0;35mNO exdev Fw in Sd 
+[m[01:35:03:846 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:43
+[m[01:35:04:646 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:42
+[m[01:35:05:446 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:41
+[m[01:35:05:599 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:06:199 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[01:35:06:200 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[01:35:06:200 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[282],val[urer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[01:35:06:209 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[282],val[format:2;]
+[m[m[01:35:06:210 [1;32mINFO[m-]:SP_MsgFromCameraProc[1461]:camera img format:2
+[m[01:35:06:210 [1;31mERROR[m-]:SP_MsgFromCameraProc[1464]:[0;32;31mcamera format no include jpg
+[m[01:35:06:210 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[282],val[format:2;]
+[m[m[01:35:06:246 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:40
+[m[01:35:06:248 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:265;val:-1
+[m[01:35:06:249 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:268;val:-1
+[m[01:35:06:249 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:275;val:-1
+[m[01:35:06:249 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:267;val:-1
+[m[01:35:06:249 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:1;code:266;val:-1
+[m[01:35:06:249 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[01:35:06:249 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[01:35:06:249 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[01:35:06:249 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[01:35:06:249 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[01:35:06:250 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[01:35:06:250 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[01:35:06:250 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[01:35:06:251 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 1
+[m[01:35:06:251 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[1] para 200
+[m[01:35:06:251 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 200
+[m[01:35:06:251 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[01:35:06:270 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:21;R:1s,2s,3s,4s,5s,6s,7s,8s,9s,10s,15s,20s,25s,30s,40s,50s,1m,1m10s,1m20s,1m30s,1m40s,1m50s,2m,2m10s,2m20s,2m30s,2m40s,2m50s,3m,3m10s,3m20s,3m30s,3m40s,3m50s,4m,4m10s,4m20s,4m30s,4m40s,4m50s,5m,6m,7m,8m,9m,10m,;]
+[m[m[01:35:06:270 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:21;R:1s,2s,3s,4s,5s,6s,7s,8s,9s,10s,15s,20s,25s,30s,40s,50s,1m,1m10s,1m20s,1m30s,1m40s,1m50s,2m,2m10s,2m20s,2m30s,2m40s,2m50s,3m,3m10s,3m20s,3m30s,3m40s,3m50s,4m,4m10s,4m20s,4m30s,4m40s,4m50s,5m,6m,7m,8m,9m,10m,;]
+[m[m[01:35:06:270 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1s,2s,3s,4s,5s,6s,7s,8s,9s,10s,15s,20s,25s,30s,40s,50s,1m,1m10s,1m20s,1m30s,1m40s,1m50s,2m,2m10s,2m20s,2m30s,2m40s,2m50s,3m,3m10s,3m20s,3m30s,3m40s,3m50s,4m,4m10s,4m20s,4m30s,4m40s,4m50s,5m,6m,7m,8m,9m,10m,]
+[m[01:35:06:270 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 21
+[m[01:35:06:270 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[21] para 1m50s
+[m[01:35:06:270 [1;32mINFO[m-]:SP_GetCameraShutter[394]:1.000000
+[m[01:35:06:271 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 60000000 
+[m[01:35:06:271 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 21 
+[m[01:35:06:271 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[01:35:06:286 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[01:35:06:286 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[01:35:06:286 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[01:35:06:286 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 18
+[m[01:35:06:286 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[18] para f/2.8
+[m[01:35:06:286 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 2.800000 
+[m[01:35:06:286 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 18 
+[m[01:35:06:286 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[01:35:06:303 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[01:35:06:304 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[01:35:06:304 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[0,]
+[m[01:35:06:304 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 0
+[m[01:35:06:304 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 0
+[m[01:35:06:304 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[01:35:06:304 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 0 
+[m[01:35:06:320 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[01:35:06:320 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[01:35:07:047 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:39
+[m[01:35:07:808 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=3 192.168.0.4:59100] from [1] s_u32ClientNum[2]
+[m[01:35:07:808 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
+[m[m[01:35:07:809 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=3] start
+[m[01:35:07:809 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[3]:type:0;code:266;val:
+[m[01:35:07:809 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
+[m[01:35:07:809 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=3] s_u32ClientNum[1]
+[m[01:35:07:809 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[3]
+[m[01:35:07:847 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:38
+[m[01:35:08:647 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:37
+[m[01:35:08:799 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:09:447 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:36
+[m[01:35:10:248 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:35
+[m[01:35:11:048 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:34
+[m[01:35:11:848 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:33
+[m[01:35:11:999 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:12:507 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[01:35:12:507 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[01:35:12:648 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:32
+[m[01:35:13:448 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:31
+[m[01:35:14:249 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:30
+[m[01:35:15:049 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:29
+[m[01:35:15:199 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:15:849 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:28
+[m[01:35:16:649 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:27
+[m[01:35:17:449 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:26
+[m[01:35:18:250 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:25
+[m[01:35:18:399 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:19:050 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:24
+[m[01:35:19:850 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:23
+[m[01:35:20:650 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:22
+[m[01:35:21:451 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:21
+[m[01:35:21:599 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:22:251 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:20
+[m[01:35:23:051 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:19
+[m[01:35:23:851 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:18
+[m[01:35:24:651 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:17
+[m[01:35:24:799 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:25:452 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:16
+[m[01:35:26:252 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:15
+[m[01:35:27:052 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:14
+[m[01:35:27:852 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:13
+[m[01:35:27:999 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+[m[01:35:28:652 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:12
+[m[01:35:29:453 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:11
+[m[01:35:30:218 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:813;val:usbmode:1;
+[m[01:35:30:218 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[813],val[usbmode:1;ret:0;]
+[m[m[01:35:30:218 [1;33mWARN[m-]:SP_MsgSysFromAppProc[995]:setting usbmode to 1
+[m[01:35:30:222 [1;32mINFO[m-]:SP_SaveUserParamToFlash[122]:SP_SaveUserParam success,s8ParamFd = 2;
+[m[01:35:30:222 [1;32mINFO[m-]:SP_SaveUserParamTask[154]:SaveUserParam
+[m[01:35:30:253 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:10
+[m[01:35:31:053 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:9
+[m[01:35:31:853 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:8
+[m[01:35:32:428 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:29;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[01:35:32:429 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:29;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,;]
+[m[m[01:35:32:429 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,1s,13/10,16/10,2s,25/10,3s,4s,5s,6s,8s,10s,13s,15s,20s,25s,30s,]
+[m[01:35:32:429 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 29
+[m[01:35:32:429 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[29] para 1/10
+[m[01:35:32:429 [1;32mINFO[m-]:SP_GetCameraShutter[389]:1/10
+[m[01:35:32:429 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 100000 
+[m[01:35:32:429 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 29 
+[m[01:35:32:429 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 1;
+[m[01:35:32:443 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[01:35:32:443 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;]
+[m[m[01:35:32:443 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,]
+[m[01:35:32:443 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 15
+[m[01:35:32:443 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[15] para 0
+[m[01:35:32:443 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[01:35:32:444 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 15 
+[m[01:35:32:653 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:7
+[m[01:35:32:664 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[2]:type:2;code:302;val:confirm:1;
+[m[01:35:32:664 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[302],val[ret:0;]
+[m[m[01:35:32:664 [1;32mINFO[m-]:SP_MsgCameraFromAppProc[603]:HDMI_REBOOT
