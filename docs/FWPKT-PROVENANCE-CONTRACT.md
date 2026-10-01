@@ -223,4 +223,6 @@ Three guards make this safe and verifiable:
       `ian-morgan99/PrivateResearch/firmware-packets/<registry-id>/` (see the
       `fwpkt-private-upload` skill). New rows record their location there;
       pre-existing rows keep their local/`smb:`/`sd:` references until
+
+| 15b-candidate | `firmware-packets/15b-candidate/FwPkt.zip` (ian-morgan99/PrivateResearch, private) | `c6d7631155eb260075d38149ddd646a4` | `32b17ffaed96bf5e` | `eb7590d79b15674f03d8772a3636a136` | `db416b7d9` | `6060709/main` | built | Built from libgphoto2 commit db416b7d9 (fixes Pentax +32/+36 field semantics) |
       backfilled.

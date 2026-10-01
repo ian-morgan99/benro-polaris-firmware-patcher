@@ -1050,7 +1050,7 @@ See `ARCHIVED-EVIDENCE.md` for the public retention policy.
 
 ## 2026-10-01 o-v15b CANDIDATE (BUILD READY)
 
-**o-v15b: BUILD READY / AWAITING CANARY**
+**o-v15b: BUILT / AWAITING STAGE & CANARY**
 
 - Built from libgphoto2 commit db416b7d9 (fixes Pentax +32/+36 field semantics)
 - Based on FwPkt from out/FwPkt_extracted/FwPkt (built Sep 28 14:37)
