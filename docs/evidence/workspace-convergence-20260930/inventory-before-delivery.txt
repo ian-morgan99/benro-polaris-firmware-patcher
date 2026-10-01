@@ -1,0 +1,22 @@
+/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher
+/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher  756fec3 [main]
+branches: * main
+HEAD: 756fec30259440efd8f31dda66de2578499584a8
+origin/main: 360a1047336502246211618d4feda1a47aca06cc
+tracked diff: True
+
+/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2
+/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2  df64a6330 [main]
+branches: * main
+HEAD: df64a63300585dbd8642861d760668b1ace92f78
+origin/main: df64a63300585dbd8642861d760668b1ace92f78
+tracked diff: False
+
+/home/ian/Documents/VSCodeProjects/OpenPolaris
+/home/ian/Documents/VSCodeProjects/OpenPolaris  5345e5e [main]
+branches: * main
+HEAD: 5345e5e173fc8f057404d80d1ff394e5009821c9
+origin/main: 5345e5e173fc8f057404d80d1ff394e5009821c9
+tracked diff: False
+
+Patcher documentation is pending the delivery commit at this snapshot; final remote identities are verified after push in the private archive and canonical issue update.

@@ -1,0 +1,77 @@
+Wed Sep 30 16:04:28 UTC 2026
+FwVer:6.0.0.54.44;date:2026.09.30;
+280.52 510.43
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+Bus 001 Device 003: ID 25fb:0189
+ls: /app/sd/normal/SP_0151.*: No such file or directory
+ls: /app/sd/normal/SP_0152.*: No such file or directory
+ls: /app/sd/normal/SP_0153.*: No such file or directory
+ls: /app/sd/normal/SP_0154.*: No such file or directory
+tcp        0      0 192.168.0.1:9090        192.168.0.3:59030       ESTABLISHED 
+tcp        0      0 192.168.0.1:8080        192.168.0.3:63774       TIME_WAIT   
+tcp        0      0 192.168.0.1:8080        192.168.0.3:59031       ESTABLISHED 
+tcp        0      0 192.168.0.1:8080        192.168.0.3:63772       TIME_WAIT   
+tcp        0      0 192.168.0.1:8080        192.168.0.3:63775       TIME_WAIT   
+tcp        0      0 192.168.0.1:8080        192.168.0.3:63773       TIME_WAIT   
+MACEVENT: WLC_E_LINK UP
+wl_process_host_event: Link event 5, flags 0, status 0
+MACEVENT: WLC_E_DEAUTH, MAC 4e:6d:a4:2b:e1:82
+dhd_rx_frame: Got BRCM event packet in a chained packet.
+wl_process_host_event: Link event 5, flags 0, status 0
+MACEVENT: WLC_E_DEAUTH, MAC 4e:6d:a4:2b:e1:82
+dhd_rx_frame: Got BRCM event packet in a chained packet.
+CFG80211-ERROR) wl_notify_connect_status_ap : 
+event WLC_E_DEAUTH(5) status 0 reason 7
+CFG80211-ERROR) wl_notify_connect_status_ap : 
+event WLC_E_DEAUTH(5) status 0 reason 7
+wl_process_host_event: Link event 5, flags 0, status 0
+MACEVENT: WLC_E_DEAUTH, MAC 66:a5:33:e5:c0:66
+CFG80211-ERROR) wl_notify_connect_status_ap : 
+event WLC_E_DEAUTH(5) status 0 reason 7
+wl_process_host_event: Link event 5, flags 0, status 0
+MACEVENT: WLC_E_DEAUTH, MAC 66:a5:33:e5:c0:66
+CFG80211-ERROR) wl_notify_connect_status_ap : 
+event WLC_E_DEAUTH(5) status 0 reason 7
+MACEVENT: WLC_E_AUTH_IND, MAC 4e:6d:a4:2b:e1:82, Open System
+MACEVENT: WLC_E_REASSOC_IND, MAC 4e:6d:a4:2b:e1:82
+CFG80211-ERROR) wl_cfg80211_change_station : 
+WLC_SCB_AUTHORIZE sta_flags_mask not set 
+MACEVENT: WLC_E_AUTH_IND, MAC 66:a5:33:e5:c0:66, Open System
+MACEVENT: WLC_E_REASSOC_IND, MAC 66:a5:33:e5:c0:66
+CFG80211-ERROR) wl_cfg80211_change_station : 
+WLC_SCB_AUTHORIZE sta_flags_mask not set 
+hibvt-i2c 120b2000.i2c: wait idle abort!, RIS: 0x611
+himci: card connected!
+usb 1-1.2: reset high-speed USB device number 3 using xhci-hcd
+cma: cma_alloc(cma c0a5e6a4, count 1, align 0)
+cma: cma_alloc(): returned effdad20
+cma: cma_alloc(cma c0a5e6a4, count 1, align 0)
+cma: cma_alloc(): returned effdad40
+cma: cma_alloc(cma c0a5e6a4, count 1, align 0)
+cma: cma_alloc(): returned effdad60
+cma: cma_alloc(cma c0a5e6a4, count 1, align 0)
+cma: cma_alloc(): returned effdad80
+cma: cma_alloc(cma c0a5e6a4, count 1, align 0)
+cma: cma_alloc(): returned effdada0
+cma: cma_alloc(cma c0a5e6a4, count 1, align 0)
+cma: cma_alloc(): returned effdadc0
+scan edges:3 p2f:4 f2p:7
+mix set temp-phase 1
+scan elemnts: startp:92 endp:89
+Tuning SampleClock. mix set phase:[02/07] ele:[02/15] 
+mmc0: new ultra high speed SDR104 SDXC card at address aaaa
+mmcblk0: mmc0:aaaa SD128 119 GiB 
+ mmcblk0: p1
+FAT-fs (mmcblk0p1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+MACEVENT: WLC_E_AUTH_IND, MAC 4c:23:38:c8:7b:6f, Open System
+MACEVENT: WLC_E_ASSOC_IND, MAC 4c:23:38:c8:7b:6f
+CFG80211-ERROR) wl_cfg80211_change_station : 
+WLC_SCB_AUTHORIZE sta_flags_mask not set 
+DHCP - REQUEST [RX] [REQUEST]
+DHCP - NAK [TX] [REPLY]
+DHCP - DISCOVER [RX] [REQUEST]
+DHCP - OFFER [TX] [REPLY]
+DHCP - REQUEST [RX] [REQUEST]
+DHCP - ACK [TX] [REPLY]

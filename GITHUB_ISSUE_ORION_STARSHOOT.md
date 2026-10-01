@@ -5,8 +5,10 @@ Content follows standard GitHub issue format.
 
 # Feature Request: Add support for Orion Starshoot All-in-One (QHY5L-II clone) to libgphoto2
 
+> Solid plan (ordered, fail-closed, 2026-09-29): docs/STARSHOOT-158-SOLID-PLAN.md — separate from #159 iPolar (docs/IPOLAR-UVC-BACKEND-PLAN.md / GITHUB_ISSUE_UVC_SUPPORT.md). Adapter contract: docs/ORION-STARSHOOT-ADAPTER-CONTRACT.md.
+
 ## Description
-The Orion Starshoot All-in-One is a rebranded QHY5L-II hardware clone used for astronomical autoguiding and imaging. Like the iOptron iPolar, it enumerates as a standard UVC (USB Video Class) webcam but requires its specific USB ID to be added to libgphoto2's UVC device table for proper recognition and support.
+The measured Orion Starshoot All-in-One `16c0:29a0` exposes a vendor-specific USB interface, not UVC. Its protocol and adapter require separate implementation and qualification from the iPolar UVC path. The historical UVC proposal below is superseded by `docs/ORION-STARSHOOT-ADAPTER-CONTRACT.md` and must not be used to add this device to a UVC table.
 
 ## Motivation
 - libgphoto2 has included native UVC support since version 2.5.0 (2016)

@@ -131,3 +131,14 @@ installed-source baseline is understood.
 The libgphoto2 owning repository's `AGENTS.md` requires a direct-camera
 reproducer before a consumer-derived behavioral change. Until that boundary is
 met, no library recovery behavior or supported firmware package is changed.
+
+
+## Workspace relocation — 2026-10-01
+
+The two build worktrees named in the original transcripts were retired after
+verified archival. Their identical installed binaries now live at
+`LibGphoto2/libgphoto2/_baselines/<full-source-sha>/prefix`; all 75 regular file
+hashes in each prefix match. Both relocated production classifier probes and
+CLI loader checks pass. See `../workspace-convergence-20260930/` for current
+paths and verification, and `../../WORKSPACE-CONVERGENCE-20260930.md` for archive
+recovery. Historical transcript paths are collection-time evidence.

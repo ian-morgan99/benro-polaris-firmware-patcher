@@ -1,0 +1,278 @@
+    461277:	find library=libgphoto2.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v4:/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v3:/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v2:/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v4/libgphoto2.so.6
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v3/libgphoto2.so.6
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v2/libgphoto2.so.6
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libgphoto2.so.6
+    461277:	
+    461277:	find library=libgphoto2_port.so.12 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libgphoto2_port.so.12
+    461277:	
+    461277:	find library=libcdk.so.5 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libcdk.so.5
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libcdk.so.5
+    461277:	
+    461277:	find library=libncurses.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libncurses.so.6
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libncurses.so.6
+    461277:	
+    461277:	find library=libaa.so.1 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libaa.so.1
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libaa.so.1
+    461277:	
+    461277:	find library=libjpeg.so.8 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libjpeg.so.8
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libjpeg.so.8
+    461277:	
+    461277:	find library=libexif.so.12 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libexif.so.12
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libexif.so.12
+    461277:	
+    461277:	find library=libreadline.so.8 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libreadline.so.8
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libreadline.so.8
+    461277:	
+    461277:	find library=libpopt.so.0 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libpopt.so.0
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libpopt.so.0
+    461277:	
+    461277:	find library=libc.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libc.so.6
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libc.so.6
+    461277:	
+    461277:	find library=libltdl.so.7 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libltdl.so.7
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libltdl.so.7
+    461277:	
+    461277:	find library=libm.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libm.so.6
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libm.so.6
+    461277:	
+    461277:	find library=libtinfo.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libtinfo.so.6
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libtinfo.so.6
+    461277:	
+    461277:	find library=libslang.so.2 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libslang.so.2
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libslang.so.2
+    461277:	
+    461277:	find library=libX11.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libX11.so.6
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libX11.so.6
+    461277:	
+    461277:	find library=libgpm.so.2 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libgpm.so.2
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libgpm.so.2
+    461277:	
+    461277:	find library=libxcb.so.1 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libxcb.so.1
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libxcb.so.1
+    461277:	
+    461277:	find library=libXau.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libXau.so.6
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libXau.so.6
+    461277:	
+    461277:	find library=libXdmcp.so.6 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libXdmcp.so.6
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libXdmcp.so.6
+    461277:	
+    461277:	find library=libbsd.so.0 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libbsd.so.0
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libbsd.so.0
+    461277:	
+    461277:	find library=libmd.so.0 [0]; searching
+    461277:	 search path=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu		(LD_LIBRARY_PATH)
+    461277:	  trying file=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libmd.so.0
+    461277:	 search cache=/etc/ld.so.cache
+    461277:	  trying file=/lib/x86_64-linux-gnu/libmd.so.0
+    461277:	
+    461277:	
+    461277:	calling init: /lib64/ld-linux-x86-64.so.2
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libc.so.6
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libmd.so.0
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libbsd.so.0
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libXdmcp.so.6
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libXau.so.6
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libxcb.so.1
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libgpm.so.2
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libX11.so.6
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libm.so.6
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libslang.so.2
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libtinfo.so.6
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libltdl.so.7
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libpopt.so.0
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libreadline.so.8
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libexif.so.12
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libjpeg.so.8
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libncurses.so.6
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libaa.so.1
+    461277:	
+    461277:	
+    461277:	calling init: /lib/x86_64-linux-gnu/libcdk.so.5
+    461277:	
+    461277:	
+    461277:	calling init: /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libgphoto2_port.so.12
+    461277:	
+    461277:	
+    461277:	calling init: /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libgphoto2.so.6
+    461277:	
+    461277:	
+    461277:	initialize program: /usr/bin/gphoto2
+    461277:	
+    461277:	
+    461277:	transferring control: /usr/bin/gphoto2
+    461277:	
+    461277:	
+    461277:	calling fini:  [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libgphoto2.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2/_baselines/df64a63300585dbd8642861d760668b1ace92f78/prefix/lib/x86_64-linux-gnu/libgphoto2_port.so.12 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libcdk.so.5 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libaa.so.1 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libncurses.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libjpeg.so.8 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libexif.so.12 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libreadline.so.8 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libpopt.so.0 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libltdl.so.7 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libtinfo.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libslang.so.2 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libm.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libX11.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libgpm.so.2 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libxcb.so.1 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libXau.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libXdmcp.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libbsd.so.0 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libmd.so.0 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib/x86_64-linux-gnu/libc.so.6 [0]
+    461277:	
+    461277:	
+    461277:	calling fini: /lib64/ld-linux-x86-64.so.2 [0]
+    461277:	
+gphoto2 2.5.28
+
+Copyright (c) 2000-2021 Marcus Meissner and others
+
+gphoto2 comes with NO WARRANTY, to the extent permitted by law. You may
+redistribute copies of gphoto2 under the terms of the GNU General Public
+License. For more information about these matters, see the files named COPYING.
+
+This version of gphoto2 is using the following software versions and options:
+gphoto2         2.5.28         gcc, popt(m), exif, cdk, aa, jpeg, readline
+libgphoto2      2.5.34         standard camlibs, gcc, ltdl, EXIF
+libgphoto2_port 2.5.34         iolibs: libusb1 usbscsi, gcc, ltdl, EXIF, USB, no serial

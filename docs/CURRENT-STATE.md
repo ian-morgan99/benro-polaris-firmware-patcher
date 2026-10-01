@@ -1,5 +1,28 @@
 # Current repository state
 
+## 2026-09-30 resumed investigation and workspace convergence
+
+**o-v15a: PHYSICAL FAIL / NOT RELEASE-QUALIFIED.** The later #149 review
+supersedes the installation-only status below. The 14:43 accepted-shot crash
+was on o-v13x (`6.0.0.54.43`); the later pre-shutter busy refusals were on o-v15a
+(`6.0.0.54.44`). Do not attribute the earlier crash to v15a or equate a refused
+request with a new exposure.
+
+The IT2 source conflict is resolved: +32 is candidate availability, +36 is the
+candidate selector (1 is a new-transfer sentinel), and +104 contains separate
+shooting/processing bits. Both installed-lineage fbc2e7e65 and current df64a6330
+production classifiers were exercised offline. They mislabel the logged
+candidate fields as `capture-active`; the guard must remain closed. Safe orphan
+recovery and durable publication acknowledgement are not yet implemented.
+Direct-PC reproduction is waiting for physical K-3 III attachment; no new
+firmware or camera command was issued in this investigation.
+
+Continue from [the current handover](HANDOVER-PENTAX-STABILITY-20260930.md),
+[the source audit](evidence/pentax-orphan-recovery-20260930/SUMMARY.md), and
+[the workspace disposition](WORKSPACE-CONVERGENCE-20260930.md). The historical
+sections below describe their collection time, not current readiness or next
+steps.
+
 ## 2026-09-30 o-v15a diagnostic candidate deployed (no shutter test)
 
 - User-authorized deployment of `o-v15a-pentax-crash-registers-20260930` used

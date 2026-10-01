@@ -4,9 +4,27 @@ This document identifies the libgphoto2 source that the Polaris patcher may cons
 
 Normative upgrade process: [`LIBGPHOTO2-UPGRADE-PROCESS.md`](LIBGPHOTO2-UPGRADE-PROCESS.md).
 
-## Current status — 2026-09-18
+## Workspace and installed-lineage distinction — 2026-10-01
 
-There are two current provenance points; neither may be replaced by repository
+The sole maintained library checkout is
+`/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2` on fork `main`
+(`df64a63300585dbd8642861d760668b1ace92f78` at this audit). The `LibGphoto2`
+parent is preserved research material, not a build input. See
+[workspace convergence](WORKSPACE-CONVERGENCE-20260930.md).
+
+The last recorded installed o-v15a (`6.0.0.54.44`) embeds
+`fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd` and is **PHYSICAL FAIL / NOT
+RELEASE-QUALIFIED**. This is an artifact/provenance observation, not promotion
+of either source SHA to a qualified baseline. No live identity was checked in
+this workspace cleanup and no firmware was built or installed. Immutable test
+prefixes for both SHAs are under the canonical checkout's ignored `_baselines/`.
+
+The protected historical P/Q provenance below is retained as history; it must
+not be mistaken for current installed identity or replaced implicitly by HEAD.
+
+## Historical provenance snapshot — 2026-09-18
+
+This snapshot records two provenance points; neither may be replaced by repository
 HEAD implicitly:
 
 | What | Value |

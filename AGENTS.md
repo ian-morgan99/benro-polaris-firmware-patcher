@@ -204,3 +204,22 @@ touching the live device. Load-bearing rules, restated:
 - **Wake/keepalive:** BT connect to `48:E7:DA:D4:B5:72` is the wake pulse
   (gimbal must be powered on); keep long jobs alive with the 9090 ping loop
   (`1&266&0&#` every 30 s). Details in the skill.
+
+## Canonical workspaces and handover convergence
+
+Delivery checkouts are `BenroPolarisPatcher` on `main`,
+`LibGphoto2/libgphoto2` on `main`, and `OpenPolaris` on `main`, all under
+`/home/ian/Documents/VSCodeProjects`. The `LibGphoto2` parent is a historical
+research corpus, not a library build or release source.
+
+A temporary branch/worktree is an implementation or immutable build input,
+not the delivered result. Before handover, reconcile applicable changes and
+evidence onto the owning canonical branch, verify local/remote commit identity,
+and retire temporary worktrees. Preserve unique history and dirty/ignored files
+with verified hashes in PrivateResearch before retirement. Do not merge closed,
+rejected, or obsolete experimental behavior simply to make branch counts zero.
+Record its disposition and recovery location instead. Immutable exact-SHA test
+installs belong under ignored `_baselines/`, not additional active source forks.
+Any necessary active exception must identify its owner, purpose, exact SHA,
+and concrete convergence action in the handover. See
+`docs/WORKSPACE-CONVERGENCE-20260930.md` for this cleanup and recovery inventory.

@@ -1,8 +1,10 @@
 # o-v15a Pentax crash-register diagnostic candidate
 
-Status: **installed and boot/runtime/provenance verified; no shutter test or
-physical qualification**. Independent review of the diagnostic change is
-pending before a capture reproduction.
+Status: **PHYSICAL FAIL / NOT RELEASE-QUALIFIED**, per the 2026-09-30
+17:35 UTC review on #149. The installation probe below was read-only; later
+physical app requests were refused before initiation with a persistent candidate.
+The 14:43 accepted-shot crash described below was the preceding o-v13x build,
+not proof of a new v15a crash. See the [current recovery audit](../pentax-orphan-recovery-20260930/SUMMARY.md).
 
 ## Why this candidate exists
 
@@ -56,16 +58,11 @@ making a behavior change.
 
 ## Next proof
 
-After independent review of the diagnostic-only change, capture a bounded
-reproduction with the same log evidence as the 14:43 event. The minimum
-intended result is a crash record whose PC/LR resolve against the matching
-runtime maps and packaged objects, followed by a separate root-cause fix and
-its deterministic tests.
-
-The physical camera reported a long shutter interval at 14:43, but this
-candidate intentionally does not claim it resolves that symptom or makes
-capture safe. See patcher issue #145 and its evidence comment for the original
-Clog/Mlog/crash-log bundle.
+Resolve safe orphan-output recovery and durable publication ownership before
+another firmware/shutter test. Preserve strict admission and the candidate.
+A direct exact-source PC baseline is required before changing library behavior.
+Crash diagnostics remain useful on a later justified reproduction; package or
+runtime verification does not qualify the camera.
 
 ## Installation and read-only runtime verification
 

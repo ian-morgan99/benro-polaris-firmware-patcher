@@ -1,52 +1,109 @@
-# Pentax stability handover — 2026-09-30
+# Pentax stability handover — resumed 2026-09-30
 
-## Plain-English status
+**Firmware remains PHYSICAL FAIL / NOT RELEASE-QUALIFIED.** Safe orphan-output
+recovery is not implemented. The immediate physical prerequisite is attaching
+the affected K-3 III directly to the PC, with no exposure running and camera
+apps closed. No new shutter, candidate deletion, firmware build or installation
+was performed in this resumption.
 
-Do not call the current firmware fixed or release-ready. The last live-verified Polaris firmware was `6.0.0.54.44` (read-only check at about 16:43 BST); no new package was built or installed after the failures recorded here. Ordinary M-mode RAW+JPEG captures did work earlier on the o-v13w lineage, but later captures either crashed the Polaris camera owner or were refused before the shutter. A refusal is currently fail-safe; do not remove the admission barrier or blindly retry.
+## One delivery line per owning repository
 
-The main unresolved engineering issue is ownership across a lost/restarted capture operation: the camera may retain an output candidate, while the new process has lost the request that owned it. Before changing code, resolve the condition-field meaning conflict called out below. The exposure-duration display requirement is also real and separate from the capture failure: users must see exact seconds/fractions, never a rounded whole-minute value.
+Continue in the canonical `main` checkouts:
 
-## Source/repository identity and preservation
+- Patcher: `/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher`.
+- Library: `/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2`,
+  `df64a63300585dbd8642861d760668b1ace92f78`.
+- App: `/home/ian/Documents/VSCodeProjects/OpenPolaris`,
+  `5345e5e173fc8f057404d80d1ff394e5009821c9`.
 
-- Patcher checkout at handover: local `main` `a7601b7e326952785048003af39e53b851c4f6be`, **7 commits behind** GitHub `main` (`4b57b5b6d37fe933979c044685afbf1594530123`). It contains user work; do not reset, clean, rebase, or overwrite it.
-- Dirty patcher files/evidence to preserve: `container/stage2_loader.c`, `docs/CURRENT-STATE.md`, `GITHUB_ISSUE_ORION_STARSHOOT.md`, `docs/STARSHOOT-158-SOLID-PLAN.md`, `docs/issues-20260930/`, and the dated `docs/evidence/` folders. In particular the Stage-2 loader has an uncommitted 59-line change; inspect ownership before touching it.
-- libgphoto2 checkout: `main` at `df64a63300585dbd8642861d760668b1ace92f78`, clean after removing an unverified Bulb experiment. No code from that experiment was built or installed.
-- Installed firmware last verified: `/app/FwVer = 6.0.0.54.44`. The working patcher SHA is not the provenance of that installed package. Re-verify identity and artifact provenance before any device operation.
-- OpenPolaris source review recorded at `161ac2d9c661ff24397f49646fab5ea0c61a4378`; see [OpenPolaris #94](https://github.com/ian-morgan99/OpenPolaris/issues/94).
+The old parent `LibGphoto2` Git checkout was a NINA/research repository and must
+not be used as a library build source. Its research files remain in place.
+[Workspace convergence](WORKSPACE-CONVERGENCE-20260930.md) identifies every old
+branch, its disposition, preserved worktree/dirty-state hashes and recovery
+location in PrivateResearch. Temporary branches from this investigation are
+integrated into main, and exact-SHA binaries are test fixtures rather than
+additional active source trees. Final local/remote identities and inventory are
+in `docs/evidence/workspace-convergence-20260930/`.
 
-## Evidence that must stay distinct
+## Resolved source question; unresolved runtime fix
 
-1. **14:43 BST shutter/owner crash:** [evidence summary](evidence/pentax-shutter-crash-20260930-1443/SUMMARY.md). A Benro Connect M-mode request was `bulb:0`; the camera readback was `1/1000s`; `InitiateCapture` returned PTP `0x2001` but no candidate/publication followed. pgphoto then SIGSEGV'd (PC `0xb5600af0`) and restarted. This proves neither a long exposure nor physical USB removal. The register/map data needed to resolve that PC was not captured.
-2. **16:00–16:04 BST refusals:** [assessment and raw Clog/Mlog](evidence/pentax-busy-after-sd-recovery-20260930-1604/ASSESSMENT.md). Four requests (`SP_0151`–`SP_0154`) returned `-110` / app `-1005`; these particular requests were rejected before `InitiateCapture`. The observed conditions were PTP `0x2001`, 576 bytes, `+32=1`, `+36=1`, `+104=0`. No requested output appeared under `/app/sd/normal`. SD capacity recovered independently.
-3. **Post-reboot report:** [assessment](evidence/pentax-after-dual-reboot-busy-20260930/ASSESSMENT.md). User reports a manual Polaris+camera reboot and another “camera busy” result, but the retained current Mlog was empty and contains no matching code-264 request. Do not claim this request reached pgphoto.
-4. `484-3701` was taken through Benro Connect at about 14:33, but who initiated it is unknown; retained logs do not map it to a Polaris code-773 publication. Do not attribute it to an assistant/user or equate it with the pending candidate.
-5. **Condition-field conflict — resolve first:** [Pentax capability matrix](https://github.com/ian-morgan99/libgphoto2/blob/main/docs/pentax/IMAGE_TRANSMITTER_CAPABILITY_MATRIX.md) labels offsets `+32/+36` “candidate flag and handle”. Recent libgphoto2 admission code and Mlog diagnostics interpret `+32=1` as “capture active”, then treat `+36` as a separate candidate. The 16:00 sample has both values equal to 1 and is labelled `capture-active`. Trace IMAGE Transmitter 2's complete candidate/capture path and the hardware-log definitions before changing admission or writing orphan recovery. A wrong interpretation could either strand a finished file or admit a shutter over an active exposure.
+The complete IMAGE Transmitter 2 candidate path establishes:
 
-The label `SP_0151` etc. is **not a reliable cross-log join key**: the #145 session ledger records some of those labels as accepted-then-timeout, while the separate 16:00 evidence assessment records same-numbered requests as rejected before initiation. They are separate log/session windows; correlate by source log, timestamp, pgphoto PID/session generation and camera state, never by request label alone.
+- +32 = transfer candidate available, not exposure active;
+- +36 = selector; value 1 is a new-transfer sentinel, not a durable image ID;
+- +104 includes separate shooting and processing bits;
+- IT2 inspects/transfers available output without needing a new shutter, then
+  closes/publishes the file before releasing its candidate.
 
-The complete raw logs and hashes are already under the linked evidence folders. Prefer those originals over copied terminal excerpts.
+Both exact built camlibs, installed-lineage `fbc2e7e65` and current `df64a6330`,
+mislabel synthetic conditions matching the recorded `+32=1,+36=1,+104=0` as
+`capture-active`, while their session reconciler calls it a stale candidate.
+That diagnostic conflict is demonstrated in production classifier functions.
+It is not proof that the physical camera is idle or that the candidate belongs
+to any particular request. Keep strict admission and candidate preservation.
 
-## Canonical issues and next work, in order
+[Source audit and exact tests](evidence/pentax-orphan-recovery-20260930/SUMMARY.md)
+record the IT2 anchors, actual module hashes, durability gap, and implementation
+acceptance cases. Reusing the current transfer helper alone is insufficient:
+it can release a candidate after publication to process-local RAM, before a
+surviving Polaris SD file is confirmed.
 
-| Priority | Issue / owning layer | What to do next; what not to do |
-|---|---|---|
-| 1 | [#145 capture lifecycle](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/145) — libgphoto2 candidate/transfer semantics plus Stage-2 request ownership | Resolve the `+32/+36` field conflict. Then implement a durable request/output identity across pgphoto restart/rebind. Keep active exposure blocked; transfer/publish an orphan under its camera-derived filename and report it as recovered/orphan, never as the refused new shot. Retain the camera candidate until transfer **and publication** succeed. Add production-path deterministic tests for active operation vs orphan output. Do not delete candidates, clear the barrier, or replay a shutter to make the UI green. |
-| 2 | [#146 session lifecycle](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/146) — patcher/Stage-2 | Separate `transport_generation` (USB/session replacement) from `config_epoch` (M↔B or other camera setting change). Rebind only on real transport change; invalidate and refresh mode-dependent config on a dial change. Old-generation work must not complete new work. |
-| 3 | [#148 Bulb/long exposure and UI](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/148) — API translation + Pentax semantics + app display | Treat requested exposure, pre-shot delay, exposure completion, processing and API completion separately. `SP_0155` requested `bulb:5`/`b:5000` while shutter readback was `1/10s`; other accepted InitiateCapture calls produced no candidate. `0x2001` means acknowledged, not exposed/completed. Do not guess Pentax release mode: release-mode 2 succeeded in a K-1 II probe but was rejected by K-3 III; use the canonical hardware/source log. Add deterministic camera-timed and host-timed tests before hardware. Never change the ordinary M path to test Bulb. |
-| 4 | Exact duration UI — #148, with old [#63](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/63) as a separate symptom | Requirement: display exact seconds or fractions (e.g. `80s`, `90s`, `1/30s`), not rounded minute buckets. Current local PrivateResearch mirror is decompiled APK; its Bulb total-seconds conversion appears lossless, but that does not prove the shutter-speed list mapping or give editable source. Locate the actual editable app source before changing firmware/libgphoto2. Test 59/60/61/80/90/110 seconds and fractional shutter values across Normal/Astro/Panorama. |
-| 5 | [#147 workload/preview](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/147), [OpenPolaris #94](https://github.com/ian-morgan99/OpenPolaris/issues/94) — OpenPolaris is lower priority | User's controlled comparison is decisive for the sustained flicker: Benro Connect alone stable; two Benro Connect clients at most briefly flicker then settle; OpenPolaris + Benro Connect repeatedly flickers. This is OpenPolaris-specific interoperability, not generic two-client contention. Source findings: auto-started 8080 preview, 286 polling continues during single capture, intervalometer bypasses single-shot suspension. Fix OpenPolaris ownership/polling/timeout there; do not destabilize ordinary M capture in libgphoto2 to mask it. Mechanism within OpenPolaris still needs instrumented A/B. |
-| 6 | [#160 multi-shot](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/160) and [#155 panorama qualification](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/155) | First run the controlled 3-shot M / RAW+JPEG / preview-off test with one client, logging scheduler request, dispatch, PTP initiation, candidates, file publication, pgphoto PID and generation. No generic `-110` retry. Panorama, Astro panorama, Astro intervalometer, Pixel Shift and RAW/JPEG/RAW+JPEG each remain separately qualified scenarios; do not mark them supported from ordinary M success. |
+## Preserve the separate incidents
 
-UVC/device adapters are separate from this stability blocker: [#158 StarShoot](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/158), [#159 iPolar](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/159), umbrella [#151](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/151). Their code/adapter safety and actual package wiring/hardware qualification must be checked independently; do not conflate them with Pentax PTP or claim support from host compilation alone.
+1. The [14:43 crash](evidence/pentax-shutter-crash-20260930-1443/SUMMARY.md)
+   snapshot identifies **o-v13x / 6.0.0.54.43**. InitiateCapture returned
+   0x2001, then pgphoto crashed without output/publication. This is acceptance,
+   not completion; the crash-time maps/registers were unavailable.
+2. The [16:00–16:04 refusals](evidence/pentax-busy-after-sd-recovery-20260930-1604/ASSESSMENT.md)
+   were on **o-v15a / 6.0.0.54.44**. Four requests were blocked before initiation;
+   SD capacity recovered independently. No requested SP_0151–SP_0154 output was
+   published. The 17:35 UTC #149 review marks v15a physically failed.
+3. The [post-reboot busy report](evidence/pentax-after-dual-reboot-busy-20260930/ASSESSMENT.md)
+   lacks a matching retained code-264 request; do not assert it reached pgphoto.
+4. Camera playback image `484-3701` was taken through Benro Connect; actor,
+   request ownership, publication mapping and relation to selector 1 are unknown.
+5. SP labels recur across sessions. Correlate original log, timestamp, pgphoto
+   PID/generation and camera identity; never join events by SP label alone.
 
-## Required execution and release gates
+## Exact resume sequence
 
-1. Read #149 first, then #145, #146, #147, #148; use its current order and senior decisions. Read #143 only for disputed provenance/baseline. Read the local normative guides before acting: `AGENTS.md`, `.github/skills/polaris-debugging/SKILL.md`, `docs/LIBGPHOTO2-UPGRADE-PROCESS.md`, and the applicable `polaris-release`, `fwpkt-update-flow`, and `fwpkt-private-upload` skills.
-2. Preserve dirty trees. Reconcile the seven-commit local/remote drift without reset/rebase of the user's checkout; use an isolated worktree if needed. Capture crash registers/maps at process death before another reproduction.
-3. Test in depth: libgphoto2 deterministic tests → patcher offline gate → harness/protocol tests → `./tests/run_prerelease_gate.sh --build out/<candidate>/FwPkt` and payload verification → only then device install/canary. A passing offline gate does not qualify firmware or hardware.
-4. Build one instrumented candidate from clean, exact source SHAs and the known stock FwPkt. Record provenance row, component hashes, package filename and hashes; upload privately as required. Never replace `/app` binaries by SSH.
-5. On hardware, start with a read-only identity/state/log snapshot. Do not send another shutter until candidate ownership/meaning is resolved and strict pre-shutter admission is sound. Then test one ordinary M RAW+JPEG capture, verify both output files and API control return, and only then run the separate mode matrix. Stop on the first unexplained failure; no retry shutter.
+1. Read #149 and #145 latest reviews plus the audit above. Use repository skills
+   and the libgphoto2 source/runtime ownership contract.
+2. After operative confirmation, verify fresh PC USB `25fb:0189`. Use the frozen
+   installed-source prefix at `LibGphoto2/libgphoto2/_baselines/`
+   `fbc2e7e6544efc93cc708a1e7d2fdf2b2bf7c7cd/prefix`, with matched core/port,
+   CAMLIBS/IOLIBS and loader proof. Begin with a bounded conditions-only read,
+   capturing the complete debug response. Do not trigger a new exposure.
+3. If the USB move cleared the state, record NOT REPRODUCED. Do not manufacture
+   an orphan through a destructive disconnect. A direct source-boundary
+   reproducer is required before changing library recovery behavior.
+4. Implement #145's two cases: active/unknown operation stays blocked; recoverable
+   orphan is inspected, transferred and durably published, retaining its camera
+   candidate until exact publication acknowledgement. Associate an original
+   request only with evidence; otherwise report recovered/orphan, never the
+   newly refused shot. Add production-path owner-loss and failure tests first.
+5. Only after that, use clean committed sources, the canonical release script,
+   immutable provenance/private upload, package gate, supported install and
+   physical regression matrix. Do not repackage unchanged behavior as a fix.
 
-## Last known package / confidence
+## Remaining dependencies and qualification
 
-Last installed identity is `6.0.0.54.44` from the 16:43 BST read-only snapshot; current live state may have changed since. No `15a` build, deployment, or canary PASS is established here. Ordinary M RAW+JPEG previously passed on the o-v13w lineage (SP_0147–SP_0150), while later owner-crash and no-candidate failures remain open. **Current status: not ready for release qualification; next agent should start at #145 field semantics + durable orphan-output ownership, not by trying another capture.**
+- #146: transport generation is distinct from mode/config epoch. M↔B refreshes
+  config; true USB replacement requires identity-driven rebind. Preserve mount
+  alignment/tracking across camera recovery.
+- #148: requested duration, pre-delay, exposure, processing and API completion
+  remain separate. Exact seconds/fractions must display correctly; locate
+  editable client source instead of changing firmware to compensate for UI.
+- #147 / OpenPolaris #94: sustained flicker was specifically associated with
+  OpenPolaris + Benro Connect. App-side fixes already exist on application main;
+  the physical A/B and sequence workload ownership remain owed.
+- #160/#155: no generic -110 retry. A controlled ordinary 3-shot M RAW+JPEG run
+  follows recovered single-shot ownership; Astro, panorama, Pixel Shift and
+  other formats need separate qualification.
+- Canon R5 II, Pentax K-3 III and K-1 II regression requirements remain in force.
+
+Offline patcher gate: 16 container + 25 Python PASS, two nested prerequisite
+skips. Both exact-source library deterministic suites: 14/14 PASS with the
+hardware-dependent `no-ci` suite excluded. The initial unrestricted library run
+failed that fixture-dependent test; see the audit. These checks do not qualify
+or fix the hardware.
