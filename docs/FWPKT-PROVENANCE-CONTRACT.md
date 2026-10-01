@@ -225,4 +225,5 @@ Three guards make this safe and verifiable:
       pre-existing rows keep their local/`smb:`/`sd:` references until
 
 | 15b-candidate | `firmware-packets/15b-candidate/FwPkt.zip` (ian-morgan99/PrivateResearch, private) | `c6d7631155eb260075d38149ddd646a4` | `32b17ffaed96bf5e` | `eb7590d79b15674f03d8772a3636a136` | `db416b7d9` | `6060709/main` | built | Built from libgphoto2 commit db416b7d9 (fixes Pentax +32/+36 field semantics) |
+| o-v15d-bulb-20261002 | `firmware-packets/o-v15d-bulb-20261002/FwPkt.zip` (ian-morgan99/PrivateResearch, private) | `d2ea64aa23a4e739bacec600bbf424e8` | `f48c4d45e9030244` | `64118278e48aeeb7a61979469583cbf3` | `d7087f17f651d7be985f9408bc987449e70db407` | `3c74f19/main` | candidate | 15d: trusted Bulb pre-delay removal plus latest Pentax main capture semantics; display formatting remains UI-layer work |
       backfilled.
