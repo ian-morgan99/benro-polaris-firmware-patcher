@@ -1047,3 +1047,25 @@ raw-evidence corpus is preserved at
 The archive contains both a commit-exact documentation tarball and a working-
 tree tarball, per-file SHA-256 manifests and the pre-cleanup worktree patch.
 See `ARCHIVED-EVIDENCE.md` for the public retention policy.
+
+## 2026-10-01 o-v15b CANDIDATE (BUILD READY)
+
+**o-v15b: BUILD READY / AWAITING CANARY**
+
+- Built from libgphoto2 commit db416b7d9 (fixes Pentax +32/+36 field semantics)
+- Based on FwPkt from out/FwPkt_extracted/FwPkt (built Sep 28 14:37)
+- Offline gate: GREEN (4/4 passed)
+- Canary test: SKIP (camera not attached - prerequisite gap, not failure)
+- Ready for physical device validation when K-3 III is attached
+
+### Build Provenance
+- Patcher commit: 84da8bd (docs: update VSCode settings for LM Studio supervision)
+- Libgphoto2 commit: db416b7d9 (ptp2: fix Pentax +32/+36 field semantics for admission logic)
+- OpenPolaris: unchanged (upstream main)
+
+### Next Steps
+1. Attach K-3 III to PC via USB
+2. Power on camera, close all camera apps
+3. Run: ./tests/run_prerelease_gate.sh --canary --expected-files 1
+4. If GREEN, proceed with fwpkt-update-flow skill for installation
+

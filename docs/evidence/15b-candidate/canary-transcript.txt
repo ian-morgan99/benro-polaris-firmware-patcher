@@ -1,0 +1,10 @@
+2026-10-01T13:01:14Z TX 1&284&2&-100#
+2026-10-01T13:01:14Z RX 284@mode:1;state:0;#
+2026-10-01T13:01:14Z TX 1&820&2&-100#
+2026-10-01T13:01:14Z RX 820@ret:-1;#
+2026-10-01T13:01:14Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-10-01T13:01:14Z TX 1&286&2&-100#
+2026-10-01T13:01:14Z RX 286@manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;#
+2026-10-01T13:01:14Z CAMERA manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;
+2026-10-01T13:01:14Z SUMMARY model=none state=-5 photoFormat=0
+2026-10-01T13:01:14Z PROBE-DONE
