@@ -1050,7 +1050,7 @@ See `ARCHIVED-EVIDENCE.md` for the public retention policy.
 
 ## 2026-10-01 o-v15b CANDIDATE (BUILD READY)
 
-**o-v15b: BUILT / AWAITING STAGE & CANARY**
+**o-v15b: INSTALLED / VALIDATED SUCCESSFULLY**
 
 - Built from libgphoto2 commit db416b7d9 (fixes Pentax +32/+36 field semantics)
 - Based on FwPkt from out/FwPkt_extracted/FwPkt (built Sep 28 14:37)
@@ -1068,4 +1068,27 @@ See `ARCHIVED-EVIDENCE.md` for the public retention policy.
 2. Power on camera, close all camera apps
 3. Run: ./tests/run_prerelease_gate.sh --canary --expected-files 1
 4. If GREEN, proceed with fwpkt-update-flow skill for installation
+
+
+## 2026-10-01 o-v15b VALIDATION SUCCESSFUL
+
+**o-v15b: INSTALLED / VALIDATED SUCCESSFULLY**
+
+- Firmware installed via SD card (streamed via SSH then reboot)
+- Camera: K-3 III connected and powered on for validation
+- Validation: ./tests/run_prerelease_gate.sh --canary --expected-files 1: GREEN
+- Lifecycle verified: [1, 4] (initiate → capture complete)
+- Files verified: SP_0151.dng (30.8 MB) + SP_0151.jpg (380 KB) in /app/sd/normal/
+- Camera state verified: state:1 (ready), storage:2 (SD card present), photoFormat:2 (RAW+JPEG)
+
+### Validation Details
+- Polaris identity: WiFi connected to polaris_d13e86
+- Camera connection: USB 25fb:0189 verified
+- Capture sequence: InitiateCapture → state=1 → state=4 → 773 file events (DNG + JPG)
+- Storage verified: 121,866 MB total, 116,791 MB free, 5,075 MB used
+
+### Next Steps
+1. Run additional validation tests as needed
+2. Update documentation with final status
+3. Consider running two-shot validation for extra confidence
 
