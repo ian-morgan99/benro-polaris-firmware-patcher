@@ -23,5 +23,8 @@
     "lmstudio.secondaryServers": [
         "192.168.68.89:8000"
     ],
-    "lmstudio.supervision.liveCompaction": true
+    "lmstudio.supervision.liveCompaction": true,
+    "lmstudio.supervision.device": "cuda",
+    "lmstudio.supervision.loadIn4bit": true,
+    "lmstudio.supervision.pythonExecutable": "/home/ian/Documents/VSCodeProjects/LMStudio-Bridge/VSCode-LMStudio-Bridge/scripts/decision-sidecar/.venv/bin/python"
 }
