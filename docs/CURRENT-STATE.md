@@ -1114,3 +1114,28 @@ the pre-capture Pentax Bulb timer when sizing the wait budget, and removes the
 fixed five-read abort during a long exposure.  The exact regression evidence
 and limits of the 2026-10-02 logs are recorded in
 `docs/evidence/polaris-bulb-regression-20261002-last-test/SUMMARY.md`.
+
+## 2026-10-02 o-v15h adversarial safety candidate
+
+Candidate `o-v15h-adversarial-bulb-20261002` was rebuilt from the pristine
+stock ZIP using clean `main` checkouts, passed the deterministic gates, and
+was uploaded to PrivateResearch.
+
+- libgphoto2: `4e996e69c0a832a59d0852f8c872510d1b5ce361`
+- patcher: `96604e38d2dc86b92f1744b6541d8252f5f4a4c9`
+- build id: `6.0.0.54.51-o-v15h-adversarial-bulb`
+- ZIP MD5: `fef08d6c994d4296e7f4441ff3528c40`
+- ZIP SHA-256: `0515048034ebef079322eb46528bdefdc8b6b5403cc2737cecfbf9a271ec14d7`
+- appfs MD5: `e7dfc61e03dfbc9b1f9df9af4001122a`
+- PrivateResearch artifact commit: `3299e6675`
+- offline status: libgphoto2 14/14; patcher/package 3 passed, one documented
+  stock-manifest prerequisite skip
+
+The important behavioral change is safety: reconciliation no longer assumes
+that a second Pentax candidate belongs to the current exposure. If ownership
+is not positively proven, the candidate remains untouched and the capture does
+not report success or allow the next shutter. RAW+JPEG therefore remains
+intentionally unqualified until direct hardware evidence supplies the missing
+correlation and format proof. The candidate retains the exact `MM:SS` Bulb
+mapping and the existing firmware-side pre-shot-delay removal/wait-budget
+changes. See the candidate [review summary](evidence/o-v15h-adversarial-bulb-20261002/SUMMARY.md).
