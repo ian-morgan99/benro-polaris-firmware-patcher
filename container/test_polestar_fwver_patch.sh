@@ -27,7 +27,7 @@ fresh = words(0xE59F10CC, 0xE08F1001, 0xE59F007C, 0xE7940000,
 patched = words(0xE59F10CC, 0xE08F1001, 0xE59F007C, 0xE7940000,
                 0xE2802FEA, 0xE2800FFA, 0xEBFB88AF)
 old_literal = struct.pack("<I", 0x0092E0FC)
-new_literal = struct.pack("<I", 0x00917798)
+new_literal = struct.pack("<I", 0x0091779c)
 
 data = bytearray(max(FORMAT + 4, LITERAL + 4, SITE + len(fresh)) + 16)
 data[FORMAT:FORMAT + 3] = b"%s\0"
@@ -46,6 +46,7 @@ assert first.returncode == 0, first.stdout + first.stderr
 patched_data = open(path, "rb").read()
 assert patched_data[SITE:SITE + len(patched)] == patched
 assert patched_data[LITERAL:LITERAL + 4] == new_literal
+assert SITE + 8 + int.from_bytes(new_literal, "little") == FORMAT
 
 before = patched_data
 second = run()

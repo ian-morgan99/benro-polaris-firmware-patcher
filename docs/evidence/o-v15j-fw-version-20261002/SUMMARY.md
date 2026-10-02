@@ -1,4 +1,14 @@
-# o-v15j firmware-version candidate
+# o-v15j firmware-version candidate — withdrawn
+
+Status: **WITHDRAWN — DO NOT STAGE**
+
+Static adversarial review found that the generated ARM PC-relative format
+literal is four bytes short. The code-780 patch therefore points at `0xa57320`
+(`"/\0"`) instead of the intended standalone `%s` at `0xa57324`. The source
+patch has been corrected and the regression test now checks the resolved
+target address. The operator has reported an unrecoverable failure after
+using this candidate; that boot failure is not attributed solely to this
+format-string defect without device logs.
 
 This candidate fixes the long-running Benro Connect version mismatch.
 

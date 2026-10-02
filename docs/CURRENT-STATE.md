@@ -1170,11 +1170,20 @@ The candidate contains the Pentax generic `bulb=1`/`bulb=0` start/stop action
 and the matched full Polaris camera stack. Full installation evidence is in
 `docs/evidence/o-v15i-pentax-bulb-matched-20261002/INSTALL-VERIFICATION.md`.
 
-## 2026-10-02 o-v15j exact app firmware version candidate
+## 2026-10-02 o-v15j exact app firmware version candidate — WITHDRAWN
 
-`o-v15j-fw-version-20261002` is now installed and runtime-verified. It is the
-first candidate that fixes the two version sources rather than merely
-rewriting `/app/FwVer`:
+`o-v15j-fw-version-20261002` is withdrawn and must not be staged again. Static
+review found a bug in the newly added ARM PC-relative format-string immediate:
+it points code 780 at `0xa57320` (`"/\0"`) rather than the intended standalone
+`%s` at `0xa57324`. The source fix is now fail-closed and covered by a test.
+The operator has reported an unrecoverable failure after using 15j; the exact
+boot failure remains uncorrelated because the device is currently unavailable.
+
+The last recovery package before this change is `o-v15i-pentax-bulb-matched-20261002`.
+Use its extracted `FwPkt/` tree for recovery; do not use 15j.
+
+15j was intended to fix the two version sources rather than merely rewriting
+`/app/FwVer`:
 
 - `/app/FwVer` and package `FwVer` are `6.0.0.54.52`.
 - code 780 now returns that exact raw five-part value instead of adding
