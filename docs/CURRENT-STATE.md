@@ -1195,3 +1195,20 @@ Build and provenance details are in
 `docs/evidence/o-v15j-fw-version-20261002/SUMMARY.md`; the registry row is in
 `docs/FWPKT-PROVENANCE-CONTRACT.md`. Installation evidence is in
 `docs/evidence/o-v15j-fw-version-20261002/INSTALL-VERIFICATION.md`.
+
+## 2026-10-02 o-v15k corrected firmware-version candidate
+
+`o-v15k-fw-version-20261002` is built and privately archived but **not
+installed**. It is the corrected successor to withdrawn 15j:
+
+- patcher `main`: `23f49297ce0de0d03b88075be73e76fdf753cde5`
+- libgphoto2 `main`: `6979070597ebddbaa5f1cff1e56b7597e4594ed2`
+- ZIP MD5: `11efec0431cfd0d705c554d3703c0453`
+- ZIP SHA-256: `00e32619f89400ff5d25a86822e241dd1d1d0f56d6dd9dbec0bbd859c068bff0`
+- appfs MD5: `ee2a37205404f59abd90a05b1a9ed377`
+- PrivateResearch artifact commit: `d3870b5ea`
+- package gate: libgphoto2 `14/14`; pre-release `4 passed, 0 failed, 0 skipped`
+
+The corrected patch resolves code 780 to the actual `%s` at `0xa57324`, and
+the package contains `/app/FwVer=6.0.0.54.52`. The package is ready for manual
+SD-card staging after recovery; no remote installation has been attempted.
