@@ -38,6 +38,16 @@ class CaptureContractTest(unittest.TestCase):
         MODULE.capture(device, 1, 1)
         self.assertEqual(device.sent, [(264, 4, "state:1;bulb:0;c:-1;")])
 
+    def test_bulb_capture_uses_nonzero_duration(self):
+        device = FakePolaris([
+            (264, "state:1;bulb:8;c:-1;"),
+            (264, "state:4;bulb:8;c:-1;"),
+            (773, "path:/app/sd/normal/SP_0044.dng;"),
+            (264, "state:0;bulb:8;c:-1;"),
+        ])
+        MODULE.capture(device, 1, 1, bulb_seconds=8)
+        self.assertEqual(device.sent, [(264, 4, "state:1;bulb:8;c:-1;")])
+
     def test_rejects_negative_lifecycle(self):
         device = FakePolaris([(264, "state:-2;bulb:0;c:-1;")])
         with self.assertRaisesRegex(RuntimeError, "terminal failure"):
