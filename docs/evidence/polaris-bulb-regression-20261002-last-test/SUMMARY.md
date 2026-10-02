@@ -50,6 +50,7 @@ Candidate `o-v15g-bulb-duration-20261002-r1` / build id
 `6.0.0.54.50-o-v15g-bulb-duration` was built from libgphoto2 `e8f0a839` and
 patcher `465a5ca`, uploaded to PrivateResearch, and installed via the complete
 extracted SD-tree flow.  Post-boot provenance and Stage-2 runtime loading
-matched the registry row.  The camera USB was not present after reboot, so this
-is still not a physical camera qualification: a real 70 s Bulb capture remains
-to be performed.
+matched the registry row; the installed `ptp2.so` MD5 is
+`564dc2b8dfc41c6f68679e20b4e11157`, identical to the candidate.  The camera
+USB was not present after reboot, so this is still not a physical camera
+qualification: a real 70 s Bulb capture remains to be performed.
