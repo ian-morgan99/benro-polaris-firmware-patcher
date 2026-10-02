@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "purpose": "Offline contract coverage for every supported Bulb output and sequence variation.",
+  "physical_status": "contract-only: each row still requires live qualification on the named camera and mode",
+  "cameras": ["K-3 III", "K-1 II"],
+  "modes": [
+    {
+      "id": "manual",
+      "output_prefix": "/app/sd/normal/SP_",
+      "shot_counts": [1, 2],
+      "runner": "canary-two-shot"
+    },
+    {
+      "id": "astro",
+      "output_prefix": "/app/sd/astro/SP_",
+      "shot_counts": [1, 2, 5],
+      "runner": "test-astro-multishot"
+    }
+  ],
+  "formats": [
+    {"id": "raw", "expected_files": 1, "suffixes": [".dng"]},
+    {"id": "jpeg", "expected_files": 1, "suffixes": [".jpg"]},
+    {"id": "raw+jpeg", "expected_files": 2, "suffixes": [".dng", ".jpg"]}
+  ],
+  "bulb_seconds": [4, 60, 70],
+  "shutter_selection": "command-277-required-before-command-264"
+}

@@ -84,14 +84,17 @@ fi
 
 # ----------------------------------------------------------------------------
 # 2. Coded Python regression tests (scenario routing, stability catalogue,
-#    trace tooling, astro multi-shot contract). These encode the invariants
+#    trace tooling, Bulb variation matrix, and astro multi-shot contract).
+#    These encode the invariants
 #    of everything we believe is working; a new regression must break one.
 # ----------------------------------------------------------------------------
 if python3 -m pytest -q \
     tests/test_pentax_scenario_routing.py \
     tests/test_pentax_stability_scenarios.py \
     tests/test_pentax_stability_trace.py \
+    tests/test_canary_bulb.py \
     tests/test_canary_two_shot.py \
+    tests/test_pentax_bulb_variations.py \
     tests/test_astro_multishot.py > /tmp/prerelease-pytest.log 2>&1; then
     ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
 else
