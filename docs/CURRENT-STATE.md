@@ -1118,8 +1118,9 @@ and limits of the 2026-10-02 logs are recorded in
 ## 2026-10-02 o-v15h adversarial safety candidate
 
 Candidate `o-v15h-adversarial-bulb-20261002` was rebuilt from the pristine
-stock ZIP using clean `main` checkouts, passed the deterministic gates, and
-was uploaded to PrivateResearch.
+stock ZIP using clean `main` checkouts, passed the deterministic gates, was
+uploaded to PrivateResearch, and was installed through the sanctioned
+extracted-SD-tree flow.
 
 - libgphoto2: `4e996e69c0a832a59d0852f8c872510d1b5ce361`
 - patcher: `96604e38d2dc86b92f1744b6541d8252f5f4a4c9`
@@ -1130,6 +1131,12 @@ was uploaded to PrivateResearch.
 - PrivateResearch artifact commit: `3299e6675`
 - offline status: libgphoto2 14/14; patcher/package 3 passed, one documented
   stock-manifest prerequisite skip
+- installed runtime: `FwVer=6.0.0.54.51-o-v15h-adversarial-bulb`; embedded
+  source and patcher provenance match the registry row
+- installed Stage-2 core/port and stock-path core/port hashes match; Stage-2
+  `ptp2.so`/`usb1.so` also match their stock-path copies
+- physical camera canary: NOT TESTED; no `25fb` USB device was present after
+  reboot, and the live gate recorded a prerequisite skip
 
 The important behavioral change is safety: reconciliation no longer assumes
 that a second Pentax candidate belongs to the current exposure. If ownership
@@ -1139,3 +1146,5 @@ intentionally unqualified until direct hardware evidence supplies the missing
 correlation and format proof. The candidate retains the exact `MM:SS` Bulb
 mapping and the existing firmware-side pre-shot-delay removal/wait-budget
 changes. See the candidate [review summary](evidence/o-v15h-adversarial-bulb-20261002/SUMMARY.md).
+Install evidence is in
+`docs/evidence/o-v15h-adversarial-bulb-20261002/INSTALL-VERIFICATION.md`.
