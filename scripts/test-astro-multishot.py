@@ -26,6 +26,8 @@ assert _PROBE_SPEC and _PROBE_SPEC.loader
 _PROBE = importlib.util.module_from_spec(_PROBE_SPEC)
 _PROBE_SPEC.loader.exec_module(_PROBE)
 bulb_capture_payload = _PROBE.bulb_capture_payload
+effective_shot_timeout = _PROBE.effective_shot_timeout
+resolve_bulb_shutter_index = _PROBE.resolve_bulb_shutter_index
 set_shutter = _PROBE.set_shutter
 
 
@@ -196,9 +198,9 @@ def main() -> int:
     parser.add_argument("--expected-files", type=int, choices=(1, 2), required=True,
                         help="authoritative output obligation; never inferred from photoFormat")
     parser.add_argument("--bulb-seconds", type=int,
-                        help="exercise Bulb for this many seconds; requires --bulb-shutter-index")
+                        help="exercise Bulb for this many seconds; index is discovered from command 268")
     parser.add_argument("--bulb-shutter-index", type=int,
-                        help="camera's Bulb entry in the shutter-option list (command 277)")
+                        help="optional checked override for the live Bulb entry (command 277)")
     parser.add_argument("--execute", action="store_true",
                         help="required acknowledgement that shutters will be released")
     args = parser.parse_args()
@@ -208,19 +210,12 @@ def main() -> int:
         parser.error("--shots must be between 1 and 20")
     if args.interval < 0:
         parser.error("--interval must be non-negative")
-    if (args.bulb_seconds is None) != (args.bulb_shutter_index is None):
-        parser.error("--bulb-seconds and --bulb-shutter-index must be supplied together")
     if args.bulb_seconds is not None and args.bulb_seconds <= 0:
         parser.error("--bulb-seconds must be positive")
     if args.shot_timeout <= 0:
         parser.error("--shot-timeout must be positive")
 
-    shot_timeout = args.shot_timeout
-    if args.bulb_seconds is not None:
-        # The camera owns the actual Bulb hold. Leave enough time for that
-        # hold and the post-capture transfer/lifecycle events even when the
-        # ordinary 120-second default was retained.
-        shot_timeout = max(shot_timeout, float(args.bulb_seconds + 90))
+    shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
 
     print(f"{stamp()} START host={args.host}:{args.port} shots={args.shots} "
           f"interval={args.interval}s bind={args.bind} "
@@ -238,9 +233,10 @@ def main() -> int:
               f"photoFormat_hint={field(camera, 'photoFormat')}", flush=True)
         preview_was_on = suspend_preview(p)
         if args.bulb_seconds is not None:
-            set_shutter(p, args.bulb_shutter_index)
+            bulb_index = resolve_bulb_shutter_index(p, args.bulb_shutter_index)
+            set_shutter(p, bulb_index)
             print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
-                  f"shutter_index={args.bulb_shutter_index}", flush=True)
+                  f"shutter_index={bulb_index}", flush=True)
         seen_paths: set[str] = set()
         for number in range(1, args.shots + 1):
             capture(p, number, shot_timeout, expected_files, seen_paths,

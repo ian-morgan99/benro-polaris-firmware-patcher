@@ -31,6 +31,8 @@ _cp_mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_cp_mod)
 Polaris, field, stamp = _cp_mod.Polaris, _cp_mod.field, _cp_mod.stamp
 bulb_capture_payload = _cp_mod.bulb_capture_payload
+effective_shot_timeout = _cp_mod.effective_shot_timeout
+resolve_bulb_shutter_index = _cp_mod.resolve_bulb_shutter_index
 set_shutter = _cp_mod.set_shutter
 
 
@@ -149,12 +151,12 @@ def main() -> int:
     ap.add_argument("--expected-sp-prefix", required=True,
                     help="expected Polaris SP output path prefix, e.g. /app/sd/normal/SP_")
     ap.add_argument("--bulb-seconds", type=int,
-                    help="exercise Bulb for this many seconds; requires --bulb-shutter-index")
+                    help="exercise Bulb for this many seconds; index is discovered from command 268")
     ap.add_argument("--bulb-shutter-index", type=int,
-                    help="camera's Bulb entry in the shutter-option list (command 277)")
+                    help="optional checked override for the live Bulb entry (command 277)")
     args = ap.parse_args()
-    if (args.bulb_seconds is None) != (args.bulb_shutter_index is None):
-        ap.error("--bulb-seconds and --bulb-shutter-index must be supplied together")
+    if args.shot_timeout <= 0:
+        ap.error("--shot-timeout must be positive")
     if args.bulb_seconds is not None and args.bulb_seconds <= 0:
         ap.error("--bulb-seconds must be positive")
 
@@ -197,12 +199,15 @@ def main() -> int:
             confirmed = p.wait_code(292, 10)
             print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
+        shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
         if args.bulb_seconds is not None:
-            set_shutter(p, args.bulb_shutter_index)
-            print(f"{stamp()} BULB requested_seconds={args.bulb_seconds}", flush=True)
+            bulb_index = resolve_bulb_shutter_index(p, args.bulb_shutter_index)
+            set_shutter(p, bulb_index)
+            print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
+                  f"shutter_index={bulb_index} shot_timeout={shot_timeout}s", flush=True)
 
         ok, _records, seen_paths = run_sequence(
-            p, shot_count=2, shot_timeout=args.shot_timeout,
+            p, shot_count=2, shot_timeout=shot_timeout,
             expected_files=expected_files,
             expected_sp_prefix=args.expected_sp_prefix, run_id=run_id,
             bulb_seconds=args.bulb_seconds)

@@ -1212,3 +1212,23 @@ installed**. It is the corrected successor to withdrawn 15j:
 The corrected patch resolves code 780 to the actual `%s` at `0xa57324`, and
 the package contains `/app/FwVer=6.0.0.54.52`. The package is ready for manual
 SD-card staging after recovery; no remote installation has been attempted.
+
+## 2026-10-02 Bulb review reconciliation
+
+The release-control and test gaps identified in the adversarial review are now
+fixed on patcher `main` and OpenPolaris `main`. The canaries discover the live
+Bulb shutter entry from command 268, require an explicit command-277
+`ret:0`, and use one timeout calculation for single-shot, two-shot, and Astro
+tests. The package gate also verifies the Bulb marker in the extracted,
+repacked `polestar_app`. OpenPolaris now reports a rejected Manual Bulb
+command when command 264 does not echo `state:1`, instead of showing a false
+success.
+
+The registered 15k ZIP remains unchanged and was built from libgphoto2
+`697907059` and patcher `23f4929`. The new changes are test/UI source changes;
+they are not included in the already-built 15k firmware. No physical camera
+qualification has been claimed: the live canary is still pending an attached
+camera and must capture the command 268/277/264/file-event evidence.
+
+Detailed evidence is in
+`docs/evidence/bulb-review-20261002/SUMMARY.md`.

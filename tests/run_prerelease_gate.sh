@@ -14,6 +14,8 @@
 #   ./tests/run_prerelease_gate.sh --canary --expected-files 1
 #   ./tests/run_prerelease_gate.sh --two-shot --expected-files 2 \
 #       --expected-sp-prefix /app/sd/normal/SP_
+#   ./tests/run_prerelease_gate.sh --canary --expected-files 1 \
+#       --bulb-seconds 30
 #   ./tests/run_prerelease_gate.sh --host 192.168.0.1 --port 9090 --bind 192.168.0.4
 #
 # Exit codes: 0 = gate green (skips allowed), 1 = a runnable check failed,
@@ -32,6 +34,9 @@ PORT="9090"
 BIND="192.168.0.4"
 EXPECTED_FILES=""
 EXPECTED_SP_PREFIX=""
+BULB_SECONDS=""
+BULB_INDEX=""
+BULB_ARGS=()
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -43,6 +48,8 @@ while [ $# -gt 0 ]; do
         --bind) BIND="${2:?}"; shift 2 ;;
         --expected-files) EXPECTED_FILES="${2:?}"; shift 2 ;;
         --expected-sp-prefix) EXPECTED_SP_PREFIX="${2:?}"; shift 2 ;;
+        --bulb-seconds) BULB_SECONDS="${2:?}"; shift 2 ;;
+        --bulb-shutter-index) BULB_INDEX="${2:?}"; shift 2 ;;
         -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
         *) echo "unknown arg: $1" >&2; exit 2 ;;
     esac
@@ -56,6 +63,24 @@ fi
 if [ "$TWO_SHOT" = "1" ] && [ -z "$EXPECTED_SP_PREFIX" ]; then
     echo "--two-shot requires --expected-sp-prefix from the selected Polaris output target" >&2
     exit 2
+fi
+if [ -n "$BULB_SECONDS" ] && ! [[ "$BULB_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "--bulb-seconds must be a positive integer" >&2
+    exit 2
+fi
+if [ -n "$BULB_INDEX" ] && ! [[ "$BULB_INDEX" =~ ^[0-9]+$ ]]; then
+    echo "--bulb-shutter-index must be a non-negative integer" >&2
+    exit 2
+fi
+if [ -n "$BULB_INDEX" ] && [ -z "$BULB_SECONDS" ]; then
+    echo "--bulb-shutter-index requires --bulb-seconds" >&2
+    exit 2
+fi
+if [ -n "$BULB_SECONDS" ]; then
+    BULB_ARGS+=(--bulb-seconds "$BULB_SECONDS")
+    if [ -n "$BULB_INDEX" ]; then
+        BULB_ARGS+=(--bulb-shutter-index "$BULB_INDEX")
+    fi
 fi
 
 pass=0; fail=0; skip=0
@@ -135,6 +160,29 @@ open('$STOCK_FI','wb').write(data)
             skp "firmwareInfo manifest gate (no stock firmware/FwPkt.zip in repo)"
         fi
         rm -f "$STOCK_FI"
+
+        # The release wrapper requests the firmware-side Bulb fix for every
+        # production candidate. Verify the marker in the actual repacked
+        # polestar_app, not merely in the source patch script or build log.
+        if command -v ubireader_extract_files >/dev/null 2>&1; then
+            PATCH_AUDIT_DIR="$(mktemp -d)"
+            if ubireader_extract_files -o "$PATCH_AUDIT_DIR" "$BUILD/camera/appfs.ubifs" \
+                >/tmp/prerelease-polestar-extract.log 2>&1; then
+                APP_BIN="$(find "$PATCH_AUDIT_DIR" -type f -path '*/bin/polestar_app' -print -quit)"
+                if [ -n "$APP_BIN" ] && \
+                   python3 container/polestar_bulb_patch.py "$APP_BIN" \
+                       >/tmp/prerelease-polestar-bulb.log 2>&1; then
+                    ok "polestar_app Bulb patch marker present in repacked appfs"
+                else
+                    bad "polestar_app Bulb patch marker missing or invalid (log: /tmp/prerelease-polestar-bulb.log)"
+                fi
+            else
+                bad "polestar_app appfs extraction for Bulb marker (log: /tmp/prerelease-polestar-extract.log)"
+            fi
+            rm -rf "$PATCH_AUDIT_DIR"
+        else
+            skp "polestar_app Bulb marker gate (ubireader_extract_files unavailable)"
+        fi
     fi
 else
     echo "INFO: no --build given; package gates skipped (offline gate only)"
@@ -153,6 +201,7 @@ if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
         if [ "$CANARY" = "1" ]; then
             if python3 scripts/canary-probe.py --host "$HOST" --port "$PORT" --bind "$BIND" --shot \
                 --expected-files "$EXPECTED_FILES" \
+                "${BULB_ARGS[@]}" \
                 > /tmp/prerelease-canary-shot.log 2>&1; then
                 ok "canary shot (lifecycle + file event)"
             else
@@ -163,6 +212,7 @@ if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
             if python3 scripts/canary-two-shot.py --host "$HOST" --port "$PORT" --bind "$BIND" \
                 --expected-files "$EXPECTED_FILES" \
                 --expected-sp-prefix "$EXPECTED_SP_PREFIX" \
+                "${BULB_ARGS[@]}" \
                 > /tmp/prerelease-twoshot.log 2>&1; then
                 ok "two-shot gate (two distinct files, fail-closed)"
             else

@@ -79,6 +79,17 @@ def field(payload: str, name: str) -> str | None:
     return None
 
 
+def effective_shot_timeout(base: float, bulb_seconds: int | None) -> float:
+    """Allow the camera's Bulb hold plus transfer/lifecycle time."""
+    if base <= 0:
+        raise ValueError("--shot-timeout must be positive")
+    if bulb_seconds is None:
+        return base
+    if bulb_seconds <= 0:
+        raise ValueError("--bulb-seconds must be positive")
+    return max(base, float(bulb_seconds + 90))
+
+
 def bulb_capture_payload(seconds: int | None) -> str:
     """Build the capture request; zero is deliberately not a Bulb test."""
     if seconds is None:
@@ -88,6 +99,46 @@ def bulb_capture_payload(seconds: int | None) -> str:
     return f"state:1;bulb:{seconds};c:-1;"
 
 
+def shutter_options(p: Polaris, timeout: float = 10.0) -> tuple[str | None, list[str]]:
+    """Read command 268's current shutter index and option list."""
+    p.send(268)
+    response = p.wait_code(268, timeout)
+    raw_options = field(response, "R")
+    if raw_options is None:
+        raise RuntimeError(f"shutter-info response has no R option list: {response}")
+    options = [item.strip() for item in raw_options.split(",") if item.strip()]
+    if not options:
+        raise RuntimeError(f"shutter-info response has an empty option list: {response}")
+    current = field(response, "V") or field(response, "shutter")
+    print(f"{stamp()} SHUTTER_OPTIONS current={current} options={options}", flush=True)
+    return current, options
+
+
+def resolve_bulb_shutter_index(
+    p: Polaris, explicit_index: int | None = None, timeout: float = 10.0
+) -> int:
+    """Resolve Bulb from the camera's live option list; reject guessed indices."""
+    _current, options = shutter_options(p, timeout)
+    matches = [
+        index for index, option in enumerate(options)
+        if option.strip().lower() in {"bulb", "b"}
+    ]
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"could not identify exactly one Bulb option in command 268 R list: "
+            f"matches={matches} options={options}"
+        )
+    index = matches[0] if explicit_index is None else explicit_index
+    if index < 0 or index >= len(options):
+        raise ValueError(f"--bulb-shutter-index {index} is outside option list")
+    if index != matches[0]:
+        raise ValueError(
+            f"--bulb-shutter-index {index} is not the live Bulb option "
+            f"(expected {matches[0]}: {options[matches[0]]!r})"
+        )
+    return index
+
+
 def set_shutter(p: Polaris, index: int, timeout: float = 10.0) -> str:
     """Select the camera shutter option through the proven 277 wire command."""
     if index < 0:
@@ -95,8 +146,8 @@ def set_shutter(p: Polaris, index: int, timeout: float = 10.0) -> str:
     p.send(277, payload=f"shutter:{index};")
     response = p.wait_code(277, timeout)
     ret = field(response, "ret")
-    if ret not in (None, "0"):
-        raise RuntimeError(f"shutter selection rejected: {response}")
+    if ret != "0":
+        raise RuntimeError(f"shutter selection lacked explicit ret:0: {response}")
     print(f"{stamp()} SHUTTER index={index} response={response}", flush=True)
     return response
 
@@ -112,14 +163,16 @@ def main() -> int:
     ap.add_argument("--expected-files", type=int, choices=(1, 2),
                     help="authoritative output obligation required with --shot")
     ap.add_argument("--bulb-seconds", type=int,
-                    help="exercise Bulb for this many seconds; requires --bulb-shutter-index")
+                    help="exercise Bulb for this many seconds; index is discovered from command 268")
     ap.add_argument("--bulb-shutter-index", type=int,
-                    help="camera's Bulb entry in the shutter-option list (command 277)")
+                    help="optional checked override for the live Bulb entry (command 277)")
     args = ap.parse_args()
     if args.shot and args.expected_files is None:
         ap.error("--shot requires --expected-files 1 or 2; photoFormat is not authoritative")
-    if (args.bulb_seconds is None) != (args.bulb_shutter_index is None):
-        ap.error("--bulb-seconds and --bulb-shutter-index must be supplied together")
+    if args.shot_timeout <= 0:
+        ap.error("--shot-timeout must be positive")
+    if args.bulb_seconds is not None and args.bulb_seconds <= 0:
+        ap.error("--bulb-seconds must be positive")
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
     try:
@@ -160,11 +213,16 @@ def main() -> int:
                 print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
             # ONE capture
+            shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
             if args.bulb_seconds is not None:
-                set_shutter(p, args.bulb_shutter_index)
-                print(f"{stamp()} BULB requested_seconds={args.bulb_seconds}", flush=True)
+                bulb_index = resolve_bulb_shutter_index(p, args.bulb_shutter_index)
+                set_shutter(p, bulb_index)
+                print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
+                      f"shutter_index={bulb_index} shot_timeout={shot_timeout}s", flush=True)
+            else:
+                print(f"{stamp()} SHOT shot_timeout={shot_timeout}s", flush=True)
             p.send(264, subtype=4, payload=bulb_capture_payload(args.bulb_seconds))
-            deadline = time.monotonic() + args.shot_timeout
+            deadline = time.monotonic() + shot_timeout
             states: list[int] = []
             files: list[str] = []
             while True:

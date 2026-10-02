@@ -10,6 +10,20 @@ def load_probe():
     return mod
 
 
+class FakePolaris:
+    def __init__(self, responses):
+        self.responses = iter(responses)
+        self.sends = []
+
+    def send(self, *args, **kwargs):
+        self.sends.append((args, kwargs))
+
+    def wait_code(self, wanted, _timeout):
+        response = next(self.responses)
+        assert response.startswith(f"{wanted}@")
+        return response.split("@", 1)[1].rstrip("#")
+
+
 def test_bulb_payload_is_explicit_and_nonzero():
     mod = load_probe()
     assert mod.bulb_capture_payload(8) == "state:1;bulb:8;c:-1;"
@@ -25,3 +39,39 @@ def test_bulb_payload_rejects_zero_or_negative_duration():
             pass
         else:
             raise AssertionError("non-positive duration must not be a Bulb test")
+
+
+def test_bulb_index_is_discovered_from_the_live_option_list():
+    mod = load_probe()
+    device = FakePolaris(["268@V:1;R:1/30,1s,Bulb,2s;#"])
+    assert mod.resolve_bulb_shutter_index(device) == 2
+    assert device.sends == [((268,), {})]
+
+
+def test_explicit_bulb_index_must_match_the_live_option_list():
+    mod = load_probe()
+    device = FakePolaris(["268@V:1;R:1/30,1s,Bulb,2s;#"])
+    try:
+        mod.resolve_bulb_shutter_index(device, explicit_index=1)
+    except ValueError as exc:
+        assert "not the live Bulb option" in str(exc)
+    else:
+        raise AssertionError("a guessed non-Bulb index must be rejected")
+
+
+def test_shutter_ack_requires_explicit_ret_zero():
+    mod = load_probe()
+    for response in ("277@shutter:2;#", "277@shutter:2;ret:1;#"):
+        device = FakePolaris([response])
+        try:
+            mod.set_shutter(device, 2)
+        except RuntimeError as exc:
+            assert "explicit ret:0" in str(exc)
+        else:
+            raise AssertionError("missing or nonzero ret must fail closed")
+
+
+def test_bulb_timeout_is_shared_across_canary_entry_points():
+    mod = load_probe()
+    assert mod.effective_shot_timeout(180, 70) == 180
+    assert mod.effective_shot_timeout(120, 300) == 390
