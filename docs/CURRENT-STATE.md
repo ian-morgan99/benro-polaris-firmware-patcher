@@ -1094,14 +1094,20 @@ See `ARCHIVED-EVIDENCE.md` for the public retention policy.
 
 ## 2026-10-02 o-v15g Bulb duration and wait-budget candidate
 
-Candidate `o-v15g-bulb-duration-20261002-r1` is built and privately archived,
-but is not installed or physically qualified yet.
+Candidate `o-v15g-bulb-duration-20261002-r1` is built, privately archived, and
+installed through the sanctioned extracted-SD-tree flow.  It is not physically
+qualified yet.
 
 - libgphoto2: `e8f0a839` on canonical `main`
 - patcher: `465a5ca` on canonical `main`
 - build id: `6.0.0.54.50-o-v15g-bulb-duration`
 - package gate: GREEN (3 passed, one documented stock-manifest skip)
-- physical K-3 III Bulb test: NOT TESTED on this candidate
+- installed runtime: `FwVer=6.0.0.54.50-o-v15g-bulb-duration`
+- installed source provenance: libgphoto2 `e8f0a839`, patcher `465a5ca`
+- installed Stage-2 core: `/app/lib/stage2/libgphoto2.so.6` loaded by pgphoto;
+  it matches `/app/lib/libgphoto2.so.6` at MD5 `4ef64d8950eee70d9200093286fb0f3b`
+- physical K-3 III Bulb test: NOT TESTED on this candidate; camera USB was not
+  present after reboot
 
 This candidate changes the long-shutter labels to lossless `MM:SS`, preserves
 the pre-capture Pentax Bulb timer when sizing the wait budget, and removes the
