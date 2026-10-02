@@ -1148,3 +1148,24 @@ mapping and the existing firmware-side pre-shot-delay removal/wait-budget
 changes. See the candidate [review summary](evidence/o-v15h-adversarial-bulb-20261002/SUMMARY.md).
 Install evidence is in
 `docs/evidence/o-v15h-adversarial-bulb-20261002/INSTALL-VERIFICATION.md`.
+
+## 2026-10-02 o-v15i matched Pentax Bulb stack
+
+Candidate `o-v15i-pentax-bulb-matched-20261002` is installed through the
+sanctioned extracted-SD-tree flow and runtime-proven.
+
+- libgphoto2: `6979070597ebddbaa5f1cff1e56b7597e4594ed2` on canonical `main`
+- patcher build input: `d94767291c36b6dee9086490a2e9ae04ae88bd94` on canonical `main`
+- build id: `6.0.0.54.52-o-v15i-pentax-bulb-matched`
+- installed `FwVer`: `6.0.0.54.52`
+- ZIP MD5: `4ddbe3754fc7832750f0ee6b895fe616`
+- ZIP SHA-256: `d4623510357125e25c2e9a7c512bae238a686e1e5eab3db47d66956f0bfb0e75`
+- appfs MD5: `e10d206ce758f6d534677f881557cd6c`
+- PrivateResearch artifact commit: `77dc1ee0e`
+- offline gates: GREEN; libgphoto2 `14/14`, patcher/package gate `4/4`
+- runtime: matched core/port hashes, Stage-2 loader `64/64`, one pgphoto owner
+- physical camera validation: NOT TESTED; no `25fb` USB device was present
+
+The candidate contains the Pentax generic `bulb=1`/`bulb=0` start/stop action
+and the matched full Polaris camera stack. Full installation evidence is in
+`docs/evidence/o-v15i-pentax-bulb-matched-20261002/INSTALL-VERIFICATION.md`.
