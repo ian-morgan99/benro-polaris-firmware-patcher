@@ -1172,9 +1172,9 @@ and the matched full Polaris camera stack. Full installation evidence is in
 
 ## 2026-10-02 o-v15j exact app firmware version candidate
 
-`o-v15j-fw-version-20261002` is built and privately published but not yet
-installed. It is the first candidate that fixes the two version sources rather
-than merely rewriting `/app/FwVer`:
+`o-v15j-fw-version-20261002` is now installed and runtime-verified. It is the
+first candidate that fixes the two version sources rather than merely
+rewriting `/app/FwVer`:
 
 - `/app/FwVer` and package `FwVer` are `6.0.0.54.52`.
 - code 780 now returns that exact raw five-part value instead of adding
@@ -1184,4 +1184,5 @@ than merely rewriting `/app/FwVer`:
 
 Build and provenance details are in
 `docs/evidence/o-v15j-fw-version-20261002/SUMMARY.md`; the registry row is in
-`docs/FWPKT-PROVENANCE-CONTRACT.md`.
+`docs/FWPKT-PROVENANCE-CONTRACT.md`. Installation evidence is in
+`docs/evidence/o-v15j-fw-version-20261002/INSTALL-VERIFICATION.md`.
