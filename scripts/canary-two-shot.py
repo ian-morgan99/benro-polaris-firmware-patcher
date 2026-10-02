@@ -30,6 +30,8 @@ _spec = importlib.util.spec_from_file_location(
 _cp_mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_cp_mod)
 Polaris, field, stamp = _cp_mod.Polaris, _cp_mod.field, _cp_mod.stamp
+bulb_capture_payload = _cp_mod.bulb_capture_payload
+set_shutter = _cp_mod.set_shutter
 
 
 def exposure_stem(path: str) -> str:
@@ -50,7 +52,8 @@ def shot_satisfied(rec: dict, seen_paths: list[str], expected_files: int,
 
 def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
              shot_timeout: float, expected_files: int,
-             expected_sp_prefix: str, run_id: str) -> dict:
+             expected_sp_prefix: str, run_id: str,
+             bulb_seconds: int | None = None) -> dict:
     """Issue one code-264 capture and watch its lifecycle. Returns a record."""
     rec = {
         "shot": shot_no,
@@ -61,7 +64,7 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
         "idle_confirmed": False,
         "terminal_failure": None,
     }
-    p.send(264, subtype=4, payload="state:1;bulb:0;c:-1;")
+    p.send(264, subtype=4, payload=bulb_capture_payload(bulb_seconds))
     print(f"{stamp()} SHOT{shot_no} source=scripted request_id={rec['request_id']} "
           f"expected_sp_prefix={expected_sp_prefix!r} capture issued", flush=True)
     deadline = time.monotonic() + shot_timeout
@@ -108,13 +111,13 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
 
 def run_sequence(p: Polaris, shot_count: int, shot_timeout: float,
                  expected_files: int, expected_sp_prefix: str,
-                 run_id: str) -> tuple[bool, list[dict], list[str]]:
+                 run_id: str, bulb_seconds: int | None = None) -> tuple[bool, list[dict], list[str]]:
     """Run captures fail-closed: a failed shot consumes the whole failure budget."""
     seen_paths: list[str] = []
     records: list[dict] = []
     for shot_no in range(1, shot_count + 1):
         rec = run_shot(p, shot_no, seen_paths, shot_timeout, expected_files,
-                       expected_sp_prefix, run_id)
+                       expected_sp_prefix, run_id, bulb_seconds)
         records.append(rec)
         new_files = [path for path in rec["files"] if path not in seen_paths]
         ok = (
@@ -145,7 +148,15 @@ def main() -> int:
                     help="authoritative per-exposure output obligation; never inferred from photoFormat")
     ap.add_argument("--expected-sp-prefix", required=True,
                     help="expected Polaris SP output path prefix, e.g. /app/sd/normal/SP_")
+    ap.add_argument("--bulb-seconds", type=int,
+                    help="exercise Bulb for this many seconds; requires --bulb-shutter-index")
+    ap.add_argument("--bulb-shutter-index", type=int,
+                    help="camera's Bulb entry in the shutter-option list (command 277)")
     args = ap.parse_args()
+    if (args.bulb_seconds is None) != (args.bulb_shutter_index is None):
+        ap.error("--bulb-seconds and --bulb-shutter-index must be supplied together")
+    if args.bulb_seconds is not None and args.bulb_seconds <= 0:
+        ap.error("--bulb-seconds must be positive")
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
     try:
@@ -186,10 +197,15 @@ def main() -> int:
             confirmed = p.wait_code(292, 10)
             print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
+        if args.bulb_seconds is not None:
+            set_shutter(p, args.bulb_shutter_index)
+            print(f"{stamp()} BULB requested_seconds={args.bulb_seconds}", flush=True)
+
         ok, _records, seen_paths = run_sequence(
             p, shot_count=2, shot_timeout=args.shot_timeout,
             expected_files=expected_files,
-            expected_sp_prefix=args.expected_sp_prefix, run_id=run_id)
+            expected_sp_prefix=args.expected_sp_prefix, run_id=run_id,
+            bulb_seconds=args.bulb_seconds)
         if not ok:
             return 1
 

@@ -79,6 +79,28 @@ def field(payload: str, name: str) -> str | None:
     return None
 
 
+def bulb_capture_payload(seconds: int | None) -> str:
+    """Build the capture request; zero is deliberately not a Bulb test."""
+    if seconds is None:
+        return "state:1;bulb:0;c:-1;"
+    if seconds <= 0:
+        raise ValueError("--bulb-seconds must be positive")
+    return f"state:1;bulb:{seconds};c:-1;"
+
+
+def set_shutter(p: Polaris, index: int, timeout: float = 10.0) -> str:
+    """Select the camera shutter option through the proven 277 wire command."""
+    if index < 0:
+        raise ValueError("--bulb-shutter-index must be non-negative")
+    p.send(277, payload=f"shutter:{index};")
+    response = p.wait_code(277, timeout)
+    ret = field(response, "ret")
+    if ret not in (None, "0"):
+        raise RuntimeError(f"shutter selection rejected: {response}")
+    print(f"{stamp()} SHUTTER index={index} response={response}", flush=True)
+    return response
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="192.168.0.1")
@@ -89,9 +111,15 @@ def main() -> int:
     ap.add_argument("--shot-timeout", type=float, default=180.0)
     ap.add_argument("--expected-files", type=int, choices=(1, 2),
                     help="authoritative output obligation required with --shot")
+    ap.add_argument("--bulb-seconds", type=int,
+                    help="exercise Bulb for this many seconds; requires --bulb-shutter-index")
+    ap.add_argument("--bulb-shutter-index", type=int,
+                    help="camera's Bulb entry in the shutter-option list (command 277)")
     args = ap.parse_args()
     if args.shot and args.expected_files is None:
         ap.error("--shot requires --expected-files 1 or 2; photoFormat is not authoritative")
+    if (args.bulb_seconds is None) != (args.bulb_shutter_index is None):
+        ap.error("--bulb-seconds and --bulb-shutter-index must be supplied together")
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
     try:
@@ -132,7 +160,10 @@ def main() -> int:
                 print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
             # ONE capture
-            p.send(264, subtype=4, payload="state:1;bulb:0;c:-1;")
+            if args.bulb_seconds is not None:
+                set_shutter(p, args.bulb_shutter_index)
+                print(f"{stamp()} BULB requested_seconds={args.bulb_seconds}", flush=True)
+            p.send(264, subtype=4, payload=bulb_capture_payload(args.bulb_seconds))
             deadline = time.monotonic() + args.shot_timeout
             states: list[int] = []
             files: list[str] = []
