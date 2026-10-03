@@ -817,7 +817,7 @@ bias = 0x10000
 site = 0x13FB80 - bias
 literal = 0x13FC54 - bias
 expected = bytes.fromhex("cc109fe5 01108fe0 7c009fe5 000094e7 ea2f80e2 fa0f80e2 af88fbeb")
-want_literal = struct.pack("<I", 0x0091779c)
+want_literal = struct.pack("<I", 0x00917798)
 sys.exit(0 if data[site:site + len(expected)] == expected and data[literal:literal + 4] == want_literal else 1)
 PYCHK
   then
