@@ -1312,8 +1312,10 @@ fails.
 - pre-release gate: `5` passed, `0` failed, `0` skipped
 - physical installation/camera qualification: **PENDING**
 
-The safe version patch has been checked against the real stock
-`polestar_app` binary and is idempotent, but this candidate has not yet been
-installed on Polaris. The live code-780 response and the full K-3 III Bulb
-matrix remain required before calling the version or Bulb path physically
+The safe version patch was checked against the real stock `polestar_app`
+binary and is idempotent. The candidate was installed through the extracted
+SD `FwPkt/` watcher path and, after reboot, code 780 returned
+`sw:6.0.0.54.52` while `polestar_app` and Stage-2 remained alive. The camera
+was absent from USB, so the live code-780 result is verified but the full K-3
+III Bulb matrix remains required before calling the Bulb path physically
 resolved.

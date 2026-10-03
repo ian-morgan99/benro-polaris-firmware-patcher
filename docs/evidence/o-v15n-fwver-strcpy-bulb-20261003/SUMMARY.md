@@ -33,8 +33,11 @@ Built from the original stock `firmware/FwPkt.zip` on patcher `main`.
 
 ## Boundary
 
-This is a candidate, not a physical qualification. It has not been staged or
-installed on Polaris. The live code-780 response, reboot persistence, and the
-K-3 III Manual/Bulb RAW/JPEG/RAW+JPEG/cancellation/recovery matrix are still
-required. The candidate does not claim that the unsafe generic K-3 III
+This is installed runtime evidence, not physical camera qualification. The
+extracted `FwPkt/` tree was staged on the mounted SD card and the device was
+rebooted with `/sbin/reboot`. After reboot, `/app/FwVer` and the embedded
+provenance matched this candidate, code 780 returned `sw:6.0.0.54.52`, and
+both `polestar_app` and Stage-2 were alive. The camera was absent from USB, so
+the K-3 III Manual/Bulb RAW/JPEG/RAW+JPEG/cancellation/recovery matrix is
+still required. The candidate does not claim that the unsafe generic K-3 III
 held-shutter libgphoto2 action is supported.
