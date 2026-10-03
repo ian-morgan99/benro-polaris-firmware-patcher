@@ -45,10 +45,12 @@ PATCHED_SITE = words(
 )
 
 STOCK_FORMAT_LITERAL = struct.pack("<I", 0x0092E0FC)
-# The LDR at SITE_VA uses ARM's PC value of instruction address + 8.
-# Keep this calculation explicit: an earlier release encoded SITE_VA + 4 + 8,
-# which made code 780 point four bytes before the standalone "%s" string.
-NEW_FORMAT_LITERAL = struct.pack("<I", FORMAT_VA - (SITE_VA + 8))
+# The ADD at SITE_VA + 4 uses ARM's PC value of instruction address + 8,
+# which is SITE_VA + 12. The immediate belongs to that ADD, not to the LDR
+# at SITE_VA. Using SITE_VA + 8 points four bytes into the next date-format
+# string and makes code 780 produce an unusable version response (the 15k
+# regression seen by Benro Connect as a null version).
+NEW_FORMAT_LITERAL = struct.pack("<I", FORMAT_VA - (SITE_VA + 12))
 
 
 def occurrences(data: bytes, needle: bytes):
