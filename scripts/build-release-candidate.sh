@@ -23,7 +23,8 @@ echo "Building $ID from libgphoto2 main $SRC_SHA and stock base $BASE"
 
 command -v meson >/dev/null || { echo "ERROR: meson is required for libgphoto2 regression tests" >&2; exit 2; }
 TEST_BUILD="$(mktemp -d "${TMPDIR:-/tmp}/libgphoto2-regression.XXXXXX")"
-trap 'rm -rf "$TEST_BUILD"' EXIT
+PACKAGE_INPUT="$(mktemp -d "${TMPDIR:-/tmp}/fwpkt-package-input.XXXXXX")"
+trap 'rm -rf "$TEST_BUILD" "$PACKAGE_INPUT"' EXIT
 echo "Running libgphoto2 deterministic regression pack"
 meson setup "$TEST_BUILD" "$SRC" --buildtype=debugoptimized -Dcamlibs=ptp2,pentax,directory >/dev/null
 meson compile -C "$TEST_BUILD"
@@ -42,14 +43,59 @@ if [ -n "$DISPLAY_FWVER" ]; then
   PATCH_ARGS+=(--display-fwver "$DISPLAY_FWVER")
 fi
 "$ROOT/patch-polaris.sh" "${PATCH_ARGS[@]}"
-# Exercise the package builder's DISPLAY_FWVER path with the exact candidate
-# tree. The normal deterministic runner cannot invoke this parameterised test
-# without a Docker image, stock tree, and clean source checkout, so the formal
-# release flow supplies all three explicitly.
+# Exercise the package builder's DISPLAY_FWVER path from the original stock
+# tree. The package test itself performs the rebuild; passing the already
+# patched candidate here would make its stock polestar_app analyzer read a
+# repacked filesystem instead of an ELF input. The normal deterministic runner
+# cannot invoke this parameterised test without a Docker image, stock tree, and
+# clean source checkout, so the formal release flow supplies all three.
+python3 - "$BASE" "$PACKAGE_INPUT" <<'PY'
+from pathlib import Path
+import shutil
+import sys
+import zipfile
+
+source = Path(sys.argv[1])
+target = Path(sys.argv[2]).resolve()
+target.mkdir(parents=True, exist_ok=True)
+
+def copy_tree(root: Path) -> None:
+    for item in root.iterdir():
+        destination = target / item.name
+        if item.is_dir():
+            shutil.copytree(item, destination)
+        else:
+            shutil.copy2(item, destination)
+
+if source.is_dir():
+    root = source / "FwPkt" if (source / "FwPkt" / "firmwareInfo").is_file() else source
+    copy_tree(root)
+else:
+    with zipfile.ZipFile(source) as archive:
+        for member in archive.infolist():
+            name = member.filename
+            if not name.startswith("FwPkt/"):
+                continue
+            relative = Path(name[len("FwPkt/"):])
+            if not relative.parts:
+                continue
+            destination = (target / relative).resolve()
+            if target not in destination.parents:
+                raise SystemExit(f"unsafe stock archive member: {name}")
+            if name.endswith("/"):
+                destination.mkdir(parents=True, exist_ok=True)
+            else:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(member) as stream, destination.open("wb") as output:
+                    shutil.copyfileobj(stream, output)
+
+if not (target / "firmwareInfo").is_file():
+    raise SystemExit(f"stock package has no firmwareInfo: {source}")
+PY
 PACKAGE_IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
 echo "Running parameterised package/display-version regression"
 bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
-  "$PACKAGE_IMAGE" "$OUT/FwPkt" "$SRC"
+  "$PACKAGE_IMAGE" "$PACKAGE_INPUT" "$SRC"
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
 bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
   --build "$OUT" --id "$ID" --status candidate \
