@@ -117,7 +117,7 @@ fi
 #     camera version can carry a fifth component while build identity remains
 #     available in the provenance file.
 BUILDID_TEST="o-v9j-testbuild"
-DISPLAY_FWVER_TEST="6.0.0.54.22"
+DISPLAY_FWVER_TEST="6.0.0.54.52"
 mkdir -p "$T/out-fwver"
 if docker run --rm --name polaris-pentax-fwver \
   -e MODE=full \

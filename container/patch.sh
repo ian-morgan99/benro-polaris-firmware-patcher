@@ -57,6 +57,25 @@ SWAP_USB1="${SWAP_USB1:-1}"
 # Issue #120: zero the polestar_app pre-shot Bulb delay when the release path
 # explicitly requests it. An explicit request must fail closed.
 POLESTAR_BULB_PATCH="${POLESTAR_BULB_PATCH:-0}"
+
+# The app-visible version is copied into fixed-size C strings in polestar_app
+# and is consumed by Benro Connect as a dotted numeric version.  The host
+# launcher validates this too, but keep the container fail-closed when it is
+# invoked directly (or by an older wrapper).  In particular, never let a
+# build identifier, slash, newline, or an overlong value reach code 780.
+if [ -n "${DISPLAY_FWVER:-}" ]; then
+  case "$DISPLAY_FWVER" in
+    *[!0-9.]*|.*|*..*|*.)
+      die "DISPLAY_FWVER must contain only dotted numeric components" ;;
+  esac
+  DISPLAY_FWVER_PARTS="$(printf '%s' "$DISPLAY_FWVER" | awk -F. '{print NF}')"
+  if [ "$DISPLAY_FWVER_PARTS" -ne 4 ] && [ "$DISPLAY_FWVER_PARTS" -ne 5 ]; then
+    die "DISPLAY_FWVER must have four components, with one optional build component"
+  fi
+  if [ "${#DISPLAY_FWVER}" -gt 63 ]; then
+    die "DISPLAY_FWVER is too long for polestar_app's 64-byte version fields"
+  fi
+fi
 XT=arm-linux-gnueabi
 W=/work
 mkdir -p "$W"
