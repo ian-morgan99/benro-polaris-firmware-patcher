@@ -1327,3 +1327,33 @@ The safe version patch was checked against the real stock `polestar_app`
 binary and is idempotent. Those package checks do not prove installation. The
 last installed identity that is physically evidenced in this workspace is
 o-v15i; the full K-3 III Bulb matrix remains required for any later candidate.
+
+## 2026-10-03 o-v15p 15G-semantic capture recovery candidate
+
+`o-v15p-15g-recovery-20261003` is the one new candidate built after the
+15G-to-current source review. It was built from the original stock package,
+not from an installed or previously modified firmware image. It contains the
+libgphoto2 capture-route and RAW+JPEG reconciliation changes in
+`52196d9f1`, plus the patcher's fail-closed installed-identity checks in
+`02fa2f0`.
+
+The source change does not claim that the previous 15I 66-second no-candidate
+trace is physically fixed: that trace failed before candidate reconciliation,
+and only the required hardware sequence can establish that. It does ensure
+that Manual and camera-timed Bulb use an explicit Pentax release-mode-0
+operation, that the unsafe K-3 III release-mode-2 path remains blocked, and
+that a same-exposure RAW+JPEG companion is no longer rejected by an
+unconditionally-false ownership callback.
+
+- patcher `main`: `02fa2f07663edcf5f7176a00532f56cd8aadb00c`
+- libgphoto2 `main`: `52196d9f16450bc5a3a234330e2bec6a472ffc8b`
+- build id: `6.0.0.54.53-o-v15p-15g-recovery`
+- Display/FwVer: `6.0.0.54.53`
+- ZIP MD5: `51a112b8fc77b2386d6cf2614395918a`
+- ZIP SHA-256: `fcf815562c07ecf21a003e53f6405c45762bcfb9b51c50c77bf3324154f8ec3c`
+- appfs MD5: `4b1ed228617bcb5e63a85c6779b47ddc`
+- PrivateResearch artifact commit: `6c0ed67ab`
+- path: `firmware-packets/o-v15p-15g-recovery-20261003/FwPkt.zip`
+- libgphoto2 applicable tests: **15 passed, 0 failed**
+- patcher/package gate: **4 passed, 0 failed, 1 prerequisite skip**
+- installation and physical camera matrix: **NOT RUN; candidate not installed**
