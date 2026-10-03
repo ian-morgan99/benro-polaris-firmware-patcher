@@ -811,13 +811,13 @@ fi
 
 if [ -n "${DISPLAY_FWVER:-}" ]; then
   if ! python3 - "$APP_VERIFY/bin/polestar_app" <<'PYCHK'
-import struct, sys
+import runpy, sys
 data = open(sys.argv[1], "rb").read()
-bias = 0x10000
-site = 0x13FB80 - bias
-literal = 0x13FC54 - bias
-expected = bytes.fromhex("cc109fe5 01108fe0 7c009fe5 000094e7 ea2f80e2 fa0f80e2 af88fbeb")
-want_literal = struct.pack("<I", 0x00917798)
+constants = runpy.run_path("/opt/patcher/polestar_fwver_patch.py")
+site = constants["va_to_file"](constants["SITE_VA"])
+literal = constants["va_to_file"](constants["LITERAL_VA"])
+expected = constants["PATCHED_SITE"]
+want_literal = constants["NEW_FORMAT_LITERAL"]
 sys.exit(0 if data[site:site + len(expected)] == expected and data[literal:literal + 4] == want_literal else 1)
 PYCHK
   then

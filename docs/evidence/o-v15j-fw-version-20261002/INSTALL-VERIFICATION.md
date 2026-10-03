@@ -58,7 +58,7 @@ Read-only binary checks on the installed `/app/bin/polestar_app` report:
 ```text
 [polestar_fwver_patch] already patched (unique SP_GetDeviceVer site at file offset 0x12fb80)
 [polestar_bulb_patch] already patched (unique replacement site at file offset 0x39754)
-version_literal=98779100
+version_literal=98779100  # decimal 0x00917798; correct standalone %s target
 bulb_anchor_count=0
 bulb_replacement_count=1
 ```

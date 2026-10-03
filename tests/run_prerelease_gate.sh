@@ -15,7 +15,7 @@
 #   ./tests/run_prerelease_gate.sh --two-shot --expected-files 2 \
 #       --expected-sp-prefix /app/sd/normal/SP_
 #   ./tests/run_prerelease_gate.sh --canary --expected-files 1 \
-#       --bulb-seconds 30
+#       --bulb-seconds 30 --expected-sw 6.0.0.54.52
 #   ./tests/run_prerelease_gate.sh --host 192.168.0.1 --port 9090 --bind 192.168.0.4
 #
 # Exit codes: 0 = gate green (skips allowed), 1 = a runnable check failed,
@@ -36,6 +36,7 @@ EXPECTED_FILES=""
 EXPECTED_SP_PREFIX=""
 BULB_SECONDS=""
 BULB_INDEX=""
+EXPECTED_SW=""
 BULB_ARGS=()
 
 while [ $# -gt 0 ]; do
@@ -50,6 +51,7 @@ while [ $# -gt 0 ]; do
         --expected-sp-prefix) EXPECTED_SP_PREFIX="${2:?}"; shift 2 ;;
         --bulb-seconds) BULB_SECONDS="${2:?}"; shift 2 ;;
         --bulb-shutter-index) BULB_INDEX="${2:?}"; shift 2 ;;
+        --expected-sw) EXPECTED_SW="${2:?}"; shift 2 ;;
         -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
         *) echo "unknown arg: $1" >&2; exit 2 ;;
     esac
@@ -76,11 +78,27 @@ if [ -n "$BULB_INDEX" ] && [ -z "$BULB_SECONDS" ]; then
     echo "--bulb-shutter-index requires --bulb-seconds" >&2
     exit 2
 fi
+if [ -n "$BULB_SECONDS" ] && [ "$CANARY" = "0" ] && [ "$TWO_SHOT" = "0" ]; then
+    echo "--bulb-seconds requires --canary or --two-shot" >&2
+    exit 2
+fi
+if [ -n "$EXPECTED_SW" ] && ! [[ "$EXPECTED_SW" =~ ^[0-9]+(\.[0-9]+){3,4}$ ]]; then
+    echo "--expected-sw must be a four- or five-component numeric version" >&2
+    exit 2
+fi
+if [ -n "$EXPECTED_SW" ] && [ "$CANARY" = "0" ] && [ "$TWO_SHOT" = "0" ]; then
+    echo "--expected-sw requires --canary or --two-shot" >&2
+    exit 2
+fi
 if [ -n "$BULB_SECONDS" ]; then
     BULB_ARGS+=(--bulb-seconds "$BULB_SECONDS")
     if [ -n "$BULB_INDEX" ]; then
         BULB_ARGS+=(--bulb-shutter-index "$BULB_INDEX")
     fi
+fi
+EXPECTED_SW_ARGS=()
+if [ -n "$EXPECTED_SW" ]; then
+    EXPECTED_SW_ARGS+=(--expected-sw "$EXPECTED_SW")
 fi
 
 pass=0; fail=0; skip=0
@@ -196,6 +214,7 @@ fi
 # ----------------------------------------------------------------------------
 if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
     if python3 scripts/canary-probe.py --host "$HOST" --port "$PORT" --bind "$BIND" --probe \
+        "${EXPECTED_SW_ARGS[@]}" \
         > /tmp/prerelease-canary-probe.log 2>&1 && grep -q "state=1" /tmp/prerelease-canary-probe.log; then
         ok "canary probe (device reachable, camera state=1)"
         if [ "$CANARY" = "1" ]; then

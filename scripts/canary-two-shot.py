@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import importlib.util
 import os
 import posixpath
@@ -31,9 +32,8 @@ _cp_mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_cp_mod)
 Polaris, field, stamp = _cp_mod.Polaris, _cp_mod.field, _cp_mod.stamp
 bulb_capture_payload = _cp_mod.bulb_capture_payload
+bulb_shutter_session = _cp_mod.bulb_shutter_session
 effective_shot_timeout = _cp_mod.effective_shot_timeout
-resolve_bulb_shutter_index = _cp_mod.resolve_bulb_shutter_index
-set_shutter = _cp_mod.set_shutter
 
 
 def exposure_stem(path: str) -> str:
@@ -159,6 +159,8 @@ def main() -> int:
         ap.error("--shot-timeout must be positive")
     if args.bulb_seconds is not None and args.bulb_seconds <= 0:
         ap.error("--bulb-seconds must be positive")
+    if args.bulb_shutter_index is not None and args.bulb_seconds is None:
+        ap.error("--bulb-shutter-index requires --bulb-seconds")
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
     try:
@@ -200,17 +202,18 @@ def main() -> int:
             print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
         shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
-        if args.bulb_seconds is not None:
-            bulb_index = resolve_bulb_shutter_index(p, args.bulb_shutter_index)
-            set_shutter(p, bulb_index)
-            print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
-                  f"shutter_index={bulb_index} shot_timeout={shot_timeout}s", flush=True)
+        shutter_context = (bulb_shutter_session(p, args.bulb_shutter_index)
+                           if args.bulb_seconds is not None else nullcontext())
+        with shutter_context:
+            if args.bulb_seconds is not None:
+                print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
+                      f"shot_timeout={shot_timeout}s", flush=True)
 
-        ok, _records, seen_paths = run_sequence(
-            p, shot_count=2, shot_timeout=shot_timeout,
-            expected_files=expected_files,
-            expected_sp_prefix=args.expected_sp_prefix, run_id=run_id,
-            bulb_seconds=args.bulb_seconds)
+            ok, _records, seen_paths = run_sequence(
+                p, shot_count=2, shot_timeout=shot_timeout,
+                expected_files=expected_files,
+                expected_sp_prefix=args.expected_sp_prefix, run_id=run_id,
+                bulb_seconds=args.bulb_seconds)
         if not ok:
             return 1
 

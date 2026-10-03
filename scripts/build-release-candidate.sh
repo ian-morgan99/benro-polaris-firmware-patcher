@@ -42,6 +42,14 @@ if [ -n "$DISPLAY_FWVER" ]; then
   PATCH_ARGS+=(--display-fwver "$DISPLAY_FWVER")
 fi
 "$ROOT/patch-polaris.sh" "${PATCH_ARGS[@]}"
+# Exercise the package builder's DISPLAY_FWVER path with the exact candidate
+# tree. The normal deterministic runner cannot invoke this parameterised test
+# without a Docker image, stock tree, and clean source checkout, so the formal
+# release flow supplies all three explicitly.
+PACKAGE_IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
+echo "Running parameterised package/display-version regression"
+bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
+  "$PACKAGE_IMAGE" "$OUT/FwPkt" "$SRC"
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
 bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
   --build "$OUT" --id "$ID" --status candidate \

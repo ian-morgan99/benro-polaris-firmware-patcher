@@ -8,12 +8,14 @@ trap 'rm -rf "$work"' EXIT HUP INT TERM
 
 python3 - "$work" "$here" <<'PY'
 import os
+import runpy
 import struct
 import subprocess
 import sys
 
 work, here = sys.argv[1], sys.argv[2]
 script = os.path.join(here, "polestar_fwver_patch.py")
+constants = runpy.run_path(script)
 BIAS = 0x10000
 SITE = 0x13FB80 - BIAS
 LITERAL = 0x13FC54 - BIAS
@@ -29,6 +31,14 @@ patched = words(0xE59F10CC, 0xE08F1001, 0xE59F007C, 0xE7940000,
 old_literal = struct.pack("<I", 0x0092E0FC)
 new_literal = struct.pack("<I", 0x00917798)
 wrong_literal = struct.pack("<I", 0x0091779c)
+
+# The implementation, repackaging post-check, and this test must all use the
+# same source value. Keep the ARM-PC calculation independently asserted so a
+# future coordinated edit cannot move the pointer into the date format again.
+assert constants["NEW_FORMAT_LITERAL"] == new_literal
+assert constants["NEW_FORMAT_LITERAL_VALUE"] == 0x00917798
+assert SITE + BIAS + 4 + 8 + constants["NEW_FORMAT_LITERAL_VALUE"] == FORMAT + BIAS
+assert "0x00917798" not in open(os.path.join(here, "patch.sh"), encoding="utf-8").read()
 
 data = bytearray(max(FORMAT + 4, LITERAL + 4, SITE + len(fresh)) + 16)
 data[FORMAT:FORMAT + 3] = b"%s\0"

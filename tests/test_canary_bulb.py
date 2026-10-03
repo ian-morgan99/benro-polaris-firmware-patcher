@@ -71,6 +71,53 @@ def test_shutter_ack_requires_explicit_ret_zero():
             raise AssertionError("missing or nonzero ret must fail closed")
 
 
+def test_bulb_session_restores_the_exact_prior_shutter():
+    mod = load_probe()
+    device = FakePolaris([
+        "268@V:1;R:1/30,1s,Bulb,2s;#",
+        "277@shutter:2;ret:0;#",
+        "277@shutter:1;ret:0;#",
+    ])
+    with mod.bulb_shutter_session(device):
+        pass
+    assert device.sends == [
+        ((268,), {}),
+        ((277,), {"payload": "shutter:2;"}),
+        ((277,), {"payload": "shutter:1;"}),
+    ]
+
+
+def test_current_shutter_can_be_restored_when_wire_reports_label():
+    mod = load_probe()
+    device = FakePolaris([
+        "268@V:Bulb;R:1/30,1s,Bulb,2s;#",
+        "277@shutter:2;ret:0;#",
+        "277@shutter:2;ret:0;#",
+    ])
+    with mod.bulb_shutter_session(device):
+        pass
+    assert device.sends[-1] == ((277,), {"payload": "shutter:2;"})
+
+
+def test_code_780_expected_version_is_checked_on_the_wire():
+    mod = load_probe()
+    device = FakePolaris(["780@sw:6.0.0.54.52;#"])
+    assert mod.read_expected_sw(device, "6.0.0.54.52") == "6.0.0.54.52"
+    assert device.sends == [((780,), {})]
+
+
+def test_code_780_missing_or_wrong_version_fails_closed():
+    mod = load_probe()
+    for response in ("780@ret:0;#", "780@sw:8.0.0.76;#"):
+        device = FakePolaris([response])
+        try:
+            mod.read_expected_sw(device, "6.0.0.54.52")
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("invalid code-780 version response must fail closed")
+
+
 def test_bulb_timeout_is_shared_across_canary_entry_points():
     mod = load_probe()
     assert mod.effective_shot_timeout(180, 70) == 180

@@ -11,6 +11,7 @@ on a negative state, ambiguous completion, disconnect, or timeout.
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import importlib.util
 import os
 import posixpath
@@ -26,9 +27,8 @@ assert _PROBE_SPEC and _PROBE_SPEC.loader
 _PROBE = importlib.util.module_from_spec(_PROBE_SPEC)
 _PROBE_SPEC.loader.exec_module(_PROBE)
 bulb_capture_payload = _PROBE.bulb_capture_payload
+bulb_shutter_session = _PROBE.bulb_shutter_session
 effective_shot_timeout = _PROBE.effective_shot_timeout
-resolve_bulb_shutter_index = _PROBE.resolve_bulb_shutter_index
-set_shutter = _PROBE.set_shutter
 
 
 def stamp() -> str:
@@ -212,6 +212,8 @@ def main() -> int:
         parser.error("--interval must be non-negative")
     if args.bulb_seconds is not None and args.bulb_seconds <= 0:
         parser.error("--bulb-seconds must be positive")
+    if args.bulb_shutter_index is not None and args.bulb_seconds is None:
+        parser.error("--bulb-shutter-index requires --bulb-seconds")
     if args.shot_timeout <= 0:
         parser.error("--shot-timeout must be positive")
 
@@ -232,18 +234,18 @@ def main() -> int:
         print(f"{stamp()} OUTPUT contract=explicit expected_files={expected_files} "
               f"photoFormat_hint={field(camera, 'photoFormat')}", flush=True)
         preview_was_on = suspend_preview(p)
-        if args.bulb_seconds is not None:
-            bulb_index = resolve_bulb_shutter_index(p, args.bulb_shutter_index)
-            set_shutter(p, bulb_index)
-            print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
-                  f"shutter_index={bulb_index}", flush=True)
-        seen_paths: set[str] = set()
-        for number in range(1, args.shots + 1):
-            capture(p, number, shot_timeout, expected_files, seen_paths,
-                    args.bulb_seconds)
-            if number != args.shots:
-                print(f"{stamp()} INTERVAL sleeping={args.interval}s", flush=True)
-                time.sleep(args.interval)
+        shutter_context = (bulb_shutter_session(p, args.bulb_shutter_index)
+                           if args.bulb_seconds is not None else nullcontext())
+        with shutter_context:
+            if args.bulb_seconds is not None:
+                print(f"{stamp()} BULB requested_seconds={args.bulb_seconds}", flush=True)
+            seen_paths: set[str] = set()
+            for number in range(1, args.shots + 1):
+                capture(p, number, shot_timeout, expected_files, seen_paths,
+                        args.bulb_seconds)
+                if number != args.shots:
+                    print(f"{stamp()} INTERVAL sleeping={args.interval}s", flush=True)
+                    time.sleep(args.interval)
     finally:
         try:
             restore_preview(p, preview_was_on)

@@ -50,7 +50,10 @@ STOCK_FORMAT_LITERAL = struct.pack("<I", 0x0092E0FC)
 # at SITE_VA. Using SITE_VA + 8 points four bytes into the next date-format
 # string and makes code 780 produce an unusable version response (the 15k
 # regression seen by Benro Connect as a null version).
-NEW_FORMAT_LITERAL = struct.pack("<I", FORMAT_VA - (SITE_VA + 12))
+# Keep the integer and encoded forms together. The packaging post-check and
+# its regression test import this value instead of carrying a second literal.
+NEW_FORMAT_LITERAL_VALUE = FORMAT_VA - (SITE_VA + 12)
+NEW_FORMAT_LITERAL = struct.pack("<I", NEW_FORMAT_LITERAL_VALUE)
 
 
 def occurrences(data: bytes, needle: bytes):

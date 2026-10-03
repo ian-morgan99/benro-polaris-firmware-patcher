@@ -1,11 +1,13 @@
-# o-v15k corrected firmware-version candidate
+# o-v15k firmware-version candidate — withdrawn
 
-Status: **BUILT; GATES GREEN; NOT INSTALLED**
+Status: **WITHDRAWN — INVALID VERSION PATCH; DO NOT STAGE**
 
-This is the corrected successor to withdrawn o-v15j. The 15j code-780 patch
-encoded a PC-relative format-string address four bytes short. 15k uses the
-correct ARM PC calculation and has a regression assertion for the resolved
-target address.
+15k was initially described as the corrected successor to withdrawn 15j, but
+that description was wrong. Its code-780 literal is `0x0091779c`, which the
+ADD at `0x13fb84` resolves to `0xa57328`, four bytes into the date format
+instead of the standalone `%s` at `0xa57324`. Benro Connect consequently saw
+an unusable version and displayed `null`. Keep this artifact as historical
+evidence only. The corrected successor is 15l.
 
 ## Build identity
 
@@ -32,4 +34,5 @@ target address.
 - idempotent patch test: passed
 - Bulb patch survived appfs repack: passed
 
-The candidate is not installed and has no physical camera qualification yet.
+The candidate was not installed and has no physical camera qualification. It
+is superseded by `o-v15l-fwver-bulb-20261003-r2`.

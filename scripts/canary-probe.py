@@ -9,6 +9,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager, nullcontext
 import posixpath
 import socket
 import sys
@@ -99,7 +100,7 @@ def bulb_capture_payload(seconds: int | None) -> str:
     return f"state:1;bulb:{seconds};c:-1;"
 
 
-def shutter_options(p: Polaris, timeout: float = 10.0) -> tuple[str | None, list[str]]:
+def shutter_options(p: Polaris, timeout: float = 10.0) -> tuple[int | None, list[str]]:
     """Read command 268's current shutter index and option list."""
     p.send(268)
     response = p.wait_code(268, timeout)
@@ -109,7 +110,24 @@ def shutter_options(p: Polaris, timeout: float = 10.0) -> tuple[str | None, list
     options = [item.strip() for item in raw_options.split(",") if item.strip()]
     if not options:
         raise RuntimeError(f"shutter-info response has an empty option list: {response}")
-    current = field(response, "V") or field(response, "shutter")
+    current_raw = field(response, "V") or field(response, "shutter")
+    current = None
+    if current_raw is not None:
+        try:
+            current = int(current_raw)
+        except ValueError:
+            matches = [index for index, option in enumerate(options)
+                       if option.lower() == current_raw.lower()]
+            if len(matches) == 1:
+                current = matches[0]
+            else:
+                raise RuntimeError(
+                    f"shutter-info response has an unresolvable current value: {response}"
+                )
+        if current < 0 or current >= len(options):
+            raise RuntimeError(
+                f"shutter-info response current index is outside option list: {response}"
+            )
     print(f"{stamp()} SHUTTER_OPTIONS current={current} options={options}", flush=True)
     return current, options
 
@@ -139,6 +157,33 @@ def resolve_bulb_shutter_index(
     return index
 
 
+def prepare_bulb_shutter(
+    p: Polaris, explicit_index: int | None = None, timeout: float = 10.0
+) -> tuple[int, int]:
+    """Return (current index, live Bulb index) before changing the camera."""
+    current, options = shutter_options(p, timeout)
+    if current is None:
+        raise RuntimeError("cannot run Bulb test without a readable current shutter index")
+    matches = [
+        index for index, option in enumerate(options)
+        if option.strip().lower() in {"bulb", "b"}
+    ]
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"could not identify exactly one Bulb option in command 268 R list: "
+            f"matches={matches} options={options}"
+        )
+    bulb_index = matches[0] if explicit_index is None else explicit_index
+    if bulb_index < 0 or bulb_index >= len(options):
+        raise ValueError(f"--bulb-shutter-index {bulb_index} is outside option list")
+    if bulb_index != matches[0]:
+        raise ValueError(
+            f"--bulb-shutter-index {bulb_index} is not the live Bulb option "
+            f"(expected {matches[0]}: {options[matches[0]]!r})"
+        )
+    return current, bulb_index
+
+
 def set_shutter(p: Polaris, index: int, timeout: float = 10.0) -> str:
     """Select the camera shutter option through the proven 277 wire command."""
     if index < 0:
@@ -150,6 +195,36 @@ def set_shutter(p: Polaris, index: int, timeout: float = 10.0) -> str:
         raise RuntimeError(f"shutter selection lacked explicit ret:0: {response}")
     print(f"{stamp()} SHUTTER index={index} response={response}", flush=True)
     return response
+
+
+@contextmanager
+def bulb_shutter_session(
+    p: Polaris, explicit_index: int | None = None, timeout: float = 10.0
+):
+    """Select Bulb for a capture and restore the exact prior shutter index."""
+    current, bulb_index = prepare_bulb_shutter(p, explicit_index, timeout)
+    restore_needed = True
+    try:
+        set_shutter(p, bulb_index, timeout)
+        print(f"{stamp()} BULB shutter_index={bulb_index} prior_index={current}", flush=True)
+        yield bulb_index
+    finally:
+        if restore_needed:
+            set_shutter(p, current, timeout)
+            print(f"{stamp()} SHUTTER restored_index={current}", flush=True)
+
+
+def read_expected_sw(p: Polaris, expected: str, timeout: float = 10.0) -> str:
+    """Read code 780 and require the exact app-visible firmware version."""
+    p.send(780)
+    response = p.wait_code(780, timeout)
+    actual = field(response, "sw")
+    if actual is None:
+        raise RuntimeError(f"code 780 response has no sw field: {response}")
+    print(f"{stamp()} FW_VERSION sw={actual} expected={expected}", flush=True)
+    if actual != expected:
+        raise RuntimeError(f"code 780 sw mismatch: expected {expected!r}, got {actual!r}")
+    return actual
 
 
 def main() -> int:
@@ -166,13 +241,23 @@ def main() -> int:
                     help="exercise Bulb for this many seconds; index is discovered from command 268")
     ap.add_argument("--bulb-shutter-index", type=int,
                     help="optional checked override for the live Bulb entry (command 277)")
+    ap.add_argument("--expected-sw",
+                    help="require this exact code-780 sw firmware version from the live device")
     args = ap.parse_args()
+    if not args.probe and not args.shot:
+        ap.error("choose --probe or --shot")
     if args.shot and args.expected_files is None:
         ap.error("--shot requires --expected-files 1 or 2; photoFormat is not authoritative")
     if args.shot_timeout <= 0:
         ap.error("--shot-timeout must be positive")
     if args.bulb_seconds is not None and args.bulb_seconds <= 0:
         ap.error("--bulb-seconds must be positive")
+    if args.bulb_seconds is not None and not args.shot:
+        ap.error("--bulb-seconds requires --shot")
+    if args.bulb_shutter_index is not None and args.bulb_seconds is None:
+        ap.error("--bulb-shutter-index requires --bulb-seconds")
+    if args.expected_sw is not None and not (args.probe or args.shot):
+        ap.error("--expected-sw requires --probe or --shot")
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
     try:
@@ -194,6 +279,9 @@ def main() -> int:
         model = field(cam, "model")
         print(f"{stamp()} SUMMARY model={model} state={state} photoFormat={photo_format}", flush=True)
 
+        if args.expected_sw is not None:
+            read_expected_sw(p, args.expected_sw)
+
         if args.probe:
             print(f"{stamp()} PROBE-DONE", flush=True)
             return 0
@@ -214,56 +302,57 @@ def main() -> int:
 
             # ONE capture
             shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
-            if args.bulb_seconds is not None:
-                bulb_index = resolve_bulb_shutter_index(p, args.bulb_shutter_index)
-                set_shutter(p, bulb_index)
-                print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
-                      f"shutter_index={bulb_index} shot_timeout={shot_timeout}s", flush=True)
-            else:
-                print(f"{stamp()} SHOT shot_timeout={shot_timeout}s", flush=True)
-            p.send(264, subtype=4, payload=bulb_capture_payload(args.bulb_seconds))
-            deadline = time.monotonic() + shot_timeout
-            states: list[int] = []
-            files: list[str] = []
-            while True:
-                code, payload = p.frame(deadline)
-                if code == 773:
-                    path = field(payload, "path")
-                    if path:
-                        if path not in files:
-                            files.append(path)
-                            print(f"{stamp()} FILE {path}", flush=True)
-                        if len(files) > args.expected_files:
-                            print(f"{stamp()} EXCESS outputs={files}", flush=True)
+            shutter_context = (bulb_shutter_session(p, args.bulb_shutter_index)
+                               if args.bulb_seconds is not None else nullcontext())
+            with shutter_context:
+                if args.bulb_seconds is not None:
+                    print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
+                          f"shot_timeout={shot_timeout}s", flush=True)
+                else:
+                    print(f"{stamp()} SHOT shot_timeout={shot_timeout}s", flush=True)
+                p.send(264, subtype=4, payload=bulb_capture_payload(args.bulb_seconds))
+                deadline = time.monotonic() + shot_timeout
+                states: list[int] = []
+                files: list[str] = []
+                while True:
+                    code, payload = p.frame(deadline)
+                    if code == 773:
+                        path = field(payload, "path")
+                        if path:
+                            if path not in files:
+                                files.append(path)
+                                print(f"{stamp()} FILE {path}", flush=True)
+                            if len(files) > args.expected_files:
+                                print(f"{stamp()} EXCESS outputs={files}", flush=True)
+                                break
+                    elif code == 264:
+                        value = field(payload, "state")
+                        if value is None:
+                            continue
+                        try:
+                            st = int(value)
+                        except ValueError:
+                            print(f"{stamp()} BAD-STATE {value!r}", flush=True)
                             break
-                elif code == 264:
-                    value = field(payload, "state")
-                    if value is None:
-                        continue
-                    try:
-                        st = int(value)
-                    except ValueError:
-                        print(f"{stamp()} BAD-STATE {value!r}", flush=True)
+                        states.append(st)
+                        print(f"{stamp()} CAPTURE state={st} lifecycle={states}", flush=True)
+                        if st < 0:
+                            print(f"{stamp()} TERMINAL-FAILURE state={st}", flush=True)
+                            break
+                    if len(files) == args.expected_files:
+                        stems = {posixpath.splitext(path)[0] for path in files}
+                        if len(stems) != 1:
+                            print(f"{stamp()} MISMATCHED output stems files={files}", flush=True)
+                            break
+                    if 4 in states and 0 in states and len(files) == args.expected_files:
+                        print(f"{stamp()} PASS lifecycle={states} files={files}", flush=True)
                         break
-                    states.append(st)
-                    print(f"{stamp()} CAPTURE state={st} lifecycle={states}", flush=True)
-                    if st < 0:
-                        print(f"{stamp()} TERMINAL-FAILURE state={st}", flush=True)
-                        break
-                if len(files) == args.expected_files:
-                    stems = {posixpath.splitext(path)[0] for path in files}
-                    if len(stems) != 1:
-                        print(f"{stamp()} MISMATCHED output stems files={files}", flush=True)
-                        break
-                if 4 in states and 0 in states and len(files) == args.expected_files:
-                    print(f"{stamp()} PASS lifecycle={states} files={files}", flush=True)
-                    break
-                # ignore other codes
-            valid_stem = len({posixpath.splitext(path)[0] for path in files}) == 1
-            ok = (4 in states and 0 in states and len(files) == args.expected_files
-                  and valid_stem and not any(s < 0 for s in states))
-            print(f"{stamp()} DONE states={states} files={files}", flush=True)
-            return 0 if ok else 1
+                    # ignore other codes
+                valid_stem = len({posixpath.splitext(path)[0] for path in files}) == 1
+                ok = (4 in states and 0 in states and len(files) == args.expected_files
+                      and valid_stem and not any(s < 0 for s in states))
+                print(f"{stamp()} DONE states={states} files={files}", flush=True)
+                return 0 if ok else 1
     finally:
         p.close()
 
