@@ -17,7 +17,7 @@
 #   3. Verify: recompute MD5s on-device, compare to firmwareInfo
 #   4. Trigger: sync + /sbin/reboot (on-boot watcher fires SP_UpgradeCheckFw)
 #   5. Wait: poll SSH until device returns (5-10 min for NAND reflash)
-#   6. Confirm: check /app/FwVer + provenance file show the expected build_id
+#   6. Confirm: fail-closed exact comparison of /app/FwVer and provenance
 set -euo pipefail
 
 BUILD_DIR=""
@@ -46,6 +46,7 @@ FWPKT_DIR="$BUILD_DIR/FwPkt"
 
 [ -d "$FWPKT_DIR" ] || { echo "ERROR: $FWPKT_DIR not found" >&2; exit 2; }
 [ -f "$FWPKT_DIR/firmwareInfo" ] || { echo "ERROR: firmwareInfo missing" >&2; exit 2; }
+[ -f "$FWPKT_DIR/FwVer" ] || { echo "ERROR: candidate FwVer missing" >&2; exit 2; }
 
 # Read the expected build_id from provenance (if present)
 EXPECTED_BUILD_ID=""
@@ -179,25 +180,16 @@ if [ "$SKIP_VERIFY" = "1" ]; then
   echo "--- [6/6] SKIPPED (--skip-verify) ---"
 else
   echo "--- [6/6] Confirming install ---"
-  REMOTE_FWVER="$(ssh -o BatchMode=yes "$SSH" 'cat /app/FwVer 2>/dev/null' || echo '<unreachable>')"
-  echo "/app/FwVer: $REMOTE_FWVER"
-
-  if [ -n "$EXPECTED_BUILD_ID" ]; then
-    if echo "$REMOTE_FWVER" | grep -q "$EXPECTED_BUILD_ID"; then
-      echo "PASS: /app/FwVer contains build_id '$EXPECTED_BUILD_ID'"
-    else
-      echo "WARN: /app/FwVer does not contain expected build_id '$EXPECTED_BUILD_ID'"
-      echo "  (the sw: version shown in Benro Connect is set by polestar_app at runtime;"
-      echo "   the FwVer file is the on-disk identity. Check Mlog for SP_SendMsgToApp code 780.)"
-    fi
+  if [ -z "$EXPECTED_BUILD_ID" ]; then
+    echo "ERROR: candidate build-source-provenance.txt has no build_id" >&2
+    exit 4
   fi
-
-  # Check provenance (libgphoto2 build info)
-  PROVENANCE="$(ssh -o BatchMode=yes "$SSH" 'cat /app/openpolaris-libgphoto2-provenance.txt 2>/dev/null' || echo '<none>')"
-  if [ -n "$PROVENANCE" ]; then
-    echo "Provenance:"
-    echo "$PROVENANCE" | sed 's/^/  /'
-  fi
+  # /app/FwVer does not contain the build_id.  The old script compared the
+  # wrong fields and turned a mismatch into a warning, which allowed a test
+  # against 15i to be reported as a test of a later candidate.  Compare the
+  # immutable build_id, both source commits, and the display version together.
+  "$(dirname "$0")/../verify-installed-build.sh" "$BUILD_DIR" \
+    --host "$HOST" --ssh-user "$SSH_USER"
 
   # Check Mlog for the upgrade result
   UPGRADE_LOG="$(ssh -o BatchMode=yes "$SSH" 'grep -aiE "CHECK_FW|UPGRADE|FwVer|SP_UpgradeCheckFw" /app/Mlog.txt 2>/dev/null | tail -10' || true)"

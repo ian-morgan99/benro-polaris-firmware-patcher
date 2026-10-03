@@ -16,6 +16,8 @@
 #       --expected-sp-prefix /app/sd/normal/SP_
 #   ./tests/run_prerelease_gate.sh --canary --expected-files 1 \
 #       --bulb-seconds 30 --expected-sw 6.0.0.54.52
+#   ./tests/run_prerelease_gate.sh --canary --expected-files 1 \
+#       --expected-build-dir out/<candidate>
 #   ./tests/run_prerelease_gate.sh --host 192.168.0.1 --port 9090 --bind 192.168.0.4
 #
 # Exit codes: 0 = gate green (skips allowed), 1 = a runnable check failed,
@@ -37,6 +39,7 @@ EXPECTED_SP_PREFIX=""
 BULB_SECONDS=""
 BULB_INDEX=""
 EXPECTED_SW=""
+EXPECTED_BUILD_DIR=""
 BULB_ARGS=()
 
 while [ $# -gt 0 ]; do
@@ -52,6 +55,7 @@ while [ $# -gt 0 ]; do
         --bulb-seconds) BULB_SECONDS="${2:?}"; shift 2 ;;
         --bulb-shutter-index) BULB_INDEX="${2:?}"; shift 2 ;;
         --expected-sw) EXPECTED_SW="${2:?}"; shift 2 ;;
+        --expected-build-dir) EXPECTED_BUILD_DIR="${2:?}"; shift 2 ;;
         -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
         *) echo "unknown arg: $1" >&2; exit 2 ;;
     esac
@@ -88,6 +92,10 @@ if [ -n "$EXPECTED_SW" ] && ! [[ "$EXPECTED_SW" =~ ^[0-9]+(\.[0-9]+){3,4}$ ]]; t
 fi
 if [ -n "$EXPECTED_SW" ] && [ "$CANARY" = "0" ] && [ "$TWO_SHOT" = "0" ]; then
     echo "--expected-sw requires --canary or --two-shot" >&2
+    exit 2
+fi
+if [ -n "$EXPECTED_BUILD_DIR" ] && [ "$CANARY" = "0" ] && [ "$TWO_SHOT" = "0" ]; then
+    echo "--expected-build-dir requires --canary or --two-shot" >&2
     exit 2
 fi
 if [ -n "$BULB_SECONDS" ]; then
@@ -213,6 +221,14 @@ if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
         > /tmp/prerelease-canary-probe.log 2>&1 && grep -q "state=1" /tmp/prerelease-canary-probe.log; then
         ok "canary probe (device reachable, camera state=1)"
         VERSION_GATE_OK=1
+        if [ -n "$EXPECTED_BUILD_DIR" ]; then
+            if scripts/verify-installed-build.sh "$EXPECTED_BUILD_DIR" --host "$HOST" > /tmp/prerelease-installed-build.log 2>&1; then
+                ok "installed build identity"
+            else
+                bad "installed build identity (log: /tmp/prerelease-installed-build.log)"
+                VERSION_GATE_OK=0
+            fi
+        fi
         if [ -n "$EXPECTED_SW" ]; then
             if python3 scripts/canary-probe.py --host "$HOST" --port "$PORT" --bind "$BIND" --probe \
                 --expected-sw "$EXPECTED_SW" \

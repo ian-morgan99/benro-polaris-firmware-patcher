@@ -1290,6 +1290,17 @@ The device has been rolled back to the previously installed 15i artifact.
 
 ## 2026-10-03 o-v15n safe firmware-identity and Bulb-gate candidate
 
+**Correction recorded 2026-10-03:** the earlier claim that o-v15n was installed
+is withdrawn. The physical archive collected at 14:29 has device provenance
+for **o-v15i**, not o-v15n; its `/app/bin/polestar_app` hash also matches the
+15i artifact. The old release confirmation compared a build id against
+`/app/FwVer`, where a build id can never appear, and accepted the mismatch as
+a warning. Therefore the M-mode log in
+`docs/evidence/polaris-test-20261003/` is 15i evidence and proves neither
+o-v15n nor a non-zero Bulb capture. The candidate below remains uninstalled
+and physically unqualified until the corrected fail-closed identity check
+passes.
+
 `o-v15n-fwver-strcpy-bulb-20261003` is the current stock-based candidate. It
 replaces the withdrawn 15m variadic `sprintf` version patch with a
 non-variadic `strcpy` from the existing `mFwVer` field into `sysFwVer`. The
@@ -1310,12 +1321,9 @@ fails.
 - libgphoto2: `14/14` passed
 - parameterised stock package/display test: **PASSED**
 - pre-release gate: `5` passed, `0` failed, `0` skipped
-- physical installation/camera qualification: **PENDING**
+- physical installation/camera qualification: **NOT RUN; candidate not installed**
 
 The safe version patch was checked against the real stock `polestar_app`
-binary and is idempotent. The candidate was installed through the extracted
-SD `FwPkt/` watcher path and, after reboot, code 780 returned
-`sw:6.0.0.54.52` while `polestar_app` and Stage-2 remained alive. The camera
-was absent from USB, so the live code-780 result is verified but the full K-3
-III Bulb matrix remains required before calling the Bulb path physically
-resolved.
+binary and is idempotent. Those package checks do not prove installation. The
+last installed identity that is physically evidenced in this workspace is
+o-v15i; the full K-3 III Bulb matrix remains required for any later candidate.
