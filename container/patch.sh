@@ -817,7 +817,7 @@ constants = runpy.run_path("/opt/patcher/polestar_fwver_patch.py")
 site = constants["va_to_file"](constants["SITE_VA"])
 literal = constants["va_to_file"](constants["LITERAL_VA"])
 expected = constants["PATCHED_SITE"]
-want_literal = constants["NEW_FORMAT_LITERAL"]
+want_literal = constants["STOCK_FORMAT_LITERAL"]
 sys.exit(0 if data[site:site + len(expected)] == expected and data[literal:literal + 4] == want_literal else 1)
 PYCHK
   then

@@ -96,11 +96,6 @@ if [ -n "$BULB_SECONDS" ]; then
         BULB_ARGS+=(--bulb-shutter-index "$BULB_INDEX")
     fi
 fi
-EXPECTED_SW_ARGS=()
-if [ -n "$EXPECTED_SW" ]; then
-    EXPECTED_SW_ARGS+=(--expected-sw "$EXPECTED_SW")
-fi
-
 pass=0; fail=0; skip=0
 failed=""; skipped=""
 
@@ -214,29 +209,47 @@ fi
 # ----------------------------------------------------------------------------
 if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
     if python3 scripts/canary-probe.py --host "$HOST" --port "$PORT" --bind "$BIND" --probe \
-        "${EXPECTED_SW_ARGS[@]}" \
         > /tmp/prerelease-canary-probe.log 2>&1 && grep -q "state=1" /tmp/prerelease-canary-probe.log; then
         ok "canary probe (device reachable, camera state=1)"
-        if [ "$CANARY" = "1" ]; then
-            if python3 scripts/canary-probe.py --host "$HOST" --port "$PORT" --bind "$BIND" --shot \
-                --expected-files "$EXPECTED_FILES" \
-                "${BULB_ARGS[@]}" \
-                > /tmp/prerelease-canary-shot.log 2>&1; then
-                ok "canary shot (lifecycle + file event)"
+        VERSION_GATE_OK=1
+        if [ -n "$EXPECTED_SW" ]; then
+            if python3 scripts/canary-probe.py --host "$HOST" --port "$PORT" --bind "$BIND" --probe \
+                --expected-sw "$EXPECTED_SW" \
+                > /tmp/prerelease-firmware-version.log 2>&1; then
+                ok "code-780 firmware version ($EXPECTED_SW)"
             else
-                bad "canary shot (log: /tmp/prerelease-canary-shot.log)"
+                bad "code-780 firmware version ($EXPECTED_SW; log: /tmp/prerelease-firmware-version.log)"
+                VERSION_GATE_OK=0
             fi
         fi
-        if [ "$TWO_SHOT" = "1" ]; then
-            if python3 scripts/canary-two-shot.py --host "$HOST" --port "$PORT" --bind "$BIND" \
-                --expected-files "$EXPECTED_FILES" \
-                --expected-sp-prefix "$EXPECTED_SP_PREFIX" \
-                "${BULB_ARGS[@]}" \
-                > /tmp/prerelease-twoshot.log 2>&1; then
-                ok "two-shot gate (two distinct files, fail-closed)"
-            else
-                bad "two-shot gate (log: /tmp/prerelease-twoshot.log)"
+
+        # Do not put the shutter through a candidate whose identity check has
+        # failed.  This keeps a bad version response a red release check,
+        # rather than allowing a later capture result to obscure it.
+        if [ "$VERSION_GATE_OK" = "1" ]; then
+            if [ "$CANARY" = "1" ]; then
+                if python3 scripts/canary-probe.py --host "$HOST" --port "$PORT" --bind "$BIND" --shot \
+                    --expected-files "$EXPECTED_FILES" \
+                    "${BULB_ARGS[@]}" \
+                    > /tmp/prerelease-canary-shot.log 2>&1; then
+                    ok "canary shot (lifecycle + file event)"
+                else
+                    bad "canary shot (log: /tmp/prerelease-canary-shot.log)"
+                fi
             fi
+            if [ "$TWO_SHOT" = "1" ]; then
+                if python3 scripts/canary-two-shot.py --host "$HOST" --port "$PORT" --bind "$BIND" \
+                    --expected-files "$EXPECTED_FILES" \
+                    --expected-sp-prefix "$EXPECTED_SP_PREFIX" \
+                    "${BULB_ARGS[@]}" \
+                    > /tmp/prerelease-twoshot.log 2>&1; then
+                    ok "two-shot gate (two distinct files, fail-closed)"
+                else
+                    bad "two-shot gate (log: /tmp/prerelease-twoshot.log)"
+                fi
+            fi
+        else
+            skp "capture canary withheld after failed code-780 identity check"
         fi
     else
         skp "live device gates (probe failed or camera state!=1 — gimbal off / camera not attached; log: /tmp/prerelease-canary-probe.log)"

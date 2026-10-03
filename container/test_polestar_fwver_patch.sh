@@ -20,6 +20,7 @@ BIAS = 0x10000
 SITE = 0x13FB80 - BIAS
 LITERAL = 0x13FC54 - BIAS
 FORMAT = 0xA57324 - BIAS
+STRCPY = 0x21604
 
 def words(*values):
     return b"".join(struct.pack("<I", value) for value in values)
@@ -27,18 +28,15 @@ def words(*values):
 fresh = words(0xE59F10CC, 0xE08F1001, 0xE59F007C, 0xE7940000,
               0xE2800FFA, 0xEBFB88B0, 0xE3A02040)
 patched = words(0xE59F10CC, 0xE08F1001, 0xE59F007C, 0xE7940000,
-                0xE2802FEA, 0xE2800FFA, 0xEBFB88AF)
+                0xE2801FEA, 0xE2800FFA, 0xEBFB8699)
 old_literal = struct.pack("<I", 0x0092E0FC)
-new_literal = struct.pack("<I", 0x00917798)
-wrong_literal = struct.pack("<I", 0x0091779c)
 
-# The implementation, repackaging post-check, and this test must all use the
-# same source value. Keep the ARM-PC calculation independently asserted so a
-# future coordinated edit cannot move the pointer into the date format again.
-assert constants["NEW_FORMAT_LITERAL"] == new_literal
-assert constants["NEW_FORMAT_LITERAL_VALUE"] == 0x00917798
-assert SITE + BIAS + 4 + 8 + constants["NEW_FORMAT_LITERAL_VALUE"] == FORMAT + BIAS
-assert "0x00917798" not in open(os.path.join(here, "patch.sh"), encoding="utf-8").read()
+# The replacement keeps the stock format-pool word untouched.  The safety
+# property is now the non-variadic strcpy call, not a hand-maintained
+# PC-relative format literal.
+assert constants["STOCK_FORMAT_LITERAL"] == old_literal
+assert constants["STRCPY_VA"] == STRCPY
+assert "NEW_FORMAT_LITERAL" not in open(os.path.join(here, "polestar_fwver_patch.py"), encoding="utf-8").read()
 
 data = bytearray(max(FORMAT + 4, LITERAL + 4, SITE + len(fresh)) + 16)
 data[FORMAT:FORMAT + 3] = b"%s\0"
@@ -56,22 +54,30 @@ first = run()
 assert first.returncode == 0, first.stdout + first.stderr
 patched_data = open(path, "rb").read()
 assert patched_data[SITE:SITE + len(patched)] == patched
-assert patched_data[LITERAL:LITERAL + 4] == new_literal
-# The literal is consumed by ADD at SITE+4; ARM reads PC as instruction+8.
-assert SITE + 4 + 8 + int.from_bytes(new_literal, "little") == FORMAT
-
+assert patched_data[LITERAL:LITERAL + 4] == old_literal
+# Decode the three changed instructions enough to pin the actual convention:
+# r1 = base + mFwVer, r0 = base + sysFwVer, then the stock strcpy PLT target.
+assert patched_data[SITE + 16:SITE + 20] == struct.pack("<I", 0xE2801FEA)
+assert patched_data[SITE + 20:SITE + 24] == struct.pack("<I", 0xE2800FFA)
+branch = int.from_bytes(patched_data[SITE + 24:SITE + 28], "little")
+imm = branch & 0x00FFFFFF
+if imm & 0x00800000:
+    imm -= 0x01000000
+assert SITE + BIAS + 24 + 8 + (imm << 2) == STRCPY
 before = patched_data
 second = run()
 assert second.returncode == 0, second.stdout + second.stderr
 assert "already patched" in second.stdout
 assert open(path, "rb").read() == before
 
-# Regression for the 15k artifact: its literal resolved four bytes after the
-# intended %s string, at the date format. Reject that mixed/invalid state
-# rather than declaring it already patched.
+# A stale variadic-format patch is not accepted as this patch's idempotent
+# state.  It must fail closed rather than being mistaken for the safe copy.
 bad_path = os.path.join(work, "polestar_app.bad")
 bad_data = bytearray(before)
-bad_data[LITERAL:LITERAL + 4] = wrong_literal
+bad_data[SITE:SITE + len(patched)] = words(
+    0xE59F10CC, 0xE08F1001, 0xE59F007C, 0xE7940000,
+    0xE2802FEA, 0xE2800FFA, 0xEBFB88AF,
+)
 with open(bad_path, "wb") as stream:
     stream.write(bad_data)
 bad = subprocess.run([sys.executable, script, bad_path, "--in-place"],

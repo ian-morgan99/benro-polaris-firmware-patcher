@@ -6,9 +6,13 @@ four numeric components of the gimbal version to the first four components of
 the camera version. That produces 8.0.0.76 when /app/FwVer is 6.0.0.54 and
 discards a fifth build component.
 
-This fail-closed patch changes only the second sprintf in SP_GetDeviceVer:
-the format becomes ``%s`` and the argument becomes the raw camera version
-string already held at the mFwVer field.
+The first attempt changed the second ``sprintf`` to use ``%s``.  That passed
+static tests but made the live ``polestar_app`` die while handling code 780.
+This replacement keeps the same verified source and destination fields but
+uses the already imported ``strcpy`` entry point instead of changing a
+variadic call's format/argument convention.  The source is the raw camera
+version string in ``mFwVer`` and the destination is the existing
+``sysFwVer`` field.
 """
 import argparse
 import struct
@@ -22,6 +26,7 @@ FILE_VA_BIAS = 0x10000
 SITE_VA = 0x13FB80
 LITERAL_VA = 0x13FC54
 FORMAT_VA = 0xA57324  # existing standalone "%s\0" in stock .rodata
+STRCPY_VA = 0x21604   # existing strcpy@plt target in the stock ELF
 
 
 def va_to_file(va: int) -> int:
@@ -38,22 +43,16 @@ FRESH_SITE = words(
     0xE2800FFA, 0xEBFB88B0, 0xE3A02040,
 )
 
-# The patched path passes global+0x3a8 (the raw mFwVer string) in r2.
+# The patched path passes global+0x3a8 (the raw mFwVer string) in r1 and calls
+# the stock strcpy entry point.  The first two instructions still load the
+# stock format address, but are harmless dead setup retained to keep this
+# patch the same size and preserve all surrounding control flow.
 PATCHED_SITE = words(
     0xE59F10CC, 0xE08F1001, 0xE59F007C, 0xE7940000,
-    0xE2802FEA, 0xE2800FFA, 0xEBFB88AF,
+    0xE2801FEA, 0xE2800FFA, 0xEBFB8699,
 )
 
 STOCK_FORMAT_LITERAL = struct.pack("<I", 0x0092E0FC)
-# The ADD at SITE_VA + 4 uses ARM's PC value of instruction address + 8,
-# which is SITE_VA + 12. The immediate belongs to that ADD, not to the LDR
-# at SITE_VA. Using SITE_VA + 8 points four bytes into the next date-format
-# string and makes code 780 produce an unusable version response (the 15k
-# regression seen by Benro Connect as a null version).
-# Keep the integer and encoded forms together. The packaging post-check and
-# its regression test import this value instead of carrying a second literal.
-NEW_FORMAT_LITERAL_VALUE = FORMAT_VA - (SITE_VA + 12)
-NEW_FORMAT_LITERAL = struct.pack("<I", NEW_FORMAT_LITERAL_VALUE)
 
 
 def occurrences(data: bytes, needle: bytes):
@@ -95,9 +94,8 @@ def main() -> int:
             print("[polestar_fwver_patch] FATAL: version site moved; refusing drift", file=sys.stderr)
             return 1
         data[site_file:site_file + len(PATCHED_SITE)] = PATCHED_SITE
-        data[literal_file:literal_file + 4] = NEW_FORMAT_LITERAL
         if (bytes(data[site_file:site_file + len(PATCHED_SITE)]) != PATCHED_SITE or
-                bytes(data[literal_file:literal_file + 4]) != NEW_FORMAT_LITERAL):
+                bytes(data[literal_file:literal_file + 4]) != STOCK_FORMAT_LITERAL):
             print("[polestar_fwver_patch] FATAL: post-write verification failed", file=sys.stderr)
             return 1
         print("[polestar_fwver_patch] patched SP_GetDeviceVer at file offset 0x%x; code 780 now uses exact raw mFwVer" % site_file)
@@ -109,7 +107,7 @@ def main() -> int:
             print("[polestar_fwver_patch] wrote %s" % out)
         return 0
 
-    if len(patched) == 1 and not fresh and literal == NEW_FORMAT_LITERAL:
+    if len(patched) == 1 and not fresh and literal == STOCK_FORMAT_LITERAL:
         print("[polestar_fwver_patch] already patched (unique SP_GetDeviceVer site at file offset 0x%x)" % patched[0])
         return 0
 

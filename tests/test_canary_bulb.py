@@ -44,7 +44,8 @@ def test_bulb_payload_rejects_zero_or_negative_duration():
 def test_bulb_index_is_discovered_from_the_live_option_list():
     mod = load_probe()
     device = FakePolaris(["268@V:1;R:1/30,1s,Bulb,2s;#"])
-    assert mod.resolve_bulb_shutter_index(device) == 2
+    current, bulb = mod.prepare_bulb_shutter(device)
+    assert (current, bulb) == (1, 2)
     assert device.sends == [((268,), {})]
 
 
@@ -52,7 +53,7 @@ def test_explicit_bulb_index_must_match_the_live_option_list():
     mod = load_probe()
     device = FakePolaris(["268@V:1;R:1/30,1s,Bulb,2s;#"])
     try:
-        mod.resolve_bulb_shutter_index(device, explicit_index=1)
+        mod.prepare_bulb_shutter(device, explicit_index=1)
     except ValueError as exc:
         assert "not the live Bulb option" in str(exc)
     else:
@@ -122,3 +123,51 @@ def test_bulb_timeout_is_shared_across_canary_entry_points():
     mod = load_probe()
     assert mod.effective_shot_timeout(180, 70) == 180
     assert mod.effective_shot_timeout(120, 300) == 390
+
+
+def test_capture_failure_remains_primary_when_restore_succeeds():
+    mod = load_probe()
+    device = FakePolaris([
+        "268@V:1;R:1/30,1s,Bulb,2s;#",
+        "277@shutter:2;ret:0;#",
+        "277@shutter:1;ret:0;#",
+    ])
+    try:
+        with mod.bulb_shutter_session(device):
+            raise RuntimeError("capture failed")
+    except RuntimeError as exc:
+        assert str(exc) == "capture failed"
+    else:
+        raise AssertionError("capture exception was lost")
+
+
+def test_capture_failure_remains_primary_when_restore_fails():
+    mod = load_probe()
+    device = FakePolaris([
+        "268@V:1;R:1/30,1s,Bulb,2s;#",
+        "277@shutter:2;ret:0;#",
+        "277@shutter:1;ret:1;#",
+    ])
+    try:
+        with mod.bulb_shutter_session(device):
+            raise RuntimeError("capture failed")
+    except RuntimeError as exc:
+        assert str(exc) == "capture failed"
+    else:
+        raise AssertionError("capture exception was replaced by restore failure")
+
+
+def test_restore_failure_fails_a_successful_capture():
+    mod = load_probe()
+    device = FakePolaris([
+        "268@V:1;R:1/30,1s,Bulb,2s;#",
+        "277@shutter:2;ret:0;#",
+        "277@shutter:1;ret:1;#",
+    ])
+    try:
+        with mod.bulb_shutter_session(device):
+            pass
+    except RuntimeError as exc:
+        assert "explicit ret:0" in str(exc)
+    else:
+        raise AssertionError("restore failure did not fail the canary")

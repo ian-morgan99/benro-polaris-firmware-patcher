@@ -132,31 +132,6 @@ def shutter_options(p: Polaris, timeout: float = 10.0) -> tuple[int | None, list
     return current, options
 
 
-def resolve_bulb_shutter_index(
-    p: Polaris, explicit_index: int | None = None, timeout: float = 10.0
-) -> int:
-    """Resolve Bulb from the camera's live option list; reject guessed indices."""
-    _current, options = shutter_options(p, timeout)
-    matches = [
-        index for index, option in enumerate(options)
-        if option.strip().lower() in {"bulb", "b"}
-    ]
-    if len(matches) != 1:
-        raise RuntimeError(
-            f"could not identify exactly one Bulb option in command 268 R list: "
-            f"matches={matches} options={options}"
-        )
-    index = matches[0] if explicit_index is None else explicit_index
-    if index < 0 or index >= len(options):
-        raise ValueError(f"--bulb-shutter-index {index} is outside option list")
-    if index != matches[0]:
-        raise ValueError(
-            f"--bulb-shutter-index {index} is not the live Bulb option "
-            f"(expected {matches[0]}: {options[matches[0]]!r})"
-        )
-    return index
-
-
 def prepare_bulb_shutter(
     p: Polaris, explicit_index: int | None = None, timeout: float = 10.0
 ) -> tuple[int, int]:
@@ -203,15 +178,30 @@ def bulb_shutter_session(
 ):
     """Select Bulb for a capture and restore the exact prior shutter index."""
     current, bulb_index = prepare_bulb_shutter(p, explicit_index, timeout)
-    restore_needed = True
+    operation_error: BaseException | None = None
     try:
         set_shutter(p, bulb_index, timeout)
         print(f"{stamp()} BULB shutter_index={bulb_index} prior_index={current}", flush=True)
         yield bulb_index
+    except BaseException as exc:
+        # Keep the capture/body/socket failure primary.  Restoration is
+        # diagnostic cleanup and must never hide the event we are trying to
+        # investigate.
+        operation_error = exc
+        raise
     finally:
-        if restore_needed:
+        try:
             set_shutter(p, current, timeout)
             print(f"{stamp()} SHUTTER restored_index={current}", flush=True)
+        except BaseException as restore_error:
+            print(
+                f"{stamp()} SHUTTER restore_failed secondary={type(restore_error).__name__}: "
+                f"{restore_error}",
+                file=sys.stderr,
+                flush=True,
+            )
+            if operation_error is None:
+                raise
 
 
 def read_expected_sw(p: Polaris, expected: str, timeout: float = 10.0) -> str:

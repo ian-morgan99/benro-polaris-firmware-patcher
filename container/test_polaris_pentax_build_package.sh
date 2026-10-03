@@ -44,7 +44,7 @@ IMAGE="${1:-polaris-patcher-fixed}"
 FW_PKT="${2:-}"
 SOURCE="${3:-}"
 [ -n "$FW_PKT" ] && [ -n "$SOURCE" ] && [ -f "$SOURCE/configure.ac" ] || {
-  echo "usage: $0 DOCKER_IMAGE FW_PKT_DIR CLEAN_LIBGPHOTO2_GIT_CHECKOUT" >&2
+  echo "SKIP: test_polaris_pentax_build_package.sh requires IMAGE FW_PKT_DIR CLEAN_LIBGPHOTO2_GIT_CHECKOUT" >&2
   exit 2
 }
 
