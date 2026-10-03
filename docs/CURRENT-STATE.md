@@ -1259,3 +1259,27 @@ capture the command 268/277/264/file-event evidence.
 
 Detailed evidence is in
 `docs/evidence/bulb-review-20261002/SUMMARY.md`.
+
+## 2026-10-03 o-v15m release-control and Bulb-canary candidate
+
+`o-v15m-release-gapfix-20261003` is the corrected stock-based successor to
+15l. It has been built and privately archived, but it has not been installed
+or physically qualified.
+
+- patcher `main`: `9e510132cfa7023c8b195eb28a571bfa020bdc56`
+- libgphoto2 `main`: `e0e5135023165b9a4411bba637076b8ca1e63ed1`
+- build id: `6.0.0.54.52-o-v15m-release-gapfix`
+- Display/FwVer: `6.0.0.54.52`
+- ZIP MD5: `0547dd258102df09501bfa8ce669e810`
+- ZIP SHA-256: `308bc9b335b04a2dfe775d4e48a64c5db879ee7b22eacca6f7212ed76bc5e8b2`
+- appfs MD5: `c05ec7dd0c47693c6308ff746b6c9213`
+- PrivateResearch artifact commit: `ac125ae6f`
+- path: `firmware-packets/o-v15m-release-gapfix-20261003/FwPkt.zip`
+- libgphoto2: `14/14` passed
+- parameterised stock package/display-version test: **PASSED**
+- patcher deterministic harness: `17` passed
+- Python regression suite: `129` passed
+- pre-release gate: `4` passed, `0` failed, `1` skipped (stock manifest is
+  unavailable inside the clean release checkout; the upload script separately
+  verified the exact shipped manifest)
+- physical Polaris installation/camera validation: **NOT TESTED**
