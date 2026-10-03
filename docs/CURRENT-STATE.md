@@ -1170,17 +1170,17 @@ The candidate contains the Pentax generic `bulb=1`/`bulb=0` start/stop action
 and the matched full Polaris camera stack. Full installation evidence is in
 `docs/evidence/o-v15i-pentax-bulb-matched-20261002/INSTALL-VERIFICATION.md`.
 
-## 2026-10-02 o-v15j exact app firmware version candidate — WITHDRAWN
+## 2026-10-02 o-v15j exact app firmware version candidate — SUPERSEDED
 
-`o-v15j-fw-version-20261002` is withdrawn and must not be staged again. Static
-review found a bug in the newly added ARM PC-relative format-string immediate:
-it points code 780 at `0xa57320` (`"/\0"`) rather than the intended standalone
-`%s` at `0xa57324`. The source fix is now fail-closed and covered by a test.
-The operator has reported an unrecoverable failure after using 15j; the exact
-boot failure remains uncorrelated because the device is currently unavailable.
+`o-v15j-fw-version-20261002` is superseded and should not be used for current
+testing. The earlier review incorrectly blamed its version literal: `0x00917798`
+is consumed by the ADD at `0x13fb84`, whose ARM PC value is `0x13fb8c`, so it
+does resolve to the intended `%s` at `0xa57324`. The candidate still has no
+physical camera qualification and is replaced by the reproducible 15l build.
 
 The last recovery package before this change is `o-v15i-pentax-bulb-matched-20261002`.
-Use its extracted `FwPkt/` tree for recovery; do not use 15j.
+Use the stock package or the privately archived 15l candidate for recovery;
+do not use 15j for current testing.
 
 15j was intended to fix the two version sources rather than merely rewriting
 `/app/FwVer`:
@@ -1196,10 +1196,14 @@ Build and provenance details are in
 `docs/FWPKT-PROVENANCE-CONTRACT.md`. Installation evidence is in
 `docs/evidence/o-v15j-fw-version-20261002/INSTALL-VERIFICATION.md`.
 
-## 2026-10-02 o-v15k corrected firmware-version candidate
+## 2026-10-02 o-v15k firmware-version candidate — WITHDRAWN
 
-`o-v15k-fw-version-20261002` is built and privately archived but **not
-installed**. It is the corrected successor to withdrawn 15j:
+`o-v15k-fw-version-20261002` is withdrawn and must not be staged. It changed
+the literal to `0x0091779c`, but the immediate belongs to the ADD at
+`0x13fb84`, not the LDR at `0x13fb80`. That made code 780 point at
+`0xa57328`, four bytes into the date-format string, rather than the standalone
+`%s` at `0xa57324`. This is the concrete cause of the reported Benro Connect
+`null` version field.
 
 - patcher `main`: `23f49297ce0de0d03b88075be73e76fdf753cde5`
 - libgphoto2 `main`: `6979070597ebddbaa5f1cff1e56b7597e4594ed2`
@@ -1209,9 +1213,32 @@ installed**. It is the corrected successor to withdrawn 15j:
 - PrivateResearch artifact commit: `d3870b5ea`
 - package gate: libgphoto2 `14/14`; pre-release `4 passed, 0 failed, 0 skipped`
 
-The corrected patch resolves code 780 to the actual `%s` at `0xa57324`, and
-the package contains `/app/FwVer=6.0.0.54.52`. The package is ready for manual
-SD-card staging after recovery; no remote installation has been attempted.
+The package contains `/app/FwVer=6.0.0.54.52`, but its code-780 response
+formatter is invalid. Keep it only as historical evidence.
+
+## 2026-10-03 o-v15l firmware-version and Bulb candidate
+
+`o-v15l-fwver-bulb-20261003-r2` is built from the original stock package,
+privately archived, and ready for sanctioned staging. It has not been
+installed or physically qualified.
+
+- patcher `main`: `7dd5ca4d9bb7cdfa9d10ff570bdef15bb8acd33e`
+- libgphoto2 `main`: `e0e5135023165b9a4411bba637076b8ca1e63ed1`
+- build id: `6.0.0.54.52-o-v15l-fwver-bulb-r2`
+- Display/FwVer: `6.0.0.54.52`
+- ZIP MD5: `71b6bf98b8fb0e90a220179ae9c5cd0b`
+- ZIP SHA-256: `a15e564773230375270ccc0f0210b976fa1715e8963059719a872dfd6a7f60ad`
+- appfs MD5: `cef86481bd27ab96f21b60fb094f3ee5`
+- PrivateResearch artifact: `a91dbe62c6ac44d4c39faf9d9672bbfe984e8abb`
+- path: `firmware-packets/o-v15l-fwver-bulb-20261003-r2/FwPkt.zip`
+- libgphoto2 tests: `14/14` passed
+- patcher deterministic harness: `17 passed`
+- Python regression suite: `125 passed`
+- pre-release gate: `4 passed, 0 failed, 1 skipped`
+
+The one gate skip was the clean checkout's stock-manifest cross-check; the
+release upload independently passed the structural and shipped-manifest
+checks. Physical camera validation remains pending.
 
 ## 2026-10-02 Bulb review reconciliation
 
@@ -1224,11 +1251,11 @@ repacked `polestar_app`. OpenPolaris now reports a rejected Manual Bulb
 command when command 264 does not echo `state:1`, instead of showing a false
 success.
 
-The registered 15k ZIP remains unchanged and was built from libgphoto2
-`697907059` and patcher `23f4929`. The new changes are test/UI source changes;
-they are not included in the already-built 15k firmware. No physical camera
-qualification has been claimed: the live canary is still pending an attached
-camera and must capture the command 268/277/264/file-event evidence.
+The withdrawn 15k ZIP remains unchanged as historical evidence. The version
+pointer fix is included in 15l, together with the existing firmware Bulb
+pre-shot-delay fix and matched libgphoto2 stack. No physical camera
+qualification has been claimed: the live canary remains pending and must
+capture the command 268/277/264/file-event evidence.
 
 Detailed evidence is in
 `docs/evidence/bulb-review-20261002/SUMMARY.md`.
