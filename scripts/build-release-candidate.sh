@@ -4,13 +4,19 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> [build-id] [display-fwver]" >&2
+  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> <display-fwver>" >&2
   exit 2
 }
-[ $# -ge 3 ] && [ $# -le 5 ] || usage
-ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="${4:-$ID}"; DISPLAY_FWVER="${5:-}"
+[ $# -eq 5 ] || usage
+ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="$5"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
+
+# Benro Connect displays this value. Do not allow a release to silently reuse
+# the previous version or fall back to the stock four-component value.
+python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" \
+  --candidate "$DISPLAY_FWVER" \
+  --state "$ROOT/docs/RELEASE-VERSION-STATE.md"
 
 case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2;; esac
 [ -e "$BASE" ] || { echo "ERROR: stock FwPkt not found: $BASE" >&2; exit 2; }

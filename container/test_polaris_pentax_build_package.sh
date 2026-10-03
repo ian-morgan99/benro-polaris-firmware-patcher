@@ -117,7 +117,10 @@ fi
 #     camera version can carry a fifth component while build identity remains
 #     available in the provenance file.
 BUILDID_TEST="o-v9j-testbuild"
-DISPLAY_FWVER_TEST="6.0.0.54.52"
+# Synthetic package regression: use the next value after the committed release
+# baseline so this test exercises the five-component path without blessing a
+# stale version for a future release.
+DISPLAY_FWVER_TEST="6.0.0.54.53"
 mkdir -p "$T/out-fwver"
 if docker run --rm --name polaris-pentax-fwver \
   -e MODE=full \

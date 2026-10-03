@@ -134,6 +134,20 @@ known generic PTP2 changes between old/new source
 
 The candidate must use an immutable source SHA. `master`, `latest`, a moving branch, or an unrecorded dirty worktree is not a release input.
 
+The release command also requires the exact five-component app-visible
+firmware version. It is checked against
+`docs/RELEASE-VERSION-STATE.md` before any build starts, and must be greater
+than the recorded baseline while retaining the same first four components:
+
+```sh
+scripts/build-release-candidate.sh <id> <stock-FwPkt.zip|dir> \
+  /path/to/clean/libgphoto2/main <build-id> 6.0.0.54.53
+```
+
+The state file is updated only when that candidate is promoted and its
+provenance row is committed. This makes version reuse or an accidental return
+to `8.0.0.76` a build failure, rather than a device-side discovery.
+
 If a dirty source tree is deliberately used for investigation, it is diagnostic only unless its dirty hash is captured and the exact content is subsequently committed and rebuilt cleanly.
 
 ## 4. Build-time compatibility gates
