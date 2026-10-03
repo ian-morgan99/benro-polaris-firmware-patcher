@@ -1287,3 +1287,33 @@ The device has been rolled back to the previously installed 15i artifact.
 - 15m physical runtime: **REJECTED — code 780 exits `polestar_app`**
 - recovery runtime: **15i installed; 9090/8080 and `polestar_app` verified**
 - physical camera validation: **BLOCKED — camera absent from USB**
+
+## 2026-10-03 o-v15n safe firmware-identity and Bulb-gate candidate
+
+`o-v15n-fwver-strcpy-bulb-20261003` is the current stock-based candidate. It
+replaces the withdrawn 15m variadic `sprintf` version patch with a
+non-variadic `strcpy` from the existing `mFwVer` field into `sysFwVer`. The
+firmware Bulb pre-shot-delay patch remains enabled. The candidate also fixes
+the release gate so a failed code-780 identity check is a red failure rather
+than a probe skip, and preserves the primary capture error if shutter restore
+fails.
+
+- patcher `main`: `8e96decce989af694c24313ae39c55088d85ac1e`
+- libgphoto2 `main`: `e0e5135023165b9a4411bba637076b8ca1e63ed1`
+- build id: `6.0.0.54.52-o-v15n-fwver-strcpy-bulb`
+- Display/FwVer: `6.0.0.54.52`
+- ZIP MD5: `3f55252842ed367b0b0ab36ab439305d`
+- ZIP SHA-256: `51af09b81918f8a99a85ee0df60ba4eb0f0e852fa55f572111ad8009dfd5bf8c`
+- appfs MD5: `02604af91eb9704249cf5a89a46d8df4`
+- PrivateResearch artifact commit: `137f75dc1`
+- path: `firmware-packets/o-v15n-fwver-strcpy-bulb-20261003/FwPkt.zip`
+- libgphoto2: `14/14` passed
+- parameterised stock package/display test: **PASSED**
+- pre-release gate: `5` passed, `0` failed, `0` skipped
+- physical installation/camera qualification: **PENDING**
+
+The safe version patch has been checked against the real stock
+`polestar_app` binary and is idempotent, but this candidate has not yet been
+installed on Polaris. The live code-780 response and the full K-3 III Bulb
+matrix remain required before calling the version or Bulb path physically
+resolved.
