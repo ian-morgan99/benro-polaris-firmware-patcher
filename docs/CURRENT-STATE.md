@@ -1263,8 +1263,8 @@ Detailed evidence is in
 ## 2026-10-03 o-v15m release-control and Bulb-canary candidate
 
 `o-v15m-release-gapfix-20261003` is the corrected stock-based successor to
-15l. It has been built and privately archived, but it has not been installed
-or physically qualified.
+15l. It has now been installed and runtime-proven, but it has not been
+physically qualified with a camera.
 
 - patcher `main`: `9e510132cfa7023c8b195eb28a571bfa020bdc56`
 - libgphoto2 `main`: `e0e5135023165b9a4411bba637076b8ca1e63ed1`
@@ -1282,4 +1282,5 @@ or physically qualified.
 - pre-release gate: `4` passed, `0` failed, `1` skipped (stock manifest is
   unavailable inside the clean release checkout; the upload script separately
   verified the exact shipped manifest)
-- physical Polaris installation/camera validation: **NOT TESTED**
+- physical Polaris installation: **INSTALLED; RUNTIME PROVEN**
+- physical camera validation: **NOT TESTED**
