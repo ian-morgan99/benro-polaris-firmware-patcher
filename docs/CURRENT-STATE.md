@@ -1283,4 +1283,7 @@ physically qualified with a camera.
   unavailable inside the clean release checkout; the upload script separately
   verified the exact shipped manifest)
 - physical Polaris installation: **INSTALLED; RUNTIME PROVEN**
-- physical camera validation: **NOT TESTED**
+- offline exact-package gate: **5 passed, 0 failed, 0 skipped**
+- physical camera validation: **BLOCKED — camera absent from USB**
+- no-camera daemon restart still logs the `0.12.0` iolib lookup / `state:-2`
+  path; this remains unqualified until retested with a camera attached
