@@ -148,6 +148,18 @@ else
     bad "python regression suite (log: /tmp/prerelease-pytest.log)"
 fi
 
+# The code-780 version patch rewrites machine code inside polestar_app, so a
+# defect in it is invisible to every Python test above. Four candidates shipped
+# with the patch overwriting the instruction that sets the following memset's
+# length, which corrupted device info while still reporting the right version.
+# This check is a shell test on a synthetic image, so it must run even when no
+# built package is supplied.
+if sh container/test_polestar_fwver_patch.sh > /tmp/prerelease-fwver-patch.log 2>&1; then
+    ok "code-780 version patch (exact copy, memset length preserved)"
+else
+    bad "code-780 version patch (log: /tmp/prerelease-fwver-patch.log)"
+fi
+
 # ----------------------------------------------------------------------------
 # 3. FwPkt package gates — only when a built package is supplied.
 #    a) structural validation (layout, duplicates, stock SHA-256 cross-check)
