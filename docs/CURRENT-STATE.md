@@ -1445,6 +1445,12 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   but narrower: valid packed-YUYV frames and corrected exposure-tick writes;
   the old banding and end-to-end plate-solving behavior remain unqualified on
   Polaris.
+- INDI PR #2012 is the upstream source of the current iOptron watchdog,
+  non-linear exposure table and lazy-stream behavior. Its documented table is
+  the iGuider table; current source also has a distinct iPolar table, but the
+  image-control and stacking-maximum paths still selected iGuider values. The
+  v7 correction fixes those two partial-reconciliation paths without changing
+  the inherited watchdog/lazy-stream behavior.
 - Historical Polaris boot evidence at
   `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
