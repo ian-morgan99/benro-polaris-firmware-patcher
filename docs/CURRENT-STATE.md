@@ -1456,3 +1456,20 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
   the earlier file-presence audit and keeps the kernel-V4L2 iPolar route open;
   it still does not prove an attached-camera node or frame.
+- Host candidate v8 was rebuilt from committed local research inputs. The
+  iPolar patch is preserved as local INDI research commit
+  `aed86bf0058a5f84b0ba23b842f9f44002fdcf7e`; the exact Orion udev/image
+  change is preserved as local INDI 3rd-party research commit
+  `1c70684a37abf338a73ea9b5c3987859acba88e6`. The target-specific
+  `indi_v4l2_ccd`, QHY library, and QHY tools all build cleanly. Bundle v8
+  SHA-256 is
+  `453d02f0b7c3d72384f63881ef8921b8155d13cc2f477feef81ed26d3d70d079`.
+  A fresh named-driver smoke test against the attached iPolar set raw
+  `Exposure Time, Absolute=666` and read back `666`. The complete INDI tree
+  build remains blocked by an unrelated `astrotrac.cpp` `-Werror` diagnostic;
+  this is not a failure of either camera target.
+- v8 QHY executables use a self-contained `$ORIGIN/../lib` runpath. Against
+  the still-attached `16c0:29a0` loader, the QHY probe and five-frame
+  benchmark correctly report no operating camera. No firmware load, USB
+  reset, `16c0:29a1` re-enumeration, or StarShoot frame capture has been
+  performed; StarShoot remains unqualified.
