@@ -6,9 +6,10 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.52
+last_display_fwver=6.0.0.54.53
 ```
 
-When a candidate is promoted as the next release, update this value in the
-same commit as its provenance row and release evidence. The next permitted
-display version after the current baseline is `6.0.0.54.53`.
+The `.53` value was consumed by the withdrawn o-v15p artifact and must not be
+reused. When the next candidate is promoted, update this value in the same
+commit as its provenance row and release evidence. The next permitted display
+version after the current baseline is `6.0.0.54.54`.

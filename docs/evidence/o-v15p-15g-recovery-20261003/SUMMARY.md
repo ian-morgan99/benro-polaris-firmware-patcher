@@ -1,6 +1,7 @@
 # o-v15p 15G-semantic capture recovery candidate
 
-Status: candidate built and privately archived; not installed; physical camera test pending.
+Status: withdrawn. The candidate is privately archived for provenance, but must
+not be installed or used for recovery.
 
 ## Provenance
 
@@ -38,6 +39,18 @@ Status: candidate built and privately archived; not installed; physical camera t
   and private-upload manifest checks passed.
 - PrivateResearch upload: **PASS**, exact ZIP hashes above were recomputed from
   the uploaded build and the upload commit is `6c0ed67ab`.
+
+## Withdrawal reason
+
+This package was built from patcher `02fa2f0`, before the code-780 patch safety
+fix in `353e2fd`. The earlier exact-version patch put `strcpy` in the final
+word of the patch span and destroyed the following `mov r2,#0x40`, which is the
+length argument for the stock `memset` that clears the device-info block. The
+package therefore cannot be treated as a safe firmware image even though its
+offline gates passed and its ZIP remains available in PrivateResearch.
+
+The corrected implementation is present on patcher `main` at `c1bbacd`, but no
+candidate containing that implementation has been built or installed yet.
 
 ## What this does not prove
 

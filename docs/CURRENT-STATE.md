@@ -1,5 +1,18 @@
 # Current repository state
 
+## 2026-10-04 takeover status — Polaris recovery required
+
+The live Polaris is currently unreachable: cached Bluetooth is visible but the
+connection aborts and the `polaris_d13e86` Wi-Fi network does not appear. There
+is no verified installed firmware identity. Follow
+[`HANDOVER-20261004-POLARIS-RECOVERY.md`](HANDOVER-20261004-POLARIS-RECOVERY.md)
+before staging any package.
+
+The o-v15p ZIP is privately archived but withdrawn. It was built before the
+code-780 memset-length safety repair and must not be staged. The next candidate
+must be built from current patcher `main` and use display version
+`6.0.0.54.54`.
+
 ## 2026-09-30 resumed investigation and workspace convergence
 
 **o-v15a: PHYSICAL FAIL / NOT RELEASE-QUALIFIED.** The later #149 review
@@ -1328,7 +1341,7 @@ binary and is idempotent. Those package checks do not prove installation. The
 last installed identity that is physically evidenced in this workspace is
 o-v15i; the full K-3 III Bulb matrix remains required for any later candidate.
 
-## 2026-10-03 o-v15p 15G-semantic capture recovery candidate
+## 2026-10-03 o-v15p 15G-semantic capture recovery candidate — withdrawn
 
 `o-v15p-15g-recovery-20261003` is the one new candidate built after the
 15G-to-current source review. It was built from the original stock package,
@@ -1345,6 +1358,12 @@ operation, that the unsafe K-3 III release-mode-2 path remains blocked, and
 that a same-exposure RAW+JPEG companion is no longer rejected by an
 unconditionally-false ownership callback.
 
+The ZIP is now withdrawn. It was built from patcher `02fa2f0`, before
+`353e2fd` repaired the code-780 exact-version patch. The older patch overwrote
+the adjacent `mov r2,#0x40` memset-length instruction after `strcpy`, so this
+artifact must not be staged. The corrected implementation is on current
+patcher `main` at `c1bbacd`; no candidate containing it has yet been built.
+
 - patcher `main`: `02fa2f07663edcf5f7176a00532f56cd8aadb00c`
 - libgphoto2 `main`: `52196d9f16450bc5a3a234330e2bec6a472ffc8b`
 - build id: `6.0.0.54.53-o-v15p-15g-recovery`
@@ -1356,4 +1375,5 @@ unconditionally-false ownership callback.
 - path: `firmware-packets/o-v15p-15g-recovery-20261003/FwPkt.zip`
 - libgphoto2 applicable tests: **15 passed, 0 failed**
 - patcher/package gate: **4 passed, 0 failed, 1 prerequisite skip**
+- status: **WITHDRAWN — DO NOT STAGE**
 - installation and physical camera matrix: **NOT RUN; candidate not installed**
