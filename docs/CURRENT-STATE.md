@@ -1435,6 +1435,11 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   `qhy_camera_bench --bin 1 --frames 5 --exposure 1000` returned `255`.
   This is expected before the exact Orion volatile load and is not evidence of
   a post-load driver failure.
+- Upstream `indilib/indi#1944` was reviewed as historical evidence. It correctly
+  links the Orion camera to the QHY5L-II family, but its proposed generic
+  `QHY5II.HEX` rule is not adopted: that image identifies as `1618:0921`, while
+  the archived Orion `AllInOne_A.sys` image identifies the operating device as
+  `16c0:29a1`. The upstream issue contains no physical frame qualification.
 - Historical Polaris boot evidence at
   `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
