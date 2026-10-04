@@ -1411,6 +1411,10 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
 - The available INDI ARM QHY library is hard-float (`Tag_ABI_VFP_args:
   VFP registers`) and cannot be assumed compatible with Polaris' soft-float
   runtime. Host INDI success is therefore not Polaris support.
+- Host bundle v5 adds INDI's `qhy_camera_bench`, which uses microsecond
+  exposure units and fails closed on missing or invalid frame readback. Its
+  archive SHA-256 is
+  `60c49c3da1e41be1c0ab95610633992b7d15d880dc33c3546db99612d6db13d9`.
 - Historical Polaris boot evidence at
   `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
