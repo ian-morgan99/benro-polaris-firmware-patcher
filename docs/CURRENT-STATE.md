@@ -1430,6 +1430,11 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   `f534dcffd1e5acba075bd00e687c890d824af78ce3b59dd671b377bd7101c29b`.
   This remains a host candidate only; it is not an INDI upstream commit or a
   Polaris runtime installation.
+- A fresh v7 QHY retest against the attached `16c0:29a0` loader initialized
+  SDK `26.7.21.5`, then correctly reported no operating camera;
+  `qhy_camera_bench --bin 1 --frames 5 --exposure 1000` returned `255`.
+  This is expected before the exact Orion volatile load and is not evidence of
+  a post-load driver failure.
 - Historical Polaris boot evidence at
   `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
