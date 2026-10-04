@@ -897,13 +897,19 @@ physical observation of the negative-state stop path, not a pass: recovery,
 Preview recovery, and post-failure idle remain owed. See
 `evidence/o-v13c-canary-path-failure-2026-09-26/SUMMARY.md`.
 
-The requested iOptron iPolar (`1233:1455`) and Orion StarShoot All-in-One
-(`16c0:29a0`) are UVC devices, not PTP. Their local `uvc-devices.c` entries are
-an unintegrated table, absent from the authoritative GitHub fork and with no
-camlib/build implementation. The installed Polaris also exposed no UVC/V4L2
-device path during the read-only audit. They must not be claimed in a release
-until a real UVC backend, Polaris adapter, packaging and frame/reconnect tests
-exist. See issue #151.
+The requested iOptron iPolar (`1233:1455`) is UVC, not PTP. The attached Orion
+StarShoot All-in-One (`16c0:29a0`) is instead a vendor-specific FX2/QHY5L-II
+loader and must not be placed in the UVC table. The local `uvc-devices.c`
+entries are an unintegrated table, absent from the authoritative GitHub fork
+and with no camlib/build implementation. The earlier idle Polaris audit found
+no `/dev/video*` or separate `uvcvideo.ko`, but the preserved 2026-09-29
+Polaris boot log does register the host `uvcvideo` driver. That means the
+driver may be built into the kernel; absence of a module file is not proof that
+the V4L2 path is unavailable. A live iPolar attach must therefore check
+`/sys/bus/usb/devices/.../driver`, `/dev/video*`, negotiated YUYV format and a
+bounded frame before deciding whether userspace libuvc is needed. Neither
+camera may be claimed in a release until the corresponding runtime adapter,
+packaging and frame/reconnect tests exist. See issue #151.
 
 ## 2026-09-25 convergence candidate
 
@@ -1405,3 +1411,8 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
 - The available INDI ARM QHY library is hard-float (`Tag_ABI_VFP_args:
   VFP registers`) and cannot be assumed compatible with Polaris' soft-float
   runtime. Host INDI success is therefore not Polaris support.
+- Historical Polaris boot evidence at
+  `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
+  `usbcore: registered new interface driver uvcvideo`. This is stronger than
+  the earlier file-presence audit and keeps the kernel-V4L2 iPolar route open;
+  it still does not prove an attached-camera node or frame.

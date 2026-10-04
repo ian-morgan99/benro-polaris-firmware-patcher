@@ -21,7 +21,11 @@ UVC -> kernel uvcvideo/V4L2 (preferred if module available on Hi3559V200)
 OR UVC -> userspace libuvc -> Polaris adapter -> OpenPolaris
 
 Open items (separate from #158):
-1. Confirm uvcvideo/videodev module on Polaris kernel (or package libuvc userspace)
+1. Attach the iPolar to Polaris and confirm whether the built-in host
+   `uvcvideo` path creates `/dev/video*` and binds the USB interfaces. The
+   preserved Polaris boot log registers `uvcvideo`, so the absence of a
+   separate `uvcvideo.ko` file in the idle audit is inconclusive. Only if this
+   live check fails should a userspace libuvc path become the primary target.
 2. Add device entry to uvc-devices.c (only if UVC camlib included; current 2.5.34 source has no uvc/ — requires newer source or userspace path per #151)
 3. Prove on device: /dev/video* creation, YUYV format/stride, bounded frames,
    reconnect, coexistence with PTP, packaging/provenance/rollback
