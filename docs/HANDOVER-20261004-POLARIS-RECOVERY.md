@@ -17,10 +17,10 @@ was not installed through the documented update flow by this session.
 ### PrivateResearch archive
 
 The recent release ZIPs were in fact uploaded to the private archive. The
-remote `ian-morgan99/PrivateResearch` `main` branch is at commit `6c0ed67ab`
-and contains the o-v15p ZIP plus the earlier o-v15a and o-v15c through o-v15o
-candidate directories. The failure was candidate quality and provenance
-clarity, not a missing PrivateResearch upload.
+remote `ian-morgan99/PrivateResearch` `main` branch is at commit `8ab2b8c87`
+and contains the o-v15p ZIP plus the earlier `15b-candidate`, o-v15a, and
+o-v15c through o-v15o candidate directories. The failure was candidate
+quality and provenance clarity, not a missing PrivateResearch upload.
 
 ### Firmware version
 
