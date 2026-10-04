@@ -4,19 +4,34 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> <display-fwver>" >&2
+  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> [display-fwver|auto]" >&2
   exit 2
 }
-[ $# -eq 5 ] || usage
-ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="$5"
+[ $# -ge 4 ] && [ $# -le 5 ] || usage
+ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="${5:-auto}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
+VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
 
-# Benro Connect displays this value. Do not allow a release to silently reuse
-# the previous version or fall back to the stock four-component value.
+# Benro Connect displays this value, so two builds must never report the same
+# one. It used to be typed by hand and the baseline advanced by hand as well,
+# which is how several candidates ended up carrying an identical version.
+# Unless a value is supplied explicitly, derive it from the recorded baseline.
+if [ -z "$DISPLAY_FWVER" ] || [ "$DISPLAY_FWVER" = "auto" ]; then
+  DISPLAY_FWVER="$(python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" \
+    --next --state "$VERSION_STATE")"
+  echo "Derived display firmware version: $DISPLAY_FWVER"
+fi
 python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" \
   --candidate "$DISPLAY_FWVER" \
-  --state "$ROOT/docs/RELEASE-VERSION-STATE.md"
+  --state "$VERSION_STATE"
+
+# Keep the immutable build id and the app-visible version in step. When the
+# caller does not supply one, derive it so the two can never disagree.
+if [ -z "$BUILD_ID" ] || [ "$BUILD_ID" = "auto" ]; then
+  BUILD_ID="${DISPLAY_FWVER}-${ID}"
+  echo "Derived build id: $BUILD_ID"
+fi
 
 case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2;; esac
 [ -e "$BASE" ] || { echo "ERROR: stock FwPkt not found: $BASE" >&2; exit 2; }
@@ -103,6 +118,15 @@ echo "Running parameterised package/display-version regression"
 bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
   "$PACKAGE_IMAGE" "$PACKAGE_INPUT" "$SRC"
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
+
+# The candidate is real only once it has passed the gate. Claim the version at
+# that point so a build that fails its tests does not consume a number, while
+# two candidates that both reach this line can never share one.
+python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" \
+  --candidate "$DISPLAY_FWVER" \
+  --state "$VERSION_STATE" --record
+git -C "$ROOT" add -- "$VERSION_STATE"
+
 bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
   --build "$OUT" --id "$ID" --status candidate \
   --note "Main-branch reproducible candidate; gate passed; physical test pending."
