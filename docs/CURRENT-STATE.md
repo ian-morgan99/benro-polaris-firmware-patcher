@@ -1423,6 +1423,13 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   `658e51abce89aa3987fd1f59a62e8ab6bfbf1e75b2eb59f8140f557b41650a4f`.
   Candidate bundle SHA-256:
   `c1dec6cd581a3c4ed6f137a08c71c907cad81f45825fd8a68f832d980435b64b`.
+- Host bundle v7 retains the same behavior correction but centralizes the
+  iGuider/iPolar tick-table selection in one helper, removing the misleading
+  iGuider-only maximum-tick macro. The target `indi_v4l2_ccd` rebuilt cleanly;
+  bundle SHA-256:
+  `f534dcffd1e5acba075bd00e687c890d824af78ce3b59dd671b377bd7101c29b`.
+  This remains a host candidate only; it is not an INDI upstream commit or a
+  Polaris runtime installation.
 - Historical Polaris boot evidence at
   `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
