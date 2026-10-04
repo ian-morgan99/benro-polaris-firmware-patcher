@@ -1415,6 +1415,14 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   exposure units and fails closed on missing or invalid frame readback. Its
   archive SHA-256 is
   `60c49c3da1e41be1c0ab95610633992b7d15d880dc33c3546db99612d6db13d9`.
+- Host bundle v6 carries a two-hunk local INDI V4L2 correction: iPolar image
+  control writes now use `iPolarTicks` rather than `iGuiderTicks`, and
+  iPolar's maximum native tick is used for over-limit stacking. Against the
+  attached iPolar, baseline raw control `666` became `39`; the corrected
+  binary preserved `666`. Corrected driver SHA-256:
+  `658e51abce89aa3987fd1f59a62e8ab6bfbf1e75b2eb59f8140f557b41650a4f`.
+  Candidate bundle SHA-256:
+  `c1dec6cd581a3c4ed6f137a08c71c907cad81f45825fd8a68f832d980435b64b`.
 - Historical Polaris boot evidence at
   `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
