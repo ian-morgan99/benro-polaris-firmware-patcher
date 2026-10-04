@@ -1440,6 +1440,11 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   `QHY5II.HEX` rule is not adopted: that image identifies as `1618:0921`, while
   the archived Orion `AllInOne_A.sys` image identifies the operating device as
   `16c0:29a1`. The upstream issue contains no physical frame qualification.
+- Historical `indilib/indi#1431` records vertical banding and plate-solving
+  failure with an older iPolar/INDI stack. The current host result is stronger
+  but narrower: valid packed-YUYV frames and corrected exposure-tick writes;
+  the old banding and end-to-end plate-solving behavior remain unqualified on
+  Polaris.
 - Historical Polaris boot evidence at
   `docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt` includes
   `usbcore: registered new interface driver uvcvideo`. This is stronger than
