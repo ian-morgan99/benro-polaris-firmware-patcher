@@ -96,5 +96,30 @@ Parse `qhyccdcamdef.h` for opcode/command table; document adapter interface; the
 5. Canary (`--canary`); if two-shot standard: `--two-shot`.
 6. Commit evidence (gate transcript + canary) to `docs/evidence/<candidate>/`; update `docs/CURRENT-STATE.md`; update registry (`FWPKT-PROVENANCE-CONTRACT.md`).
 Only after 1–6 complete may #158 be declared "supported in libgphoto2".
+
+## 2026-10-04 evidence correction
+
+The earlier adapter notes above described a provisional `0x41` control probe
+and called its result observable. That was not a validated QHY5L-II command
+and must not be treated as protocol evidence.
+
+The archived Orion `qhy5dll.dll` was subsequently disassembled without
+accessing the camera. Its generic vendor transfers use `bmRequestType` `0x40`
+for OUT and `0xc0` for IN; the static request IDs found in the capture path
+are `0x10`, `0x11`, `0x18`, `0x21`, `0x22`, `0x25`, `0x26`, and `0x55`. No
+`0x41` request was found. The canonical adapter therefore no longer sends a
+guessed probe: `starshoot_adapter_probe_init()` returns
+`LIBUSB_ERROR_NOT_SUPPORTED` until the exact post-load `16c0:29a1` sequence is
+validated and a real frame is checked. The mock regression test asserts this
+refusal.
+
+The current INDI host candidate is separate evidence, not Polaris support:
+`indi_qhy_ccd` and QHY SDK 26.7.21 build on x86_64, but the attached device is
+still the `16c0:29a0` FX2 loader. The exact Orion firmware reconstructed from
+`AllInOne_A.sys` is hash-recorded, and the next physical gate remains the
+controlled volatile `29a0 -> 29a1` transition followed by QHY/INDI detection
+and one validated frame. The INDI ARMv6 library is hard-float (`Tag_ABI_VFP_args:
+VFP registers`) and cannot be assumed compatible with Polaris' soft-float
+runtime.
 ## Action (next agent / user)
 Wire both adapters into the build (`container/build_fullstack.sh` source list + include paths: `-ITemp`, `-I/work/src/libuvc/include/libuvc`, `-I/work/src/libuvc/build/include`); build FwPkt; run gate WITH build; run canary (`--canary` / `--two-shot`); only then declare libgphoto2 support. Do NOT claim support before gate + canary pass.

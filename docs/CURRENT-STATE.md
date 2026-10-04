@@ -1377,3 +1377,27 @@ patcher `main` at `c1bbacd`; no candidate containing it has yet been built.
 - patcher/package gate: **4 passed, 0 failed, 1 prerequisite skip**
 - status: **WITHDRAWN — DO NOT STAGE**
 - installation and physical camera matrix: **NOT RUN; candidate not installed**
+
+## 2026-10-04 INDI camera-driver research
+
+The attached iPolar and Orion devices were evaluated on the development host
+using INDI source commits `indi=1dd9b34f24df6fd74ed45be17823fc937e192b47`
+and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
+
+- **iOptron iPolar (`1233:1455`) — host PASS:** freshly built
+  `indi_v4l2_ccd` negotiated YUYV 1280x960 through `indiserver`, exposed the
+  expected iPolar model, completed a 0.5-second exposure, and returned a
+  valid 8-bit FITS BLOB (`1280x960x3`, 3,689,280 bytes). FITS SHA-256:
+  `713800d30ae632a0c7427cd383108ab1f84d8d0802193d1460fd640de9284ada`.
+- **Orion StarShoot All-in-One (`16c0:29a0`) — not yet qualified:** the
+  device is still the vendor-specific FX2 loader. A temporary x86_64 bundle
+  contains INDI `indi_qhy_ccd`, QHY SDK 26.7.21, the exact reconstructed
+  Orion loader image, and a fail-closed volatile-load helper. No hardware
+  write, `29a1` re-enumeration, or frame capture has been claimed.
+- The earlier adapter's guessed `0x41` probe was removed by patcher commit
+  `8f6b6b2`; the probe now returns `LIBUSB_ERROR_NOT_SUPPORTED` until the
+  exact post-load protocol is validated. Deterministic gate: 17 passed, 0
+  failed, 2 prerequisite skips; pre-release gate: 3 passed, 0 failed.
+- The available INDI ARM QHY library is hard-float (`Tag_ABI_VFP_args:
+  VFP registers`) and cannot be assumed compatible with Polaris' soft-float
+  runtime. Host INDI success is therefore not Polaris support.
