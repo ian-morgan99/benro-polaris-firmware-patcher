@@ -1,0 +1,14 @@
+Polaris preflight evidence
+Date: 2026-10-04
+Command: ./scripts/polaris-preflight.sh --wake --wait 60 --scan 20
+
+--- polaris preflight 2026-10-04T08:53:35Z ---
+[1/5] BLE advertisement (cache cleared, 20s window)...
+      no advertisement (cached entries ignored)
+[2/5] AP broadcast...
+      not broadcasting
+      sending BLE wake pulse, waiting up to 60s
+VERDICT=ASLEEP no BLE advertisement and no AP; the SoC is asleep or unpowered. Power-cycle it, or check the battery.
+
+Interpretation: the cached Bluetooth record is not proof that Polaris is
+awake. No firmware identity was obtained and no installation was attempted.
