@@ -52,7 +52,9 @@ the memset-length repair and should not be used as a recovery image.
 3. Once the AP returns, verify SSID/BSSID, route via `wlp8s0`, SSH identity,
    `/app/FwVer`, running process identity, and the matched Stage-2/core/port
    hashes before any camera command. Pull fresh Mlog/Clog before testing.
-4. Build a new candidate from patcher `main` `c1bbacd` and libgphoto2 `main`
+4. Build a new candidate from patcher `main` `0556e19` (including the
+   code-780 repair at `c1bbacd` and the fail-closed `polaris-preflight.sh`)
+   and libgphoto2 `main`
    `52196d9f1`, from original stock, with the builder's automatic display
    version. That candidate should be `.54`, not a manually typed value. Run
    the offline package gate, upload the exact ZIP to PrivateResearch, then use
@@ -63,7 +65,7 @@ the memset-length repair and should not be used as a recovery image.
 
 ## Handoff boundaries
 
-- Patcher delivery branch: `main`, currently `c1bbacd`.
+- Patcher delivery branch: `main`, currently `0556e19`.
 - Libgphoto2 delivery branch: `main`, currently `52196d9f1`.
 - Patcher `main` has unrelated user changes in `.vscode/settings.json` and
   `docs/evidence/polaris-test-20261003/`; preserve them.
