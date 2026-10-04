@@ -1,0 +1,2306 @@
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+Pentax preview stage get-frame returned 0xa008 (0 bytes, 30 attempts, 1230 ms).
+Pentax preview stage restore-after-frame returned 0x2001.
+[stage2] preview-backoff: 140 consecutive transient failures (last ret=-10) -- backing off 30s (issues #36/#55/#127)
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (20s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (19s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (18s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (17s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (16s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (15s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (14s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (13s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (12s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (11s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (10s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (9s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (8s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (7s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (6s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (5s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (4s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (3s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (2s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (1s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+Pentax preview stage get-frame returned 0xa008 (0 bytes, 30 attempts, 1228 ms).
+Pentax preview stage restore-after-frame returned 0x2001.
+[stage2] preview-backoff: 141 consecutive transient failures (last ret=-10) -- backing off 30s (issues #36/#55/#127)
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (29s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (28s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (27s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (26s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (25s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (24s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] preview-backoff: in cooldown (23s left) -- returning busy without blocking
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (22s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+[stage2] init: stubbed 64 slots (fail-closed baseline; slot base 0x30000000)
+[stage2] on-disk loader: CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] dlopen core via abs /app/lib/stage2/libgphoto2.so.6
+[stage2] dlopen core ok
+[stage2] dlopen port via abs /app/lib/stage2/libgphoto2_port.so.12
+[stage2] dlopen port ok
+[stage2] preview-backoff: gp_camera_capture_preview slot -> shim (real core fn cached for pass-through)
+[stage2] storage: gp_camera_init slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_config slot -> shim (real core fn cached for pass-through)
+[stage2] capturetarget: gp_camera_set_single_config slot -> shim (real core fn cached for pass-through)
+[stage2] resolved 64/64
+[stage2] slots filled 64/64
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
+[stage2] preview-backoff: in cooldown (21s left) -- returning busy without blocking
