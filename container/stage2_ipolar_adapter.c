@@ -1,9 +1,9 @@
 /* #159 iPolar (1233:1455) adapter — userspace libuvc -> adapter -> OpenPolaris.
  * Upstream libgphoto2 2.5.34 has no uvc/ camlib; userspace path only.
- * Device: UVC 1.00, VID:PID 1233:1455, Y16, 640x960 / 1280x960.
+ * Device: UVC 1.00, VID:PID 1233:1455, packed YUYV 4:2:2, 1280x960.
  *
  * TA architecture direction (issue #159, 2026-09-28): once this adapter can
- * produce reliable bounded Y16 frames, feed them through the common
+ * produce reliable bounded packed-YUYV frames, feed them through the common
  * camera-source interface into plate solve — do NOT build an iPolar-specific
  * polar-solving stack. Pipeline: iPolar -> UVC/libuvc frame -> common
  * camera-source frame -> plate solve -> polar-axis error calculation.
@@ -14,34 +14,32 @@
 #include <libuvc/libuvc.h>  /* libuvc (built /work/src/libuvc/build/libuvc.so) */
 #include <errno.h>
 
-/* Bounded packed-Y16 frame store. Three leased slots prevent the libuvc
+/* Bounded packed-YUYV frame store. Three leased slots prevent the libuvc
  * callback from mutating pixels while the alignment consumer is reading them. */
-#define IPOLAR_MAX_FRAME_BYTES (1280 * 960 * 2) /* worst case 1280x960 Y16 */
-#define IPOLAR_MIN_WIDTH 640u
-#define IPOLAR_MAX_WIDTH 1280u
+#define IPOLAR_MAX_FRAME_BYTES (1280 * 960 * 2) /* 1280x960 YUYV */
+#define IPOLAR_WIDTH 1280u
 #define IPOLAR_HEIGHT 960u
 
 static struct {
     uvc_context_t *ctx;
     uvc_device_handle_t *devh;
     uvc_stream_ctrl_t ctrl;
-    int streaming;          /* 1 = Y16 stream active */
+    int streaming;          /* 1 = YUYV stream active */
     struct ipolar_frame_store frames;
     int frames_initialized;
 } g_ip;
 
-/* libuvc frame callback: bounded copy of the latest Y16 frame. */
+/* libuvc frame callback: bounded copy of the latest packed YUYV frame. */
 static void ipolar_frame_cb(struct uvc_frame *frame, void *user_ptr)
 {
     (void)user_ptr;
     if (frame == NULL || frame->data == NULL || !g_ip.frames_initialized ||
-        frame->frame_format != UVC_FRAME_FORMAT_GRAY16 ||
-        frame->height != IPOLAR_HEIGHT ||
-        (frame->width != IPOLAR_MIN_WIDTH && frame->width != IPOLAR_MAX_WIDTH))
+        frame->frame_format != UVC_FRAME_FORMAT_YUYV ||
+        frame->width != IPOLAR_WIDTH || frame->height != IPOLAR_HEIGHT)
         return;
 
     /* libuvc may pad rows. The store validates data_bytes against the complete
-     * source span and publishes a tightly-packed immutable Y16 frame. */
+     * source span and publishes a tightly-packed immutable YUYV frame. */
     (void)ipolar_frame_store_publish(&g_ip.frames, frame->data,
                                      frame->data_bytes, frame->width,
                                      frame->height, frame->step);
@@ -124,20 +122,21 @@ int ipolar_adapter_reconnect(uint16_t vid, uint16_t pid)
     return ipolar_adapter_open(vid, pid);
 }
 
-/* Start bounded Y16 streaming (640x960 default; 1280x960 supported).
+/* Start bounded packed-YUYV streaming at the first physically proven mode.
  * Idempotent: a second call while streaming is active is a no-op. */
-int ipolar_adapter_stream_y16(void)
+int ipolar_adapter_stream_yuyv(void)
 {
     if (g_ip.devh == NULL) return -ENODEV;
     if (g_ip.streaming) return 0; /* idempotent */
     if (!g_ip.frames_initialized) return -EINVAL;
-    /* Y16 = 16-bit greyscale (UVC_FRAME_FORMAT_GRAY16 in libuvc 0.0.8).
-     * The measured iPolar descriptor interval is about 1.8 fps at 640x960;
-     * requesting 30 fps cannot match its discrete frame-interval descriptor.
+    /* The measured iPolar host path exposes packed YUYV 4:2:2 at 1280x960.
+     * Request the device-advertised cadence (fps=0); hard-coding an
+     * unsupported rate is not a valid way to negotiate this camera.
      * libuvc 0.0.8 defines fps=0 as "accept first rate available" for exactly
      * this case, so let the device advertise its supported cadence. */
     uvc_error_t rc = uvc_get_stream_ctrl_format_size(
-        g_ip.devh, &g_ip.ctrl, UVC_FRAME_FORMAT_GRAY16, 640, 960, 0);
+        g_ip.devh, &g_ip.ctrl, UVC_FRAME_FORMAT_YUYV,
+        IPOLAR_WIDTH, IPOLAR_HEIGHT, 0);
     if (rc < 0) {
         return rc; /* fail-closed: format not available */
     }

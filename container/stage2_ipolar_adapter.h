@@ -1,6 +1,6 @@
 /* #159 iPolar adapter interface — userspace libuvc path.
  * No upstream uvc-devices.c; adapter defines VID/PID and stream modes.
- * TA direction (#159): bounded Y16 frames -> common camera-source interface
+ * TA direction (#159): bounded packed-YUYV frames -> common camera-source interface
  * -> plate solve (source-agnostic). This layer: frame acquisition, identity/
  * generation, reconnect, exposure/gain controls.
  */
@@ -18,7 +18,8 @@ int  ipolar_adapter_exit(void);
 int  ipolar_adapter_open(uint16_t vid, uint16_t pid);
 void ipolar_adapter_close(void);
 int  ipolar_adapter_reconnect(uint16_t vid, uint16_t pid);
-int  ipolar_adapter_stream_y16(void);
+/* The attached iPolar's proven host mode is packed YUYV 4:2:2 at 1280x960. */
+int  ipolar_adapter_stream_yuyv(void);
 int  ipolar_adapter_set_exposure(uint32_t time_100us);
 int  ipolar_adapter_set_gain(uint16_t gain);
 int  ipolar_adapter_acquire_latest(struct ipolar_frame_view *view);

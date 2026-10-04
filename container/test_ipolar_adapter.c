@@ -65,7 +65,7 @@ uvc_error_t uvc_get_stream_ctrl_format_size(uvc_device_handle_t *devh,
         int width, int height, int fps)
 {
     (void)devh; (void)ctrl;
-    if (format != UVC_FRAME_FORMAT_GRAY16 || width != 640 || height != 960)
+    if (format != UVC_FRAME_FORMAT_YUYV || width != 1280 || height != 960)
         return -1;
     selected_fps = fps;
     /* libuvc 0.0.8 uses zero to accept a discrete device-advertised rate. */
@@ -81,11 +81,11 @@ uvc_error_t uvc_start_streaming(uvc_device_handle_t *devh,
     if (stream_error) return stream_error;
     struct uvc_frame frame = {
         .data = frame_data,
-        .frame_format = UVC_FRAME_FORMAT_GRAY16,
-        .width = 640,
+        .frame_format = UVC_FRAME_FORMAT_YUYV,
+        .width = 1280,
         .height = 960,
-        .data_bytes = 640u * 960u * 2u,
-        .step = 640u * 2u
+        .data_bytes = 1280u * 960u * 2u,
+        .step = 1280u * 2u
     };
     callback(&frame, user_ptr);
     return 0;
@@ -108,7 +108,7 @@ uvc_error_t uvc_set_gain(uvc_device_handle_t *devh, uint16_t value)
 int main(void)
 {
     struct ipolar_frame_view view;
-    frame_data = calloc(640u * 960u, 2u);
+    frame_data = calloc(1280u * 960u, 2u);
     CHECK(frame_data != NULL);
     frame_data[0] = 0x34;
     frame_data[1] = 0x12;
@@ -118,20 +118,20 @@ int main(void)
     CHECK(ipolar_adapter_open(IPOLAR_VID, IPOLAR_PID) == 0);
     CHECK(ipolar_adapter_set_exposure(1234) == 0 && exposure_value == 1234);
     CHECK(ipolar_adapter_set_gain(17) == 0 && gain_value == 17);
-    CHECK(ipolar_adapter_stream_y16() == 0);
-    CHECK(ipolar_adapter_stream_y16() == 0);
+    CHECK(ipolar_adapter_stream_yuyv() == 0);
+    CHECK(ipolar_adapter_stream_yuyv() == 0);
     CHECK(selected_fps == 0);
     CHECK(stream_starts == 1); /* already-active stream is idempotent */
     CHECK(ipolar_adapter_acquire_latest(&view) == 1);
-    CHECK(view.width == 640 && view.height == 960);
-    CHECK(view.size == 640u * 960u * 2u);
+    CHECK(view.width == 1280 && view.height == 960);
+    CHECK(view.size == 1280u * 960u * 2u);
     CHECK(view.data[0] == 0x34 && view.data[1] == 0x12);
     CHECK(ipolar_adapter_frame_is_current(&view) == 1);
 
     CHECK(ipolar_adapter_reconnect(IPOLAR_VID, IPOLAR_PID) == 0);
     CHECK(ipolar_adapter_frame_is_current(&view) == 0);
     CHECK(ipolar_adapter_release_frame(&view) == 0);
-    CHECK(ipolar_adapter_stream_y16() == 0);
+    CHECK(ipolar_adapter_stream_yuyv() == 0);
     CHECK(stream_starts == 2);
     ipolar_adapter_close();
     find_error = -7;
@@ -142,12 +142,12 @@ int main(void)
     open_error = 0;
     CHECK(ipolar_adapter_open(IPOLAR_VID, IPOLAR_PID) == 0);
     stream_error = -9;
-    CHECK(ipolar_adapter_stream_y16() == -9);
+    CHECK(ipolar_adapter_stream_yuyv() == -9);
     stream_error = 0;
     ipolar_adapter_close();
     CHECK(ipolar_adapter_exit() == 0);
     CHECK(stream_stops == 2);
     free(frame_data);
-    puts("iPolar adapter accepts device-default frame rate, publishes bounded Y16, and invalidates on reconnect PASS");
+    puts("iPolar adapter negotiates proven YUYV 1280x960, publishes bounded frames, and invalidates on reconnect PASS");
     return 0;
 }

@@ -12,7 +12,8 @@ typedef int uvc_error_t;
 
 enum uvc_frame_format {
     UVC_FRAME_FORMAT_UNKNOWN = 0,
-    UVC_FRAME_FORMAT_GRAY16 = 1
+    UVC_FRAME_FORMAT_GRAY16 = 1,
+    UVC_FRAME_FORMAT_YUYV = 2
 };
 
 struct uvc_frame {

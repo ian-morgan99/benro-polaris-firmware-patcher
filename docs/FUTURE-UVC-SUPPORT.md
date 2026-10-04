@@ -37,8 +37,9 @@ The iOptron iPolar (an electronic polar alignment scope for astronomical telesco
 - **Product ID**: 1455 (0x5AF) - iOptron iPolar
 - **Device Class**: Video (UVC - USB Video Class)
 - **Interfaces**: Video Control + Video Streaming
-- **Format**: Uncompressed Y16 (16-bit grayscale)
-- **Resolutions**: 640×960 (~1.8 fps) and 1280×960 (~0.9 fps)
+- **Format**: Packed YUYV 4:2:2 (2 bytes per pixel)
+- **Resolutions**: 1280×960 is the first frame-qualified host mode; 640×960
+  enumerates but remains unqualified
 - **Notes**: Video-only device, no still image capture supported
 
 ## Implementation Steps
@@ -60,7 +61,8 @@ When ready to expand scope:
    IOLIBS=/path/to/libgphoto2_port/.libs \
    gphoto2 --summary
    ```
-4. Verify video capture capabilities if needed for the use case
+4. Verify packed YUYV capture, explicit stride, and frame conversion
+   capabilities if needed for the use case
 
 ## Dependencies Consideration
 Enabling UVC may require ensuring:

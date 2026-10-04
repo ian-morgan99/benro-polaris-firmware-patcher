@@ -1394,6 +1394,10 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   contains INDI `indi_qhy_ccd`, QHY SDK 26.7.21, the exact reconstructed
   Orion loader image, and a fail-closed volatile-load helper. No hardware
   write, `29a1` re-enumeration, or frame capture has been claimed.
+- The earlier iPolar libuvc adapter's Y16 assumption was corrected to the
+  measured packed-YUYV 1280x960 mode; its mock and real-libuvc compile checks
+  now exercise the same format. This is still adapter/build evidence, not a
+  Polaris runtime qualification.
 - The earlier adapter's guessed `0x41` probe was removed by patcher commit
   `8f6b6b2`; the probe now returns `LIBUSB_ERROR_NOT_SUPPORTED` until the
   exact post-load protocol is validated. Deterministic gate: 17 passed, 0
