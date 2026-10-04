@@ -17,10 +17,6 @@ static libusb_device *test_list[] = { &test_device, NULL };
 static int claim_result;
 static int alt_result;
 static int claims, releases, closes, exits, frees;
-static uint8_t transfer_type, transfer_request;
-static uint16_t transfer_value, transfer_length;
-static unsigned transfer_timeout;
-static int transfer_result = 4;
 
 int libusb_init(libusb_context **ctx) { *ctx = &test_ctx; return 0; }
 void libusb_exit(libusb_context *ctx) { (void)ctx; ++exits; }
@@ -58,30 +54,13 @@ int libusb_release_interface(libusb_device_handle *devh, int iface)
     (void)devh; (void)iface; ++releases; return 0;
 }
 void libusb_close(libusb_device_handle *devh) { (void)devh; ++closes; }
-int libusb_control_transfer(libusb_device_handle *devh, uint8_t request_type,
-        uint8_t request, uint16_t value, uint16_t index,
-        unsigned char *data, uint16_t length, unsigned int timeout)
-{
-    (void)devh; (void)index; (void)data;
-    transfer_type = request_type; transfer_request = request;
-    transfer_value = value; transfer_length = length;
-    transfer_timeout = timeout;
-    return transfer_result;
-}
-
 int main(void)
 {
     CHECK(starshoot_adapter_init() == 0);
     CHECK(starshoot_adapter_open(0x1233, 0x1455) == LIBUSB_ERROR_INVALID_PARAM);
     CHECK(starshoot_adapter_open(STARSHOOT_VID, STARSHOOT_PID) == 0);
     CHECK(claims == 1 && frees == 1);
-    CHECK(starshoot_adapter_probe_init() == 0);
-    CHECK(transfer_type == (LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS));
-    CHECK(transfer_request == 0x41 && transfer_value == 1);
-    CHECK(transfer_length == 4 && transfer_timeout == 2000);
-    transfer_result = 0; /* zero-byte completion is not a successful command */
-    CHECK(starshoot_adapter_probe_init() == LIBUSB_ERROR_IO);
-    transfer_result = 4;
+    CHECK(starshoot_adapter_probe_init() == LIBUSB_ERROR_NOT_SUPPORTED);
     CHECK(starshoot_adapter_close() == 0);
     CHECK(releases == 1 && closes == 1);
 
@@ -94,6 +73,6 @@ int main(void)
     CHECK(closes == 3 && releases == 2); /* failed alt selection releases claim */
     CHECK(starshoot_adapter_exit() == 0);
     CHECK(exits == 1);
-    puts("StarShoot adapter bounds identity, USB ownership cleanup, and transfer result PASS");
+    puts("StarShoot adapter bounds identity, USB ownership cleanup, and unqualified-protocol refusal PASS");
     return 0;
 }

@@ -30,7 +30,8 @@ int  starshoot_adapter_init(void);
 int  starshoot_adapter_open(uint16_t vid, uint16_t pid);
 int  starshoot_adapter_close(void);
 int  starshoot_adapter_exit(void);
-/* Provisional control-request probe only; this does not capture a frame. */
+/* No USB probe is issued yet: the exact 29a1 command sequence is not
+ * validated. This currently returns LIBUSB_ERROR_NOT_SUPPORTED. */
 int  starshoot_adapter_probe_init(void);
 
 #endif /* STAGE2_STARSHOOT_ADAPTER_H */

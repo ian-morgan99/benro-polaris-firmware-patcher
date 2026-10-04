@@ -33,40 +33,6 @@ struct starshoot_adapter {
 
 static struct starshoot_adapter g_ss = { .claimed_iface = -1 };
 
-/* Vendor-protocol command opcodes (SDK opcode table, qhyccdcamdef.h). */
-enum ss_opcode {
-    SS_OP_RESET_USB_PIPE     = 1,
-    SS_OP_IS_CAMARA_INIT     = 1, /* SDK: IS_CAMARA_INIT(1) */
-    SS_OP_IS_CAMARA_OPEN     = 2,
-    SS_OP_IS_CAMARA_CLOSE    = 3,
-    SS_OP_GET_IMAGE_TIMEOUT  = 6,
-    SS_OP_GET_SINGLEPICTURE  = 7,
-    SS_OP_GET_LIVEPICTURE    = 8
-};
-
-/* Bounded command transfer: one bulk control write of the opcode word.
- * Returns 0 on success, negative libusb error code otherwise (fail-closed). */
-static int ss_transfer_opcode(struct starshoot_adapter *a, uint16_t opcode)
-{
-    if (!a->dev) {
-        return LIBUSB_ERROR_NOT_FOUND; /* fail-closed: no open handle */
-    }
-    uint8_t buf[4];
-    buf[0] = (uint8_t)(opcode & 0xff);
-    buf[1] = (uint8_t)((opcode >> 8) & 0xff);
-    buf[2] = 0; /* payload length (low) */
-    buf[3] = 0; /* payload length (high) */
-    int rc = libusb_control_transfer(a->dev,
-                                     LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS,
-                                     0x41, /* vendor request (SDK-style) */
-                                     opcode, 0, buf, (uint16_t)sizeof(buf), 2000);
-    if (rc < 0)
-        return rc;
-    /* libusb returns the number of payload bytes transferred. A zero-byte
-     * status is not proof that this four-byte command reached the camera. */
-    return (rc == (int)sizeof(buf)) ? 0 : LIBUSB_ERROR_IO;
-}
-
 int starshoot_adapter_init(void)
 {
     if (g_ss.ctx != NULL) {
@@ -165,10 +131,12 @@ int starshoot_adapter_exit(void)
     return result;
 }
 
-/* Provisional protocol probe. A full 4-byte transfer only proves that the
- * host sent the proposed request; device acceptance and image capture remain
- * unproven until a response and validated frame are implemented. */
+/* The former implementation sent a guessed class request (0x41). Static
+ * inspection of the archived vendor qhy5dll.dll found no such request; its
+ * observed vendor requests are 0x10, 0x11, 0x18, 0x21, 0x22, 0x25, 0x26 and
+ * 0x55. Do not send any of those until the exact post-firmware 29a1 sequence
+ * is validated against the camera and a frame can be checked. */
 int starshoot_adapter_probe_init(void)
 {
-    return ss_transfer_opcode(&g_ss, SS_OP_IS_CAMARA_INIT);
+    return LIBUSB_ERROR_NOT_SUPPORTED;
 }
