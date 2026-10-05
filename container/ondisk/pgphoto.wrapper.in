@@ -152,6 +152,12 @@ fi
 # reset path. Keep one process-independent, debounced USB identity supervisor
 # alive so an actual camera detach/reattach/body swap gets a clean restart.
 if [ -x "$D/camera_usb_supervisor.sh" ]; then
-    nohup "$D/camera_usb_supervisor.sh" >> /app/Clog.txt 2>&1 &
+    # The supervisor only shells out (tr/cat/awk/ls/sleep). It must NOT inherit
+    # LD_PRELOAD: stage2_ondisk_init() is an ELF constructor that prints a
+    # 13-line banner on every load, so a preloaded `sleep` wrote the whole
+    # loader banner into Clog once per poll -- 48150 banners in one rotation
+    # window (issue #160). Unset it in a subshell so pgphoto keeps the preload.
+    SUPERVISOR_LOG=${OPENPOLARIS_SUPERVISOR_LOG:-/app/Clog.txt}
+    ( unset LD_PRELOAD; exec nohup "$D/camera_usb_supervisor.sh" >> "$SUPERVISOR_LOG" 2>&1 ) &
 fi
 exec $D/pgphoto.stage2ondisk "$@"

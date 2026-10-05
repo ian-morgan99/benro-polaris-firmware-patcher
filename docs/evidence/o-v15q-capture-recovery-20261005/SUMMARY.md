@@ -173,6 +173,49 @@ Loader initialisations per retained rotated log:
 correction: they are short-lived child processes inheriting `LD_PRELOAD`, not
 in-process re-init, and the volume is far larger than previously estimated.
 
+### The child is now named: the USB supervisor's own polling loop
+
+A 1 Hz `/proc` scan misses sub-second children, so a high-rate probe during a
+capture was used instead. It found the spawner immediately — it is the USB
+supervisor (pid 425), not pgphoto:
+
+```
+pid=1925 ppid=425 comm=(sleep)
+pid=1952 ppid=425 comm=(camera_usb_supe)
+pid=1970 ppid=425 comm=(sleep)
+pid=2034 ppid=425 comm=(camera_usb_supe)
+...
+```
+
+Direct count: **10 distinct supervisor children in a 10 s window** (a floor,
+given 1 Hz sampling). The chain is:
+
+1. `pgphoto.wrapper.in:11` exports `LD_PRELOAD=$D/libpolaris_stage2.so`.
+2. `pgphoto.wrapper.in:155` starts the supervisor from that same shell, so it
+   inherits the preload — confirmed in `/proc/425/environ`.
+3. The supervisor polls every `POLL_SECS=1` (`camera_usb_supervisor.sh:10`,
+   `:150`) and forks `tr`/`cat`/`awk`/`ls`/`sleep` each poll. Those inherit it
+   too — confirmed: `CHILD pid=4965 comm=sleep preload=1`.
+4. `stage2_ondisk_init()` is an ELF `constructor` (`stage2_loader.c:1444`) that
+   prints its 13-line banner unconditionally.
+
+So a shell `sleep` prints the full loader banner once per second, forever. That
+is the entire "re-init storm" — not libgphoto2 re-initialising, and not a
+per-request capture child. At 13 lines per child this is ~780 lines/min,
+consistent with 48 150 banners in one window.
+
+Fix applied here: the wrapper now launches the supervisor with `LD_PRELOAD`
+unset in a subshell, so pgphoto keeps the interposition and the supervisor does
+not. `container/test_pgphoto_wrapper_lock.sh` asserts both halves (pgphoto still
+receives the preload, the supervisor reports `UNSET`); it fails with exit 1 on
+the pre-fix wrapper and passes on the fixed one.
+
+Deliberately not done: gating the constructor banner itself. It is the
+crash-diagnostics path, and the flood has one cause that is now removed at
+source. If a future build reintroduces a preloaded short-lived process, the
+banner will flood again — that is the point at which a debug gate would earn its
+keep.
+
 ## 7. Process observations
 
 * `camera_usb_supervisor.sh` runs as pid 425, reparented to init (ppid 1) — it

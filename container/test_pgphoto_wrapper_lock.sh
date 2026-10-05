@@ -13,14 +13,26 @@ echo launched
 echo "preview_backoff=$STAGE2_PENTAX_PREVIEW_BACKOFF"
 echo "preview_interval=$STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS"
 echo "capture_trace=$STAGE2_CAPTURE_TRACE"
+echo "pgphoto_preload=$LD_PRELOAD"
 EOF
 chmod +x "$TMP/stage2/pgphoto.stage2ondisk"
+
+# The USB supervisor must NOT inherit LD_PRELOAD: the Stage-2 loader prints a
+# banner from an ELF constructor, so a preloaded `sleep` in its poll loop floods
+# the log (issue #160). It reports what it was launched with.
+cat > "$TMP/stage2/camera_usb_supervisor.sh" <<'EOF'
+#!/bin/sh
+echo "supervisor_preload=${LD_PRELOAD:-UNSET}"
+sleep 30
+EOF
+chmod +x "$TMP/stage2/camera_usb_supervisor.sh"
 
 run_wrapper() {
     OPENPOLARIS_RUN_DIR=$TMP/run \
     OPENPOLARIS_PROC_ROOT=$TMP/proc \
     OPENPOLARIS_STAGE2_DIR=$TMP/stage2 \
     OPENPOLARIS_PRINTK_PATH=$TMP/printk \
+    OPENPOLARIS_SUPERVISOR_LOG=$TMP/supervisor-default.out \
     sh "$WRAPPER"
 }
 
@@ -102,5 +114,18 @@ rm -rf "$TMP/run/openpolaris-pgphoto.launch.lock"
 rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
 OPENPOLARIS_PRINTK_QUIET=0 run_wrapper >/dev/null 2>&1
 test "$(cat "$TMP/printk")" = "7 4 1 7"
+
+# The USB supervisor must be launched without LD_PRELOAD, while pgphoto keeps
+# it. Otherwise every subprocess the supervisor's poll loop forks re-runs the
+# Stage-2 ELF constructor and floods the log (issue #160).
+rm -rf "$TMP/run/openpolaris-pgphoto.launch.lock"
+rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
+SUP_OUT="$TMP/supervisor-default.out"; : > "$SUP_OUT"
+OUT=$(run_wrapper 2>&1)
+printf '%s\n' "$OUT" | grep -q '^launched$'
+printf '%s\n' "$OUT" | grep -q '^pgphoto_preload=.*/libpolaris_stage2.so$'
+sleep 1
+grep -q '^supervisor_preload=UNSET$' "$SUP_OUT" || {
+    echo "FAIL: USB supervisor inherited LD_PRELOAD: $(cat "$SUP_OUT")"; exit 1; }
 
 echo 'PASS: pgphoto wrapper validates lock ownership, contains console log floods, and exits safely during backoff (issue #34)'
