@@ -367,3 +367,32 @@ assert a 261 write, assert the descriptor reads `5/1` before `InitiateCapture`.
 Note `bulb-timer=no` in every sample including the accepted `4/1`. Whether the
 K-3 III needs the bulb-timer property as well for a *timed* bulb is untested
 and is the next question after the missing write is fixed.
+
+### 12b. Why #173 was misdiagnosed: the 261 write applies *asynchronously*
+
+The canary already writes the shutter before a Bulb shot (`ce94298`, 19:22), so
+"the Bulb path never writes it" is only true of the stock app, not of our test.
+The reason our own test still reported failure is in the verification, and the
+logs show it exactly:
+
+```
+18:49:41  WRITE s:54;                       (ret:0)
+18:49:42  268 V = 33        <-- still the old index, 1 s later
+18:49:54  268 V = 54        <-- applied, ~13 s after the write
+```
+
+`set_shutter()` read the state back **once, immediately**, saw the old index and
+raised "accepted (ret:0) but the camera reports V:33". The camera was not
+refusing the duration; it was honouring it a few seconds later than the check.
+That false failure is what turned "Bulb duration is ignored" into a stated
+property of the K-3 III.
+
+Fixed in `scripts/canary-probe.py`: the readback is now polled inside a bounded
+budget (`SHUTTER_SETTLE_TIMEOUT_S`, default 30 s, 1 s apart) and only fails once
+the budget is exhausted. Three tests in `tests/test_canary_bulb.py` cover it —
+a late-apply that must now pass, a never-apply that must still fail closed, and
+the existing immediate-failure case. 125 tests pass across the canary/bulb pack.
+
+The practical consequence for #173: the acceptance test the review asked for
+(requested duration -> camera readback -> captured file -> EXIF duration) is
+viable, because the second step now works. It was blocked behind a harness bug.

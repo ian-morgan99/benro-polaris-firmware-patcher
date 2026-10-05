@@ -233,15 +233,31 @@ def prepare_bulb_shutter(
     return current, index, label, seconds
 
 
+# The K-3 III applies a 261 shutter write asynchronously. Measured on device
+# (out/logs/device-20261005-late, Clog): `s:54` accepted with ret:0 at 18:49:41,
+# command 268 still reporting V:33 at 18:49:42, and V:54 from 18:49:54 -- a
+# ~13 s write-to-visible delay. A single immediate readback therefore reports a
+# real, working write as "accepted but not applied", which is how #173 came to be
+# recorded as a camera limitation. Verify by polling within a bounded budget.
+SHUTTER_SETTLE_TIMEOUT_S = 30.0
+SHUTTER_SETTLE_POLL_S = 1.0
+
+
 def set_shutter(
-    p: Polaris, index: int, timeout: float = 10.0, verify: bool = True
+    p: Polaris,
+    index: int,
+    timeout: float = 10.0,
+    verify: bool = True,
+    settle_timeout: float = SHUTTER_SETTLE_TIMEOUT_S,
+    poll_interval: float = SHUTTER_SETTLE_POLL_S,
+    sleep=time.sleep,
 ) -> str:
     """Select the camera shutter through the proven 261 `s:<index>;` command.
 
-    `ret:0` only means the request parsed.  On the K-3 III a write of `s:44`
-    (`00-05`) answers `ret:0` while command 268 keeps reporting `V:33` (`1/4`),
-    so the accepted-but-not-applied case is read back and raised as an error
-    rather than being reported as a successful selection.
+    `ret:0` only means the request parsed, and the camera then takes seconds to
+    honour it (see SHUTTER_SETTLE_TIMEOUT_S). The readback is therefore polled
+    until it matches or the budget runs out; only then is the accepted-but-not-
+    applied case raised as an error rather than reported as a success.
     """
     if index < 0:
         raise ValueError("--bulb-shutter-index must be non-negative")
@@ -252,12 +268,36 @@ def set_shutter(
         raise RuntimeError(f"shutter selection lacked explicit ret:0: {response}")
     print(f"{stamp()} SHUTTER index={index} response={response}", flush=True)
     if verify:
-        readback, options = shutter_options(p, timeout, quiet=True)
-        if readback != index:
-            raise RuntimeError(
-                f"shutter index {index} was accepted (ret:0) but the camera reports "
-                f"V:{readback} ({options[readback] if readback is not None and readback < len(options) else '?'})"
+        deadline = time.monotonic() + max(settle_timeout, 0.0)
+        attempt = 0
+        while True:
+            attempt += 1
+            readback, options = shutter_options(p, timeout, quiet=True)
+            if readback == index:
+                if attempt > 1:
+                    print(
+                        f"{stamp()} SHUTTER index={index} confirmed after {attempt} "
+                        f"readbacks (the camera applies 261 writes asynchronously)",
+                        flush=True,
+                    )
+                break
+            if time.monotonic() >= deadline:
+                label = (
+                    options[readback]
+                    if readback is not None and readback < len(options)
+                    else "?"
+                )
+                raise RuntimeError(
+                    f"shutter index {index} was accepted (ret:0) but still is not "
+                    f"reported after {settle_timeout:.0f}s ({attempt} readbacks); "
+                    f"the camera reports V:{readback} ({label})"
+                )
+            print(
+                f"{stamp()} SHUTTER index={index} not yet visible (V:{readback}), "
+                f"re-reading in {poll_interval}s",
+                flush=True,
             )
+            sleep(poll_interval)
     return response
 
 

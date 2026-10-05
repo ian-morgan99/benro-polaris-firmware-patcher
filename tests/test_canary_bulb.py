@@ -144,11 +144,53 @@ def test_accepted_but_unapplied_shutter_fails_closed():
     mod = load_probe()
     device = FakePolaris([ack(4), info(K3_CURRENT)])  # still reporting 1/4
     try:
-        mod.set_shutter(device, 4)
+        mod.set_shutter(device, 4, settle_timeout=0.0)
     except RuntimeError as exc:
         assert "accepted (ret:0)" in str(exc)
     else:
         raise AssertionError("a shutter that did not move must not report success")
+
+
+def test_shutter_write_that_applies_late_is_not_reported_as_failure():
+    """The K-3 III honours a 261 write seconds later; polling must not give up.
+
+    Device evidence (Clog 2026-10-05): `s:54` ret:0 at 18:49:41, command 268
+    still V:33 at 18:49:42, V:54 from 18:49:54. A single immediate readback
+    turned that working write into a false "accepted but not applied" failure,
+    which is how #173 was misattributed to the camera.
+    """
+    mod = load_probe()
+    slept: list[float] = []
+    device = FakePolaris([ack(4), info(K3_CURRENT), info(K3_CURRENT), info(4)])
+    mod.set_shutter(
+        device, 4, settle_timeout=30.0, poll_interval=1.0, sleep=slept.append
+    )
+    # Two polls were stale, a third confirmed, and no error was raised.
+    assert len(slept) == 2
+    assert device.sends[0] == ((261,), {"payload": "s:4;"})
+    assert device.sends[1][0][0] == 268 and device.sends[2][0][0] == 268
+
+
+def test_shutter_settle_budget_is_bounded_and_configurable():
+    """A camera that never applies the write must still fail, not hang."""
+    mod = load_probe()
+    slept: list[float] = []
+    # Every readback keeps reporting the old index.
+    replies = [ack(4)] + [info(K3_CURRENT)] * 40
+    device = FakePolaris(replies)
+    clock = iter([0.0] + [i * 5.0 for i in range(1, 41)])
+    real_monotonic = mod.time.monotonic
+    mod.time.monotonic = lambda: next(clock)
+    try:
+        mod.set_shutter(
+            device, 4, settle_timeout=10.0, poll_interval=5.0, sleep=slept.append
+        )
+    except RuntimeError as exc:
+        assert "still is not reported after 10s" in str(exc)
+    else:
+        raise AssertionError("an endless stale readback must fail closed")
+    finally:
+        mod.time.monotonic = real_monotonic
 
 
 def test_bulb_session_restores_the_exact_prior_shutter():
