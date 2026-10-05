@@ -1,0 +1,24 @@
+o-v15r (.55) supervisor LD_PRELOAD evidence, captured 2026-10-05
+
+--- supervisor process environment (pid 272) ---
+pid=272 cmd=/bin/sh/app/lib/stage2/camera_usb_supervisor.sh
+  LD_PRELOAD_entries=0
+
+--- child fork inheritance sample (10 s, 40 x 0.25 s) ---
+child_samples=33 child_samples_with_preload=0
+
+--- log volume after ~2.4 h uptime ---
+/app/Clog.txt size=1736 bytes
+(newest SD rotation: /app/sd/system/log/Clog_000247.log, 882973 bytes)
+
+comparison, .54 (o-v15q): a single 42 MB rotation window contained ~48150
+13-line Stage-2 loader banners, one block per supervisor poll.
+
+--- provenance ---
+build_id=6.0.0.54.55-o-v15r-supervisor-preload-20261005
+display_fwver=6.0.0.54.55
+patcher_commit=5fdc174af3c7280fee34b07f46c24d1e5d9a584c
+patcher_dirty_diff_hash=
+git_commit=ee301fefefe845a2a259bae7a0bf25ca61c10ca7
+actual_version=2.5.34
+selected_camlibs=ptp2,pentax

@@ -1,0 +1,47 @@
+Bulb start/stop trace from /app/sd/system/log/Clog_000247.log (o-v15r, .55)
+
+=== 4a. stop while idle -> -2, no 0x9012 (lines 8541-8549) ===
+[m[11:34:34:906 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[264],val[state:0;focus:-1000;leve:1;b:0;path:;c:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 264  data: state:0;focus:-1000;leve:1;b:0;path:;c:0;   --_isInit 1 
+[m[11:34:34:906 [1;32mINFO[m-]:captureImage[1485]:[0;32;31m----will captureImage status:0  focus:-1000  sPath:
+[m[11:34:35:006 [1;32mINFO[m-]:capture_image_with_Burst[3481]:----capture_image_with_Burst  -2 continuous 0
+[m[11:34:35:006 [1;32mINFO[m-]:capture_image_with_Burst[3512]:----capture_image_with_Burst will end
+[m[11:34:35:006 [1;32mINFO[m-]:capture_image_with_Burst[3515]:----capture_image_with_Burst end
+[m[11:34:35:007 [1;32mINFO[m-]:captureImage[1547]:[0;32;31m----capture burst Image ret -2
+[m[11:34:35:008 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:-2;]
+[m[m[11:34:39:787 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[265],val[-1]
+
+=== 4b. in-flight capture blocks the IPC queue (lines 11160-11172) ===
+[m[11:35:44:044 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 TIFF
+[m[11:35:44:044 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[11:35:44:044 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info imageformat ret 0 
+[m[11:35:44:044 [1;32mINFO[m-]:numOfCaptureImage[3018]:----numOfCaptureImage  2
+[m[11:35:44:044 [1;32mINFO[m-]:capture_image[3076]:----capture
+[m[11:35:44:044 [1;32mINFO[m-]:clearCameraEvent[3026]:----clearCameraEvent  
+[m[11:35:44:074 [1;32mINFO[m-]:capture_image[3092]:---- will CAPTURE_IMAGE  
+[libgphoto2] gp_camera_capture: enter camera=0x3abce8 type=0 path=0xb68986fc context=0x399650
+[pentax] capture=1 boundary=camlib-enter transfer=0 recovery=1 output_pending=0
+[pentax] capture=1 boundary=preconditions-enter
+[pentax] capture=1 boundary=preconditions-return ptp=0x2001 size=576
+[pentax] capture=1 boundary=initiate-enter focus=2 companions=1
+[pentax] capture=1 boundary=initiate-return ptp=0x2001
+
+=== 4c. camera leaves USB, pgphoto restarts ===
+[restart_gphoto] starting pgphoto via /app/bin/pgphoto
+[m[11:36:31:183 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+[restart_gphoto] pgphoto running (PID 23930)
+[restart_gphoto] OK: port 8080 listening — restart successful
+[camera-usb] pgphoto restart complete (restart 1/6)
+[m[11:36:37:932 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[286],val[manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;]
+
+=== 0x9012 / terminate occurrences in this log ===
+0
+=== pentax-bulb occurrences across recent logs ===
+/app/sd/system/log/Clog_000240.log:0
+/app/sd/system/log/Clog_000241.log:0
+/app/sd/system/log/Clog_000242.log:0
+/app/sd/system/log/Clog_000243.log:0
+/app/sd/system/log/Clog_000244.log:0
+/app/sd/system/log/Clog_000245.log:0
+/app/sd/system/log/Clog_000246.log:0
+/app/sd/system/log/Clog_000247.log:0
