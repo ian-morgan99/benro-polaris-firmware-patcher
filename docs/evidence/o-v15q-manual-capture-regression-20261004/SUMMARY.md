@@ -3,6 +3,31 @@
 Status: **REPRODUCED, root cause narrowed, not yet fixed.**
 Tracked at [#172](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/172).
 
+> **Corrections added 2026-10-05 after further work — read these first.**
+>
+> 1. **The "library re-init per request" claim below is wrong.**
+>    `stage2_ondisk_init()` is an ELF `constructor` in `libpolaris_stage2.so`,
+>    and the wrapper exports `LD_PRELOAD` (`pgphoto.wrapper.in:11`), which every
+>    child inherits. `pgphoto.stage2ondisk` imports `fork`/`execve`/`popen`.
+>    The loader blocks in `Clog` are therefore almost certainly **short-lived
+>    child processes**, not in-process re-initialisation. A single process cannot
+>    re-run its own constructor, and pid 250 was unchanged with zero
+>    `restart_gphoto` calls across 30 blocks. See #160 for the follow-up test.
+> 2. **A second, different failure code was observed.** After enabling
+>    `STAGE2_CAPTURE_TRACE=1` and restarting pgphoto, the next shot returned
+>    `-1002` (camera absent), not `-1005`. `dmesg` shows the restart itself took
+>    the body off USB:
+>    `usb 1-1.2: USB disconnect, device number 3` — never re-enumerated.
+>    The traced run is therefore **inconclusive, not negative**: no `[pentax]`
+>    line appeared because the capture never reached the camlib.
+>    `-1005` (guard, camera present) and `-1002` (no camera) must be triaged
+>    apart; "Shot failed" covers both.
+> 3. **Restarting pgphoto is not a neutral act on this hardware.** It dropped the
+>    K-3 III from USB twice on 2026-10-04. Relevant to #146.
+> 4. The device was rebooted cleanly at 23:41 UTC (`boot_id` verified, back in
+>    ~30 s, `FwVer` intact). It has been unreachable since due to the host WiFi
+>    interface being down — see #170 for the misread-ping trap that caused.
+
 ## Scope
 
 Operator report after installing `o-v15q` (`6.0.0.54.54`):
