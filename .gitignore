@@ -104,3 +104,8 @@ docs/evidence/**/*.tmp
 docs/evidence/**/*.pid
 docs/evidence/**/*.jpg
 docs/evidence/**/*.pyc
+
+# Raw device snapshot from the 2026-10-03 physical test (92 MB of rotating
+# logs). Per the policy above these stay in PrivateResearch; the concise
+# findings are in docs/evidence/o-v15q-manual-capture-regression-20261004/.
+docs/evidence/polaris-test-20261003/
