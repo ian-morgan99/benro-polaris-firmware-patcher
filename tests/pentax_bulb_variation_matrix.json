@@ -23,5 +23,6 @@
     {"id": "raw+jpeg", "expected_files": 2, "suffixes": [".dng", ".jpg"]}
   ],
   "bulb_seconds": [4, 60, 70],
-  "shutter_selection": "command-277-required-before-command-264"
+  "max_camera_exposure_seconds": 30,
+  "shutter_selection": "command-261-s-index-required-before-command-264; index resolved from the live command-268 list by duration (the K-3 III exposes no Bulb entry, so 60s and 70s rows can only be attempted at the 00-30 maximum)"
 }

@@ -111,6 +111,12 @@ that reports success at the wrong exposure is worse than one that fails.**
 
 ## 4. New defect: command 277 never answers, so the shutter cannot be set
 
+> **SUPERSEDED (2026-10-05).** 277 is `camera_set_aperture`, not a shutter
+> setter; the real command is **261 with `s:<index>;`**, which does reply
+> (`RX 261@s:44;ret:0;`). "277 never replies" was our client bug, not a
+> firmware defect. See `docs/evidence/bulb-root-cause-20261005/SUMMARY.md`.
+> The observation in this section is kept as recorded at the time.
+
 The canary cannot even reach the Bulb path, because command 268 exposes no
 Bulb entry (its list stops at `00-30`):
 

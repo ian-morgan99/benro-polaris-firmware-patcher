@@ -55,7 +55,7 @@ def shot_satisfied(rec: dict, seen_paths: list[str], expected_files: int,
 def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
              shot_timeout: float, expected_files: int,
              expected_sp_prefix: str, run_id: str,
-             bulb_seconds: int | None = None) -> dict:
+             bulb_seconds: float | None = None) -> dict:
     """Issue one code-264 capture and watch its lifecycle. Returns a record."""
     rec = {
         "shot": shot_no,
@@ -113,7 +113,7 @@ def run_shot(p: Polaris, shot_no: int, seen_paths: list[str],
 
 def run_sequence(p: Polaris, shot_count: int, shot_timeout: float,
                  expected_files: int, expected_sp_prefix: str,
-                 run_id: str, bulb_seconds: int | None = None) -> tuple[bool, list[dict], list[str]]:
+                 run_id: str, bulb_seconds: float | None = None) -> tuple[bool, list[dict], list[str]]:
     """Run captures fail-closed: a failed shot consumes the whole failure budget."""
     seen_paths: list[str] = []
     records: list[dict] = []
@@ -150,10 +150,11 @@ def main() -> int:
                     help="authoritative per-exposure output obligation; never inferred from photoFormat")
     ap.add_argument("--expected-sp-prefix", required=True,
                     help="expected Polaris SP output path prefix, e.g. /app/sd/normal/SP_")
-    ap.add_argument("--bulb-seconds", type=int,
-                    help="exercise Bulb for this many seconds; index is discovered from command 268")
+    ap.add_argument("--bulb-seconds", type=float,
+                    help="requested long-exposure seconds; the shutter index is resolved from the "
+                         "live command 268 list (K-3 III exposes no Bulb entry, max is 00-30)")
     ap.add_argument("--bulb-shutter-index", type=int,
-                    help="optional checked override for the live Bulb entry (command 277)")
+                    help="optional override for the shutter index written through command 261")
     args = ap.parse_args()
     if args.shot_timeout <= 0:
         ap.error("--shot-timeout must be positive")
@@ -202,7 +203,7 @@ def main() -> int:
             print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
         shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
-        shutter_context = (bulb_shutter_session(p, args.bulb_shutter_index)
+        shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index)
                            if args.bulb_seconds is not None else nullcontext())
         with shutter_context:
             if args.bulb_seconds is not None:

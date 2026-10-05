@@ -188,10 +188,19 @@ def test_each_bulb_variation_has_a_fail_closed_lifecycle(case):
 
 
 def test_bulb_selection_is_a_separate_required_wire_step():
-    device = FakePolaris([(277, "ret:0;")])
-    PROBE.set_shutter(device, 17)
+    """Shutter selection is command 261 `s:<index>;`, verified by a 268 readback.
+
+    277 is `camera_set_aperture`; sending the shutter there is what made every
+    earlier Bulb canary time out.  See docs/evidence/bulb-root-cause-20261005.
+    """
+    device = FakePolaris([
+        (261, "s:5;ret:0;"),
+        (268, "V:5;R:1/8000,1/1000,1/60,1/4,00-03,00-08,00-30;"),
+    ])
+    PROBE.set_shutter(device, 5)
     assert device.sends == [
-        ((277,), {"payload": "shutter:17;"}),
+        ((261,), {"payload": "s:5;"}),
+        ((268,), {}),
     ]
 
 

@@ -91,19 +91,92 @@ def effective_shot_timeout(base: float, bulb_seconds: int | None) -> float:
     return max(base, float(bulb_seconds + 90))
 
 
-def bulb_capture_payload(seconds: int | None) -> str:
-    """Build the capture request; zero is deliberately not a Bulb test."""
+def bulb_capture_payload(seconds: float | None) -> str:
+    """Build the capture request; zero is deliberately not a Bulb test.
+
+    The firmware scans this field with `%d` (see the `state:%d;bulb:%d;c:%d;`
+    sscanf in the command-264 handler), so a fractional request is truncated to
+    whole seconds rather than sent as a value the parser would truncate anyway.
+    """
     if seconds is None:
         return "state:1;bulb:0;c:-1;"
     if seconds <= 0:
         raise ValueError("--bulb-seconds must be positive")
-    return f"state:1;bulb:{seconds};c:-1;"
+    return f"state:1;bulb:{int(seconds)};c:-1;"
 
 
-def shutter_options(p: Polaris, timeout: float = 10.0) -> tuple[int | None, list[str]]:
-    """Read command 268's current shutter index and option list."""
-    p.send(268)
-    response = p.wait_code(268, timeout)
+# Wire commands, established by disassembling the stock binaries and confirmed
+# against the Benro Connect app's own traffic in /app/sd/system/log/Mlog_*.log.
+#   261 -> setCameraConfig(3, ...)  shutter, payload "s:<index>;"
+#   268 -> getCameraConfig(3)       shutter list,   reply  "RD:0;V:<index>;R:<list>;"
+#   277 -> camera_set_aperture      aperture only -- it is NOT a shutter setter.
+# See docs/evidence/bulb-root-cause-20261005/SUMMARY.md.
+SHUTTER_SET_COMMAND = 261
+SHUTTER_INFO_COMMAND = 268
+
+
+def parse_shutter_seconds(label: str) -> float | None:
+    """Convert a command-268 shutter label into seconds, or None if not numeric.
+
+    The K-3 III list mixes two encodings: slash forms where a proper fraction
+    is sub-second (``1/8000``) and an improper one is a real duration
+    (``13/10`` == 1.3 s), and ``MM-SS`` for minute values (``00-30`` == 30 s,
+    ``01-30`` == 90 s). Non-durations such as ``Bulb`` or ``Auto`` return None
+    so callers skip them instead of guessing.
+    """
+    text = label.strip()
+    if not text:
+        return None
+    if "-" in text:
+        minutes, _, seconds = text.partition("-")
+        try:
+            return float(int(minutes) * 60 + int(seconds))
+        except ValueError:
+            return None
+    if "/" in text:
+        numerator, _, denominator = text.partition("/")
+        try:
+            top, bottom = int(numerator), int(denominator)
+        except ValueError:
+            return None
+        if bottom == 0:
+            return None
+        return top / bottom
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def resolve_shutter_index(options: list[str], seconds: float) -> tuple[int, str, float]:
+    """Choose the option index closest to a requested exposure in seconds.
+
+    Prefers an exact match, then the shortest option that still covers the
+    request, and finally the longest available. Never returns a non-numeric
+    entry, so a list without a ``Bulb`` label is not an error.
+    """
+    scored = []
+    for index, option in enumerate(options):
+        duration = parse_shutter_seconds(option)
+        if duration is None or duration <= 0:
+            continue
+        scored.append((index, option, duration))
+    if not scored:
+        raise RuntimeError("command 268 exposed no numeric shutter options")
+    wanted = float(seconds)
+    exact = [item for item in scored if abs(item[2] - wanted) < 1e-6]
+    if exact:
+        return exact[0]
+    covers = [item for item in scored if item[2] >= wanted]
+    if covers:
+        return min(covers, key=lambda item: item[2])
+    return max(scored, key=lambda item: item[2])
+
+
+def shutter_options(p: Polaris, timeout: float = 10.0, quiet: bool = False):
+    """Read the current shutter index and option list through command 268."""
+    p.send(SHUTTER_INFO_COMMAND)
+    response = p.wait_code(SHUTTER_INFO_COMMAND, timeout)
     raw_options = field(response, "R")
     if raw_options is None:
         raise RuntimeError(f"shutter-info response has no R option list: {response}")
@@ -128,60 +201,86 @@ def shutter_options(p: Polaris, timeout: float = 10.0) -> tuple[int | None, list
             raise RuntimeError(
                 f"shutter-info response current index is outside option list: {response}"
             )
-    print(f"{stamp()} SHUTTER_OPTIONS current={current} options={options}", flush=True)
+    if not quiet:
+        print(f"{stamp()} SHUTTER_OPTIONS current={current} options={options}", flush=True)
     return current, options
 
 
 def prepare_bulb_shutter(
-    p: Polaris, explicit_index: int | None = None, timeout: float = 10.0
-) -> tuple[int, int]:
-    """Return (current index, live Bulb index) before changing the camera."""
+    p: Polaris,
+    bulb_seconds: float,
+    explicit_index: int | None = None,
+    timeout: float = 10.0,
+) -> tuple[int, int, str, float | None]:
+    """Return (current index, chosen index, label, seconds) before changing the camera.
+
+    The K-3 III's command 268 list has no `Bulb` entry (it stops at `00-30`), so
+    a long exposure is requested as the nearest available timed shutter.  An
+    explicit `--bulb-shutter-index` still wins, which is how a device that does
+    expose `Bulb` in its list stays testable.
+    """
     current, options = shutter_options(p, timeout)
     if current is None:
         raise RuntimeError("cannot run Bulb test without a readable current shutter index")
-    matches = [
-        index for index, option in enumerate(options)
-        if option.strip().lower() in {"bulb", "b"}
-    ]
-    if len(matches) != 1:
-        raise RuntimeError(
-            f"could not identify exactly one Bulb option in command 268 R list: "
-            f"matches={matches} options={options}"
-        )
-    bulb_index = matches[0] if explicit_index is None else explicit_index
-    if bulb_index < 0 or bulb_index >= len(options):
-        raise ValueError(f"--bulb-shutter-index {bulb_index} is outside option list")
-    if bulb_index != matches[0]:
-        raise ValueError(
-            f"--bulb-shutter-index {bulb_index} is not the live Bulb option "
-            f"(expected {matches[0]}: {options[matches[0]]!r})"
-        )
-    return current, bulb_index
+    if explicit_index is not None:
+        if explicit_index < 0 or explicit_index >= len(options):
+            raise ValueError(f"--bulb-shutter-index {explicit_index} is outside option list")
+        index = explicit_index
+        label = options[index]
+        seconds = parse_shutter_seconds(label)
+    else:
+        index, label, seconds = resolve_shutter_index(options, bulb_seconds)
+    return current, index, label, seconds
 
 
-def set_shutter(p: Polaris, index: int, timeout: float = 10.0) -> str:
-    """Select the camera shutter option through the proven 277 wire command."""
+def set_shutter(
+    p: Polaris, index: int, timeout: float = 10.0, verify: bool = True
+) -> str:
+    """Select the camera shutter through the proven 261 `s:<index>;` command.
+
+    `ret:0` only means the request parsed.  On the K-3 III a write of `s:44`
+    (`00-05`) answers `ret:0` while command 268 keeps reporting `V:33` (`1/4`),
+    so the accepted-but-not-applied case is read back and raised as an error
+    rather than being reported as a successful selection.
+    """
     if index < 0:
         raise ValueError("--bulb-shutter-index must be non-negative")
-    p.send(277, payload=f"shutter:{index};")
-    response = p.wait_code(277, timeout)
+    p.send(SHUTTER_SET_COMMAND, payload=f"s:{index};")
+    response = p.wait_code(SHUTTER_SET_COMMAND, timeout)
     ret = field(response, "ret")
     if ret != "0":
         raise RuntimeError(f"shutter selection lacked explicit ret:0: {response}")
     print(f"{stamp()} SHUTTER index={index} response={response}", flush=True)
+    if verify:
+        readback, options = shutter_options(p, timeout, quiet=True)
+        if readback != index:
+            raise RuntimeError(
+                f"shutter index {index} was accepted (ret:0) but the camera reports "
+                f"V:{readback} ({options[readback] if readback is not None and readback < len(options) else '?'})"
+            )
     return response
 
 
 @contextmanager
 def bulb_shutter_session(
-    p: Polaris, explicit_index: int | None = None, timeout: float = 10.0
+    p: Polaris,
+    bulb_seconds: float,
+    explicit_index: int | None = None,
+    timeout: float = 10.0,
 ):
-    """Select Bulb for a capture and restore the exact prior shutter index."""
-    current, bulb_index = prepare_bulb_shutter(p, explicit_index, timeout)
+    """Select the long-exposure shutter for a capture and restore the prior index."""
+    current, bulb_index, bulb_label, bulb_actual = prepare_bulb_shutter(
+        p, bulb_seconds, explicit_index, timeout
+    )
     operation_error: BaseException | None = None
     try:
         set_shutter(p, bulb_index, timeout)
-        print(f"{stamp()} BULB shutter_index={bulb_index} prior_index={current}", flush=True)
+        print(
+            f"{stamp()} BULB shutter_index={bulb_index} shutter_label={bulb_label!r} "
+            f"shutter_seconds={bulb_actual} requested_seconds={bulb_seconds} "
+            f"prior_index={current}",
+            flush=True,
+        )
         yield bulb_index
     except BaseException as exc:
         # Keep the capture/body/socket failure primary.  Restoration is
@@ -227,10 +326,11 @@ def main() -> int:
     ap.add_argument("--shot-timeout", type=float, default=180.0)
     ap.add_argument("--expected-files", type=int, choices=(1, 2),
                     help="authoritative output obligation required with --shot")
-    ap.add_argument("--bulb-seconds", type=int,
-                    help="exercise Bulb for this many seconds; index is discovered from command 268")
+    ap.add_argument("--bulb-seconds", type=float,
+                    help="requested long-exposure seconds; the shutter index is resolved from the "
+                         "live command 268 list (K-3 III exposes no Bulb entry, max is 00-30)")
     ap.add_argument("--bulb-shutter-index", type=int,
-                    help="optional checked override for the live Bulb entry (command 277)")
+                    help="optional override for the shutter index written through command 261")
     ap.add_argument("--expected-sw",
                     help="require this exact code-780 sw firmware version from the live device")
     args = ap.parse_args()
@@ -292,7 +392,7 @@ def main() -> int:
 
             # ONE capture
             shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
-            shutter_context = (bulb_shutter_session(p, args.bulb_shutter_index)
+            shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index)
                                if args.bulb_seconds is not None else nullcontext())
             with shutter_context:
                 if args.bulb_seconds is not None:
