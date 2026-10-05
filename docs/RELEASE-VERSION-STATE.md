@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.55
+last_display_fwver=6.0.0.54.56
 ```
 
 ## Consumed-version registry (authoritative)
@@ -18,6 +18,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.53
+consumed_display_fwver=6.0.0.54.56
 consumed_display_fwver=6.0.0.54.54
 consumed_display_fwver=6.0.0.54.55
 ```
@@ -27,6 +28,7 @@ consumed_display_fwver=6.0.0.54.55
 | `.53` | o-v15p | withdrawn artifact |
 | `.54` | o-v15q | installed; reported `6.0.0.54.54` on code 780 |
 | `.55` | o-v15r-supervisor-preload-20261005 | installed 2026-10-05; reports `6.0.0.54.55` |
+| `.56` | o-v15s-orphan-candidate-recovery-20261005 | candidate, gate passed 2026-10-05; carries libgphoto2 `e65404f5f` (#175 orphan-candidate recovery). Not yet flashed. |
 
 ## Why the registry exists (#169)
 

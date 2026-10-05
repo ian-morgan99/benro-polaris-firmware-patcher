@@ -107,3 +107,68 @@ has no capture of its own in flight:
 
 Ownership is "proven" by the download succeeding into a path we created, which
 is the same standard the current comment text demands, just actually enforced.
+
+## 6. As-built fix (libgphoto2 `e65404f5f`, carried by o-v15s / `6.0.0.54.56`)
+
+Implemented differently from §5 in two respects, both deliberate:
+
+1. **Reuse over a new loop.** The claim reuses `pentax_reconcile_extra_candidates()`
+   — the same bounded (≤4 objects, ≤30 s) transfer → publish → delete machinery
+   already proven by dual-format reconciliation (#73). Only the ownership
+   predicate differs. A separate download-to-`-orphan-1` path would have been a
+   second transfer implementation to trust.
+2. **Preservation is by publishing under the candidate's own name**, not by
+   renaming. `pentax_reconcile_transfer_candidate()` reads the candidate's
+   filename while the object still exists, writes the bytes into the camera
+   filesystem (collision-free: it probes for an existing name first), and only
+   then deletes the PTP object. The frame therefore lands on the Polaris SD
+   under its original name. If the name cannot be read, the transfer returns
+   `GP_ERROR_CORRUPTED_DATA` and the object is **kept** — we never delete what
+   we could not publish.
+
+Claimability is decided once, before the loop, by
+`pentax_orphan_candidate_claimable()` (`pentax-utils.c`): a candidate-bearing
+admission reason, **and** `capture_output_pending == 0`, **and** a non-zero
+handle. `OUTPUT_UNRESOLVED` is excluded because it is derived only from our own
+pending flag — that is our capture, not an orphan. Both admission sites
+(recovery-probe and pre-shutter baseline) now claim → re-probe from one fresh
+conditions frame → decide, so a single refusal can no longer be terminal.
+
+A failed claim leaves the object in place and the fail-closed `-110` intact.
+
+**Assumption not yet verified on hardware:** after a successful claim the
+function clears `pentax_capture_publications_clear()` and zeroes
+`extra_capture_count`, so an orphan is not reported as the *next* capture's
+output. The rationale is that the Polaris app reads images from the camera SD
+rather than through `gp_camera_file_get()`. If that assumption is wrong the
+symptom would be a missing file event for the capture *following* a recovery —
+which is exactly what step 3 of the acceptance test below watches for.
+
+## 7. Acceptance test (blocked on hardware)
+
+The device must first be power-cycled: it is latched on SP_0228 and, before
+this fix, nothing short of a power cycle cleared it. As of 2026-10-05 19:53 the
+camera is additionally USB-detached (`286` reports `manufacturer:none
+state:-5`; `dmesg` shows `usb 1-1.2: USB disconnect`; a software re-bind of the
+hub enumerates 4 ports but nothing downstream), so a physical reseat is needed
+too.
+
+1. **Identity.** `python3 scripts/canary-probe.py --probe --expected-sw 6.0.0.54.56`
+   — proves the flashed build is the one under test, not a stale install.
+2. **The regression itself.** Five consecutive Manual captures in **one**
+   session, no reconnect, no pgphoto restart, no re-plug:
+   `python3 scripts/canary-two-shot.py --expected-files 1 --expected-sp-prefix /app/sd/normal/SP_ --shot-count 5 --expected-sw 6.0.0.54.56`
+   Pass = five distinct new `SP_` paths, each `state:1 → 4 → 0`, no negative
+   state, no repeated path. Before the fix this died at shot 2 (or at shot 1 of
+   the *next* session) with `state:-1005`.
+3. **Recovery must not steal the next frame.** After any capture that logs
+   `path=orphan-recovery outcome=cleared`, the *following* capture must still
+   produce its own new file. A missing 773 event there falsifies the
+   publication-clearing assumption in §6.
+4. **Then #173.** Only once 1–3 pass can the Bulb EXIF test in
+   `docs/evidence/bulb-root-cause-20261005/SUMMARY.md` §5 be run; it was
+   blocked behind this latch.
+
+The harness changes in this commit (`--shot-count`, `--expected-sw`, and the
+three new sequence tests) exist so that steps 1–3 are one command and so that
+"the second capture is where it breaks" is a case the offline suite models.

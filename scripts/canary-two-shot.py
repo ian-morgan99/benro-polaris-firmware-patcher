@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Two-shot canary: one 9090 session, two consecutive code-264
+"""Multi-shot canary: one 9090 session, N consecutive code-264
 captures with no reconnect, no pgphoto restart, and no USB re-plug.
 
 Gate per shot:
@@ -9,9 +9,15 @@ Gate per shot:
   - no negative state (e.g. -10, -1005), no stale candidate (a 773 repeating
     a previous shot's path), and companion files share one exposure stem.
 
+Consecutive captures in one session are the point of the script: the #175
+orphan-candidate latch survived a power cycle but killed every later capture,
+so a single-shot probe cannot tell a recovery that works from one that merely
+has not been asked to run twice yet.
+
 Usage:
   canary-two-shot.py --expected-files 1  # independently established RAW-only/JPEG-only
   canary-two-shot.py --expected-files 2  # independently established RAW+JPEG
+  canary-two-shot.py --expected-files 1 --shot-count 5 --expected-sw 6.0.0.54.56
 """
 from __future__ import annotations
 
@@ -34,6 +40,7 @@ Polaris, field, stamp = _cp_mod.Polaris, _cp_mod.field, _cp_mod.stamp
 bulb_capture_payload = _cp_mod.bulb_capture_payload
 bulb_shutter_session = _cp_mod.bulb_shutter_session
 effective_shot_timeout = _cp_mod.effective_shot_timeout
+read_expected_sw = _cp_mod.read_expected_sw
 
 
 def exposure_stem(path: str) -> str:
@@ -150,6 +157,11 @@ def main() -> int:
                     help="authoritative per-exposure output obligation; never inferred from photoFormat")
     ap.add_argument("--expected-sp-prefix", required=True,
                     help="expected Polaris SP output path prefix, e.g. /app/sd/normal/SP_")
+    ap.add_argument("--shot-count", type=int, default=2,
+                    help="consecutive captures to attempt in this one session (default 2)")
+    ap.add_argument("--expected-sw",
+                    help="require this exact code-780 sw firmware version before shooting; "
+                         "proves the build under test is the one physically installed")
     ap.add_argument("--bulb-seconds", type=float,
                     help="requested long-exposure seconds; the shutter index is resolved from the "
                          "live command 268 list (K-3 III exposes no Bulb entry, max is 00-30)")
@@ -158,6 +170,9 @@ def main() -> int:
     args = ap.parse_args()
     if args.shot_timeout <= 0:
         ap.error("--shot-timeout must be positive")
+    if args.shot_count < 2:
+        ap.error("--shot-count must be at least 2; a single capture cannot show "
+                 "whether a recovery survives a second request")
     if args.bulb_seconds is not None and args.bulb_seconds <= 0:
         ap.error("--bulb-seconds must be positive")
     if args.bulb_shutter_index is not None and args.bulb_seconds is None:
@@ -174,6 +189,9 @@ def main() -> int:
             raise RuntimeError("device requires a password")
         run_id = uuid.uuid4().hex
         p.send(823, payload=f"app:openpolaris-canary-two-shot-{run_id};ver:1;")
+        if args.expected_sw is not None:
+            # Confirm the installed build before spending a capture on it.
+            read_expected_sw(p, args.expected_sw)
         print(f"{stamp()} RUN source=scripted run_id={run_id}; any overlapping "
               "manual/app/script capture invalidates this run", flush=True)
 
@@ -211,14 +229,15 @@ def main() -> int:
                       f"shot_timeout={shot_timeout}s", flush=True)
 
             ok, _records, seen_paths = run_sequence(
-                p, shot_count=2, shot_timeout=shot_timeout,
+                p, shot_count=args.shot_count, shot_timeout=shot_timeout,
                 expected_files=expected_files,
                 expected_sp_prefix=args.expected_sp_prefix, run_id=run_id,
                 bulb_seconds=args.bulb_seconds)
         if not ok:
             return 1
 
-        print(f"{stamp()} TWO-SHOT PASS files={seen_paths}", flush=True)
+        print(f"{stamp()} MULTI-SHOT PASS shots={args.shot_count} files={seen_paths}",
+              flush=True)
         return 0
     finally:
         p.close()

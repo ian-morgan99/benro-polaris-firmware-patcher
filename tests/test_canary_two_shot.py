@@ -110,3 +110,66 @@ def test_wrong_sp_target_invalidates_capture_result():
         "files": ["/app/sd/astro/SP_0123.jpg"],
     }
     assert not MOD.shot_satisfied(rec, [], 1, "/app/sd/normal/SP_")
+
+
+def good_shot(shot_no: int) -> list[tuple[int, str]]:
+    return [
+        (264, "state:1;"),
+        (264, "state:4;"),
+        (773, f"path:/app/sd/normal/SP_02{shot_no:02d}.jpg;"),
+        (264, "state:0;"),
+    ]
+
+
+def test_sequence_runs_every_requested_shot_in_one_session():
+    """The #175 acceptance shape: N captures, no reconnect between them."""
+    frames = [frame for shot in (1, 2, 3, 4, 5) for frame in good_shot(shot)]
+    p = FakePolaris(frames)
+    ok, records, paths = MOD.run_sequence(
+        p, shot_count=5, shot_timeout=1.0, expected_files=1,
+        expected_sp_prefix="/app/sd/normal/SP_", run_id="orphan-accept")
+    assert ok
+    assert len(records) == 5
+    assert len(paths) == 5
+    # One session means one socket: every capture is issued to the same handle,
+    # so a latch that only appears on the second request cannot hide.
+    assert sum(1 for args, _ in p.sends if args and args[0] == 264) == 5
+
+
+def test_sequence_stops_at_the_shot_that_latches():
+    """A -1005 on the third shot must fail the run, not be retried away."""
+    frames = [
+        *good_shot(1),
+        *good_shot(2),
+        (264, "state:1;"),
+        (264, "state:-1005;"),
+    ]
+    p = FakePolaris(frames)
+    ok, records, paths = MOD.run_sequence(
+        p, shot_count=5, shot_timeout=1.0, expected_files=1,
+        expected_sp_prefix="/app/sd/normal/SP_", run_id="orphan-latch")
+    assert not ok
+    assert len(records) == 3
+    assert records[2]["terminal_failure"] == "state:-1005"
+    assert len(paths) == 2
+    # Fail-closed: no fourth shutter is issued after the latch.
+    assert sum(1 for args, _ in p.sends if args and args[0] == 264) == 3
+
+
+def test_a_repeated_path_is_a_stale_candidate_not_a_new_output():
+    """The orphan signature: the camera reports the previous shot's file."""
+    first = "/app/sd/normal/SP_0201.jpg"
+    frames = [
+        *good_shot(1),
+        (264, "state:1;"),
+        (264, "state:4;"),
+        (773, f"path:{first};"),
+        (264, "state:0;"),
+    ]
+    p = FakePolaris(frames)
+    ok, records, paths = MOD.run_sequence(
+        p, shot_count=2, shot_timeout=1.0, expected_files=1,
+        expected_sp_prefix="/app/sd/normal/SP_", run_id="orphan-stale")
+    assert not ok
+    assert records[1]["stale_candidate"] == first
+    assert len(paths) == 1
