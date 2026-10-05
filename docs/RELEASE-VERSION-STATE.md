@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.53
+last_display_fwver=6.0.0.54.55
 ```
 
 The `.53` value was consumed by the withdrawn o-v15p artifact and must not be
