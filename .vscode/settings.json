@@ -1,7 +1,17 @@
 {
+    // Repo-generic settings only.
+    //
+    // Editor/assistant preferences (lmstudio.baseUrl, lmstudio.secondaryServers,
+    // lmstudio.supervision.*) deliberately live in user-level settings, not here.
+    // They encode machine-specific state - loopback/LAN endpoints, a CUDA device
+    // choice and an absolute path to a local venv - which is wrong for anyone
+    // else checking this repo out, and was the subject of the review note on
+    // commit 5fdc174.
+    //
+    // The two lmstudio keys kept below carry no host identity and are not set at
+    // user level, so removing them would silently change behaviour.
     "lmstudio.contextOverflow.preferBridgeCompaction": false,
-    "lmstudio.contextGuardrails.level": "high",
-    "lmstudio.contextOverflow.strategy": "compress-only",
+    "lmstudio.syncChatLm": true,
     "files.watcherExclude": {
         "**/.git/objects/**": true,
         "**/builds/**": true,
@@ -16,17 +26,5 @@
         "**/container/testdata/fail_closed_stage/**": true,
         "**/.lmstudio-context/**": true,
         "**/docs/evidence/**/*.log": true
-    },
-    "lmstudio.syncChatLm": true,
-    "lmstudio.supervision.compactionThreshold": 0.4,
-    "lmstudio.supervision.mode": "active",
-    "lmstudio.secondaryServers": [
-        "192.168.68.89:8000",
-        "127.0.0.1:8080"
-    ],
-    "lmstudio.supervision.liveCompaction": true,
-    "lmstudio.supervision.device": "cuda",
-    "lmstudio.supervision.loadIn4bit": true,
-    "lmstudio.supervision.pythonExecutable": "/home/ian/Documents/VSCodeProjects/LMStudio-Bridge/VSCode-LMStudio-Bridge/scripts/decision-sidecar/.venv/bin/python",
-    "lmstudio.baseUrl": "http://localhost:8080"
+    }
 }
