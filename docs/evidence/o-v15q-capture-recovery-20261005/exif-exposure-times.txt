@@ -1,0 +1,10 @@
+# Camera EXIF read from the JPEGs the bulb tests produced.
+# Requested duration vs the exposure the camera actually made.
+
+file         requested  ExposureTime  DateTimeOriginal
+SP_0188      bulb:3     2.0 s         2026:10:05 08:06:34
+SP_0191      bulb:3     2.0 s         2026:10:05 08:07:18
+SP_0192      bulb:8     2.0 s         2026:10:05 08:07:29
+SP_0193      bulb:3     2.0 s         2026:10:05 08:07:44
+SP_0194      bulb:8     2.0 s         2026:10:05 08:07:52
+SP_0195      bulb:20    2.0 s         2026:10:05 08:08:10
