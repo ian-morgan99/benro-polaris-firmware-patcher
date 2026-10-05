@@ -396,3 +396,64 @@ the existing immediate-failure case. 125 tests pass across the canary/bulb pack.
 The practical consequence for #173: the acceptance test the review asked for
 (requested duration -> camera readback -> captured file -> EXIF duration) is
 viable, because the second step now works. It was blocked behind a harness bug.
+
+## 13. WHAT THE USER ACTUALLY SEES — the death produces *two* different UI symptoms
+
+Everything above answers "why does the capture fail". It does not answer "what
+does the app do about it", which is the part that was actually reported from the
+camera: *'Shot failed'* on one hand, and *the red button kept spinning* on the
+other. Those are the same fault, and the difference between them is whether
+anything tells the app the process died.
+
+`SP_SendMsgToApp` for code 264 has **two different producers**, distinguishable
+on the wire:
+
+```
+type[1],code[264],val[state:-1005]    <-- the camlib's own reply (a real refusal)
+type[2],code[264],val[state:-1005;]   <-- polestar_app synthesising a failure
+```
+
+The `type` field and the trailing `;` separate them. Cross-referencing every
+app-facing 264 in `Mlog_000249` against the capture table in §11:
+
+| capture | app sees | how |
+|---|---|---|
+| 18:52, 19:12, 19:21 (the #175 gate) | `state:1` → `state:-1005` in 0.3 s, `type[1]` | genuine guard refusal |
+| 20:44 (pgphoto dies) | `state:1` → `state:-1005` **3 s later**, `type[2]` | app noticed the process gone |
+| 21:22:59 (pgphoto dies) | `state:1` → **nothing** | no terminal state, ever |
+
+After the 21:22:59 death the app never receives another 264 for that capture —
+zero occurrences in the log. `state:1` means "accepted, shooting", so the UI is
+left in the shooting state with nothing to clear it. **That is the spinning red
+button.** It is not a UI bug; it is a missing terminal transition.
+
+So the honest account of the user-visible failure is:
+
+1. The camera usually *does* take the photograph (the exposure completes; the
+   file lands on the card as `IMGP379x`).
+2. pgphoto dies of SIGILL during the wait, so the completion is never reported.
+3. Depending on timing, the app either invents a failure (`-1005`, "Shot
+   failed") or hears nothing at all (button spins forever).
+
+Neither of those is what #172's title describes. #172 records `state:1 →
+state:-1005 in 0.3s (refused before InitiateCapture)` — that is the `type[1]`
+producer, and it is a real, separate defect (the #175 gate). The `type[2]` and
+silent cases are #176 masquerading as #172. Any triage that reads only the state
+code conflates three different faults into "Shot failed".
+
+### The one-line discriminator to use until #176 is fixed
+
+`-1005` arriving on **`type[2]`, seconds after `state:1`** = pgphoto died.
+`-1005` arriving on **`type[1]`, within ~0.3 s** = the pre-shutter guard refused.
+No reply at all after `state:1` = pgphoto died and the app did not notice.
+
+### What this makes fixable independently of the SIGILL
+
+Even before the crash is understood, the *silent* case is a defect in its own
+right: a process that owns an accepted capture must not be able to vanish without
+a terminal state. `restart_gphoto` already knows the process went away, and the
+stock `checkGphotoTask` watchdog restarts it — neither publishes a failure for the
+in-flight generation. That is a small, testable change in the supervisor/watchdog
+path, it does not touch the Pentax capture code, and it converts "spins forever"
+into an honest failure. It will not make captures succeed, but it will stop the
+UI lying about them.
