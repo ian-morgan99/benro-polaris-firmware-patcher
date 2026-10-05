@@ -183,10 +183,13 @@ Device backup of the unmodified wrapper: `/app/sd/pgphoto.wrapper.probebak`.
   are in the same stream, and the probe line survived. So the fault is either
   raised where the handler cannot run, or the disposition is retaken after our
   constructor. A later process does report `SigCgt: 0000000188001e48`
-  (bits for SIGILL/SIGBUS/SIGSEGV set) and `SigIgn: 0x6` (SIGHUP+SIGINT), but
-  that is a *different* pid from the one that died, so it does not tell us what
-  disposition pid 32008 had at the moment of the fault. Until that is settled,
-  the probe's wait status is the only dependable signal record.
+  (bits for SIGILL/SIGBUS/SIGSEGV set) and `SigIgn: 0x6` (which decodes to
+  SIGINT+SIGQUIT, *not* SIGHUP+SIGINT — corrected after re-reading the bitmask),
+  but that is a *different* pid from the one that died, so it does not tell us
+  what disposition pid 32008 had at the moment of the fault. Until that is
+  settled, the probe's wait status is the only dependable signal record. The
+  probe now also samples `SigBlk/SigIgn/SigCgt` of the child 5 s after start, so
+  the next death can be attributed to a known disposition.
 
 A second death at 22:24:20 read `wait_status=143` → **SIGTERM**, and that one
 *was* deliberate: `[restart_gphoto] stopping pgphoto (PID 10238)` immediately
@@ -208,9 +211,14 @@ remains, in order of value per unit of camera risk:
    `/app/sd/core`; use a `%p`-suffixed pattern and a UBIFS/ext4 target so
    successive crashes do not collide. (No `strace`/`gdb`/`ltrace` on the
    device, so a core is the only way to get a stack.)
-3. Cheapest discriminator for ownership: does the stock
-   `/app/sd/pgphoto.prestage2.bak` binary also take SIGILL mid-capture? Yes ->
-   entirely upstream of our Stage-2 work; no -> it is in our stack.
+3. ~~Cheapest discriminator for ownership: does the stock
+   `/app/sd/pgphoto.prestage2.bak` binary also take SIGILL mid-capture?~~
+   **Invalid as written — there is no stock ELF to A/B against.**
+   `/app/sd/pgphoto.prestage2.bak` is byte-identical to our own wrapper (md5
+   `8509cebb…`), and the firmware-extracted `/app/bin/pgphoto` is also a shell
+   script. The real discriminator is now much cheaper anyway — see section 11:
+   run `pgphoto.stage2ondisk` with the Stage-2 `LD_PRELOAD` removed and take a
+   *first* capture in a fresh process.
 4. Make the stock watchdog report what it saw. `checkGphotoTask` logs only
    "pgphoto is exit,reboot it"; the wait status is available to it and would
    have answered this in one line months ago.
@@ -292,3 +300,70 @@ Consistent with the review on #175: o-v15s is an **experimental hardware
 candidate**. It cannot be qualified by repeated-shot testing on this device
 until the mid-capture death is fixed, because the test's precondition — a
 capture that completes — is what currently fails.
+
+## 11. SECOND FINDING — the deaths are concentrated on the *first* capture of a process
+
+Re-correlating all three log copies by capture (correcting an earlier off-by-one
+in which the `[pentax-recovery]` line was attributed to the *next* capture; it
+belongs to the capture that prints it, immediately before `initiate-enter`) gives
+23 attempts:
+
+| window | attempts | outcome |
+|---|---|---|
+| 16:17–16:29, one long-lived process, `capture=1..13` | 13 | **13 OK** |
+| 18:50, first capture of a new process | 1 | DIED |
+| 18:52 / 19:12 / 19:21 | 3 | fail-110 (gate, #175) |
+| 20:44, 20:45, 21:22, 22:12, 22:15 — all `capture=1` | 5 | DIED / fail-1 |
+| 22:23, first capture of a new process | 1 | **OK** |
+
+Split by position in the process rather than by time:
+
+* **first capture in a process: 2 OK, 7 not-OK**
+* **second and later in the same process: 12 OK, 0 not-OK**
+
+One-sided Fisher exact **p = 0.00031**. This is the first discriminator this
+issue has had, and it is the opposite of what "the camera is flaky" predicts.
+
+Two consequences that matter more than the statistics:
+
+1. **The 13-shot run at 16:2x is the real baseline and it is still valid.** It
+   was one process taking 13 captures in 3 minutes with a 100% success rate. The
+   "Manual has regressed" reading came from comparing *first-captures* against
+   that run, which is a different population.
+2. **The successful 22:23 capture did not photograph anything new.** It
+   downloaded and deleted `IMGP3797.DNG` — the file the *dead* 22:15 process had
+   left on the camera. So the camera completed that exposure; only pgphoto's
+   wait did not survive it. Every "success" must therefore be checked for
+   whether the file it reports is the one it just made.
+
+The window in which the process dies is now narrow and specific: after
+`boundary=initiate-return` and before the first candidate/event, i.e. inside the
+post-initiate conditions-probe and wait loop (`library.c` ~7080 onward). What
+runs there on a first capture and not on a later one is the obvious thing to
+look for next; the `LD_PRELOAD`-off A/B in §8b step 3 is now cheap because we
+know a *first* capture is the one that reproduces it.
+
+## 12. THIRD FINDING — #173: the Bulb duration is settable; the Bulb path never sets it
+
+The claim "Bulb duration is ignored" was tested directly against the descriptor
+(`Pentax Shutter/Bulb Descriptor`, printed by `print_widget`):
+
+```
+18:49:38  Mlog: code 261 val[s:44;] -> ret:0     (index 44 = 00-03)
+18:50:02  Mlog: code 261 val[s:45;] -> ret:0     (index 45 = 00-04)
+18:50:35  Clog: bulb-seconds=4/1  bulb-timer=no  <-- the camera accepted it
+20:44:53  Mlog: code 264 val[state:1;bulb:5;]    <-- bulb:5 requested
+20:44:47  Clog: bulb-seconds=1/4                 <-- and never changed
+```
+
+Between the `bulb:5` request and the capture there is **no command 261 write at
+all** — only reads (`command 29`, `current_shutter`), which keep reporting the
+pre-existing `s:1/4`. So the duration is *not* rejected by the camera; the
+Bulb code path simply never issues the shutter write that a Manual capture does.
+That is a narrower and much more tractable defect than "the K-3 III ignores
+Bulb durations", and it is testable without a long exposure: request `bulb:5`,
+assert a 261 write, assert the descriptor reads `5/1` before `InitiateCapture`.
+
+Note `bulb-timer=no` in every sample including the accepted `4/1`. Whether the
+K-3 III needs the bulb-timer property as well for a *timed* bulb is untested
+and is the next question after the missing write is fixed.
