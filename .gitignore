@@ -26,6 +26,12 @@ appfs*
 # fresh clone cannot build the image.
 !container/ondisk/pgphoto.wrapper.in
 
+# ...and the same `pgphoto*`/`ptp2*` build-artifact patterns must not swallow
+# evidence directories whose names legitimately begin with those words. The
+# directory itself has to be re-included, otherwise git never descends into it.
+!docs/**/pgphoto*/
+!docs/**/ptp2*/
+
 # Session-local reverse-engineering scratch (firmware-derived blobs +
 # disassembly caches; never authoritative, never committed per the firmware
 # policy above).
