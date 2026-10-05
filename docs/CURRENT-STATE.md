@@ -1473,3 +1473,41 @@ and `indi-3rdparty=9d8aff3711efa824137123b007b97978aeac2688`.
   benchmark correctly report no operating camera. No firmware load, USB
   reset, `16c0:29a1` re-enumeration, or StarShoot frame capture has been
   performed; StarShoot remains unqualified.
+
+## 2026-10-05 TA review response (v15r-era review) — status of each item
+
+The review relayed after the v15r release gave four priorities plus two hygiene
+items. Recording where each stands, because the physical test it assumed has
+since been overtaken by [#176](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/176).
+
+| # | TA item | Status |
+| --- | --- | --- |
+| 1 | Physically test v15r before changing anything | **Overtaken.** v15r was installed and tested; the Stage-2 log flood is gone (#160 confirmed fixed). Manual was **not** re-confirmed on `.55` — the K-3 III left USB during the first Bulb attempt (see the ordering note on #172). Testing then hit the wall described in #176: no capture completes at all. |
+| 2 | Concentrate on #173 (Bulb duration) | **Blocked, not attempted.** The requested-duration → readback → file → **EXIF** chain cannot close while no capture produces a file. The one forwarded `bulb:5` reached `initiate-return ptp=0x2001` and died 12 s later — the same fault as Manual. Noted on #173. |
+| 3 | Fix #169 properly in tooling | **Done** (`d62aa8b`). Append-only `consumed_display_fwver` registry in `docs/RELEASE-VERSION-STATE.md`; `--next` derives from `max(baseline, registry) + 1` and skips consumed values; `validate_monotonic` checks the registry independently; registry read is fail-closed. The manual device cross-check is now secondary, as asked. |
+| 4 | Don't disturb Manual | **Respected.** No Pentax capture code was changed in this cycle. The only commits are evidence documents, the version tooling, and one `.gitignore` correction. |
+| — | `.vscode/settings.json` leakage from `5fdc174` | **Done.** Machine-specific keys (`192.168.68.89`, `localhost:8080`, absolute `/home/ian/...` venv path) moved to user-level settings; the tracked file keeps only repo-generic keys and carries a comment naming the review note. |
+| — | #169 as unresolved engineering debt | **Closed by the tooling change above**, not by documentation. |
+
+### Where the review's premise turned out to be incomplete
+
+The review's model was "Manual has a credible baseline; Bulb is a narrower
+problem". The `Clog`/`Mlog` correlation says otherwise: **both fail from one
+cause**, and it is not in the capture logic. `pgphoto` dies after
+`InitiateCapture` returns and before the camera's file event arrives; the stock
+app's `checkGphotoTask` watchdog restarts it silently, which is why the deaths
+read as normal operation (10 process starts vs 5 supervisor restarts). Proof and
+correlation table: `docs/evidence/pgphoto-dies-mid-capture-20261005/SUMMARY.md`.
+
+Consequences for the review's own conclusions:
+
+* "A successful protocol state alone is insufficient" (#173) — agreed, and
+  stronger than intended: even protocol state is unobservable for the file half,
+  because there is no file.
+* The SP_0225 orphan behind #175 was **created by this crash**
+  (`18:50:02 SP_0225` → `initiate-return` → `18:50:19 pgphoto is exit`). #175
+  fixes the second half of the chain only, and its claim path is still
+  unexercised on hardware (`path=orphan-recovery`: 0 occurrences in the log).
+* "Consolidate rather than keep altering several layers simultaneously" is the
+  right call and is what has been done. The next step is diagnostic, not a code
+  change: the stock-binary discriminator in #176.
