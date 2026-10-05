@@ -172,3 +172,45 @@ too.
 The harness changes in this commit (`--shot-count`, `--expected-sw`, and the
 three new sequence tests) exist so that steps 1–3 are one command and so that
 "the second capture is where it breaks" is a case the offline suite models.
+
+## 8. Device state right now (2026-10-05 ~19:20 UTC) — read before testing
+
+The **capture stack of o-v15s is installed on the device by the reversible
+on-disk route**, not by flashing:
+
+```
+tar of out/o-v15s-.../stage2-ondisk -> /app/sd/stage2-ondisk
+sh /app/sd/stage2-ondisk/ondisk/install_stage2.sh
+/app/restart_gphoto
+```
+
+Verified loaded, not assumed:
+
+| check | result |
+| --- | --- |
+| `pgphoto.stage2ondisk` running | PID 6084, port 8080 listening |
+| `CAMLIBS` of that process | `/app/lib/stage2/libgphoto2/2.5.34` |
+| md5 of that `ptp2.so` | `4d592aad528d388aaf11d56e6742fd62` — byte-identical to the candidate's |
+| fix string in the loaded lib | `path=orphan-recovery …` present |
+
+**But `/app/FwVer` still reads `6.0.0.54.55`**, because the on-disk bundle does
+not touch it. So on this device right now:
+
+- code 780 will report **`.55`** while the code under test is o-v15s;
+- therefore the acceptance command must **omit** `--expected-sw 6.0.0.54.56` —
+  passing it would fail the identity gate for the wrong reason;
+- this is the #168 failure mode reproduced deliberately, and it is why the
+  identity check belongs on the *artifact*, not on a version string a partial
+  install cannot change.
+
+Revert at any time with `sh /app/sd/stage2-ondisk/ondisk/restore_stock.sh`.
+A full flash of `out/o-v15s-.../FwPkt.zip` (md5 `1fb9e03e859d2e06967d47ab333fca2e`)
+is still the correct way to get a self-consistent `.56` device; the on-disk
+install is only there so the #175 behaviour can be tested without spending a
+reflash cycle.
+
+**Armed, unattended:** `scripts/wait-for-camera.sh --timeout 3000 --interval 20
+-- python3 scripts/canary-two-shot.py --expected-files 1 --expected-sp-prefix
+/app/sd/normal/SP_ --shot-count 5` → `out/logs/ov15s-ondisk-acceptance.log`.
+It blocks on code 286 `state:1` and execs the five-shot run the moment the
+camera returns, so a reseat alone is enough to produce the result.
