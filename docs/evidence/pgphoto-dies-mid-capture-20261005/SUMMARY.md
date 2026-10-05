@@ -457,3 +457,13 @@ in-flight generation. That is a small, testable change in the supervisor/watchdo
 path, it does not touch the Pentax capture code, and it converts "spins forever"
 into an honest failure. It will not make captures succeed, but it will stop the
 UI lying about them.
+
+Feasibility caveat, checked rather than assumed: there is **no existing mechanism
+in `container/ondisk/*.sh` to inject an app-facing IPC message** — nothing there
+even references code 264. The `type[2]` failure the app synthesises at 20:44
+comes from inside `polestar_app` itself, which we patch by byte-patch but do not
+own. So "publish a terminal state" is not a shell-script change; the realistic
+options are (a) find and widen the condition under which `polestar_app` already
+produces the `type[2]` failure, since it demonstrably can, or (b) have the
+supervisor treat "accepted capture + process gone" as a first-class event and
+force the same path. Option (a) is cheaper and should be tried first.
