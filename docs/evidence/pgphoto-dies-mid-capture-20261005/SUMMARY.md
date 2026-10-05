@@ -29,6 +29,11 @@ fetches it, nothing is written to `/app/sd/normal/`, and the app reports failure
 **Zero files exist between SP_0225 and SP_0232** — eight consecutive attempts,
 all with the shutter actually firing.
 
+**And the death is a signal: `SIGILL` (4), caught directly as
+`wait_status=132` — see section 8.** It is not a deliberate `exit()`, and it is
+not the slot-page null jump our own crash handler was written for (that handler
+printed nothing).
+
 ## 2. Direct proof, not inference
 
 A single controlled capture with the process identity sampled on both sides:
@@ -44,10 +49,14 @@ Correlation across the whole log (device clock):
 
 | signal | count | times |
 | --- | --- | --- |
-| `initiate-return ptp=0x2001` (shutter accepted) | 16 | 16:17–16:29 ×13, 18:50, 20:44, 20:45 |
+| `initiate-return ptp=0x2001` (shutter accepted) | 17 | 16:17–16:29 ×13, 18:50, 20:44, 20:45, 21:22 |
 | `pgphoto is exit, reboot it` (app watchdog) | 3 | 18:50:19, 20:44:30, 20:45:47 |
-| pgphoto process starts | 10 | only **5** of which are supervisor-initiated |
+| pgphoto process starts visible in the SD log | 10 | only **5** of which are supervisor-initiated |
 | camera file events / files saved to album | 38 / 26 | **last one at 16:29:28** |
+
+A fourth death at 21:23:13 is established from `/proc` rather than from a log
+line (section 9c) — it is the reason the "10 starts" and "3 watchdog reboots"
+figures under-count: a watchdog restart writes to `/app/Clog.txt`, not the card.
 
 Every capture from 18:50 onward is followed within ~15 s by a process death.
 The last capture that worked (16:29, `SP_0224`) shows the healthy path for
@@ -123,29 +132,161 @@ survives long enough to produce a file to inspect.
 
 - Not the pre-shutter admission gate: `path=recovery-probe` refusals stop at
   19:21, and captures after 20:44 reach `initiate-return`.
-- Not the #175 fix: `path=orphan-recovery` appears **0 times** in the log. The
-  latch was cleared by a process restart, not by the claim path. **The fix is
-  still unexercised on hardware** — it neither worked nor failed here.
+- Not the #175 fix. (This bullet was written against a 21:10 log copy and read
+  "0 occurrences, still unexercised" — see section 9 for the correction. The
+  claim path has since run, it did unblock the gate, and it is not what kills
+  the capture.)
 - Not OOM: 1.4 GB free, `dmesg` has no OOM/killer entries.
-- Not a kernel-visible fault: no `traps`/`segfault` in `dmesg`, and
-  `core_pattern=core` with `ulimit -c 0`, so no core is written either way.
+- Not OOM, and not a kernel-visible fault in `dmesg` (no `traps`/`segfault`).
+  That last point is now explained rather than assumed: the death is `SIGILL`,
+  which the ARM kernel does not report as a `traps` line, and the core the
+  kernel did write was `/app/sd/core` at **0 bytes** because `core_pattern=core`
+  is a single fixed name on a vfat mount.
 
-## 8. Next diagnostic step
+## 8. THE DEATH IS A SIGNAL: `SIGILL` (4) — not `exit()`
 
-The death is silent, so it has to be caught in the act:
+The bullet above ("not a `SIGSEGV`/`SIGBUS`/`SIGILL` inside our stack") was
+written before the probe existed and is now wrong on the signal number. The
+wrapper `exec`s pgphoto, so the wait status was being discarded. Replacing that
+one `exec` with a subshell + `wait` (TERM/INT/HUP forwarded, so the #33/#34
+single-owner semantics are unchanged) gives it directly:
 
-1. Relaunch pgphoto with `ulimit -c unlimited` and a writable cwd, reproduce one
-   capture, read the core. (No `strace`/`gdb`/`ltrace` on the device.)
-2. If no core is produced, the process is calling `exit()` rather than taking a
-   signal — then the search is for an exit path reached from the capture
-   failure handler, not a memory fault.
-3. Cheaper discriminator first: does the stock `/app/sd/pgphoto.prestage2.bak`
-   binary die mid-capture too? If yes, this is entirely upstream of our Stage-2
-   work and belongs to the stock app + this camera; if no, it is in our stack.
-   Note the caveat already recorded: restarting pgphoto has dropped the K-3 III
-   off USB twice before (see #146), so each of these attempts costs a reseat.
+```sh
+( ulimit -c unlimited; cd /app/sd; exec "$D/pgphoto.stage2ondisk" "$@" ) &
+PROBE_PID=$!
+probe_forward() { kill -TERM "$PROBE_PID" 2>/dev/null; exit 143; }
+trap probe_forward HUP INT TERM
+wait $PROBE_PID
+PROBE_RC=$?
+echo "[probe] pgphoto pid=$PROBE_PID wait_status=$PROBE_RC $(date)" >&2
+```
 
-## 9. Consequence for release qualification
+Device backup of the unmodified wrapper: `/app/sd/pgphoto.wrapper.probebak`.
+
+```
+[22:15:01:548] ---- will CAPTURE_IMAGE
+[pentax] capture=1 boundary=initiate-return ptp=0x2001
+<nothing>
+[probe] pgphoto pid=32008 wait_status=132 Mon Oct  5 22:15:05 UTC 2026
+[probe] interpretation: killed by signal 4
+```
+
+`132 = 128+4` → **SIGILL**, 4 s after the shutter was accepted. So:
+
+- it is **not** a deliberate `exit()` from a capture-failure handler;
+- **Our own crash handler is not a reliable witness.** `stage2_crash_handler()`
+  is installed for SIGILL at load time (`install_crash_handler()`,
+  `container/stage2_loader.c:1271`) and writes `si_addr`, the PC, a PC
+  classification and the last checkpoint to fd 2 before re-raising. It printed
+  **nothing** for pid 32008, even though fd 2 of that process demonstrably
+  reached the card — the `[pentax]` lines above and the `[probe]` line below it
+  are in the same stream, and the probe line survived. So the fault is either
+  raised where the handler cannot run, or the disposition is retaken after our
+  constructor. A later process does report `SigCgt: 0000000188001e48`
+  (bits for SIGILL/SIGBUS/SIGSEGV set) and `SigIgn: 0x6` (SIGHUP+SIGINT), but
+  that is a *different* pid from the one that died, so it does not tell us what
+  disposition pid 32008 had at the moment of the fault. Until that is settled,
+  the probe's wait status is the only dependable signal record.
+
+A second death at 22:24:20 read `wait_status=143` → **SIGTERM**, and that one
+*was* deliberate: `[restart_gphoto] stopping pgphoto (PID 10238)` immediately
+before it, triggered by the USB supervisor. So the probe distinguishes the two
+cases cleanly, which is exactly the discrimination this issue needed.
+
+## 8b. Next diagnostic step
+
+Steps 1 and 2 of the original plan are done — see section 8. The death is a
+signal (`SIGILL`), so the "find the `exit()` path" branch is closed. What
+remains, in order of value per unit of camera risk:
+
+1. Get the faulting instruction, not just the signal number. Re-assert
+   `install_crash_handler()` at capture entry (or install it after pgphoto's own
+   signal setup) so the handler is provably the disposition at fault time, then
+   take one capture. If it still prints nothing, the fault is raised somewhere
+   our handler cannot run, which is itself the answer.
+2. Make cores readable. `core_pattern=core` plus a vfat cwd produced a 0-byte
+   `/app/sd/core`; use a `%p`-suffixed pattern and a UBIFS/ext4 target so
+   successive crashes do not collide. (No `strace`/`gdb`/`ltrace` on the
+   device, so a core is the only way to get a stack.)
+3. Cheapest discriminator for ownership: does the stock
+   `/app/sd/pgphoto.prestage2.bak` binary also take SIGILL mid-capture? Yes ->
+   entirely upstream of our Stage-2 work; no -> it is in our stack.
+4. Make the stock watchdog report what it saw. `checkGphotoTask` logs only
+   "pgphoto is exit,reboot it"; the wait status is available to it and would
+   have answered this in one line months ago.
+
+Caveat that applies to all of the above: every restart risks the camera. The
+K-3 III dropped off USB again at 22:24 during this measurement
+(`[camera-usb] quarantined identity none ... bounded rebind failed; remaining
+degraded`) and needed a power cycle (#146).
+
+## 9. CORRECTION — the #175 claim path HAS now run on hardware
+
+Section 7 said `path=orphan-recovery` appears 0 times. That was measured on the
+`Clog_000249.log` copy taken at 21:10. A fresh copy taken at 21:42 contains it:
+
+```
+[21:22:59:273] capture_image: ---- will CAPTURE_IMAGE
+[pentax] capture=1 boundary=preconditions-return ptp=0x2001 size=576
+[pentax-recovery] capture=1 path=orphan-recovery outcome=cleared recovered=1
+                  names=IMGP3794.DNG accepted=1
+                  action=preserve-then-delete-only-after-verified-download
+[pentax] capture=1 boundary=initiate-enter focus=2 companions=1
+[pentax] capture=1 boundary=initiate-return ptp=0x2001
+```
+
+So the gate **did** unblock by claiming the orphan rather than by a process
+restart, and the shutter proceeded in the same call, exactly as #175 specifies.
+The earlier conclusion ("still unexercised") was an artefact of analysing a
+stale log copy — the same trap as section 1's clock offset.
+
+Two things follow, both now filed:
+
+**(a) The claimed frame is discarded, not preserved.** `IMGP3794.DNG` exists
+nowhere on the SD card (`find /app/sd -name 'IMGP3794*'` → nothing). In
+`camlibs/ptp2/library.c`, `pentax_reconcile_transfer_candidate()` downloads the
+object into an in-memory `CameraFile` and `pentax_capture_publication_add()`
+only stores a reference in `params->pentax.capture_publications[]`;
+`pentax_recover_orphan_candidates()` then calls
+`pentax_capture_publications_clear()`, which `gp_file_unref`s it. Nothing ever
+writes the buffer to a path. The log line's own promise —
+`action=preserve-then-delete-only-after-verified-download` — is only half true:
+the object is deleted from the camera after a verified *download into RAM*, and
+the frame is then lost. The unblocking works; the rescue does not.
+
+**(b) The capture still failed, and the process died again.** SP_0233 shows
+`state:1` at 21:22:59 and then nothing — no `state:3`, no code 773, no file.
+The running pgphoto (PID 23766) started at device **21:23:13**, i.e. ~14 s
+after the shutter, from `/proc/23766/stat` starttime `2008039` against
+`/proc/uptime`. Same signature as sections 1–2.
+
+**(c) The process that killed this capture left no startup trace on the card.**
+There is no `checkGphotoTask` line and no `[camera-usb] stable identity change`
+line anywhere near 21:23, and there is **no version banner after Clog line
+17948** — the reliable process-start marker of section 2 is absent for this
+start, even though the file continues to 21:23:37.
+
+The mechanism is a log-destination split. pgphoto's own stdout/stderr goes to
+`/app/Clog.txt` on UBIFS, and the stock app is what copies that onto the card:
+
+```
+strings /app/bin/polestar_app:
+    cat /app/Clog.txt >> /app/sd/system/log/Clog_%06d.log
+    > /app/Clog.txt
+ls -l /proc/23766/fd/{1,2} -> /app/Clog.txt
+/app/Clog.txt: 0 bytes, but /proc/23766/fdinfo/1 reports pos: 108830
+```
+
+So ~108 KB was written to that fd and then truncated away by the rotation step,
+and the SD-side `Clog_000249.log` stopped growing at 21:24. `/app/restart_gphoto`
+uses `LOG=${OPENPOLARIS_PGPHOTO_LOG:-/app/Clog.txt}`, a different destination
+from the boot-time launch. The practical effect: whether a given capture's
+`[pentax]` trace survives on the card depends on whether the app happened to
+rotate before the process died. That is the second reason these deaths have been
+invisible, and it means the single most important capture — the one that just
+died — is the one we have no trace of.
+
+## 10. Consequence for release qualification
 
 Consistent with the review on #175: o-v15s is an **experimental hardware
 candidate**. It cannot be qualified by repeated-shot testing on this device
