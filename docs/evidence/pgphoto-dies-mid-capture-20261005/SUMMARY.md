@@ -530,3 +530,58 @@ cycle. Acceptance, in order:
    is admitted instead of refused with `output-obligation-unresolved`.
 2. Bulb 5 s completes and produces a file whose EXIF duration matches the request.
 3. Only then treat #173 as closed. A `state:5` alone is not the acceptance test.
+
+---
+
+## 15. o-v15t (`.57`) built, gate-passed, and staged on-device — awaiting one power cycle
+
+**Artifact.** `out/o-v15t-admission-deadlock-and-durability-20261006/FwPkt.zip`,
+md5 `d841983329a1bae74fc74a6929aef5bb`, published to PrivateResearch at
+`c72b70219`. Display version `6.0.0.54.57`, derived by the allocator (not typed),
+registry updated in `3e043ea`. `.56`/o-v15s is marked **superseded, do not flash** —
+it was never installed and its content is a strict subset of `.57`.
+
+**Verified in the artifact, not just in the source SHA.** `strings` on the packaged
+`stage2-ondisk/libgphoto2/2.5.34/ptp2.so` finds all four fixes by their log
+signatures: `path=obligation-release` (#173), `outcome=destination-unavailable`
+and `no durable owner was established` (#176 review), `orphan recovery: wrote`
+(#176). A provenance row naming a commit is not evidence the binary contains it.
+
+**Staged live on the device while the camera was off USB.** Only `ptp2.so` differed
+from what was already installed — `libgphoto2.so.6` and `libgphoto2_port.so.12`
+matched byte for byte — so exactly one file was swapped:
+
+- live `/app/lib/stage2/libgphoto2/2.5.34/ptp2.so` → md5 `99657b5f…` (v15t);
+- previous file preserved at `/app/sd/ptp2.so.pre-v15t-4d592aad.bak`;
+- scp's sftp subsystem is unavailable on this device; `cat | ssh "cat > file"` via
+  `/app/sd` works and was verified by md5 on both ends.
+
+Doing this now rather than after the power cycle matters: `restart_gphoto` is what
+drops the K-3 III off USB (#146), so a camera that is *already* detached costs
+nothing to restart. When the camera comes back it should attach to the fixed
+library with no further restart.
+
+**The restart loop is not the new library — A/B proved it.** After the swap pgphoto
+churned (new PID every ~10 s, 8080 flapping). Restoring the previous `ptp2.so`
+produced **identical** churn, so the cause is the camera being absent, matching the
+existing #119 path:
+
+```
+[camera-usb] quarantined identity none stable for 9 polls but bounded rebind
+             failed; remaining degraded (issue #119)
+```
+
+The new library itself loads cleanly: `dlopen core ok`, `resolved 64/64`,
+`slots filled 64/64`, no symbol or version errors.
+
+**One operational trap hit and cleared.** `/app/restart_gphoto` refused to run with
+`another restart owns /var/run/openpolaris-pgphoto.restart.lock`. The lock held
+`pid=18006`, dead since 00:22 — the script's `trap 'rm -rf "$LOCKDIR"' EXIT` does
+not run when the process is SIGKILLed, so a killed restart leaves a lock that never
+expires. Removing it by hand was safe (owner verified gone), but the script has no
+staleness check on the lock owner and will re-trip the same way. Worth a small fix
+separate from this thread.
+
+**Blocked on:** one physical power cycle. Then run the §14 acceptance sequence —
+deliberate Manual timeout → next request admitted → Bulb 5 s with EXIF duration
+match.
