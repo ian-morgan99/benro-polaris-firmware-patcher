@@ -25,16 +25,23 @@ Minimise cable/body moves by using this order:
 
 The operative should never have to infer when to move the camera.
 
-## Blocking prerequisite: the body has two USB product IDs
+## Blocking prerequisite: the body must be in PTP mode (`25fb:0183`)
 
 Before any Pass 2 result is interpretable, confirm which `idProduct` the body
-presented. The K-1 II enumerates as **either** `25fb:0183` **or** `25fb:0182`
-(both are declared in its own firmware image), and only `0183` is accepted by any
-PID gate in libgphoto2. At `0182` autodetect returns 0 supported cameras and the
-app silently falls back to hardcoded K-3 III abilities, so nothing Pentax-specific
-runs at all and every observation is meaningless. See
+presented. The K-1 II declares two IDs in its own firmware image:
+
+- `25fb:0183` — **PTP mode.** This is the only one Pass 2 can use.
+- `25fb:0182` — **mass-storage mode.** Not a second PTP identity; it is the MSC
+  PID, the same first-of-pair split as every other Pentax body (K-01 `0130`/`0131`
+  is the hardware-confirmed case). A body here has no PTP interface to control.
+
+At `0182` autodetect returns 0 supported cameras and the app silently falls back
+to hardcoded K-3 III abilities, so nothing Pentax-specific runs at all and every
+observation is meaningless — and the log blames the driver rather than the camera
+setting. If a Pass 2 log shows `0182`, **stop and set the camera's USB mode to
+PTP/MTP**; do not record it as a driver failure. See
 [`evidence/k1ii-pid-0182-20261006/SUMMARY.md`](evidence/k1ii-pid-0182-20261006/SUMMARY.md)
-and issue #179. Record the `scanUsb` `idProduct` line in every Pass 2 log.
+(§9) and issue #179. Record the `scanUsb` `idProduct` line in every Pass 2 log.
 
 ## Why K-1 II matters
 

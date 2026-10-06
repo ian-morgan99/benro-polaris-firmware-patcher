@@ -1,14 +1,35 @@
 # K-1 II "why might that not work" — 2026-10-06
 
 Question asked: analyse the K-1 II implementation and explain why it might not
-work. Answer: the body has a second USB product ID that no PID gate in the stack
-accepts. Filed as **ian-morgan99/benro-polaris-firmware-patcher#179**.
+work. Filed as **ian-morgan99/benro-polaris-firmware-patcher#179**.
 
-Headline: this explains "the K-1 II never reaches vendor mode" for a `0182`
-attachment. It does **not** explain the preview/`NoUpdateImage` instability seen
-on `0183` sessions, which did bind correctly.
+## Answer (corrected 2026-10-06, supersedes the original conclusion below)
+
+The `0182` attachment is the K-1 II in **mass-storage mode**, not a second PTP
+identity. `0x0182` is the body's MSC PID and `0x0183` its PTP PID. A body in
+MSC mode has no PTP interface to talk to, so no amount of table or gate work
+makes it controllable — the remedy is the camera's **USB mode setting**, and the
+`0182` sighting is a *usage* fault, not a code fault.
+
+The original conclusion in this document ("the body has a second USB product ID
+that no PID gate accepts", fixed by adding a table row) was wrong in its
+interpretation. §1–§3 below are kept as the investigation as it happened; the
+correction and the evidence for it are in §9.
+
+What *was* a genuine code defect, and is now fixed, is narrower: a `0182`
+attachment autodetected to **zero** cameras and the host then silently fell back
+to hardcoded `Pentax K-3 Mark III (MTP mode)` abilities — the wrong model, with
+no diagnostic anywhere in the log. That misattribution is what made an MSC-mode
+camera look like a driver bug for two weeks.
+
+As originally stated, this does **not** explain the preview/`NoUpdateImage`
+instability seen on `0183` sessions, which did bind correctly. That remains open
+in [pentax-k1ii-second-pass.md](../pentax-k1ii-second-pass.md).
 
 ## 1. The body declares two PIDs
+
+> The data here is correct; the reading of it ("both are PTP IDs we should
+> accept") is not. The first is the MSC ID — see §9.
 
 Extracted from the K-1 II's own firmware image
 (`PrivateResearch/pentax_firmware/PENTAX_K-1_Mark_II_FW_v2.51_extracted/k1II_v251/fwdc240b.bin`,
@@ -85,6 +106,13 @@ even with the PID fixed a mode suffix would still disable vendor mode — and
 `stage2_policy.c:48` already records that MTP-mode bodies emit suffixed/spaced
 runtime strings.
 
+> Overstatement, corrected on review: the `strcmp` risk is **latent, not live**.
+> Every observed `deviceinfo.Model` string for this body is exactly
+> `"PENTAX K-1 Mark II"` (see §2's `0183` capture), the same guard form the K-3
+> III uses, and no real string has ever failed it. It was not a contributing
+> cause of the `0182` failure. Left unchanged on purpose — widening it would be
+> an untested change.
+
 ## 4. Cross-repo predicate disagreement
 
 `container/stage2_policy.c` `stage2_model_is_k1_mark_ii()` matches the
@@ -113,6 +141,10 @@ the evidence is not retrievable.
   `PENTAX K-3 Mark III`, serial 8093033.
 
 ## 7. Fix implemented (not yet in a qualified build)
+
+> Superseded in part by §9: the behaviour below is correct, the *reason* given
+> for it here is not, and the row has since been renamed to
+> `Pentax:K-1 Mark II (MSC mode, USB id 0182)`.
 
 Committed to the libgphoto2 fork at **`1b65cbe0a`** ("ptp2: accept the K-1 II's
 second product ID"), pushed to `ian-morgan99/libgphoto2` `main`. It adds the
@@ -147,6 +179,84 @@ when the next candidate is built from a source input containing `1b65cbe0a`.
 - unit coverage for `0x0182` in `tests/test-pentax-utils.c` (`:287`, `:611`).
 
 With the body on the Polaris: read `idProduct` from `scanUsb` and establish
-whether it changes with the camera's USB Compatibility menu setting. That is the
-one open question the offline evidence cannot settle — §1 proves the body
-*declares* both IDs but not which menu state selects which.
+whether it changes with the camera's USB Compatibility menu setting. §1 proves
+the body *declares* both IDs but not which menu state selects which. **This was
+subsequently answered from offline evidence — see §9.**
+
+## 9. Correction: the first PID of every pair is the MSC ID
+
+The §1/§3 reading ("a second PTP ID we fail to accept") is wrong. The first ID
+in each `fb25` pair is the body's **mass-storage** PID, the second its **PTP**
+PID. Three independent lines of evidence:
+
+1. **Upstream says so in the code.** `camlibs/pentax/library.c` (the legacy
+   SCSI camlib) claims `0x25fb:0x0182` as `"Pentax:K1II"` with the comment
+   *"in MSC mode, which is used by usbscsi"*. That camlib speaks raw SCSI over
+   `GP_PORT_USB_SCSI`; it cannot drive a PTP device.
+2. **The pattern holds for every body.** Each first-half PID is the one
+   `camlibs/pentax` claims, and each second-half is the PTP row in
+   `camlibs/ptp2/library.c`:
+
+   | body | MSC (first) | claimed by `camlibs/pentax` | PTP (second) | claimed by ptp2 |
+   |---|---|---|---|---|
+   | K-1 II | `0x0182` | yes | `0x0183` | yes |
+   | K-1 | `0x0178` | yes | `0x0179` | yes |
+   | KP | `0x017e` | yes | `0x017f` | yes |
+   | K-70 | `0x017c` | yes | `0x017d` | yes |
+   | K-3 II | `0x017a` | yes | `0x017b` | yes |
+   | K-3 | `0x0164` | yes | `0x0165` | yes |
+
+   6/6. The §1 table's "in our table" column was implicitly assuming both IDs
+   were PTP IDs; they are not.
+3. **The K-01 is the hardware-confirmed case.** Our own table comment at
+   `library.c:2836` reads *"the legacy SCSI path needs MSC mode (0x0130)"*, and
+   `0x0131` is the PTP ID that actually bound on the bench (2026-08-22, and
+   again in the o-v12n log at 00:18). Same split, directly observed.
+
+Consequences:
+
+- The §3 "four gates" analysis is still mechanically accurate — those gates did
+  all fail closed at `0182` — but fixing them cannot control a body with no PTP
+  interface. Gate 1 is the only one that produced a user-visible symptom, and
+  the right response to that symptom is a clearer error, not PTP support.
+- The `0182` sighting is a **usage fault**: the camera was in MSC mode. The
+  operative action is to set the camera's USB mode to PTP/MTP, which is already
+  the standing guidance in
+  [pentax-physical-operative-runbook.md](../pentax-physical-operative-runbook.md).
+- The `0182` row is retained, deliberately narrowed: it makes the body
+  *identifiable* instead of autodetecting to nothing and silently adopting
+  hardcoded K-3 III abilities. Renamed to
+  `Pentax:K-1 Mark II (MSC mode, USB id 0182)` so the row states what it is.
+
+### What was actually shipped
+
+| SHA | change |
+|---|---|
+| `1b65cbe0a` | `0x0182` table row + both PID gates accept it + unit coverage. Correct behaviour, wrong stated reason. |
+| `15c6b9805` | `tests/test-camera-list.c` R0 containment guard was keyed on two exact model names, so a second row for the same body escaped it silently. Re-keyed on the research PIDs, scoped to the ptp2 camlib. Negative-tested: forcing a research attach in a public build and commenting out the `0x0183` row makes the guard fail by naming the `0182` row. |
+| `f3a8ffebf` | Corrects the interpretation: row renamed to MSC mode, comments in `library.c` / `pentax-utils.c` fixed. `0x0183` row untouched, so the patcher's `Pentax:K-1 Mark II (PTP mode)` package gate is unaffected. |
+
+All three pushed to `ian-morgan99/libgphoto2` `main`. Verified in **both**
+build modes after each commit: `test-camera-list` OK, and a probe confirms the
+public build advertises `cap/preview/trigger/config = no` for both K-1 II rows
+while the research build advertises capture for both. Full suite unchanged
+(only the pre-existing `no-ci` `test-gp-port` failure).
+
+Note on build configuration, since it cost time here: `_build` carries
+`-DLIBGPHOTO2_ENABLE_PENTAX_RESEARCH_CAPTURE` on 107 compile commands even
+though its `intro-buildoptions.json` reports `pentax_research_capture = False`
+and its `config.h` has no define — stale cflags from an earlier configure. Any
+"public build" check run against `_build` is really a research build. Use a
+freshly configured dir (`_build_pub`) for public-build assertions.
+
+### Still open
+
+- Whether a K-1 II in MSC mode exposes *any* PTP interface (composite) or none.
+  Decides whether the `0182` row yields a working camera or a clean PTP error.
+  Needs `lsusb -t` / `lsusb -v -d 25fb:0182` on the Polaris.
+- The silent hardcoded-abilities fallback itself. `stage2_loader.c` intercepts
+  `gp_camera_get_abilities` but not `gp_camera_set_abilities`, so the fallback
+  is invisible in our logs. Surfacing "no camera matched 25fb:0182 — is the
+  camera in MSC mode?" would have turned two weeks of driver-hunting into one
+  line.
+- The §5 unverifiable 8 s preview-interval citation, unchanged.
