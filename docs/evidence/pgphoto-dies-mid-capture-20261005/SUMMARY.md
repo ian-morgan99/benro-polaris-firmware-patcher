@@ -467,3 +467,66 @@ options are (a) find and widen the condition under which `polestar_app` already
 produces the `type[2]` failure, since it demonstrably can, or (b) have the
 supervisor treat "accepted capture + process gone" as a first-class event and
 force the same path. Option (a) is cheaper and should be tried first.
+
+---
+
+## 14. FOURTH FINDING — "Bulb still fails" on v15r is a self-locking admission gate, not a Bulb fault
+
+Reported by the user as *"Manual shooting seems ok, but bulb still fails"* on `.55`.
+Reproduced live at ~01:0x UTC 2026-10-06 and read back through `Clog_000250`
+(`out/logs/device-20261006/c2.log`). The two symptoms are two events in one log,
+and the second has nothing to do with Bulb.
+
+| capture | mode | outcome |
+|---|---|---|
+| 1–4 | Manual | reached `state:5` — "Manual seems ok" confirmed |
+| 4 | Manual | `capture end -66252 ms`, `ERROR: Could not capture image`, **yet the app still received `state:2` (`SP_0240.jpg`) + `state:5`** |
+| 5 | Bulb 5 s | refused pre-shutter, `path=pre-shutter reason=output-obligation-unresolved` |
+| 6 | Bulb 5 s | refused again, `path=recovery-probe reason=output-obligation-unresolved` |
+
+Both refusals carry `field32=0x00000000 field36=0x00000000`: the camera reports
+nothing active and nothing pending.
+
+### The camera passed its own readiness check; only our bookkeeping failed it
+
+`field104=0x20000000` is **not** in `PENTAX_CONDITION_ACTIVITY_UNSAFE`
+(`0x00109a03`), so `pentax_admission_block_reason(..., STRICT)` returned `NONE`.
+The block was manufactured entirely by our own `capture_output_pending` flag,
+which capture 4 left set when its wait timed out.
+
+### Why it never recovers
+
+`capture_output_pending` is set before `InitiateCapture` and cleared in exactly
+two places: an explicit non-ambiguous initiate rejection, and the publication of
+every expected output. A capture abandoned on the wait timeout reaches neither.
+
+Both admission gates then promote `NONE` → `OUTPUT_UNRESOLVED` purely because the
+flag is set — the preconditions gate (capture 5) and the recovery probe (capture
+6). Every escape route then tests the one thing that can only be cleared by the
+publication that will now never happen: `pentax_recovery_probe_can_clear`
+requires `NONE && !pending`, and `pentax_orphan_candidate_claimable` deliberately
+excludes `OUTPUT_UNRESOLVED` because it is derived from that same flag. So the
+lock is permanent until process restart — a self-locking bug in the gate shipped
+for #172/#175.
+
+This also explains the *apparent* Bulb-specificity: Manual looks healthy until a
+Manual capture times out, and whatever request comes next inherits the lock.
+
+### Fix
+
+`98ee8e67a`. The flag is bookkeeping, not a measurement, so only the camera is
+allowed to contradict it. `pentax_output_obligation_releasable` releases it when
+a readable conditions frame positively reports no active exposure and no candidate
+on the body. Anything ambiguous stays fail-closed; a frame that really did land
+without being downloaded still presents a candidate and is claimed as an orphan
+(#175) rather than dropped. The three sites that derived the block independently
+now share one helper.
+
+Unit-tested. **Not yet physically verified** — clearing the latch with
+`restart_gphoto.sh` dropped the K-3 III off USB again (#146) and needs a power
+cycle. Acceptance, in order:
+
+1. Manual capture, let it time out deliberately, then confirm the *next* request
+   is admitted instead of refused with `output-obligation-unresolved`.
+2. Bulb 5 s completes and produces a file whose EXIF duration matches the request.
+3. Only then treat #173 as closed. A `state:5` alone is not the acceptance test.
