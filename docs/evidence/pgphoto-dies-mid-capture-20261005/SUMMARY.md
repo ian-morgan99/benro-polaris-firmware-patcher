@@ -714,4 +714,26 @@ Still blocked on one physical power cycle, which now covers four things at once:
 4. #175 — the positive `wrote=` assertion once a capture leaves an orphan.
 
 The device remains a v15r appfs + v15t `ptp2.so` hybrid, so
-`verify_installed_build.py` will report a mismatch until o-v15t is flashed properly.
+`verify_installed_build.py` will report a mismatch until a candidate is flashed
+properly.
+
+**Flash `.58`/o-v15u, not `.57`/o-v15t** (`docs/RELEASE-VERSION-STATE.md`). It is
+o-v15t's content plus `4a8359f`, built from the stock `firmware/FwPkt.zip`
+(md5 `90bdad51`) and libgphoto2 `e6b55ad09`, gate GREEN with the single known
+prerequisite skip. Verified to carry the diagnostic: the loader `patch.sh`
+recorded (`42efee0c`) is byte-identical to the one in the candidate, and the same
+`$APP` tree is what `repack_appfs.sh` writes into `appfs.ubifs`, so the flashed
+image has it and not only the reversible `stage2-ondisk` copy.
+
+Two things worth recording about how that was reached, because both were my
+errors and both would have been silent:
+
+* The first build attempt used `out/FwPkt.zip` — a leftover *candidate* output
+  (`FwVer='unknown'`) — instead of the documented stock input. It failed
+  fail-closed at pgphoto analysis (`ELFError: Magic number does not match`),
+  which is the correct outcome; the trap is that `out/` accumulates FwPkt.zip
+  files that look like inputs.
+* `strings appfs.ubifs | grep <marker>` returns 0 for **every** marker, including
+  ones known to be present, because the UBI image is compressed. Confirming a
+  change is in a candidate means comparing the loader md5 `patch.sh` logs against
+  the built artifact, not grepping the image.
