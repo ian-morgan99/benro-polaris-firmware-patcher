@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.56
+last_display_fwver=6.0.0.54.57
 ```
 
 ## Consumed-version registry (authoritative)
@@ -18,6 +18,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.53
+consumed_display_fwver=6.0.0.54.57
 consumed_display_fwver=6.0.0.54.56
 consumed_display_fwver=6.0.0.54.54
 consumed_display_fwver=6.0.0.54.55
@@ -28,7 +29,8 @@ consumed_display_fwver=6.0.0.54.55
 | `.53` | o-v15p | withdrawn artifact |
 | `.54` | o-v15q | installed; reported `6.0.0.54.54` on code 780 |
 | `.55` | o-v15r-supervisor-preload-20261005 | installed 2026-10-05; reports `6.0.0.54.55` |
-| `.56` | o-v15s-orphan-candidate-recovery-20261005 | candidate, gate passed 2026-10-05; carries libgphoto2 `e65404f5f` (#175 orphan-candidate recovery). Not yet flashed. |
+| `.56` | o-v15s-orphan-candidate-recovery-20261005 | **superseded by `.57`, do not flash** — built 2026-10-05 and never installed, so its version is consumed but its content is a strict subset of `.57`. |
+| `.57` | o-v15t-admission-deadlock-and-durability-20261006 | candidate, gate passed 2026-10-06; **flash this one**. Carries `e65404f5f` (#175 orphan recovery), `e0742ce03` (#176 durable save), `98ee8e67a` (#173 stale-output-obligation release — the self-locking gate behind "Bulb still fails" on `.55`) and `e6b55ad09` (#176 review durability made non-optional). Physical test pending: K-3 III USB-detached. |
 
 ## Why the registry exists (#169)
 
