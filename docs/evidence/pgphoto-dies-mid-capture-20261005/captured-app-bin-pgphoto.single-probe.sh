@@ -1,0 +1,205 @@
+#!/bin/sh
+# CAPTURED DEVICE ARTIFACT (2026-10-06), not the build template.
+# This is the live /app/bin/pgphoto with the duplicated #176 probe block
+# removed. The probe instrumentation itself was hand-applied on the device
+# and exists nowhere in this repository, so a flash silently discards it.
+#
+# What was wrong: the PROBE(#176) block had been appended twice (device
+# lines 163-183 and 184-210) with no exit between them, so every launch
+# started pgphoto twice and the second lost the 8080 bind. The first block
+# was removed; the later one, which also samples SigBlk/SigIgn/SigCgt, was
+# kept. Supervisor preload and #33/#4 single-owner semantics are unchanged.
+#
+# Restore to device:  cat this-file | ssh root@192.168.0.1 'cat > /app/bin/pgphoto.new'
+#                     then chmod 755 and mv over /app/bin/pgphoto
+# Previous device copy kept at /app/sd/pgphoto.wrapper.dblprobe.bak
+#
+# pgphoto.wrapper.in -- TEMPLATE; do NOT ship this to the device.
+# patch.sh generates the real wrapper from this template at build time by
+# sed-substituting the two version placeholders below. See issue #1.
+D=${OPENPOLARIS_STAGE2_DIR:-/app/lib/stage2}
+RUN_DIR=${OPENPOLARIS_RUN_DIR:-/var/run}
+PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
+export CAMLIBS=$D/libgphoto2/2.5.34
+export IOLIBS=$D/libgphoto2_port/0.12.2
+export LD_LIBRARY_PATH=$D:/app/lib
+export LD_PRELOAD=$D/libpolaris_stage2.so
+export STAGE2_STORAGE_SHIM=1
+export STAGE2_TETHER_CAPTURE=1
+# Make preview throttling deterministic in release images. The Stage-2 loader
+# defaults to this policy, but exporting it here prevents wrapper/environment
+# drift from reopening the high-rate Pentax preview loop.
+export STAGE2_PENTAX_PREVIEW_BACKOFF=${STAGE2_PENTAX_PREVIEW_BACKOFF:-1}
+# Still-capture dispatch must remain direct by default: the Stage-2 trace shim
+# adds an extra ABI/call boundary around gp_camera_capture. Enable it explicitly
+# only for a diagnostic build/run that needs the outer entry/return markers.
+export STAGE2_CAPTURE_TRACE=${STAGE2_CAPTURE_TRACE:-0}
+# On-demand preview gate interval (seconds). Pin it ONLY when the operator
+# explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
+# model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --
+# see stage2_loader.c STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS). Hard-coding
+# 2 here would mask that per-body default in shipped images.
+if [ -n "${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS:-}" ]; then
+    export STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS="${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS}"
+fi
+# Pentax capture budget (issue #2). libgphoto2's hard-coded default is 2 GiB,
+# which is unsafe on the Polaris' constrained RAM — a single runaway DNG/RAW
+# request from a K-1 II / K-3 III would exhaust the heap and abort pgphoto
+# mid-transfer. patch.sh sed-substitutes 268435456 from the
+# PENTAX_MAX_CAPTURE_SIZE env var at build time. Override per-device with
+# PENTAX_MAX_CAPTURE_SIZE=<bytes> in the patcher invocation; documented in
+# docs/PENTAX-CAPTURE-BUDGET.md.
+export LIBGPHOTO2_PENTAX_MAX_CAPTURE_SIZE=268435456
+# PID-file ownership for the single-owner restart helper (issue #33). Refuse
+# a watchdog-spawned duplicate when the recorded stage-2 owner is still live.
+PIDFILE=$RUN_DIR/openpolaris-pgphoto.pid
+LAUNCH_LOCK=$RUN_DIR/openpolaris-pgphoto.launch.lock
+BACKOFF_FILE=$RUN_DIR/openpolaris-pgphoto.backoff
+pid_is_pgphoto() {
+    [ -n "$1" ] && [ -d "$PROC_ROOT/$1" ] || return 1
+    CMD=$(tr '\0' '\n' < "$PROC_ROOT/$1/cmdline" 2>/dev/null | head -1)
+    [ "$CMD" = "$D/pgphoto.stage2ondisk" ]
+}
+if ! mkdir "$LAUNCH_LOCK" 2>/dev/null; then
+    # SIGKILL/power loss can strand the mkdir-based lock.  A permanent stale
+    # directory makes every later watchdog launch return success without ever
+    # starting pgphoto.  Give a just-created owner time to publish its PID,
+    # then reclaim the directory only when that owner is definitely gone.
+    LOCKPID=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    if [ -z "$LOCKPID" ]; then
+        sleep 1
+        LOCKPID=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    fi
+    case "$LOCKPID" in
+        ''|*[!0-9]*) LOCKPID= ;;
+    esac
+    if pid_is_pgphoto "$LOCKPID"; then
+        echo "[stage2] another pgphoto launch is already in progress (PID $LOCKPID); refusing duplicate" >&2
+        exit 0
+    fi
+    echo "[stage2] reclaiming stale pgphoto launch lock (owner ${LOCKPID:-unknown})" >&2
+    rm -rf "$LAUNCH_LOCK"
+    if ! mkdir "$LAUNCH_LOCK" 2>/dev/null; then
+        echo "[stage2] another pgphoto launch won stale-lock recovery; refusing duplicate" >&2
+        exit 0
+    fi
+fi
+echo $$ > "$LAUNCH_LOCK/pid"
+release_launch_lock() {
+    OWNER=$(cat "$LAUNCH_LOCK/pid" 2>/dev/null)
+    [ "$OWNER" = "$$" ] && rm -rf "$LAUNCH_LOCK"
+}
+# TA review (issue #34): termination and cleanup must be separate/exit-safe.
+# On TERM/HUP/INT the wrapper exits immediately so it CANNOT continue past the
+# backoff sleep to publish a PID / exec a new pgphoto instance after the launch
+# lock has been released.  `exit` (not kill -TERM $$, whose re-entrancy is
+# unspecified across shells) makes the exit final; release_launch_lock then
+# runs via EXIT exactly once.  Regression: send TERM during the 5-60 s backoff
+# and prove no pgphoto is subsequently launched.
+trap 'exit 143' HUP INT TERM
+trap 'release_launch_lock' EXIT
+if [ -f "$PIDFILE" ]; then
+    OLDPID=$(cat "$PIDFILE" 2>/dev/null)
+    if pid_is_pgphoto "$OLDPID"; then
+        echo "[stage2] pgphoto already owned by PID $OLDPID; refusing duplicate launch" >&2
+        exit 0
+    fi
+fi
+
+# Bound watchdog crash loops. A prior owner that survived at least two minutes
+# counts as stable and resets the sequence; otherwise repeated launches back
+# off 5 -> 10 -> 30 -> 60 seconds (issue #34).
+NOW=$(date +%s)
+COUNT=0
+LAST=0
+if [ -f "$BACKOFF_FILE" ]; then
+    read COUNT LAST < "$BACKOFF_FILE"
+fi
+case "$COUNT:$LAST:$NOW" in
+    *[!0-9:]*|::*|*:) COUNT=0; LAST=0 ;;
+esac
+AGE=$((NOW - LAST))
+if [ "$LAST" -eq 0 ] || [ "$AGE" -ge 120 ] || [ "$AGE" -lt 0 ]; then
+    COUNT=0
+else
+    COUNT=$((COUNT + 1))
+fi
+case "$COUNT" in
+    0) DELAY=0 ;;
+    1) DELAY=5 ;;
+    2) DELAY=10 ;;
+    3) DELAY=30 ;;
+    *) DELAY=60 ; COUNT=4 ;;
+esac
+echo "$COUNT $NOW" > "${BACKOFF_FILE}.tmp" 2>/dev/null && \
+    mv "${BACKOFF_FILE}.tmp" "$BACKOFF_FILE"
+if [ "$DELAY" -gt 0 ]; then
+    echo "[stage2] repeated pgphoto launch; backing off ${DELAY}s" >&2
+    # Run the sleep in the background and wait on it: a trapped TERM/HUP/INT
+    # interrupts `wait` immediately (a foreground `sleep` would only be seen by
+    # the trap after it finished, delaying termination up to 60 s).  The exit-143
+    # trap then makes the wrapper terminate before it can publish a PID or exec
+    # a new pgphoto instance (issue #34 TA review regression: TERM during the
+    # backoff must not lead to a launch).
+    ( sleep "$DELAY" ) &
+    wait $! 2>/dev/null
+fi
+echo $$ > "${PIDFILE}.tmp" 2>/dev/null && mv "${PIDFILE}.tmp" "$PIDFILE"
+release_launch_lock
+trap - EXIT
+# The stock kernel command line exposes a 115200-baud serial console. The
+# bcmdhd driver can emit its TCP bookkeeping diagnostics at a high rate under
+# preview load; synchronously mirroring that flood to the serial console can
+# amplify a driver-pressure event into whole-system starvation. Restrict only
+# console delivery (the ring buffer remains available to dmesg). This is a
+# containment measure, not a claim that printk caused the underlying pool
+# exhaustion. Set OPENPOLARIS_PRINTK_QUIET=0 to retain stock behaviour.
+PRINTK_PATH=${OPENPOLARIS_PRINTK_PATH:-/proc/sys/kernel/printk}
+if [ "${OPENPOLARIS_PRINTK_QUIET:-1}" = "1" ] && [ -w "$PRINTK_PATH" ]; then
+    PRINTK_BEFORE=$(cat "$PRINTK_PATH" 2>/dev/null || true)
+    if echo 1 > "$PRINTK_PATH" 2>/dev/null; then
+        echo "[stage2] console loglevel -> 1 (was: ${PRINTK_BEFORE:-unknown}); kernel ring buffer preserved" >&2
+    else
+        echo "[stage2] warning: could not lower console loglevel via $PRINTK_PATH" >&2
+    fi
+fi
+# pgphoto retains stale CameraAbilities/usb:BUS,DEVICE state across its internal
+# reset path. Keep one process-independent, debounced USB identity supervisor
+# alive so an actual camera detach/reattach/body swap gets a clean restart.
+if [ -x "$D/camera_usb_supervisor.sh" ]; then
+    # The supervisor only shells out (tr/cat/awk/ls/sleep). It must NOT inherit
+    # LD_PRELOAD: stage2_ondisk_init() is an ELF constructor that prints a
+    # 13-line banner on every load, so a preloaded `sleep` wrote the whole
+    # loader banner into Clog once per poll -- 48150 banners in one rotation
+    # window (issue #160). Unset it in a subshell so pgphoto keeps the preload.
+    SUPERVISOR_LOG=${OPENPOLARIS_SUPERVISOR_LOG:-/app/Clog.txt}
+    ( unset LD_PRELOAD; exec nohup "$D/camera_usb_supervisor.sh" >> "$SUPERVISOR_LOG" 2>&1 ) &
+fi
+# PROBE(#176): pgphoto dies silently mid-capture and nothing records how. Run it
+# in a subshell with core dumps enabled and cwd on the card so a signal death
+# leaves a core, then record the wait status so "killed by signal N" and
+# "exit(N)" are distinguishable. The wrapper remains the session leader and
+# forwards TERM/INT/HUP to the child, so restart_gphoto still stops exactly one
+# owner (issues #33/#34 semantics preserved). Takes effect at the next restart.
+# Reversible: cp /app/sd/pgphoto.wrapper.probebak /app/bin/pgphoto
+( ulimit -c unlimited; cd /app/sd; exec "$D/pgphoto.stage2ondisk" "$@" ) &
+PROBE_PID=$!
+probe_forward() { kill -TERM "$PROBE_PID" 2>/dev/null; exit 143; }
+trap probe_forward HUP INT TERM
+# Sample the child's own dispositions once the loader has finished, so a later
+# death can be attributed: if bit 4 (SIGILL, 0x8) is set in SigCgt then our
+# stage2_crash_handler was still the disposition and its silence means the
+# handler itself could not run, not that it had been replaced.
+sleep 5
+echo "[probe] pid=$PROBE_PID $(grep -E '^Sig(Blk|Ign|Cgt)' /proc/$PROBE_PID/status 2>/dev/null | tr '\n' ' ') $(date)" >&2
+wait $PROBE_PID
+PROBE_RC=$?
+trap - HUP INT TERM
+# 128+N => killed by signal N; anything else is a deliberate exit(N).
+echo "[probe] pgphoto pid=$PROBE_PID wait_status=$PROBE_RC $(date)" >&2
+if [ "$PROBE_RC" -gt 128 ]; then
+    echo "[probe] interpretation: killed by signal $((PROBE_RC-128))" >&2
+else
+    echo "[probe] interpretation: clean exit code $PROBE_RC" >&2
+fi
+exit 0
