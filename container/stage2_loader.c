@@ -814,8 +814,18 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
 /* Loader-internal wrapper installed in gp_camera_init's slot (see the fill loop).
  * Runs in NORMAL context (not a signal handler), so plain fprintf/getenv/free are
  * fine; stderr stays unbuffered like the rest of the loader. */
+/* Defined below, called from the gp_camera_init shim above: the shim is the
+ * earliest point that necessarily runs after the host application has installed
+ * its own signal handlers. */
+static void stage2_reassert_crash_handler(void);
+
 static int stage2_shim_gp_camera_init(void *camera, void *context)
 {
+    /* This shim runs after the host application has finished its own setup, so
+     * it is the earliest point at which our crash handler can be re-asserted
+     * over the application's (see stage2_reassert_crash_handler). */
+    stage2_reassert_crash_handler();
+
     /* Resolve + cache the REAL core fns on first use, from the SAME core handle
      * the loader used to fill the other 63 slots. */
     if (!g_real_gp_camera_init && g_stage2_core)
@@ -1268,16 +1278,61 @@ static void stage2_crash_handler(int sig, siginfo_t *si, void *uc)
     raise(sig);
 }
 
-static void install_crash_handler(void)
+static int g_crash_reasserted;
+
+static void install_one_crash_handler(int sig)
 {
     struct sigaction sa;
+
     memset(&sa, 0, sizeof sa);
     sa.sa_sigaction = stage2_crash_handler;
     sa.sa_flags = SA_SIGINFO;
     sigemptyset(&sa.sa_mask);
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGBUS,  &sa, NULL);
-    sigaction(SIGILL,  &sa, NULL);
+    sigaction(sig, &sa, NULL);
+}
+
+static void install_crash_handler(void)
+{
+    install_one_crash_handler(SIGSEGV);
+    install_one_crash_handler(SIGBUS);
+    install_one_crash_handler(SIGILL);
+}
+
+/* Re-assert our handler after the host application has installed its own.
+ *
+ * Observed on device (Clog_000249, three recorded deaths): the wrapper samples
+ * the child's SigCgt as 0x188001e48, which covers SIGILL/SIGBUS/SIGSEGV *and*
+ * SIGUSR1/SIGUSR2/SIGRTMIN+3. Our constructor installs only the first three,
+ * so the broader set is polestar_app's, installed after us and superseding us.
+ * The result is that a real fault is fatal but silent: `wait_status=132`
+ * (SIGILL) and `=139` (SIGSEGV) are recorded by the wrapper, while
+ * "[stage2] *** CRASH" / "pc classify" appears 0 times in 235 MB of retained
+ * logs. The one datum that would localise the #176 death -- the faulting PC --
+ * is thrown away because of the installation order.
+ *
+ * Re-asserting from the init shim (which necessarily runs after the app has
+ * set up) puts us back in front for the capture. Opt-in: production behaviour
+ * is unchanged unless STAGE2_REASSERT_CRASH_HANDLER is set, so this is a
+ * diagnostic for the reproduction run and not a silent change to the shipped
+ * signal disposition. It deliberately does NOT chain to the displaced handler:
+ * that handler belongs to the application and calling an unknown SA_SIGINFO
+ * handler with a synthesised siginfo_t risks a second fault inside the crash
+ * path, which would lose the record we are trying to keep. The handler already
+ * restores SIG_DFL and re-raises, so the process still dies of the original
+ * signal and the wrapper's wait_status is unaffected. */
+static void stage2_reassert_crash_handler(void)
+{
+    const char *want = getenv("STAGE2_REASSERT_CRASH_HANDLER");
+
+    if (g_crash_reasserted) return;
+    if (!want || !want[0] || !strcmp(want, "0")) return;
+    g_crash_reasserted = 1;
+    install_one_crash_handler(SIGSEGV);
+    install_one_crash_handler(SIGBUS);
+    install_one_crash_handler(SIGILL);
+    s_write("[stage2] reassert: crash handler re-installed ahead of the first "
+            "capture (the application's own handler is superseded for these "
+            "three signals)\n");
 }
 
 /* ---------------------------------------------------------------------------
