@@ -15,6 +15,31 @@ static int fake_get_abilities(void *camera, void *abilities)
     return 0;
 }
 
+static int fake_capture_calls;
+static int fake_capture_saw_in_flight;
+
+static int fake_capture(void *camera, int type, void *path, void *context)
+{
+    (void)camera;
+    (void)type;
+    (void)path;
+    (void)context;
+    fake_capture_calls++;
+    fake_capture_saw_in_flight = atomic_load(&g_capture_in_flight);
+    return 0;
+}
+
+static int fake_init_result;
+static int fake_init_calls;
+
+static int fake_init_passthrough(void *camera, void *context)
+{
+    (void)camera;
+    (void)context;
+    fake_init_calls++;
+    return fake_init_result;
+}
+
 static int fake_capture_preview(void *camera, void *file, void *context)
 {
     (void)camera;
@@ -28,6 +53,10 @@ static void reset_fixture(void)
 {
     g_real_gp_camera_get_abilities = fake_get_abilities;
     g_real_gp_camera_capture_preview = fake_capture_preview;
+    g_real_gp_camera_capture = fake_capture;
+    fake_capture_calls = 0;
+    fake_capture_saw_in_flight = -1;
+    atomic_store(&g_capture_in_flight, 0);
     g_pentax_preview_timeouts = 0;
     g_pentax_preview_backoff_until = 0;
     g_pentax_preview_last_fetch = 0;
@@ -60,6 +89,62 @@ int main(void)
     assert(g_real_gp_camera_capture ==
            (stage2_gp_camera_capture_fn)&direct_capture_target);
     unsetenv("STAGE2_CAPTURE_TRACE");
+
+    /* Issue #176: the capture-in-flight guard is opt-in, and when armed it must
+     * (a) still resolve through the cached real fn, (b) mark the window so the
+     * init shim refuses re-entry, and (c) clear the mark on return. */
+    unsetenv("STAGE2_CAPTURE_GUARD");
+    assert(!stage2_capture_guard_enabled());
+    assert(stage2_capture_slot_target("gp_camera_capture",
+                                      &direct_capture_target) ==
+           &direct_capture_target);
+    setenv("STAGE2_CAPTURE_GUARD", "0", 1);
+    assert(!stage2_capture_guard_enabled());
+    assert(stage2_capture_slot_target("gp_camera_capture",
+                                      &direct_capture_target) ==
+           &direct_capture_target);
+    setenv("STAGE2_CAPTURE_GUARD", "1", 1);
+    assert(stage2_capture_guard_enabled());
+    assert(stage2_capture_slot_target("gp_camera_capture",
+                                      &direct_capture_target) !=
+           &direct_capture_target);
+    assert(g_real_gp_camera_capture ==
+           (stage2_gp_camera_capture_fn)&direct_capture_target);
+
+    /* Armed: a capture marks the window and clears it; a re-init inside the
+     * window returns busy without calling the real init. */
+    reset_fixture();
+    g_real_gp_camera_init = fake_init_passthrough;
+    fake_init_calls = 0;
+    g_real_gp_camera_capture = fake_capture;
+    assert(stage2_guarded_gp_camera_capture(&camera, 0, NULL, NULL) == 0);
+    assert(fake_capture_calls == 1);
+    assert(fake_capture_saw_in_flight == 1);
+    assert(atomic_load(&g_capture_in_flight) == 0);
+
+    /* Outside a capture window the guard must not interfere with init. */
+    assert(stage2_capture_guard_enabled());
+    assert(atomic_load(&g_capture_in_flight) == 0);
+    fake_init_calls = 0;
+    fake_init_result = 0;
+    assert(stage2_shim_gp_camera_init(&camera, NULL) == 0);
+    assert(fake_init_calls == 1);            /* no window -> real init runs */
+
+    /* Inside a window, init is refused with the non-terminal busy class. */
+    atomic_store(&g_capture_in_flight, 1);
+    fake_init_calls = 0;
+    assert(stage2_shim_gp_camera_init(&camera, NULL) == STAGE2_GP_ERROR_CAMERA_BUSY);
+    assert(fake_init_calls == 0);            /* refused BEFORE the real init */
+    atomic_store(&g_capture_in_flight, 0);
+
+    /* Guard disarmed: the same in-flight state must not change init behaviour. */
+    setenv("STAGE2_CAPTURE_GUARD", "0", 1);
+    atomic_store(&g_capture_in_flight, 1);
+    g_real_gp_camera_init = fake_init_passthrough;
+    fake_init_result = 0;
+    assert(stage2_shim_gp_camera_init(&camera, NULL) == 0);
+    atomic_store(&g_capture_in_flight, 0);
+    unsetenv("STAGE2_CAPTURE_GUARD");
 
     setenv("STAGE2_TETHER_CAPTURE", "1", 1);
     setenv("STAGE2_PENTAX_PREVIEW_BACKOFF", "1", 1);

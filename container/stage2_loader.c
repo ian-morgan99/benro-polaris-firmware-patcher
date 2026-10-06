@@ -819,12 +819,41 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
  * its own signal handlers. */
 static void stage2_reassert_crash_handler(void);
 
+/* Issue #176: the resolved crash record puts the fatal instruction in the
+ * vendor libusb's sync_transfer_cb (sync.c:40, `str r1,[r2]` with
+ * transfer->user_data == NULL) with the return address in the camlib's init
+ * path.  A synchronous transfer completing onto a recycled transfer object is
+ * the only way that field reads NULL, and the sequence that produces it is a
+ * camera re-init while a capture's transfer is still in flight.  Mark the
+ * capture window so the init shim can refuse to re-enter inside it.
+ *
+ * Default OFF: like STAGE2_REASSERT_CRASH_HANDLER, the shipped capture boundary
+ * stays exactly direct-to-core unless a run explicitly asks for this. */
+static _Atomic int g_capture_in_flight = 0;
+
+static int stage2_capture_guard_enabled(void)
+{
+    const char *e = getenv("STAGE2_CAPTURE_GUARD");
+    return e && strcmp(e, "0") != 0;
+}
+
 static int stage2_shim_gp_camera_init(void *camera, void *context)
 {
     /* This shim runs after the host application has finished its own setup, so
      * it is the earliest point at which our crash handler can be re-asserted
      * over the application's (see stage2_reassert_crash_handler). */
     stage2_reassert_crash_handler();
+
+    /* Issue #176: a re-init inside a live capture window is what recycles the
+     * transfer object under a completing synchronous USB transfer.  Busy is
+     * non-terminal and the caller retries; the fault it prevents is terminal for
+     * the shot and orphans the file. */
+    if (stage2_capture_guard_enabled() && atomic_load(&g_capture_in_flight)) {
+        fprintf(stderr, "[stage2] capture-guard: gp_camera_init refused while a "
+                        "capture is in flight -- returning busy without re-init "
+                        "(issue #176)\n");
+        return STAGE2_GP_ERROR_CAMERA_BUSY;
+    }
 
     /* Resolve + cache the REAL core fns on first use, from the SAME core handle
      * the loader used to fill the other 63 slots. */
@@ -1481,13 +1510,32 @@ static int stage2_trace_gp_camera_capture(void *camera, int type,
     return ret;
 }
 
+/* In-flight marker around still capture.  Unlike the trace wrapper above this is
+ * meant for real runs, so it adds no logging on the happy path -- one flag and
+ * one call frame.  The result is returned untouched. */
+static int stage2_guarded_gp_camera_capture(void *camera, int type,
+                                           void *path, void *context)
+{
+    if (!g_real_gp_camera_capture)
+        return -1;                                   /* GP_ERROR */
+    atomic_store(&g_capture_in_flight, 1);
+    int ret = g_real_gp_camera_capture(camera, type, path, context);
+    atomic_store(&g_capture_in_flight, 0);
+    return ret;
+}
+
 static void *stage2_capture_slot_target(const char *name, void *resolved)
 {
-    if (name && strcmp(name, "gp_camera_capture") == 0 &&
-        getenv("STAGE2_CAPTURE_TRACE") &&
-        strcmp(getenv("STAGE2_CAPTURE_TRACE"), "0") != 0) {
-        g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
-        return (void *)&stage2_trace_gp_camera_capture;
+    if (name && strcmp(name, "gp_camera_capture") == 0) {
+        if (getenv("STAGE2_CAPTURE_TRACE") &&
+            strcmp(getenv("STAGE2_CAPTURE_TRACE"), "0") != 0) {
+            g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
+            return (void *)&stage2_trace_gp_camera_capture;
+        }
+        if (stage2_capture_guard_enabled()) {
+            g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
+            return (void *)&stage2_guarded_gp_camera_capture;
+        }
     }
     return resolved;
 }
