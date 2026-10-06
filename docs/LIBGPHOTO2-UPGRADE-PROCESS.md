@@ -240,6 +240,23 @@ or installed. Do not record only the libgphoto2 SHA: the generated wrapper,
 Stage-2 loader, packaging scripts, and patcher-side appfs changes are part of
 the artifact's provenance.
 
+`libpolaris_stage2.so` has exactly one producer: `build-release-candidate.sh`
+-> `patch-polaris.sh` -> `container/patch.sh`. Hand-compiling the loader is
+invalid even when it compiles cleanly, because
+`container/testdata/stage2_ondisk_table.h` is a compile-only fixture defining 2
+of the 64 slots, while the real table is generated from the device's own
+`pgphoto`/core/port by `stage2_patch.py`. A loader built against the fixture
+boots, prints its banner, and faults on the first boundary call. Reusing a
+Docker tag is likewise unsafe: `patch-polaris.sh` rebuilds
+`polaris-patcher:latest` from the working tree, so any other tag is by
+definition not the tree. (2026-10-06: three hand-built loaders were installed
+and faulted on-device before this was understood.)
+
+Before presenting a candidate, diff its packaged artifacts against the last
+known-good and state the result in plain terms. "Same core, same libraries, one
+new flag-off shim" is a materially different claim from "new build", and the
+operator's exposure depends on which it is.
+
 The output must include:
 
 - FwPkt SHA-256;
@@ -275,6 +292,54 @@ preview port/process ownership is singular and stable
 ```
 
 Capture `/proc/<pid>/maps`, process command line and relevant environment or equivalent loader evidence where available. File presence alone is not proof of use.
+
+### 7a. Proving a change is *not* implicated
+
+A failure observed after installing a candidate is attributed to that candidate
+by default. Break that default with a control, in this order, before opening or
+updating an issue:
+
+```bash
+# 1. shim absent entirely
+/app/bin/gphoto2 --port usb:001,007 --capture-image
+# 2. shim present, the new feature flag off
+LD_PRELOAD=/app/lib/stage2/libpolaris_stage2.so STAGE2_MY_FLAG=0 \
+  /app/bin/gphoto2 --port usb:001,007 --capture-image
+```
+
+If the no-shim control fails identically, the new code is not the cause and the
+defect belongs elsewhere. On 2026-10-06 the control failed identically with
+`-1002`, which is what kept a rig fault from being filed against the capture
+guard.
+
+Distinguish the failure codes when reporting: `-1002` means no camera session was
+open; `-1005` means the admission guard refused a request while a camera *was*
+present. They have different owners and must not be merged into one "capture
+fails" report.
+
+### 7b. Rig state that survives a service restart
+
+Some rig faults cannot be cleared from software, and time spent trying looks like
+indecision to the operator:
+
+- The body holds a single PTP session. If a previous client did not close it,
+  `code[286]` reports `manufacturer:none;model:none;state:-2` while the device is
+  still enumerated and `dmesg` shows no disconnect. A fresh CLI process sees it
+  too: `Pentax session already open from a previous connection`. Restarting
+  `gphoto` does not release it.
+- Soft USB de-authorisation (`authorized` 0/1) re-enumerates with the same
+  `devnum`, so the supervisor's bus+devnum identity fingerprint sees no change
+  and does not rebind.
+- A reboot resets the bus and clears the stale session. `/app` is persistent
+  UBIFS, so the installed build survives it. This is the remote equivalent of the
+  power cycle an operator would perform by hand.
+- `0x0189` is the correct K-3 III tethering PID (`library.c` USB table,
+  `pentax-utils.c` -> `PENTAX_MODEL_K3_MARK_III`). Do not chase "wrong USB mode"
+  when that is what the camera reports.
+- Network identity: the canary scripts default to `--bind 192.168.0.4`, which is
+  only valid on the gimbal's own AP. Off it, `OSError: [Errno 99] Cannot assign
+  requested address` refers to the host bind address, not the device. Confirm the
+  peer by `/app/FwVer` over SSH, never by ping (see §2 of the debugging skill).
 
 ## 8. A/B/C camera qualification ladder
 

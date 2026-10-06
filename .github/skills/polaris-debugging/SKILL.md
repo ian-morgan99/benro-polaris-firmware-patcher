@@ -11,6 +11,51 @@ camera stack. It distils what actually worked across the agent sessions (see
 investigations). Read it top to bottom once; then use the quick reference at the
 end.
 
+## 0. Reporting to the operator (read this first)
+
+The recurring argument on this project has not been about the code. It has been
+about not being able to tell what an agent did, or what it changed. These are the
+rules that came out of that.
+
+**Lead with the delta, not the activity.** "Spent a day on this and I have no
+idea what improvements you have made" is a reporting failure even when the work
+was sound. Every status update answers, in this order:
+
+1. What is now true that was not before (behaviour, artifact, evidence).
+2. What is *not* proven yet, and what would prove it.
+3. What you changed on the rig or in the tree that the operator can now see.
+
+Verbs like "investigated", "analysed", "traced" are not deliverables. If a step
+produced no artifact, no commit, and no decision, say so explicitly rather than
+listing it as progress.
+
+**Do not let a diagnostic become a candidate.** Hand-built binaries, runtime
+`LD_PRELOAD` swaps and ad-hoc harnesses are diagnostics. A candidate is what
+`scripts/build-release-candidate.sh` emits. Mixing the two makes a day of
+diagnostics look like a day of releases, and it is the operator who discovers the
+difference on the bench.
+
+**Name the risk honestly before the operator asks.** If the new artifact differs
+from the last known-good one in one file behind a default-off flag, say that in
+one sentence. If it differs in the core libraries, say that too. The question
+"what could this break?" should never be the first time the comparison gets made.
+
+**Do not silently re-plan a manual test.** If a rig, cable, card, or camera has
+to change for a test to run, that is the operator's decision, not an
+implementation detail. State the requirement and the evidence for it and wait,
+rather than substituting a different test and reporting its result as if it were
+the one that was asked for. Concretely: the canaries assert
+`--expected-files 1 --expected-sp-prefix /app/sd/normal/SP_`, i.e. they qualify
+the **RAW-only** card. A card left in RAW+JPEG writes two files per frame and
+fails the assertion with no defect behind it — and a manual bench test on that
+card fails the same way while looking like a capture regression. Check the body's
+capture mode before concluding anything from a missing file.
+
+**One failure, one owner.** Before filing or updating an issue, run the control
+without your change in the path (§7a of
+`docs/LIBGPHOTO2-UPGRADE-PROCESS.md`). Attributing a pre-existing rig fault to
+the newest commit is what turns a 10-minute triage into a day of rework.
+
 ## 1. Getting the SSH connection
 
 Constants (memorise these):
@@ -200,6 +245,90 @@ subsystem). Prefer a single tar-stream:
 `ssh … 'cd dir && tar czf - files' | tar xzf -`. For many files,
 stream them with `===FILE:name===` markers in one connection and split locally —
 faster than N separate SSH sessions.
+
+**A hand-compiled `libpolaris_stage2.so` segfaults on-device and that is not a
+code bug (cost a full day, 2026-10-06).** A loader built by invoking
+`arm-linux-gnueabi-gcc` directly dies immediately after its own banner:
+
+```
+[stage2] mmap slot page @0x30000000 ok (fresh RW anon page, 4096 B)
+Segmentation fault
+```
+
+Two independent causes, both silent:
+
+1. **The slot table.** `container/testdata/stage2_ondisk_table.h` is a
+   *compile-only fixture* — it defines 2 of the 64 slots. Production builds
+   generate the real table from the device's actual `pgphoto`/core/port via
+   `stage2_patch.py`. Compiling with `-I container/testdata` produces a loader
+   whose other 62 slots are zero, so the first boundary call jumps to NULL.
+2. **The image.** `patch-polaris.sh` rebuilds `polaris-patcher:latest` from the
+   working tree (`COPY container/ /opt/patcher/`). Older tags such as
+   `polaris-patcher-fixed:latest` are stale — that one carried a loader 142
+   lines behind `main` and produced binaries that fault on the device.
+
+There is no supported shortcut. `scripts/build-release-candidate.sh` is the only
+entry point (AGENTS.md says so); it rebuilds the image from the tree and
+generates the real table. A hand-built `.so` is a diagnostic, never evidence.
+
+**Before calling something a new candidate, diff it against the last known-good
+(cost a full day, 2026-10-06).** Compare the packaged artifacts, not the build
+names:
+
+```bash
+for f in stage2-ondisk/ondisk/libpolaris_stage2.so \
+         stage2-ondisk/ondisk/pgphoto.stage2ondisk \
+         stage2-ondisk/libgphoto2.so.6 \
+         stage2-ondisk/libgphoto2_port.so.12; do
+  x=$(md5sum "$A/$f"|cut -c1-12); y=$(md5sum "$B/$f"|cut -c1-12)
+  [ "$x" = "$y" ] && echo "SAME $f" || echo "DIFF $f"
+done
+```
+
+`o-v16a` vs `o-v15v` differed in exactly one file, and the flag gating it
+defaulted off — i.e. the "new candidate" was the working build plus a dark
+shim. Say that plainly rather than presenting it as a new risk surface.
+
+**Run the control before blaming your own change (cost a full day,
+2026-10-06).** When a capture fails after you install something, run the same
+command with your code absent:
+
+```bash
+# shim absent — this is the control
+/app/bin/gphoto2 --port usb:001,007 --capture-image
+# shim present, feature flag off
+LD_PRELOAD=/app/lib/stage2/libpolaris_stage2.so STAGE2_MY_FLAG=0 \
+  /app/bin/gphoto2 --port usb:001,007 --capture-image
+```
+
+On 2026-10-06 the *no-shim* control failed identically, which is what proved the
+new code was not implicated. Without it the failure gets attributed to whatever
+was added last.
+
+**The body holds one PTP session and a pgphoto restart does not release it
+(2026-10-06).** Symptom chain: camera still enumerated (`25fb:0189`), no
+disconnect in `dmesg`, but `code[286]` reports `manufacturer:none;model:none;
+state:-2` and capture returns `-1002`. A fresh CLI process prints:
+
+```
+Pentax session already open from a previous connection; observing camera state.
+```
+
+The camera-side session is stale, so the new client lands in an observe-only
+path. `restart_gphoto` does not clear it, and neither does
+`echo 0/1 > /sys/bus/usb/devices/<dev>/authorized` — soft de-authorisation
+re-enumerates with the **same `devnum`**, so the supervisor's identity
+fingerprint (bus+devnum) sees no change and takes no action. A reboot does reset
+the bus and is the remote equivalent of the power cycle a physical operative
+would do. Note `/app` is persistent UBIFS, so a reboot keeps the installed
+build.
+
+**Network identity after the host moves networks (2026-10-06).** The canary
+scripts default to `--bind 192.168.0.4`. Off the gimbal's own AP that fails with
+`OSError: [Errno 99] Cannot assign requested address` — that is the *bind*
+address, not the device. Check `ip -4 addr` and pass the host's current address.
+And per §2: `ping 192.168.0.1` answering while `ssh` gives *Connection refused*
+means you are talking to the cable router, not the gimbal.
 
 **Camera state codes you will see in Mlog/Clog:** `code[286]` = camera info
 (`manufacturer:…;model:…;state:N;storage:N;photoFormat:N`; `state:1` healthy,
