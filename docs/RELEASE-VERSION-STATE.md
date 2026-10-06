@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.58
+last_display_fwver=6.0.0.54.59
 ```
 
 ## Consumed-version registry (authoritative)
@@ -18,6 +18,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.53
+consumed_display_fwver=6.0.0.54.59
 consumed_display_fwver=6.0.0.54.58
 consumed_display_fwver=6.0.0.54.57
 consumed_display_fwver=6.0.0.54.56
@@ -32,7 +33,8 @@ consumed_display_fwver=6.0.0.54.55
 | `.55` | o-v15r-supervisor-preload-20261005 | installed 2026-10-05; reports `6.0.0.54.55` |
 | `.56` | o-v15s-orphan-candidate-recovery-20261005 | **superseded by `.57`, do not flash** — built 2026-10-05 and never installed, so its version is consumed but its content is a strict subset of `.57`. |
 | `.57` | o-v15t-admission-deadlock-and-durability-20261006 | **superseded by `.58`, do not flash** — same libgphoto2 (`e6b55ad09`) and never installed, so its content is a strict subset of `.58`. It carried `e65404f5f` (#175 orphan recovery), `e0742ce03` (#176 durable save), `98ee8e67a` (#173 stale-output-obligation release — the self-locking gate behind "Bulb still fails" on `.55`) and `e6b55ad09` (#176 review durability made non-optional). |
-| `.58` | o-v15u-first-capture-crash-pinpoint-20261006 | candidate, gate GREEN 2026-10-06 (only skip: `libgphoto2:test-gp-port`, no host DTR/CTS fixture); **flash this one**. Everything `.57` carried, plus patcher `4a8359f`: the stage2 crash handler can be re-asserted over `polestar_app`'s own, which is what has been swallowing the faulting PC. Verified present in the packaged loader (`STAGE2_REASSERT_CRASH_HANDLER` marker in `stage2-ondisk/ondisk/libpolaris_stage2.so`; absent from the loader currently on the device). Physical test pending: K-3 III USB-detached. |
+| `.58` | o-v15u-first-capture-crash-pinpoint-20261006 | **superseded by `.59`, do not flash** — gate was GREEN but it was never installed (device still on `.55`), and `.59`'s libgphoto2 (`f3a8ffebf`) is a verified descendant of `.58`'s (`e6b55ad09`) with the same patcher content plus `4a8359f` confirmed present by `git merge-base --is-ancestor`. Its content is a strict subset of `.59`. |
+| `.59` | o-v15v-k1ii-msc-pid-20261006 | candidate, gate GREEN 2026-10-06 (only skip: `libgphoto2:test-gp-port`, no host DTR/CTS fixture); **flash this one**. Everything `.58` carried (incl. `4a8359f` crash-handler re-assertion, #175, #176, #173), plus libgphoto2 `1b65cbe0a` / `15c6b9805` / `f3a8ffebf` (#179 — K-1 II `0x0182` identified as the MSC PID instead of autodetecting to nothing and silently adopting hardcoded K-3 III abilities, and the R0 containment guard re-keyed onto product IDs). md5 `2afb6e3b087af03e8d0d902626e7327a`, appfs `e31baa64438a8a2f934dbb9ddcadf5a2`, libgphoto2 `f3a8ffebf285b0f32d2bef366f1c5c4f1687077d`, patcher `8949d83/main`. Published to `ian-morgan99/PrivateResearch` `firmware-packets/o-v15v-k1ii-msc-pid-20261006/`. Staged to `/app/sd/FwPkt` with 6/6 on-device MD5+size matches against the on-card `firmwareInfo`; rebooted 2026-10-06 06:28:44Z. |
 
 ## Why the registry exists (#169)
 
