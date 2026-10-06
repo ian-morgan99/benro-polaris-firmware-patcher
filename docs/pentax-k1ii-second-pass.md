@@ -25,6 +25,17 @@ Minimise cable/body moves by using this order:
 
 The operative should never have to infer when to move the camera.
 
+## Blocking prerequisite: the body has two USB product IDs
+
+Before any Pass 2 result is interpretable, confirm which `idProduct` the body
+presented. The K-1 II enumerates as **either** `25fb:0183` **or** `25fb:0182`
+(both are declared in its own firmware image), and only `0183` is accepted by any
+PID gate in libgphoto2. At `0182` autodetect returns 0 supported cameras and the
+app silently falls back to hardcoded K-3 III abilities, so nothing Pentax-specific
+runs at all and every observation is meaningless. See
+[`evidence/k1ii-pid-0182-20261006/SUMMARY.md`](evidence/k1ii-pid-0182-20261006/SUMMARY.md)
+and issue #179. Record the `scanUsb` `idProduct` line in every Pass 2 log.
+
 ## Why K-1 II matters
 
 Existing field evidence already shows K-1 II-specific instability around preview/session handling, including the NoUpdateImage family and body-swap/stale runtime state. Its parameter/control capabilities should not be assumed absent merely because a current runtime path fails to expose them; prior interoperability evidence showed the body supports relevant controls.
