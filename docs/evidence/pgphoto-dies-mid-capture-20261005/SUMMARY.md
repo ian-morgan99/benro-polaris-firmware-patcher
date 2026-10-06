@@ -585,3 +585,133 @@ separate from this thread.
 **Blocked on:** one physical power cycle. Then run the §14 acceptance sequence —
 deliberate Manual timeout → next request admitted → Bulb 5 s with EXIF duration
 match.
+
+## 16. FOURTH FINDING — the deaths are already recorded; we were not reading them
+
+Prompted by re-reading the TA's three later comments (`out/ta/comments-new.md`
+lines 85–233 — I had previously acted only on the first two). The wrapper records
+the child's wait status (`128+N` ⇒ killed by signal N), so the fatal signal is in
+the logs already. Histogram over the retained Clog set:
+
+```
+ 873  wait_status=1     # ordinary exit
+1251  wait_status=143   # SIGTERM — the camera-absent churn (§15)
+   2  wait_status=139   # SIGSEGV
+   1  wait_status=132   # SIGILL
+```
+
+The three real faults, all in `Clog_000249`:
+
+| time | pid | signal | last line from that pid |
+| --- | --- | --- | --- |
+| 22:15:05 | 32008 | **SIGILL (4)** | `[pentax] capture=1 boundary=initiate-return ptp=0x2001` |
+| 22:45:58 | 6556 | SIGSEGV (11) | none — last capture line ~36 000 lines earlier |
+| 23:22:09 | 25903 | SIGSEGV (11) | none — context is the #119 rebind quarantine |
+
+Two corrections to my own first reading, recorded so the error is not repeated:
+the two SIGSEGVs are **not** in a capture window at all (they belong to the
+camera-absent population, same as the 143s), and the single
+`boundary=initiate-return ptp=0x2002` in the whole log set is at line 25545, not
+adjacent to either. Adjacency was checked by line number, not by "last match
+before".
+
+So of three faults, **one** is a capture-path death — and it is a `capture=1`, a
+first capture, in exactly the window the TA narrowed to in #176: after
+`boundary=initiate-return`, before any candidate or event. It is a hard fault,
+not a timeout and not `checkGphotoTask`.
+
+### 16b. Why we never got the faulting PC
+
+`install_crash_handler()` installs SIGSEGV/SIGBUS/SIGILL handlers from the ELF
+constructor, and the handler writes to fd 2 — the same descriptor the `[pentax]`
+boundary lines use, which do survive. Yet `*** CRASH` / `pc classify` appears
+**0 times in 235 MB**. The handler never ran.
+
+The wrapper's own sample explains it: the child's `SigCgt` is `0x188001e48`,
+which decodes to SIGILL, SIGBUS, SIGSEGV **and** SIGUSR1, SIGUSR2, SIGRTMIN+3.
+Our constructor installs only the first three, so the broader set is
+`polestar_app`'s — installed after us, superseding us. The one datum that would
+localise the death was discarded purely because of installation order.
+
+Fixed in `4a8359f`: `stage2_reassert_crash_handler()`, called from the
+`gp_camera_init` shim (the earliest point that necessarily runs after the app has
+set up). Opt-in via `STAGE2_REASSERT_CRASH_HANDLER` so the shipped signal
+disposition is unchanged unless a run asks for it. It deliberately does **not**
+chain to the displaced handler — calling an unknown `SA_SIGINFO` handler with a
+synthesised `siginfo_t` risks a second fault inside the crash path, which would
+lose the record we are trying to keep. The handler still restores `SIG_DFL` and
+re-raises, so the `wait_status` the wrapper records is unaffected.
+
+Checked and ruled out as the mechanism: `gp_port_set_timeout` (the first thing the
+window calls) is **not** one of the 64 slotted symbols — dumped from the device's
+`libpolaris_stage2.so` — and every launch logs `resolved 64/64 / slots filled
+64/64`. So there is still no mechanism, only a better instrument.
+
+## 17. FIFTH FINDING — we ship a byte-patch whose premise our own RE falsified (#178)
+
+`--polestar-bulb-patch` is applied unconditionally by the release builder
+(`scripts/build-release-candidate.sh:62`), so it is in o-v15t. Its docstring
+justifies zeroing `bulb_ms` because "the camera's own Bulb timer (set via cmd 277
+shutter index) controls the actual shutter-open duration". Both halves were
+disproved by `bulb-root-cause-20261005` (§1, §3): 277 is `camera_set_aperture`,
+and `bulb_ms` never reaches libgphoto2 — it becomes a watchdog deadline at
+`ctx+0x180`. The patch (2026-09-21, `691e034`) simply predates the RE
+(2026-10-05, `ce94298`) and was never revisited.
+
+It also does more than documented. The instruction it rewrites feeds the very next
+branch:
+
+```
+4975c:  mul  r3, r2, r3      ; bulb_seconds * 1000   <-- replaced by mov r3,#0
+49768:  cmp  r3, #0
+4976c:  bne  497a0           ; non-zero -> the app's Bulb branch
+        ; fall-through (r3 == 0) -> SP_SetPhotoRecodeState(0, 0, 1, ...) plain capture
+```
+
+With `r3` pinned to zero the `bne` is never taken, so every `state:1;bulb:N;`
+request is routed down the plain-capture branch and the app's Bulb branch is
+unreachable. That is consistent with the TA's #173 item 1 (no 261 write on the
+product path) and with `bulb-timer=no` in every sample. It does not prove the app
+*would* have issued 261 without the patch — the branch may only have set the
+watchdog — which is exactly why it is the first variable to A/B rather than an
+assumption to keep.
+
+## 18. #175 assertion implemented, and it answered part of the question without a camera
+
+`scripts/assert-orphan-wrote.py` (`4d25c29`, 11 tests) parses `wrote=<path>` out
+of the `path=orphan-recovery` audit line and asserts each is a real non-empty
+file. Fail-closed three ways: no report line, absent path, or zero-length file
+all fail; a local log copy without `--root` reports *inconclusive* rather than
+passing.
+
+Run against the device with the camera still off USB, the Clog set contains:
+
+```
+[pentax-recovery] capture=1 path=orphan-recovery outcome=cleared recovered=1 names=IMGP3795.DNG accepted=1 action=preserve-then-delete-only-after-verified-download
+[pentax-recovery] capture=1 path=orphan-recovery outcome=cleared recovered=1 names=IMGP3796.DNG accepted=1 action=preserve-then-delete-only-after-verified-download
+[pentax-recovery] capture=1 path=orphan-recovery outcome=cleared recovered=1 names=IMGP3797.DNG accepted=1 action=preserve-then-delete-only-after-verified-download
+```
+
+Three claims of `recovered=1 accepted=1` with **no `wrote=` suffix on any of
+them**. Those captures ran on `.55`/o-v15r, whose library is `ee301fef`;
+`git merge-base --is-ancestor e0742ce03 ee301fef` is false, so that build predates
+the save-before-delete fix entirely. The absent suffix is therefore exactly what
+that build must emit — it confirms the *pre-fix* behaviour is observable in the
+audit line, but it is **not** a test of the fix. Against the current log set the
+assertion correctly returns `PASS (vacuous)`: the staged v15t library contains
+`e0742ce03`, but no orphan recovery has run since it was installed.
+
+## 19. State of play
+
+Still blocked on one physical power cycle, which now covers four things at once:
+
+1. #177/#173 acceptance — deliberate Manual timeout → next request admitted
+   (`path=obligation-release … released=1`) → Bulb 5 s with EXIF duration match.
+2. #176 first-capture reproduction **with `STAGE2_REASSERT_CRASH_HANDLER=1`**, to
+   get `pc`/`lr`/slot classification instead of a bare 132/139.
+3. #173 step 1 — A/B `--polestar-bulb-patch` on/off and assert on the wire
+   whether a 261 write appears for `bulb:5`.
+4. #175 — the positive `wrote=` assertion once a capture leaves an orphan.
+
+The device remains a v15r appfs + v15t `ptp2.so` hybrid, so
+`verify_installed_build.py` will report a mismatch until o-v15t is flashed properly.

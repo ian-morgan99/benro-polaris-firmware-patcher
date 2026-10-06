@@ -130,10 +130,13 @@ on this body is the camera-timed one, and that path has **no stop at all**.
 
 ## 5. Consequences for the plan
 
-1. **#173 is understated.** It is not only "duration ignored" (still true —
-   `current_shutter` read `s:00:01` and `updateCaptureInfo` logged
-   `shutter speed 0.000000` for a requested Bulb). There is no working stop, and
-   the attempt cost us the camera on USB.
+1. **#173 is understated.** There is no working stop, and the attempt cost us the
+   camera on USB. (Corrected after the TA review: this line originally also
+   asserted "duration ignored" was *still true*. It is not a property of the
+   K-3 III — the camera honours a 261 shutter write, applying it asynchronously.
+   What is true is that the *stock app path never issues* that write, and that
+   our own canary appeared to fail because it verified with a single immediate
+   readback. See `pgphoto-dies-mid-capture-20261005/SUMMARY.md` §12/§12b.)
 2. **A real fix needs the stop to be reachable.** Either the wait loop must poll
    a cancellation the wrapper can raise from outside, or the 264 handler must run
    off the queue-reading thread. Until then no Bulb design is testable from the
