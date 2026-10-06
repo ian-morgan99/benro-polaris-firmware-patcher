@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.57
+last_display_fwver=6.0.0.54.58
 ```
 
 ## Consumed-version registry (authoritative)
@@ -18,6 +18,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.53
+consumed_display_fwver=6.0.0.54.58
 consumed_display_fwver=6.0.0.54.57
 consumed_display_fwver=6.0.0.54.56
 consumed_display_fwver=6.0.0.54.54
@@ -30,7 +31,8 @@ consumed_display_fwver=6.0.0.54.55
 | `.54` | o-v15q | installed; reported `6.0.0.54.54` on code 780 |
 | `.55` | o-v15r-supervisor-preload-20261005 | installed 2026-10-05; reports `6.0.0.54.55` |
 | `.56` | o-v15s-orphan-candidate-recovery-20261005 | **superseded by `.57`, do not flash** — built 2026-10-05 and never installed, so its version is consumed but its content is a strict subset of `.57`. |
-| `.57` | o-v15t-admission-deadlock-and-durability-20261006 | candidate, gate passed 2026-10-06; **flash this one**. Carries `e65404f5f` (#175 orphan recovery), `e0742ce03` (#176 durable save), `98ee8e67a` (#173 stale-output-obligation release — the self-locking gate behind "Bulb still fails" on `.55`) and `e6b55ad09` (#176 review durability made non-optional). Physical test pending: K-3 III USB-detached. |
+| `.57` | o-v15t-admission-deadlock-and-durability-20261006 | **superseded by `.58`, do not flash** — same libgphoto2 (`e6b55ad09`) and never installed, so its content is a strict subset of `.58`. It carried `e65404f5f` (#175 orphan recovery), `e0742ce03` (#176 durable save), `98ee8e67a` (#173 stale-output-obligation release — the self-locking gate behind "Bulb still fails" on `.55`) and `e6b55ad09` (#176 review durability made non-optional). |
+| `.58` | o-v15u-first-capture-crash-pinpoint-20261006 | candidate, gate GREEN 2026-10-06 (only skip: `libgphoto2:test-gp-port`, no host DTR/CTS fixture); **flash this one**. Everything `.57` carried, plus patcher `4a8359f`: the stage2 crash handler can be re-asserted over `polestar_app`'s own, which is what has been swallowing the faulting PC. Verified present in the packaged loader (`STAGE2_REASSERT_CRASH_HANDLER` marker in `stage2-ondisk/ondisk/libpolaris_stage2.so`; absent from the loader currently on the device). Physical test pending: K-3 III USB-detached. |
 
 ## Why the registry exists (#169)
 
