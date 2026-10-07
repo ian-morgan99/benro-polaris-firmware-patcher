@@ -1,0 +1,62 @@
+{
+ "issue": 180,
+ "started": "2026-10-07T11:24:54+00:00",
+ "expected_sw": "6.0.0.54.60",
+ "long_exposure_seconds": 10,
+ "shots_per_scenario": 3,
+ "settings_provenance": {
+  "G1": {
+   "menu_state": "Pixel Shift = OFF, Slow Shutter NR = OFF",
+   "scenarios": [
+    "A"
+   ],
+   "nr_and_pixel_shift": "USER-CONFIRMED",
+   "confirmed_at": "2026-10-07T11:24:56+00:00",
+   "auto_verified": false
+  }
+ },
+ "scenarios": {
+  "A": {
+   "spec": {
+    "format": 2,
+    "exposure": "short",
+    "nr": "off",
+    "pixel_shift": "off"
+   },
+   "group": "G1",
+   "file_format": {
+    "required": 2,
+    "readback_photoFormat": null,
+    "status": "USER-CONFIRMED"
+   },
+   "exposure": {
+    "requested": "short",
+    "seconds": null,
+    "status": "AUTO-VERIFIED (261/268 set + read-back)"
+   },
+   "noise_reduction": "USER-CONFIRMED",
+   "pixel_shift": "USER-CONFIRMED",
+   "shots": [
+    {
+     "t": "2026-10-07T11:27:56+00:00",
+     "exit": 1,
+     "duration_s": 180.1,
+     "first_file_at": null,
+     "files": [],
+     "pass": false,
+     "tail": "2026-10-07T11:27:42Z RX 525@Tempa509ca361c0000255a ;#",
+     "shot": 1
+    }
+   ],
+   "health_after": {
+    "t": "2026-10-07T11:27:56+00:00",
+    "pgphoto_pid": "17720",
+    "uptime": "1425",
+    "camera": ""
+   },
+   "verdict": "FAIL"
+  }
+ },
+ "completed": "2026-10-07T11:27:57+00:00",
+ "matrix_verdict": "FAIL"
+}

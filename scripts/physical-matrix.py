@@ -78,12 +78,36 @@ def health(host: str) -> dict:
     }
 
 
-def photo_format(host: str) -> str | None:
-    """Read photoFormat via the canary probe (code 286 path), read-only."""
+def probe_state() -> tuple[str | None, str | None, str | None]:
+    """Read (model, state, photoFormat) via the canary probe (code 286), read-only."""
     r = subprocess.run([sys.executable, str(CANARY), "--probe"],
                        capture_output=True, text=True, timeout=90)
     m = re.search(r"SUMMARY model=(\S+) state=(\S+) photoFormat=(\S+)", r.stdout)
-    return m.group(3) if m else None
+    return (m.group(1), m.group(2), m.group(3)) if m else (None, None, None)
+
+
+def wait_ready(settle_seconds: float) -> None:
+    """#181: after a disconnect/reconnect the session must come back on its own.
+    Poll until the camera session is live, then hold a settle window before any
+    capture is issued -- a fresh-session camera can accept a capture and not
+    honour it."""
+    deadline = time.monotonic() + 300
+    while time.monotonic() < deadline:
+        model, state, _ = probe_state()
+        if state == "1" and model and model != "none":
+            break
+        print(f"{now()} WAIT-READY state={state} model={model}", flush=True)
+        time.sleep(10)
+    else:
+        raise RuntimeError("camera session did not come up within 300 s (#181)")
+    if settle_seconds > 0:
+        print(f"{now()} SETTLE {settle_seconds}s after session-ready (#181)",
+              flush=True)
+        time.sleep(settle_seconds)
+
+
+def photo_format(host: str) -> str | None:
+    return probe_state()[2]
 
 
 def run_shot(expected_files: int, expected_sw: str, bulb: float | None) -> dict:
@@ -124,6 +148,10 @@ def main() -> int:
     ap.add_argument("--yes", action="store_true",
                     help="do not pause at user boundaries (dry runs only; "
                          "records stay USER-CONFIRMED/unverified)")
+    ap.add_argument("--settle-seconds", type=float, default=90.0,
+                    help="hold-off after the session becomes ready before "
+                         "issuing captures (#181: fresh-session camera can "
+                         "accept a capture and not honour it)")
     args = ap.parse_args()
 
     wanted = [s.strip().upper() for s in args.scenarios.split(",") if s.strip()]
@@ -140,6 +168,7 @@ def main() -> int:
 
     h0 = health(args.host)
     print(f"{now()} HEALTH-START {h0}", flush=True)
+    wait_ready(args.settle_seconds)
 
     for gid, scen_ids, menu_state in GROUPS:
         run_ids = [s for s in scen_ids if s in wanted]
