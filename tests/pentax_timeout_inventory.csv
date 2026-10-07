@@ -1,5 +1,15 @@
 layer,source_path,function,name,duration_ms,semantic,start_event,expiry_action,can_overlap_exposing,can_overlap_processing,status
-libgphoto2,camlibs/ptp2/library.c,TO_VERIFY,USB_TIMEOUT_CAPTURE,100000,TO_CLASSIFY,TO_VERIFY,TO_VERIFY,TO_VERIFY,TO_VERIFY,KNOWN_CONSTANT_NEEDS_PATH_AUDIT
-pgphoto,TO_FIND,TO_FIND,TO_FIND,,TO_CLASSIFY,TO_FIND,TO_FIND,TO_FIND,TO_FIND,NOT_AUDITED
-watchdog,TO_FIND,TO_FIND,TO_FIND,,TO_CLASSIFY,TO_FIND,TO_FIND,TO_FIND,TO_FIND,NOT_AUDITED
-preview,TO_FIND,TO_FIND,TO_FIND,,TO_CLASSIFY,TO_FIND,TO_FIND,TO_FIND,TO_FIND,NOT_AUDITED
+libgphoto2,camlibs/ptp2/library.c,ptp_operation_exec,USB_TIMEOUT_CAPTURE,100000,capture-transfer ceiling,object download begins,PTP error returned to caller,yes,yes,VERIFIED-CONSTANT (value read from source 2026-10-07; path audit of callers still open)
+libgphoto2,camlibs/ptp2/library.c,camera_init,USB_NORMAL_TIMEOUT,20000,general PTP op timeout,any non-capture op,PTP error returned to caller,no,yes,VERIFIED-CONSTANT
+libgphoto2,camlibs/ptp2/library.c,camera_init,USB_START_TIMEOUT,8000,device start/reopen timeout,camera init,reopen failure propagated,no,no,VERIFIED-CONSTANT (not Pentax-specific)
+libgphoto2,camlibs/ptp2/library.c,canon only,EOS_CAPTURE_TIMEOUT,90000,Canon capture wait,Canon capture,timeout error,no,yes,VERIFIED-CONSTANT (not on the Pentax path; listed to prevent misattribution)
+ptp2,camlibs/ptp2/library.c,ptp_operation_exec,pentax_live_view_frame_should_retry,TO_MEASURE,live-view frame retry budget,live-view frame read fails,retry or give up per predicate,yes,yes,EXISTS-NEEDS-MEASUREMENT (predicate at library.c:3830; attempts/elapsed_ms bounds not yet recorded)
+reference-client,ImageTransmitter2/MtpDevice.cs,ConditionRefreshTask,conditions poll rearm,100,one-shot rearm delay AFTER previous cycle completes,previous poll+transfer completes,next GetAllConditions,no (bus serialized by _wpdCmdLock),no,VERIFIED-SOURCE (see libgphoto2 docs/pentax/REFERENCE_CLIENTS.md; NOT a fixed 100 ms period)
+reference-client,ImageTransmitter2/MainWindow.xaml.cs,BulbTimerTick,bulb duration tick,1000,one-second tick issuing the second release edge,user starts bulb,second CamRelease edge ends exposure,yes,no,VERIFIED-SOURCE
+reference-client,ImageTransmitter2/MainWindow.xaml.cs,SetLiveViewZoom,zoom fallback settle,100,wait after magnification reset,live view disabled,one fallback write at 10x on 0x201c only,no,no,VERIFIED-SOURCE (needs USB trace before adoption)
+canary,scripts/canary-probe.py,set_shutter,SHUTTER_SETTLE_TIMEOUT_S,30000,polled readback ceiling after code 261,shutter set accepted,poll 268 until index matches or give up,no,no,VERIFIED-OUR-TOOL
+canary,scripts/canary-probe.py,wait_code,per-command response timeout,10000,single Benro command reply,command sent,RuntimeError,no,no,VERIFIED-OUR-TOOL
+canary,scripts/canary-probe.py,shot,bulb-aware shot timeout,base+bulb_seconds,shot wait scaled by requested bulb length,shutter accepted,shot timeout,no,yes,VERIFIED-OUR-TOOL (effective_shot_timeout)
+pgphoto,TO_FIND,TO_FIND,TO_FIND,,TO_CLASSIFY,TO_FIND,TO_FIND,TO_FIND,TO_FIND,NOT-AUDITED (binary; needs disassembly of the dispatcher at 0x16dac)
+watchdog,TO_FIND,TO_FIND,TO_FIND,,TO_CLASSIFY,TO_FIND,TO_FIND,TO_FIND,TO_FIND,NOT-AUDITED
+preview,TO_FIND,TO_FIND,TO_FIND,,TO_CLASSIFY,TO_FIND,TO_FIND,TO_FIND,TO_FIND,NOT-AUDITED

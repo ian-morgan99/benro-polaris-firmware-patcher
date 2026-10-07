@@ -6,8 +6,11 @@ PTP camlib) from a **newer libgphoto2 release**, applies a few surgical edits to
 the `pgphoto` control binary, and repackages everything into a **flashable
 firmware image**.
 
-For the current protected baseline, open bugs and authoritative evidence entry
-points, start with [docs/CURRENT-STATE.md](docs/CURRENT-STATE.md).
+Start with [docs/README.md](docs/README.md) — the documentation map. It gives
+the read order, says which file owns which fact, and lists what is superseded.
+[docs/CURRENT-STATE.md](docs/CURRENT-STATE.md) is a dated journal, not a status
+report; current firmware identity lives in
+[docs/RELEASE-VERSION-STATE.md](docs/RELEASE-VERSION-STATE.md).
 
 It was created to fix the **Canon EOS R5 Mark II** on the Polaris, where three
 things were broken on stock firmware (libgphoto2 2.5.27, ~2021):

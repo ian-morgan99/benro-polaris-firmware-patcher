@@ -1,5 +1,23 @@
 # What has (and has not) been tested
 
+> **Scope correction, 2026-10-07.** The "only camera tested" framing below is
+> true only of the **original Canon R5 Mark II end-to-end flash validation**,
+> which is what this document was written to record. It is **not** true of the
+> project as a whole. Since then, Pentax K-3 Mark III and K-1 Mark II have been
+> attached to the Polaris repeatedly, and capture, live view, bulb, recovery and
+> crash behaviour have been investigated on the device across dozens of
+> candidates. Those results live in `docs/evidence/*/SUMMARY.md` and, for camera
+> capability, in `ian-morgan99/libgphoto2` `docs/pentax/REAL_HARDWARE_TEST_LOG.md`.
+>
+> Read the sections below as the R5 Mark II qualification record, which they
+> are. Do not read "the only camera tested" as a current claim about Pentax
+> support — it is a 2025-era statement that was never revised, and it has been
+> actively misleading agents into re-deriving known Pentax behaviour.
+>
+> The qualification bar is unchanged and still applies to every camera: a
+> bounded, reproducible result with named provenance. Enumeration is not
+> support; `ret:0` is not success.
+
 ## Target firmware — the ONLY one tested
 
 | | |

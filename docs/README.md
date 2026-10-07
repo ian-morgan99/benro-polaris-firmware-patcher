@@ -25,6 +25,7 @@ Duplicated facts go stale. Each subject has one owner; everything else links to 
 |---|---|---|
 | Benro wire protocol (codes 258–812) | `ian-morgan99/OpenPolaris` | Anything in this repo. Codes here are quoted evidence, not a spec. |
 | Pentax PTP behaviour, opcodes, condition offsets | `ian-morgan99/libgphoto2` → `docs/pentax/` | This repo's evidence summaries. |
+| What a reference client (IT2 / Wi-Fi Commander / Image Sync) proves | `libgphoto2/docs/pentax/REFERENCE_CLIENTS.md` | Any claim from a Wi-Fi client about PTP. |
 | Camera capability matrix | `libgphoto2/docs/pentax/IMAGE_TRANSMITTER_CAPABILITY_MATRIX.md` | `CameraCapabilities.md`, which only points there. |
 | Which firmware is on the device | `RELEASE-VERSION-STATE.md` | `CURRENT-STATE.md` (see below). |
 | Artifact hashes and source SHAs | `FWPKT-PROVENANCE-CONTRACT.md` | Build logs, commit messages. |
@@ -65,6 +66,12 @@ Tracked so the next agent does not rediscover them:
 1. `CURRENT-STATE.md` has no staleness marker and lags the version registry.
 2. `DOCUMENT-INVENTORY.md` is incomplete (see above).
 3. The Benro-side code table exists only as fragments inside evidence summaries
-   (e.g. `evidence/bulb-root-cause-20261005/SUMMARY.md` §on codes 258–275). The
-   canonical table belongs in OpenPolaris per `CROSS-PROJECT.md`; nothing here
-   links to it.
+   (e.g. `evidence/bulb-root-cause-20261005/SUMMARY.md` §on codes 258–277). The
+   canonical table belongs in OpenPolaris per `CROSS-PROJECT.md`.
+   **Open as of 2026-10-07:** OpenPolaris `Codes.kt` currently holds *two*
+   conflicting camera maps for codes 258–279 and both are in use. The device
+   evidence supports `Codes.BenroCamera` (261 = shutter set, 268 = shutter list,
+   277 = aperture, not shutter). See
+   [`OpenPolaris/docs/PROTOCOL-CODE-CONFLICT-20261007.md`](https://github.com/ian-morgan99/OpenPolaris/blob/main/docs/PROTOCOL-CODE-CONFLICT-20261007.md).
+   Our own `scripts/canary-probe.py` is already correct (261/268); do not
+   "fix" it back to 277.
