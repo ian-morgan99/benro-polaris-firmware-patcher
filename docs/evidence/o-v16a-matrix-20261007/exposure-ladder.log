@@ -1,0 +1,36 @@
+===== LADDER 5s 13:19:29 =====
+pre-shot USB: 25fb:0189
+shot 5s: 2026-10-07T12:19:33Z BULB shutter_index=46 shutter_label='00-05' shutter_seconds=5.0 requested_seconds=5.0 prior_index=44
+2026-10-07T12:19:44Z PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0269.dng', '/app/sd/normal/SP_0269.jpg']
+2026-10-07T12:19:44Z DONE states=[1, 4, 0] files=['/app/sd/normal/SP_0269.dng', '/app/sd/normal/SP_0269.jpg']
+post-shot USB: 25fb:0189
+===== LADDER 10s 13:20:02 =====
+pre-shot USB: 25fb:0189
+shot 10s: 2026-10-07T12:20:04Z BULB shutter_index=49 shutter_label='00-10' shutter_seconds=10.0 requested_seconds=10.0 prior_index=44
+2026-10-07T12:20:20Z PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0270.dng', '/app/sd/normal/SP_0270.jpg']
+2026-10-07T12:20:20Z DONE states=[1, 4, 0] files=['/app/sd/normal/SP_0270.dng', '/app/sd/normal/SP_0270.jpg']
+post-shot USB: 25fb:0189
+===== LADDER 20s 13:20:38 =====
+pre-shot USB: 25fb:0189
+shot 20s: 2026-10-07T12:20:41Z BULB shutter_index=52 shutter_label='00-20' shutter_seconds=20.0 requested_seconds=20.0 prior_index=44
+2026-10-07T12:21:09Z PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0271.dng', '/app/sd/normal/SP_0271.jpg']
+2026-10-07T12:21:09Z DONE states=[1, 4, 0] files=['/app/sd/normal/SP_0271.dng', '/app/sd/normal/SP_0271.jpg']
+post-shot USB: 25fb:0189
+===== LADDER 30s 13:21:27 =====
+pre-shot USB: 25fb:0189
+shot 30s: 2026-10-07T12:21:30Z BULB shutter_index=54 shutter_label='00-30' shutter_seconds=30.0 requested_seconds=30.0 prior_index=44
+2026-10-07T12:22:08Z PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0272.dng', '/app/sd/normal/SP_0272.jpg']
+2026-10-07T12:22:08Z DONE states=[1, 4, 0] files=['/app/sd/normal/SP_0272.dng', '/app/sd/normal/SP_0272.jpg']
+post-shot USB: 25fb:0189
+
+## Interpretation (2026-10-07 13:23)
+4/4 PASS (5s, 10s, 20s, 30s via canary bulb path, shutter indices 46/49/52/54
+confirmed via 261+268 readback). USB identity 25fb:0189 stable before and after
+every shot. The 13:04 30s drop (via Benro Connect, 264 bulb:0 with the shutter
+set on the camera) did NOT reproduce on the canary path. Paths differ:
+app = plain capture, camera-set shutter; canary = bulb payload + 261 shutter
+write. The drop is therefore not deterministically exposure-length on the
+canary path. Remaining suspects for the app path: app-side concurrent traffic
+(preview/condition polling) during the long exposure, or a one-off camera
+power/state event. Next discriminator: repeat 30s via the app while the
+canary-side USB watcher runs.
