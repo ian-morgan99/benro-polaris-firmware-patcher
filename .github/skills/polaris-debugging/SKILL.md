@@ -51,6 +51,15 @@ fails the assertion with no defect behind it — and a manual bench test on that
 card fails the same way while looking like a capture regression. Check the body's
 capture mode before concluding anything from a missing file.
 
+**A camera power cycle resets the body's menu settings to factory defaults**
+(operator-confirmed on the K-3 III, 2026-10-07). Never assume a previously
+requested state (NR, Pixel Shift, file format) survives a power cycle — re-read
+what you can (`286 photoFormat`) and re-ask the operator for the rest before
+trusting any scenario that depends on them. Related: the first capture issued
+within ~2 minutes of a session re-establishment (power cycle, USB re-plug,
+compatibility-mode toggle) can be accepted and silently lost — see issue #181;
+wait for `286 state:1` **plus** a settle window before issuing captures.
+
 **One failure, one owner.** Before filing or updating an issue, run the control
 without your change in the path (§7a of
 `docs/LIBGPHOTO2-UPGRADE-PROCESS.md`). Attributing a pre-existing rig fault to
