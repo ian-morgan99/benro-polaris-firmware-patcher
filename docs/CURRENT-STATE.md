@@ -1,5 +1,28 @@
 # Current repository state
 
+> **Read this as a journal, not a status.** This file is append-only and its
+> sections are dated. Only the top section can be current, and it is routinely
+> days behind the authoritative sources. For what is actually true now, use
+> [`README.md`](README.md) to find the owner: firmware identity comes from
+> [`RELEASE-VERSION-STATE.md`](RELEASE-VERSION-STATE.md), artifact hashes from
+> [`FWPKT-PROVENANCE-CONTRACT.md`](FWPKT-PROVENANCE-CONTRACT.md), and hardware
+> qualification from [`TESTED.md`](TESTED.md). Anything below a section header
+> describes its own collection date.
+
+## 2026-10-07 status pointer
+
+Device runs `6.0.0.54.59` (`o-v15v-k1ii-msc-pid-20261006`). `.60`
+(`o-v16a-captureguard-20261006`) is built, gated GREEN and published, but was
+never installed and has no canary result — its version is consumed, its content
+is `.59` plus the default-off #176 capture guard. The capture A/B for that guard
+has not run. The gimbal's AP was not broadcasting as of 2026-10-07 and the host
+is on `192.168.68.0/22`, so `192.168.0.1` currently resolves to the router, not
+the device.
+
+Everything below this line is historical. Do not act on the "next candidate must
+use display version 6.0.0.54.54" instruction in the next section; the registry is
+the only version authority.
+
 ## 2026-10-04 takeover status — Polaris recovery required
 
 The live Polaris is currently unreachable: cached Bluetooth is visible but the

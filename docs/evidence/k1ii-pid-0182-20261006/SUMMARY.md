@@ -24,7 +24,7 @@ camera look like a driver bug for two weeks.
 
 As originally stated, this does **not** explain the preview/`NoUpdateImage`
 instability seen on `0183` sessions, which did bind correctly. That remains open
-in [pentax-k1ii-second-pass.md](../pentax-k1ii-second-pass.md).
+in [pentax-k1ii-second-pass.md](../../pentax-k1ii-second-pass.md).
 
 ## 1. The body declares two PIDs
 
@@ -222,7 +222,7 @@ Consequences:
 - The `0182` sighting is a **usage fault**: the camera was in MSC mode. The
   operative action is to set the camera's USB mode to PTP/MTP, which is already
   the standing guidance in
-  [pentax-physical-operative-runbook.md](../pentax-physical-operative-runbook.md).
+  [pentax-physical-operative-runbook.md](../../pentax-physical-operative-runbook.md).
 - The `0182` row is retained, deliberately narrowed: it makes the body
   *identifiable* instead of autodetecting to nothing and silently adopting
   hardcoded K-3 III abilities. Renamed to

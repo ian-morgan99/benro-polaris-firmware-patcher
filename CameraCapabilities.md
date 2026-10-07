@@ -6,8 +6,12 @@ SHA in this repository.
 
 - Pentax capability matrix:
   <https://github.com/ian-morgan99/libgphoto2/blob/master/docs/pentax/IMAGE_TRANSMITTER_CAPABILITY_MATRIX.md>
-- Pentax audit notes:
-  <https://github.com/ian-morgan99/libgphoto2/blob/master/docs/pentax/CAPABILITY_MATRIX_AUDIT.md>
+- Pentax audit notes (archived 2026-08-21 trail, provenance only — it was moved
+  under `archive/`, the un-prefixed URL 404s):
+  <https://github.com/ian-morgan99/libgphoto2/blob/master/docs/pentax/archive/CAPABILITY_MATRIX_AUDIT.md>
+- Reference clients (IMAGE Transmitter 2 / Wi-Fi Commander / Image Sync) — what
+  each can and cannot be cited for, with content hashes:
+  <https://github.com/ian-morgan99/libgphoto2/blob/master/docs/pentax/REFERENCE_CLIENTS.md>
 - The exact libgphoto2 SHA packaged in firmware is defined by
   `docs/FWPKT-PROVENANCE-CONTRACT.md`.
 - Bounded device qualification claims live in `docs/TESTED.md` and the current
