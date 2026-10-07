@@ -1,0 +1,53 @@
+2026-10-07T16:10:34Z TX 1&284&2&-100#
+2026-10-07T16:10:34Z RX 284@mode:1;state:0;#
+2026-10-07T16:10:34Z TX 1&820&2&-100#
+2026-10-07T16:10:34Z RX 820@ret:-1;#
+2026-10-07T16:10:34Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-10-07T16:10:34Z TX 1&286&2&-100#
+2026-10-07T16:10:34Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-10-07T16:10:34Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-10-07T16:10:34Z SUMMARY model=pentax k-3 mark iii state=1 photoFormat=2
+2026-10-07T16:10:34Z TX 1&292&2&-100#
+2026-10-07T16:10:34Z RX 292@state:1;#
+2026-10-07T16:10:34Z PREVIEW initial_state=1
+2026-10-07T16:10:34Z TX 1&260&2&ev:30;#
+2026-10-07T16:10:34Z RX 260@ev:30;ret:0;#
+2026-10-07T16:10:34Z EV index=30 response=ev:30;ret:0;
+2026-10-07T16:10:34Z TX 1&261&2&s:54;#
+2026-10-07T16:10:35Z RX 261@s:54;ret:0;#
+2026-10-07T16:10:35Z SHUTTER index=54 response=s:54;ret:0;
+2026-10-07T16:10:35Z TX 1&268&2&-100#
+2026-10-07T16:10:35Z RX 268@RD:0;V:18;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,00-01,13/10,16/10,00-02,25/10,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;#
+2026-10-07T16:10:35Z SHUTTER index=54 not yet visible (V:18), re-reading in 1.0s
+2026-10-07T16:10:36Z TX 1&268&2&-100#
+2026-10-07T16:10:36Z RX 268@RD:0;V:18;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,00-01,13/10,16/10,00-02,25/10,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;#
+2026-10-07T16:10:36Z SHUTTER index=54 not yet visible (V:18), re-reading in 1.0s
+2026-10-07T16:10:37Z TX 1&268&2&-100#
+2026-10-07T16:10:37Z RX 268@RD:0;V:54;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,00-01,13/10,16/10,00-02,25/10,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;#
+2026-10-07T16:10:37Z SHUTTER index=54 confirmed after 3 readbacks (the camera applies 261 writes asynchronously)
+2026-10-07T16:10:37Z SHOT shot_timeout=180.0s
+2026-10-07T16:10:37Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-10-07T16:10:37Z RX 264@state:1#
+2026-10-07T16:10:37Z CAPTURE state=1 lifecycle=[1]
+2026-10-07T16:11:01Z RX 525@Tempa509ca361c0000255a ;#
+2026-10-07T16:11:12Z RX 264@state:4;#
+2026-10-07T16:11:12Z CAPTURE state=4 lifecycle=[1, 4]
+2026-10-07T16:11:16Z RX 773@type:1;path:/app/sd/normal/SP_0276.dng;size:34572751;cTime:2026-10-07 17:11:15;duration:0;#
+2026-10-07T16:11:16Z FILE /app/sd/normal/SP_0276.dng
+2026-10-07T16:11:16Z RX 775@status:1;totalspace:121866;freespace:112971;usespace:8894;#
+2026-10-07T16:11:16Z RX 773@type:1;path:/app/sd/normal/SP_0276.jpg;size:406414;cTime:2026-10-07 17:11:15;duration:0;#
+2026-10-07T16:11:16Z FILE /app/sd/normal/SP_0276.jpg
+2026-10-07T16:11:16Z RX 775@status:1;totalspace:121866;freespace:112971;usespace:8895;#
+2026-10-07T16:11:16Z RX 264@state:0;#
+2026-10-07T16:11:16Z CAPTURE state=0 lifecycle=[1, 4, 0]
+2026-10-07T16:11:16Z PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0276.dng', '/app/sd/normal/SP_0276.jpg']
+2026-10-07T16:11:16Z DONE states=[1, 4, 0] files=['/app/sd/normal/SP_0276.dng', '/app/sd/normal/SP_0276.jpg']
+
+# T2/T3 RESULT: BOTH PASS on clean boot + fresh camera battery.
+# T2 (16:09): app-path, LV ON, EV 0, 1/125 -> full lifecycle 1->4->0, 2 files, 5 s.
+# T3 (16:10): app-path, LV ON, EV -5, 30 s (the EXACT original failure condition)
+#             -> full lifecycle 1->4->0, 2 files, 39 s. No drop.
+# Conclusion: EV/shutter/LV/app-path were never the cause. The post-14:38-reboot
+# daemon was wedged (capture accepted -> numOfCaptureImage -> silence) while the
+# supervisor still considered the system healthy because its health model is
+# USB-identity-only. Only a full gimbal reboot restored capture.
