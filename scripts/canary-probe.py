@@ -113,6 +113,7 @@ def bulb_capture_payload(seconds: float | None) -> str:
 # See docs/evidence/bulb-root-cause-20261005/SUMMARY.md.
 SHUTTER_SET_COMMAND = 261
 SHUTTER_INFO_COMMAND = 268
+EV_SET_COMMAND = 260
 
 
 def parse_shutter_seconds(label: str) -> float | None:
@@ -301,6 +302,24 @@ def set_shutter(
     return response
 
 
+def set_ev(p: Polaris, index: int, timeout: float = 10.0) -> str:
+    """Set EV compensation through the app's own command 260 (`ev:<index>;`).
+
+    The K-3 III exposes 31 entries (idx 0 = +5 … idx 30 = -5, 1/3-stop steps).
+    `ret:0` is the camera's acceptance; unlike 261 shutter writes this one was
+    observed to apply immediately (Mlog 14:09:01 ev:30 -> ret:0 in 66 ms).
+    """
+    if not 0 <= index <= 30:
+        raise ValueError("--ev-index must be within the camera's 0..30 option list")
+    p.send(EV_SET_COMMAND, payload=f"ev:{index};")
+    response = p.wait_code(EV_SET_COMMAND, timeout)
+    ret = field(response, "ret")
+    if ret != "0":
+        raise RuntimeError(f"EV index {index} lacked explicit ret:0: {response}")
+    print(f"{stamp()} EV index={index} response={response}", flush=True)
+    return response
+
+
 @contextmanager
 def bulb_shutter_session(
     p: Polaris,
@@ -373,6 +392,16 @@ def main() -> int:
                     help="optional override for the shutter index written through command 261")
     ap.add_argument("--expected-sw",
                     help="require this exact code-780 sw firmware version from the live device")
+    ap.add_argument("--keep-preview", action="store_true",
+                    help="app-path reproduction: leave live view running (start it if off) "
+                         "instead of forcing preview off before the capture")
+    ap.add_argument("--ev-index", type=int,
+                    help="set the camera EV compensation to this option-list index via code 260 "
+                         "before the capture (0=+5 .. 15=0 .. 30=-5 on the K-3 III)")
+    ap.add_argument("--shutter-index", type=int,
+                    help="set the camera shutter to this option-list index via code 261 before "
+                         "the capture and LEAVE it set (app path); unlike --bulb-seconds this "
+                         "does not wrap the shot in a bulb session")
     args = ap.parse_args()
     if not args.probe and not args.shot:
         ap.error("choose --probe or --shot")
@@ -386,6 +415,10 @@ def main() -> int:
         ap.error("--bulb-seconds requires --shot")
     if args.bulb_shutter_index is not None and args.bulb_seconds is None:
         ap.error("--bulb-shutter-index requires --bulb-seconds")
+    if args.shutter_index is not None and args.bulb_seconds is not None:
+        ap.error("--shutter-index (app path) conflicts with --bulb-seconds (canary path)")
+    if (args.ev_index is not None or args.keep_preview) and not args.shot:
+        ap.error("--ev-index/--keep-preview require --shot")
     if args.expected_sw is not None and not (args.probe or args.shot):
         ap.error("--expected-sw requires --probe or --shot")
 
@@ -417,18 +450,31 @@ def main() -> int:
             return 0
 
         if args.shot:
-            # preview off
+            # preview: app-path reproduction keeps live view running; the
+            # default canary path forces it off (unchanged behaviour).
             p.send(292)
             preview = p.wait_code(292, 10)
             pv_state = field(preview, "state")
             print(f"{stamp()} PREVIEW initial_state={pv_state}", flush=True)
-            if pv_state != "0":
+            if args.keep_preview:
+                if pv_state != "1":
+                    p.send(291, payload="state:1;")
+                    started = p.wait_code(291, 15)
+                    print(f"{stamp()} PREVIEW start_ack={started}", flush=True)
+            elif pv_state != "0":
                 p.send(291, payload="state:0;")
                 stopped = p.wait_code(291, 15)
                 print(f"{stamp()} PREVIEW stop_ack={stopped}", flush=True)
                 p.send(292)
                 confirmed = p.wait_code(292, 10)
                 print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
+
+            # app-path settings: camera-side EV/shutter via the app's own
+            # commands, left in place (no bulb session, no restore).
+            if args.ev_index is not None:
+                set_ev(p, args.ev_index)
+            if args.shutter_index is not None:
+                set_shutter(p, args.shutter_index)
 
             # ONE capture
             shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
