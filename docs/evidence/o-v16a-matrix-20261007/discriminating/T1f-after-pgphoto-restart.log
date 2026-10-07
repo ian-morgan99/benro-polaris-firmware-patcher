@@ -1,0 +1,21 @@
+2026-10-07T15:30:39Z TX 1&284&2&-100#
+2026-10-07T15:30:39Z RX 284@mode:1;state:0;#
+2026-10-07T15:30:39Z TX 1&820&2&-100#
+2026-10-07T15:30:39Z RX 820@ret:-1;#
+2026-10-07T15:30:39Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-10-07T15:30:39Z TX 1&286&2&-100#
+2026-10-07T15:30:39Z RX 286@manufacturer:none;model:none;state:-2;storage:0;photoFormat:0;#
+2026-10-07T15:30:39Z CAMERA manufacturer:none;model:none;state:-2;storage:0;photoFormat:0;
+2026-10-07T15:30:39Z SUMMARY model=none state=-2 photoFormat=0
+2026-10-07T15:30:39Z TX 1&292&2&-100#
+2026-10-07T15:30:39Z RX 292@state:1;#
+2026-10-07T15:30:39Z PREVIEW initial_state=1
+2026-10-07T15:30:39Z TX 1&291&2&state:0;#
+2026-10-07T15:30:39Z RX 291@state:0;ret:0;#
+2026-10-07T15:30:39Z PREVIEW stop_ack=state:0;ret:0;
+2026-10-07T15:30:39Z TX 1&292&2&-100#
+2026-10-07T15:30:39Z RX 292@state:0;#
+2026-10-07T15:30:39Z PREVIEW confirmed=state:0;
+2026-10-07T15:30:39Z TX 1&260&2&ev:15;#
+2026-10-07T15:30:39Z RX 260@ev:15;ret:-1;#
+2026-10-07T15:30:39Z FAIL RuntimeError: EV index 15 lacked explicit ret:0: ev:15;ret:-1;

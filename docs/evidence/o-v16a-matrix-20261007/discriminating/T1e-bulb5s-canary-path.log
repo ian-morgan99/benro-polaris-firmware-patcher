@@ -1,0 +1,58 @@
+2026-10-07T15:27:45Z TX 1&284&2&-100#
+2026-10-07T15:27:45Z RX 284@mode:1;state:0;#
+2026-10-07T15:27:45Z TX 1&820&2&-100#
+2026-10-07T15:27:45Z RX 820@ret:-1;#
+2026-10-07T15:27:45Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-10-07T15:27:45Z TX 1&286&2&-100#
+2026-10-07T15:27:45Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-10-07T15:27:45Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-10-07T15:27:45Z SUMMARY model=pentax k-3 mark iii state=1 photoFormat=2
+2026-10-07T15:27:45Z TX 1&292&2&-100#
+2026-10-07T15:27:45Z RX 292@state:1;#
+2026-10-07T15:27:45Z PREVIEW initial_state=1
+2026-10-07T15:27:45Z TX 1&291&2&state:0;#
+2026-10-07T15:27:46Z RX 291@state:0;ret:0;#
+2026-10-07T15:27:46Z PREVIEW stop_ack=state:0;ret:0;
+2026-10-07T15:27:46Z TX 1&292&2&-100#
+2026-10-07T15:27:46Z RX 292@state:0;#
+2026-10-07T15:27:46Z PREVIEW confirmed=state:0;
+2026-10-07T15:27:46Z TX 1&268&2&-100#
+2026-10-07T15:27:46Z RX 268@RD:0;V:18;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,00-01,13/10,16/10,00-02,25/10,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;#
+2026-10-07T15:27:46Z SHUTTER_OPTIONS current=18 options=['1/8000', '1/6400', '1/5000', '1/4000', '1/3200', '1/2500', '1/2000', '1/1600', '1/1250', '1/1000', '1/800', '1/640', '1/500', '1/400', '1/320', '1/250', '1/200', '1/160', '1/125', '1/100', '1/80', '1/60', '1/50', '1/40', '1/30', '1/25', '1/20', '1/15', '1/13', '1/10', '1/8', '1/6', '1/5', '1/4', '3/10', '4/10', '5/10', '6/10', '8/10', '00-01', '13/10', '16/10', '00-02', '25/10', '00-03', '00-04', '00-05', '00-06', '00-08', '00-10', '00-13', '00-15', '00-20', '00-25', '00-30']
+2026-10-07T15:27:46Z TX 1&261&2&s:46;#
+2026-10-07T15:27:47Z RX 261@s:46;ret:0;#
+2026-10-07T15:27:47Z SHUTTER index=46 response=s:46;ret:0;
+2026-10-07T15:27:47Z TX 1&268&2&-100#
+2026-10-07T15:27:47Z RX 268@RD:0;V:18;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,00-01,13/10,16/10,00-02,25/10,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;#
+2026-10-07T15:27:47Z SHUTTER index=46 not yet visible (V:18), re-reading in 1.0s
+2026-10-07T15:27:48Z TX 1&268&2&-100#
+2026-10-07T15:27:48Z RX 268@RD:0;V:46;R:1/8000,1/6400,1/5000,1/4000,1/3200,1/2500,1/2000,1/1600,1/1250,1/1000,1/800,1/640,1/500,1/400,1/320,1/250,1/200,1/160,1/125,1/100,1/80,1/60,1/50,1/40,1/30,1/25,1/20,1/15,1/13,1/10,1/8,1/6,1/5,1/4,3/10,4/10,5/10,6/10,8/10,00-01,13/10,16/10,00-02,25/10,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;#
+2026-10-07T15:27:48Z SHUTTER index=46 confirmed after 2 readbacks (the camera applies 261 writes asynchronously)
+2026-10-07T15:27:48Z BULB shutter_index=46 shutter_label='00-05' shutter_seconds=5.0 requested_seconds=5.0 prior_index=18
+2026-10-07T15:27:48Z BULB requested_seconds=5.0 shot_timeout=180.0s
+2026-10-07T15:27:48Z TX 1&264&4&state:1;bulb:5;c:-1;#
+2026-10-07T15:27:48Z RX 264@state:1#
+2026-10-07T15:27:48Z CAPTURE state=1 lifecycle=[1]
+2026-10-07T15:27:57Z RX 525@Tempa509ca361c0000255a ;#
+2026-10-07T15:28:26Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-10-07T15:28:26Z RX 282@format:3;#
+2026-10-07T15:28:27Z RX 525@Tempa509ca361c0000255a ;#
+2026-10-07T15:28:38Z RX 265@RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;#
+2026-10-07T15:28:38Z RX 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;#
+2026-10-07T15:28:38Z RX 267@RD:0;V:15;R:5,4.7,4.3,4,3.7,3.3,3,2.7,2.3,2,1.7,1.3,1,0.7,0.3,0,-0.3,-0.7,-1,-1.3,-1.7,-2,-2.3,-2.7,-3,-3.3,-3.7,-4,-4.3,-4.7,-5,;#
+2026-10-07T15:28:38Z RX 275@RD:0;V:0;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;#
+2026-10-07T15:28:58Z RX 525@Tempa509ca361c0000255a ;#
+
+# T1e/T1f RESULT: the discriminator inverted. After the 14:38 gimbal reboot,
+# EVERY capture path fails identically (T1c app-path LV-on, T1d app-path LV-off,
+# T1e bulb path 5s - the path that passed 21+ times pre-reboot):
+#   captureImage -> numOfCaptureImage 2 -> SILENCE. No 264 lifecycle, no 773.
+# The camera DOES fire every time (IMGP3836..3839 all landed on-card and were
+# orphan-recovered, 28-35 MB each). No USB drops, no restarts, no crashes.
+# So: post-reboot, the daemon's capture-completion flow is wedged for ALL
+# paths; the app-session hypothesis is NOT the (only) cause of T1/T1b.
+# /app/restart_gphoto then hit the stale-PTP-session trap (0x2002 / "session
+# already open"); USB unbind/bind re-enumerated the camera (1:3) and vendor
+# enable succeeded, but the session stayed model=none state=-2; OpenSession now
+# returns 0x02ff with CloseSession 0x02fa. Software recovery exhausted ->
+# camera power cycle required (same failure mode as #181).
