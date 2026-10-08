@@ -51,9 +51,9 @@ int main(int argc, char **argv)
     printf("protection violations=%d (8 combinations, 3 shots, success/timeout)\n",
            violations);
     if (!require) {
-        /* Frozen-source diagnostic, not a green protection/firmware gate. */
-        assert(violations == 12);
-        puts("OBSERVATION CONFIRMED: trace bypasses enabled protections");
+        /* Diagnostic only; enforcement below is the protection gate. */
+        puts(violations ? "OBSERVATION: enabled protections bypassed"
+                        : "OBSERVATION: enabled protections preserved");
         return 0;
     }
     if (violations) {
@@ -62,3 +62,4 @@ int main(int argc, char **argv)
     }
     return 0;
 }
+

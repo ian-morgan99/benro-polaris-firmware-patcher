@@ -1,3 +1,33 @@
+# Capture tracing composition repair (#188)
+
+The user explicitly authorized only the composition repair on patcher
+`afef264a0a0c9d5464e644e033a374ec9e8ff9e2`. The missing historical v10 binding
+is not a blocker for this scoped repair.
+
+Capture tracing now uses the same wrapper as the enabled in-flight guard and
+empty-path check. The core is called once; trace output records its raw return;
+valid paths and core errors retain their values. With every flag disabled the
+slot still targets the original function directly. Flag defaults are unchanged.
+This repairs a proven software defect; it does not establish that the physical
+camera crash or app completion behavior is resolved.
+
+The new deterministic regression covers 144 calls across all eight flag
+combinations, repeated populated/empty paths, timeout errors, non-still captures,
+and null paths. It also checks init guarding, argument forwarding, marker cleanup,
+trace counts, and direct selection. It fails against the original loader and
+passes against this repair, including ASan/UBSan with leak detection disabled.
+Seven stage-2 host tests pass. The ARM compile test skips without its compiler.
+The offline prerelease gate is not green: pytest and pyelftools are unavailable
+in this workspace. No readiness or physical PASS is claimed. See
+[composition-results.txt](composition-results.txt) for verification details.
+
+## Historical Phase 0 report
+
+The report below records the analysis before the scoped authorization. Its stop
+status, source line references and red probe results describe that frozen
+baseline, not the repaired branch. The historical v10 gap remains relevant to
+restoring or comparing the old build, not to this authorized composition fix.
+
 # Pentax capture recovery: Phase 0 stop report (#188)
 
 Status: **ANALYSIS COMPLETE TO THE PROVENANCE STOP; FUNCTIONAL WORK BLOCKED.**
