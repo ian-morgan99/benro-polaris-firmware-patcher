@@ -1,0 +1,456 @@
+
+[stage2] *** CRASH sig=4 (SIGILL) si_addr=0x00393a38 pc=0x00393a38
+[stage2]   arm lr=0xb6935b34 sp=0xb68c1ee8 r0=0xb5600e38 r1=0x42240000 r2=0xb5600fb8 r3=0x00000000 r12=0x00000025
+[stage2]   slot region [0x30000000,0x30000100)  si_addr is NOT in the slot region
+[stage2]   pc classify: not null, not the stub, not a current slot target
+[stage2]   last checkpoint reached: slots filled
+[stage2] process maps begin
+00010000-002e0000 r-xp 00000000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+002f0000-002f7000 r-xp 002d0000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+002f7000-00312000 rwxp 002d7000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+00312000-003ed000 rwxp 00000000 00:00 0          [heap]
+30000000-30001000 rwxp 00000000 00:00 0 
+b18ff000-b1a00000 rwxp 00000000 00:00 0 
+b1a00000-b1a01000 ---p 00000000 00:00 0 
+b1a01000-b2200000 rwxp 00000000 00:00 0 
+b2200000-b223c000 rwxp 00000000 00:00 0 
+b223c000-b2300000 ---p 00000000 00:00 0 
+b2400000-b2401000 ---p 00000000 00:00 0 
+b2401000-b2c00000 rwxp 00000000 00:00 0 
+b2c00000-b2c21000 rwxp 00000000 00:00 0 
+b2c21000-b2d00000 ---p 00000000 00:00 0 
+b2d54000-b2d55000 ---p 00000000 00:00 0 
+b2d55000-b3554000 rwxp 00000000 00:00 0 
+b3554000-b3555000 ---p 00000000 00:00 0 
+b3555000-b3d54000 rwxp 00000000 00:00 0 
+b3d54000-b3d55000 ---p 00000000 00:00 0 
+b3d55000-b4554000 rwxp 00000000 00:00 0 
+b4554000-b4555000 ---p 00000000 00:00 0 
+b4555000-b4d54000 rwxp 00000000 00:00 0 
+b4d54000-b5441000 rwxp 00000000 00:00 0 
+b547e000-b5600000 rwxp 00000000 00:00 0 
+b5600000-b5640000 rwxp 00000000 00:00 0 
+b5640000-b5700000 ---p 00000000 00:00 0 
+b571e000-b575f000 rwxp 00000000 00:00 0 
+b575f000-b5830000 r-xp 00000000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b5830000-b5840000 ---p 000d1000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b5840000-b584b000 r-xp 000d1000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b584b000-b585d000 rwxp 000dc000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b585d000-b585e000 ---p 00000000 00:00 0 
+b585e000-b605d000 rwxp 00000000 00:00 0 
+b605d000-b6079000 r-xp 00000000 00:0c 155        /lib/libudev.so.1
+b6079000-b6089000 ---p 0001c000 00:0c 155        /lib/libudev.so.1
+b6089000-b608a000 r-xp 0001c000 00:0c 155        /lib/libudev.so.1
+b608a000-b608b000 rwxp 0001d000 00:0c 155        /lib/libudev.so.1
+b608b000-b609f000 r-xp 00000000 00:0e 333        /app/lib/libusb-1.0.so.0
+b609f000-b60ae000 ---p 00014000 00:0e 333        /app/lib/libusb-1.0.so.0
+b60ae000-b60af000 r-xp 00013000 00:0e 333        /app/lib/libusb-1.0.so.0
+b60af000-b60b0000 rwxp 00014000 00:0e 333        /app/lib/libusb-1.0.so.0
+b60b0000-b60b6000 r-xp 00000000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b60b6000-b60c6000 ---p 00006000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b60c6000-b60c7000 r-xp 00006000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b60c7000-b60c8000 rwxp 00007000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b60c8000-b60c9000 ---p 00000000 00:00 0 
+b60c9000-b68c8000 rwxp 00000000 00:00 0 
+b68c8000-b68f1000 r-xp 00000000 00:0e 302        /app/lib/libexif.so.12
+b68f1000-b6900000 ---p 00029000 00:0e 302        /app/lib/libexif.so.12
+b6900000-b690c000 r-xp 00028000 00:0e 302        /app/lib/libexif.so.12
+b690c000-b690d000 rwxp 00034000 00:0e 302        /app/lib/libexif.so.12
+b690d000-b6916000 r-xp 00000000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6916000-b6925000 ---p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6925000-b6926000 r-xp 00008000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6926000-b6927000 rwxp 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6927000-b6947000 r-xp 00000000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6947000-b6956000 ---p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6956000-b6957000 r-xp 0001f000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6957000-b6958000 rwxp 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6958000-b69b8000 rwxp 00000000 00:00 0 
+b69b8000-b69bf000 r-xp 00000000 00:0c 186        /lib/ld-uClibc.so.0
+b69bf000-b69ce000 ---p 00007000 00:0c 186        /lib/ld-uClibc.so.0
+b69ce000-b69cf000 r-xp 00006000 00:0c 186        /lib/ld-uClibc.so.0
+b69cf000-b69d0000 rwxp 00007000 00:0c 186        /lib/ld-uClibc.so.0
+b69d0000-b6a6d000 r-xp 00000000 00:0c 153        /lib/libc.so.0
+b6a6d000-b6a7c000 ---p 0009d000 00:0c 153        /lib/libc.so.0
+b6a7c000-b6a7d000 r-xp 0009c000 00:0c 153        /lib/libc.so.0
+b6a7d000-b6a7e000 rwxp 0009d000 00:0c 153        /lib/libc.so.0
+b6a7e000-b6a83000 rwxp 00000000 00:00 0 
+b6a83000-b6a9f000 r-xp 00000000 00:0c 166        /lib/libgcc_s.so.1
+b6a9f000-b6aae000 ---p 0001c000 00:0c 166        /lib/libgcc_s.so.1
+b6aae000-b6aaf000 r-xp 0001b000 00:0c 166        /lib/libgcc_s.so.1
+b6aaf000-b6ab0000 rwxp 0001c000 00:0c 166        /lib/libgcc_s.so.1
+b6ab0000-b6ad6000 r-xp 00000000 00:0c 180        /lib/libgomp.so.1.0.0
+b6ad6000-b6ae5000 ---p 00026000 00:0c 180        /lib/libgomp.so.1.0.0
+b6ae5000-b6ae6000 r-xp 00025000 00:0c 180        /lib/libgomp.so.1.0.0
+b6ae6000-b6ae7000 rwxp 00026000 00:0c 180        /lib/libgomp.so.1.0.0
+b6ae7000-b6afe000 r-xp 00000000 00:0c 249        /lib/libz.so.1
+b6afe000-b6b0d000 ---p 00017000 00:0c 249        /lib/libz.so.1
+b6b0d000-b6b0e000 r-xp 00016000 00:0c 249        /lib/libz.so.1
+b6b0e000-b6b0f000 rwxp 00017000 00:0c 249        /lib/libz.so.1
+b6b0f000-b6b2c000 r-xp 00000000 00:0e 378        /app/lib/liblzma.so.5
+b6b2c000-b6b3c000 ---p 0001d000 00:0e 378        /app/lib/liblzma.so.5
+b6b3c000-b6b3d000 r-xp 0001d000 00:0e 378        /app/lib/liblzma.so.5
+b6b3d000-b6b3e000 rwxp 0001e000 00:0e 378        /app/lib/liblzma.so.5
+b6b3e000-b6b45000 r-xp 00000000 00:0e 275        /app/lib/libltdl.so.7
+b6b45000-b6b54000 ---p 00007000 00:0e 275        /app/lib/libltdl.so.7
+b6b54000-b6b55000 r-xp 00006000 00:0e 275        /app/lib/libltdl.so.7
+b6b55000-b6b56000 rwxp 00007000 00:0e 275        /app/lib/libltdl.so.7
+b6b56000-b6c7c000 r-xp 00000000 00:0c 257        /lib/libc-2.24.so
+b6c7c000-b6c8c000 ---p 00126000 00:0c 257        /lib/libc-2.24.so
+b6c8c000-b6c8e000 r-xp 00126000 00:0c 257        /lib/libc-2.24.so
+b6c8e000-b6c8f000 rwxp 00128000 00:0c 257        /lib/libc-2.24.so
+b6c8f000-b6c92000 rwxp 00000000 00:00 0 
+b6c92000-b6dbf000 r-xp 00000000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6dbf000-b6dce000 ---p 0012d000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6dce000-b6dd3000 r-xp 0012c000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6dd3000-b6dd5000 rwxp 00131000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6dd5000-b6dd7000 rwxp 00000000 00:00 0 
+b6dd7000-b6e48000 r-xp 00000000 00:0c 144        /lib/libm-2.24.so
+b6e48000-b6e57000 ---p 00071000 00:0c 144        /lib/libm-2.24.so
+b6e57000-b6e58000 r-xp 00070000 00:0c 144        /lib/libm-2.24.so
+b6e58000-b6e59000 rwxp 00071000 00:0c 144        /lib/libm-2.24.so
+b6e59000-b6e6a000 r-xp 00000000 00:0c 189        /lib/libsecurec.so
+b6e6a000-b6e79000 ---p 00011000 00:0c 189        /lib/libsecurec.so
+b6e79000-b6e7a000 r-xp 00010000 00:0c 189        /lib/libsecurec.so
+b6e7a000-b6e7b000 rwxp 00011000 00:0c 189        /lib/libsecurec.so
+b6e7b000-b6e7c000 r-xp 00000000 00:0c 173        /lib/libuproc.so
+b6e7c000-b6e8b000 ---p 00001000 00:0c 173        /lib/libuproc.so
+b6e8b000-b6e8c000 r-xp 00000000 00:0c 173        /lib/libuproc.so
+b6e8c000-b6e8d000 rwxp 00001000 00:0c 173        /lib/libuproc.so
+b6e8d000-b6e90000 r-xp 00000000 00:0c 201        /lib/libtimers.so
+b6e90000-b6e9f000 ---p 00003000 00:0c 201        /lib/libtimers.so
+b6e9f000-b6ea0000 r-xp 00002000 00:0c 201        /lib/libtimers.so
+b6ea0000-b6ea1000 rwxp 00003000 00:0c 201        /lib/libtimers.so
+b6ea1000-b6ea2000 rwxp 00000000 00:00 0 
+b6ea2000-b6eb8000 r-xp 00000000 00:0c 253        /lib/libpthread-2.24.so
+b6eb8000-b6ec8000 ---p 00016000 00:0c 253        /lib/libpthread-2.24.so
+b6ec8000-b6ec9000 r-xp 00016000 00:0c 253        /lib/libpthread-2.24.so
+b6ec9000-b6eca000 rwxp 00017000 00:0c 253        /lib/libpthread-2.24.so
+b6eca000-b6ecc000 rwxp 00000000 00:00 0 
+b6ecc000-b6ece000 r-xp 00000000 00:0c 250        /lib/libdl-2.24.so
+b6ece000-b6edd000 ---p 00002000 00:0c 250        /lib/libdl-2.24.so
+b6edd000-b6ede000 r-xp 00001000 00:0c 250        /lib/libdl-2.24.so
+b6ede000-b6edf000 rwxp 00002000 00:0c 250        /lib/libdl-2.24.so
+b6edf000-b6ee5000 r-xp 00000000 00:0c 252        /lib/librt-2.24.so
+b6ee5000-b6ef4000 ---p 00006000 00:0c 252        /lib/librt-2.24.so
+b6ef4000-b6ef5000 r-xp 00005000 00:0c 252        /lib/librt-2.24.so
+b6ef5000-b6ef6000 rwxp 00006000 00:0c 252        /lib/librt-2.24.so
+b6ef6000-b6efe000 r-xp 00000000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6efe000-b6f0d000 ---p 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f0d000-b6f0e000 r-xp 00007000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f0e000-b6f0f000 rwxp 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f0f000-b6f2f000 r-xp 00000000 00:0c 222        /lib/ld-2.24.so
+b6f35000-b6f3e000 rwxp 00000000 00:00 0 
+b6f3e000-b6f3f000 r-xp 0001f000 00:0c 222        /lib/ld-2.24.so
+b6f3f000-b6f40000 rwxp 00020000 00:0c 222        /lib/ld-2.24.so
+beeaf000-beed0000 rw-p 00000000 00:00 0          [stack]
+bef1a000-bef1b000 r-xp 00000000 00:00 0          [sigpage]
+bef1b000-bef1c000 r--p 00000000 00:00 0          [vvar]
+bef1c000-bef1d000 r-xp 00000000 00:00 0          [vdso]
+ffff0000-ffff1000 r-xp 00000000 00:00 0          [vectors]
+[stage2] process maps end
+
+[stage2] *** CRASH sig=11 (SIGSEGV) si_addr=0x00500046 pc=0x00500046
+[stage2]   arm lr=0xb69a3b34 sp=0xb692fee8 r0=0xb56084f8 r1=0x42240000 r2=0xb56235d8 r3=0x0044002e r12=0x00000025
+[stage2]   slot region [0x30000000,0x30000100)  si_addr is NOT in the slot region
+[stage2]   pc classify: not null, not the stub, not a current slot target
+[stage2]   last checkpoint reached: slots filled
+[stage2] process maps begin
+00010000-002e0000 r-xp 00000000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+002f0000-002f7000 r--p 002d0000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+002f7000-00312000 rw-p 002d7000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+00312000-003dc000 rw-p 00000000 00:00 0          [heap]
+30000000-30001000 rw-p 00000000 00:00 0 
+b20ff000-b2200000 rw-p 00000000 00:00 0 
+b2200000-b222b000 rw-p 00000000 00:00 0 
+b222b000-b2300000 ---p 00000000 00:00 0 
+b2400000-b2401000 ---p 00000000 00:00 0 
+b2401000-b2c00000 rw-p 00000000 00:00 0 
+b2c00000-b2c21000 rw-p 00000000 00:00 0 
+b2c21000-b2d00000 ---p 00000000 00:00 0 
+b2dc2000-b2dc3000 ---p 00000000 00:00 0 
+b2dc3000-b35c2000 rw-p 00000000 00:00 0 
+b35c2000-b35c3000 ---p 00000000 00:00 0 
+b35c3000-b3dc2000 rw-p 00000000 00:00 0 
+b3dc2000-b3dc3000 ---p 00000000 00:00 0 
+b3dc3000-b45c2000 rw-p 00000000 00:00 0 
+b45c2000-b45c3000 ---p 00000000 00:00 0 
+b45c3000-b4dc2000 rw-p 00000000 00:00 0 
+b4dc2000-b54af000 rw-p 00000000 00:00 0 
+b54ff000-b5600000 rw-p 00000000 00:00 0 
+b5600000-b5668000 rw-p 00000000 00:00 0 
+b5668000-b5700000 ---p 00000000 00:00 0 
+b574c000-b57cd000 rw-p 00000000 00:00 0 
+b57cd000-b589e000 r-xp 00000000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b589e000-b58ae000 ---p 000d1000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b58ae000-b58b9000 r--p 000d1000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b58b9000-b58cb000 rw-p 000dc000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b58cb000-b58cc000 ---p 00000000 00:00 0 
+b58cc000-b60cb000 rw-p 00000000 00:00 0 
+b60cb000-b60e7000 r-xp 00000000 00:0c 155        /lib/libudev.so.1
+b60e7000-b60f7000 ---p 0001c000 00:0c 155        /lib/libudev.so.1
+b60f7000-b60f8000 r--p 0001c000 00:0c 155        /lib/libudev.so.1
+b60f8000-b60f9000 rw-p 0001d000 00:0c 155        /lib/libudev.so.1
+b60f9000-b610d000 r-xp 00000000 00:0e 333        /app/lib/libusb-1.0.so.0
+b610d000-b611c000 ---p 00014000 00:0e 333        /app/lib/libusb-1.0.so.0
+b611c000-b611d000 r--p 00013000 00:0e 333        /app/lib/libusb-1.0.so.0
+b611d000-b611e000 rw-p 00014000 00:0e 333        /app/lib/libusb-1.0.so.0
+b611e000-b6124000 r-xp 00000000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b6124000-b6134000 ---p 00006000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b6134000-b6135000 r--p 00006000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b6135000-b6136000 rw-p 00007000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b6136000-b6137000 ---p 00000000 00:00 0 
+b6137000-b6936000 rw-p 00000000 00:00 0 
+b6936000-b695f000 r-xp 00000000 00:0e 302        /app/lib/libexif.so.12
+b695f000-b696e000 ---p 00029000 00:0e 302        /app/lib/libexif.so.12
+b696e000-b697a000 r--p 00028000 00:0e 302        /app/lib/libexif.so.12
+b697a000-b697b000 rw-p 00034000 00:0e 302        /app/lib/libexif.so.12
+b697b000-b6984000 r-xp 00000000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6984000-b6993000 ---p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6993000-b6994000 r--p 00008000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6994000-b6995000 rw-p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6995000-b69b5000 r-xp 00000000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b69b5000-b69c4000 ---p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b69c4000-b69c5000 r--p 0001f000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b69c5000-b69c6000 rw-p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b69c6000-b6a26000 rw-p 00000000 00:00 0 
+b6a26000-b6a2d000 r-xp 00000000 00:0c 186        /lib/ld-uClibc.so.0
+b6a2d000-b6a3c000 ---p 00007000 00:0c 186        /lib/ld-uClibc.so.0
+b6a3c000-b6a3d000 r--p 00006000 00:0c 186        /lib/ld-uClibc.so.0
+b6a3d000-b6a3e000 rw-p 00007000 00:0c 186        /lib/ld-uClibc.so.0
+b6a3e000-b6adb000 r-xp 00000000 00:0c 153        /lib/libc.so.0
+b6adb000-b6aea000 ---p 0009d000 00:0c 153        /lib/libc.so.0
+b6aea000-b6aeb000 r--p 0009c000 00:0c 153        /lib/libc.so.0
+b6aeb000-b6aec000 rw-p 0009d000 00:0c 153        /lib/libc.so.0
+b6aec000-b6af1000 rw-p 00000000 00:00 0 
+b6af1000-b6b0d000 r-xp 00000000 00:0c 166        /lib/libgcc_s.so.1
+b6b0d000-b6b1c000 ---p 0001c000 00:0c 166        /lib/libgcc_s.so.1
+b6b1c000-b6b1d000 r--p 0001b000 00:0c 166        /lib/libgcc_s.so.1
+b6b1d000-b6b1e000 rw-p 0001c000 00:0c 166        /lib/libgcc_s.so.1
+b6b1e000-b6b44000 r-xp 00000000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b44000-b6b53000 ---p 00026000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b53000-b6b54000 r--p 00025000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b54000-b6b55000 rw-p 00026000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b55000-b6b6c000 r-xp 00000000 00:0c 249        /lib/libz.so.1
+b6b6c000-b6b7b000 ---p 00017000 00:0c 249        /lib/libz.so.1
+b6b7b000-b6b7c000 r--p 00016000 00:0c 249        /lib/libz.so.1
+b6b7c000-b6b7d000 rw-p 00017000 00:0c 249        /lib/libz.so.1
+b6b7d000-b6b9a000 r-xp 00000000 00:0e 378        /app/lib/liblzma.so.5
+b6b9a000-b6baa000 ---p 0001d000 00:0e 378        /app/lib/liblzma.so.5
+b6baa000-b6bab000 r--p 0001d000 00:0e 378        /app/lib/liblzma.so.5
+b6bab000-b6bac000 rw-p 0001e000 00:0e 378        /app/lib/liblzma.so.5
+b6bac000-b6bb3000 r-xp 00000000 00:0e 275        /app/lib/libltdl.so.7
+b6bb3000-b6bc2000 ---p 00007000 00:0e 275        /app/lib/libltdl.so.7
+b6bc2000-b6bc3000 r--p 00006000 00:0e 275        /app/lib/libltdl.so.7
+b6bc3000-b6bc4000 rw-p 00007000 00:0e 275        /app/lib/libltdl.so.7
+b6bc4000-b6cea000 r-xp 00000000 00:0c 257        /lib/libc-2.24.so
+b6cea000-b6cfa000 ---p 00126000 00:0c 257        /lib/libc-2.24.so
+b6cfa000-b6cfc000 r--p 00126000 00:0c 257        /lib/libc-2.24.so
+b6cfc000-b6cfd000 rw-p 00128000 00:0c 257        /lib/libc-2.24.so
+b6cfd000-b6d00000 rw-p 00000000 00:00 0 
+b6d00000-b6e2d000 r-xp 00000000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6e2d000-b6e3c000 ---p 0012d000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6e3c000-b6e41000 r--p 0012c000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6e41000-b6e43000 rw-p 00131000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6e43000-b6e45000 rw-p 00000000 00:00 0 
+b6e45000-b6eb6000 r-xp 00000000 00:0c 144        /lib/libm-2.24.so
+b6eb6000-b6ec5000 ---p 00071000 00:0c 144        /lib/libm-2.24.so
+b6ec5000-b6ec6000 r--p 00070000 00:0c 144        /lib/libm-2.24.so
+b6ec6000-b6ec7000 rw-p 00071000 00:0c 144        /lib/libm-2.24.so
+b6ec7000-b6ed8000 r-xp 00000000 00:0c 189        /lib/libsecurec.so
+b6ed8000-b6ee7000 ---p 00011000 00:0c 189        /lib/libsecurec.so
+b6ee7000-b6ee8000 r--p 00010000 00:0c 189        /lib/libsecurec.so
+b6ee8000-b6ee9000 rw-p 00011000 00:0c 189        /lib/libsecurec.so
+b6ee9000-b6eea000 r-xp 00000000 00:0c 173        /lib/libuproc.so
+b6eea000-b6ef9000 ---p 00001000 00:0c 173        /lib/libuproc.so
+b6ef9000-b6efa000 r--p 00000000 00:0c 173        /lib/libuproc.so
+b6efa000-b6efb000 rw-p 00001000 00:0c 173        /lib/libuproc.so
+b6efb000-b6efe000 r-xp 00000000 00:0c 201        /lib/libtimers.so
+b6efe000-b6f0d000 ---p 00003000 00:0c 201        /lib/libtimers.so
+b6f0d000-b6f0e000 r--p 00002000 00:0c 201        /lib/libtimers.so
+b6f0e000-b6f0f000 rw-p 00003000 00:0c 201        /lib/libtimers.so
+b6f0f000-b6f10000 rw-p 00000000 00:00 0 
+b6f10000-b6f26000 r-xp 00000000 00:0c 253        /lib/libpthread-2.24.so
+b6f26000-b6f36000 ---p 00016000 00:0c 253        /lib/libpthread-2.24.so
+b6f36000-b6f37000 r--p 00016000 00:0c 253        /lib/libpthread-2.24.so
+b6f37000-b6f38000 rw-p 00017000 00:0c 253        /lib/libpthread-2.24.so
+b6f38000-b6f3a000 rw-p 00000000 00:00 0 
+b6f3a000-b6f3c000 r-xp 00000000 00:0c 250        /lib/libdl-2.24.so
+b6f3c000-b6f4b000 ---p 00002000 00:0c 250        /lib/libdl-2.24.so
+b6f4b000-b6f4c000 r--p 00001000 00:0c 250        /lib/libdl-2.24.so
+b6f4c000-b6f4d000 rw-p 00002000 00:0c 250        /lib/libdl-2.24.so
+b6f4d000-b6f53000 r-xp 00000000 00:0c 252        /lib/librt-2.24.so
+b6f53000-b6f62000 ---p 00006000 00:0c 252        /lib/librt-2.24.so
+b6f62000-b6f63000 r--p 00005000 00:0c 252        /lib/librt-2.24.so
+b6f63000-b6f64000 rw-p 00006000 00:0c 252        /lib/librt-2.24.so
+b6f64000-b6f6c000 r-xp 00000000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f6c000-b6f7b000 ---p 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f7b000-b6f7c000 r--p 00007000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f7c000-b6f7d000 rw-p 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f7d000-b6f9d000 r-xp 00000000 00:0c 222        /lib/ld-2.24.so
+b6fa3000-b6fac000 rw-p 00000000 00:00 0 
+b6fac000-b6fad000 r--p 0001f000 00:0c 222        /lib/ld-2.24.so
+b6fad000-b6fae000 rw-p 00020000 00:0c 222        /lib/ld-2.24.so
+bedd1000-bedf2000 rw-p 00000000 00:00 0          [stack]
+beee7000-beee8000 r-xp 00000000 00:00 0          [sigpage]
+beee8000-beee9000 r--p 00000000 00:00 0          [vvar]
+beee9000-beeea000 r-xp 00000000 00:00 0          [vdso]
+ffff0000-ffff1000 r-xp 00000000 00:00 0          [vectors]
+[stage2] process maps end
+
+[stage2] *** CRASH sig=11 (SIGSEGV) si_addr=0x312e3338 pc=0x312e3338
+[stage2]   arm lr=0xb6975b34 sp=0xb6901ee8 r0=0xb2400830 r1=0x42240000 r2=0xb2400778 r3=0x0000001d r12=0x00000025
+[stage2]   slot region [0x30000000,0x30000100)  si_addr is NOT in the slot region
+[stage2]   pc classify: not null, not the stub, not a current slot target
+[stage2]   last checkpoint reached: slots filled
+[stage2] process maps begin
+00010000-002e0000 r-xp 00000000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+002f0000-002f7000 r-xp 002d0000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+002f7000-00312000 rwxp 002d7000 00:0e 314        /app/lib/stage2/pgphoto.stage2ondisk
+00312000-003eb000 rwxp 00000000 00:00 0          [heap]
+30000000-30001000 rwxp 00000000 00:00 0 
+a9e79000-ade7a000 rwxp 00000000 00:00 0 
+b00ff000-b0200000 rwxp 00000000 00:00 0 
+b0200000-b0201000 ---p 00000000 00:00 0 
+b0201000-b0a00000 rwxp 00000000 00:00 0 
+b0a00000-b0a01000 ---p 00000000 00:00 0 
+b0a01000-b1200000 rwxp 00000000 00:00 0 
+b1200000-b1201000 ---p 00000000 00:00 0 
+b1201000-b1a00000 rwxp 00000000 00:00 0 
+b1a00000-b1a01000 ---p 00000000 00:00 0 
+b1a01000-b2200000 rwxp 00000000 00:00 0 
+b2200000-b223e000 rwxp 00000000 00:00 0 
+b223e000-b2300000 ---p 00000000 00:00 0 
+b2400000-b2441000 rwxp 00000000 00:00 0 
+b2441000-b2500000 ---p 00000000 00:00 0 
+b2513000-b2594000 rwxp 00000000 00:00 0 
+b2594000-b2595000 ---p 00000000 00:00 0 
+b2595000-b2d94000 rwxp 00000000 00:00 0 
+b2d94000-b2d95000 ---p 00000000 00:00 0 
+b2d95000-b3594000 rwxp 00000000 00:00 0 
+b3594000-b3595000 ---p 00000000 00:00 0 
+b3595000-b3d94000 rwxp 00000000 00:00 0 
+b3d94000-b3d95000 ---p 00000000 00:00 0 
+b3d95000-b4594000 rwxp 00000000 00:00 0 
+b4594000-b4595000 ---p 00000000 00:00 0 
+b4595000-b4d94000 rwxp 00000000 00:00 0 
+b4d94000-b5481000 rwxp 00000000 00:00 0 
+b54ff000-b5600000 rwxp 00000000 00:00 0 
+b5600000-b5621000 rwxp 00000000 00:00 0 
+b5621000-b5700000 ---p 00000000 00:00 0 
+b575e000-b579f000 rwxp 00000000 00:00 0 
+b579f000-b5870000 r-xp 00000000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b5870000-b5880000 ---p 000d1000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b5880000-b588b000 r-xp 000d1000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b588b000-b589d000 rwxp 000dc000 00:0e 344        /app/lib/libgphoto2/2.5.27.1/ptp2.so
+b589d000-b589e000 ---p 00000000 00:00 0 
+b589e000-b609d000 rwxp 00000000 00:00 0 
+b609d000-b60b9000 r-xp 00000000 00:0c 155        /lib/libudev.so.1
+b60b9000-b60c9000 ---p 0001c000 00:0c 155        /lib/libudev.so.1
+b60c9000-b60ca000 r-xp 0001c000 00:0c 155        /lib/libudev.so.1
+b60ca000-b60cb000 rwxp 0001d000 00:0c 155        /lib/libudev.so.1
+b60cb000-b60df000 r-xp 00000000 00:0e 333        /app/lib/libusb-1.0.so.0
+b60df000-b60ee000 ---p 00014000 00:0e 333        /app/lib/libusb-1.0.so.0
+b60ee000-b60ef000 r-xp 00013000 00:0e 333        /app/lib/libusb-1.0.so.0
+b60ef000-b60f0000 rwxp 00014000 00:0e 333        /app/lib/libusb-1.0.so.0
+b60f0000-b60f6000 r-xp 00000000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b60f6000-b6106000 ---p 00006000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b6106000-b6107000 r-xp 00006000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b6107000-b6108000 rwxp 00007000 00:0e 285        /app/lib/libgphoto2_port/0.12.0/usb1.so
+b6108000-b6109000 ---p 00000000 00:00 0 
+b6109000-b6908000 rwxp 00000000 00:00 0 
+b6908000-b6931000 r-xp 00000000 00:0e 302        /app/lib/libexif.so.12
+b6931000-b6940000 ---p 00029000 00:0e 302        /app/lib/libexif.so.12
+b6940000-b694c000 r-xp 00028000 00:0e 302        /app/lib/libexif.so.12
+b694c000-b694d000 rwxp 00034000 00:0e 302        /app/lib/libexif.so.12
+b694d000-b6956000 r-xp 00000000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6956000-b6965000 ---p 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6965000-b6966000 r-xp 00008000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6966000-b6967000 rwxp 00009000 00:0e 311        /app/lib/stage2/libgphoto2_port.so.12
+b6967000-b6987000 r-xp 00000000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6987000-b6996000 ---p 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6996000-b6997000 r-xp 0001f000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6997000-b6998000 rwxp 00020000 00:0e 313        /app/lib/stage2/libgphoto2.so.6
+b6998000-b69f8000 rwxp 00000000 00:00 0 
+b69f8000-b69ff000 r-xp 00000000 00:0c 186        /lib/ld-uClibc.so.0
+b69ff000-b6a0e000 ---p 00007000 00:0c 186        /lib/ld-uClibc.so.0
+b6a0e000-b6a0f000 r-xp 00006000 00:0c 186        /lib/ld-uClibc.so.0
+b6a0f000-b6a10000 rwxp 00007000 00:0c 186        /lib/ld-uClibc.so.0
+b6a10000-b6aad000 r-xp 00000000 00:0c 153        /lib/libc.so.0
+b6aad000-b6abc000 ---p 0009d000 00:0c 153        /lib/libc.so.0
+b6abc000-b6abd000 r-xp 0009c000 00:0c 153        /lib/libc.so.0
+b6abd000-b6abe000 rwxp 0009d000 00:0c 153        /lib/libc.so.0
+b6abe000-b6ac3000 rwxp 00000000 00:00 0 
+b6ac3000-b6adf000 r-xp 00000000 00:0c 166        /lib/libgcc_s.so.1
+b6adf000-b6aee000 ---p 0001c000 00:0c 166        /lib/libgcc_s.so.1
+b6aee000-b6aef000 r-xp 0001b000 00:0c 166        /lib/libgcc_s.so.1
+b6aef000-b6af0000 rwxp 0001c000 00:0c 166        /lib/libgcc_s.so.1
+b6af0000-b6b16000 r-xp 00000000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b16000-b6b25000 ---p 00026000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b25000-b6b26000 r-xp 00025000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b26000-b6b27000 rwxp 00026000 00:0c 180        /lib/libgomp.so.1.0.0
+b6b27000-b6b3e000 r-xp 00000000 00:0c 249        /lib/libz.so.1
+b6b3e000-b6b4d000 ---p 00017000 00:0c 249        /lib/libz.so.1
+b6b4d000-b6b4e000 r-xp 00016000 00:0c 249        /lib/libz.so.1
+b6b4e000-b6b4f000 rwxp 00017000 00:0c 249        /lib/libz.so.1
+b6b4f000-b6b6c000 r-xp 00000000 00:0e 378        /app/lib/liblzma.so.5
+b6b6c000-b6b7c000 ---p 0001d000 00:0e 378        /app/lib/liblzma.so.5
+b6b7c000-b6b7d000 r-xp 0001d000 00:0e 378        /app/lib/liblzma.so.5
+b6b7d000-b6b7e000 rwxp 0001e000 00:0e 378        /app/lib/liblzma.so.5
+b6b7e000-b6b85000 r-xp 00000000 00:0e 275        /app/lib/libltdl.so.7
+b6b85000-b6b94000 ---p 00007000 00:0e 275        /app/lib/libltdl.so.7
+b6b94000-b6b95000 r-xp 00006000 00:0e 275        /app/lib/libltdl.so.7
+b6b95000-b6b96000 rwxp 00007000 00:0e 275        /app/lib/libltdl.so.7
+b6b96000-b6cbc000 r-xp 00000000 00:0c 257        /lib/libc-2.24.so
+b6cbc000-b6ccc000 ---p 00126000 00:0c 257        /lib/libc-2.24.so
+b6ccc000-b6cce000 r-xp 00126000 00:0c 257        /lib/libc-2.24.so
+b6cce000-b6ccf000 rwxp 00128000 00:0c 257        /lib/libc-2.24.so
+b6ccf000-b6cd2000 rwxp 00000000 00:00 0 
+b6cd2000-b6dff000 r-xp 00000000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6dff000-b6e0e000 ---p 0012d000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6e0e000-b6e13000 r-xp 0012c000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6e13000-b6e15000 rwxp 00131000 00:0c 179        /lib/libstdc++.so.6.0.23
+b6e15000-b6e17000 rwxp 00000000 00:00 0 
+b6e17000-b6e88000 r-xp 00000000 00:0c 144        /lib/libm-2.24.so
+b6e88000-b6e97000 ---p 00071000 00:0c 144        /lib/libm-2.24.so
+b6e97000-b6e98000 r-xp 00070000 00:0c 144        /lib/libm-2.24.so
+b6e98000-b6e99000 rwxp 00071000 00:0c 144        /lib/libm-2.24.so
+b6e99000-b6eaa000 r-xp 00000000 00:0c 189        /lib/libsecurec.so
+b6eaa000-b6eb9000 ---p 00011000 00:0c 189        /lib/libsecurec.so
+b6eb9000-b6eba000 r-xp 00010000 00:0c 189        /lib/libsecurec.so
+b6eba000-b6ebb000 rwxp 00011000 00:0c 189        /lib/libsecurec.so
+b6ebb000-b6ebc000 r-xp 00000000 00:0c 173        /lib/libuproc.so
+b6ebc000-b6ecb000 ---p 00001000 00:0c 173        /lib/libuproc.so
+b6ecb000-b6ecc000 r-xp 00000000 00:0c 173        /lib/libuproc.so
+b6ecc000-b6ecd000 rwxp 00001000 00:0c 173        /lib/libuproc.so
+b6ecd000-b6ed0000 r-xp 00000000 00:0c 201        /lib/libtimers.so
+b6ed0000-b6edf000 ---p 00003000 00:0c 201        /lib/libtimers.so
+b6edf000-b6ee0000 r-xp 00002000 00:0c 201        /lib/libtimers.so
+b6ee0000-b6ee1000 rwxp 00003000 00:0c 201        /lib/libtimers.so
+b6ee1000-b6ee2000 rwxp 00000000 00:00 0 
+b6ee2000-b6ef8000 r-xp 00000000 00:0c 253        /lib/libpthread-2.24.so
+b6ef8000-b6f08000 ---p 00016000 00:0c 253        /lib/libpthread-2.24.so
+b6f08000-b6f09000 r-xp 00016000 00:0c 253        /lib/libpthread-2.24.so
+b6f09000-b6f0a000 rwxp 00017000 00:0c 253        /lib/libpthread-2.24.so
+b6f0a000-b6f0c000 rwxp 00000000 00:00 0 
+b6f0c000-b6f0e000 r-xp 00000000 00:0c 250        /lib/libdl-2.24.so
+b6f0e000-b6f1d000 ---p 00002000 00:0c 250        /lib/libdl-2.24.so
+b6f1d000-b6f1e000 r-xp 00001000 00:0c 250        /lib/libdl-2.24.so
+b6f1e000-b6f1f000 rwxp 00002000 00:0c 250        /lib/libdl-2.24.so
+b6f1f000-b6f25000 r-xp 00000000 00:0c 252        /lib/librt-2.24.so
+b6f25000-b6f34000 ---p 00006000 00:0c 252        /lib/librt-2.24.so
+b6f34000-b6f35000 r-xp 00005000 00:0c 252        /lib/librt-2.24.so
+b6f35000-b6f36000 rwxp 00006000 00:0c 252        /lib/librt-2.24.so
+b6f36000-b6f3e000 r-xp 00000000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f3e000-b6f4d000 ---p 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f4d000-b6f4e000 r-xp 00007000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f4e000-b6f4f000 rwxp 00008000 00:0e 312        /app/lib/stage2/libpolaris_stage2.so
+b6f4f000-b6f6f000 r-xp 00000000 00:0c 222        /lib/ld-2.24.so
+b6f75000-b6f7e000 rwxp 00000000 00:00 0 
+b6f7e000-b6f7f000 r-xp 0001f000 00:0c 222        /lib/ld-2.24.so
+b6f7f000-b6f80000 rwxp 00020000 00:0c 222        /lib/ld-2.24.so
+bef5f000-bef80000 rw-p 00000000 00:00 0          [stack]
+befde000-befdf000 r-xp 00000000 00:00 0          [sigpage]
+befdf000-befe0000 r--p 00000000 00:00 0          [vvar]
+befe0000-befe1000 r-xp 00000000 00:00 0          [vdso]
+ffff0000-ffff1000 r-xp 00000000 00:00 0          [vectors]
+[stage2] process maps end
