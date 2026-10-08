@@ -1,0 +1,30 @@
+Scoped composition repair validation, 2026-10-08
+Baseline: afef264a0a0c9d5464e644e033a374ec9e8ff9e2
+Authorization: user authorized only the composition repair on afef264.
+
+Before repair:
+- Original enforcement probe: exit 1, 12 protection violations.
+- New test_stage2_capture_composition.c against original loader: exit 134,
+  assertion fails because tracing selects a separate wrapper.
+
+After repair:
+- sh container/test_stage2_capture_composition.sh: exit 0.
+  PASS: capture composition (8 combinations x 3 shots x 6 scenarios)
+  Runner verifies 72 trace entries, 72 raw returns and 12 timeout returns.
+- ASAN_OPTIONS=detect_leaks=0 COMPOSITION_CFLAGS='-O1 -g
+  -fsanitize=address,undefined -fno-omit-frame-pointer' with the same runner:
+  exit 0, no ASan/UBSan diagnostics. Leak checking disabled for this environment.
+- capture-boundary-probe.sh --require-protection: exit 0, violations=0.
+- Seven stage-2 host tests pass: backoff isolation, capture composition,
+  capture empty path, init null call, monotonic, preview error class,
+  settle configuration. ARM loader compile test skips (compiler absent).
+
+Release validation limitations:
+- Offline prerelease gate invoked; not green. Python suite cannot start
+  without pytest; analyze_pgphoto_focus_wait cannot import pyelftools.
+- Initial snapshot omitted patch-polaris.sh; fetched the exact baseline file,
+  then test_camlib_selection.sh passed. Gate rerun after this snapshot repair.
+- Direct host shared-library compile cannot validate the ARM-only constructor:
+  existing crash-handler code accesses ARM mcontext registers on an x86 host.
+- No ARM build, firmware package, deployment, camera test or physical PASS.
+  A correct wrapper does not prove the closed caller handles errors correctly.

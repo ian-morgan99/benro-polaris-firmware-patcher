@@ -1,0 +1,260 @@
+{
+  "issue": 188,
+  "date": "2026-10-08",
+  "patcher": {
+    "repository": "ian-morgan99/benro-polaris-firmware-patcher",
+    "default_branch": "main",
+    "sha": "afef264a0a0c9d5464e644e033a374ec9e8ff9e2",
+    "branches": [
+      {
+        "name": "main",
+        "commit": {
+          "sha": "afef264a0a0c9d5464e644e033a374ec9e8ff9e2",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/commits/afef264a0a0c9d5464e644e033a374ec9e8ff9e2"
+        },
+        "protected": false
+      }
+    ],
+    "open_prs": [],
+    "tags": [
+      {
+        "ref": "refs/tags/archive/legacy-HEAD-20260927",
+        "object": {
+          "sha": "9c3c1d9e0caaf8d5badb79ae1d03e196a0c53b34",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/9c3c1d9e0caaf8d5badb79ae1d03e196a0c53b34"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-agents-attachment-plan-follow-up-20260927",
+        "object": {
+          "sha": "77ecea17fbad465c253fe32da486472f359c9757",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/77ecea17fbad465c253fe32da486472f359c9757"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-agents-benro-polaris-firmware-docs-20260927",
+        "object": {
+          "sha": "5d0fc7580a76e20fa8b3f9b5ea7be656613651c2",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/5d0fc7580a76e20fa8b3f9b5ea7be656613651c2"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-agents-libgphoto2-only-fork-20260927",
+        "object": {
+          "sha": "f6407e731fd966179c7a54c68588c976b911d445",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/f6407e731fd966179c7a54c68588c976b911d445"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-agents-work-out-why-our-firmware-just-disappears-when-20260927",
+        "object": {
+          "sha": "a99a64c811563cfe36e60549b0616e747a299678",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/a99a64c811563cfe36e60549b0616e747a299678"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-audit-final-handover-20260924-20260927",
+        "object": {
+          "sha": "0ebf18ab2acbfbaaac868a54883c97989f255c0a",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/0ebf18ab2acbfbaaac868a54883c97989f255c0a"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-convergence-pentax-candidate-20260925-20260927",
+        "object": {
+          "sha": "fbfab89a3e6b811150a7676a91032665035664ca",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/fbfab89a3e6b811150a7676a91032665035664ca"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-diagnostic-128-config-pass-through-20260927",
+        "object": {
+          "sha": "bd9d61f022420d128086e598af56d6b41c863729",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/bd9d61f022420d128086e598af56d6b41c863729"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-fix-multifamily-camera-packaging-20260926-20260927",
+        "object": {
+          "sha": "ef4d03e2aa7b5ace14545529da8b50049f8bf276",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/ef4d03e2aa7b5ace14545529da8b50049f8bf276"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-fix-release-safety-gates-20260927",
+        "object": {
+          "sha": "d5b2fd878439eb373d9abafdd772325b4d1379d2",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/d5b2fd878439eb373d9abafdd772325b4d1379d2"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-fix-stage2-direct-capture-20260924-20260927",
+        "object": {
+          "sha": "c474e9c5ddefb4915713ee694b4a470f29eb9e65",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/c474e9c5ddefb4915713ee694b4a470f29eb9e65"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-release-o-v13d-review-convergence-20260926-20260927",
+        "object": {
+          "sha": "46b4947b30040f48d92ce604c17b3d00459ebd66",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/46b4947b30040f48d92ce604c17b3d00459ebd66"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-rescue-final-shutter-20260923-20260927",
+        "object": {
+          "sha": "b96632b33abb8a8cdfe006e8dfee1b9398b20f83",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/b96632b33abb8a8cdfe006e8dfee1b9398b20f83"
+        }
+      },
+      {
+        "ref": "refs/tags/archive/legacy-rescue-shutter-thermal-20260922-20260927",
+        "object": {
+          "sha": "8ca2786be0af77388e1e2a214141a42a49172c1d",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/8ca2786be0af77388e1e2a214141a42a49172c1d"
+        }
+      },
+      {
+        "ref": "refs/tags/o-v12-k1ii-stability-20260920",
+        "object": {
+          "sha": "acc4348fd964055034df6b4a6ab361afa941ab73",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/acc4348fd964055034df6b4a6ab361afa941ab73"
+        }
+      },
+      {
+        "ref": "refs/tags/o-v13o-adapter-consolidation-20260929",
+        "object": {
+          "sha": "1ac5ee587d878856046e693273f882a5e1efc0c5",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/1ac5ee587d878856046e693273f882a5e1efc0c5"
+        }
+      },
+      {
+        "ref": "refs/tags/o-v13p-adapter-hardening-20260929",
+        "object": {
+          "sha": "08fff54a18fef2c8e1d8e06a3fb869d2275f1216",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/08fff54a18fef2c8e1d8e06a3fb869d2275f1216"
+        }
+      },
+      {
+        "ref": "refs/tags/o-v13q-frame-ownership-20260929",
+        "object": {
+          "sha": "f248ec407cb89075485389f7a8f2e8fc9fe287b5",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/f248ec407cb89075485389f7a8f2e8fc9fe287b5"
+        }
+      },
+      {
+        "ref": "refs/tags/o-v13r-starshoot-discriminator-20260929",
+        "object": {
+          "sha": "d11bc748f917a1705988596aa6acf565a7131c9a",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/d11bc748f917a1705988596aa6acf565a7131c9a"
+        }
+      },
+      {
+        "ref": "refs/tags/o-v9z-stability-20260919",
+        "object": {
+          "sha": "e41748f9bfc94176a08f5b05c9628bccca0db63e",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/e41748f9bfc94176a08f5b05c9628bccca0db63e"
+        }
+      },
+      {
+        "ref": "refs/tags/tooling-agent-host-checks-20261008",
+        "object": {
+          "sha": "ff7ed42389e89a163aa4ad9398fb7c9c616cb6ce",
+          "type": "tag",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/tags/ff7ed42389e89a163aa4ad9398fb7c9c616cb6ce"
+        }
+      },
+      {
+        "ref": "refs/tags/v0.1.0-debug",
+        "object": {
+          "sha": "7814a8d35c5bb9d26c84c35f8d701c8f7c0bea34",
+          "type": "commit",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/commits/7814a8d35c5bb9d26c84c35f8d701c8f7c0bea34"
+        }
+      },
+      {
+        "ref": "refs/tags/v0.3.0-pentax-hdmi-combined-720p60",
+        "object": {
+          "sha": "166fcc3a4f3326aa98405190814401ff6f25efbe",
+          "type": "tag",
+          "url": "https://api.github.com/repos/ian-morgan99/benro-polaris-firmware-patcher/git/tags/166fcc3a4f3326aa98405190814401ff6f25efbe"
+        }
+      }
+    ],
+    "workflow_runs": [
+      {
+        "id": 33220468372,
+        "name": "Running Copilot Code Review",
+        "head_sha": "c5fb1c3755eda32e100039f6e80a31a0fcbdade2",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "libgphoto2": {
+    "repository": "ian-morgan99/libgphoto2",
+    "default_branch_observed": "main",
+    "sha": "678d0dc3a8d5626fb22900e70b10f7dd67417aa5",
+    "branches": [
+      {
+        "name": "main",
+        "commit": {
+          "sha": "678d0dc3a8d5626fb22900e70b10f7dd67417aa5",
+          "url": "https://api.github.com/repos/ian-morgan99/libgphoto2/commits/678d0dc3a8d5626fb22900e70b10f7dd67417aa5"
+        },
+        "protected": false
+      }
+    ],
+    "open_prs": []
+  },
+  "acquisition": "GitHub connector GET; shell Git clone unavailable because inherited proxy:8080 refused connection. Local files are a partial source snapshot, not a Git checkout.",
+  "source_blobs": [
+    {
+      "path": "container/stage2_loader.c",
+      "sha": "90e8e9ab88d989c73242b27d7517ff1bb0152f22",
+      "size": 89096
+    },
+    {
+      "path": "container/stage2_policy.c",
+      "sha": "2fcf484863021bee29bef1290798032c80c07274",
+      "size": 2593
+    },
+    {
+      "path": "container/stage2_policy.h",
+      "sha": "81ffcb33006a12cbba00790c892ed8f0f0ca10a5",
+      "size": 683
+    },
+    {
+      "path": "container/testdata/stage2_ondisk_table.h",
+      "sha": "dbb034956e5ea249fbab1ed408c56b42ce8c1f1f",
+      "size": 375
+    }
+  ],
+  "unavailable": [
+    "owner-local worktrees/stashes/dirty files (not inspected)",
+    "original/base v10 artifact -> exact patcher SHA/build/hash binding",
+    "raw boots 265-271 and crash log referenced by o-v16b-full-test SUMMARY (not present under its raw/ path at frozen main)",
+    "symbolized core/backtrace with exact matching binaries",
+    "pgphoto/polestar_app caller source (not present in public tree)"
+  ]
+}

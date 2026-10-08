@@ -1493,40 +1493,16 @@ typedef int (*stage2_gp_camera_capture_fn)(void *camera, int type,
 static stage2_gp_camera_capture_fn g_real_gp_camera_capture = NULL;
 static _Atomic unsigned long g_capture_trace_seq = 0;
 
-/* Diagnostic-only pass-through wrapper.  It is opt-in so production builds
- * retain the exact direct-to-core capture boundary. */
-static int stage2_trace_gp_camera_capture(void *camera, int type,
-                                          void *path, void *context)
+/* Trace and protection share one wrapper so diagnostic runs cannot bypass
+ * the enabled guard or outcome check. The core is still called exactly once.
+ * Empty-path validation is an API guard, not proof of disk publication or
+ * correct handling by the closed caller (see #186/#188). */
+static int stage2_capture_trace_enabled(void)
 {
-    if (!g_real_gp_camera_capture && g_stage2_core)
-        g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)
-            dlsym(g_stage2_core, "gp_camera_capture");
-    unsigned long seq = atomic_fetch_add(&g_capture_trace_seq, 1) + 1;
-    fprintf(stderr, "[stage2-trace] capture-enter seq=%lu pid=%ld type=%d\n",
-            seq, (long)getpid(), type);
-    if (!g_real_gp_camera_capture)
-        return -1;
-    int ret = g_real_gp_camera_capture(camera, type, path, context);
-    fprintf(stderr, "[stage2-trace] capture-return seq=%lu ret=%d\n", seq, ret);
-    return ret;
+    const char *e = getenv("STAGE2_CAPTURE_TRACE");
+    return e && strcmp(e, "0") != 0;
 }
 
-/* In-flight marker around still capture.  Unlike the trace wrapper above this is
- * meant for real runs, so it adds no logging on the happy path -- one flag and
- * one call frame.
- *
- * Issue #183 (empty-path false success): the closed camera process treats a
- * GP_OK return from gp_camera_capture() as success and emits the full
- * `264 state:2/5/0` lifecycle even when the CameraFilePath came back EMPTY --
- * the observed signature of a lost transfer (camera fires, no file lands, the
- * app waits forever for a file that never existed).  The empty path IS the
- * artifact check at this boundary: a still capture that reports GP_OK with a
- * blank name/folder produced no artifact, so it must not be surfaced as
- * success.  Convert it to GP_ERROR_CAMERA_ERROR (terminal for the caller's
- * lifecycle, same class as the real post-capture failures this masks) and log
- * `capture-outcome=empty-path` so #182's health probe can consume it.
- * Gated by STAGE2_CAPTURE_EMPTY_PATH_CHECK (default ON; "0" restores the
- * legacy pass-through).  Non-still capture types are untouched pass-through. */
 static int stage2_capture_empty_path_check_enabled(void)
 {
     const char *e = getenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK");
@@ -1536,11 +1512,29 @@ static int stage2_capture_empty_path_check_enabled(void)
 static int stage2_guarded_gp_camera_capture(void *camera, int type,
                                            void *path, void *context)
 {
+    int trace = stage2_capture_trace_enabled();
+    int protected = stage2_capture_guard_enabled() ||
+                    stage2_capture_empty_path_check_enabled();
+    unsigned long seq = 0;
+    if (trace) {
+        if (!g_real_gp_camera_capture && g_stage2_core)
+            g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)
+                dlsym(g_stage2_core, "gp_camera_capture");
+        seq = atomic_fetch_add(&g_capture_trace_seq, 1) + 1;
+        fprintf(stderr, "[stage2-trace] capture-enter seq=%lu pid=%ld type=%d\n",
+                seq, (long)getpid(), type);
+    }
     if (!g_real_gp_camera_capture)
         return -1;                                   /* GP_ERROR */
-    atomic_store(&g_capture_in_flight, 1);
+    if (protected)
+        atomic_store(&g_capture_in_flight, 1);
     int ret = g_real_gp_camera_capture(camera, type, path, context);
-    atomic_store(&g_capture_in_flight, 0);
+    if (protected)
+        atomic_store(&g_capture_in_flight, 0);
+    /* Keep the trace's return marker the raw core result; any conversion
+     * below logs its own outcome and returns the validated result. */
+    if (trace)
+        fprintf(stderr, "[stage2-trace] capture-return seq=%lu ret=%d\n", seq, ret);
     if (ret == 0 && type == STAGE2_GP_CAPTURE_IMAGE && path &&
         stage2_capture_empty_path_check_enabled()) {
         /* CameraFilePath layout (gphoto2-camera.h): char name[128];
@@ -1563,16 +1557,9 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
 static void *stage2_capture_slot_target(const char *name, void *resolved)
 {
     if (name && strcmp(name, "gp_camera_capture") == 0) {
-        if (getenv("STAGE2_CAPTURE_TRACE") &&
-            strcmp(getenv("STAGE2_CAPTURE_TRACE"), "0") != 0) {
-            g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
-            return (void *)&stage2_trace_gp_camera_capture;
-        }
-        /* Issue #183: the empty-path outcome check defaults ON and lives in
-         * the guarded wrapper, so it installs the wrapper on its own merit --
-         * independent of the opt-in #176 in-flight guard. The A/B on .60
-         * (16/16 clean, guard ON) established the wrapper frame is safe. */
-        if (stage2_capture_guard_enabled() ||
+        /* All enabled capture modes compose at the same call boundary.
+         * With every mode off, preserve the exact resolved core target. */
+        if (stage2_capture_trace_enabled() || stage2_capture_guard_enabled() ||
             stage2_capture_empty_path_check_enabled()) {
             g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
             return (void *)&stage2_guarded_gp_camera_capture;
