@@ -142,11 +142,34 @@ if python3 -m pytest -q \
     tests/test_canary_two_shot.py \
     tests/test_pentax_bulb_variations.py \
     tests/test_astro_multishot.py \
-    tests/test_display_fwver_monotonic.py > /tmp/prerelease-pytest.log 2>&1; then
+    tests/test_display_fwver_monotonic.py \
+    tests/test_agent_sandbox_check.py > /tmp/prerelease-pytest.log 2>&1; then
     ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
 else
     bad "python regression suite (log: /tmp/prerelease-pytest.log)"
 fi
+
+# ----------------------------------------------------------------------------
+# 2b. Live agent-host check (issue #184). Runs against THIS host, not
+#     fixtures: the sandbox must be enabled AND functional — a missing
+#     slirp4netns silently pushed every command outside the sandbox.
+#     Exit 77 = no VS Code-family settings here (e.g. CI container) =
+#     prerequisite SKIP, never silent green. Contract:
+#     docs/AGENT-HOST-CONFIG.md.
+# ----------------------------------------------------------------------------
+for checker in scripts/check-agent-sandbox.py; do
+    set --
+    if out="$(python3 "$checker" "$@" 2>&1)"; then
+        ok "agent host check: $checker ($(printf '%s' "$out" | head -1))"
+    else
+        rc=$?
+        if [ "$rc" = "77" ]; then
+            skp "agent host check: $checker (no VS Code settings on this host)"
+        else
+            bad "agent host check: $checker (exit $rc) — $out"
+        fi
+    fi
+done
 
 # The code-780 version patch rewrites machine code inside polestar_app, so a
 # defect in it is invisible to every Python test above. Four candidates shipped
