@@ -11,9 +11,15 @@
 #   - keep-awake while connected: the protocol ping `1&266&0&#` on TCP 9090
 #     every 30 s (the firmware AP idle timer is ~5 min of no 9090 traffic;
 #     284/822 polling does NOT reset it - KEEPALIVE-WAKE-INVESTIGATION-2026-09-07).
-#   - wake when down: the canonical double ping (connect -> verify the link is
-#     actually HELD -> disconnect), then immediate association with the saved
-#     profile, polling for the AP by SSID/BSSID.
+#   - wake when down: the canonical pulse (connect -> verify the link is
+#     actually HELD), then immediate association with the saved profile,
+#     polling for the AP by SSID/BSSID.
+#   - HOLD like the vendor app: Benro Connect keeps GATT open for the whole
+#     session (this is what resets the firmware's ~90 s AP watchdog; see
+#     OpenPolaris 0a1cbaf + KEEPALIVE-WAKE-INVESTIGATION-2026-09-07). v2.1
+#     therefore RETAINS the verified GATT link through the Wi-Fi handoff and
+#     re-establishes it if it drops while we own the control session; it is
+#     released only when we give up control (EXIT trap).
 #   - every outcome is logged as a terminal PHASE, never as a vague success:
 #       control-up | not-advertising | connect-aborted | ap-not-visible |
 #       joined-ssh-down | ssh-up
@@ -57,6 +63,28 @@ bt_release() {
   timeout 10 bluetoothctl --timeout 8 disconnect "$BT_MAC" >/dev/null 2>&1
 }
 
+bt_held() {
+  bluetoothctl info "$BT_MAC" 2>/dev/null | grep -q "Connected: yes"
+}
+
+# Vendor-algorithm hold: while we own the control session, GATT must stay up.
+# Re-pulse (connect only, no disconnect) if the link dropped. Bounded: one
+# attempt per keepalive cycle; failures are logged, never fatal.
+bt_ensure_held() {
+  if bt_held; then
+    return 0
+  fi
+  log "phase=gatt-dropped; re-pulsing to restore hold"
+  timeout 20 bluetoothctl --timeout 15 connect "$BT_MAC" >/dev/null 2>&1
+  sleep 2
+  if bt_held; then
+    log "phase=gatt-held"
+    return 0
+  fi
+  log "phase=gatt-hold-failed; continuing on Wi-Fi keepalive alone"
+  return 1
+}
+
 join_ap() {
   # Kick the saved profile immediately (the documented handoff starts
   # association during/after the pulse), then wait for the AP and activate.
@@ -82,13 +110,16 @@ wait_ssh() {
   return 1
 }
 
-log "=== Polaris keepalive v2 started (pid $$) ==="
+trap 'bt_release; log "phase=exit; GATT released, control owner gone"' EXIT
+
+log "=== Polaris keepalive v2.1 started (pid $$) ==="
 while true; do
   if control_up; then
     log "phase=control-up; holding with 9090 protocol ping every ${PING_INTERVAL}s"
     for _ in $(seq 1 "$CONTROL_WINDOW"); do
       sleep "$PING_INTERVAL"
       protocol_ping
+      bt_ensure_held
     done
   else
     log "phase=no-control; attempting wake"
@@ -102,16 +133,19 @@ while true; do
       sleep "$DOWN_SLEEP"
       continue
     fi
-    bt_release
-    log "phase=gatt-pulse-delivered; associating"
+    # NOTE: no bt_release here. Like Benro Connect, we RETAIN the verified GATT
+    # link through the Wi-Fi handoff; it is what holds the AP past the ~90 s
+    # watchdog. It is released only on exit (trap below).
+    log "phase=gatt-pulse-delivered-held; associating"
     if join_ap; then
       if wait_ssh; then
-        log "phase=ssh-up; wake succeeded"
+        log "phase=ssh-up; wake succeeded (GATT retained)"
       else
         log "phase=joined-ssh-down; associated but daemon not answering yet"
       fi
     else
       log "phase=ap-not-visible; wake pulse did not bring up the AP"
+      bt_release
     fi
     sleep "$DOWN_SLEEP"
   fi
