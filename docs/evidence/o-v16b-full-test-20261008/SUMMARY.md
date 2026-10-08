@@ -114,6 +114,25 @@ crashes this loader was designed to avoid.
    (wild PC, same call site, mid-capture) matches the historical o-v12j/k/n
    capture-boundary crashes the loader comment says must not be reintroduced.
 
+## CORRECTION (same evening, after the wrapper-off test)
+
+The "prime suspect" above is **wrong** and is retracted. `docs/evidence/
+pgphoto-dies-mid-capture-20261005/SUMMARY.md` records the identical failure on
+2026-10-05 — *"state:1, shutter fires, then process dies"*, including a bulb
+request that reached `initiate-return ptp=0x2001` and died 12 s later — on a
+build that predates the #183 wrapper entirely. Mid-capture death is therefore a
+**pre-existing defect that `.60`'s 16/16 canary run did not exercise**, not
+something `.61` introduced. The canary passed on `.60` because its captures
+completed inside the window before the death, or took a different path; the
+crash itself is older than this build.
+
+Running the wrapper-off test confirmed the wrapper is not required for the
+symptom: with `STAGE2_CAPTURE_EMPTY_PATH_CHECK=0` injected through the restart
+environment (verified in `/proc/<pid>/environ`), the manual restart wedged the
+session (`state:-2`) and the next capture was refused by the app with `-1002`
+(no session) — the documented post-restart wedge, not a capture result. A
+clean re-run needs a reboot.
+
 ## Decisive next test (cheap)
 
 Set `STAGE2_CAPTURE_EMPTY_PATH_CHECK=0` in `/app/bin/pgphoto` (wrapper stays
