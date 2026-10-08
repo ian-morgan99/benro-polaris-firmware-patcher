@@ -41,6 +41,15 @@
 				"--short"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Write bulb trace evidence summary",
+			"type": "shell",
+			"command": "printf",
+			"args": [
+				"ok"
+			],
+			"isBackground": false
 		}
 	]
 }

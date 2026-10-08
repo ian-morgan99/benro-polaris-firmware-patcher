@@ -1,0 +1,8 @@
+[m[m[16:37:19:680 [1;32mINFO[m-]:captureImage[1485]:[0;32;31m----will captureImage status:1  focus:-1000  sPath:/app/sd/normal/SP_0280.jpg
+[stage2-trace] capture-enter seq=1 pid=251 type=0
+[stage2-trace] capture-return seq=1 ret=-10
+[m[16:38:25:935 [1;32mINFO[m-]:captureImage[1579]:[0;32;31m----captureImage ret 0  p:   ; 
+[m[m[16:41:01:893 [1;32mINFO[m-]:captureImage[1485]:[0;32;31m----will captureImage status:1  focus:-1000  sPath:/app/sd/normal/SP_0281.jpg
+[stage2-trace] capture-enter seq=2 pid=251 type=0
+[stage2-trace] capture-return seq=2 ret=-10
+[m[16:42:08:157 [1;32mINFO[m-]:captureImage[1579]:[0;32;31m----captureImage ret 0  p:   ; 
