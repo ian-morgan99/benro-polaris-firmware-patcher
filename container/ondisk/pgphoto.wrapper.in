@@ -19,6 +19,14 @@ export STAGE2_PENTAX_PREVIEW_BACKOFF=${STAGE2_PENTAX_PREVIEW_BACKOFF:-1}
 # adds an extra ABI/call boundary around gp_camera_capture. Enable it explicitly
 # only for a diagnostic build/run that needs the outer entry/return markers.
 export STAGE2_CAPTURE_TRACE=${STAGE2_CAPTURE_TRACE:-0}
+# Issue #183: a still capture that returns GP_OK with an empty CameraFilePath
+# produced no artifact; the Stage-2 guarded wrapper converts that false success
+# to GP_ERROR_CAMERA_ERROR so the closed app cannot emit a success lifecycle
+# for a file that does not exist. This check installs the wrapper on its own
+# merit (independent of the opt-in STAGE2_CAPTURE_GUARD in-flight guard).
+# Keep it explicit in release images; "0" is the documented escape hatch for a
+# diagnostic run.
+export STAGE2_CAPTURE_EMPTY_PATH_CHECK=${STAGE2_CAPTURE_EMPTY_PATH_CHECK:-1}
 # On-demand preview gate interval (seconds). Pin it ONLY when the operator
 # explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
 # model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --

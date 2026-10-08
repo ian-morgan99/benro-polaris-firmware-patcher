@@ -601,6 +601,7 @@ static long long g_pentax_preview_last_fetch = 0;
 /* GP result codes in this libgphoto2 (port-result.h / gphoto2-result.h). */
 #define STAGE2_GP_ERROR_TIMEOUT (-10)   /* GP_ERROR_TIMEOUT */
 #define STAGE2_GP_ERROR_CAMERA_BUSY (-110) /* GP_ERROR_CAMERA_BUSY */
+#define STAGE2_GP_ERROR_CAMERA_ERROR (-113) /* GP_ERROR_CAMERA_ERROR */
 /* CameraCaptureType from gphoto2-camera.h.  Only still-image capture is
  * subject to the shutter failure budget; movie/sound/preview-like extensions
  * must remain exact pass-through calls. */
@@ -1512,7 +1513,26 @@ static int stage2_trace_gp_camera_capture(void *camera, int type,
 
 /* In-flight marker around still capture.  Unlike the trace wrapper above this is
  * meant for real runs, so it adds no logging on the happy path -- one flag and
- * one call frame.  The result is returned untouched. */
+ * one call frame.
+ *
+ * Issue #183 (empty-path false success): the closed camera process treats a
+ * GP_OK return from gp_camera_capture() as success and emits the full
+ * `264 state:2/5/0` lifecycle even when the CameraFilePath came back EMPTY --
+ * the observed signature of a lost transfer (camera fires, no file lands, the
+ * app waits forever for a file that never existed).  The empty path IS the
+ * artifact check at this boundary: a still capture that reports GP_OK with a
+ * blank name/folder produced no artifact, so it must not be surfaced as
+ * success.  Convert it to GP_ERROR_CAMERA_ERROR (terminal for the caller's
+ * lifecycle, same class as the real post-capture failures this masks) and log
+ * `capture-outcome=empty-path` so #182's health probe can consume it.
+ * Gated by STAGE2_CAPTURE_EMPTY_PATH_CHECK (default ON; "0" restores the
+ * legacy pass-through).  Non-still capture types are untouched pass-through. */
+static int stage2_capture_empty_path_check_enabled(void)
+{
+    const char *e = getenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK");
+    return !e || strcmp(e, "0") != 0;
+}
+
 static int stage2_guarded_gp_camera_capture(void *camera, int type,
                                            void *path, void *context)
 {
@@ -1521,6 +1541,22 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
     atomic_store(&g_capture_in_flight, 1);
     int ret = g_real_gp_camera_capture(camera, type, path, context);
     atomic_store(&g_capture_in_flight, 0);
+    if (ret == 0 && type == STAGE2_GP_CAPTURE_IMAGE && path &&
+        stage2_capture_empty_path_check_enabled()) {
+        /* CameraFilePath layout (gphoto2-camera.h): char name[128];
+         * char folder[1024].  Do not include the header here (the loader
+         * deliberately avoids libgphoto2 headers); mirror the layout. */
+        char *name = (char *)path;
+        char *folder = (char *)path + 128;
+        if (name[0] == '\0' || folder[0] == '\0') {
+            fprintf(stderr, "[stage2] capture-outcome=empty-path ret=0 "
+                            "name_empty=%d folder_empty=%d -- reporting "
+                            "GP_ERROR_CAMERA_ERROR instead of false success "
+                            "(issue #183)\n",
+                    name[0] == '\0', folder[0] == '\0');
+            return STAGE2_GP_ERROR_CAMERA_ERROR;
+        }
+    }
     return ret;
 }
 
@@ -1532,7 +1568,12 @@ static void *stage2_capture_slot_target(const char *name, void *resolved)
             g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
             return (void *)&stage2_trace_gp_camera_capture;
         }
-        if (stage2_capture_guard_enabled()) {
+        /* Issue #183: the empty-path outcome check defaults ON and lives in
+         * the guarded wrapper, so it installs the wrapper on its own merit --
+         * independent of the opt-in #176 in-flight guard. The A/B on .60
+         * (16/16 clean, guard ON) established the wrapper frame is safe. */
+        if (stage2_capture_guard_enabled() ||
+            stage2_capture_empty_path_check_enabled()) {
             g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
             return (void *)&stage2_guarded_gp_camera_capture;
         }

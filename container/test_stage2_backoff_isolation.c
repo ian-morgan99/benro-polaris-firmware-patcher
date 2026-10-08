@@ -70,9 +70,15 @@ int main(void)
     int camera;
     int direct_capture_target;
 
-    /* Regression for o-v12j/k/n: normal still capture is installed as the
-     * exact resolved core target, never through a Stage-2 wrapper. */
+    /* Regression for o-v12j/k/n: with ALL Stage-2 capture policy explicitly
+     * disabled (the legacy escape hatch), still capture is installed as the
+     * exact resolved core target, never through a Stage-2 wrapper.
+     * Issue #183 changes the DEFAULT: the empty-path outcome check is ON by
+     * default and installs the guarded wrapper on its own merit (the .60 A/B,
+     * 16/16 clean with the wrapper frame, established that boundary is safe). */
     unsetenv("STAGE2_CAPTURE_TRACE");
+    setenv("STAGE2_CAPTURE_GUARD", "0", 1);
+    setenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK", "0", 1);
     assert(stage2_capture_slot_target("gp_camera_capture",
                                       &direct_capture_target) ==
            &direct_capture_target);
@@ -80,6 +86,15 @@ int main(void)
     assert(stage2_capture_slot_target("gp_camera_capture",
                                       &direct_capture_target) ==
            &direct_capture_target);
+    /* #183: with the empty-path check enabled and the #176 guard OFF, the
+     * guarded wrapper must still be installed (the check stands on its own). */
+    setenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK", "1", 1);
+    assert(stage2_capture_slot_target("gp_camera_capture",
+                                      &direct_capture_target) !=
+           &direct_capture_target);
+    assert(g_real_gp_camera_capture ==
+           (stage2_gp_camera_capture_fn)&direct_capture_target);
+    setenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK", "0", 1);
     /* The additional call boundary is available only when explicitly selected
      * for boundary diagnostics; it must never be silently enabled by default. */
     setenv("STAGE2_CAPTURE_TRACE", "1", 1);
