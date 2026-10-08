@@ -133,16 +133,49 @@ session (`state:-2`) and the next capture was refused by the app with `-1002`
 (no session) — the documented post-restart wedge, not a capture result. A
 clean re-run needs a reboot.
 
-## Decisive next test (cheap)
+## RESOLVED — the crash is located to one instruction (see #190)
 
-Set `STAGE2_CAPTURE_EMPTY_PATH_CHECK=0` in `/app/bin/pgphoto` (wrapper stays
-installed only if the guard is set; otherwise capture goes direct-to-core as on
-`.60`), restart, take one plain capture in Av.
-- Completes with `state:2/5` + file → the wrapper is the crash cause; revert
-  #183 to default-off or fix the wrapper ABI; the empty-path check is useless
-  anyway (the app ignores return codes).
-- Still crashes → the wrapper is exonerated; suspect the core's
-  candidate/download path on the success branch and re-instrument there.
+The wrapper-off A/B above is moot: the wrapper was never the cause. Resolving
+every register in `raw/stage2-crash.log` against the `/proc/self/maps` dump in
+the same entry, then disassembling the returned-to address in the shipped
+`libgphoto2.so.6`, gives one identical fault site for all three crashes:
+
+| | entry 1 | entry 2 | entry 3 |
+|---|---|---|---|
+| signal | SIGILL | SIGSEGV | SIGSEGV |
+| `pc` | heap `+0x81a38` | unmapped | unmapped (ASCII `8.31`) |
+| **`lr`** | **`libgphoto2.so.6 + 0xeb34`** | same | same |
+| `r1` | `0x42240000` | same | same |
+
+`0xeb34` is the instruction after `bx r5` inside `gp_context_progress_start`,
+where `r5 = context->progress_start_func`. The fault is an **indirect call
+through a non-NULL but invalid `context->progress_start_func`**.
+
+`r1 = 0x42240000` is IEEE-754 float **41.0**, and the only callers in this path
+pass `bytes / CONTEXT_BLOCK_SIZE` with `CONTEXT_BLOCK_SIZE = 200000`
+(`camlibs/ptp2/usb.c:408`). `41 × 200000 ≈ 8.2 MB` — a K-3 III lossless DNG.
+So the crash occurs **as the captured file begins downloading**, on the
+download-progress callback. That accounts for the 11–33 s delay (camera writing
+to card first) and for why neither the `.60` 16/16 canary nor any no-camera
+test ever reproduced it.
+
+`r0` (the `GPContext *`) is non-NULL and its callback field is non-NULL, so
+this is not a missing check — the context object in use at download time is not
+a live `GPContext`. The only post-v10 change that alters where that pointer
+comes from is the per-thread context table (`fbc2e7e6544e`, `4149ce48c`), which
+`ptp_usb_getdata` now reads via `ptp_context_get`. Note `gp_context_progress_start`
+already tolerates a NULL context, so a fix must **invalidate stale bindings**,
+not add another null check.
+
+### Decisive test (needs camera; `ptp2.so` only, no full firmware build)
+
+Log the `GPContext *`, its four callback pointers and `pthread_self()`
+immediately before the `report_progress` call in `ptp_usb_getdata`, and the same
+values at `SET_CONTEXT_P(params, context)` in `camera_capture`. One real capture
+distinguishes: different pointer → stale thread-local binding (fix the binding
+lifetime); same pointer with garbage fields → the app freed the context under an
+in-flight download (app-side lifetime bug, #176/#182); same pointer with valid
+fields → theory wrong, but the fault is still localised.
 
 ## Side findings
 
