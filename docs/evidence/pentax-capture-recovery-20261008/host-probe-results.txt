@@ -1,0 +1,203 @@
+COMMAND RESULT: observe
+exit=0
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2-trace] capture-enter seq=1 pid=767 type=0
+[stage2-trace] capture-return seq=1 ret=0
+[stage2-trace] capture-enter seq=2 pid=767 type=0
+[stage2-trace] capture-return seq=2 ret=-10
+[stage2-trace] capture-enter seq=3 pid=767 type=0
+[stage2-trace] capture-return seq=3 ret=0
+[stage2-trace] capture-enter seq=4 pid=767 type=0
+[stage2-trace] capture-return seq=4 ret=-10
+[stage2-trace] capture-enter seq=5 pid=767 type=0
+[stage2-trace] capture-return seq=5 ret=0
+[stage2-trace] capture-enter seq=6 pid=767 type=0
+[stage2-trace] capture-return seq=6 ret=-10
+[stage2-trace] capture-enter seq=7 pid=767 type=0
+[stage2-trace] capture-return seq=7 ret=0
+[stage2-trace] capture-enter seq=8 pid=767 type=0
+[stage2-trace] capture-return seq=8 ret=-10
+[stage2-trace] capture-enter seq=9 pid=767 type=0
+[stage2-trace] capture-return seq=9 ret=0
+[stage2-trace] capture-enter seq=10 pid=767 type=0
+[stage2-trace] capture-return seq=10 ret=-10
+[stage2-trace] capture-enter seq=11 pid=767 type=0
+[stage2-trace] capture-return seq=11 ret=0
+[stage2-trace] capture-enter seq=12 pid=767 type=0
+[stage2-trace] capture-return seq=12 ret=-10
+trace=0 guard=0 check=0 marker=0 repeated_timeout=-10
+trace=0 guard=0 check=1 marker=1 repeated_timeout=-10
+trace=0 guard=1 check=0 marker=1 repeated_timeout=-10
+trace=0 guard=1 check=1 marker=1 repeated_timeout=-10
+trace=1 guard=0 check=0 marker=0 repeated_timeout=-10
+trace=1 guard=0 check=1 marker=0 repeated_timeout=-10
+trace=1 guard=1 check=0 marker=0 repeated_timeout=-10
+trace=1 guard=1 check=1 marker=0 repeated_timeout=-10
+protection violations=12 (8 combinations, 3 shots, success/timeout)
+OBSERVATION CONFIRMED: trace bypasses enabled protections
+[stage2-trace] capture-enter seq=13 pid=767 type=0
+[stage2-trace] capture-return seq=13 ret=0
+[stage2-trace] capture-enter seq=14 pid=767 type=0
+[stage2-trace] capture-return seq=14 ret=-10
+[stage2-trace] capture-enter seq=15 pid=767 type=0
+[stage2-trace] capture-return seq=15 ret=0
+[stage2-trace] capture-enter seq=16 pid=767 type=0
+[stage2-trace] capture-return seq=16 ret=-10
+[stage2-trace] capture-enter seq=17 pid=767 type=0
+[stage2-trace] capture-return seq=17 ret=0
+[stage2-trace] capture-enter seq=18 pid=767 type=0
+[stage2-trace] capture-return seq=18 ret=-10
+[stage2-trace] capture-enter seq=19 pid=767 type=0
+[stage2-trace] capture-return seq=19 ret=0
+[stage2-trace] capture-enter seq=20 pid=767 type=0
+[stage2-trace] capture-return seq=20 ret=-10
+[stage2-trace] capture-enter seq=21 pid=767 type=0
+[stage2-trace] capture-return seq=21 ret=0
+[stage2-trace] capture-enter seq=22 pid=767 type=0
+[stage2-trace] capture-return seq=22 ret=-10
+[stage2-trace] capture-enter seq=23 pid=767 type=0
+[stage2-trace] capture-return seq=23 ret=0
+[stage2-trace] capture-enter seq=24 pid=767 type=0
+[stage2-trace] capture-return seq=24 ret=-10
+
+
+COMMAND RESULT: red
+exit=1
+trace=0 guard=0 check=0 marker=0 repeated_timeout=-10
+trace=0 guard=0 check=1 marker=1 repeated_timeout=-10
+trace=0 guard=1 check=0 marker=1 repeated_timeout=-10
+trace=0 guard=1 check=1 marker=1 repeated_timeout=-10
+trace=1 guard=0 check=0 marker=0 repeated_timeout=-10
+trace=1 guard=0 check=1 marker=0 repeated_timeout=-10
+trace=1 guard=1 check=0 marker=0 repeated_timeout=-10
+trace=1 guard=1 check=1 marker=0 repeated_timeout=-10
+protection violations=12 (8 combinations, 3 shots, success/timeout)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2-trace] capture-enter seq=1 pid=917 type=0
+[stage2-trace] capture-return seq=1 ret=0
+[stage2-trace] capture-enter seq=2 pid=917 type=0
+[stage2-trace] capture-return seq=2 ret=-10
+[stage2-trace] capture-enter seq=3 pid=917 type=0
+[stage2-trace] capture-return seq=3 ret=0
+[stage2-trace] capture-enter seq=4 pid=917 type=0
+[stage2-trace] capture-return seq=4 ret=-10
+[stage2-trace] capture-enter seq=5 pid=917 type=0
+[stage2-trace] capture-return seq=5 ret=0
+[stage2-trace] capture-enter seq=6 pid=917 type=0
+[stage2-trace] capture-return seq=6 ret=-10
+[stage2-trace] capture-enter seq=7 pid=917 type=0
+[stage2-trace] capture-return seq=7 ret=0
+[stage2-trace] capture-enter seq=8 pid=917 type=0
+[stage2-trace] capture-return seq=8 ret=-10
+[stage2-trace] capture-enter seq=9 pid=917 type=0
+[stage2-trace] capture-return seq=9 ret=0
+[stage2-trace] capture-enter seq=10 pid=917 type=0
+[stage2-trace] capture-return seq=10 ret=-10
+[stage2-trace] capture-enter seq=11 pid=917 type=0
+[stage2-trace] capture-return seq=11 ret=0
+[stage2-trace] capture-enter seq=12 pid=917 type=0
+[stage2-trace] capture-return seq=12 ret=-10
+[stage2-trace] capture-enter seq=13 pid=917 type=0
+[stage2-trace] capture-return seq=13 ret=0
+[stage2-trace] capture-enter seq=14 pid=917 type=0
+[stage2-trace] capture-return seq=14 ret=-10
+[stage2-trace] capture-enter seq=15 pid=917 type=0
+[stage2-trace] capture-return seq=15 ret=0
+[stage2-trace] capture-enter seq=16 pid=917 type=0
+[stage2-trace] capture-return seq=16 ret=-10
+[stage2-trace] capture-enter seq=17 pid=917 type=0
+[stage2-trace] capture-return seq=17 ret=0
+[stage2-trace] capture-enter seq=18 pid=917 type=0
+[stage2-trace] capture-return seq=18 ret=-10
+[stage2-trace] capture-enter seq=19 pid=917 type=0
+[stage2-trace] capture-return seq=19 ret=0
+[stage2-trace] capture-enter seq=20 pid=917 type=0
+[stage2-trace] capture-return seq=20 ret=-10
+[stage2-trace] capture-enter seq=21 pid=917 type=0
+[stage2-trace] capture-return seq=21 ret=0
+[stage2-trace] capture-enter seq=22 pid=917 type=0
+[stage2-trace] capture-return seq=22 ret=-10
+[stage2-trace] capture-enter seq=23 pid=917 type=0
+[stage2-trace] capture-return seq=23 ret=0
+[stage2-trace] capture-enter seq=24 pid=917 type=0
+[stage2-trace] capture-return seq=24 ret=-10
+FAIL: enabled protections must execute with tracing
+
+
+COMMAND RESULT: sanitizer
+exit=0
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2] capture-outcome=empty-path ret=0 name_empty=1 folder_empty=1 -- reporting GP_ERROR_CAMERA_ERROR instead of false success (issue #183)
+[stage2-trace] capture-enter seq=1 pid=898 type=0
+[stage2-trace] capture-return seq=1 ret=0
+[stage2-trace] capture-enter seq=2 pid=898 type=0
+[stage2-trace] capture-return seq=2 ret=-10
+[stage2-trace] capture-enter seq=3 pid=898 type=0
+[stage2-trace] capture-return seq=3 ret=0
+[stage2-trace] capture-enter seq=4 pid=898 type=0
+[stage2-trace] capture-return seq=4 ret=-10
+[stage2-trace] capture-enter seq=5 pid=898 type=0
+[stage2-trace] capture-return seq=5 ret=0
+[stage2-trace] capture-enter seq=6 pid=898 type=0
+[stage2-trace] capture-return seq=6 ret=-10
+[stage2-trace] capture-enter seq=7 pid=898 type=0
+[stage2-trace] capture-return seq=7 ret=0
+[stage2-trace] capture-enter seq=8 pid=898 type=0
+[stage2-trace] capture-return seq=8 ret=-10
+[stage2-trace] capture-enter seq=9 pid=898 type=0
+[stage2-trace] capture-return seq=9 ret=0
+[stage2-trace] capture-enter seq=10 pid=898 type=0
+[stage2-trace] capture-return seq=10 ret=-10
+[stage2-trace] capture-enter seq=11 pid=898 type=0
+[stage2-trace] capture-return seq=11 ret=0
+[stage2-trace] capture-enter seq=12 pid=898 type=0
+[stage2-trace] capture-return seq=12 ret=-10
+[stage2-trace] capture-enter seq=13 pid=898 type=0
+[stage2-trace] capture-return seq=13 ret=0
+[stage2-trace] capture-enter seq=14 pid=898 type=0
+[stage2-trace] capture-return seq=14 ret=-10
+[stage2-trace] capture-enter seq=15 pid=898 type=0
+[stage2-trace] capture-return seq=15 ret=0
+[stage2-trace] capture-enter seq=16 pid=898 type=0
+[stage2-trace] capture-return seq=16 ret=-10
+[stage2-trace] capture-enter seq=17 pid=898 type=0
+[stage2-trace] capture-return seq=17 ret=0
+[stage2-trace] capture-enter seq=18 pid=898 type=0
+[stage2-trace] capture-return seq=18 ret=-10
+[stage2-trace] capture-enter seq=19 pid=898 type=0
+[stage2-trace] capture-return seq=19 ret=0
+[stage2-trace] capture-enter seq=20 pid=898 type=0
+[stage2-trace] capture-return seq=20 ret=-10
+[stage2-trace] capture-enter seq=21 pid=898 type=0
+[stage2-trace] capture-return seq=21 ret=0
+[stage2-trace] capture-enter seq=22 pid=898 type=0
+[stage2-trace] capture-return seq=22 ret=-10
+[stage2-trace] capture-enter seq=23 pid=898 type=0
+[stage2-trace] capture-return seq=23 ret=0
+[stage2-trace] capture-enter seq=24 pid=898 type=0
+[stage2-trace] capture-return seq=24 ret=-10
+trace=0 guard=0 check=0 marker=0 repeated_timeout=-10
+trace=0 guard=0 check=1 marker=1 repeated_timeout=-10
+trace=0 guard=1 check=0 marker=1 repeated_timeout=-10
+trace=0 guard=1 check=1 marker=1 repeated_timeout=-10
+trace=1 guard=0 check=0 marker=0 repeated_timeout=-10
+trace=1 guard=0 check=1 marker=0 repeated_timeout=-10
+trace=1 guard=1 check=0 marker=0 repeated_timeout=-10
+trace=1 guard=1 check=1 marker=0 repeated_timeout=-10
+protection violations=12 (8 combinations, 3 shots, success/timeout)
+OBSERVATION CONFIRMED: trace bypasses enabled protections
+
