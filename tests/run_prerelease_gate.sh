@@ -143,22 +143,26 @@ if python3 -m pytest -q \
     tests/test_pentax_bulb_variations.py \
     tests/test_astro_multishot.py \
     tests/test_display_fwver_monotonic.py \
-    tests/test_agent_sandbox_check.py > /tmp/prerelease-pytest.log 2>&1; then
+    tests/test_agent_sandbox_check.py \
+    tests/test_agent_host_config_check.py > /tmp/prerelease-pytest.log 2>&1; then
     ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
 else
     bad "python regression suite (log: /tmp/prerelease-pytest.log)"
 fi
 
 # ----------------------------------------------------------------------------
-# 2b. Live agent-host check (issue #184). Runs against THIS host, not
-#     fixtures: the sandbox must be enabled AND functional — a missing
-#     slirp4netns silently pushed every command outside the sandbox.
-#     Exit 77 = no VS Code-family settings here (e.g. CI container) =
-#     prerequisite SKIP, never silent green. Contract:
-#     docs/AGENT-HOST-CONFIG.md.
+# 2b. Live agent-host checks (issues #184, #185). These run against THIS
+#     host, not fixtures: the sandbox must be enabled AND functional (a
+#     missing slirp4netns silently pushed every command outside the
+#     sandbox), and the model pins must exist so selection is identical
+#     whether chat.experimentalModelPicker is true or false. Exit 77 =
+#     no VS Code-family settings here (e.g. CI container) = prerequisite
+#     SKIP, never silent green. Contract: docs/AGENT-HOST-CONFIG.md.
 # ----------------------------------------------------------------------------
-for checker in scripts/check-agent-sandbox.py; do
+for checker in scripts/check-agent-sandbox.py scripts/check-agent-host-config.py; do
     set --
+    [ "$checker" = "scripts/check-agent-host-config.py" ] && \
+        set -- --workspace-settings .vscode/settings.json
     if out="$(python3 "$checker" "$@" 2>&1)"; then
         ok "agent host check: $checker ($(printf '%s' "$out" | head -1))"
     else

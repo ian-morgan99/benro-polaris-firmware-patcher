@@ -27,6 +27,5 @@
         "**/.lmstudio-context/**": true,
         "**/docs/evidence/**/*.log": true
     },
-    "chat.experimentalModelPicker": false,
-    "lmstudio.baseUrl": "http://localhost:8080"
+    "chat.experimentalModelPicker": false
 }
