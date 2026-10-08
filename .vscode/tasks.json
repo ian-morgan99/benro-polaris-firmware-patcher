@@ -31,6 +31,16 @@
 			"label": "noop",
 			"type": "shell",
 			"command": "true"
+		},
+		{
+			"label": "Show git status and recent log",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status",
+				"--short"
+			],
+			"isBackground": false
 		}
 	]
 }

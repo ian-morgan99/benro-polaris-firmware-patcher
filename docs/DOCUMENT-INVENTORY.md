@@ -65,33 +65,6 @@ verified by its `SHA256SUMS` manifest.
 | `tests/pentax_stability_trace_events.txt` | KEEP | Active operational guidance, configuration, test contract, or concise evidence. |
 | `tests/pentax_stability_unknown_tokens.txt` | KEEP | Active operational guidance, configuration, test contract, or concise evidence. |
 
-## Addendum 2026-10-07 — documents created after this inventory
-
-This table was produced by the issue #116 sweep and is **not complete**: 27
-tracked documents created afterwards are absent from it. Absence here does not
-mean a document is unmanaged or a candidate for removal. The classification below
-is the minimum needed to stop that gap being re-investigated; `docs/README.md`
-is the entry point that says which documents are load-bearing.
-
-| Path | Decision | Reason |
-|---|---|---|
-| `docs/README.md` | KEEP | Documentation map: read order, subject ownership, superseded set. Added 2026-10-07. |
-| `docs/RELEASE-VERSION-STATE.md` | KEEP | Authoritative display-version registry (#169). |
-| `docs/HANDOVER-2026-09-23-O-V12M-COMPANION-UAF.md` | KEEP-AS-HISTORY | Point-in-time handover, superseded. Provenance only. |
-| `docs/HANDOVER-2026-09-23-RESCUE-REVIEW.md` | KEEP-AS-HISTORY | Point-in-time handover, superseded. Provenance only. |
-| `docs/HANDOVER-2026-09-24-O-V12N-AUDIT.md` | KEEP-AS-HISTORY | Point-in-time handover, superseded. Provenance only. |
-| `docs/HANDOVER-PENTAX-STABILITY-20260930.md` | KEEP-AS-HISTORY | Point-in-time handover, superseded. Provenance only. |
-| `docs/HANDOVER-20261004-POLARIS-RECOVERY.md` | KEEP-AS-HISTORY | Point-in-time handover, superseded. Provenance only. |
-| `docs/PENTAX-CAPTURE-RECOVERY.md`, `docs/PENTAX-CAPTURE-VERSION-LEDGER-2026-09-23.md`, `docs/WORKSPACE-CONVERGENCE-20260930.md` | KEEP-AS-HISTORY | Dated investigation records; superseded by the current registry and evidence summaries. |
-| `docs/FUTURE-UVC-SUPPORT.md`, `docs/IPOLAR-UVC-BACKEND-PLAN.md`, `docs/ORION-STARSHOOT-ADAPTER-CONTRACT.md`, `docs/STARSHOOT-158-SOLID-PLAN.md`, `docs/ISSUE-158-QHY5L-II-PROTOCOL.md` | KEEP | Forward-looking plans for unshipped hardware paths. |
-| `docs/analysis/` (3 files) | KEEP-AS-HISTORY | Design analysis, not a contract. |
-| `docs/archive/` (3 files) | KEEP-AS-HISTORY | Explicitly archived; see `docs/ARCHIVED-EVIDENCE.md`. |
-| `GITHUB_ISSUE_ORION_STARSHOOT.md`, `GITHUB_ISSUE_UVC_SUPPORT.md`, `IOPTRON_IPOLAR_TEST_SUMMARY.md` | TRIM-CANDIDATE | Top-level issue drafts / one-off test summaries. Belong in the issue tracker or `docs/evidence/`; left in place pending owner decision. |
-| `.memories/session/` (3 files) | TRIM-CANDIDATE | Agent session scratch state committed to the tree. Not project documentation. |
-
-No new `HANDOVER-*` files: update `docs/README.md` and the owning document
-instead.
-
 ## Archive location
 
 The complete moved-path manifest and original bytes are in the private
