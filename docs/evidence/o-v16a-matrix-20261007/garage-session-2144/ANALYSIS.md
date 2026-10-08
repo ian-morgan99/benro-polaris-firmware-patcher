@@ -61,7 +61,7 @@ with camera auto-power-off/sleep; not a new failure mode.
    already died once today).
 3. **False-success capture (new defect):** daemon emits `state:2/5/0` with an
    empty path and no file on disk. Same class as #182 / OpenPolaris#97: success
-   inferred from the wrong signal. Filed separately (see below).
+   inferred from the wrong signal. Filed as ian-morgan99/benro-polaris-firmware-patcher#183.
 4. Supervisor recovery worked this time (restart 1/6 → healthy session in ~60 s).
    Remaining gap: no signal reaches the app that the camera path recovered.
 
