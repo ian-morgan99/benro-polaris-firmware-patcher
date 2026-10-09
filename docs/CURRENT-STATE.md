@@ -17,14 +17,19 @@ loop, not in the notifier. For #187, the user confirmed Benro Connect died
 as expected during the one authorized camera-present attempt. Persistent logs
 were pulled after the operator restart; identity was reverified on `.62`,
 camera absent, with a phone peer on 9090. The logs distinguish the diagnostic
-host replay from native phone sockets: the replay ran before camera readiness;
-the phone did not reconnect until about three minutes after USB enumeration.
+host replay from native phone sockets: the first replay ran before camera
+readiness; the phone reconnected about three minutes after USB enumeration.
 Its first lasting socket got the expected code-780 `sw:6.0.0.54.62`, closed,
 then a second socket received the same response and stayed connected >14 min;
-neither requested camera-property codes. A similar handoff and the same blank
-`ov`/unknown-WB entries occur in `.61` logs during a stable native session.
-Mlog/Clog do not expose the phone process exception, so they cannot determine
-the exact crash cause. The pull, hashes, timeline, and limits are in
+neither requested camera-property codes. A second user-reported camera on/off
+event is now in boot 274: USB add, `Pentax session already open from a previous
+connection`, vendor enable rejected with `0x2002`, `gp_camera_init ret -1`,
+`state:-1`, then USB removal about 1.5 seconds later. That establishes a stale
+Pentax-session/init failure for this event, but no phone `.2` socket is logged
+in that exact window; it does not prove why the app died. Similar socket
+handoffs and blank `ov`/unknown-WB entries occur in `.61` during native stable
+sessions. Mlog/Clog do not expose the phone process exception, so the exact app
+crash cause remains unknown. The pull, hashes, timeline, and limits are in
 [`evidence/benro-connect-crash-20261009/SUMMARY.md`](evidence/benro-connect-crash-20261009/SUMMARY.md).
 The pull helper failed on an unset remote `$1`; the documented SSH/tar fallback
 succeeded. The camera is now absent and Polaris identity was verified after

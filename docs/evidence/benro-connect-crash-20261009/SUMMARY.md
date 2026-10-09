@@ -46,6 +46,24 @@ committed record. This avoids publishing device/network identifiers in raw logs.
 
 **Conclusion:** Mlog/Clog do **not** provide an exact root cause. They materially weaken the earlier white-balance and `ov` hypotheses, but the crash itself is not represented in these device logs. Do not make a firmware change based on this sample.
 
+## Operator-reported second camera-on/off event (captured by boot 274)
+
+After the user reported turning the camera on, seeing Benro Connect die, then turning the camera off, boot-274 logs were pulled again. The identity check still showed `.62`; the body was absent when queried afterward. Refreshed raw files and SHA-256s:
+
+| File | SHA-256 |
+|---|---|
+| `raw/Mlog_000274-after-second-event.log` | `6300ca4e3a0ecd818e73ffd3162e2126b1b3cf407c126f9606efaf2fd2283c9d` |
+| `raw/Clog_000274-after-second-event.log` | `c77a9f4012069c8177952b742a3efe2bb3c2e5de7beb0ee72d9652fe41ddcdbf` |
+| `raw/Mlog-current-after-second-event.log` | `684d54f8e08b6291fd31b0adc6454139be7da630d57407bab6d62c74f854a4c6` |
+| `raw/Clog-current-after-second-event.log` | `ac8ae3ad0b15d6319cec314c3c2bff4172fa091447f36411b4fda42aef934a08` |
+
+- At `20:50:45.611` the camera USB interface enumerated as `25fb:0189`. `spGphotoRest` ran; at `20:50:46.738` USB scan found the K-3 III.
+- At `20:50:47.900`, Clog reports `Pentax session already open from a previous connection; observing camera state.` The subsequent `Pentax init stage vendor enable returned 0x2002`, `gp_camera_init ret -1`, and `sp_Gphoto_Init ret -1` produce code 286 `manufacturer:none;model:none;state:-1`.
+- USB removal is logged at `20:50:48.406` and `20:50:48.439`, consistent with the user turning the body off. This is a concrete **camera-stack initialization failure** for this event: a stale Pentax session prevented vendor-mode enable. It plausibly explains a camera-not-ready/error state, but not by itself the phone app's process crash.
+- No `.2` phone socket/request is logged during this second USB-add / init-fail window. A later `App[113]` from `.3` is present around `20:51:03`; it is not identified as Benro Connect. Therefore the log does not show the exact native phone payload immediately preceding the reported crash.
+
+This is stronger than the first attempt's transient `state:-5`, but still does **not** prove that the `0x2002` response caused the Benro Connect crash. No new test was initiated by the agent; no shutter command was sent.
+
 ## Next diagnostic step
 
-The camera was off at the verified post-restart collection. Before any further camera-on attempt, improve `scripts/watch-app-crash.sh` offline so it captures native Mlog/socket traffic immediately at the USB transition and **before** opening the separate `app-burst.py` diagnostic connection. Preserve a clearly separated pre-replay snapshot, replay output, and post-replay snapshot. Test that behavior offline. Then schedule only one new camera-on attempt with explicit operator authorization and the phone already connected. No shutter command is required for this crash reproduction.
+Keep the camera off and current `.62` installed. The exact phone crash trigger remains unproven. Repair/test `scripts/watch-app-crash.sh` offline so it captures native Mlog/socket traffic immediately at USB insertion before any separate `app-burst.py` replay; also fix its log-pull helper's remote `$1` failure. Then arrange a supervised attempt with the phone already connected and explicit operator authorization. No firmware fix is justified from this evidence alone.
