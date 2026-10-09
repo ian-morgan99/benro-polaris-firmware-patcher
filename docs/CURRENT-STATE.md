@@ -13,22 +13,26 @@ Polaris identity was verified (BSSID `48:E7:DA:D4:B5:73`, route via `wlp8s0`,
 sent. Issue #169 was updated and closed after the code-780 regression test
 passed and the monotonic allocator returned `.63` as next. The newest #191
 analysis locates the ~61 s delay in `camera_capture`'s 20-second event-poll
-loop, not in the notifier. For #187, the user confirmed Benro Connect died as
-expected during the one authorized camera-present attempt. The watcher saw USB
-count `0 -> 1`; its diagnostic replay got `286 state:-5`, and captured Mlog
-requests are from `App[96]` (the replay), not a proven native-phone socket
-trace. The Clog includes camera property responses and `Unknown value` white-
-balance choices, but this is correlation, not the crash cause. The host then
-lost Wi-Fi association and routed through Ethernet, so the SSH failure does not
-establish Polaris failure. Raw evidence and limits are in
-[`evidence/benro-connect-crash-20261008/SUMMARY.md`](evidence/benro-connect-crash-20261008/SUMMARY.md).
-The watcher was stopped after the single attempt. Current Polaris identity is
-unverified; next recover camera-off access and re-prove AP/route/FwVer, then
-revise the watcher offline to preserve native Mlog before its replay. No second
-camera-on attempt until that capture path is checked and separately authorized.
-The offline prerelease gate is GREEN (19 container checks, 208 Python tests);
-no build or shutter capture was run. Do not change firmware or shorten #191
-without a separate controlled test.
+loop, not in the notifier. For #187, the user confirmed Benro Connect died
+as expected during the one authorized camera-present attempt. Persistent logs
+were pulled after the operator restart; identity was reverified on `.62`,
+camera absent, with a phone peer on 9090. The logs distinguish the diagnostic
+host replay from native phone sockets: the replay ran before camera readiness;
+the phone did not reconnect until about three minutes after USB enumeration.
+Its first lasting socket got the expected code-780 `sw:6.0.0.54.62`, closed,
+then a second socket received the same response and stayed connected >14 min;
+neither requested camera-property codes. A similar handoff and the same blank
+`ov`/unknown-WB entries occur in `.61` logs during a stable native session.
+Mlog/Clog do not expose the phone process exception, so they cannot determine
+the exact crash cause. The pull, hashes, timeline, and limits are in
+[`evidence/benro-connect-crash-20261009/SUMMARY.md`](evidence/benro-connect-crash-20261009/SUMMARY.md).
+The pull helper failed on an unset remote `$1`; the documented SSH/tar fallback
+succeeded. The camera is now absent and Polaris identity was verified after
+restart. Next, fix/test the watcher offline so native Mlog is captured before
+the diagnostic replay; no second camera-on attempt until that passes and is
+separately authorized. The offline gate is GREEN (19 container checks, 208
+Python tests); no build or shutter capture was run. Do not change firmware or
+shorten #191 without a separate controlled test.
 
 ## 2026-10-09 — `.62` installed and capture-clean; remaining faults are reporting faults
 
