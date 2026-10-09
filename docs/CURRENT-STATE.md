@@ -1,5 +1,27 @@
 # Current repository state
 
+## 2026-10-09 late-session handover
+
+The detailed conversation review and next actions are in
+[`evidence/conversation-handover-20261009.md`](evidence/conversation-handover-20261009.md).
+It supersedes earlier same-day wording below where noted: #187's camera-present
+Benro Connect crash remains unroot-caused; the installed `.62` returns the
+expected code-780 `sw:6.0.0.54.62`, and `SP_PushDeviceVer` selects a hard-coded
+blank `ov` field when the OMS-version state flag is inactive. During the check,
+Polaris identity was verified (BSSID `48:E7:DA:D4:B5:73`, route via `wlp8s0`,
+`/app/FwVer=6.0.0.54.62`). No camera was on USB, and no shutter command was
+sent. Issue #169 was updated and closed after the code-780 regression test
+passed and the monotonic allocator returned `.63` as next. The newest #191
+analysis locates the ~61 s delay in `camera_capture`'s 20-second event-poll
+loop, not in the notifier. For #187, the existing device-side
+`scripts/watch-app-crash.sh` watcher records camera-presence transitions and
+Mlog/Clog; ADB is not part of this workflow. The camera is absent and no new
+crash event has been captured. Any camera-on reproduction needs operator
+authorization because Benro Connect is part of the keepalive path. The offline
+prerelease gate is GREEN after adding protocol/file-check regressions (19
+container checks, 208 Python tests); no build or live canary was run. Do not
+change firmware or shorten the #191 timeout without a controlled physical test.
+
 ## 2026-10-09 — `.62` installed and capture-clean; remaining faults are reporting faults
 
 Installed and verified on device: **`6.0.0.54.62`**, candidate
@@ -15,30 +37,42 @@ mode-dependent, not a firmware fault (#186 corrected).
 
 **What is actually left is reporting, not capture:**
 - **#191** — in ~7 % of captures the file is on the card ~3 s after `state:4` but
-  the completion notification arrives at **exactly 61.0 s**. Static hunt found the
-  notifier (`MediaMsgProcTask`) waits on an **untimed** condition variable, so
-  there is no 60 s constant to shorten there; the delay is upstream in whatever
-  signals it. See [`evidence/notification-delay-20261009/SUMMARY.md`](evidence/notification-delay-20261009/SUMMARY.md).
+  the completion notification arrives at **exactly 61.0 s**. The notifier
+  (`MediaMsgProcTask`) waits on an untimed condition variable; the newest static
+  analysis instead finds three 20-second blocking event polls in `camera_capture`,
+  consistent with the measured delay. A shorter port timeout is only a proposed
+  hardware experiment, not a shipped fix. See [issue #191](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/191),
+  [`evidence/notification-delay-20261009/SUMMARY.md`](evidence/notification-delay-20261009/SUMMARY.md),
+  and the [late-session handover](evidence/conversation-handover-20261009.md).
 - **#182** — a ~19 s window where the daemon accepts a connection and answers
   nothing to a read-only `284`, with no crash and no restart. USB identity never
   changes, so the supervisor cannot see it. `scripts/control-liveness.py` now
   distinguishes `refused` / `unresponsive` / `healthy` and is the missing signal.
 - **#192** — clients (and our own canary) report a *successful* capture as a
-  failure when a notification is late. Checking the file exists before declaring
-  failure is the fastest user-visible fix and needs no firmware change.
+  failure when a notification is late. The canary now has an offline-tested file
+  inventory check that requires the exact expected `SP_` output set; failed
+  SSH inventories remain `unknown`, and a partial RAW+JPEG pair cannot pass.
+  Tests are in the offline gate, which is GREEN. This source/test work is still
+  uncommitted and has not been live-qualified; the previous-shot orphan caveat
+  still needs physical validation.
 - Bulb **duration** is still not honoured — `bulb_ms` is a capture watchdog, never
   a shutter-speed write. Pre-existing stock-path design, not a `.62` regression.
 
-**Device state at time of writing:** locked up. `ping` answers with 0 % loss while
-both port 22 and control port 9090 refuse connections (`control-liveness.py`
-reports `refused`, exit 2). Undiagnosed — no shell available. This is the same
-shape as #187 and is what #182's probe exists to detect.
+**Earlier post-soak device snapshot (superseded):** `ping` answered while ports
+22 and 9090 refused connections, with no shell available. During the later
+code-780 check recorded above, identity was re-established and SSH verified
+`.62`; 9090 was listening and no camera was attached. The former refusal remains
+a valid historical observation, not the current status. The camera-present app
+crash (#187) has not been reproduced during this later camera-absent session.
 
-**Next steps, in order:** (1) find the callers of `action_camera_wait_event`
-(reached via function pointer, so `bl` scan misses it) and the deadline they
-pass — still camera-free; (2) on-device, run `control-liveness.py` when the
-device returns and capture why the service is refusing; (3) implement the
-file-exists check in the canary (#192); (4) only then, a longer soak.
+**Next steps:** A's code-780 check is complete: `.62` reports the expected `sw`,
+and `ov` is conditionally blank when the OMS-version flag is false. #169 has
+been updated with this evidence and closed. The immediate blocker is #187:
+collect an Android crash log paired with the native-app Mlog/socket sequence
+before making any app-crash fix. For #191, validate the identified 3×20-second
+capture event wait with a controlled one-variable physical experiment before
+changing its timeout. Keep #182 daemon liveness and #192 file-exists handling
+separate; then run a longer soak after those changes are tested.
 
 ## 2026-10-04 takeover status — Polaris recovery required
 

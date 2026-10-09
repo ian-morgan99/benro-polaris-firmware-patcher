@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager, nullcontext
+import math
 import posixpath
+import shlex
 import socket
+import subprocess
 import sys
 import time
 
@@ -78,6 +81,103 @@ def field(payload: str, name: str) -> str | None:
         if item.startswith(prefix):
             return item[len(prefix):]
     return None
+
+
+class DeviceFileCheck:
+    """Compare file names around one shot without writing markers on-device."""
+
+    def __init__(self, ssh_host: str | None, output_dir: str,
+                 ssh_options: list[str] | None = None):
+        self.ssh_host = ssh_host
+        self.output_dir = output_dir
+        self.ssh_options = ssh_options or ["ssh", "-o", "BatchMode=yes",
+                                           "-o", "ConnectTimeout=5"]
+        self.before_files: set[str] | None = None
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.ssh_host)
+
+    def _list_files(self, timeout: float = 30.0) -> list[str] | None:
+        if not self.enabled:
+            return None
+        cmd = f"find {shlex.quote(self.output_dir)} -type f 2>/dev/null"
+        try:
+            proc = subprocess.run(self.ssh_options + [self.ssh_host, cmd],
+                                  capture_output=True, text=True, timeout=timeout,
+                                  check=False)
+        except (OSError, subprocess.SubprocessError) as exc:
+            print(f"{stamp()} FILECHECK query failed ({type(exc).__name__})",
+                  flush=True)
+            return None
+        if proc.returncode != 0:
+            print(f"{stamp()} FILECHECK query rc={proc.returncode} "
+                  f"{proc.stderr.strip()[:120]}", flush=True)
+            return None
+        return sorted(line for line in proc.stdout.splitlines() if line.strip())
+
+    def arm(self) -> None:
+        """Snapshot names before capture; a failed snapshot leaves the check unknown."""
+        self.before_files = None
+        if not self.enabled:
+            return
+        files = self._list_files(timeout=15.0)
+        if files is None:
+            print(f"{stamp()} FILECHECK baseline unavailable; timeout verdict will be unknown",
+                  flush=True)
+            return
+        self.before_files = set(files)
+
+    def new_files(self, timeout: float = 30.0) -> list[str] | None:
+        """New files since arm, or None if either inventory is unknown."""
+        if self.before_files is None:
+            return None
+        files = self._list_files(timeout=timeout)
+        if files is None:
+            return None
+        return sorted(set(files) - self.before_files)
+
+    def disarm(self) -> None:
+        self.before_files = None
+
+
+def expected_output_files(paths: list[str], expected_files: int) -> list[str] | None:
+    """Return one complete SP_ output set, rejecting partial or mixed captures."""
+    outputs = sorted(path for path in set(paths)
+                     if posixpath.basename(path).startswith("SP_"))
+    if len(outputs) != expected_files:
+        return None
+    if len({posixpath.splitext(path)[0] for path in outputs}) != 1:
+        return None
+    return outputs
+
+
+def wait_for_expected_output_set(
+    filecheck: DeviceFileCheck, expected_files: int, wait_seconds: float
+) -> tuple[bool, list[str], list[str] | None]:
+    """Return whether inventory worked, last new paths, and a complete set if found."""
+    if filecheck.before_files is None:
+        return False, [], None
+    deadline = time.monotonic() + wait_seconds
+    observed = False
+    new_files: list[str] = []
+    first_check = True
+    while first_check or time.monotonic() < deadline:
+        remaining = max(0.0, deadline - time.monotonic())
+        query_timeout = min(30.0, max(1.0 if first_check else 0.1, remaining))
+        first_check = False
+        found = filecheck.new_files(timeout=query_timeout)
+        if found is not None:
+            observed = True
+            new_files = found
+            complete = expected_output_files(found, expected_files)
+            if complete:
+                return observed, new_files, complete
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return observed, new_files, None
+        time.sleep(min(2.0, remaining))
+    return observed, new_files, None
 
 
 def effective_shot_timeout(base: float, bulb_seconds: int | None) -> float:
@@ -418,13 +518,28 @@ def main() -> int:
                     help="set the camera shutter to this option-list index via code 261 before "
                          "the capture and LEAVE it set (app path); unlike --bulb-seconds this "
                          "does not wrap the shot in a bulb session")
+    ap.add_argument("--ssh-host", default=None,
+                    help="SSH target used for the #192 file-exists check on a completion "
+                         "timeout (default root@<host>)")
+    ap.add_argument("--output-dir", default="/app/sd/normal",
+                    help="device directory the SP captures are written to, for the file check")
+    ap.add_argument("--file-check-wait", type=float, default=20.0,
+                    help="after a completion timeout, poll for the expected new output set "
+                         "up to this many seconds before reporting no-file (0 = check once)")
+    ap.add_argument("--no-file-check", action="store_true",
+                    help="report a completion timeout as FAIL without consulting the file "
+                         "system (the pre-#192 behaviour)")
     args = ap.parse_args()
+    if args.ssh_host is None and not args.no_file_check:
+        args.ssh_host = f"root@{args.host}"
     if not args.probe and not args.shot:
         ap.error("choose --probe or --shot")
     if args.shot and args.expected_files is None:
         ap.error("--shot requires --expected-files 1 or 2; photoFormat is not authoritative")
     if args.shot_timeout <= 0:
         ap.error("--shot-timeout must be positive")
+    if not math.isfinite(args.file_check_wait) or args.file_check_wait < 0:
+        ap.error("--file-check-wait must be finite and non-negative")
     if args.bulb_seconds is not None and args.bulb_seconds <= 0:
         ap.error("--bulb-seconds must be positive")
     if args.bulb_seconds is not None and not args.shot:
@@ -439,6 +554,9 @@ def main() -> int:
         ap.error("--expected-sw requires --probe or --shot")
 
     p = Polaris(args.host, args.port, args.bind or None, timeout=10)
+    # Defined before the try so the finally can always reach it.
+    filecheck = DeviceFileCheck(
+        None if args.no_file_check else args.ssh_host, args.output_dir)
     try:
         # authenticate
         p.send(284)
@@ -502,12 +620,23 @@ def main() -> int:
                           f"shot_timeout={shot_timeout}s", flush=True)
                 else:
                     print(f"{stamp()} SHOT shot_timeout={shot_timeout}s", flush=True)
+                # Snapshot before the shutter so new filenames can be compared
+                # after a notification timeout. Caveat kept honest: a late
+                # orphan write from a *previous* shot (#175/#176) landing in
+                # this window is indistinguishable here from this shot's file;
+                # the STALE-CANDIDATE logic in canary-two-shot covers that.
+                filecheck.arm()
                 p.send(264, subtype=4, payload=bulb_capture_payload(args.bulb_seconds))
                 deadline = time.monotonic() + shot_timeout
                 states: list[int] = []
                 files: list[str] = []
+                timed_out = False
                 while True:
-                    code, payload = p.frame(deadline)
+                    try:
+                        code, payload = p.frame(deadline)
+                    except (TimeoutError, socket.timeout):
+                        timed_out = True
+                        break
                     if code == 773:
                         path = field(payload, "path")
                         if path:
@@ -540,12 +669,39 @@ def main() -> int:
                         print(f"{stamp()} PASS lifecycle={states} files={files}", flush=True)
                         break
                     # ignore other codes
+                if timed_out:
+                    # #192: a missing notification does not prove the capture
+                    # produced no file. Require the complete expected SP_ set;
+                    # a partial RAW+JPEG pair or unrelated new file is not PASS.
+                    check_observed, new_files, on_disk = wait_for_expected_output_set(
+                        filecheck, args.expected_files, args.file_check_wait
+                    )
+                    if on_disk and not any(state < 0 for state in states):
+                        print(f"{stamp()} LATE-NOTIFICATION-BUT-FILE-PRESENT "
+                              f"states={states} files={on_disk} "
+                              "notification=absent verdict=success", flush=True)
+                        print(f"{stamp()} PASS lifecycle={states} files={on_disk} "
+                              "via=file-check", flush=True)
+                        return 0
+                    if any(state < 0 for state in states):
+                        verdict = "terminal-state"
+                    elif not check_observed:
+                        verdict = "unknown"
+                    elif new_files:
+                        verdict = "partial-files"
+                    else:
+                        verdict = "no-file"
+                    print(f"{stamp()} TIMEOUT verdict={verdict} states={states} "
+                          f"notified_files={files} disk_files={new_files} "
+                          "note=no 773/state:4 before deadline", flush=True)
+                    return 1
                 valid_stem = len({posixpath.splitext(path)[0] for path in files}) == 1
                 ok = (4 in states and 0 in states and len(files) == args.expected_files
                       and valid_stem and not any(s < 0 for s in states))
                 print(f"{stamp()} DONE states={states} files={files}", flush=True)
                 return 0 if ok else 1
     finally:
+        filecheck.disarm()
         p.close()
 
 

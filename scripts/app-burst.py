@@ -31,38 +31,61 @@ IDENTITY = [780]
 CAMERA_STATE = [265, 268, 275, 267, 266, 286]
 STORAGE_AND_MISC = [775, 778, 296, 303, 300, 823, 826, 802, 804, 824, 524]
 
+# Wire format, per Mlog (`msg_rcv_from_app_process`): the app sends the
+# camera-state queries as `type:1;val:-1` and everything else as
+# `type:2;val:-100`. The daemon only forwards type:1 camera-state queries to
+# the camera; sent as type:2 they are answered `val[-1]` and dropped, which is
+# why an earlier replay reported NO_REPLY for 265/268/275/267 while the app's
+# own identical queries were answered seconds later in the same Mlog.
+TYPE1_CAMERA_STATE = {265, 268, 275, 267, 266}
+CLIENT_HANDSHAKE = (
+    "1&284&2&-100#",
+    "1&820&2&-100#",
+    "1&823&2&app:openpolaris-app-burst;ver:1;#",
+)
+
+
+def request_frame(code: int) -> str:
+    if code in TYPE1_CAMERA_STATE:
+        return f"1&{code}&1&-1#"
+    return f"1&{code}&2&-100#"
+
 # Fields that a client parsing a fixed schema is most likely to reject outright.
 SUSPECT_KEYS = ("state:-", "manufacturer:none", "model:none", "ret:-")
 
 
-def frames(sock: socket.socket, want: int, deadline: float, buf: bytes):
-    """Yield decoded frames until the one answering `want` arrives, or timeout."""
-    while True:
-        while b"#" in buf:
-            raw, buf = buf.split(b"#", 1)
-            text = raw.decode("ascii", errors="replace")
-            yield text, buf
-            if text.startswith(f"{want}@") or text.startswith(f"1&{want}&"):
-                return
-        if time.monotonic() > deadline:
-            return
-        try:
-            chunk = sock.recv(65536)
-        except (socket.timeout, TimeoutError):
-            return
-        if not chunk:
-            return
-        buf += chunk
+class FrameReader:
+    """Read delimited replies without dropping coalesced or partial frames."""
+
+    def __init__(self):
+        self.buffer = b""
+
+    def receive(self, sock: socket.socket, want: int, deadline: float) -> str:
+        while True:
+            while b"#" in self.buffer:
+                raw, self.buffer = self.buffer.split(b"#", 1)
+                text = raw.decode("ascii", errors="replace")
+                if text.startswith(f"{want}@") or text.startswith(f"1&{want}&"):
+                    return text
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return ""
+            sock.settimeout(remaining)
+            try:
+                chunk = sock.recv(65536)
+            except (socket.timeout, TimeoutError):
+                return ""
+            if not chunk:
+                return ""
+            self.buffer += chunk
 
 
-def ask(sock: socket.socket, code: int, timeout: float) -> tuple[str, float]:
+def ask(sock: socket.socket, code: int, timeout: float,
+        reader: FrameReader) -> tuple[str, float]:
     started = time.monotonic()
-    sock.sendall(f"1&{code}&2&-100#".encode("ascii"))
-    buf = b""
-    for text, buf in frames(sock, code, started + timeout, buf):
-        if text.startswith(f"{code}@") or text.startswith(f"1&{code}&"):
-            return text, time.monotonic() - started
-    return "", time.monotonic() - started
+    sock.sendall(request_frame(code).encode("ascii"))
+    text = reader.receive(sock, code, started + timeout)
+    return text, time.monotonic() - started
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -86,10 +109,31 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     sock.settimeout(args.timeout)
 
+    # Register like a client does (284 handshake, 820 auth check, 823 app id).
+    # The camera-state queries are only forwarded to the camera for a session
+    # the daemon recognises, so replaying them cold is not the same question.
+    for frame in CLIENT_HANDSHAKE:
+        sock.sendall(frame.encode("ascii"))
+        time.sleep(0.2)
+    # Drain the handshake replies. The device also pushes 517/284 frames
+    # unsolicited, so drain against a deadline rather than until a read times
+    # out (a busy push stream would never let that happen).
+    drain_until = time.monotonic() + 1.0
+    while time.monotonic() < drain_until:
+        try:
+            sock.settimeout(max(0.05, drain_until - time.monotonic()))
+            if not sock.recv(65536):
+                break
+        except (socket.timeout, TimeoutError):
+            break
+        except OSError:
+            break
+
     problems = 0
+    reader = FrameReader()
     for code in codes:
         try:
-            text, elapsed = ask(sock, code, args.timeout)
+            text, elapsed = ask(sock, code, args.timeout, reader)
         except OSError as exc:
             print(f"{code:>4} ERROR {type(exc).__name__}: {exc}")
             problems += 1

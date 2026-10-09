@@ -130,7 +130,8 @@ fi
 
 # ----------------------------------------------------------------------------
 # 2. Coded Python regression tests (scenario routing, stability catalogue,
-#    trace tooling, Bulb variation matrix, and astro multi-shot contract).
+#    trace tooling, Bulb variation matrix, astro multi-shot contract, app-burst
+#    wire framing, and canary file-check contract).
 #    These encode the invariants
 #    of everything we believe is working; a new regression must break one.
 # ----------------------------------------------------------------------------
@@ -144,7 +145,9 @@ if python3 -m pytest -q \
     tests/test_astro_multishot.py \
     tests/test_display_fwver_monotonic.py \
     tests/test_agent_sandbox_check.py \
-    tests/test_agent_host_config_check.py > /tmp/prerelease-pytest.log 2>&1; then
+    tests/test_agent_host_config_check.py \
+    tests/test_app_burst_protocol.py \
+    tests/test_canary_file_check.py > /tmp/prerelease-pytest.log 2>&1; then
     ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
 else
     bad "python regression suite (log: /tmp/prerelease-pytest.log)"
