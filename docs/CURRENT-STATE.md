@@ -30,9 +30,14 @@ no camera-property requests then. This establishes a stale Pentax-session/init
 failure, not the cause of the reported app UI crash. The `.62` source already
 contains stale-session close/reset/reopen recovery, but the camera is absent now
 and `ptp2.so` is not mapped, so the logs do not prove that branch ran during the
-failed init. Similar socket handoffs and blank `ov`/unknown-WB entries occur in
-`.61` during native stable sessions. Mlog/Clog do not expose the phone process exception, so the exact app
-crash cause remains unknown. The Wi-Fi driver hypothesis has evidence: current
+failed init. A direct-PC Layer A test at the exact `.62` libgphoto2 source SHA
+then opened the same K-3 III, recovered from an already-open PTP session,
+enabled vendor mode, and returned five valid preview frames. Per the ownership
+rule, this points the `0x2002` Polaris-only difference to the packaged
+pgphoto/Stage-2/session path, not the libgphoto2 source. The [direct-PC test
+report](evidence/pentax-direct-pc-20261009/SUMMARY.md) records the exact SHA, USB
+ID, hashes, and five-frame transcript. The preview did not reproduce the phone
+UI crash, whose exact cause remains unknown. The Wi-Fi driver hypothesis has evidence: current
 dmesg contains 924 `No more free tdata_psh_info` and 923 `Out of tdata_disc_grp`
 messages. A second 125-second camera-off sample held them steady at 936/935
 while WLAN traffic increased and two 9090 connections stayed established. The
@@ -46,11 +51,12 @@ Wi-Fi route and SSH FwVer, snapshots Mlog/Clog before any separate replay, and
 keeps replay opt-in. Fake-SSH tests cover identity, ordering, and replay-off
 behavior. The camera is absent and Polaris identity was verified after restart.
 The offline gate is GREEN (19 container checks, 211 Python tests); no build or
-live canary was run. Root cause for #187 is still unproven: the second camera
-cycle logged stale Pentax session / vendor-enable `0x2002` / `state:-1`, but no
-phone `.2` socket at that instant. Next physical comparison requires the native
-phone socket established before camera-on and explicit operator authorization.
-Do not change firmware or shorten #191 without a separate controlled test.
+live canary was run. The direct-PC Layer A pass narrows the stale-session
+`0x2002` / `state:-1` difference to the packaged Polaris path, but does not prove
+why the phone UI crashed. The next comparison is Layer B: after the camera is
+available to move to Polaris, verify a fresh camera session, keep the phone
+socket active, start the watcher/Wi-Fi sampler, then do one authorized camera-on
+attempt. No firmware change or #191 timeout change is justified first.
 
 ## 2026-10-09 — `.62` installed and capture-clean; remaining faults are reporting faults
 

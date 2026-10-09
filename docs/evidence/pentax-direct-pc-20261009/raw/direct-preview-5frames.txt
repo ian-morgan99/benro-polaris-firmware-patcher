@@ -1,0 +1,27 @@
+UTC=2026-10-09T21:58:54Z
+CAMERA=K-3 III
+ATTACHMENT=PC
+LAYER=A
+PATH=usb:001,011
+SOURCE_SHA=67843d2248e7e37cfa58c15cc52e0a47bc13d952
+USB=Bus 001 Device 011: ID 25fb:0189 Pentax Ricoh Imaging Co., Ltd PENTAX K-3 Mark III
+ae91fceb99765f40c2fbe9b3b71dd670696dd5f20f4c152dea7eb99d4093da0f  /tmp/lgp-direct-67843d224/_build/examples/pentax-safe-preview
+cdd7d38aed0c0a485b1509ae1b343b25c78f673ecd873885c0623854edaaa091  /tmp/lgp-direct-67843d224/_build/camlibs/ptp2/ptp2.so
+Pentax session already open from a previous connection; observing camera state.
+Pentax init stage vendor enable succeeded; function flags 0x00000000.
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (46605 bytes, 1 attempts, 11 ms).
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (81285 bytes, 1 attempts, 32 ms).
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (84950 bytes, 1 attempts, 35 ms).
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (87755 bytes, 1 attempts, 15 ms).
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (89220 bytes, 1 attempts, 24 ms).
+frame=1 bytes=46605 valid_jpeg=yes
+frame=2 bytes=81285 valid_jpeg=yes
+frame=3 bytes=84950 valid_jpeg=yes
+frame=4 bytes=87755 valid_jpeg=yes
+frame=5 bytes=89220 valid_jpeg=yes
+completed_frames=5 cleanup=ok
