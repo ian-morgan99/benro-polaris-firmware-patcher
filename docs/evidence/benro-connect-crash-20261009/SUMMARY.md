@@ -79,13 +79,22 @@ so these counts cannot be aligned to the app crash. Sample:
 `wifi-driver-counter-sample-20261009.txt` (SHA-256
 `55bb6e2ba912e7aeda20007d882e3114d32a060c8977eaa64dc33efe5d79c236`).
 
-**Interpretation:** the driver fault is a credible independent network-risk
-factor, but this sample does not show active counter growth during the camera-off
-window or prove it caused Benro Connect to crash. It is pool exhaustion evidence,
-not evidence of memory clobber/corruption. To establish causality, future
-monitoring must sample the driver counters and Wi-Fi association continuously
-across an operator-authorized camera-on event, while separately recording the
-native phone socket timeline. Do not change Wi-Fi firmware based on this sample.
+A second read-only sample ran for 125 seconds on camera-off `.62`, with two
+9090 peers established and no 8080 peer. The counters stayed at 936/935 for the
+whole interval while WLAN RX increased by 95,672 bytes and TX by 108,868 bytes.
+The TSV is `wifi-camera-off-2m-20261009.tsv` (SHA-256
+`d029e7d25dc0206c6d78e990cdd4687c8424ebafa29843e85f5d6d646d42f626`). Compared
+with the earlier camera-off snapshot (924/923), there were 12 additional pairs
+in roughly 43 minutes between the two snapshots; the counters then stopped
+increasing for this 125-second window.
+
+**Interpretation:** the driver fault is a real independent network-risk factor,
+but these samples do not show ongoing exhaustion during the most recent window
+or prove it caused Benro Connect to crash. They show pool-resource exhaustion,
+not memory clobber/corruption. To establish causality, future monitoring must
+sample the driver counters and Wi-Fi association continuously across an
+authorized camera-on event, while separately recording the native phone socket
+timeline. Do not change Wi-Fi firmware based on this sample.
 
 ## Diagnostic tooling update
 

@@ -31,10 +31,10 @@ handoffs and blank `ov`/unknown-WB entries occur in `.61` during native stable
 sessions. Mlog/Clog do not expose the phone process exception, so the exact app
 crash cause remains unknown. The Wi-Fi driver hypothesis has evidence: current
 dmesg contains 924 `No more free tdata_psh_info` and 923 `Out of tdata_disc_grp`
-messages. A 37-second camera-off sample held those counters steady while WLAN
-traffic increased and three 9090 connections stayed established; without kernel
-timestamps this does not tie the pool exhaustion to the crash. See [the Wi-Fi
-sample and log analysis](evidence/benro-connect-crash-20261009/SUMMARY.md). The pull, hashes, timeline, and limits are in
+messages. A second 125-second camera-off sample held them steady at 936/935
+while WLAN traffic increased and two 9090 connections stayed established. The
+counts rose by 12 since the earlier sample, but no kernel timestamps tie that
+growth to the crash. See [the Wi-Fi sample and log analysis](evidence/benro-connect-crash-20261009/SUMMARY.md). The pull, hashes, timeline, and limits are in
 [`evidence/benro-connect-crash-20261009/SUMMARY.md`](evidence/benro-connect-crash-20261009/SUMMARY.md).
 The pull helper initially failed on an unset remote `$1`; it is now fixed to
 stream selected persistent logs to the host and include current Mlog/Clog tails,
