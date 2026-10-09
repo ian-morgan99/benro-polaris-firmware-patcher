@@ -1,6 +1,49 @@
 # Current repository state
 
+## 2026-10-09 — `.62` installed and capture-clean; remaining faults are reporting faults
+
+Installed and verified on device: **`6.0.0.54.62`**, candidate
+`o-v16c-context-lifetime-20261009` (the #190 context-lifetime fix).
+Evidence: [`evidence/o-v16c-context-lifetime-20261009/SUMMARY.md`](evidence/o-v16c-context-lifetime-20261009/SUMMARY.md)
+and [`SOAK-30.md`](evidence/o-v16c-context-lifetime-20261009/SOAK-30.md).
+
+**Capture path: no crash found.** 19 manual/B-mode/bulb captures plus a 30-run
+bulb soak — 47 captures total on `.62`, capture daemon pid unchanged throughout,
+no core file, no segfault or OOM in `dmesg`, no reboot. #190 is closed on this.
+Bulb works with the dial on **B**; the earlier `261 ret:-6` refusals were
+mode-dependent, not a firmware fault (#186 corrected).
+
+**What is actually left is reporting, not capture:**
+- **#191** — in ~7 % of captures the file is on the card ~3 s after `state:4` but
+  the completion notification arrives at **exactly 61.0 s**. Static hunt found the
+  notifier (`MediaMsgProcTask`) waits on an **untimed** condition variable, so
+  there is no 60 s constant to shorten there; the delay is upstream in whatever
+  signals it. See [`evidence/notification-delay-20261009/SUMMARY.md`](evidence/notification-delay-20261009/SUMMARY.md).
+- **#182** — a ~19 s window where the daemon accepts a connection and answers
+  nothing to a read-only `284`, with no crash and no restart. USB identity never
+  changes, so the supervisor cannot see it. `scripts/control-liveness.py` now
+  distinguishes `refused` / `unresponsive` / `healthy` and is the missing signal.
+- **#192** — clients (and our own canary) report a *successful* capture as a
+  failure when a notification is late. Checking the file exists before declaring
+  failure is the fastest user-visible fix and needs no firmware change.
+- Bulb **duration** is still not honoured — `bulb_ms` is a capture watchdog, never
+  a shutter-speed write. Pre-existing stock-path design, not a `.62` regression.
+
+**Device state at time of writing:** locked up. `ping` answers with 0 % loss while
+both port 22 and control port 9090 refuse connections (`control-liveness.py`
+reports `refused`, exit 2). Undiagnosed — no shell available. This is the same
+shape as #187 and is what #182's probe exists to detect.
+
+**Next steps, in order:** (1) find the callers of `action_camera_wait_event`
+(reached via function pointer, so `bl` scan misses it) and the deadline they
+pass — still camera-free; (2) on-device, run `control-liveness.py` when the
+device returns and capture why the service is refusing; (3) implement the
+file-exists check in the canary (#192); (4) only then, a longer soak.
+
 ## 2026-10-04 takeover status — Polaris recovery required
+
+> **Superseded on 2026-10-09.** The device recovered, `6.0.0.54.62` was built,
+> installed and qualified. See the section above for current state.
 
 The live Polaris is currently unreachable: cached Bluetooth is visible but the
 connection aborts and the `polaris_d13e86` Wi-Fi network does not appear. There
