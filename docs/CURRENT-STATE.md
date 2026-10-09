@@ -52,9 +52,9 @@ mode-dependent, not a firmware fault (#186 corrected).
   failure when a notification is late. The canary now has an offline-tested file
   inventory check that requires the exact expected `SP_` output set; failed
   SSH inventories remain `unknown`, and a partial RAW+JPEG pair cannot pass.
-  Tests are in the offline gate, which is GREEN. This source/test work is still
-  uncommitted and has not been live-qualified; the previous-shot orphan caveat
-  still needs physical validation.
+  Tests are in the offline gate, which is GREEN. The changes are committed in
+  `4a1999e` and described on #192; they have not been live-qualified. The
+  previous-shot orphan caveat still needs physical validation.
 - Bulb **duration** is still not honoured — `bulb_ms` is a capture watchdog, never
   a shutter-speed write. Pre-existing stock-path design, not a `.62` regression.
 
