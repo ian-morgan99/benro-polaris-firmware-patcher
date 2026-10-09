@@ -13,14 +13,22 @@ Polaris identity was verified (BSSID `48:E7:DA:D4:B5:73`, route via `wlp8s0`,
 sent. Issue #169 was updated and closed after the code-780 regression test
 passed and the monotonic allocator returned `.63` as next. The newest #191
 analysis locates the ~61 s delay in `camera_capture`'s 20-second event-poll
-loop, not in the notifier. For #187, the existing device-side
-`scripts/watch-app-crash.sh` watcher records camera-presence transitions and
-Mlog/Clog; ADB is not part of this workflow. The camera is absent and no new
-crash event has been captured. Any camera-on reproduction needs operator
-authorization because Benro Connect is part of the keepalive path. The offline
-prerelease gate is GREEN after adding protocol/file-check regressions (19
-container checks, 208 Python tests); no build or live canary was run. Do not
-change firmware or shorten the #191 timeout without a controlled physical test.
+loop, not in the notifier. For #187, the user confirmed Benro Connect died as
+expected during the one authorized camera-present attempt. The watcher saw USB
+count `0 -> 1`; its diagnostic replay got `286 state:-5`, and captured Mlog
+requests are from `App[96]` (the replay), not a proven native-phone socket
+trace. The Clog includes camera property responses and `Unknown value` white-
+balance choices, but this is correlation, not the crash cause. The host then
+lost Wi-Fi association and routed through Ethernet, so the SSH failure does not
+establish Polaris failure. Raw evidence and limits are in
+[`evidence/benro-connect-crash-20261008/SUMMARY.md`](evidence/benro-connect-crash-20261008/SUMMARY.md).
+The watcher was stopped after the single attempt. Current Polaris identity is
+unverified; next recover camera-off access and re-prove AP/route/FwVer, then
+revise the watcher offline to preserve native Mlog before its replay. No second
+camera-on attempt until that capture path is checked and separately authorized.
+The offline prerelease gate is GREEN (19 container checks, 208 Python tests);
+no build or shutter capture was run. Do not change firmware or shorten #191
+without a separate controlled test.
 
 ## 2026-10-09 — `.62` installed and capture-clean; remaining faults are reporting faults
 

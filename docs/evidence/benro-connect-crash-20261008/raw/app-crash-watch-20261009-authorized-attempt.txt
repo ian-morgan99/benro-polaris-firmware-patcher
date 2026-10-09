@@ -1,0 +1,157 @@
+2026-10-09T15:53:02Z === watch start (host=root@192.168.0.1 interval=5s) ===
+2026-10-09T15:53:02Z CAMERA_STATE change: unknown -> 0
+2026-10-09T15:55:27Z CAMERA_STATE change: 0 -> 1
+2026-10-09T15:55:27Z --- app-burst replay (camera present) ---
+ 265 NO_REPLY (3.0s)  <-- the app waits on this
+ 268 NO_REPLY (3.0s)  <-- the app waits on this
+ 275 NO_REPLY (3.0s)  <-- the app waits on this
+ 267 NO_REPLY (3.0s)  <-- the app waits on this
+ 266 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;
+ 286 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+--- 4 of 6 queries unusable ---
+2026-10-09T15:55:40Z --- device log ---
+[m[16:55:42:747 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[76]:type:1;code:268;val:-1
+[m[16:55:42:747 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[76]:type:1;code:275;val:-1
+[m[16:55:42:747 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[76]:type:1;code:267;val:-1
+[m[16:55:42:747 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[76]:type:1;code:266;val:-1
+[m[16:55:42:747 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[16:55:42:747 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[16:55:42:748 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[16:55:42:748 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[16:55:42:749 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00:00,;]
+[m[m[16:55:42:749 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00:00,;]
+[m[m[16:55:42:749 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00:00,]
+[m[16:55:42:749 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[16:55:42:750 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00:00
+[m[16:55:42:750 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[16:55:42:750 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[16:55:42:750 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[16:55:42:750 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 0;
+[m[16:55:42:752 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:0;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[16:55:42:752 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:0;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[16:55:42:752 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[16:55:42:752 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 0
+[m[16:55:42:753 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para f/22
+[m[16:55:42:753 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 22.000000 
+[m[16:55:42:753 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 0 
+[m[16:55:42:753 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[16:55:42:754 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[16:55:42:754 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[16:55:42:754 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[0,]
+[m[16:55:42:754 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 0
+[m[16:55:42:754 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 0
+[m[16:55:42:754 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[16:55:42:754 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 0 
+[m[16:55:42:757 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[16:55:42:757 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[16:55:42:760 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[91]:type:2;code:286;val:-100
+[m[16:55:42:760 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+[m[m[16:55:42:762 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=91] s_u32ClientNum[1]
+[m[16:55:42:762 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[91]
+[m[16:55:43:020 [1;32mINFO[m-]:SocketServerTask[120]:SOCKET_CLOSE(201) [id=76] s_u32ClientNum[0]
+[m[16:55:43:020 [1;32mINFO[m-]:SP_ClientCtxDel[390]:[0;35mSP_ClientCtxDel:id[76],type[wifi];WifiCount[0],CellCount[0];
+--- Clog ---
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 Unknown value 800d
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 Tungsten
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 Unknown value 800e
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 Unknown value 8007
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 Unknown value 8008
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 Unknown value 8009
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 Unknown value 800a
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 Unknown value 800b
+[m[16:55:42:756 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 Unknown value 800c
+[m[16:55:42:757 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[16:55:42:757 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret 0 
+[m[16:55:42:757 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[16:55:42:757 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[restart_gphoto] OK: port 8080 listening — restart successful
+[camera-usb] pgphoto restart complete (restart 1/6)
+Pentax preview stage start-PC-LV returned 0x2001.
+Pentax preview stage get-frame returned 0x2001 (59715 bytes, 1 attempts, 15 ms).
+----handle_sign_pipe
+on client close..........1 
+[m[16:55:43:160 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:0 
+2026-10-09T15:55:58Z CAMERA_STATE change: 1 -> 0
+2026-10-09T15:56:46Z CAMERA_STATE change: 0 -> ?
+2026-10-09T15:59:21Z CAMERA_STATE change: ? -> 0
+2026-10-09T16:01:54Z CAMERA_STATE change: 0 -> ?
+2026-10-09T16:02:37Z CAMERA_STATE change: ? -> 0
+2026-10-09T16:03:44Z CAMERA_STATE change: 0 -> ?
+2026-10-09T16:04:13Z CAMERA_STATE change: ? -> 0
+2026-10-09T16:13:05Z CAMERA_STATE change: 0 -> ?
+2026-10-09T16:14:20Z CAMERA_STATE change: ? -> 0
+2026-10-09T17:04:03Z CAMERA_STATE change: 0 -> ?
+2026-10-09T17:04:38Z CAMERA_STATE change: ? -> 0
+2026-10-09T17:12:48Z CAMERA_STATE change: 0 -> ?
+2026-10-09T17:12:53Z CAMERA_STATE change: ? -> 0
+2026-10-09T19:18:53Z CAMERA_STATE change: 0 -> 1
+2026-10-09T19:18:53Z --- app-burst replay (camera present) ---
+ 265 NO_REPLY (3.0s)  <-- the app waits on this
+ 268 NO_REPLY (3.0s)  <-- the app waits on this
+ 275 NO_REPLY (3.0s)  <-- the app waits on this
+ 267 267@RD:0;V:0;R:0,;
+ 266 266@RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;
+ 286 286@manufacturer:none;model:none;state:-5;storage:0;photoFormat:0;  <-- state:-, manufacturer:none, model:none
+--- 3 of 6 queries unusable ---
+2026-10-09T19:19:04Z --- device log ---
+[m[m[20:19:08:705 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:3;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[20:19:08:705 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[20:19:08:705 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 3
+[m[20:19:08:705 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[3] para 800
+[m[20:19:08:705 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 800
+[m[20:19:08:705 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[20:19:08:707 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[96]:type:1;code:268;val:-1
+[m[20:19:08:707 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[96]:type:1;code:275;val:-1
+[m[20:19:08:707 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[m[20:19:08:707 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[96]:type:1;code:267;val:-1
+[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[20:19:08:707 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[96]:type:1;code:266;val:-1
+[m[20:19:08:707 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[20:19:08:708 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[20:19:08:708 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[20:19:08:709 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00:00,;]
+[m[m[20:19:08:710 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00:00,;]
+[m[m[20:19:08:710 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00:00,]
+[m[20:19:08:710 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[20:19:08:710 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00:00
+[m[20:19:08:710 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[20:19:08:710 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[20:19:08:710 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[20:19:08:710 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 0;
+[m[20:19:08:712 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:0;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[20:19:08:712 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:0;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[20:19:08:712 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[20:19:08:712 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 0
+[m[20:19:08:712 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para f/22
+[m[20:19:08:712 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 22.000000 
+[m[20:19:08:713 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 0 
+[m[20:19:08:713 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[20:19:08:715 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[20:19:08:715 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[20:19:08:715 [1;32mINFO[m-]:SP_MsgFromCameraProc[1248]:evString[0,]
+[m[20:19:08:715 [1;32mINFO[m-]:SP_MsgFromCameraProc[1253]:ev index 0
+[m[20:19:08:715 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 0
+[m[20:19:08:715 [1;32mINFO[m-]:SP_GetCameraEv[544]:[0;35mf32Ev 0.000000 
+[m[20:19:08:715 [1;32mINFO[m-]:SP_GetCameraEv[546]:u32EvIndex 0 
+[m[20:19:08:718 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[20:19:08:718 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+--- Clog ---
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 Daylight
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 Cloudy
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 Fluorescent- Daylight
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 Fluorescent- Day White
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 Fluorescent- White
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 Fluorescent- Tungsten
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 Unknown value 800d
+[m[20:19:08:717 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 Tungsten
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 Unknown value 800e
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 Unknown value 8007
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 Unknown value 8008
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 Unknown value 8009
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 Unknown value 800a
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 Unknown value 800b
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 Unknown value 800c
+[m[20:19:08:718 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[20:19:08:718 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret 0 
+[m[20:19:08:718 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[20:19:08:719 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m2026-10-09T19:20:12Z CAMERA_STATE change: 1 -> ?

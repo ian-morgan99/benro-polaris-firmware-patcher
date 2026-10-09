@@ -37,3 +37,48 @@ trace analysis are in `../o-v16b-bulb-trace-20261008/`.
 - Dial A/B reproduction of the 0x2002 refusal.
 - Plain (non-bulb) capture with dial off B after a clean init.
 - App-side crash log (logcat) for #187; `.60` comparison for app behaviour.
+
+## 2026-10-09 authorized single camera-present observation
+
+Raw watcher output: `raw/app-crash-watch-20261009-authorized-attempt.txt`
+(SHA-256 `91cecdefbe3e272a886acbc97c634e6c8e3a68c70b80978169fdd59bda1c10e0`).
+
+- Before the attempt, Polaris identity was verified on `.62` via BSSID
+  `48:E7:DA:D4:B5:73`, route `wlp8s0`, and `/app/FwVer`.
+- At `19:18:53Z`, the host watcher saw USB camera count change `0 -> 1` and ran
+  the read-only `app-burst.py` replay. It reported no replies for `265`, `268`,
+  and `275`, valid replies for `267` and `266`, then `286 state:-5` (camera absent).
+- The device-log snapshot at `19:19:04Z` contains camera property responses,
+  including the white-balance list, plus `Unknown value` choices in Clog. The
+  Mlog excerpt identifies client `App[96]` making type-1 control queries,
+  consistent with the diagnostic replay connection. It does **not** preserve a
+  distinguishable native Benro Connect accept/close pair at this test moment.
+  Therefore this is not proof that the native app crashed on white balance.
+- At `19:20:12Z` the watcher changed `1 -> ?` after SSH/presence polling became
+  inconclusive. Follow-up on the host found Wi-Fi disconnected and the route to
+  `192.168.0.1` via Ethernet; SSH refused. This does not prove whether the
+  Polaris AP/service failed or only the host left the AP. No shutter/capture
+  command was sent.
+- The watcher was stopped after this one authorized observation. No retry or
+  second camera-on cycle was attempted.
+
+**Result:** the operator confirmed Benro Connect died as expected during this
+authorized camera-present attempt, so the user-visible crash symptom is
+reproduced. The device-side trace does not identify the crashing native app
+transaction: `App[96]` is the diagnostic `app-burst.py` client, not proven to be
+the phone; its `286 state:-5` also shows the camera was absent by that query.
+The Clog snapshot contains the white-balance choices including several
+`Unknown value` entries, but the trace does not correlate these lines to a
+native phone socket closing. The host then lost the Polaris Wi-Fi association
+and routed through Ethernet, so the subsequent SSH refusal cannot distinguish
+host route loss from Polaris service/AP loss. Re-prove BSSID/route before any
+further device conclusion. #187 remains open and root cause unproven. No shutter
+command was sent; no new firmware build or device change is justified by this
+sample.
+
+**Next:** no immediate second camera-on attempt. First restore the safe
+camera-off connection and verify Polaris identity. Then adjust the watcher to
+capture the native Mlog/socket exchange before its diagnostic replay (and
+preserve the event window) so `App[96]` traffic cannot be mistaken for the
+phone. Only after the updated capture path is checked offline should another
+single camera-on reproduction be scheduled and explicitly authorized.
