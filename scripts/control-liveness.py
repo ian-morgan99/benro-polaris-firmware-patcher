@@ -28,11 +28,13 @@ against a live device at any time.
 
 Exit codes are stable so this can be wired into a supervisor or CI gate:
   0 healthy, 1 unresponsive, 2 refused/unreachable, 3 protocol error,
+  5 unreachable (host gone: no route / no connect answer),
   4 wrong_network (the address is not the gimbal; see route_interface).
 """
 from __future__ import annotations
 
 import argparse
+import errno
 import os
 import re
 import socket
@@ -49,6 +51,7 @@ EXIT_UNRESPONSIVE = 1
 EXIT_REFUSED = 2
 EXIT_PROTOCOL_ERROR = 3
 EXIT_WRONG_NETWORK = 4
+EXIT_UNREACHABLE = 5
 
 # "healthy" is not merely "a byte arrived". The device answers several frames
 # around a session (unsolicited notifications included), so the probe looks for
@@ -74,7 +77,7 @@ def parse_frame(text: str) -> tuple[int, str] | None:
 def classify(connect_error: str | None, reply_code: int | None) -> str:
     """Map what happened to one of the four states. Pure, so it is unit-testable."""
     if connect_error is not None:
-        return "refused"
+        return "refused" if connect_error == "ConnectionRefusedError" else "unreachable"
     if reply_code is None:
         return "unresponsive"
     if reply_code == PROBE_COMMAND:
@@ -89,7 +92,17 @@ def probe(host: str, port: int, timeout: float) -> tuple[str, float, str]:
     sock.settimeout(timeout)
     try:
         sock.connect((host, port))
+    except ConnectionRefusedError as exc:
+        return "refused", time.monotonic() - started, f"{type(exc).__name__}: {exc}"
+    except (TimeoutError, socket.timeout) as exc:
+        # Connect produced no answer at all: the host is silent, not rejecting.
+        return "unreachable", time.monotonic() - started, f"{type(exc).__name__}: {exc}"
     except OSError as exc:
+        # EHOSTUNREACH/ENETUNREACH mean the host went away mid-session (seen on
+        # 2026-10-09 when Benro Connect crashed and the AP dropped). Calling that
+        # `refused` would tell a supervisor to restart a service that is fine.
+        if exc.errno in (errno.EHOSTUNREACH, errno.ENETUNREACH):
+            return "unreachable", time.monotonic() - started, f"{type(exc).__name__}: {exc}"
         return "refused", time.monotonic() - started, f"{type(exc).__name__}: {exc}"
     try:
         sock.sendall(f"1&{PROBE_COMMAND}&2&-100#".encode("ascii"))
@@ -185,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
                   f"target={args.host}:{args.port} {detail}", flush=True)
         if state != "healthy":
             worst_state, worst_exit = state, {
+                "unreachable": EXIT_UNREACHABLE,
                 "unresponsive": EXIT_UNRESPONSIVE,
                 "refused": EXIT_REFUSED,
                 "protocol_error": EXIT_PROTOCOL_ERROR,

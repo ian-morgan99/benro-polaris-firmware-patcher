@@ -206,3 +206,45 @@ def test_route_check_can_be_skipped_for_non_gimbal_targets(monkeypatch):
     monkeypatch.setattr(probe_mod, "probe", lambda *a, **k: ("healthy", 0.01, "ok"))
     assert probe_mod.main(["--host", "127.0.0.1", "--port", "1", "--iface", "",
                            "--quiet"]) == 0
+
+
+# --- unreachable vs refused --------------------------------------------------
+# When Benro Connect crashed on 2026-10-09 the AP dropped mid-session and the
+# probe reported `refused` for EHOSTUNREACH. A supervisor acting on that would
+# restart a service that is fine; the host is what went away.
+
+def test_no_route_is_unreachable_not_refused():
+    assert probe_mod.classify("OSError: [Errno 113] No route to host", None) == "unreachable"
+    assert probe_mod.classify("ConnectionRefusedError", None) == "refused"
+
+
+def test_connect_ehostunreach_is_reported_as_unreachable():
+    import errno as _errno
+    srv = _listen()
+    port = srv.getsockname()[1]
+    srv.close()
+    original_connect = socket.socket.connect
+
+    def fake_connect(self, addr):
+        raise OSError(_errno.EHOSTUNREACH, "No route to host")
+
+    socket.socket.connect = fake_connect
+    try:
+        state, _, detail = probe_mod.probe("192.168.0.1", port, 1.0)
+    finally:
+        socket.socket.connect = original_connect
+    assert state == "unreachable", detail
+    assert "route" in detail.lower()
+
+
+def test_connect_refused_still_reports_refused():
+    srv = _listen()
+    port = srv.getsockname()[1]
+    srv.close()
+    state, _, _ = probe_mod.probe("127.0.0.1", port, 1.0)
+    assert state == "refused"
+
+
+def test_unreachable_has_its_own_exit_code():
+    assert probe_mod.EXIT_UNREACHABLE == 5
+    assert probe_mod.EXIT_REFUSED == 2
