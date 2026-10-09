@@ -155,8 +155,54 @@ def test_main_maps_states_to_stable_exit_codes():
     port = srv.getsockname()[1]
     srv.close()
     code = probe_mod.main(["--host", "127.0.0.1", "--port", str(port),
-                           "--timeout", "0.5", "--quiet"])
+                           "--timeout", "0.5", "--iface", "", "--quiet"])
     assert code == probe_mod.EXIT_REFUSED == 2
     assert probe_mod.EXIT_HEALTHY == 0
     assert probe_mod.EXIT_UNRESPONSIVE == 1
     assert probe_mod.EXIT_PROTOCOL_ERROR == 3
+
+
+# --- wrong-network guard -----------------------------------------------------
+# 192.168.0.1 is shared with the home router. On 2026-10-09 the Wi-Fi dropped to
+# the LAN and the probe reported `refused` for ~40 minutes about a device that
+# was never unreachable. A liveness probe must not call the router "service down".
+
+def test_route_interface_reports_the_device_used(monkeypatch):
+    def fake_run(cmd, **kwargs):
+        assert cmd[:3] == ["ip", "-o", "route"]
+        return __import__("subprocess").CompletedProcess(
+            cmd, 0,
+            "192.168.0.1 via 192.168.68.1 dev enp11s0 src 192.168.68.89\n", "")
+    monkeypatch.setattr(probe_mod.subprocess, "run", fake_run)
+    assert probe_mod.route_interface("192.168.0.1") == "enp11s0"
+
+
+def test_route_interface_is_none_when_ip_is_unavailable(monkeypatch):
+    def boom(*a, **k):
+        raise OSError("no ip command")
+    monkeypatch.setattr(probe_mod.subprocess, "run", boom)
+    assert probe_mod.route_interface("192.168.0.1") is None
+
+
+def test_main_refuses_to_report_on_the_wrong_network(monkeypatch, capsys):
+    monkeypatch.setattr(probe_mod, "route_interface", lambda host: "enp11s0")
+    # probe() would say `refused` here; that verdict must never be reached.
+    monkeypatch.setattr(probe_mod, "probe",
+                        lambda *a, **k: ("refused", 0.0, "would be a false alarm"))
+    code = probe_mod.main(["--host", "192.168.0.1", "--port", "9090"])
+    assert code == probe_mod.EXIT_WRONG_NETWORK == 4
+    out = capsys.readouterr().out
+    assert "wrong_network" in out and "enp11s0" in out
+
+
+def test_main_probes_normally_when_the_route_is_correct(monkeypatch):
+    monkeypatch.setattr(probe_mod, "route_interface", lambda host: "wlp8s0")
+    monkeypatch.setattr(probe_mod, "probe", lambda *a, **k: ("healthy", 0.02, "ok"))
+    assert probe_mod.main(["--host", "192.168.0.1", "--port", "9090", "--quiet"]) == 0
+
+
+def test_route_check_can_be_skipped_for_non_gimbal_targets(monkeypatch):
+    monkeypatch.setattr(probe_mod, "route_interface", lambda host: "enp11s0")
+    monkeypatch.setattr(probe_mod, "probe", lambda *a, **k: ("healthy", 0.01, "ok"))
+    assert probe_mod.main(["--host", "127.0.0.1", "--port", "1", "--iface", "",
+                           "--quiet"]) == 0

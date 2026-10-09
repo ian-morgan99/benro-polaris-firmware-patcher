@@ -27,12 +27,16 @@ wedge. Nothing is written and no capture is triggered, so this is safe to run
 against a live device at any time.
 
 Exit codes are stable so this can be wired into a supervisor or CI gate:
-  0 healthy, 1 unresponsive, 2 refused/ unreachable, 3 protocol error.
+  0 healthy, 1 unresponsive, 2 refused/unreachable, 3 protocol error,
+  4 wrong_network (the address is not the gimbal; see route_interface).
 """
 from __future__ import annotations
 
 import argparse
+import os
+import re
 import socket
+import subprocess
 import sys
 import time
 
@@ -44,6 +48,7 @@ EXIT_HEALTHY = 0
 EXIT_UNRESPONSIVE = 1
 EXIT_REFUSED = 2
 EXIT_PROTOCOL_ERROR = 3
+EXIT_WRONG_NETWORK = 4
 
 # "healthy" is not merely "a byte arrived". The device answers several frames
 # around a session (unsolicited notifications included), so the probe looks for
@@ -119,6 +124,27 @@ def probe(host: str, port: int, timeout: float) -> tuple[str, float, str]:
         sock.close()
 
 
+def route_interface(host: str) -> str | None:
+    """Return the interface `ip route get <host>` would use, or None if unknown.
+
+    Why this is checked before probing. 192.168.0.1 is not unique on this
+    network: when the host is on its LAN rather than the gimbal's own AP, the
+    address belongs to the home router, which answers ping and lighttpd on :80
+    and refuses 22/9090. Observed directly on 2026-10-09 -- the probe reported
+    `refused` for ~40 minutes about a device that was never unreachable, because
+    the Wi-Fi had dropped to the LAN. `polaris-preflight.sh` documents the same
+    trap; a liveness probe that cannot tell "service down" from "wrong network"
+    will keep producing that false alarm.
+    """
+    try:
+        out = subprocess.run(["ip", "-o", "route", "get", host],
+                             capture_output=True, text=True, timeout=5).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    match = re.search(r"\bdev\s+(\S+)", out)
+    return match.group(1) if match else None
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--host", default=DEFAULT_HOST)
@@ -128,12 +154,27 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--attempts", type=int, default=1,
                     help="repeat N times; the worst result is reported (default 1)")
     ap.add_argument("--interval", type=float, default=1.0)
+    ap.add_argument("--iface", default=None,
+                    help="interface the address must route via (default $WIFI_IFACE, "
+                         "else wlp8s0, matching polaris-preflight.sh); pass '' to skip")
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args(argv)
 
     if args.attempts < 1:
         print("--attempts must be >= 1", file=sys.stderr)
         return EXIT_PROTOCOL_ERROR
+
+    expected_iface = args.iface if args.iface is not None else \
+        os.environ.get("WIFI_IFACE", "wlp8s0")
+    if expected_iface:
+        actual = route_interface(args.host)
+        if actual != expected_iface:
+            print(f"RESULT state=wrong_network exit={EXIT_WRONG_NETWORK} "
+                  f"route to {args.host} is via {actual or 'nowhere'}, not "
+                  f"{expected_iface}; that address is being answered by another "
+                  f"host (the LAN router shares it), so any result here is "
+                  f"about the router, not the gimbal")
+            return EXIT_WRONG_NETWORK
 
     worst_state = "healthy"
     worst_exit = EXIT_HEALTHY
