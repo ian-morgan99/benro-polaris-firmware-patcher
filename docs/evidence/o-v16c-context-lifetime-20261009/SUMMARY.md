@@ -325,3 +325,64 @@ a direct 264 payload instead. Worth a small follow-up: treat a single-entry
 #190 stays open on the remaining plan item and the attribution caveat, but the
 crash this issue is about did not reproduce across 12 captures and two forced
 teardown races on hardware.
+
+---
+
+# Addendum — repeated bulb canary in B mode (2026-10-09, 14:01–14:03 UTC)
+
+After fixing `canary-probe.py` to work with the dial on B (see the canary
+commit), the documented bulb canary was run end-to-end on device:
+
+```
+canary-probe.py --shot --expected-files 2 --bulb-seconds 5 --expected-sw 6.0.0.54.62
+```
+
+It now reaches the capture instead of aborting on the `['00:00']` list, logs
+`BULB shutter_index=0 ... (already selected, no write)`, and completes.
+
+| run | file | state:1 → state:4 | state:4 → state:0 | result |
+|---|---|---|---|---|
+| 1 | SP_0294 | 3 s | 3 s | PASS |
+| 2 | SP_0295 | 4 s | 2 s | PASS |
+| 3 | SP_0296 | 3 s | 4 s | PASS |
+| 4 | SP_0297 | 4 s | 4 s | PASS |
+| 5 | SP_0298 | 3 s | 3 s | PASS |
+| 6 | SP_0299 | 4 s | 3 s | PASS |
+| 7 | SP_0300 | 4 s | **18 s** | PASS |
+
+**7/7 PASS.** Every run produced the full `[1, 4, 0]` lifecycle and both the DNG
+and JPEG obligations.
+
+## Stability check
+
+`ps` on device afterwards: the capture daemon is **pid 1921**, the same process
+that was running before this session's captures began. The device has not
+rebooted (`/proc/uptime` 3615 s, still the 13:01 install boot). No `.core`
+files, no segfault or OOM lines in `dmesg`.
+
+Note on a false positive during this check: `pidof polaris-bridge-daemon ||
+pgrep -f polaris-bridge` reported `12022 12023`, which looked like a daemon
+restart. Those were the `pgrep`/subshell processes matching their own command
+line over the ssh session; `ps` shows the real daemon is the unchanged 1921.
+Worth remembering when scripting stability checks over ssh.
+
+## Timing observation (not a failure)
+
+Run 7 held `state:4` for 18 s before `state:0`, against 2–4 s for the other six.
+The capture still completed correctly. This is the same download-side variance
+seen in the direct-264 runs above (2.4–4.0 s) and is consistent with SD write or
+USB transfer contention rather than a capture-path fault. It is recorded because
+a client with a shorter state:4 timeout would treat this run as a hang — the
+canary's own bulb-aware timeout (`bulb_seconds + 90`) is what keeps it passing.
+
+## Cumulative on-device result on .62
+
+- Manual captures: 3/3 PASS
+- Forced mid-download teardown race (#190 trigger): 2/2 PASS
+- B-mode normal captures: 4/4 PASS
+- B-mode bulb canary: 7/7 PASS
+- Direct-264 bulb requests: 3/3 complete
+- **19 captures, 0 crashes, 0 daemon restarts, 0 missing files**
+
+The crash #190 is about did not reproduce on hardware. The bulb *duration* is
+still not honoured (documented stock-path design, unrelated to #190).
