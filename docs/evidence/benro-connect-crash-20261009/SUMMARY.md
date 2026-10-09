@@ -59,8 +59,8 @@ After the user reported turning the camera on, seeing Benro Connect die, then tu
 
 - At `20:50:45.611` the camera USB interface enumerated as `25fb:0189`. `spGphotoRest` ran; at `20:50:46.738` USB scan found the K-3 III.
 - At `20:50:47.900`, Clog reports `Pentax session already open from a previous connection; observing camera state.` The subsequent `Pentax init stage vendor enable returned 0x2002`, `gp_camera_init ret -1`, and `sp_Gphoto_Init ret -1` produce code 286 `manufacturer:none;model:none;state:-1`.
-- USB removal is logged at `20:50:48.406` and `20:50:48.439`, consistent with the user turning the body off. This is a concrete **camera-stack initialization failure** for this event: a stale Pentax session prevented vendor-mode enable. It plausibly explains a camera-not-ready/error state, but not by itself the phone app's process crash.
-- No `.2` phone socket/request is logged during this second USB-add / init-fail window. A later `App[113]` from `.3` is present around `20:51:03`; it is not identified as Benro Connect. Therefore the log does not show the exact native phone payload immediately preceding the reported crash.
+- USB removal is logged at `20:50:48.406` and `20:50:48.439`, consistent with the user turning the body off. This is a concrete **camera-stack initialization failure** for this event: a stale Pentax session prevented vendor-mode enable. It explains why the camera was reported not ready (`state:-1`). The phone's existing 9090 socket remained registered, so this log does not show a phone transport disconnect at the same time; it still cannot explain the user's reported app UI crash.
+- The phone's `App[109]` socket from `192.168.0.2`, established at `20:36:17`, remains registered through the second camera-add/init-fail interval; Mlog shows no `SOCKET_CLOSE` for it then and no App[109] camera-property request in that interval. A later `App[113]` from `.3` appears around `20:51:03`; it is not the phone. Thus the UI crash reported by the user is not represented as a phone socket close or a native camera-property exchange in this event window.
 
 This is stronger than the first attempt's transient `state:-5`, but still does **not** prove that the `0x2002` response caused the Benro Connect crash. No new test was initiated by the agent; no shutter command was sent.
 
@@ -112,18 +112,16 @@ through SSH tar. Its fake-SSH regression test is in the prerelease gate.
 
 **Validation:** offline prerelease gate GREEN (19 container checks, 211 Python
 tests); `bash -n` checks and `git diff --check` pass. No device watcher was
-started, no camera was turned on, and no capture was issued during this tooling
-change. The one previous operator-authorized test remains the only camera-on
-attempt by the agent.
+started and no capture command was issued during these tooling changes. The
+operator, not the agent, turned the camera on/off for the recorded attempts.
 
 ## Next diagnostic step
 
 Keep `.62` installed; the exact Benro Connect process crash trigger is still
-unproven. The camera is off and identity is currently verified. For a next
-physical comparison, start with the phone's native Benro Connect socket already
-established while the camera is off, then schedule one explicitly authorized
-camera-on attempt. The watcher will preserve the native Mlog context before any
-optional replay. Monitor Wi-Fi driver counters at the same time; current
-camera-off sample showed 924/923 historic pool errors with no growth over 37 s,
-so only an event-correlated delta can support the driver's role. Do not change
-firmware or send a shutter command for this startup/crash test.
+unproven. The camera is off and identity was verified after restart. The watcher
+and log puller are now corrected and offline-tested. When the camera is available
+and the operator authorizes another single comparison, first confirm the phone's
+native Benro Connect socket is established with the camera off, then start the
+watcher and a Wi-Fi counter sample before the camera-on event. Do not run the
+separate `app-burst.py` replay until after the native snapshot. No shutter
+command or firmware change is needed for this startup/crash test.

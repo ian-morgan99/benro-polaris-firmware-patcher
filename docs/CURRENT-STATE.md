@@ -24,9 +24,10 @@ then a second socket received the same response and stayed connected >14 min;
 neither requested camera-property codes. A second user-reported camera on/off
 event is now in boot 274: USB add, `Pentax session already open from a previous
 connection`, vendor enable rejected with `0x2002`, `gp_camera_init ret -1`,
-`state:-1`, then USB removal about 1.5 seconds later. That establishes a stale
-Pentax-session/init failure for this event, but no phone `.2` socket is logged
-in that exact window; it does not prove why the app died. Similar socket
+`state:-1`, then USB removal about 1.5 seconds later. The phone's `.2` socket
+had been established earlier and stayed registered through this event, but sent
+no camera-property requests then. This establishes a stale Pentax-session/init
+failure, not the cause of the reported app UI crash. Similar socket
 handoffs and blank `ov`/unknown-WB entries occur in `.61` during native stable
 sessions. Mlog/Clog do not expose the phone process exception, so the exact app
 crash cause remains unknown. The Wi-Fi driver hypothesis has evidence: current
