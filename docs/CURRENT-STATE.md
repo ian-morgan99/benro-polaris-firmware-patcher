@@ -27,9 +27,11 @@ connection`, vendor enable rejected with `0x2002`, `gp_camera_init ret -1`,
 `state:-1`, then USB removal about 1.5 seconds later. The phone's `.2` socket
 had been established earlier and stayed registered through this event, but sent
 no camera-property requests then. This establishes a stale Pentax-session/init
-failure, not the cause of the reported app UI crash. Similar socket
-handoffs and blank `ov`/unknown-WB entries occur in `.61` during native stable
-sessions. Mlog/Clog do not expose the phone process exception, so the exact app
+failure, not the cause of the reported app UI crash. The `.62` source already
+contains stale-session close/reset/reopen recovery, but the camera is absent now
+and `ptp2.so` is not mapped, so the logs do not prove that branch ran during the
+failed init. Similar socket handoffs and blank `ov`/unknown-WB entries occur in
+`.61` during native stable sessions. Mlog/Clog do not expose the phone process exception, so the exact app
 crash cause remains unknown. The Wi-Fi driver hypothesis has evidence: current
 dmesg contains 924 `No more free tdata_psh_info` and 923 `Out of tdata_disc_grp`
 messages. A second 125-second camera-off sample held them steady at 936/935
