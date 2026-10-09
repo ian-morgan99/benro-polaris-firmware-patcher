@@ -34,9 +34,7 @@ ssh -o ConnectTimeout=10 -o BatchMode=yes "$HOST" \
 }
 
 echo "==> 2/4 collecting device state..."
-ssh -o BatchMode=yes "$HOST" '
-set -u
-{
+ssh -o BatchMode=yes "$HOST" '{
   echo "== identity =="
   cat /app/FwVer
   uname -a
@@ -49,27 +47,26 @@ set -u
   cat /proc/mounts | grep -E "mmcblk|/app/sd" || true
   echo "== sd root =="
   ls -la /app/sd 2>/dev/null || echo "(SD not mounted at /app/sd)"
-} > "$1/meta.txt" 2>&1
-' "$STAGE"
+}' > "$STAGE/meta.txt" 2>&1
+ssh -o BatchMode=yes "$HOST" 'cat /app/Mlog.txt' > "$STAGE/Mlog-current.txt"
+ssh -o BatchMode=yes "$HOST" 'cat /app/Clog.txt' > "$STAGE/Clog-current.txt"
+ssh -o BatchMode=yes "$HOST" 'ls -la /app/sd' > "$STAGE/sd-root-listing" 2>&1 || true
 
-echo "==> 3/4 pulling Mlog/Clog from the SD card..."
-ssh -o BatchMode=yes "$HOST" '
-set -u
-mkdir -p "$1/system-log"
-if [ -d /app/sd/system/log ]; then
-  # newest 25 of each kind — enough for any recent session, small enough to scp fast
-  ls -t /app/sd/system/log/Mlog_* 2>/dev/null | head -25 | while read -r f; do cp "$f" "$1/system-log/"; done
-  ls -t /app/sd/system/log/Clog_* 2>/dev/null | head -25 | while read -r f; do cp "$f" "$1/system-log/"; done
-  # any other log kinds present (access/error/etc.)
-  for f in /app/sd/system/log/*; do
-    b=$(basename "$f")
-    case "$b" in Mlog_*|Clog_*) ;; *) [ -f "$f" ] && cp "$f" "$1/system-log/" ;; esac
-  done
+mkdir -p "$STAGE/system-log"
+echo "==> 3/4 streaming Mlog/Clog from the SD card..."
+if ssh -o BatchMode=yes "$HOST" 'test -d /app/sd/system/log'; then
+  ssh -o BatchMode=yes "$HOST" '
+    cd /app/sd/system/log || exit 1
+    set -- $(ls -t Mlog_* 2>/dev/null | head -25) \
+           $(ls -t Clog_* 2>/dev/null | head -25)
+    for f in error_* access_*; do [ -f "$f" ] && set -- "$@" "$f"; done
+    [ "$#" -gt 0 ] || exit 1
+    tar czf - "$@"
+  ' | tar xzf - -C "$STAGE/system-log"
 else
-  echo "SD card log dir /app/sd/system/log not found — is the card in the gimbal?" > "$1/system-log/MISSING.txt"
+  echo "SD card log dir /app/sd/system/log not found — is the card in the gimbal?" \
+    > "$STAGE/system-log/MISSING.txt"
 fi
-ls -la /app/sd > "$1/sd-root-listing" 2>&1 || true
-' "$STAGE"
 
 echo "==> 4/4 packaging..."
 tar czf "$OUTDIR/polaris-logs-$TS.tar.gz" -C "$STAGE" .

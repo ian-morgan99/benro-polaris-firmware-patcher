@@ -29,15 +29,25 @@ Pentax-session/init failure for this event, but no phone `.2` socket is logged
 in that exact window; it does not prove why the app died. Similar socket
 handoffs and blank `ov`/unknown-WB entries occur in `.61` during native stable
 sessions. Mlog/Clog do not expose the phone process exception, so the exact app
-crash cause remains unknown. The pull, hashes, timeline, and limits are in
+crash cause remains unknown. The Wi-Fi driver hypothesis has evidence: current
+dmesg contains 924 `No more free tdata_psh_info` and 923 `Out of tdata_disc_grp`
+messages. A 37-second camera-off sample held those counters steady while WLAN
+traffic increased and three 9090 connections stayed established; without kernel
+timestamps this does not tie the pool exhaustion to the crash. See [the Wi-Fi
+sample and log analysis](evidence/benro-connect-crash-20261009/SUMMARY.md). The pull, hashes, timeline, and limits are in
 [`evidence/benro-connect-crash-20261009/SUMMARY.md`](evidence/benro-connect-crash-20261009/SUMMARY.md).
-The pull helper failed on an unset remote `$1`; the documented SSH/tar fallback
-succeeded. The camera is now absent and Polaris identity was verified after
-restart. Next, fix/test the watcher offline so native Mlog is captured before
-the diagnostic replay; no second camera-on attempt until that passes and is
-separately authorized. The offline gate is GREEN (19 container checks, 208
-Python tests); no build or shutter capture was run. Do not change firmware or
-shorten #191 without a separate controlled test.
+The pull helper initially failed on an unset remote `$1`; it is now fixed to
+stream selected persistent logs to the host and include current Mlog/Clog tails,
+with an offline fake-SSH regression test. The watcher now verifies AP BSSID/SSID,
+Wi-Fi route and SSH FwVer, snapshots Mlog/Clog before any separate replay, and
+keeps replay opt-in. Fake-SSH tests cover identity, ordering, and replay-off
+behavior. The camera is absent and Polaris identity was verified after restart.
+The offline gate is GREEN (19 container checks, 211 Python tests); no build or
+live canary was run. Root cause for #187 is still unproven: the second camera
+cycle logged stale Pentax session / vendor-enable `0x2002` / `state:-1`, but no
+phone `.2` socket at that instant. Next physical comparison requires the native
+phone socket established before camera-on and explicit operator authorization.
+Do not change firmware or shorten #191 without a separate controlled test.
 
 ## 2026-10-09 — `.62` installed and capture-clean; remaining faults are reporting faults
 

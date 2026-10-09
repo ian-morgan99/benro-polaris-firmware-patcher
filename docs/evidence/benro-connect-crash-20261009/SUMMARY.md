@@ -4,7 +4,7 @@
 
 After the operator restarted the device, identity was reverified before log access: BSSID `48:E7:DA:D4:B5:73`, SSID `polaris_d13e86`, route via `wlp8s0`, and `/app/FwVer=6.0.0.54.62`. At collection time the camera was absent from USB, TCP 9090 was listening, and a phone peer at `192.168.0.2` was established. `/app/Mlog.txt` was 232 bytes and `/app/Clog.txt` was empty; persistent boot logs were the useful evidence.
 
-`scripts/pull-mlog-clog.sh` was attempted but failed at its remote metadata step with `sh: 1: parameter not set`: its SSH command refers to `$1` without arranging a remote positional argument. No device writes occurred. The logs were pulled using the documented read-only SSH/tar stream. Artifacts are under `raw/`; SHA-256 hashes are listed below.
+`scripts/pull-mlog-clog.sh` initially failed at its remote metadata step with `sh: 1: parameter not set`: its SSH command referred to `$1` without arranging a remote positional argument. No device writes occurred. The logs were recovered using the documented read-only SSH/tar stream. I then fixed the helper to stream remote files into host-local staging, include current Mlog/Clog tails, and package recent persistent Mlog/Clog plus other logs. A fake-SSH test was added to verify the archive contents; the offline gate passes with it. Artifacts are under `raw/`; SHA-256 hashes are listed below.
 
 | File | SHA-256 |
 |---|---|
@@ -64,6 +64,57 @@ After the user reported turning the camera on, seeing Benro Connect die, then tu
 
 This is stronger than the first attempt's transient `state:-5`, but still does **not** prove that the `0x2002` response caused the Benro Connect crash. No new test was initiated by the agent; no shutter command was sent.
 
+## Wi-Fi driver hypothesis check (camera off)
+
+After the user suggested the Wi-Fi driver, Polaris identity was again verified on
+`.62`; the camera was absent and the host route was through the Polaris AP. The
+current kernel ring buffer contains 924 `No more free tdata_psh_info` and 923
+`Out of tdata_disc_grp` messages. This confirms the known Broadcom `dhd` pool
+exhaustion issue (#171) is present in this boot. However, during the repository's
+read-only 37-second `monitor-wifi-qualification.sh` sample, those counters stayed
+at 924/923 while WLAN RX/TX bytes increased and three 9090 connections remained
+established; no 8080 connection was open. `dmesg -T` is unsupported on the
+firmware's BusyBox, and the ring-buffer messages have no wall-clock timestamp,
+so these counts cannot be aligned to the app crash. Sample:
+`wifi-driver-counter-sample-20261009.txt` (SHA-256
+`55bb6e2ba912e7aeda20007d882e3114d32a060c8977eaa64dc33efe5d79c236`).
+
+**Interpretation:** the driver fault is a credible independent network-risk
+factor, but this sample does not show active counter growth during the camera-off
+window or prove it caused Benro Connect to crash. It is pool exhaustion evidence,
+not evidence of memory clobber/corruption. To establish causality, future
+monitoring must sample the driver counters and Wi-Fi association continuously
+across an operator-authorized camera-on event, while separately recording the
+native phone socket timeline. Do not change Wi-Fi firmware based on this sample.
+
+## Diagnostic tooling update
+
+The watcher now fails closed unless the host is associated with a `polaris_*`
+SSID/BSSID prefix `48:E7:DA`, the route to `192.168.0.1` uses the Wi-Fi
+interface, and SSH returns `/app/FwVer`. On USB-present transition it snapshots
+current and latest persistent Mlog/Clog plus socket peers **before** any replay.
+The separate `app-burst.py` replay is opt-in (`WATCH_REPLAY=1`); it is off by
+default. `WATCH_MAX_POLLS` bounds test runs. Offline fake-SSH tests verify
+identity, pre-snapshot-before-replay ordering, and no replay by default.
+
+The log-pull helper no longer tries to copy device files into a host-only temp
+path; it captures current Mlog/Clog locally and streams selected persistent logs
+through SSH tar. Its fake-SSH regression test is in the prerelease gate.
+
+**Validation:** offline prerelease gate GREEN (19 container checks, 211 Python
+tests); `bash -n` checks and `git diff --check` pass. No device watcher was
+started, no camera was turned on, and no capture was issued during this tooling
+change. The one previous operator-authorized test remains the only camera-on
+attempt by the agent.
+
 ## Next diagnostic step
 
-Keep the camera off and current `.62` installed. The exact phone crash trigger remains unproven. Repair/test `scripts/watch-app-crash.sh` offline so it captures native Mlog/socket traffic immediately at USB insertion before any separate `app-burst.py` replay; also fix its log-pull helper's remote `$1` failure. Then arrange a supervised attempt with the phone already connected and explicit operator authorization. No firmware fix is justified from this evidence alone.
+Keep `.62` installed; the exact Benro Connect process crash trigger is still
+unproven. The camera is off and identity is currently verified. For a next
+physical comparison, start with the phone's native Benro Connect socket already
+established while the camera is off, then schedule one explicitly authorized
+camera-on attempt. The watcher will preserve the native Mlog context before any
+optional replay. Monitor Wi-Fi driver counters at the same time; current
+camera-off sample showed 924/923 historic pool errors with no growth over 37 s,
+so only an event-correlated delta can support the driver's role. Do not change
+firmware or send a shutter command for this startup/crash test.
