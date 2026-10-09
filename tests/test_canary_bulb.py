@@ -213,18 +213,17 @@ def test_bulb_session_restores_the_exact_prior_shutter():
     ]
 
 
-def test_current_shutter_can_be_restored_when_wire_reports_label():
+def test_a_shutter_already_at_the_requested_index_is_not_re_written():
+    """Re-writing the current index is not a no-op: on device it answers ret:-2.
+
+    When the body already reports the index the bulb request resolves to, the
+    session must send no 261 at all — neither the "set" nor the "restore".
+    """
     mod = load_probe()
-    device = FakePolaris([
-        info("00-08"),
-        ack(5),
-        info(5),
-        ack(5),
-        info(5),
-    ])
+    device = FakePolaris([info("00-08")])
     with mod.bulb_shutter_session(device, 8):
         pass
-    assert device.sends[3] == ((261,), {"payload": "s:5;"})
+    assert device.sends == [((268,), {})]
 
 
 def test_code_780_expected_version_is_checked_on_the_wire():
@@ -302,3 +301,48 @@ def test_restore_failure_fails_a_successful_capture():
         assert "explicit ret:0" in str(exc)
     else:
         raise AssertionError("restore failure did not fail the canary")
+
+
+# With the dial on `B` the body reports a single-entry list instead of the timed
+# one: `268@RD:0;V:0;R:00:00,;` (measured on device,
+# o-v16c-context-lifetime-20261009). That entry is the bulb slot, so the bulb
+# canary must run against it rather than abort with "no numeric shutter options".
+B_MODE_INFO = "268@RD:0;V:0;R:00:00,;#"
+
+
+def test_bulb_in_b_mode_uses_the_single_bulb_entry_instead_of_aborting():
+    mod = load_probe()
+    device = FakePolaris([B_MODE_INFO])
+    current, index, label, seconds = mod.prepare_bulb_shutter(device, 5)
+    assert (current, index, label, seconds) == (0, 0, "00:00", None)
+    assert device.sends == [((268,), {})]
+
+
+def test_bulb_session_in_b_mode_writes_no_shutter_and_restores_nothing():
+    """`s:0;` over an already-selected `V:0` answers ret:-2, so it must not be sent."""
+    mod = load_probe()
+    device = FakePolaris([B_MODE_INFO])
+    with mod.bulb_shutter_session(device, 5):
+        pass
+    assert device.sends == [((268,), {})]
+
+
+def test_bulb_session_still_writes_when_the_body_offers_timed_shutters():
+    mod = load_probe()
+    device = FakePolaris([
+        info(),          # resolve -> index 5
+        ack(5), info(5),  # set + verify
+        ack(K3_CURRENT), info(K3_CURRENT),  # restore + verify
+    ])
+    with mod.bulb_shutter_session(device, 8):
+        pass
+    assert [call[1]["payload"] for call in device.sends
+            if call[0][0] == 261] == ["s:5;", "s:3;"]
+
+
+def test_a_single_numeric_entry_is_still_resolved_by_duration():
+    """Only a non-duration single entry is the bulb slot; `00-30` is a real shutter."""
+    mod = load_probe()
+    device = FakePolaris([info(current=0, options="00-30")])
+    current, index, label, seconds = mod.prepare_bulb_shutter(device, 8)
+    assert (current, index, label, seconds) == (0, 0, "00-30", 30.0)

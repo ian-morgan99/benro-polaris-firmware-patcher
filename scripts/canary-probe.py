@@ -219,10 +219,18 @@ def prepare_bulb_shutter(
     a long exposure is requested as the nearest available timed shutter.  An
     explicit `--bulb-shutter-index` still wins, which is how a device that does
     expose `Bulb` in its list stays testable.
+
+    With the dial on `B` the body reports a single-entry list instead — measured
+    on device (o-v16c-context-lifetime-20261009): `268@RD:0;V:0;R:00:00,;`.
+    That is the bulb slot, not "no numeric options", so it is returned as-is and
+    the dial is left alone; the previous behaviour aborted the whole bulb canary
+    with `command 268 exposed no numeric shutter options`.
     """
     current, options = shutter_options(p, timeout)
     if current is None:
         raise RuntimeError("cannot run Bulb test without a readable current shutter index")
+    if explicit_index is None and len(options) == 1 and not parse_shutter_seconds(options[0]):
+        return current, current, options[0], None
     if explicit_index is not None:
         if explicit_index < 0 or explicit_index >= len(options):
             raise ValueError(f"--bulb-shutter-index {explicit_index} is outside option list")
@@ -332,12 +340,19 @@ def bulb_shutter_session(
         p, bulb_seconds, explicit_index, timeout
     )
     operation_error: BaseException | None = None
+    # The body already reports the slot we want (dial on `B`, or a timed list
+    # whose best match is the current index). Writing it anyway is not a no-op:
+    # measured on device, `s:0;` over `V:0;R:00:00,;` answers `ret:-2`, which
+    # this helper treats as a failure. Skip the write and the restore.
+    already_selected = bulb_index == current
     try:
-        set_shutter(p, bulb_index, timeout)
+        if not already_selected:
+            set_shutter(p, bulb_index, timeout)
         print(
             f"{stamp()} BULB shutter_index={bulb_index} shutter_label={bulb_label!r} "
             f"shutter_seconds={bulb_actual} requested_seconds={bulb_seconds} "
-            f"prior_index={current}",
+            f"prior_index={current}"
+            + (" (already selected, no write)" if already_selected else ""),
             flush=True,
         )
         yield bulb_index
@@ -349,8 +364,9 @@ def bulb_shutter_session(
         raise
     finally:
         try:
-            set_shutter(p, current, timeout)
-            print(f"{stamp()} SHUTTER restored_index={current}", flush=True)
+            if not already_selected:
+                set_shutter(p, current, timeout)
+                print(f"{stamp()} SHUTTER restored_index={current}", flush=True)
         except BaseException as restore_error:
             print(
                 f"{stamp()} SHUTTER restore_failed secondary={type(restore_error).__name__}: "
