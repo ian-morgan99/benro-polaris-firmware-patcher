@@ -159,6 +159,61 @@ download-progress callback. That accounts for the 11–33 s delay (camera writin
 to card first) and for why neither the `.60` 16/16 canary nor any no-camera
 test ever reproduced it.
 
+### Mechanism (resolved statically — supersedes the paragraph below it)
+
+The "stale thread-local binding" guess below was **wrong**, and so was the
+capture framing. Both are settled without hardware, because
+`pgphoto.stage2ondisk` retains its symbols:
+
+1. The app owns exactly **one** `GPContext`. `gp_context_new` has a single call
+   site, in `gp_params_init` (`0xf7114`), which registers a valid progress
+   callback (`ctx_progress_start_func`, `0xf62f0`).
+2. `gp_params_exit` **frees** it (`gp_context_unref` at `0xf7434`; that function
+   decrements `ref_count` at offset 64 and calls `gp_context_free` at zero),
+   then `memset`s `gp_params` — `0x3cf8` bytes, exactly the `.bss` object.
+3. `gp_params_exit` is **not** shutdown-only. It is reached from `cameraRest`
+   and from roughly ten error paths inside `cameraInit`, so every failed init
+   attempt frees the context.
+4. **Nothing holds a reference.** `gp_context_ref` is called zero times in the
+   app, and our library never refs a borrowed context.
+
+So the app frees its only context while an operation started by an earlier init
+attempt is still in flight inside our library. The borrowed pointer then refers
+to freed heap and `ldr r5,[r4,#8]` loads whatever the allocator put there —
+which is why entry 3's `pc` is the ASCII bytes `8.31` (the app contains three
+`%.2f` format strings).
+
+The timeline shows the trigger is **init, not capture**: in `Clog_000267.log` a
+`cameraInit` burst runs 17:05:18–17:05:19 with `updateCameraViewFinder ret:-1`,
+and crash 1 is detected at **17:05:21 — six minutes before the first
+`will CAPTURE_IMAGE` at 17:11:04**. Boot 271 repeats the pattern. A large object
+download during a failing init is sufficient; no shutter is involved.
+
+A stale TLS binding is excluded by the code: `ptp_context_get` returns `NULL` on
+any miss and `gp_context_progress_start` returns early on `NULL`, so a stale
+entry is a safe no-op and can never yield an invalid non-NULL pointer.
+
+**Fix direction:** the library must hold a reference for the duration of any
+operation that borrows a context instead of trusting a borrowed pointer across a
+callback boundary — a libgphoto2 change. This also fully exonerates the #183
+wrapper.
+
+### Still to prove on hardware
+
+1. Existing-DNG download on a **stable** session — expected to **pass**, which
+   localises the fault to the free-during-flight race rather than the download
+   path itself.
+2. Force the race: re-init the camera while a large download is in flight and
+   confirm the same `lr`.
+3. Log at the callback boundary: context pointer, `ref_count` at offset 64, the
+   four callback pointers, plus a marker at each `gp_params_exit`.
+
+The two clean captures taken later that evening (lifecycle `[1,4,0]`, DNG+JPEG,
+no crash) had init succeed first time, so nothing was freed mid-flight —
+consistent with this mechanism, and better evidence than the wrapper A/B.
+
+<details><summary>Superseded reasoning (kept for the record)</summary>
+
 `r0` (the `GPContext *`) is non-NULL and its callback field is non-NULL, so
 this is not a missing check — the context object in use at download time is not
 a live `GPContext`. The only post-v10 change that alters where that pointer
@@ -167,15 +222,7 @@ comes from is the per-thread context table (`fbc2e7e6544e`, `4149ce48c`), which
 already tolerates a NULL context, so a fix must **invalidate stale bindings**,
 not add another null check.
 
-### Decisive test (needs camera; `ptp2.so` only, no full firmware build)
-
-Log the `GPContext *`, its four callback pointers and `pthread_self()`
-immediately before the `report_progress` call in `ptp_usb_getdata`, and the same
-values at `SET_CONTEXT_P(params, context)` in `camera_capture`. One real capture
-distinguishes: different pointer → stale thread-local binding (fix the binding
-lifetime); same pointer with garbage fields → the app freed the context under an
-in-flight download (app-side lifetime bug, #176/#182); same pointer with valid
-fields → theory wrong, but the fault is still localised.
+</details>
 
 ## Side findings
 
