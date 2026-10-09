@@ -248,3 +248,80 @@ defect to the context lifetime.
 
 #190 stays open: bulb and the no-shutter download remain, and the attribution
 caveat above stands.
+
+---
+
+# Addendum — bulb with the dial on B (2026-10-09, 13:53–13:57 UTC)
+
+The camera was switched to **B** and power-cycled. It then reports
+`268@RD:0;V:0;R:00:00,;` — a single-entry list whose only entry is the bulb
+slot, already selected. The earlier `261 ret:-6` refusals are gone; a redundant
+`s:0;` write now returns `ret:-2` (nothing to change), which is expected when
+the requested index is already current.
+
+Device identity re-proven before capturing: **the Polaris did not reboot**
+(`/proc/uptime` 3113 s, still the 13:01 install boot — only the camera was
+restarted). `/app/FwVer` = `6.0.0.54.62`; the running daemon maps
+`libgphoto2.so.6` = `5cd64dbd…` and stock-path `ptp2.so` = `e6a0d857…`, both
+the candidate's bytes.
+
+## Capture path in B mode — PASS (4/4)
+
+`canary-probe.py --shot` (normal `state:1;bulb:0;c:-1;` request) with the dial
+on B: SP_0287, SP_0288, SP_0289, SP_0290. All reached `[1, 4, 0]` with both
+RAW+JPEG obligations.
+
+## Bulb request path — completes (3/3), but the duration is NOT honoured
+
+Direct `264` with the real bulb payload `state:1;bulb:5;c:-1;`:
+
+| file | state:4 | file event | gap |
+|---|---|---|---|
+| SP_0291 | +3.3 s | +7.3 s | 4.0 s |
+| SP_0292 | +4.3 s | +6.7 s | 2.4 s |
+| SP_0293 | +3.3 s | +5.8 s | 2.5 s |
+
+All three completed: full lifecycle, both files, daemon pid **unchanged at
+1921** throughout, no crash artifacts, no segfault in `dmesg`.
+
+**But a 5-second request did not produce a 5-second exposure.** The whole
+exposure-plus-~30 MB download completed in 2.4–4.0 s, so the shutter was open
+well under the requested 5 s, and the gap shows no correlation with the request.
+This matches `docs/evidence/bulb-root-cause-20261005/SUMMARY.md`, which
+established from the binary that `bulb_ms` is consumed only as a capture
+watchdog (`ctx+0x180 = bulb_ms + 30048`) and is never handed to libgphoto2 or
+turned into a shutter-speed write — so `bulb:N` cannot set a duration in the
+stock path by design.
+
+## What this does and does not establish
+
+- **Established:** with the dial on B, bulb requests traverse the capture and
+  download path on `.62` without crashing and without restarting the capture
+  daemon. The #186 "camera never actuates" condition did not reproduce here.
+- **Not established, and not claimed:** that the bulb *duration* is honoured —
+  it demonstrably is not, for the pre-existing reason above.
+- **Not attributable to `.62`:** the recovery from the `ret:-6` refusals
+  followed the dial change and camera power-cycle. That is the body responding,
+  not the firmware.
+
+## Tooling gap found
+
+`canary-probe.py --bulb-seconds` cannot run in B mode at all:
+`prepare_bulb_shutter` → `resolve_shutter_index` raises
+`command 268 exposed no numeric shutter options` on the `['00:00']` list, so the
+documented bulb canary aborts before capturing. The bulb results above came from
+a direct 264 payload instead. Worth a small follow-up: treat a single-entry
+`00:00` list as the bulb slot rather than as "no options".
+
+## Status after this addendum
+
+- Manual: 3/3 PASS. Forced mid-download teardown race: 2/2 PASS (the #190
+  trigger). B-mode capture: 4/4 PASS. Bulb request path: 3/3 complete, no crash.
+- Bulb *duration*: not honoured — pre-existing stock-path design, tracked
+  separately from #190.
+- Plan step 1 (no-shutter download of an existing DNG): still not run; no
+  tooling path.
+
+#190 stays open on the remaining plan item and the attribution caveat, but the
+crash this issue is about did not reproduce across 12 captures and two forced
+teardown races on hardware.
