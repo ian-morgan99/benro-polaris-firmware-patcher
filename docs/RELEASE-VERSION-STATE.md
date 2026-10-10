@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.62
+last_display_fwver=6.0.0.54.63
 ```
 
 ## Consumed-version registry (authoritative)
@@ -18,6 +18,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.53
+consumed_display_fwver=6.0.0.54.63
 consumed_display_fwver=6.0.0.54.62
 consumed_display_fwver=6.0.0.54.61
 consumed_display_fwver=6.0.0.54.60
