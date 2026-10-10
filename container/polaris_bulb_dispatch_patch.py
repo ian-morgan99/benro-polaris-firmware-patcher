@@ -108,17 +108,13 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
     return bytes(blob)
 
 
-def capture_call_setup_is_valid(disassembly, site):
-    lines = disassembly.splitlines()
-    try:
-        position = next(i for i, line in enumerate(lines)
-                        if re.match(r"\s*0*%x:" % site, line))
-    except StopIteration:
+def capture_call_setup_is_valid(data, site_offset):
+    expected = (0xE1A02003, 0xE51B1028, 0xE3A00000)
+    if site_offset < 12 or site_offset + 4 > len(data):
         return False
-    prior = [re.sub(r"\s+", " ",
-                    re.sub(r"^\s*[0-9a-f]+:\s+", "", line).split("@", 1)[0].strip())
-             for line in lines[max(0, position - 3):position]]
-    return prior == ["mov r2, r3", "ldr r1, [fp, #-40]", "mov r0, #0"]
+    actual = tuple(struct.unpack_from("<I", data, site_offset - 12 + i * 4)[0]
+                   for i in range(3))
+    return actual == expected
 
 
 def call_instructions(path):
@@ -217,7 +213,10 @@ def inspect_binary(path):
         if len(direct) != 1:
             raise ValueError("expected one captureImage -> burst-helper call, found %d" % len(direct))
         caller_site = direct[0][0]
-        if not capture_call_setup_is_valid(disassembly, caller_site):
+        caller_file_offset = va_to_offset(elf, caller_site)
+        stream.seek(0)
+        binary_data = stream.read()
+        if not capture_call_setup_is_valid(binary_data, caller_file_offset):
             raise ValueError("captureImage burst call arguments differ from (status=0, duration=bTime, files)")
 
         loads = []
@@ -265,8 +264,7 @@ def inspect_binary(path):
             key: va_to_offset(elf, value) for key, value in addresses.items()
         }
         offsets["bulb_function"] = va_to_offset(elf, bulb_function)
-        stream.seek(0)
-        data = bytearray(stream.read())
+        data = bytearray(binary_data)
     return data, offsets, addresses, segment
 
 
