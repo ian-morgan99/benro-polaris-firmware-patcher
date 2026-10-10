@@ -10,7 +10,7 @@
     //
     // The two lmstudio keys kept below carry no host identity and are not set at
     // user level, so removing them would silently change behaviour.
-    "lmstudio.contextOverflow.preferBridgeCompaction": false,
+    "lmstudio.contextOverflow.preferBridgeCompaction": true,
     "lmstudio.syncChatLm": true,
     "files.watcherExclude": {
         "**/.git/objects/**": true,
@@ -27,5 +27,11 @@
         "**/.lmstudio-context/**": true,
         "**/docs/evidence/**/*.log": true
     },
-    "chat.experimentalModelPicker": false
+    "chat.experimentalModelPicker": false,
+    "lmstudio.contextGuardrails.level": "low",
+    "lmstudio.supervision.contextAssemblyMode": "ranked",
+    "lmstudio.supervision.liveCompaction": true,
+    "lmstudio.supervision.mode": "active",
+    "lmstudio.toolCalling.maxOutputTokens": 20000,
+    "lmstudio.conversationBranchAdvisor.enabled": false
 }
