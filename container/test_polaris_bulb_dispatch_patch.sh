@@ -84,17 +84,14 @@ check(tuple(struct.unpack_from("<I", patched, offsets["bulb_function"] + i * 4)[
 repeat_segment = dict(segment, filesz=new_filesz, memsz=new_memsz)
 repeated, changed = patch.patch_data(patched, offsets, addresses, repeat_segment)
 check(not changed and repeated == patched, "reapplication is idempotent")
-call_site = 0x8100
-valid_disassembly = "\n".join([
-    "  80f4:\tmov\tr2, r3",
-    "  80f8:\tldr\tr1, [fp, #-40]\t@ duration",
-    "  80fc:\tmov\tr0, #0",
-    "  8100:\tbl\t102548 <capture_image_with_Burst>",
-])
-check(patch.capture_call_setup_is_valid(valid_disassembly, call_site),
+call_site_offset = 0x100
+setup_data = bytearray(0x200)
+for index, instruction in enumerate((0xE1A02003, 0xE51B1028, 0xE3A00000)):
+    struct.pack_into("<I", setup_data, call_site_offset - 12 + index * 4, instruction)
+check(patch.capture_call_setup_is_valid(setup_data, call_site_offset),
       "only the proven (status=0, duration=bTime, file buffer) caller is patched")
-invalid_disassembly = valid_disassembly.replace("ldr\tr1, [fp, #-40]", "ldr\tr1, [fp, #-44]")
-check(not patch.capture_call_setup_is_valid(invalid_disassembly, call_site),
+struct.pack_into("<I", setup_data, call_site_offset - 8, 0xE51B102C)
+check(not patch.capture_call_setup_is_valid(setup_data, call_site_offset),
       "unexpected duration argument layout is rejected")
 
 short_gap = dict(segment, next_offset=cave_off + patch.TRAMPOLINE_SIZE - 1)
