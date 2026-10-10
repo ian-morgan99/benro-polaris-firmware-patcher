@@ -374,7 +374,10 @@ if [ "$MODE" = "ptp2only" ]; then
   # 17 = 3 (gates) + 7 (resetUsb: mov r0,#0 + bx lr) + 4 (list-files bl → nop)
   #      + 3 changed bytes in the ARM movw r0,#3000 focus-idle instruction.
   [ "$DIFFB" = "17" ] || die "pgphoto patch changed $DIFFB bytes (expected 17) — aborting"
-  log "  pgphoto patched: 17 bytes (gates + resetUsb + list-files skip + focus idle wait) ✓"
+  log "  pgphoto reliability patches: 17 bytes (gates + resetUsb + list-files + focus idle wait) ✓"
+  python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.patched" --in-place \
+    || die "pgphoto timed-Bulb dispatch patch failed"
+  log "  positive-duration Pentax K-3 III requests route to the timed Bulb lifecycle"
 
   O_UID="$(stat -c %u "$STOCK_PTP2")"; O_GID="$(stat -c %g "$STOCK_PTP2")"; O_MODE="$(stat -c %a "$STOCK_PTP2")"
   install -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2"           "$STOCK_PTP2"
@@ -398,6 +401,9 @@ else
   DIFFB="$( { cmp -l "$PG" "$W/pgphoto.base" || true; } | wc -l | tr -d ' ')"
   [ "$DIFFB" = "17" ] || die "reliability base changed $DIFFB bytes (expected 17) — aborting"
   log "  base: 17-byte reliability patch (resetUsb + list-files + 3 gates + focus idle wait) md5=$(md5sum "$W/pgphoto.base"|cut -d' ' -f1)"
+  python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.base" --in-place \
+    || die "pgphoto timed-Bulb dispatch patch failed"
+  log "  pgphoto Bulb route: positive-duration K-3 III requests use the timed Bulb lifecycle"
 
   log "full-libgphoto2: on-disk trampolining 64 boundary entries…"
   rm -rf "$W/s2"; mkdir -p "$W/s2"
@@ -743,6 +749,9 @@ STAGE2_BIN="$APP_VERIFY/lib/stage2/pgphoto.stage2ondisk"
 if [ ! -f "$STAGE2_BIN" ]; then
   die "post-repack assertion failed: lib/stage2/pgphoto.stage2ondisk missing from appfs.ubifs"
 fi
+python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$STAGE2_BIN" --check \
+  || die "post-repack assertion failed: duration-aware Pentax Bulb dispatch missing"
+log "  verified timed Bulb dispatch in repacked pgphoto"
 STAGE2_LOADER="$APP_VERIFY/lib/stage2/libpolaris_stage2.so"
 if [ ! -f "$STAGE2_LOADER" ]; then
   die "post-repack assertion failed: lib/stage2/libpolaris_stage2.so missing from appfs.ubifs"
