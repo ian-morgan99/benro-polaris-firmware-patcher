@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.64
+last_display_fwver=6.0.0.54.65
 ```
 
 ## Consumed-version registry (authoritative)
@@ -18,6 +18,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.53
+consumed_display_fwver=6.0.0.54.65
 consumed_display_fwver=6.0.0.54.64
 consumed_display_fwver=6.0.0.54.63
 consumed_display_fwver=6.0.0.54.62
@@ -39,6 +40,8 @@ consumed_display_fwver=6.0.0.54.55
 | `.56` | o-v15s-orphan-candidate-recovery-20261005 | **superseded by `.57`, do not flash** — built 2026-10-05 and never installed, so its version is consumed but its content is a strict subset of `.57`. |
 | `.57` | o-v15t-admission-deadlock-and-durability-20261006 | **superseded by `.58`, do not flash** — same libgphoto2 (`e6b55ad09`) and never installed, so its content is a strict subset of `.58`. It carried `e65404f5f` (#175 orphan recovery), `e0742ce03` (#176 durable save), `98ee8e67a` (#173 stale-output-obligation release — the self-locking gate behind "Bulb still fails" on `.55`) and `e6b55ad09` (#176 review durability made non-optional). |
 | `.58` | o-v15u-first-capture-crash-pinpoint-20261006 | **superseded by `.59`, do not flash** — gate was GREEN but it was never installed (device was still on `.55`). `.59`'s libgphoto2 (`f3a8ffebf`) and patcher (`8949d83`) are both verified descendants of `.58`'s inputs (`e6b55ad09`, `984d5eb`) by `git merge-base --is-ancestor`, so its content is a strict subset of `.59`. |
+| `.65` | o-v16g-k3iii-timed-bulb-20261010 | **candidate; not installed; Polaris Layer B pending** — routes positive-duration K-3 III capture requests through pgphoto’s stock timed Bulb helper. Offline gates and package/firmwareInfo validation pass; no device behavior is yet proven. See `docs/evidence/o-v16g-k3iii-timed-bulb-20261010/SUMMARY.md`. |
+| `.65` | o-v16g-k3iii-timed-bulb-20261010 | **candidate; not installed; Polaris Layer B pending** — routes positive-duration K-3 III capture requests through pgphoto's timed Bulb helper. Offline gates, package structure, and exact firmwareInfo manifest validation pass; physical duration/output/idle trace is still required. See `docs/evidence/o-v16g-k3iii-timed-bulb-20261010/SUMMARY.md`. |
 | `.64` | o-v16f-bulb-branch-audit-20261010 | **DIAGNOSTIC — DO NOT STAGE** — omits the retired zero-bulb patch and verifies the original app branch, but static pgphoto analysis shows code 264 still reaches `captureImage`; no K-3 III Bulb action/duration bridge is implemented or physically tested. See `docs/evidence/o-v16f-bulb-branch-audit-20261010/SUMMARY.md`. |
 | `.63` | o-v16e-bulbstart98-20261010 | **candidate; not installed** — carries libgphoto2 #98 recovery admission fix. Built before PR #99 merged; no physical Bulb qualification. See the provenance registry. |
 | `.62` | o-v16c-context-lifetime-20261009 | **installed 2026-10-09; runtime provenance verified** — manual canary and forced download-teardown checks passed; Bulb duration and pgphoto dispatch remain unqualified. See `docs/evidence/o-v16c-context-lifetime-20261009/SUMMARY.md`. |

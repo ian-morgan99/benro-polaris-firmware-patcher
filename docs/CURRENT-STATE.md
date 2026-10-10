@@ -91,14 +91,16 @@ mode-dependent, not a firmware fault (#186 corrected).
   Tests are in the offline gate, which is GREEN. The changes are committed in
   `4a1999e` and described on #192; they have not been live-qualified. The
   previous-shot orphan caveat still needs physical validation.
-- Bulb **duration** is still not honoured — `bulb_ms` is a capture watchdog, never
-  a shutter-speed write. The old polestar_app patch that zeroed `bulb_ms` was
-  proven to force the plain-capture branch. It is removed from the release path;
-  the package gate rejects that byte sequence. Candidate `.64`
-  (`o-v16f-bulb-branch-audit-20261010`) is built and privately archived, but is
-  marked **DO NOT STAGE**. Static pgphoto analysis confirms code 264 still calls
-  `captureImage`; its positive-`bTime` burst path is not a proven Pentax Bulb
-  action. No requested-duration start/stop bridge is implemented. Keep #186 open.
+- Bulb **duration** is still not physically qualified through Polaris. The old
+  polestar_app patch that zeroed `bulb_ms` is removed; package gates reject that
+  byte sequence. Patcher PRs #193–#195 merged a fail-closed pgphoto dispatcher:
+  positive `bTime` on Pentax K-3 III routes to the stock timed-Bulb helper, while
+  zero-duration captures, other models, and K-3 III Monochrome retain the
+  original burst path. The patch preserves the Nikon `captureBulbImage` function
+  and indirect table reference. Candidate `.65`
+  (`o-v16g-k3iii-timed-bulb-20261010`) is built and privately archived; it is
+  not installed. Layer B must still prove requested duration, one start/stop,
+  file publication, and idle/recovery before issue #186 can close.
 **Earlier post-soak device snapshot (superseded):** `ping` answered while ports
 22 and 9090 refused connections, with no shell available. During the later
 code-780 check recorded above, identity was re-established and SSH verified

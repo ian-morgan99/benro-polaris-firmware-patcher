@@ -227,12 +227,12 @@ open('$STOCK_FI','wb').write(data)
         fi
         rm -f "$STOCK_FI"
 
-        # Verify that the repacked appfs retains the original Bulb branch and
-        # does not contain the retired patch that zeroed bulb_ms.
+        # Audit both the app-side request branch and pgphoto's concrete timed
+        # Bulb dispatch in the exact repacked appfs.
         if command -v ubireader_extract_files >/dev/null 2>&1; then
             PATCH_AUDIT_DIR="$(mktemp -d)"
             if ubireader_extract_files -o "$PATCH_AUDIT_DIR" "$BUILD/camera/appfs.ubifs" \
-                >/tmp/prerelease-polestar-extract.log 2>&1; then
+                >/tmp/prerelease-appfs-extract.log 2>&1; then
                 APP_BIN="$(find "$PATCH_AUDIT_DIR" -type f -path '*/bin/polestar_app' -print -quit)"
                 if [ -n "$APP_BIN" ] && \
                    python3 container/polestar_bulb_patch.py "$APP_BIN" \
@@ -241,12 +241,20 @@ open('$STOCK_FI','wb').write(data)
                 else
                     bad "polestar_app contains a retired Bulb patch or unknown branch (log: /tmp/prerelease-polestar-bulb.log)"
                 fi
+                PGPHOTO_BIN="$(find "$PATCH_AUDIT_DIR" -type f -path '*/lib/stage2/pgphoto.stage2ondisk' -print -quit)"
+                if [ -n "$PGPHOTO_BIN" ] && \
+                   python3 container/polaris_bulb_dispatch_patch.py "$PGPHOTO_BIN" --check \
+                       >/tmp/prerelease-pgphoto-bulb.log 2>&1; then
+                    ok "pgphoto timed Bulb dispatch present in repacked appfs"
+                else
+                    bad "pgphoto timed Bulb dispatch missing or invalid (log: /tmp/prerelease-pgphoto-bulb.log)"
+                fi
             else
-                bad "polestar_app appfs extraction for Bulb marker (log: /tmp/prerelease-polestar-extract.log)"
+                bad "appfs extraction for Bulb dispatch checks (log: /tmp/prerelease-appfs-extract.log)"
             fi
             rm -rf "$PATCH_AUDIT_DIR"
         else
-            skp "polestar_app Bulb marker gate (ubireader_extract_files unavailable)"
+            skp "polestar_app and pgphoto Bulb marker gates (ubireader_extract_files unavailable)"
         fi
     fi
 else

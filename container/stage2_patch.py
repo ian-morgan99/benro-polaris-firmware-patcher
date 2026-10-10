@@ -42,8 +42,8 @@ runtime):
      auditable manifest.
 
 Fail-closed: any entry <12 bytes, any address not inside an executable LOAD, any
-boundary symbol not exported by the new core/port lib, a reliability-patch byte
-that would be clobbered by a trampoline (see --reliability-base), or (with
+boundary symbol not exported by the new core/port lib, any patcher-owned changed
+byte that would be clobbered by a trampoline (see --reliability-base), or (with
 --expect-md5) an unexpected input md5 -> nonzero exit, no output written.
 
 Ships NO Benro/reconstructed source: the boundary is the list of public LGPL
@@ -169,11 +169,12 @@ class Elf32:
 
 
 def reliability_ranges(base_bytes, stock_path):
-    """Generic reliability-site guard: the bytes that differ between the stock
-    pgphoto and the reliability-patched base ARE the reliability-patch sites
-    (resetUsb / list-files / gates).  Return a list of (file_off, length) runs of
-    contiguous differing bytes.  No device-specific addresses are hard-coded -- the
-    sites are DERIVED from the user's own two binaries."""
+    """Protect every patcher-owned range that differs from stock from trampoline overlap.
+
+    Return (file_off, length) runs of contiguous differing bytes. The baseline
+    includes reliability edits and any separately audited pgphoto dispatch patch;
+    no device-specific addresses are hard-coded.
+    """
     stock = open(stock_path, "rb").read()
     if len(stock) != len(base_bytes):
         die("reliability-base %s and base differ in size (%d vs %d) -- not the "
@@ -204,10 +205,9 @@ def main():
     ap.add_argument("--out", default=None, help="patched binary path "
                     "(default OUTDIR/pgphoto.stage2ondisk)")
     ap.add_argument("--reliability-base", default=None,
-                    help="the ORIGINAL stock pgphoto; if given, the bytes that "
-                         "differ between it and --pgphoto are treated as the "
-                         "reliability-patch sites and the patcher fails closed if "
-                         "any trampoline would clobber one (fail-closed guard)")
+                    help="the ORIGINAL stock pgphoto; if given, every byte range "
+                         "that differs from stock is protected from trampoline "
+                         "overlap (reliability and other audited patch sites)")
     ap.add_argument("--expect-md5", default=None,
                     help="require this exact input md5 (optional; the structural "
                          "guards below are the real safety net)")
@@ -241,7 +241,7 @@ def main():
             die("slot region [%#x,%#x) overlaps pgphoto PT_LOAD #%d [%#x,%#x); "
                 "pick a different SLOT_BASE" % (slot_base, slot_end, i, seg_lo, seg_hi))
 
-    # --- reliability sites (derived; fail-closed collision guard). --------------
+    # --- protected patch sites (derived; fail-closed collision guard). ----------
     rel_report = {"checked": False, "sites": []}
     rel_ranges = []
     if a.reliability_base:
@@ -250,7 +250,7 @@ def main():
         for (ro, rl) in rel_ranges:
             rel_report["sites"].append({"file_off": "0x%x" % ro, "len": rl})
         total = sum(rl for _, rl in rel_ranges)
-        sys.stderr.write("[stage2] reliability sites derived from stock<->base "
+        sys.stderr.write("[stage2] protected patch sites derived from stock<->base "
                          "diff: %d run(s), %d byte(s)\n" % (len(rel_ranges), total))
 
     # --- resolve every boundary entry against the base symtab + new libs. -------
@@ -300,17 +300,17 @@ def main():
                   indent=2)
         sys.exit(1)
 
-    # --- reliability collision guard (fail-closed) BEFORE any write. ------------
+    # --- protected-patch collision guard (fail-closed) BEFORE any write. -------
     if rel_ranges:
         for rec in entries:
             foff = int(rec["file_off"], 16)
             for (ro, rl) in rel_ranges:
                 if foff < ro + rl and foff + TRAMP_BYTES > ro:
                     die("COLLISION: trampoline for %s [%#x,%#x) would overwrite a "
-                        "reliability-patch site [%#x,%#x) -- refusing to patch"
+                        "protected pgphoto patch site [%#x,%#x) -- refusing to patch"
                         % (rec["symbol"], foff, foff + TRAMP_BYTES, ro, ro + rl))
-        sys.stderr.write("[stage2] reliability collision guard: %d trampolines vs "
-                         "%d sites -- 0 collisions\n" % (n, len(rel_ranges)))
+        sys.stderr.write("[stage2] patch-overlap guard: %d trampolines vs "
+                         "%d protected ranges -- 0 collisions\n" % (n, len(rel_ranges)))
 
     # --- apply: 64 entry patches ONLY (no size-field bumps). --------------------
     for rec in entries:
@@ -320,12 +320,12 @@ def main():
                          ARM_LDR_R12_PC0, ARM_LDR_PC_R12, slot)
         rec["new12"] = e.d[foff:foff + TRAMP_BYTES].hex()
 
-    # --- re-confirm the reliability bytes SURVIVED the 64 trampoline writes. -----
+    # --- re-confirm protected patch bytes SURVIVED the 64 trampoline writes. ---
     if rel_ranges:
         base_orig = open(a.pgphoto, "rb").read()
         for (ro, rl) in rel_ranges:
             if bytes(e.d[ro:ro+rl]) != base_orig[ro:ro+rl]:
-                die("post-patch reliability site [%#x,%#x) was clobbered -- must "
+                die("post-patch protected site [%#x,%#x) was clobbered -- must "
                     "never happen; aborting" % (ro, ro + rl))
 
     open(out_bin, "wb").write(e.d)
@@ -381,7 +381,7 @@ def main():
     print("slot mechanism     : loader mmap MAP_FIXED anon RW page (no .bss ext)")
     print("segment sizes      : UNCHANGED (no p_memsz / .bss sh_size bump)")
     print("entry point        : 0x%08x (unchanged)" % e.e_entry)
-    print("reliability guard  : %s" % ("%d site-run(s), 0 collisions"
+    print("patch overlap guard: %s" % ("%d protected site-run(s), 0 collisions"
           % len(rel_ranges) if rel_ranges else "SKIPPED (no --reliability-base)"))
     print("in  md5            : %s%s" % (in_md5,
           "  (== known reliability-patched base)" if in_md5 == KNOWN_BASE_MD5 else ""))
