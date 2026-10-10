@@ -1,0 +1,10 @@
+=== Polaris pre-release gate (2026-10-10T01:11:08Z) ===
+PASS: container deterministic harness (19 passed)
+PASS: python regression suite (219 passed)
+PASS: agent host check: scripts/check-agent-sandbox.py (VERDICT=SANDBOX_OK sandbox=enabled prerequisites=present)
+PASS: agent host check: scripts/check-agent-host-config.py (VERDICT=CONFIG_OK pins=present settings=/home/ian/.config/Code - Insiders/User/settings.json,.vscode/settings.json)
+PASS: code-780 version patch (exact copy, memset length preserved)
+INFO: no --build given; package gates skipped (offline gate only)
+=== Pre-release gate summary: 5 passed, 0 failed, 0 skipped ===
+GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence).
+EXIT=0
