@@ -45,13 +45,17 @@ esac
 """
 
 _IW_FAKE = """#!/usr/bin/env bash
+if [ -n "${WATCH_IW_MISSING:-}" ]; then
+  printf 'bash: iw: command not found\\n' >&2
+  exit 127
+fi
 tick=$(cat "$WATCH_TICK" 2>/dev/null || echo 0)
 state="ok"
 if [ -n "${WATCH_IW_PLAN:-}" ]; then
   state=$(printf '%s\\n' "$WATCH_IW_PLAN" | awk -v n="$((tick + 1))" '{print $n}')
 fi
 case "$state" in
-  ok) printf '%s\\n' 'Connected to 48:e7:da:d4:b5:73 (on wlp8s0)' ' SSID: polaris_d13e86' ;;
+  ok) printf '%s\\n' "Connected to ${WATCH_IW_BSSID:-48:e7:da:d4:b5:73} (on wlp8s0)" ' SSID: polaris_d13e86' ;;
   *) printf '%s\\n' 'Not connected.' ;;
 esac
 """
@@ -101,11 +105,19 @@ def _install_fake_commands(bin_dir: Path) -> None:
     python3.chmod(0o755)
 
 
-def _run_watcher(tmp_path: Path, replay: str, polls: int = 3, **plan: str) -> str:
-    bin_dir = tmp_path / f"bin-{replay}"
+def _run_watcher(tmp_path: Path, replay: str, polls: int = 3, omit_iw: bool = False, expect_exit: int = 0, name: str | None = None, **plan: str) -> str:
+    # `replay` is the WATCH_REPLAY value, so it is always "0"/"1"; `name`
+    # separates the scratch files when one test needs two runs.
+    name = name or replay
+    bin_dir = tmp_path / f"bin-{name}"
     bin_dir.mkdir()
     _install_fake_commands(bin_dir)
-    out = tmp_path / f"watch-{replay}.log"
+    if omit_iw:
+        # A host without the tool at all: bash reports "command not found"
+        # (127) on stderr and nothing on stdout, which is what WATCH_IW_MISSING
+        # reproduces while the rest of the fake set stays usable.
+        plan = {**plan, "WATCH_IW_MISSING": "1"}
+    out = tmp_path / f"watch-{name}.log"
     env = os.environ.copy()
     env.update(
         {
@@ -114,9 +126,9 @@ def _run_watcher(tmp_path: Path, replay: str, polls: int = 3, **plan: str) -> st
             "WATCH_INTERVAL": "0",
             "WATCH_MAX_POLLS": str(polls),
             "WATCH_REPLAY": replay,
-            "WATCH_SSH_TRACE": str(tmp_path / f"ssh-{replay}.trace"),
-            "WATCH_POLL_STATE": str(tmp_path / f"poll-{replay}.state"),
-            "WATCH_TICK": str(tmp_path / f"tick-{replay}.state"),
+            "WATCH_SSH_TRACE": str(tmp_path / f"ssh-{name}.trace"),
+            "WATCH_POLL_STATE": str(tmp_path / f"poll-{name}.state"),
+            "WATCH_TICK": str(tmp_path / f"tick-{name}.state"),
         }
     )
     env.update(plan)
@@ -128,8 +140,8 @@ def _run_watcher(tmp_path: Path, replay: str, polls: int = 3, **plan: str) -> st
         check=False,
         timeout=10,
     )
-    assert result.returncode == 0, result.stdout + result.stderr
-    return out.read_text(encoding="utf-8")
+    assert result.returncode == expect_exit, result.stdout + result.stderr
+    return out.read_text(encoding="utf-8") if out.exists() else ""
 
 
 def test_watcher_snapshots_native_logs_before_optional_replay(tmp_path):
@@ -231,3 +243,58 @@ def test_camera_is_reobserved_after_recovery(tmp_path):
     recovered = output.index("LINK_STATE change: DEVICE_UNREACHABLE -> OK")
     resnapshot = output.index("device snapshot: before diagnostic replay", recovered)
     assert recovered < resnapshot
+
+
+def test_missing_iw_is_link_loss_with_reason_not_a_healthy_link(tmp_path):
+    # Review T11(b): a host without the `iw` binary must not masquerade as a
+    # healthy link. The identity check has to refuse to start, and say why.
+    output = _run_watcher(tmp_path, replay="0", omit_iw=True, expect_exit=1)
+
+    assert output == ""
+
+
+def test_missing_iw_refusal_names_the_reason(tmp_path, capsys):
+    # The refusal must be self-explanating: "no verified Polaris BSSID", not a
+    # silent exit.
+    bin_dir = tmp_path / "bin-refuse"
+    bin_dir.mkdir()
+    _install_fake_commands(bin_dir)
+    env = os.environ.copy()
+    env.update(
+        {
+            "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
+            "WATCH_IW_MISSING": "1",
+            "WATCH_MAX_POLLS": "3",
+            "WATCH_REPLAY": "0",
+            "WATCH_SSH_TRACE": str(tmp_path / "refuse.trace"),
+            "WATCH_POLL_STATE": str(tmp_path / "refuse.state"),
+            "WATCH_TICK": str(tmp_path / "refuse.tick"),
+        }
+    )
+    result = subprocess.run(
+        [str(WATCHER), str(tmp_path / "refuse.log")],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+        timeout=10,
+    )
+    assert result.returncode == 1
+    assert "Refusing watcher" in result.stderr
+    assert "no verified Polaris BSSID" in result.stderr
+
+
+def test_polaris_bssid_prefix_is_data_not_code(tmp_path):
+    # Review T11(a): the interface is env-overridable, so the BSSID prefix has
+    # to be too. A non-default prefix must be accepted when configured, and the
+    # default must still reject a foreign BSSID.
+    output = _run_watcher(
+        tmp_path,
+        replay="0",
+        POLARIS_BSSID_PREFIX="aa:bb:cc",
+        WATCH_IW_BSSID="aa:bb:cc:11:22:33",
+    )
+    assert "IDENTITY bssid=aa:bb:cc:11:22:33" in output
+
+    refused = _run_watcher(tmp_path, replay="0", name="foreign", expect_exit=1, WATCH_IW_BSSID="aa:bb:cc:11:22:33")
+    assert refused == ""

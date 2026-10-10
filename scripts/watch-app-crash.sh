@@ -42,7 +42,13 @@ set -u
 HOST="${POLARIS_SSH:-root@192.168.0.1}"
 GIMBAL_IP="${POLARIS_IP:-192.168.0.1}"
 WIFI_IFACE="${POLARIS_WIFI_IFACE:-wlp8s0}"
-OUT="${1:-/tmp/app-crash-watch.log}"
+# AGENTS.md pins the Polaris OUI as data, not code: the interface above is
+# env-overridable, so the BSSID prefix has to be too. The default is the same
+# value the pinned BSSID 48:e7:da:d4:b5:73 starts with.
+BSSID_PREFIX="${POLARIS_BSSID_PREFIX:-48:e7:da}"
+# A default run must never clobber a previous one: /tmp/app-crash-watch.log
+# currently holds a byte-identical copy of committed operator evidence.
+OUT="${1:-/tmp/app-crash-watch-$(date -u +%Y%m%dT%H%M%SZ).log}"
 INTERVAL="${WATCH_INTERVAL:-5}"
 MAX_POLLS="${WATCH_MAX_POLLS:-0}"
 REPLAY="${WATCH_REPLAY:-0}"
@@ -62,7 +68,7 @@ host_link_ok() {
     LINK_BSSID=$(printf '%s\n' "$link" | awk 'tolower($1)=="connected" && tolower($2)=="to" {print tolower($3); exit}')
     LINK_SSID=$(printf '%s\n' "$link" | awk -F': ' '/^[[:space:]]*SSID:/ {print $2; exit}')
     case "$LINK_BSSID" in
-        48:e7:da:*) ;;
+        "$BSSID_PREFIX":*) ;;
         *) LINK_FAIL_REASON="no verified Polaris BSSID on $WIFI_IFACE (bssid=${LINK_BSSID:-none})"; return 1 ;;
     esac
     case "$LINK_SSID" in
