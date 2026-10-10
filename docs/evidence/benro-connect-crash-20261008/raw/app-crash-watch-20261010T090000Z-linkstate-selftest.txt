@@ -1,0 +1,4 @@
+2026-10-10T09:00:00Z IDENTITY bssid=48:e7:da:d4:b5:73 ssid=polaris_d13e86 route_dev=wlp8s0 FwVer:6.0.0.54.62;date:2026.10.09;
+2026-10-10T09:00:00Z === watch start (host=root@192.168.0.1 interval=5s replay=0 max_polls=3) ===
+2026-10-10T09:00:01Z CAMERA_STATE change: unknown -> 0
+2026-10-10T09:00:13Z watch stop: reached WATCH_MAX_POLLS=3
