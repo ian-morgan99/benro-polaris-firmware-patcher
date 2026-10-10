@@ -48,8 +48,8 @@ def branch_target(address, word):
 
 def check(condition, message):
     if not condition:
-        raise SystemExit(f"FAIL: {message}")
-    print(f"PASS: {message}")
+        raise SystemExit("FAIL: %s" % message)
+    print("PASS: %s" % message)
 
 cave = segment["vaddr"] + segment["filesz"]
 cave_off = segment["offset"] + segment["filesz"]
