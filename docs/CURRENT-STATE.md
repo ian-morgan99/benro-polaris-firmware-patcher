@@ -93,9 +93,12 @@ mode-dependent, not a firmware fault (#186 corrected).
   previous-shot orphan caveat still needs physical validation.
 - Bulb **duration** is still not honoured — `bulb_ms` is a capture watchdog, never
   a shutter-speed write. The old polestar_app patch that zeroed `bulb_ms` was
-  proven to force the plain-capture branch; it is being removed from the release
-  path and guarded against in the package gate. The actual pgphoto held-Bulb
-  dispatch remains unimplemented and unqualified.
+  proven to force the plain-capture branch. It is removed from the release path;
+  the package gate rejects that byte sequence. Candidate `.64`
+  (`o-v16f-bulb-branch-audit-20261010`) is built and privately archived, but is
+  not installed or physically qualified. It does **not** implement the missing
+  code-264 to Bulb-action/duration bridge: stock pgphoto still calls
+  `captureImage`. Keep #186 open.
 
 **Earlier post-soak device snapshot (superseded):** `ping` answered while ports
 22 and 9090 refused connections, with no shell available. During the later
