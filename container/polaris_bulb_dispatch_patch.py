@@ -25,7 +25,7 @@ def symbol_value(elf, name):
             if symbol.name == name and symbol.entry["st_shndx"] != "SHN_UNDEF":
                 hits.append((symbol.entry["st_value"], symbol.entry["st_size"]))
     if len(hits) != 1:
-        raise ValueError(f"expected one defined {name} symbol, found {len(hits)}")
+        raise ValueError("expected one defined %s symbol, found %d" % (name, len(hits)))
     return hits[0]
 
 
@@ -37,13 +37,14 @@ def va_to_offset(elf, address):
         size = segment.header["p_filesz"]
         if start <= address < start + size:
             return segment.header["p_offset"] + address - start
-    raise ValueError(f"address 0x{address:x} is not in a file-backed LOAD segment")
+    raise ValueError("address 0x%x is not in a file-backed LOAD segment" % address)
 
 
 def encode_branch(source, target, condition=0xE, link=False):
     displacement = target - (source + 8)
     if displacement & 3 or not -(1 << 25) <= displacement < (1 << 25):
-        raise ValueError(f"ARM branch from 0x{source:x} to 0x{target:x} is out of range/alignment")
+        raise ValueError("ARM branch from 0x%x to 0x%x is out of range/alignment" %
+                         (source, target))
     immediate = (displacement >> 2) & 0xFFFFFF
     return (condition << 28) | 0x0A000000 | (0x01000000 if link else 0) | immediate
 
@@ -111,7 +112,7 @@ def capture_call_setup_is_valid(disassembly, site):
     lines = disassembly.splitlines()
     try:
         position = next(i for i, line in enumerate(lines)
-                        if re.match(rf"\s*0*{site:x}:", line))
+                        if re.match(r"\s*0*%x:" % site, line))
     except StopIteration:
         return False
     prior = [re.sub(r"\s+", " ",
@@ -165,7 +166,7 @@ def patch_data(data, offsets, addresses, segment):
         raise ValueError("unused executable LOAD tail is not zero-filled")
     for name, offset, size in segment["allocated_sections"]:
         if offset < cave_off + TRAMPOLINE_SIZE and cave_off < offset + size:
-            raise ValueError(f"executable LOAD gap overlaps allocated section {name}")
+            raise ValueError("executable LOAD gap overlaps allocated section %s" % name)
     expected_branch = encode_branch(addresses["burst"], cave)
     trampoline = build_trampoline(
         cave, addresses["burst"], addresses["bulb"],
@@ -208,13 +209,13 @@ def inspect_binary(path):
         if burst_size < 12 or bulb_size == 0 or bulb_function_size < 16 or capture_size == 0:
             raise ValueError("pgphoto capture functions have unexpected sizes")
         calls, strcasestr, disassembly = call_instructions(path)
-        if not re.search(rf"^\s*0*{capture:x}\s+<captureImage>:", disassembly, re.M):
+        if not re.search(r"^\s*0*%x\s+<captureImage>:" % capture, disassembly, re.M):
             raise ValueError("captureImage disassembly/symbol anchor mismatch")
-        if not re.search(rf"^\s*0*{burst:x}\s+<capture_image_with_Burst>:", disassembly, re.M):
+        if not re.search(r"^\s*0*%x\s+<capture_image_with_Burst>:" % burst, disassembly, re.M):
             raise ValueError("burst-helper disassembly/symbol anchor mismatch")
         direct = [call for call in calls if call[1] == burst and capture <= call[0] < capture + capture_size]
         if len(direct) != 1:
-            raise ValueError(f"expected one captureImage -> burst-helper call, found {len(direct)}")
+            raise ValueError("expected one captureImage -> burst-helper call, found %d" % len(direct))
         caller_site = direct[0][0]
         if not capture_call_setup_is_valid(disassembly, caller_site):
             raise ValueError("captureImage burst call arguments differ from (status=0, duration=bTime, files)")
@@ -237,7 +238,7 @@ def inspect_binary(path):
                       if item["flags"] & 1 and
                       item["vaddr"] <= burst < item["vaddr"] + item["filesz"]]
         if len(executable) != 1:
-            raise ValueError(f"expected one executable LOAD for burst helper, found {len(executable)}")
+            raise ValueError("expected one executable LOAD for burst helper, found %d" % len(executable))
         segment = executable[0]
         following = [item for item in loads if item["offset"] > segment["offset"]]
         following.sort(key=lambda item: item["offset"])
@@ -281,7 +282,7 @@ def main():
         data, offsets, addresses, segment = inspect_binary(args.pgphoto)
         patched, changed = patch_data(data, offsets, addresses, segment)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
-        print(f"[polaris_bulb_dispatch] FATAL: {error}", file=sys.stderr)
+        print("[polaris_bulb_dispatch] FATAL: %s" % error, file=sys.stderr)
         return 1
 
     if args.check:
@@ -308,7 +309,7 @@ def main():
         else:
             with open(output_path, "wb") as output:
                 output.write(patched)
-        print(f"[polaris_bulb_dispatch] patched {output_path}: positive-duration K-3 III requests use timed Bulb action")
+        print("[polaris_bulb_dispatch] patched %s: positive-duration K-3 III requests use timed Bulb action" % output_path)
     else:
         print("[polaris_bulb_dispatch] already patched (unique verified dispatch)")
     return 0
