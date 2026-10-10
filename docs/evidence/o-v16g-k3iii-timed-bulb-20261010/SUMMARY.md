@@ -12,12 +12,12 @@ This wiring is based on stock-binary disassembly and the direct-PC K-3 III held-
 
 - Candidate ID: `o-v16g-k3iii-timed-bulb-20261010`
 - Display version / build ID: `6.0.0.54.65` / `6.0.0.54.65-o-v16g-k3iii-timed-bulb-20261010`
-- Patcher source: [`9d0efe0abd6125ef04d38bb0789f3b50597a373f`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/9d0efe0abd6125ef04d38bb0789f3b50597a373f), merged Patcher `main`
+- Patcher source: [`9d0efe0abd6125ef04d38bb0789f3b50597a373f`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/9d0efe0abd6125ef04d38bb0789f3b50597a373f), the exact Patcher `main` commit at build time (the clean checkout retained the feature-branch name)
 - libgphoto2 source: [`2cde4485b0222b38c364f8893f487228102c2d2d`](https://github.com/ian-morgan99/libgphoto2/commit/2cde4485b0222b38c364f8893f487228102c2d2d), clean `main`
 - Selected camlibs: `ptp2,pentax`; full matched libgphoto2 core/port/ptp2/usb1 stack
 - Stock FwPkt: MD5 `90bdad511f556f25a2904ae9d2980102`; SHA-256 `f980fe5245a1f85b58d0c2db523402d1af72ddfff782acba99a4eadfdca54d2f`; appfs MD5 `47f2ae680be3a5f5d69aa20e20a2397b`
 - Candidate FwPkt: MD5 `4ce76e1a3d4be7830713c2609989b384`; SHA-256 `abee7692bbb50d0fef9147d3cce70fb21eefba9c9f4adb4e0e43a00b6f8e4d7b`; appfs MD5 `28f597774a55aa2f49fdbc48cd099d5a`
-- PrivateResearch commit: `50b4c108c5a98869b6fcd0c19c04a27dcd10cf7a`; file `firmware-packets/o-v16g-k3iii-timed-bulb-20261010/FwPkt.zip`
+- PrivateResearch ZIP commit: `50b4c108c5a98869b6fcd0c19c04a27dcd10cf7a`; ZIP at `firmware-packets/o-v16g-k3iii-timed-bulb-20261010/FwPkt.zip`. Its patcher-SHA/status README is commit `1050e0ac6`; ZIP bytes and hashes are unchanged.
 
 ## Validation
 
