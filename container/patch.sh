@@ -54,10 +54,6 @@ case "$MODE" in full|ptp2only) : ;; *) echo "invalid MODE=$MODE (full|ptp2only)"
 SWAP_USB1="${SWAP_USB1:-1}"
 # Full mode ALWAYS needs usb1 (the fresh 2.5.34 port dlopens usb1 from IOLIBS).
 [ "$MODE" = "full" ] && SWAP_USB1=1
-# Issue #120: zero the polestar_app pre-shot Bulb delay when the release path
-# explicitly requests it. An explicit request must fail closed.
-POLESTAR_BULB_PATCH="${POLESTAR_BULB_PATCH:-0}"
-
 # The app-visible version is copied into fixed-size C strings in polestar_app
 # and is consumed by Benro Connect as a dotted numeric version.  The host
 # launcher validates this too, but keep the container fail-closed when it is
@@ -365,17 +361,6 @@ if [ "$SELFTEST" = "1" ] && command -v qemu-arm-static >/dev/null 2>&1; then
     warn "selftest skipped in full mode (it emulates ptp2 against the device's 2.5.27"
     warn "core; full mode runs ptp2 against the fresh $LIBGPHOTO2_VERSION core it just built)."
   fi
-fi
-
-# Issue #120: the formal release path requests this firmware-side Bulb fix.
-# Apply it before repacking so the exact modified polestar_app is covered by
-# the package assertions below.
-if [ "$POLESTAR_BULB_PATCH" = "1" ]; then
-  PA="$APP/bin/polestar_app"
-  [ -f "$PA" ] || die "polestar_app not found but POLESTAR_BULB_PATCH=1"
-  python3 /opt/patcher/polestar_bulb_patch.py "$PA" --in-place \
-    || die "polestar_app Bulb patch failed (issue #120)"
-  log "polestar_app Bulb pre-shot delay patch applied (issue #120)"
 fi
 
 P_UID="$(stat -c %u "$PG")"; P_GID="$(stat -c %g "$PG")"; P_MODE="$(stat -c %a "$PG")"
@@ -792,21 +777,6 @@ elif [ -n "${BUILD_ID:-}" ]; then
     die "post-repack assertion failed: /app/FwVer in appfs.ubifs is not '$BUILD_ID' ($(cat "$APPFS_FWVER"))"
   fi
   log "  verified /app/FwVer in appfs.ubifs reports '$BUILD_ID'"
-fi
-
-if [ "$POLESTAR_BULB_PATCH" = "1" ]; then
-  APPFS_PA="$APP_VERIFY/bin/polestar_app"
-  [ -f "$APPFS_PA" ] || die "post-repack assertion failed: polestar_app missing after Bulb patch"
-  if ! python3 - "$APPFS_PA" <<'PYCHK'
-import sys
-data = open(sys.argv[1], "rb").read()
-repl = bytes.fromhex("1c301be5 0030a0e3 000000e1 1c300be5")
-sys.exit(0 if data.count(repl) == 1 else 1)
-PYCHK
-  then
-    die "post-repack assertion failed: Bulb replacement marker missing"
-  fi
-  log "  verified Bulb patch survived appfs repack"
 fi
 
 if [ -n "${DISPLAY_FWVER:-}" ]; then

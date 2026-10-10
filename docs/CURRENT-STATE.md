@@ -92,7 +92,10 @@ mode-dependent, not a firmware fault (#186 corrected).
   `4a1999e` and described on #192; they have not been live-qualified. The
   previous-shot orphan caveat still needs physical validation.
 - Bulb **duration** is still not honoured — `bulb_ms` is a capture watchdog, never
-  a shutter-speed write. Pre-existing stock-path design, not a `.62` regression.
+  a shutter-speed write. The old polestar_app patch that zeroed `bulb_ms` was
+  proven to force the plain-capture branch; it is being removed from the release
+  path and guarded against in the package gate. The actual pgphoto held-Bulb
+  dispatch remains unimplemented and unqualified.
 
 **Earlier post-soak device snapshot (superseded):** `ping` answered while ports
 22 and 9090 refused connections, with no shell available. During the later

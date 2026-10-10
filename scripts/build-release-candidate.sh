@@ -54,12 +54,8 @@ meson test -C "$TEST_BUILD" --no-suite no-ci --print-errorlogs
 
 PATCH_ARGS=(--fwpkt "$(realpath "$BASE")" \
   --libgphoto2-source "$(realpath "$SRC")" --out "$OUT" --build-id "$BUILD_ID")
-# The formal release path must carry the verified firmware-side Bulb fix as
-# well as the matched libgphoto2 stack.  Without this explicit flag, a build
-# from an untouched stock FwPkt silently omits the polestar_app pre-shot
-# delay fix; a build from an already-patched candidate would hide that mistake
-# by inheriting the patch from its base artifact.
-PATCH_ARGS+=(--polestar-bulb-patch)
+# Do not apply the retired polestar_app Bulb patch. It zeroed bulb_ms and
+# forced the plain-capture branch, bypassing the non-zero Bulb request path.
 if [ -n "$DISPLAY_FWVER" ]; then
   PATCH_ARGS+=(--display-fwver "$DISPLAY_FWVER")
 fi

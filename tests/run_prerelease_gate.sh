@@ -227,9 +227,8 @@ open('$STOCK_FI','wb').write(data)
         fi
         rm -f "$STOCK_FI"
 
-        # The release wrapper requests the firmware-side Bulb fix for every
-        # production candidate. Verify the marker in the actual repacked
-        # polestar_app, not merely in the source patch script or build log.
+        # Verify that the repacked appfs retains the original Bulb branch and
+        # does not contain the retired patch that zeroed bulb_ms.
         if command -v ubireader_extract_files >/dev/null 2>&1; then
             PATCH_AUDIT_DIR="$(mktemp -d)"
             if ubireader_extract_files -o "$PATCH_AUDIT_DIR" "$BUILD/camera/appfs.ubifs" \
@@ -238,9 +237,9 @@ open('$STOCK_FI','wb').write(data)
                 if [ -n "$APP_BIN" ] && \
                    python3 container/polestar_bulb_patch.py "$APP_BIN" \
                        >/tmp/prerelease-polestar-bulb.log 2>&1; then
-                    ok "polestar_app Bulb patch marker present in repacked appfs"
+                    ok "polestar_app original Bulb branch intact in repacked appfs"
                 else
-                    bad "polestar_app Bulb patch marker missing or invalid (log: /tmp/prerelease-polestar-bulb.log)"
+                    bad "polestar_app contains a retired Bulb patch or unknown branch (log: /tmp/prerelease-polestar-bulb.log)"
                 fi
             else
                 bad "polestar_app appfs extraction for Bulb marker (log: /tmp/prerelease-polestar-extract.log)"

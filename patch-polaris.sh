@@ -23,10 +23,8 @@
 #                          DEFAULT (no flag) is the full-libgphoto2 stack swap.
 #     --selftest           qemu-emulate the driver load (R5 II registration)
 #     --no-fix-typo        do NOT correct the upstream "EOS 5Rm2" model typo
-#     --no-usb1            (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only#     --polestar-bulb-patch  zero the polestar_app pre-shot bulb delay (issue #120):
-#                            the 264 PHOTO_RECORD handler no longer applies a
-#                            countdown timer; the camera's own Bulb timer governs
-#                            exposure duration. OFF by default.#     --pentax-max-capture-size BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
+#     --no-usb1            (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
+#     --pentax-max-capture-size BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
 #                                       Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
 #     --ssh-key FILE|KEY   opt-in: authorise a public key for root SSH debugging
 #                          (issue #31). FILE may be a path to an authorized_keys
@@ -47,7 +45,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; CAMLIBS="ptp2,pentax"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; DISPLAY_FWVER=""; POLESTAR_BULB_PATCH=0
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; CAMLIBS="ptp2,pentax"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; DISPLAY_FWVER=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -64,7 +62,6 @@ while [ $# -gt 0 ]; do
     --selftest) SELFTEST=1; shift;;
     --no-fix-typo) FIXTYPO=0; shift;;
     --no-usb1) SWAPUSB1=0; shift;;
-    --polestar-bulb-patch) POLESTAR_BULB_PATCH=1; shift;;
     --pentax-max-capture-size) PENTAX_MAX_CAPTURE_SIZE="$2"; shift 2;;
     --ssh-key) SSHKEY="$2"; shift 2;;
     --build-id) BUILDID="$2"; shift 2;;
@@ -187,7 +184,6 @@ docker run --rm \
   -e PENTAX_MAX_CAPTURE_SIZE="$PENTAX_MAX_CAPTURE_SIZE" \
   -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
-  -e POLESTAR_BULB_PATCH="$POLESTAR_BULB_PATCH" \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
   -e PATCHER_COMMIT="$PATCHER_COMMIT" \
   -e PATCHER_DIRTY_HASH="$PATCHER_DIRTY_HASH" \
