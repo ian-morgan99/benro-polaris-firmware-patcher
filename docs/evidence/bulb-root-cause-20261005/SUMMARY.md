@@ -57,21 +57,36 @@ is consumed as "how long am I willing to wait for a file", which is why every
 Bulb request exposes whatever the camera's shutter already happens to be (2.0 s
 in our tests) and still reports success.
 
-## 2. The stock Bulb capture function is dead code
+## 2. The timed Bulb helper exists, but code 264 never selects it
 
 In `pgphoto`:
 
-* `captureBulbImage` @ `0x20604` (`gphotoMain.c:1430`) — **zero callers**.
-* Its only callee `capture_image_with_Bulb` @ `0x101aac` (`gpManager.c:3185`)
-  is called from `0x206e0`, which lies *inside* `captureBulbImage`
-  (`0x20604`–`0x208af`; the next symbol `captureImage` starts at `0x208b0`).
+* The code-264 handler calls `captureImage` at `0x1741c`.
+* `captureImage` passes its positive `bTime` value to
+  `capture_image_with_Burst` at `0x20bc0`; the callee treats that value as a
+  generic continuous/burst argument, not as a Pentax shutter duration.
+* `captureBulbImage` @ `0x20604` (`gphotoMain.c:1430`) has no direct `BL`
+  call-site in the disassembly, but it is referenced by an indirect data-table
+  entry at `0x300cd4` adjacent to a Nikon Coolpix model row. The earlier
+  direct-call-only search missed this pointer, so the function entry is **not**
+  a safe code cave and its Nikon behavior must be preserved.
+* `capture_image_with_Bulb` @ `0x101aac` (`gpManager.c:3185`) accepts
+  `(Status, time_ms, newFiles)`, sends the `bulb=1` action, waits against the
+  duration in milliseconds, sends `bulb=0`, and runs the existing file finalize
+  and transfer path. Its only direct callee in the original binary is inside
+  `captureBulbImage`.
 * Globals `glob_bulblength` (`0x375e14`) and `bulb.11463` (`0x311c28`) are
   unreferenced.
 
-This is why `captureBulbImage` appears in **no log on the device, ever**
-(0 hits across `Clog_000240`–`000249`). `captureImage` and `captureBulbImage`
-share the signature `int (SPC_Settings *)`, so the intended dispatch was a
-drop-in swap that was never wired.
+The repair now being integrated redirects only a positive-duration, status-0
+request whose camera manufacturer/model identify a Pentax K-3 III to
+`capture_image_with_Bulb`, preserving the original burst path for zero-duration
+requests, other models, and the K-3 III Monochrome. It injects the dispatcher in
+the unused file-backed gap at the end of the executable LOAD segment and extends
+that segment's sizes without changing the file size. It leaves the
+`captureBulbImage` function and its indirect model-table pointer untouched.
+Offline patcher tests and actual stock-binary disassembly verify this transform;
+Polaris physical qualification is still pending.
 
 ## 3. The real shutter-set command is **261 `s:<index>;`**, not 277
 
