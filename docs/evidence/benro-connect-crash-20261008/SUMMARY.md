@@ -87,6 +87,25 @@ Re-prove BSSID/route before any further device conclusion. #187 remains open;
 root cause is still unproven. No shutter command was sent; no new firmware
 build or device change is justified by this sample.
 
+## Standing caveat on the seven `?` transitions (added 2026-10-10)
+
+Seven `CAMERA_STATE … -> ?` transitions appear in the raw watch log in this
+directory. They are **host-side until proven otherwise** and must not be cited
+as evidence for #171/#68 Wi-Fi driver exhaustion.
+
+The only one that was followed up is the `19:20:12Z` event, and that follow-up
+found the host disassociated with the route to `192.168.0.1` running over
+Ethernet — a plausible host-side cause. As recorded above, it "does not prove
+whether the Polaris AP/service failed or only the host left the AP." The other
+six have no follow-up at all.
+
+A `?` means the watcher could not obtain a camera reading. It does not
+distinguish "the device stopped answering" from "we stopped reaching the
+device", and on this host the second has been the observed case. The merged
+watcher now attributes the two separately (`LINK_LOSS_HOST`,
+`DEVICE_UNREACHABLE`, `SERVICE_DOWN`) instead of emitting `?`, so runs from
+2026-10-10 onward can be read without this caveat; runs before it cannot.
+
 ## Persistent-log analysis after the operator restart
 
 The post-restart connection was identity-checked again: BSSID
