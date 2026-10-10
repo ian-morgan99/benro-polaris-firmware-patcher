@@ -96,10 +96,9 @@ mode-dependent, not a firmware fault (#186 corrected).
   proven to force the plain-capture branch. It is removed from the release path;
   the package gate rejects that byte sequence. Candidate `.64`
   (`o-v16f-bulb-branch-audit-20261010`) is built and privately archived, but is
-  not installed or physically qualified. It does **not** implement the missing
-  code-264 to Bulb-action/duration bridge: stock pgphoto still calls
-  `captureImage`. Keep #186 open.
-
+  marked **DO NOT STAGE**. Static pgphoto analysis confirms code 264 still calls
+  `captureImage`; its positive-`bTime` burst path is not a proven Pentax Bulb
+  action. No requested-duration start/stop bridge is implemented. Keep #186 open.
 **Earlier post-soak device snapshot (superseded):** `ping` answered while ports
 22 and 9090 refused connections, with no shell available. During the later
 code-780 check recorded above, identity was re-established and SSH verified
