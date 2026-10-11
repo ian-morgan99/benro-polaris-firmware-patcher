@@ -68,21 +68,24 @@ The root cause is the USB flapping: each disconnect/reconnect cycle re-initialis
 
 ### 4. ROOT CAUSE of #187: degenerate camera-state burst pushed the instant the K-3 III connects
 
-The user's report — "Benro Connect crashes the moment the K-3 III connects, and has for days" — is reproduced in this log at **21:43:11**, and the trigger is visible on the gimbal side. The sequence:
+The user's report — "Benro Connect crashes the moment the K-3 III connects, and has for days" — is reproduced in this log at **21:43:11**, and the trigger is visible on the gimbal side. The sequence (all codes present; values degenerate):
 
 ```
 usb_connect ++++++++++++++++++++            ← K-3 III enumerates
-code[275] fNum   R:f/22,f/20,...,f/2.8      ← REVERSED / partial range (19 stops, descending)
+code[265] ISO    R:…409600,819200,1600000   ← EXTENDED range (healthy ends at 204800)
+code[268] shutter R:00:00,;                 ← COLLAPSED to a single "00:00" (colon form)
+code[275] fNum   R:f/22,f/20,...,f/2.8      ← REVERSED range (19 stops, descending)
 code[267] EV     R:0,;                      ← COLLAPSED to a single "0"
 code[266] WB     (full list, OK)
-code[268] shutter  ← ABSENT (count = 0)      ← shutter range never sent in this burst
 SOCKET_ERROR(201) [id=6]                    ← Benro Connect client #1 dies mid-burst
 SOCKET_ERROR(201) [id=28]                  ← second client dies 246 ms later
 ```
 
-Compare the **healthy** burst at 21:52:00 (client id 34 survives): `code[265]` ISO full list, `code[268]` shutter full list (`00-30…1/8000`), `code[275]` fNum ascending `f/1.4…f/16`.
+Compare the **healthy** burst at 21:46:04 (client survives): `code[265]` ISO normal range (ends 204800), `code[268]` shutter full 52-entry list (`00-30,00-25,…,1/8000,00-00` — hyphen form), `code[275]` fNum ascending `f/1.4…f/16`.
 
-So the trigger is a **half-populated camera-state burst pushed while the PTP property store is still initialising**: the shutter range (code 268) is missing entirely, EV (267) is collapsed to `0`, and fNum (275) is reversed/partial. Benro Connect's parser chokes on the degenerate state and dies — exactly "crashes the moment the K3iii connects."
+So the trigger is a **degenerate camera-state burst pushed while the PTP property store is still initialising**: shutter (268) collapsed to a single `00:00`, EV (267) collapsed to `0`, fNum (275) reversed, ISO (265) extended range. Note the shutter format flips from colon (`00:00`) when not-ready to hyphen (`00-30`) when ready — but the decompiled Benro Connect app stores these as opaque display strings (`CameraParamerIndex.value`), so the format flip alone is not the fault; the crash is most likely in the UI layer rendering a 1-item picker with a stale `selectIndex`, or in the code-286 (CAM_INFO) handler, which is not yet traced.
+
+**App-side parser check (decompiled APK, PrivateResearch):** `parseSP_GET_SHUTTER_INFO` / `_EV_` / `_FNUM_` / `_ISO_` are all defensive — a 1-entry `R:` list parses cleanly and `V:` parse failures are caught. The degenerate values therefore land in `CameraInfoModel` as valid-but-degenerate state, and the crash is downstream of the parsers (UI/picker or CAM_INFO path).
 
 ### 5. The id 29→34 churn is the crash loop; the index errors are its gimbal-side symptom
 
@@ -92,7 +95,7 @@ After the 21:43:11 dual-death, the app relaunches and reconnects (ids 29, 30, 31
 
 The 2026-10-10 evening session on `6.0.0.54.65` (o-v16g) **reproduces #187 and identifies its trigger**:
 
-1. **#187 root cause identified (gimbal-side trigger)**: the instant the K-3 III connects, polestar_app pushes a degenerate camera-state burst — shutter range (code 268) absent, EV (267) collapsed to `0`, fNum (275) reversed/partial — because it emits state before the PTP property store is fully initialised. Benro Connect dies parsing this half-populated state. This matches the user's "crashes the moment the K3iii connects" report and the id 29→34 crash loop.
+1. **#187 trigger identified (gimbal-side)**: the instant the K-3 III connects, polestar_app pushes a degenerate camera-state burst — shutter (268) collapsed to a single `00:00`, EV (267) collapsed to `0`, fNum (275) reversed, ISO (265) extended range — because it emits state before the PTP property store is fully initialised. Benro Connect dies on this degenerate state (parsers are defensive; fault is downstream in UI/CAM_INFO). This matches the user's "crashes the moment the K3iii connects" report and the id 29→34 crash loop.
 2. **USB flapping amplifies it** — 7+ connect/disconnect cycles in ~13 minutes, with pgphoto restart lock contention, keep re-triggering the degenerate-state window and the `SP_SET_SHUTTER FAIL` errors.
 3. **The timed-Bulb feature was not tested** — all bulb-state messages carried `bulb:0`, so the new positive-duration dispatch path was never entered. Layer B qualification remains pending.
 4. **Fix direction**: gate the camera-state push (codes 265/266/267/268/275) on the property store being fully initialised, or suppress/defer the burst until `code[268]` shutter range is present and non-degenerate. This is a polestar_app state-machine change, not a pgphoto/timed-Bulb change.
