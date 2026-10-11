@@ -2,7 +2,7 @@
 
 ## Status
 
-Built from verified stock firmware and uploaded to the private artifact repository. Offline gates passed. **Not installed or physically tested on Polaris; issue #186 remains open.** This is an install/test candidate, not a claim that Polaris Bulb now works.
+Built from verified stock firmware and uploaded to the private artifact repository. Offline gates passed. **Installed on the Polaris 2026-10-11; runtime provenance verified** (device reports `6.0.0.54.65`, on-device provenance file matches this candidate's libgphoto2/patcher SHAs and build_id). **K-3 III timed-Bulb Layer B qualification is still pending; issue #186 remains open.** This is an installed, canary-pending candidate, not a claim that Polaris Bulb now works.
 
 The pgphoto patch uses the existing timed helper after the exact code-264 capture request reaches `capture_image_with_Burst`. For positive `bTime`, status 0, Pentax manufacturer, and K-3 Mark III model, it routes to `capture_image_with_Bulb(Status, time_ms, newFiles)`. The helper sends the `bulb=1` action, waits for the requested milliseconds, sends `bulb=0`, and follows its existing finalize/transfer path. Zero-duration capture, other models, and Monochrome keep the old path. The original `captureBulbImage` entry and indirect Nikon model-table reference are preserved; the new trampoline occupies an audited zero-filled executable LOAD tail and is protected from Stage-2 trampoline overlap.
 

@@ -1,5 +1,30 @@
 # Current repository state
 
+## 2026-10-11 — `.65` installed on the device; repo consolidated to a single clean main
+
+**Installed and verified on device: `6.0.0.54.65`, candidate `o-v16g-k3iii-timed-bulb-20261010`.**
+The device reports `/app/FwVer=6.0.0.54.65;date:2026.10.10` and its
+`/app/openpolaris-libgphoto2-provenance.txt` matches the candidate exactly:
+libgphoto2 `2cde4485b` (clean main), patcher `9d0efe0`, build_id
+`6.0.0.54.65-o-v16g-k3iii-timed-bulb-20261010`, camlibs `ptp2,pentax`.
+The candidate ZIP in PrivateResearch (`firmware-packets/o-v16g-k3iii-timed-bulb-20261010/FwPkt.zip`)
+verifies against the recorded hashes (MD5 `4ce76e1a…`, SHA-256 `abee7692…`), and its
+appfs MD5 `28f597774a55aa2f49fdbc48cd099d5a` matches the firmwareInfo manifest.
+Device is healthy: `polestar_app` (pid 249) and `pgphoto.stage2ondisk` (pid 27201)
+running, ports 9090/8080 listening, Mlog emitting normal battery/temp frames.
+**K-3 III timed-Bulb Layer B qualification is still pending** (requested duration,
+one start/stop, file publication, idle/recovery); issue #186 stays open until it passes.
+
+Repo cleanup done the same day: all four stale `/tmp` worktrees pruned; branches
+`diag/k1ii-capture-lifecycle`, `fix/validate-fwpacket-provenance`,
+`fix/polaris-bulb-duration-dispatch`, `diag/187-watcher-link-state` (all fully
+merged) and the superseded `fix/retire-polestar-bulb-patch` deleted; matching
+origin remote branches deleted; two orphaned untracked files removed. `main` is
+pushed to origin and is the single source of truth. The duplicate `.65` records in
+`docs/RELEASE-VERSION-STATE.md` and `docs/FWPKT-PROVENANCE-CONTRACT.md` were
+deduplicated (TA #186 finding) and now record the install; the monotonic
+fwver validator passes (`--next` = `6.0.0.54.66`).
+
 ## 2026-10-09 late-session handover
 
 The detailed conversation review and next actions are in
@@ -98,9 +123,10 @@ mode-dependent, not a firmware fault (#186 corrected).
   zero-duration captures, other models, and K-3 III Monochrome retain the
   original burst path. The patch preserves the Nikon `captureBulbImage` function
   and indirect table reference. Candidate `.65`
-  (`o-v16g-k3iii-timed-bulb-20261010`) is built and privately archived; it is
-  not installed. Layer B must still prove requested duration, one start/stop,
-  file publication, and idle/recovery before issue #186 can close.
+  (`o-v16g-k3iii-timed-bulb-20261010`) is built, privately archived, and now
+  **installed on the device** (see the 2026-10-11 section above). Layer B must
+  still prove requested duration, one start/stop, file publication, and
+  idle/recovery before issue #186 can close.
 **Earlier post-soak device snapshot (superseded):** `ping` answered while ports
 22 and 9090 refused connections, with no shell available. During the later
 code-780 check recorded above, identity was re-established and SSH verified
@@ -1416,7 +1442,7 @@ The device has been rolled back to the previously installed 15i artifact.
 - PrivateResearch artifact commit: `ac125ae6f`
 - path: `firmware-packets/o-v15m-release-gapfix-20261003/FwPkt.zip`
 - libgphoto2: `14/14` passed
-- parameterised stock package/display-version test: **PASSED**
+- parameterised stock package/display test: **PASSED**
 - patcher deterministic harness: `17` passed
 - Python regression suite: `129` passed
 - pre-release gate: `4` passed, `0` failed, `1` skipped (stock manifest is
