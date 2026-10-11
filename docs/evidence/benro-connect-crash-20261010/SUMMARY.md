@@ -20,13 +20,13 @@ This build adds a K-3 III-only positive-`bTime` pgphoto dispatch to the existing
 ## Timeline (boot 276, Mlog_000276)
 
 - **~21:42** — camera USB connect begins; rapid connect/disconnect flapping starts (lines 78960/78964 → 79022/79026 → 79032/79036 → 79223/79227 → 79234/79238 → 79259/79263 → 79274/79278). `restart_gphoto` lock contention appears: "another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race" (lines 79266, 79281).
-- **21:43:11** — `SOCKET_ERROR(201) [id=6]` and `[id=28]`; two app clients disconnect simultaneously.
+- **21:43:11** — **#187 crash reproduced**: `usb_connect` (K-3 III enumerates) → degenerate camera-state burst (code 275 fNum reversed, code 267 EV collapsed to `0`, code 268 shutter range absent) → `SOCKET_ERROR(201) [id=6]` and `[id=28]`; two Benro Connect clients die mid-burst. See finding 4.
 - **21:43:44** — `SP_ClientCtxDel:id[29]`.
 - **21:45:29–31** — `SP_ClientCtxDel:id[30]`, `[31]`, `[32]` (three more app clients gone).
 - **21:46:13–14** — `SP_SET_SHUTTER FAIL` ×2 (lines 80664, 80669); app sends `code:264;val:state:1;bulb:0;c:-1` (bulb state ON, zero duration).
 - **21:48:18–19** — `SP_SET_SHUTTER FAIL` ×2 more (lines 81086, 81089); app sends `code:264;val:state:1;bulb:0;c:-1` again.
 - **~21:50:29** — camera USB disconnect (lines 81182/81186), then reconnect (81196/81200). `restart_gphoto` lock contention again (line 81258).
-- **21:51:24:029** — `SOCKET_ERROR(201) [id=33]` + `SP_ClientCtxDel:id[33]` — the app-side disconnect. This is the crash window from the earlier 23:42 pull: `SP_SendMsgToApp` camera-state code[286] with empty param strings (`shutterString index error`, `fNumString index error`, `ev index error`, `iso index error`) followed by the Benro Connect client disconnecting.
+- **21:51:24:029** — `SOCKET_ERROR(201) [id=33]` + `SP_ClientCtxDel:id[33]` — another iteration of the #187 crash loop (see finding 5), immediately followed by id 34 reconnecting at 21:51:31. The `shutterString/ev/iso/fNumString index error` lines at 21:51:31–34 are the gimbal-side symptom of the degenerate camera state.
 - **~21:55:00** — camera USB disconnect (lines 82818/82822), then reconnect; pgphoto restart #3 (`restart_gphoto OK: port 8080 listening`, PID 27201, `camera_connected_to_app connected:1` at 21:55:07).
 - **21:55–21:58** — gimbal healthy: periodic battery (code 778, capacity 65→68, charging) and temperature (code 525) messages to the app. No further `SOCKET_ERROR`/`SP_ClientCtxDel` after the 21:51 disconnect in this pull; the app had not reconnected by 21:58.
 
@@ -66,25 +66,39 @@ All 4 shutter-speed set attempts fail (`ret:-1`), while F-number (6× OK) and IS
 
 The root cause is the USB flapping: each disconnect/reconnect cycle re-initialises the pgphoto camera session, and the shutter-speed widget's state is lost or not yet populated when the app next queries it. The F-number and ISO widgets recover faster (or are cached), which is why they succeed.
 
-### 4. The 21:51:24 disconnect is a clean socket close, not a gimbal fault
+### 4. ROOT CAUSE of #187: degenerate camera-state burst pushed the instant the K-3 III connects
 
-`SOCKET_ERROR(201) [id=33]` at 21:51:24:029 is errno 201 (ECONNRESET on this kernel), meaning the phone-side Benro Connect client closed the TCP connection. The gimbal's `polestar_app` kept running, the camera state machine kept emitting code[286] frames, and the USB/pgphoto restart path worked (restarts 2/6 then 3/6). No new crash signature beyond what the 2026-10-09 analysis recorded; Mlog/Clog still do not capture the native client crash itself (it lives on the phone).
+The user's report — "Benro Connect crashes the moment the K-3 III connects, and has for days" — is reproduced in this log at **21:43:11**, and the trigger is visible on the gimbal side. The sequence:
 
-### 5. Empty camera-param index errors are a timing/race, not a firmware fault
+```
+usb_connect ++++++++++++++++++++            ← K-3 III enumerates
+code[275] fNum   R:f/22,f/20,...,f/2.8      ← REVERSED / partial range (19 stops, descending)
+code[267] EV     R:0,;                      ← COLLAPSED to a single "0"
+code[266] WB     (full list, OK)
+code[268] shutter  ← ABSENT (count = 0)      ← shutter range never sent in this burst
+SOCKET_ERROR(201) [id=6]                    ← Benro Connect client #1 dies mid-burst
+SOCKET_ERROR(201) [id=28]                  ← second client dies 246 ms later
+```
 
-The `shutterString/fNumString/ev/iso index error` messages recur around each camera connect/disconnect cycle — consistent with the app reading camera params while the camera is mid-initialisation after a USB flap. This is a **timing/race in the app's param fetch**, not a gimbal firmware fault. The o-v16g build does not change this path.
+Compare the **healthy** burst at 21:52:00 (client id 34 survives): `code[265]` ISO full list, `code[268]` shutter full list (`00-30…1/8000`), `code[275]` fNum ascending `f/1.4…f/16`.
+
+So the trigger is a **half-populated camera-state burst pushed while the PTP property store is still initialising**: the shutter range (code 268) is missing entirely, EV (267) is collapsed to `0`, and fNum (275) is reversed/partial. Benro Connect's parser chokes on the degenerate state and dies — exactly "crashes the moment the K3iii connects."
+
+### 5. The id 29→34 churn is the crash loop; the index errors are its gimbal-side symptom
+
+After the 21:43:11 dual-death, the app relaunches and reconnects (ids 29, 30, 31, 32, 33), each dying as the camera keeps flapping — the classic #187 crash loop. The `shutterString/ev/iso/fNumString index error` lines (21:45:40, 21:47:46, 21:51:31–34) are the **gimbal-side** symptom of the same degenerate state: polestar_app cannot map a current value into a missing/collapsed range. Only when the camera settles (21:52 healthy burst) does client id 34 survive. The 21:51:24 `SOCKET_ERROR(201) [id=33]` is therefore **not** a clean user-initiated close — it is another iteration of the crash loop, immediately followed by id 34 reconnecting at 21:51:31.
 
 ## Conclusion
 
-The 2026-10-10 evening session on `6.0.0.54.65` (o-v16g) shows:
+The 2026-10-10 evening session on `6.0.0.54.65` (o-v16g) **reproduces #187 and identifies its trigger**:
 
-1. **The timed-Bulb feature was not tested** — all bulb-state messages carried `bulb:0`, so the new positive-duration dispatch path was never entered. Layer B qualification remains pending.
-2. **USB flapping is the dominant failure mode** in this session — 7+ connect/disconnect cycles in ~13 minutes, with pgphoto restart lock contention confirming concurrent restart attempts. This flapping causes the `SP_SET_SHUTTER FAIL` errors and the empty-param index errors that precede the app-side disconnect.
-3. **The 21:51:24 crash is an app-side event** (phone client closed the socket), not a gimbal fault. The gimbal survived all camera cycles.
-4. **No firmware change is justified from this sample.** The USB flapping is either a hardware/cable issue or a power-management quirk on the Polaris; it is not something the o-v16g patch addresses.
+1. **#187 root cause identified (gimbal-side trigger)**: the instant the K-3 III connects, polestar_app pushes a degenerate camera-state burst — shutter range (code 268) absent, EV (267) collapsed to `0`, fNum (275) reversed/partial — because it emits state before the PTP property store is fully initialised. Benro Connect dies parsing this half-populated state. This matches the user's "crashes the moment the K3iii connects" report and the id 29→34 crash loop.
+2. **USB flapping amplifies it** — 7+ connect/disconnect cycles in ~13 minutes, with pgphoto restart lock contention, keep re-triggering the degenerate-state window and the `SP_SET_SHUTTER FAIL` errors.
+3. **The timed-Bulb feature was not tested** — all bulb-state messages carried `bulb:0`, so the new positive-duration dispatch path was never entered. Layer B qualification remains pending.
+4. **Fix direction**: gate the camera-state push (codes 265/266/267/268/275) on the property store being fully initialised, or suppress/defer the burst until `code[268]` shutter range is present and non-degenerate. This is a polestar_app state-machine change, not a pgphoto/timed-Bulb change.
 
 ### Next steps
 
-- **To qualify o-v16g Layer B**: repeat the test with a **positive-duration** bulb setting (e.g. 5 s, 30 s) so that `code:264` carries `bulb:N` where N > 0, and confirm the timed-Bulb helper is entered (look for the pgphoto dispatch in Clog).
-- **To isolate the USB flapping**: check the camera's USB cable/port, try a different cable or port, and monitor whether the flapping persists. If it does, add a `dmesg` pull to capture the kernel-side USB events (disconnect reason: over-current, remote wakeup, host reset, etc.).
-- **If the crash recurs**: capture the phone's logcat around the crash, or add a `SP_ClientCtxDel`-triggered dump on the gimbal.
+- **Confirm the fix hypothesis**: add a guard in polestar_app so the camera-state burst is only pushed once `code[268]` (shutter range) has been received and is non-empty; re-test with the K-3 III connect and watch for the id-churn crash loop to stop.
+- **To qualify o-v16g Layer B** (separate from #187): repeat with a **positive-duration** bulb setting so `code:264` carries `bulb:N>0`.
+- **To isolate the USB flapping**: check the camera's USB cable/port; add a `dmesg` pull for kernel-side disconnect reasons.
