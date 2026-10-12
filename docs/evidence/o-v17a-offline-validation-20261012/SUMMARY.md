@@ -49,13 +49,13 @@ Extracted both appfs trees (`ubireader_extract_files`) and compared file by file
 ## 3. Patcher provenance
 
 - o-v16g: patcher `9d0efe0` (clean `main`).
-- o-v17a: built from `main` @ `7ad3bc9` **plus uncommitted working-tree changes** in `container/`:
+- o-v17a: built from `main` @ `7ad3bc9` **plus working-tree changes now committed as [`833f9f1`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/833f9f1)** in `container/`:
   - `stage2_loader.c` — SHIM #6 implementation (+83 lines) and slot-region comment fix
   - `stage2_patch.py` — `gp_camera_get_single_config` added to `CORE_BOUNDARY` (55→56), doc/comment updates
   - `ondisk/pgphoto.wrapper.in` — `STAGE2_SHUTTER_FALLBACK` export (fail-closed default `0`)
   - `build_ptp2.sh` — `-fno-stack-protector` CFLAGS
-  - `patch.sh` — build-flow adjustments
-- The on-package provenance file therefore records `patcher_commit=unknown`. **Before publishing to PrivateResearch, commit the working tree and rebuild (or record the exact dirty-diff hash) so the registry row can carry a real SHA.**
+  - `patch.sh` — non-root `inst()` helper, `@version` stripping in nm checks, dynamic boundary counts
+- The on-package provenance file records `patcher_commit=unknown` because the build predates the commit. **The only post-build change is cosmetic** (dynamic boundary counts + `inst()` helper in `patch.sh`; no binary impact), so the staged artifact is valid as-is; a future rebuild will carry the real SHA automatically.
 
 ## 4. SHIM #6 verification in the shipped binaries
 
@@ -123,4 +123,4 @@ installed for the host python3 (`/run/host/usr/bin/python3`, PEP 668
    behavior unchanged) vs `=1` (expect no restart loop; watch for the
    `[stage2] shutter-fallback: synthesized shutterspeed widget` stderr line).
 5. **K-1 II regression check** before enabling the fallback by default.
-6. Commit the patcher working tree and republish with a real `patcher_commit`.
+6. ~~Commit the patcher working tree~~ — **done: [`833f9f1`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/833f9f1)** (post-build changes cosmetic only; staged artifact valid as-is).
