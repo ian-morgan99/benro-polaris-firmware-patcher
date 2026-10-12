@@ -275,6 +275,7 @@ else
     LDFLAGS="-L$DEV -Wl,-rpath-link,$DEV"
     --with-libusb-1.0=no --with-libusb=no)
 fi
+export CFLAGS="-fno-stack-protector ${CFLAGS:-}"
 if [ ! -f config.status ]; then
   ./configure "${CONF_ARGS[@]}" >/dev/null
 fi

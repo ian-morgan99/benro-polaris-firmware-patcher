@@ -27,6 +27,12 @@ export STAGE2_CAPTURE_TRACE=${STAGE2_CAPTURE_TRACE:-0}
 # Keep it explicit in release images; "0" is the documented escape hatch for a
 # diagnostic run.
 export STAGE2_CAPTURE_EMPTY_PATH_CHECK=${STAGE2_CAPTURE_EMPTY_PATH_CHECK:-1}
+# Issue #187: shutter-fallback shim (SHIM #6).  Fail-closed by default: the
+# synthetic shutterspeed widget is only synthesized when explicitly enabled,
+# so a genuine camera/session error is never masked until the A/B test and
+# K-1 II regression check are complete.  Set STAGE2_SHUTTER_FALLBACK=1 for a
+# controlled fallback run.
+export STAGE2_SHUTTER_FALLBACK=${STAGE2_SHUTTER_FALLBACK:-0}
 # On-demand preview gate interval (seconds). Pin it ONLY when the operator
 # explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
 # model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --

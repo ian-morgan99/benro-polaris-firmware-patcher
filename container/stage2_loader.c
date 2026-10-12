@@ -119,7 +119,7 @@
  * RW anon page here; it is no longer the executable's .bss). */
 #define STAGE2_SLOT_LO ((uintptr_t)STAGE2_SLOT_BASE)
 #define STAGE2_SLOT_HI ((uintptr_t)STAGE2_SLOT_BASE + STAGE2_SLOTS_LEN * 4u)
-#define STAGE2_SLOT_PAGE 4096u   /* one page holds the 64*4 = 256 B slot region */
+#define STAGE2_SLOT_PAGE 4096u   /* one page holds the (<=1024)*4 slot region */
 
 /* ---------------------------------------------------------------------------
  * Last-checkpoint breadcrumb + async-signal-safe stderr writers.  The crash
@@ -1162,6 +1162,89 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
 }
 
 /* ---------------------------------------------------------------------------
+ * SHIM #6 (Issue #187) -- gp_camera_get_single_config wrapper.  When the pentax
+ * driver's get_config fails (PTP session degraded after app disconnect, or bulb
+ * mode where the shutter-speed widget is a TEXT with value "0/1"), pgphoto's
+ * updateCameraViewFinder sees ret:-1 and triggers a restart loop.  This shim
+ * passes through normally; on failure for "shutterspeed" it synthesizes a
+ * minimal TEXT widget so the viewfinder update succeeds without a restart.
+ * Gated by STAGE2_SHUTTER_FALLBACK (default OFF -- fail-closed per the #187
+ * review: a synthetic widget must not mask genuine camera/session errors until
+ * the A/B test and K-1 II regression check are complete; set "1" to enable). */
+typedef int (*stage2_gp_widget_new_fn)(int type, const char *label, void **widget);
+typedef int (*stage2_gp_widget_set_name_fn)(void *widget, const char *name);
+static stage2_gp_widget_new_fn      g_real_gp_widget_new     = NULL;
+static stage2_gp_widget_set_name_fn g_real_gp_widget_set_name = NULL;
+
+/* GP_WIDGET_TEXT == 2 (libgphoto2 2.5.34 enum: WINDOW=0, SECTION=1, TEXT=2). */
+#define STAGE2_GP_WIDGET_TEXT 2
+
+static int stage2_shim_gp_camera_get_single_config(void *camera, const char *name,
+                                                   void **widget_out, void *context)
+{
+    /* Resolve the real core fn (pass-through target on every call). */
+    if (!g_real_gp_camera_get_single_config && g_stage2_core)
+        g_real_gp_camera_get_single_config =
+            (stage2_gp_camera_get_single_config_fn)
+                dlsym(g_stage2_core, "gp_camera_get_single_config");
+    if (!g_real_gp_camera_get_single_config) {
+        fprintf(stderr, "[stage2] shutter-fallback: FATAL real "
+                        "gp_camera_get_single_config unresolved (core %p)\n",
+                g_stage2_core);
+        return -1;
+    }
+
+    int ret = g_real_gp_camera_get_single_config(camera, name, widget_out, context);
+    if (ret == 0)
+        return 0;   /* success -- pure pass-through */
+
+    /* Gate: default OFF (fail-closed, #187 review).  STAGE2_SHUTTER_FALLBACK=1
+     * enables the synthetic-widget fallback. */
+    {
+        const char *gate = getenv("STAGE2_SHUTTER_FALLBACK");
+        if (!gate || strcmp(gate, "1") != 0)
+            return ret;
+    }
+
+    /* Only synthesize for the shutter-speed widget -- the one that fails in
+     * bulb mode and triggers the pgphoto restart loop (#187). */
+    if (!name || strcmp(name, "shutterspeed") != 0)
+        return ret;
+
+    /* Resolve widget-creation helpers (lazy, cached). */
+    if (!g_real_gp_widget_new && g_stage2_core)
+        g_real_gp_widget_new = (stage2_gp_widget_new_fn)
+            dlsym(g_stage2_core, "gp_widget_new");
+    if (!g_real_gp_widget_set_name && g_stage2_core)
+        g_real_gp_widget_set_name = (stage2_gp_widget_set_name_fn)
+            dlsym(g_stage2_core, "gp_widget_set_name");
+    if (!g_real_gp_widget_new || !g_real_gp_widget_set_name) {
+        fprintf(stderr, "[stage2] shutter-fallback: widget helpers unresolved "
+                        "-- returning original error %d\n", ret);
+        return ret;
+    }
+
+    /* Synthesize a minimal TEXT widget: name="shutterspeed", value="0/1"
+     * (bulb mode: 0 seconds / 1 = indeterminate duration).  The caller
+     * (pgphoto updateCameraViewFinder) only needs a non-NULL widget with a
+     * readable string value; it does not mutate or free it before the next
+     * poll cycle. */
+    void *w = NULL;
+    if (g_real_gp_widget_new(STAGE2_GP_WIDGET_TEXT, "Shutter Speed", &w) != 0 || !w) {
+        fprintf(stderr, "[stage2] shutter-fallback: gp_widget_new failed\n");
+        return ret;
+    }
+    g_real_gp_widget_set_name(w, "shutterspeed");
+    if (g_real_gp_widget_set_value && g_real_gp_widget_set_value(w, "0/1") != 0) {
+        /* Non-fatal: the widget still has a valid type+name; value stays NULL. */
+    }
+    *widget_out = w;
+    fprintf(stderr, "[stage2] shutter-fallback: synthesized shutterspeed widget "
+                    "(core ret=%d) -- issue #187\n", ret);
+    return 0;
+}
+
+/* ---------------------------------------------------------------------------
  * Session 19: env-less-capable dlopen.  Try, in order:
  *   (1) an env override (STAGE2_CORE_PATH / STAGE2_PORT_PATH) -- for tests;
  *   (2) the compiled-in ABSOLUTE default path -- resolves with NO environment
@@ -1650,8 +1733,9 @@ static void stage2_ondisk_init(void)
         /* SHIM #1: gp_camera_init is the ONE slot redirected to a loader-internal
          * wrapper (stage2_shim_gp_camera_init), which then calls the real core
          * init `t` (via g_stage2_core) and populates Benro's storageType@+0x1c
-         * after a successful init.  All other 63 slots go DIRECT to the core/port
-         * target.  Match by EXACT boundary symbol name (robust to slot ordering). */
+         * after a successful init.  All other non-shimmed slots go DIRECT to the
+         * core/port target.  Match by EXACT boundary symbol name (robust to slot
+         * ordering). */
         if (strcmp(name, "gp_camera_init") == 0) {
             slot_store(STAGE2_SLOTS[i].slot, (void *)&stage2_shim_gp_camera_init);
             fprintf(stderr, "[stage2] storage: gp_camera_init slot -> shim "
@@ -1696,6 +1780,21 @@ static void stage2_ondisk_init(void)
                        (void *)&stage2_shim_gp_camera_capture_preview);
             fprintf(stderr, "[stage2] preview-backoff: gp_camera_capture_preview "
                             "slot -> shim (real core fn cached for pass-through)\n");
+            filled++;
+            continue;
+        }
+        /* SHIM #6 (Issue #187): gp_camera_get_single_config is redirected to the
+         * shutter-fallback wrapper (stage2_shim_gp_camera_get_single_config).  It
+         * passes through normally; on failure for "shutterspeed" (bulb mode /
+         * degraded PTP session) it synthesizes a minimal TEXT widget so pgphoto's
+         * updateCameraViewFinder does not see ret:-1 and trigger a restart loop.
+         * The synthesis is gated by STAGE2_SHUTTER_FALLBACK (default OFF --
+         * fail-closed per the #187 review; the wrapper exports it). */
+        if (strcmp(name, "gp_camera_get_single_config") == 0) {
+            slot_store(STAGE2_SLOTS[i].slot,
+                       (void *)&stage2_shim_gp_camera_get_single_config);
+            fprintf(stderr, "[stage2] shutter-fallback: gp_camera_get_single_config "
+                            "slot -> shim (issue #187)\n");
             filled++;
             continue;
         }

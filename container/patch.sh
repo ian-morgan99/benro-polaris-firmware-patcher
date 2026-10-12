@@ -26,6 +26,11 @@
 # ============================================================================
 set -euo pipefail
 
+# install wrapper: apply -o/-g ownership only when running as root (non-root
+# builds, e.g. the container, cannot chown; the on-disk image preserves the
+# stock owner recorded at extraction time).
+inst() { if [ "$(id -u)" = "0" ]; then install "$@"; else local a=() skip=0 x; for x in "$@"; do if [ "$skip" = 1 ]; then skip=0; continue; fi; case "$x" in -o|-g) skip=1;; *) a+=("$x");; esac; done; install "${a[@]}"; fi; }
+
 log(){ printf '\033[1;36m[patcher]\033[0m %s\n' "$*"; }
 warn(){ printf '\033[1;33m[warn]\033[0m %s\n' "$*" >&2; }
 die(){ printf '\033[1;31m[abort]\033[0m %s\n' "$*" >&2; exit 1; }
@@ -245,24 +250,24 @@ case "$MAXGLIBC" in GLIBC_2.4|GLIBC_2.5|GLIBC_2.6|GLIBC_2.7|GLIBC_2.8|GLIBC_2.9|
 # Build the symbol-provider set for the core the driver will bind against.
 if [ "$MODE" = "full" ]; then
   [ -f "$NEW_CORE" ] && [ -f "$NEW_PORT" ] || die "full mode: core/port not built"
-  $XT-nm -D --defined-only "$NEW_CORE" | awk '{print $3}'  >"$W/prov.txt"
-  $XT-nm -D --defined-only "$NEW_PORT" | awk '{print $3}' >>"$W/prov.txt"
+  $XT-nm -D --defined-only "$NEW_CORE" | awk '{print $3}' | sed 's/@.*//'  >"$W/prov.txt"
+  $XT-nm -D --defined-only "$NEW_PORT" | awk '{print $3}' | sed 's/@.*//' >>"$W/prov.txt"
   PROV_DESC="the freshly-built $LIBGPHOTO2_VERSION core/port"
 else
-  $XT-nm -D --defined-only "$DEV/dev_libgphoto2.so.6"       | awk '{print $3}'  >"$W/prov.txt"
-  $XT-nm -D --defined-only "$DEV/dev_libgphoto2_port.so.12" | awk '{print $3}' >>"$W/prov.txt"
+  $XT-nm -D --defined-only "$DEV/dev_libgphoto2.so.6"       | awk '{print $3}' | sed 's/@.*//'  >"$W/prov.txt"
+  $XT-nm -D --defined-only "$DEV/dev_libgphoto2_port.so.12" | awk '{print $3}' | sed 's/@.*//' >>"$W/prov.txt"
   PROV_DESC="the device's stock 2.5.27 core"
 fi
-$XT-nm -D --defined-only "$PG"                             | awk '{print $3}' >>"$W/prov.txt"
+$XT-nm -D --defined-only "$PG"                             | awk '{print $3}' | sed 's/@.*//' >>"$W/prov.txt"
 sort -u "$W/prov.txt" -o "$W/prov.txt"
-$XT-nm -D --undefined-only "$NEW_PTP2" | awk '{print $2}' | grep -E '^(gp_|gpi_)' | sort -u >"$W/need.txt"
+$XT-nm -D --undefined-only "$NEW_PTP2" | awk '{print $2}' | sed 's/@.*//' | grep -E '^(gp_|gpi_)' | sort -u >"$W/need.txt"
 MISSING="$(comm -23 "$W/need.txt" "$W/prov.txt" || true)"
 [ -z "$MISSING" ] || die "rebuilt driver needs core symbols missing from the target core:\n$MISSING"
 log "  all core symbols resolve against $PROV_DESC ✓"
 # Pentax helper functions are private to ptp2.so.  An unresolved one means a
 # source file was omitted from the selected build system; the dynamic loader
 # otherwise defers the failure until the first camera operation that calls it.
-UNRESOLVED_PENTAX="$($XT-nm -D --undefined-only "$NEW_PTP2" | awk '{print $2}' | grep -E '^pentax_' || true)"
+UNRESOLVED_PENTAX="$($XT-nm -D --undefined-only "$NEW_PTP2" | awk '{print $2}' | sed 's/@.*//' | grep -E '^pentax_' || true)"
 [ -z "$UNRESOLVED_PENTAX" ] || die "rebuilt driver has unresolved internal Pentax symbols:\n$UNRESOLVED_PENTAX"
 log "  no unresolved internal Pentax symbols ✓"
 
@@ -282,7 +287,7 @@ if [ "$SWAP_USB1" = "1" ]; then
     *) die "usb1 glibc ceiling $UMAXGLIBC exceeds device glibc 2.24 — iolib would not load";; esac
   # it must export the three iolib entry points the port loader lt_dlsym's.
   for e in gp_port_library_type gp_port_library_list gp_port_library_operations; do
-    $XT-nm -D --defined-only "$NEW_USB1" | awk '{print $3}' | grep -qx "$e" \
+    $XT-nm -D --defined-only "$NEW_USB1" | awk '{print $3}' | sed 's/@.*//' | grep -qx "$e" \
       || die "rebuilt usb1.so is missing iolib entry point '$e' — aborting"
   done
   # DT_NEEDED ⊆ the STOCK usb1.so's NEEDED: never introduce a shared library the
@@ -294,11 +299,11 @@ if [ "$SWAP_USB1" = "1" ]; then
   log "  DT_NEEDED ⊆ stock usb1.so ($(tr '\n' ' ' <"$W/usb1_new_needed.txt")) ✓"
   # every gp_/gpi_ (core/port) symbol it imports must be provided by the device
   # port core; every libusb_* import must be provided by the device's libusb.
-  $XT-nm -D --undefined-only "$NEW_USB1" | awk '{print $2}' | grep -E '^(gp_|gpi_)' | sort -u >"$W/usb1_need.txt"
+  $XT-nm -D --undefined-only "$NEW_USB1" | awk '{print $2}' | sed 's/@.*//' | grep -E '^(gp_|gpi_)' | sort -u >"$W/usb1_need.txt"
   MISSING_U="$(comm -23 "$W/usb1_need.txt" "$W/prov.txt" || true)"
   [ -z "$MISSING_U" ] || die "rebuilt usb1.so needs core/port symbols the device lacks:\n$MISSING_U"
-  $XT-nm -D --undefined-only "$NEW_USB1" | awk '{print $2}' | grep -iE '^libusb_' | sort -u >"$W/usb1_needusb.txt"
-  $XT-nm -D --defined-only "$DEV/libusb-1.0.so.0" | awk '{print $3}' | sort -u >"$W/usb1_provusb.txt"
+  $XT-nm -D --undefined-only "$NEW_USB1" | awk '{print $2}' | sed 's/@.*//' | grep -iE '^libusb_' | sort -u >"$W/usb1_needusb.txt"
+  $XT-nm -D --defined-only "$DEV/libusb-1.0.so.0" | awk '{print $3}' | sed 's/@.*//' | sort -u >"$W/usb1_provusb.txt"
   MISSING_LU="$(comm -23 "$W/usb1_needusb.txt" "$W/usb1_provusb.txt" || true)"
   [ -z "$MISSING_LU" ] || die "rebuilt usb1.so needs libusb symbols the device's libusb-1.0 lacks:\n$MISSING_LU"
   log "  all core/port + libusb symbols resolve on-device ✓ ($(wc -l <"$W/usb1_needusb.txt"|tr -d ' ') libusb imports)"
@@ -338,14 +343,16 @@ if [ "$MODE" = "full" ]; then
       || die "rebuilt ptp2 lacks capture checkpoint: $marker"
   done
   log "  direct-capture boundary checkpoints present in core + ptp2 ✓"
-  # Every one of the 64 boundary symbols the loader dlsym's must be exported by the
-  # new core or port, else the loader would leave that slot at the abort stub.
-  $XT-nm -D --defined-only "$NEW_CORE" | awk '{print $3}'  >"$W/newexp.txt"
-  $XT-nm -D --defined-only "$NEW_PORT" | awk '{print $3}' >>"$W/newexp.txt"
+  # Every boundary symbol the loader dlsym's (currently 65: 56 core + 9 port)
+  # must be exported by the new core or port, else the loader would leave that
+  # slot at the abort stub.
+  $XT-nm -D --defined-only "$NEW_CORE" | awk '{print $3}' | sed 's/@.*//'  >"$W/newexp.txt"
+  $XT-nm -D --defined-only "$NEW_PORT" | awk '{print $3}' | sed 's/@.*//' >>"$W/newexp.txt"
   sort -u "$W/newexp.txt" -o "$W/newexp.txt"
-  MISSING_B="$(comm -23 <(python3 -c "import sys;sys.path.insert(0,'/opt/patcher');import stage2_patch as s;print('\n'.join(sorted(s.BOUNDARY)))") "$W/newexp.txt" || true)"
+  MISSING_B="$(for b in $(python3 -c "import sys;sys.path.insert(0,'/opt/patcher');import stage2_patch as s;print(' '.join(s.BOUNDARY))"); do grep -qxF "$b" "$W/newexp.txt" || printf '%s\n' "$b"; done)"
   [ -z "$MISSING_B" ] || die "new core/port do not export boundary symbols:\n$MISSING_B"
-  log "  core/port soft-float, glibc≤2.24, all 64 boundary symbols exported ✓"
+  NB=$(python3 -c "import sys;sys.path.insert(0,'/opt/patcher');import stage2_patch as s;print(len(s.BOUNDARY))")
+  log "  core/port soft-float, glibc≤2.24, all $NB boundary symbols exported ✓"
 fi
 
 if [ "$SELFTEST" = "1" ] && command -v qemu-arm-static >/dev/null 2>&1; then
@@ -380,18 +387,18 @@ if [ "$MODE" = "ptp2only" ]; then
   log "  positive-duration Pentax K-3 III requests route to the timed Bulb lifecycle"
 
   O_UID="$(stat -c %u "$STOCK_PTP2")"; O_GID="$(stat -c %g "$STOCK_PTP2")"; O_MODE="$(stat -c %a "$STOCK_PTP2")"
-  install -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2"           "$STOCK_PTP2"
-  install -m "$P_MODE" -o "$P_UID" -g "$P_GID" "$W/pgphoto.patched" "$PG"
+  inst -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2"           "$STOCK_PTP2"
+  inst -m "$P_MODE" -o "$P_UID" -g "$P_GID" "$W/pgphoto.patched" "$PG"
   if [ "$SWAP_USB1" = "1" ]; then
     U_UID="$(stat -c %u "$STOCK_USB1")"; U_GID="$(stat -c %g "$STOCK_USB1")"; U_MODE="$(stat -c %a "$STOCK_USB1")"
-    install -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1"         "$STOCK_USB1"
+    inst -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1"         "$STOCK_USB1"
     log "swapped usb1 iolib: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
   fi
 else
   # -------------------------------------------------------------------------
   # 6 (full). Full-libgphoto2 on-disk trampoline swap (DEFAULT).
   #   a) reliability-patched base (the same 17-byte patch, symbol-discovered)
-  #   b) on-disk trampoline the 64 boundary entries over that base
+  #   b) on-disk trampoline the boundary entries (one per BOUNDARY symbol) over that base
   #   c) compile the generic loader against the generated slot table
   #   d) assemble /app/lib/stage2 + install the self-driving wrapper as
   #      /app/bin/pgphoto  (the hardware-validated wrapper form)
@@ -405,7 +412,7 @@ else
     || die "pgphoto timed-Bulb dispatch patch failed"
   log "  pgphoto Bulb route: positive-duration K-3 III requests use the timed Bulb lifecycle"
 
-  log "full-libgphoto2: on-disk trampolining 64 boundary entries…"
+  log "full-libgphoto2: on-disk trampolining $(python3 -c "import sys;sys.path.insert(0,'/opt/patcher');import stage2_patch as s;print(len(s.BOUNDARY))") boundary entries…"
   rm -rf "$W/s2"; mkdir -p "$W/s2"
   python3 /opt/patcher/stage2_patch.py \
     --pgphoto "$W/pgphoto.base" --core "$NEW_CORE" --port "$NEW_PORT" \
@@ -481,19 +488,19 @@ else
   # d) assemble /app/lib/stage2 and install the wrapper as /app/bin/pgphoto.
   STAGE2="$APP/lib/stage2"
   rm -rf "$STAGE2"
-  install -d -m "$P_MODE" -o "$P_UID" -g "$P_GID" \
+  inst -d -m "$P_MODE" -o "$P_UID" -g "$P_GID" \
     "$STAGE2" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION" "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/libpolaris_stage2.so"  "$STAGE2/libpolaris_stage2.so"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/pgphoto.stage2ondisk"  "$STAGE2/pgphoto.stage2ondisk"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CORE"                   "$STAGE2/libgphoto2.so.6"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PORT"                   "$STAGE2/libgphoto2_port.so.12"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
+  inst -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/libpolaris_stage2.so"  "$STAGE2/libpolaris_stage2.so"
+  inst -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/pgphoto.stage2ondisk"  "$STAGE2/pgphoto.stage2ondisk"
+  inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CORE"                   "$STAGE2/libgphoto2.so.6"
+  inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PORT"                   "$STAGE2/libgphoto2_port.so.12"
+  inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
   while read -r _hash camlib_file; do
-    install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CAMLIB_DIR/$camlib_file" \
+    inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CAMLIB_DIR/$camlib_file" \
       "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/$camlib_file"
   done < "$NEW_CAMLIB_MANIFEST"
-  install -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
-  install -m 755 -o "$P_UID" -g "$P_GID" /opt/patcher/ondisk/camera_usb_supervisor.sh "$STAGE2/camera_usb_supervisor.sh"
+  inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
+  inst -m 755 -o "$P_UID" -g "$P_GID" /opt/patcher/ondisk/camera_usb_supervisor.sh "$STAGE2/camera_usb_supervisor.sh"
   # Generate the wrapper from its template (CAMLIBS_VERSION/IOLIBS_VERSION +
   # PENTAX_MAX_CAPTURE_SIZE) so it matches the staged dir layout above. Issue #1:
   # previously this was a checked-in file that hard-coded "2.5.34" / "0.12.2",
@@ -505,7 +512,7 @@ else
       -e "s|@PENTAX_MAX_CAPTURE_SIZE@|$PENTAX_MAX_CAPTURE_SIZE|g" \
       /opt/patcher/ondisk/pgphoto.wrapper.in > "$W/pgphoto.wrapper"
   chmod 755 "$W/pgphoto.wrapper"
-  install -m "$P_MODE" -o "$P_UID" -g "$P_GID" "$W/pgphoto.wrapper" "$PG"
+  inst -m "$P_MODE" -o "$P_UID" -g "$P_GID" "$W/pgphoto.wrapper" "$PG"
   log "  assembled /app/lib/stage2 (loader + core + port + ptp2 + usb1 + trampolined binary)"
   log "  installed self-driving wrapper -> /app/bin/pgphoto (execs /app/lib/stage2/pgphoto.stage2ondisk)"
 
@@ -522,7 +529,7 @@ else
   else
     R_UID="$P_UID"; R_GID="$P_GID"; R_MODE=755
   fi
-  install -m "$R_MODE" -o "$R_UID" -g "$R_GID" /opt/patcher/ondisk/restart_gphoto.sh "$RST"
+  inst -m "$R_MODE" -o "$R_UID" -g "$R_GID" /opt/patcher/ondisk/restart_gphoto.sh "$RST"
   log "  installed single-owner restart helper -> /app/restart_gphoto (issue #33/#34)"
 
   # ALSO place the fresh ptp2/usb1 at the STOCK camlib/iolib paths. This is the
@@ -533,15 +540,15 @@ else
   # Without this the core would load the STALE stock 2.5.27 ptp2 and the Canon
   # driver would not bind. Stock perms/uid/gid preserved (stock camlib is 0750).
   O_UID="$(stat -c %u "$STOCK_PTP2")"; O_GID="$(stat -c %g "$STOCK_PTP2")"; O_MODE="$(stat -c %a "$STOCK_PTP2")"
-  install -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2" "$STOCK_PTP2"
+  inst -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2" "$STOCK_PTP2"
   log "  placed fresh ptp2 at stock camlib path: /app/lib/libgphoto2/$(basename "$CAMLIB_DIR")/ptp2.so"
   while read -r _hash camlib_file; do
-    install -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_CAMLIB_DIR/$camlib_file" "$CAMLIB_DIR/$camlib_file"
+    inst -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_CAMLIB_DIR/$camlib_file" "$CAMLIB_DIR/$camlib_file"
   done < "$NEW_CAMLIB_MANIFEST"
   cp "$NEW_CAMLIB_MANIFEST" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/camlibs.manifest"
   if [ "$SWAP_USB1" = "1" ]; then
     U_UID="$(stat -c %u "$STOCK_USB1")"; U_GID="$(stat -c %g "$STOCK_USB1")"; U_MODE="$(stat -c %a "$STOCK_USB1")"
-    install -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1" "$STOCK_USB1"
+    inst -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1" "$STOCK_USB1"
     log "  placed fresh usb1 at stock iolib path: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
   fi
 
@@ -558,12 +565,12 @@ else
   STOCK_PORT="$APP/lib/libgphoto2_port.so.12"
   if [ -f "$STOCK_CORE" ]; then
     S_UID="$(stat -c %u "$STOCK_CORE")"; S_GID="$(stat -c %g "$STOCK_CORE")"; S_MODE="$(stat -c %a "$STOCK_CORE")"
-    install -m "$S_MODE" -o "$S_UID" -g "$S_GID" "$NEW_CORE" "$STOCK_CORE"
+    inst -m "$S_MODE" -o "$S_UID" -g "$S_GID" "$NEW_CORE" "$STOCK_CORE"
     log "  replaced stock libgphoto2.so.6 with fresh 2.5.34 core at /app/lib/libgphoto2.so.6"
   fi
   if [ -f "$STOCK_PORT" ]; then
     S_UID="$(stat -c %u "$STOCK_PORT")"; S_GID="$(stat -c %g "$STOCK_PORT")"; S_MODE="$(stat -c %a "$STOCK_PORT")"
-    install -m "$S_MODE" -o "$S_UID" -g "$S_GID" "$NEW_PORT" "$STOCK_PORT"
+    inst -m "$S_MODE" -o "$S_UID" -g "$S_GID" "$NEW_PORT" "$STOCK_PORT"
     log "  replaced stock libgphoto2_port.so.12 with fresh matched port at /app/lib/libgphoto2_port.so.12"
   fi
 fi
@@ -572,7 +579,7 @@ fi
 # output beside FwPkt.zip. This lets a running device prove which exact clean
 # libgphoto2 checkout produced its embedded stack (issue #1/#13).
 [ -f "$W/out/source-provenance.env" ] || die "source provenance was not generated"
-install -m 644 -o 0 -g 0 "$W/out/source-provenance.env" \
+inst -m 644 -o 0 -g 0 "$W/out/source-provenance.env" \
   "$APP/openpolaris-libgphoto2-provenance.txt"
 log "embedded libgphoto2 provenance -> /app/openpolaris-libgphoto2-provenance.txt"
 
@@ -626,7 +633,7 @@ if [ -n "${SSH_PUBKEY:-}" ]; then
 
   # same owner/mode as bootapp itself (which provably has +x — S10mpp runs it)
   B_UID="$(stat -c %u "$BOOTAPP")"; B_GID="$(stat -c %g "$BOOTAPP")"; B_MODE="$(stat -c %a "$BOOTAPP")"
-  install -m "$B_MODE" -o "$B_UID" -g "$B_GID" "$W/ssh_hook.sh" "$APP/$SSH_HOOK"
+  inst -m "$B_MODE" -o "$B_UID" -g "$B_GID" "$W/ssh_hook.sh" "$APP/$SSH_HOOK"
   log "  added /app/$SSH_HOOK (boot hook, $B_MODE $B_UID:$B_GID — same as bootapp) — appends to /root/.ssh/authorized_keys at boot"
   log "  after flashing: ssh -i <your private key> root@<polaris ip>"
 fi
@@ -924,7 +931,7 @@ fi
 # ---------------------------------------------------------------------------
 if [ -n "$SSH_HOOK" ]; then
   SSHOUT=/out/ssh-debug; rm -rf "$SSHOUT"; mkdir -p "$SSHOUT"
-  install -m 755 "$W/ssh_hook.sh" "$SSHOUT/$SSH_HOOK"
+  inst -m 755 "$W/ssh_hook.sh" "$SSHOUT/$SSH_HOOK"
   cat > "$SSHOUT/README.txt" <<EOF
 SSH debug access
 ================
