@@ -111,6 +111,55 @@ ok()   { pass=$((pass+1)); echo "PASS: $1"; }
 bad()  { fail=$((fail+1)); failed="$failed $1"; echo "FAIL: $1"; }
 skp()  { skip=$((skip+1)); skipped="$skipped $1"; echo "SKIP: $1 (prerequisite unavailable)"; }
 
+# Resolve a FUNCTIONAL ubireader_extract_files. A wrapper can be on PATH yet
+# crash at import time (its Python module installed for a different interpreter),
+# so `command -v` alone is not enough. Try the PATH candidate first, then the
+# known-good /work/bin wrapper used by the native build runner; require --help
+# to exit 0. Prints the chosen binary on stdout; non-zero exit if none works.
+resolve_ubireader() {
+    local c
+    for c in "$(command -v ubireader_extract_files 2>/dev/null || true)" \
+             /work/bin/ubireader_extract_files; do
+        [ -n "$c" ] && [ -x "$c" ] || continue
+        if "$c" --help >/dev/null 2>&1; then
+            printf '%s\n' "$c"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Resolve a functional ARM objdump for the pgphoto timed-Bulb dispatch check.
+# The cross-toolchain is often not on PATH (e.g. only under /run/host/usr/bin,
+# where it also needs the host dynamic linker + lib paths). Probe PATH then the
+# known host location; require --version to exit 0. Prints a runnable command:
+# either the direct binary (PATH case) or a generated exec-wrapper (host case).
+resolve_objdump() {
+    local c probe
+    for c in "$(command -v arm-linux-gnueabi-objdump 2>/dev/null || true)" \
+             /run/host/usr/bin/arm-linux-gnueabi-objdump; do
+        [ -n "$c" ] && [ -x "$c" ] || continue
+        # Direct probe.
+        if "$c" --version >/dev/null 2>&1; then
+            printf '%s\n' "$c"; return 0
+        fi
+        # Host-binary case: needs the host dynamic linker + host lib paths.
+        if [ -x /run/host/lib64/ld-linux-x86-64.so.2 ] && \
+           LD_LIBRARY_PATH=/run/host/usr/lib/x86_64-linux-gnu:/run/host/lib/x86_64-linux-gnu \
+               /run/host/lib64/ld-linux-x86-64.so.2 "$c" --version >/dev/null 2>&1; then
+            probe="/tmp/prerelease-objdump-host.sh"
+            {
+                echo '#!/bin/sh'
+                printf 'exec env LD_LIBRARY_PATH=/run/host/usr/lib/x86_64-linux-gnu:/run/host/lib/x86_64-linux-gnu /run/host/lib64/ld-linux-x86-64.so.2 %s "$@"\n' "$c"
+            } > "$probe"
+            chmod +x "$probe"
+            printf '%s\n' "$probe"
+            return 0
+        fi
+    done
+    return 1
+}
+
 echo "=== Polaris pre-release gate ($(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
 
 # ----------------------------------------------------------------------------
@@ -229,9 +278,12 @@ open('$STOCK_FI','wb').write(data)
 
         # Audit both the app-side request branch and pgphoto's concrete timed
         # Bulb dispatch in the exact repacked appfs.
-        if command -v ubireader_extract_files >/dev/null 2>&1; then
+        # Use a FUNCTIONAL ubireader (PATH first, then /work/bin); a broken
+        # wrapper on PATH must not shadow a working one, and a missing/broken
+        # tool is a prerequisite gap -> SKIP (never silent green).
+        if UBI="$(resolve_ubireader)"; then
             PATCH_AUDIT_DIR="$(mktemp -d)"
-            if ubireader_extract_files -o "$PATCH_AUDIT_DIR" "$BUILD/camera/appfs.ubifs" \
+            if "$UBI" -o "$PATCH_AUDIT_DIR" "$BUILD/camera/appfs.ubifs" \
                 >/tmp/prerelease-appfs-extract.log 2>&1; then
                 APP_BIN="$(find "$PATCH_AUDIT_DIR" -type f -path '*/bin/polestar_app' -print -quit)"
                 if [ -n "$APP_BIN" ] && \
@@ -242,19 +294,26 @@ open('$STOCK_FI','wb').write(data)
                     bad "polestar_app contains a retired Bulb patch or unknown branch (log: /tmp/prerelease-polestar-bulb.log)"
                 fi
                 PGPHOTO_BIN="$(find "$PATCH_AUDIT_DIR" -type f -path '*/lib/stage2/pgphoto.stage2ondisk' -print -quit)"
-                if [ -n "$PGPHOTO_BIN" ] && \
-                   python3 container/polaris_bulb_dispatch_patch.py "$PGPHOTO_BIN" --check \
-                       >/tmp/prerelease-pgphoto-bulb.log 2>&1; then
-                    ok "pgphoto timed Bulb dispatch present in repacked appfs"
+                if [ -n "$PGPHOTO_BIN" ]; then
+                    if OBJDUMP_BIN="$(resolve_objdump)"; then
+                        if OBJDUMP="$OBJDUMP_BIN" python3 container/polaris_bulb_dispatch_patch.py "$PGPHOTO_BIN" --check \
+                            >/tmp/prerelease-pgphoto-bulb.log 2>&1; then
+                            ok "pgphoto timed Bulb dispatch present in repacked appfs"
+                        else
+                            bad "pgphoto timed Bulb dispatch missing or invalid (log: /tmp/prerelease-pgphoto-bulb.log)"
+                        fi
+                    else
+                        skp "pgphoto timed Bulb dispatch check (no functional arm-linux-gnueabi-objdump on PATH or /run/host/usr/bin)"
+                    fi
                 else
-                    bad "pgphoto timed Bulb dispatch missing or invalid (log: /tmp/prerelease-pgphoto-bulb.log)"
+                    skp "pgphoto timed Bulb dispatch check (pgphoto.stage2ondisk not found in repacked appfs)"
                 fi
             else
                 bad "appfs extraction for Bulb dispatch checks (log: /tmp/prerelease-appfs-extract.log)"
             fi
             rm -rf "$PATCH_AUDIT_DIR"
         else
-            skp "polestar_app and pgphoto Bulb marker gates (ubireader_extract_files unavailable)"
+            skp "polestar_app and pgphoto Bulb marker gates (no functional ubireader_extract_files on PATH or /work/bin)"
         fi
     fi
 else
