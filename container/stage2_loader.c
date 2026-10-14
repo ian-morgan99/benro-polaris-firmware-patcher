@@ -1173,8 +1173,10 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
  * the A/B test and K-1 II regression check are complete; set "1" to enable). */
 typedef int (*stage2_gp_widget_new_fn)(int type, const char *label, void **widget);
 typedef int (*stage2_gp_widget_set_name_fn)(void *widget, const char *name);
+typedef void (*stage2_gp_widget_free_fn)(void *widget);
 static stage2_gp_widget_new_fn      g_real_gp_widget_new     = NULL;
 static stage2_gp_widget_set_name_fn g_real_gp_widget_set_name = NULL;
+static stage2_gp_widget_free_fn     g_real_gp_widget_free    = NULL;
 
 /* GP_WIDGET_TEXT == 2 (libgphoto2 2.5.34 enum: WINDOW=0, SECTION=1, TEXT=2). */
 #define STAGE2_GP_WIDGET_TEXT 2
@@ -1211,14 +1213,27 @@ static int stage2_shim_gp_camera_get_single_config(void *camera, const char *nam
     if (!name || strcmp(name, "shutterspeed") != 0)
         return ret;
 
-    /* Resolve widget-creation helpers (lazy, cached). */
+    /* Resolve ALL widget helpers this path uses (lazy, cached).  set_value is
+     * declared in the SHIM #3 block but only resolved there, so resolve it here
+     * too -- a synthesized widget must not be returned with an unresolved value
+     * helper (the #187 review: "g_real_gp_widget_set_value is not resolved in
+     * this wrapper").  gp_widget_free lets us release the widget on any failure,
+     * and propagate the original camera error unless a complete value-bearing
+     * widget is verified. */
     if (!g_real_gp_widget_new && g_stage2_core)
         g_real_gp_widget_new = (stage2_gp_widget_new_fn)
             dlsym(g_stage2_core, "gp_widget_new");
     if (!g_real_gp_widget_set_name && g_stage2_core)
         g_real_gp_widget_set_name = (stage2_gp_widget_set_name_fn)
             dlsym(g_stage2_core, "gp_widget_set_name");
-    if (!g_real_gp_widget_new || !g_real_gp_widget_set_name) {
+    if (!g_real_gp_widget_set_value && g_stage2_core)
+        g_real_gp_widget_set_value = (stage2_gp_widget_set_value_fn)
+            dlsym(g_stage2_core, "gp_widget_set_value");
+    if (!g_real_gp_widget_free && g_stage2_core)
+        g_real_gp_widget_free = (stage2_gp_widget_free_fn)
+            dlsym(g_stage2_core, "gp_widget_free");
+    if (!g_real_gp_widget_new || !g_real_gp_widget_set_name ||
+        !g_real_gp_widget_set_value || !g_real_gp_widget_free) {
         fprintf(stderr, "[stage2] shutter-fallback: widget helpers unresolved "
                         "-- returning original error %d\n", ret);
         return ret;
@@ -1228,15 +1243,25 @@ static int stage2_shim_gp_camera_get_single_config(void *camera, const char *nam
      * (bulb mode: 0 seconds / 1 = indeterminate duration).  The caller
      * (pgphoto updateCameraViewFinder) only needs a non-NULL widget with a
      * readable string value; it does not mutate or free it before the next
-     * poll cycle. */
+     * poll cycle.  Every helper's result is checked: on any failure we free
+     * the widget and propagate the ORIGINAL camera error, so a synthetic
+     * widget never masks a genuine fault (fail-closed, #187 review). */
     void *w = NULL;
     if (g_real_gp_widget_new(STAGE2_GP_WIDGET_TEXT, "Shutter Speed", &w) != 0 || !w) {
         fprintf(stderr, "[stage2] shutter-fallback: gp_widget_new failed\n");
         return ret;
     }
-    g_real_gp_widget_set_name(w, "shutterspeed");
-    if (g_real_gp_widget_set_value && g_real_gp_widget_set_value(w, "0/1") != 0) {
-        /* Non-fatal: the widget still has a valid type+name; value stays NULL. */
+    if (g_real_gp_widget_set_name(w, "shutterspeed") != 0) {
+        fprintf(stderr, "[stage2] shutter-fallback: gp_widget_set_name failed\n");
+        g_real_gp_widget_free(w);
+        return ret;
+    }
+    if (g_real_gp_widget_set_value(w, "0/1") != 0) {
+        /* Value helper failed -> the widget has no readable value; do not
+         * return success with a NULL-valued widget. */
+        fprintf(stderr, "[stage2] shutter-fallback: gp_widget_set_value failed\n");
+        g_real_gp_widget_free(w);
+        return ret;
     }
     *widget_out = w;
     fprintf(stderr, "[stage2] shutter-fallback: synthesized shutterspeed widget "
