@@ -198,6 +198,7 @@ if python3 -m pytest -q \
     tests/test_app_burst_protocol.py \
     tests/test_canary_file_check.py \
     tests/test_pull_mlog_clog.py \
+    tests/test_autonomous_install.py \
     tests/test_watch_app_crash.py > /tmp/prerelease-pytest.log 2>&1; then
     ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
 else
@@ -276,6 +277,23 @@ open('$STOCK_FI','wb').write(data)
         fi
         rm -f "$STOCK_FI"
 
+        # Immutable install manifest (issue #199): the post-reboot verify phase
+        # compares every mandatory installed file's SHA-256 against this file.
+        # It must exist for the candidate and its recorded zip digest must match
+        # the current FwPkt.zip — a stale manifest would verify the wrong build.
+        CAND_DIR="$(dirname "$BUILD")"
+        if [ -f "$CAND_DIR/install-manifest.json" ]; then
+            MZIP="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["zip"]["sha256"])' "$CAND_DIR/install-manifest.json" 2>/dev/null)"
+            ZZIP="$(sha256sum "$CAND_DIR/FwPkt.zip" 2>/dev/null | cut -d' ' -f1)"
+            if [ -n "$MZIP" ] && [ "$MZIP" = "$ZZIP" ]; then
+                ok "install manifest present and current (zip sha256 matches $CAND_DIR)"
+            else
+                bad "install manifest stale or invalid (manifest=$MZIP zip=${ZZIP:-<missing>}; regenerate with scripts/generate-fwpkt-manifest.py)"
+            fi
+        else
+            bad "install manifest missing for candidate ($CAND_DIR/install-manifest.json; run scripts/generate-fwpkt-manifest.py)"
+        fi
+
         # Audit both the app-side request branch and pgphoto's concrete timed
         # Bulb dispatch in the exact repacked appfs.
         # Use a FUNCTIONAL ubireader (PATH first, then /work/bin); a broken
@@ -306,7 +324,17 @@ open('$STOCK_FI','wb').write(data)
                         skp "pgphoto timed Bulb dispatch check (no functional arm-linux-gnueabi-objdump on PATH or /run/host/usr/bin)"
                     fi
                 else
-                    skp "pgphoto timed Bulb dispatch check (pgphoto.stage2ondisk not found in repacked appfs)"
+                    # Machine-checkable predicate (issue #199): a SKIP for the
+                    # pgphoto.stage2ondisk check is acceptable ONLY when the
+                    # repacked appfs has no lib/stage2 tree at all (the
+                    # candidate is not a full-libgphoto2 build, so the on-disk
+                    # trampoline is nonmandatory). If lib/stage2 IS present but
+                    # pgphoto.stage2ondisk is missing, the selected gate fails.
+                    if [ -d "$PATCH_AUDIT_DIR/lib/stage2" ]; then
+                        bad "pgphoto.stage2ondisk missing although appfs ships a lib/stage2 tree (mandatory for full-libgphoto2 candidates)"
+                    else
+                        skp "pgphoto timed Bulb dispatch check (no lib/stage2 tree in repacked appfs — stage2ondisk nonmandatory, machine-checked)"
+                    fi
                 fi
             else
                 bad "appfs extraction for Bulb dispatch checks (log: /tmp/prerelease-appfs-extract.log)"
@@ -394,5 +422,13 @@ if [ "$fail" -gt 0 ]; then
     echo "GATE: RED — do not stage/install the FwPkt until the failed checks pass."
     exit 1
 fi
-echo "GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence)."
+if [ -z "$BUILD" ] && [ "$CANARY" != "1" ] && [ "$TWO_SHOT" != "1" ]; then
+    echo "GATE: GREEN — OFFLINE-QUALIFIED only (no package/device gates ran)."
+    echo "This is NOT device-qualified or release-qualified: the mandatory device install"
+    echo "hash checks (scripts/o-v17a-autonomous-install.sh verify phase against the"
+    echo "immutable install-manifest.json) and the physical Benro Connect / Manual / Bulb"
+    echo "regression remain separate mandatory gates before a release is declared."
+else
+    echo "GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence)."
+fi
 exit 0
