@@ -197,15 +197,33 @@ phase_stage() {
     log "STAGE: device already reports target FwVer ($cur) — skipping reflash (no blind re-stage)"
     return 0
   fi
-  log "STAGE: pushing FwPkt.zip ($(du -h "$FWPKT_ZIP" | cut -f1)) -> /app/sd/FwPkt.zip"
-  scp $SSH_OPTS "$FWPKT_ZIP" "$GIMBAL_SSH:/app/sd/FwPkt.zip" >/dev/null 2>&1 \
-    || { log "STAGE: scp failed"; return 1; }
+  # Transfer strategy (field-validated 2026-10-16):
+  #  1. scp (SFTP protocol) — fast when the device's OpenSSH supports it.
+  #  2. cat-over-ssh        — reliable fallback; the Polaris' OpenSSH rejects
+  #     the SFTP subsystem ("scp: Connection closed") and legacy scp -O hangs.
+  # The file is written to /app/sd/FwPkt.zip.part FIRST, verified by SHA-256,
+  # then atomically renamed into place. This matters because the firmware's
+  # auto-installer watches /app/sd/FwPkt.zip and reboots the device when it
+  # sees a complete zip — writing directly there mid-transfer can trigger an
+  # uncontrolled reboot (observed: device went dark at ~29 MB of 68 MB).
+  log "STAGE: pushing FwPkt.zip ($(du -h "$FWPKT_ZIP" | cut -f1)) -> /app/sd/FwPkt.zip.part"
+  if ! scp $SSH_OPTS "$FWPKT_ZIP" "$GIMBAL_SSH:/app/sd/FwPkt.zip.part" >/dev/null 2>&1; then
+    log "STAGE: scp failed — falling back to cat-over-ssh (slower, reliable)"
+    ssh_dev "rm -f /app/sd/FwPkt.zip.part" >/dev/null 2>&1
+    if ! cat "$FWPKT_ZIP" | ssh $SSH_OPTS "$GIMBAL_SSH" "cat > /app/sd/FwPkt.zip.part" >/dev/null 2>&1; then
+      log "STAGE: cat-over-ssh transfer failed"
+      return 1
+    fi
+  fi
   local actual
-  actual="$(ssh_dev "sha256sum /app/sd/FwPkt.zip 2>/dev/null | cut -d' ' -f1")"
+  actual="$(ssh_dev "sha256sum /app/sd/FwPkt.zip.part 2>/dev/null | cut -d' ' -f1")"
   if [ "$actual" = "$ZIP_SHA256" ]; then
-    log "STAGE: on-device sha256 matches ($ZIP_SHA256)"
+    ssh_dev "mv -f /app/sd/FwPkt.zip.part /app/sd/FwPkt.zip" >/dev/null 2>&1 \
+      || { log "STAGE: rename .part -> FwPkt.zip failed"; return 1; }
+    log "STAGE: on-device sha256 matches ($ZIP_SHA256) — staged atomically"
     return 0
   fi
+  ssh_dev "rm -f /app/sd/FwPkt.zip.part" >/dev/null 2>&1
   log "STAGE: sha256 mismatch (device=${actual:-<unreadable>} expected=$ZIP_SHA256)"
   return 1
 }
