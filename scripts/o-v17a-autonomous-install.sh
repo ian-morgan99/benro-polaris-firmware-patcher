@@ -206,15 +206,54 @@ phase_stage() {
   # auto-installer watches /app/sd/FwPkt.zip and reboots the device when it
   # sees a complete zip — writing directly there mid-transfer can trigger an
   # uncontrolled reboot (observed: device went dark at ~29 MB of 68 MB).
-  log "STAGE: pushing FwPkt.zip ($(du -h "$FWPKT_ZIP" | cut -f1)) -> /app/sd/FwPkt.zip.part"
-  if ! scp $SSH_OPTS "$FWPKT_ZIP" "$GIMBAL_SSH:/app/sd/FwPkt.zip.part" >/dev/null 2>&1; then
-    log "STAGE: scp failed — falling back to cat-over-ssh (slower, reliable)"
-    ssh_dev "rm -f /app/sd/FwPkt.zip.part" >/dev/null 2>&1
-    if ! cat "$FWPKT_ZIP" | ssh $SSH_OPTS "$GIMBAL_SSH" "cat > /app/sd/FwPkt.zip.part" >/dev/null 2>&1; then
-      log "STAGE: cat-over-ssh transfer failed"
-      return 1
+  #
+  # The AP link flaps (device stays up; uptime keeps climbing across dark
+  # periods), so the transfer is RESUME-ABLE: .part persists on the SD card,
+  # and each attempt appends from the current on-device size. A size that does
+  # not match a local offset (e.g. after a device reboot truncated it) falls
+  # back to a fresh write. Bounded by STAGE_RETRY_LIMIT / STAGE_RETRY_WAIT.
+  local total off attempt=0
+  total="$(stat -c %s "$FWPKT_ZIP" 2>/dev/null || wc -c < "$FWPKT_ZIP")"
+  log "STAGE: pushing FwPkt.zip (${total} bytes) -> /app/sd/FwPkt.zip.part (resume-aware)"
+  while :; do
+    attempt=$((attempt+1))
+    if ! ssh_dev "true"; then
+      log "STAGE: attempt $attempt — device unreachable, waiting ${STAGE_RETRY_WAIT}s for the link"
+      sleep "$STAGE_RETRY_WAIT"
+      [ "$attempt" -ge "${STAGE_RETRY_LIMIT:-8}" ] && { log "STAGE: retry limit reached"; return 1; }
+      continue
     fi
-  fi
+    off="$(ssh_dev "stat -c %s /app/sd/FwPkt.zip.part 2>/dev/null || echo 0" | tr -d '[:space:]')"
+    case "$off" in (*[!0-9]*|"") off=0 ;; esac
+    if [ "$off" -ge "$total" ]; then
+      log "STAGE: .part already complete on device (${off} bytes) — verifying"
+      break
+    fi
+    if [ "$off" -gt 0 ] && [ "$off" -lt "$total" ]; then
+      log "STAGE: attempt $attempt — resuming from ${off}/${total} bytes"
+      tail -c +"$((off+1))" "$FWPKT_ZIP" | ssh $SSH_OPTS "$GIMBAL_SSH" "cat >> /app/sd/FwPkt.zip.part" >/dev/null 2>&1
+    else
+      log "STAGE: attempt $attempt — fresh transfer (0/${total} bytes)"
+      cat "$FWPKT_ZIP" | ssh $SSH_OPTS "$GIMBAL_SSH" "cat > /app/sd/FwPkt.zip.part" >/dev/null 2>&1
+    fi
+    # Re-read the size: if it advanced, the link held (or we can resume after a
+    # flap); if it is unchanged, this attempt's bytes were lost — retry.
+    local now
+    now="$(ssh_dev "stat -c %s /app/sd/FwPkt.zip.part 2>/dev/null || echo 0" | tr -d '[:space:]')"
+    case "$now" in (*[!0-9]*|"") now=0 ;; esac
+    if [ "$now" -ge "$total" ]; then
+      log "STAGE: transfer complete (${now} bytes)"
+      break
+    fi
+    if [ "$now" -gt "$off" ]; then
+      log "STAGE: link dropped at ${now}/${total} — will resume next attempt"
+    else
+      log "STAGE: no progress this attempt (still ${now}/${total}) — retrying fresh"
+      ssh_dev "rm -f /app/sd/FwPkt.zip.part" >/dev/null 2>&1
+    fi
+    [ "$attempt" -ge "${STAGE_RETRY_LIMIT:-8}" ] && { log "STAGE: retry limit reached at ${now}/${total}"; return 1; }
+    sleep "${STAGE_RETRY_WAIT:-60}"
+  done
   local actual
   actual="$(ssh_dev "sha256sum /app/sd/FwPkt.zip.part 2>/dev/null | cut -d' ' -f1")"
   if [ "$actual" = "$ZIP_SHA256" ]; then
