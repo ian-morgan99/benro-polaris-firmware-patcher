@@ -14,7 +14,11 @@
 #                manifest), device identity (SSH host key + FwVer family), and
 #                an idle/camera-state check (code 286 must not show a camera
 #                in capture; ALLOW_BUSY=1 overrides).
-#   3. STAGE   — scp FwPkt.zip -> /app/sd/FwPkt.zip, verify SHA-256 on-device.
+#   3. STAGE   — stream FwPkt.zip over SSH (cat | ssh "cat > ...") to
+#                /app/sd/FwPkt.zip.part, verify SHA-256 on-device, then atomic
+#                rename into place (the auto-installer watches the final name).
+#                Resume-aware: appends from the current .part size with a
+#                prefix-hash check; bounded by STAGE_RETRY_LIMIT/WAIT.
 #                Skipped when the device already reports the target FwVer
 #                (no blind reflash of an already-updated device).
 #   4. REBOOT  — fire protocol code 812 (SYS_REBOOT) so the on-boot FwPkt
@@ -198,20 +202,22 @@ phase_stage() {
     return 0
   fi
   # Transfer strategy (field-validated 2026-10-16):
-  #  1. scp (SFTP protocol) — fast when the device's OpenSSH supports it.
-  #  2. cat-over-ssh        — reliable fallback; the Polaris' OpenSSH rejects
-  #     the SFTP subsystem ("scp: Connection closed") and legacy scp -O hangs.
-  # The file is written to /app/sd/FwPkt.zip.part FIRST, verified by SHA-256,
-  # then atomically renamed into place. This matters because the firmware's
-  # auto-installer watches /app/sd/FwPkt.zip and reboots the device when it
-  # sees a complete zip — writing directly there mid-transfer can trigger an
-  # uncontrolled reboot (observed: device went dark at ~29 MB of 68 MB).
-  #
-  # The AP link flaps (device stays up; uptime keeps climbing across dark
-  # periods), so the transfer is RESUME-ABLE: .part persists on the SD card,
-  # and each attempt appends from the current on-device size. A size that does
-  # not match a local offset (e.g. after a device reboot truncated it) falls
-  # back to a fresh write. Bounded by STAGE_RETRY_LIMIT / STAGE_RETRY_WAIT.
+  #  - cat-over-ssh: the Polaris' OpenSSH rejects the SFTP subsystem
+  #    ("scp: Connection closed") and legacy scp -O hangs, so the zip is
+  #    streamed with `cat | ssh "cat > ..."`.
+  #  - .part + atomic rename: written to /app/sd/FwPkt.zip.part FIRST,
+  #    verified by SHA-256, then renamed into place. The firmware's
+  #    auto-installer watches /app/sd/FwPkt.zip and reboots the device when
+  #    it sees a complete zip — writing directly there mid-transfer triggered
+  #    an uncontrolled reboot (observed: device went dark at ~29 MB of 68 MB).
+  #  - resume-aware: the AP link flaps (device stays up; uptime keeps
+  #    climbing across dark periods), so each attempt appends from the
+  #    current on-device size. Before every resume the on-device prefix is
+  #    verified against the local zip (head -c N | sha256sum both sides); a
+  #    mismatch or an over-appended size (> total) forces a fresh write.
+  #    Stray transfer pipes from earlier interrupted runs are killed at stage
+  #    start so two writers can never append concurrently. Bounded by
+  #    STAGE_RETRY_LIMIT / STAGE_RETRY_WAIT.
   local total off attempt=0
   total="$(stat -c %s "$FWPKT_ZIP" 2>/dev/null || wc -c < "$FWPKT_ZIP")"
   log "STAGE: pushing FwPkt.zip (${total} bytes) -> /app/sd/FwPkt.zip.part (resume-aware)"
