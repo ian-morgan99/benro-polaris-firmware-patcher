@@ -150,6 +150,35 @@ phase_wake() {
 manifest_zip_sha() { python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["zip"]["sha256"])' "$MANIFEST" 2>/dev/null; }
 manifest_fwver()   { python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["fwver_content"])' "$MANIFEST" 2>/dev/null; }
 
+# --- Wire send with /dev/tcp fallback ----------------------------------------
+# `nc` is NOT installed on every host (e.g. this workstation: `which nc` empty),
+# in which case the old `timeout 10 nc ...` always exited 127 and the 812 frame
+# was never actually delivered — the script then (correctly) reported
+# "delivery uncertain" on every attempt. Prefer nc when present; otherwise use
+# bash's /dev/tcp: open a bidirectional socket, write the frame, close the
+# write side (EOF to the device), read any reply for ~1s, close.
+# rc: 0 = frame written (reply printed, may be empty). A timeout (124) also means
+# the frame was delivered — the device simply kept the socket open — so it is
+# normalised to success. Non-zero otherwise (connect/write failed).
+wire_send() { # $1 = wire frame; prints the device reply (may be empty)
+  local frame="$1" rc
+  if command -v nc >/dev/null 2>&1; then
+    printf '%s' "$frame" | timeout 8 nc "$GIMBAL_HOST" "$GIMBAL_PORT" 2>/dev/null
+    rc=$?
+  else
+    timeout 8 bash -c '
+      exec 3<>/dev/tcp/"$1"/"$2" || exit 1
+      printf "%s" "$3" >&3 || exit 1
+      exec 4<&3          # keep a read-side copy of the socket
+      exec 3>&-          # close the write side -> device sees EOF, may still reply
+      sleep 1            # allow the reply to arrive
+      cat <&4 2>/dev/null
+    ' _ "$GIMBAL_HOST" "$GIMBAL_PORT" "$frame"
+    rc=$?
+  fi
+  [ "$rc" -eq 0 ] || [ "$rc" -eq 124 ]
+}
+
 phase_auth() {
   log "AUTH: gating destructive install (digest + identity + idle)"
   [ -f "$MANIFEST" ] || { log "AUTH: manifest not found: $MANIFEST (run scripts/generate-fwpkt-manifest.py)"; return 1; }
@@ -174,7 +203,7 @@ phase_auth() {
   # Idle/camera-state check: query code 286. A camera in capture (state:1 with a
   # live session) must not be rebooted mid-exposure unless explicitly allowed.
   local cam
-  cam="$(printf '%s' "$WIRE_CAMSTATE" | timeout 8 nc "$GIMBAL_HOST" "$GIMBAL_PORT" 2>/dev/null | tr -d '\r')"
+  cam="$(wire_send "$WIRE_CAMSTATE" | tr -d '\r')"
   log "AUTH: camera-state reply: ${cam:-<none>}"
   case "$cam" in
     *state:1*)
@@ -301,7 +330,7 @@ phase_reboot() {
   local up_before
   up_before="$(ssh_dev "awk '{print int(\$1)}' /proc/uptime 2>/dev/null")"
   log "REBOOT: firing 812 (SYS_REBOOT); uptime before=${up_before:-<unknown>}s"
-  if printf '%s' "$WIRE_REBOOT" | timeout 10 nc "$GIMBAL_HOST" "$GIMBAL_PORT" >/dev/null 2>&1; then
+  if wire_send "$WIRE_REBOOT" >/dev/null; then
     log "REBOOT: 812 send OK — watching for the device to go dark"
   else
     log "REBOOT: 812 send FAILED (delivery uncertain)"

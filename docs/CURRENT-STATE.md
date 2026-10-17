@@ -1,5 +1,34 @@
 # Current repository state
 
+## 2026-10-17 — `.66` installed on the device (o-v17a, SHIM #6 shipped OFF)
+
+**Installed and verified on device: `6.0.0.54.66`, candidate `o-v17a-shutter-fallback-off-20261012`.**
+The device reports `/app/FwVer=6.0.0.54.66;date:2026.10.14` (observed 00:41 local,
+fresh boot after the U-Boot reflash) and its
+`/app/openpolaris-libgphoto2-provenance.txt` matches the candidate exactly:
+libgphoto2 `2cde4485b`, build_id `o-v17a-shutter-fallback-off-20261012`,
+camlibs `ptp2,pentax`. All 10 mandatory files from
+`out/staged/o-v17a-shutter-fallback-off-20261012/install-manifest.json` were
+re-verified on-device by SHA-256 + size (verdict **verified**). Device healthy:
+`polestar_app` and `pgphoto.stage2ondisk` running, all stage2 binaries dated
+Oct 14 03:42.
+
+Install path note: the zip-based `.part` flow (commits `909610e`, `26e4a8d`,
+`247f01e`) kept dying on AP-link flaps (attempts 1–20, "device unreachable"
+windows), so the install completed via the **tree** path — the extracted
+`FwPkt/` tree was streamed to `/app/sd/FwPkt/`, all 6 `firmwareInfo` MD5s
+re-verified on-device, stray `FwPkt.zip`/`.part` artifacts removed, then a plain
+`sync; /sbin/reboot` at 00:39 local. The on-boot FwPkt watcher detected the
+tree and handed off to U-Boot (dark ~1 min).
+
+Pre-release gate GREEN 2026-10-17 (10 passed / 0 failed / 0 skipped; container
+harness 20, python regression 234). **Physical qualification PENDING — no
+camera on the USB bus at install time**; SHIM #6 A/B
+(`STAGE2_SHUTTER_FALLBACK=0` vs `1`) and the K-1 II regression check are still
+outstanding before enabling by default. `.55` remains the last *physically*
+tested build and the rollback target. Full record:
+`docs/evidence/o-v17a-offline-validation-20261012/RELEASE-20261016.md`.
+
 ## 2026-10-11 — `.65` installed on the device; repo consolidated to a single clean main
 
 **Installed and verified on device: `6.0.0.54.65`, candidate `o-v16g-k3iii-timed-bulb-20261010`.**
