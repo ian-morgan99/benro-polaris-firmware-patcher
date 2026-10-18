@@ -70,6 +70,18 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
     # result returned; everything else reconstructs the stock prologue and
     # resumes capture_image_with_Burst unchanged.
     #
+    # Why there is no runtime "is the dial on B?" gate here (issue #205): the
+    # app's capture request is `state:1;bulb:N;c:-1;` and N is the *requested
+    # exposure duration*. Across every captured session log the normal-capture
+    # path is always `bulb:0` and a positive `bulb:N` appears only on an explicit
+    # long-exposure request (docs/evidence/*/raw/Mlog_*: 108x bulb:0, 124x
+    # bulb:N>0, never a positive N on a plain timed capture). So r1 > 0 already
+    # *is* the app's explicit "expose for N seconds" signal; a timed-shutter
+    # capture never reaches this branch with a positive duration. Gating on the
+    # physical dial would only suppress the timed helper for the exact requests
+    # it exists to serve (the app drives the duration, not the dial), so the
+    # duration check is the correct and sufficient gate.
+    #
     # Three correctness constraints the previous trampoline got wrong (issue #210):
     #   1. getCameraName copies the lowercased model name into its r0 destination
     #      buffer and returns 0 on success / -1 on error; the model check must
