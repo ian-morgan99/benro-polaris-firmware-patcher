@@ -107,13 +107,16 @@ case "$ACTUAL_VERSION" in
   "$VER"|"$VER".*) ;;
   *) echo "[build] ERROR: source version $ACTUAL_VERSION is incompatible with requested $VER"; exit 1;;
 esac
-if [ ! -x configure ]; then
+# A git checkout's `configure` is generated, not authoritative, and the copy
+# above carries over any stale one (gitignored, so invisible to the clean-tree
+# check) whose auxiliary files (config.guess/config.sub/install-sh/compile/
+# ar-lib/missing) are absent from the tree -- `./configure` then dies with
+# "cannot find required auxiliary files". So for a git-directory source always
+# regenerate, never trust a pre-existing configure. Release tarballs ship a
+# complete set and keep the cheap path. `-f` matches upstream autogen.sh
+# (`autoreconf -fi`). Runs on the container's copy; the host checkout is clean.
+if [ ! -x configure ] || [ "$SOURCE_KIND" = "git-directory" ]; then
   echo "[build] generating Autotools files for source checkout"
-  # -f (force) is required: a git checkout ships none of the auxiliary files
-  # (config.guess/config.sub/install-sh/compile/ar-lib/missing), and `autoreconf -i`
-  # alone does not reliably install them, leaving the generated configure to fail
-  # with "cannot find required auxiliary files". This mirrors upstream autogen.sh
-  # (`autoreconf -fi`). Runs on the container's copy, so the host checkout stays clean.
   autoreconf -isf
 fi
 cat > /work/out/source-provenance.env <<EOF
