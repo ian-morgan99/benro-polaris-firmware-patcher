@@ -61,15 +61,31 @@ check(branch_target(addresses["burst"], entry) == cave,
 tramp = patched[cave_off:cave_off + patch.TRAMPOLINE_SIZE]
 word = lambda offset: struct.unpack_from("<I", tramp, offset)[0]
 check(word(0) == 0xE3510000 and (word(4) >> 28) == 0xD and
-      branch_target(cave + 4, word(4)) == cave + 0x74,
+      branch_target(cave + 4, word(4)) == cave + 0x80,
       "zero or negative duration falls back to the stock burst helper")
-check(branch_target(cave + 0x6C, word(0x6C)) == addresses["bulb"],
-      "only positive Pentax K-3 III duration calls the timed Bulb helper")
-check(branch_target(cave + 0x80, word(0x80)) == addresses["burst"] + 12,
+check((word(0x74) >> 24) == 0xEA and branch_target(cave + 0x74, word(0x74)) == addresses["bulb"],
+      "only positive Pentax K-3 III duration tail-calls the timed Bulb helper")
+check(branch_target(cave + 0x8C, word(0x8C)) == addresses["burst"] + 12,
       "fallback reconstructs original burst prologue then resumes stock code")
-check(tramp[0x90:0x97] == b"pentax\0" and
-      tramp[0x97:0xA4] == b"K-3 Mark III\0" and
-      tramp[0xA4:0xAF] == b"Monochrome\0",
+# Issue #210: getCameraName always returns 0, so the model gate must inspect the
+# name buffer (not the return value), must not clobber the capture arguments,
+# and must return rather than fall through into the stock burst body.
+check(word(0x34) == 0xE1A0000D and (word(0x38) >> 24) == 0xEB and
+      branch_target(cave + 0x38, word(0x38)) == addresses["name"],
+      "getCameraName is given a writable stack buffer, not the strcasestr result")
+check(word(0x3C) == 0xE3500000 and (word(0x40) >> 28) == 0x1 and
+      branch_target(cave + 0x40, word(0x40)) == cave + 0x78,
+      "a getCameraName error (nonzero return) falls back instead of matching")
+check(word(0x44) == 0xE1A0000D and word(0x58) == 0xE1A0000D,
+      "the model and Monochrome checks search the name buffer, not a stale pointer")
+check(word(0x6C) == 0xE28DD088 and word(0x70) == 0xE8BD4007,
+      "the timed-Bulb path restores the original (status, duration, files) arguments")
+check(word(0x78) == 0xE28DD088 and word(0x7C) == 0xE8BD4007 and
+      word(0x80) == patch.BURST_PROLOGUE[0],
+      "the fallback path restores arguments then reconstructs the burst prologue")
+check(tramp[patch.PENTAX_TEXT:patch.PENTAX_TEXT + 7] == b"pentax\0" and
+      tramp[patch.MODEL_TEXT:patch.MODEL_TEXT + 13] == b"K-3 Mark III\0" and
+      tramp[patch.MONO_TEXT:patch.MONO_TEXT + 11] == b"Monochrome\0",
       "vendor, tested model, and explicitly excluded Monochrome are encoded")
 new_filesz = struct.unpack_from("<I", patched, segment["phdr_offset"] + 16)[0]
 new_memsz = struct.unpack_from("<I", patched, segment["phdr_offset"] + 20)[0]

@@ -12,7 +12,20 @@ from elftools.elf.elffile import ELFFile
 
 BURST_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DD0AC)
 BULB_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DDD2F, 0xE24DD004)
-TRAMPOLINE_SIZE = 0xB0
+TRAMPOLINE_SIZE = 0x140
+
+# Code-cave sub-layout (the trampoline is hand-assembled ARM; see
+# build_trampoline). The literal pool and match strings sit after the code. The
+# 128-byte getCameraName destination buffer is NOT here: the code cave lives in
+# the read-only (R+X) text segment, and getCameraName copies the lowercased
+# model name into its r0 argument, so the buffer is allocated on the stack at
+# run time (sub sp). getCameraName always returns 0 (issue #210), so the model
+# check inspects the buffer contents, never the return value.
+LITERAL_POOL = 0x100
+PENTAX_TEXT = 0x110
+MODEL_TEXT = 0x120
+MONO_TEXT = 0x130
+NAME_BUF_BYTES = 136  # 128-byte name + 8-byte guard, keeps sp 8-byte aligned
 OBJDUMP = os.environ.get("OBJDUMP", "arm-linux-gnueabi-objdump")
 
 
@@ -50,61 +63,99 @@ def encode_branch(source, target, condition=0xE, link=False):
 
 
 def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
-    addresses = {
-        "fallback": cave + 0x74,
-        "restore": cave + 0x70,
-        "burst_resume": burst + 12,
-        "pentax_literal": cave + 0x84,
-        "model_literal": cave + 0x88,
-        "mono_literal": cave + 0x8C,
-        "pentax_text": cave + 0x90,
-        "model_text": cave + 0x97,
-        "mono_text": cave + 0xA4,
-    }
+    # Hand-assembled ARM. Entry registers are the stock burst arguments:
+    #   r0 = status, r1 = duration (bTime), r2 = newFiles.
+    # Positive-duration, status-0 Pentax K-3 III (non-Monochrome) requests are
+    # routed to capture_image_with_Bulb(status, duration, newFiles) and its
+    # result returned; everything else reconstructs the stock prologue and
+    # resumes capture_image_with_Burst unchanged.
+    #
+    # Three correctness constraints the previous trampoline got wrong (issue #210):
+    #   1. getCameraName copies the lowercased model name into its r0 destination
+    #      buffer and returns 0 on success / -1 on error; the model check must
+    #      inspect the buffer, never the return value. The buffer cannot live in
+    #      the code cave (read-only text), so it is allocated on the stack.
+    #   2. strcasestr/getCameraName clobber r0-r3, so the original arguments are
+    #      saved on entry and reloaded before the timed-Bulb call.
+    #   3. After the timed-Bulb call the trampoline must return, not fall through
+    #      into the stock burst body (which would capture twice).
+    fallback = 0x80            # reconstruct prologue + resume (nothing pushed)
+    restore_fallback = 0x78    # drop buffer + reload args, then fall to fallback
+    do_bulb = 0x6C             # drop buffer + reload args, then tail-call Bulb
+    pentax_lit = LITERAL_POOL
+    model_lit = LITERAL_POOL + 4
+    mono_lit = LITERAL_POOL + 8
+
+    def ldr_pc(instr_off, literal_off):
+        # ldr r1, [pc, #imm]; PC during execution is instr address + 8.
+        imm = literal_off - (instr_off + 8)
+        if not 0 <= imm < 0x1000 or imm & 3:
+            raise ValueError("literal pool entry is out of ldr range")
+        return 0xE59F1000 | imm
+
+    def br(instr_off, target, link=False, condition=0xE):
+        # Branch at blob offset instr_off (address cave + instr_off) to target.
+        return encode_branch(cave + instr_off, target, link=link, condition=condition)
+
+    MOV_R0_SP = 0xE1A0000D
+    PUSH_ARGS = 0xE92D4007     # push {r0, r1, r2, lr}
+    POP_ARGS = 0xE8BD4007      # pop  {r0, r1, r2, lr}
+    SUB_SP_BUF = 0xE24DD088    # sub sp, sp, #136
+    ADD_SP_BUF = 0xE28DD088    # add sp, sp, #136
+    CMP_R0 = 0xE3500000
+    CMP_R1 = 0xE3510000
+
     words = {
-        0x00: 0xE3510000,  # cmp r1, #0
-        0x04: encode_branch(cave + 0x04, addresses["fallback"], condition=0xD),  # ble fallback
-        0x08: 0xE3500000,  # cmp r0, #0
-        0x0C: encode_branch(cave + 0x0C, addresses["fallback"], condition=0x1),  # bne fallback
-        0x10: 0xE92D4007,  # push {r0, r1, r2, lr}
-        0x14: encode_branch(cave + 0x14, get_manufacturer, link=True),
-        0x18: 0xE3500000,  # cmp r0, #0
-        0x1C: encode_branch(cave + 0x1C, addresses["restore"], condition=0x0),
-        0x20: 0xE59F105C,  # ldr r1, [pc, #0x5c]
-        0x24: encode_branch(cave + 0x24, strcasestr, link=True),
-        0x28: 0xE3500000,  # cmp r0, #0
-        0x2C: encode_branch(cave + 0x2C, addresses["restore"], condition=0x0),
-        0x30: encode_branch(cave + 0x30, get_name, link=True),
-        0x34: 0xE3500000,  # cmp r0, #0
-        0x38: encode_branch(cave + 0x38, addresses["restore"], condition=0x0),
-        0x3C: 0xE59F1044,  # ldr r1, [pc, #0x44]
-        0x40: encode_branch(cave + 0x40, strcasestr, link=True),
-        0x44: 0xE3500000,  # cmp r0, #0
-        0x48: encode_branch(cave + 0x48, addresses["restore"], condition=0x0),
-        0x4C: encode_branch(cave + 0x4C, get_name, link=True),
-        0x50: 0xE3500000,  # cmp r0, #0
-        0x54: encode_branch(cave + 0x54, addresses["restore"], condition=0x0),
-        0x58: 0xE59F102C,  # ldr r1, [pc, #0x2c]
-        0x5C: encode_branch(cave + 0x5C, strcasestr, link=True),
-        0x60: 0xE3500000,  # cmp r0, #0
-        0x64: encode_branch(cave + 0x64, addresses["restore"], condition=0x1),
-        0x68: 0xE8BD4007,  # pop {r0, r1, r2, lr}
-        0x6C: encode_branch(cave + 0x6C, bulb),
-        0x70: 0xE8BD4007,  # restore inputs before normal capture
-        0x74: BURST_PROLOGUE[0],
-        0x78: BURST_PROLOGUE[1],
-        0x7C: BURST_PROLOGUE[2],
-        0x80: encode_branch(cave + 0x80, addresses["burst_resume"]),
-        0x84: addresses["pentax_text"],
-        0x88: addresses["model_text"],
-        0x8C: addresses["mono_text"],
+        0x00: CMP_R1,
+        0x04: br(0x04, cave + fallback, condition=0xD),          # ble fallback
+        0x08: CMP_R0,
+        0x0C: br(0x0C, cave + fallback, condition=0x1),          # bne fallback
+        0x10: PUSH_ARGS,
+        0x14: SUB_SP_BUF,
+        0x18: br(0x18, get_manufacturer, link=True),             # bl getCameraManufacturer
+        0x1C: CMP_R0,
+        0x20: br(0x20, cave + restore_fallback, condition=0x0),  # beq restore (null)
+        0x24: ldr_pc(0x24, pentax_lit),                          # ldr r1, ="pentax"
+        0x28: br(0x28, strcasestr, link=True),                   # bl strcasestr
+        0x2C: CMP_R0,
+        0x30: br(0x30, cave + restore_fallback, condition=0x0),  # beq restore (not pentax)
+        0x34: MOV_R0_SP,                                         # r0 = stack buffer
+        0x38: br(0x38, get_name, link=True),                     # bl getCameraName
+        0x3C: CMP_R0,
+        0x40: br(0x40, cave + restore_fallback, condition=0x1),  # bne restore (name error)
+        0x44: MOV_R0_SP,                                         # r0 = buffer
+        0x48: ldr_pc(0x48, model_lit),                           # ldr r1, ="K-3 Mark III"
+        0x4C: br(0x4C, strcasestr, link=True),                   # bl strcasestr
+        0x50: CMP_R0,
+        0x54: br(0x54, cave + restore_fallback, condition=0x0),  # beq restore (not K-3 III)
+        0x58: MOV_R0_SP,                                         # r0 = buffer
+        0x5C: ldr_pc(0x5C, mono_lit),                            # ldr r1, ="Monochrome"
+        0x60: br(0x60, strcasestr, link=True),                   # bl strcasestr
+        0x64: CMP_R0,
+        0x68: br(0x68, cave + restore_fallback, condition=0x1),  # bne restore (Monochrome)
+        # do_bulb: reload the original arguments, then tail-call the timed helper
+        # so its result is returned directly to the original caller.
+        0x6C: ADD_SP_BUF,
+        0x70: POP_ARGS,
+        0x74: br(0x74, bulb),                                    # b capture_image_with_Bulb
+        # restore_fallback: drop the buffer, reload args, then run the stock path.
+        0x78: ADD_SP_BUF,
+        0x7C: POP_ARGS,
+        # fallback: reconstruct the prologue clobbered by the entry branch.
+        0x80: BURST_PROLOGUE[0],
+        0x84: BURST_PROLOGUE[1],
+        0x88: BURST_PROLOGUE[2],
+        0x8C: br(0x8C, burst + 12),                              # b burst_resume
+        pentax_lit: cave + PENTAX_TEXT,
+        model_lit: cave + MODEL_TEXT,
+        mono_lit: cave + MONO_TEXT,
     }
     blob = bytearray(TRAMPOLINE_SIZE)
     for offset, word in words.items():
         struct.pack_into("<I", blob, offset, word)
-    blob[0x90:0x97] = b"pentax\0"
-    blob[0x97:0xA4] = b"K-3 Mark III\0"
-    blob[0xA4:0xAF] = b"Monochrome\0"
+    blob[PENTAX_TEXT:PENTAX_TEXT + 7] = b"pentax\0"
+    blob[MODEL_TEXT:MODEL_TEXT + 13] = b"K-3 Mark III\0"
+    blob[MONO_TEXT:MONO_TEXT + 11] = b"Monochrome\0"
     return bytes(blob)
 
 
