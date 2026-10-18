@@ -274,6 +274,29 @@ def resolve_shutter_index(options: list[str], seconds: float) -> tuple[int, str,
     return max(scored, key=lambda item: item[2])
 
 
+def is_bulb_slot_list(options: list[str]) -> bool:
+    """True when command 268 reports the collapsed single-entry list the K-3 III
+    shows with the dial on ``B`` (measured: ``RD:0;V:0;R:00:00,;``).
+
+    This is a *symptom* of B mode, not a definition of it: a body whose PTP
+    property store is still initialising can also report a single entry
+    (docs/evidence/benro-connect-crash-20261010). It is therefore used only as a
+    heuristic and callers must log a warning when it fires (#206).
+
+    The B slot is a single entry that is not a usable timed shutter — either a
+    non-duration label (``00:00`` parses to ``None``) or a zero duration
+    (``00-00`` parses to ``0.0``). Handling both forms is deliberate: the entry
+    has been observed in colon form and a future revision could use hyphen form,
+    and neither may be mistaken for a real timed shutter or abort the canary the
+    way ``resolve_shutter_index`` would (#206). A single *positive* duration
+    (e.g. ``00-30``) is a genuine shutter, not the bulb slot, so it is excluded.
+    """
+    if len(options) != 1:
+        return False
+    seconds = parse_shutter_seconds(options[0])
+    return seconds is None or seconds <= 0
+
+
 def shutter_options(p: Polaris, timeout: float = 10.0, quiet: bool = False):
     """Read the current shutter index and option list through command 268."""
     p.send(SHUTTER_INFO_COMMAND)
@@ -312,8 +335,12 @@ def prepare_bulb_shutter(
     bulb_seconds: float,
     explicit_index: int | None = None,
     timeout: float = 10.0,
-) -> tuple[int, int, str, float | None]:
-    """Return (current index, chosen index, label, seconds) before changing the camera.
+) -> tuple[int, int, str, float | None, bool]:
+    """Return (current index, chosen index, label, seconds, started_in_bulb_slot).
+
+    ``started_in_bulb_slot`` tells the caller whether the dial was on ``B`` before
+    any change, so a later restore can verify against the collapsed list rather
+    than the timed list (#209).
 
     The K-3 III's command 268 list has no `Bulb` entry (it stops at `00-30`), so
     a long exposure is requested as the nearest available timed shutter.  An
@@ -325,21 +352,54 @@ def prepare_bulb_shutter(
     That is the bulb slot, not "no numeric options", so it is returned as-is and
     the dial is left alone; the previous behaviour aborted the whole bulb canary
     with `command 268 exposed no numeric shutter options`.
+
+    The single-entry list is a heuristic for B mode, not a proof (#206), so its
+    detection is centralised in `is_bulb_slot_list` and logged when it fires.
+    When an explicit index is requested while the dial is on B (#208), the
+    collapsed list is not a valid range to validate against: index 5 is a real
+    timed shutter on the K-3 III, only unreachable while the dial sits on B. We
+    therefore do not reject it against the one-entry list — we treat the request
+    as "move off B to this timed index", return the current (B-slot) index so the
+    session restores it, and let `set_shutter` verify against the post-write
+    (timed) list (#209).
     """
     current, options = shutter_options(p, timeout)
     if current is None:
         raise RuntimeError("cannot run Bulb test without a readable current shutter index")
-    if explicit_index is None and len(options) == 1 and not parse_shutter_seconds(options[0]):
-        return current, current, options[0], None
+    in_bulb_slot = is_bulb_slot_list(options)
+    if in_bulb_slot:
+        print(
+            f"{stamp()} NOTE: command 268 reported a single-entry list "
+            f"({options[0]!r}); treating it as the B-mode bulb slot. This is a "
+            f"heuristic — a body still initialising its PTP store can look the "
+            f"same (#206).",
+            flush=True,
+        )
     if explicit_index is not None:
-        if explicit_index < 0 or explicit_index >= len(options):
+        if explicit_index < 0:
+            raise ValueError(f"--bulb-shutter-index {explicit_index} is negative")
+        if in_bulb_slot and explicit_index != current:
+            # The dial is on B; the requested timed index is valid on the K-3 III
+            # but not present in the collapsed list. Do not range-check it
+            # against that list (#208). The session will write it via 261 (which
+            # moves the body off B) and restore the B slot afterwards.
+            print(
+                f"{stamp()} NOTE: dial is on B; --bulb-shutter-index "
+                f"{explicit_index} is not in the collapsed list and will be "
+                f"requested by moving the body off B, then the B slot restored.",
+                flush=True,
+            )
+            return current, explicit_index, f"<timed index {explicit_index} requested from B mode>", None, True
+        if explicit_index >= len(options):
             raise ValueError(f"--bulb-shutter-index {explicit_index} is outside option list")
         index = explicit_index
         label = options[index]
         seconds = parse_shutter_seconds(label)
-    else:
-        index, label, seconds = resolve_shutter_index(options, bulb_seconds)
-    return current, index, label, seconds
+        return current, index, label, seconds, in_bulb_slot
+    if in_bulb_slot:
+        return current, current, options[0], None, True
+    index, label, seconds = resolve_shutter_index(options, bulb_seconds)
+    return current, index, label, seconds, False
 
 
 # The K-3 III applies a 261 shutter write asynchronously. Measured on device
@@ -359,6 +419,7 @@ def set_shutter(
     verify: bool = True,
     settle_timeout: float = SHUTTER_SETTLE_TIMEOUT_S,
     poll_interval: float = SHUTTER_SETTLE_POLL_S,
+    expect_bulb_slot: bool = False,
     sleep=time.sleep,
 ) -> str:
     """Select the camera shutter through the proven 261 `s:<index>;` command.
@@ -367,6 +428,14 @@ def set_shutter(
     honour it (see SHUTTER_SETTLE_TIMEOUT_S). The readback is therefore polled
     until it matches or the budget runs out; only then is the accepted-but-not-
     applied case raised as an error rather than reported as a success.
+
+    The readback index is only meaningful within one option-list shape (#209).
+    Writing a timed index while the dial is on `B` makes the body leave B mode,
+    so the list changes from the single-entry bulb list to the full timed list
+    mid-poll; index 0 means the B slot in one and `00-30` in the other. The
+    caller therefore states which shape it expects via `expect_bulb_slot`, and a
+    readback is only accepted when both the index *and* the list shape agree —
+    otherwise a `V:0` in the wrong coordinate system reads as a false success.
     """
     if index < 0:
         raise ValueError("--bulb-shutter-index must be non-negative")
@@ -382,7 +451,8 @@ def set_shutter(
         while True:
             attempt += 1
             readback, options = shutter_options(p, timeout, quiet=True)
-            if readback == index:
+            shape_ok = is_bulb_slot_list(options) == expect_bulb_slot
+            if readback == index and shape_ok:
                 if attempt > 1:
                     print(
                         f"{stamp()} SHUTTER index={index} confirmed after {attempt} "
@@ -396,13 +466,21 @@ def set_shutter(
                     if readback is not None and readback < len(options)
                     else "?"
                 )
+                shape_note = (
+                    "the camera is still reporting the collapsed B-mode list"
+                    if expect_bulb_slot is False and is_bulb_slot_list(options)
+                    else "the camera is not reporting the B-mode list"
+                    if expect_bulb_slot and not is_bulb_slot_list(options)
+                    else "the requested index was not applied"
+                )
                 raise RuntimeError(
                     f"shutter index {index} was accepted (ret:0) but still is not "
                     f"reported after {settle_timeout:.0f}s ({attempt} readbacks); "
-                    f"the camera reports V:{readback} ({label})"
+                    f"the camera reports V:{readback} ({label}) and {shape_note}"
                 )
             print(
-                f"{stamp()} SHUTTER index={index} not yet visible (V:{readback}), "
+                f"{stamp()} SHUTTER index={index} not yet visible (V:{readback}, "
+                f"list_shape={'bulb' if is_bulb_slot_list(options) else 'timed'}), "
                 f"re-reading in {poll_interval}s",
                 flush=True,
             )
@@ -436,18 +514,21 @@ def bulb_shutter_session(
     timeout: float = 10.0,
 ):
     """Select the long-exposure shutter for a capture and restore the prior index."""
-    current, bulb_index, bulb_label, bulb_actual = prepare_bulb_shutter(
+    current, bulb_index, bulb_label, bulb_actual, started_in_bulb_slot = prepare_bulb_shutter(
         p, bulb_seconds, explicit_index, timeout
     )
     operation_error: BaseException | None = None
     # The body already reports the slot we want (dial on `B`, or a timed list
-    # whose best match is the current index). Writing it anyway is not a no-op:
+    # whose best index is the current index). Writing it anyway is not a no-op:
     # measured on device, `s:0;` over `V:0;R:00:00,;` answers `ret:-2`, which
     # this helper treats as a failure. Skip the write and the restore.
     already_selected = bulb_index == current
     try:
         if not already_selected:
-            set_shutter(p, bulb_index, timeout)
+            # We are writing a timed index; once applied the body reports the
+            # timed list, so the readback must be checked in that coordinate
+            # system (#209) — including the B -> timed transition from #208.
+            set_shutter(p, bulb_index, timeout, expect_bulb_slot=False)
         print(
             f"{stamp()} BULB shutter_index={bulb_index} shutter_label={bulb_label!r} "
             f"shutter_seconds={bulb_actual} requested_seconds={bulb_seconds} "
@@ -465,7 +546,11 @@ def bulb_shutter_session(
     finally:
         try:
             if not already_selected:
-                set_shutter(p, current, timeout)
+                # If we started on `B`, restoring the prior index moves the body
+                # back onto the collapsed bulb list; verify in that coordinate
+                # system so a `V:0` in the timed list is not mistaken for the B
+                # slot (#209).
+                set_shutter(p, current, timeout, expect_bulb_slot=started_in_bulb_slot)
                 print(f"{stamp()} SHUTTER restored_index={current}", flush=True)
         except BaseException as restore_error:
             print(

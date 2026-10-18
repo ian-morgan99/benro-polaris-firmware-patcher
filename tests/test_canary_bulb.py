@@ -104,16 +104,20 @@ def test_bulb_index_is_resolved_by_duration_without_a_Bulb_entry():
     """The K-3 III exposes no `Bulb` label, so resolution is by duration."""
     mod = load_probe()
     device = FakePolaris([info()])
-    current, index, label, seconds = mod.prepare_bulb_shutter(device, 8)
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(device, 8)
     assert (current, index, label, seconds) == (K3_CURRENT, 5, "00-08", 8.0)
+    assert started_in_b is False
     assert device.sends == [((268,), {})]
 
 
 def test_explicit_shutter_index_overrides_duration_resolution():
     mod = load_probe()
     device = FakePolaris([info()])
-    current, index, label, _ = mod.prepare_bulb_shutter(device, 8, explicit_index=6)
+    current, index, label, _, started_in_b = mod.prepare_bulb_shutter(
+        device, 8, explicit_index=6
+    )
     assert (current, index, label) == (K3_CURRENT, 6, "00-30")
+    assert started_in_b is False
 
 
 def test_explicit_shutter_index_outside_the_list_is_rejected():
@@ -313,8 +317,9 @@ B_MODE_INFO = "268@RD:0;V:0;R:00:00,;#"
 def test_bulb_in_b_mode_uses_the_single_bulb_entry_instead_of_aborting():
     mod = load_probe()
     device = FakePolaris([B_MODE_INFO])
-    current, index, label, seconds = mod.prepare_bulb_shutter(device, 5)
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(device, 5)
     assert (current, index, label, seconds) == (0, 0, "00:00", None)
+    assert started_in_b is True
     assert device.sends == [((268,), {})]
 
 
@@ -344,5 +349,123 @@ def test_a_single_numeric_entry_is_still_resolved_by_duration():
     """Only a non-duration single entry is the bulb slot; `00-30` is a real shutter."""
     mod = load_probe()
     device = FakePolaris([info(current=0, options="00-30")])
-    current, index, label, seconds = mod.prepare_bulb_shutter(device, 8)
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(device, 8)
     assert (current, index, label, seconds) == (0, 0, "00-30", 30.0)
+    assert started_in_b is False
+
+
+# --- #206: B-mode detection must not depend on the entry's label format -------
+
+def test_is_bulb_slot_list_accepts_colon_and_hyphen_zero_forms():
+    """Both observed/possible B-slot encodings are recognised, and a real timed
+    shutter is not (#206)."""
+    mod = load_probe()
+    assert mod.is_bulb_slot_list(["00:00"]) is True    # measured colon form
+    assert mod.is_bulb_slot_list(["00-00"]) is True    # hypothetical hyphen form
+    assert mod.is_bulb_slot_list(["Bulb"]) is True     # non-numeric label
+    assert mod.is_bulb_slot_list(["00-30"]) is False   # a real 30 s shutter
+    assert mod.is_bulb_slot_list(K3_SHUTTER_LIST.split(",")) is False
+
+
+def test_hyphen_form_b_entry_is_treated_as_bulb_slot_not_aborted():
+    """A future firmware reporting the B slot as `00-00` must not abort the canary
+    via resolve_shutter_index's 'no numeric shutter options' (#206)."""
+    mod = load_probe()
+    device = FakePolaris(["268@RD:0;V:0;R:00-00,;#"])
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(device, 5)
+    assert (current, index, seconds) == (0, 0, None)
+    assert started_in_b is True
+
+
+# --- #208: an explicit timed index while the dial is on B --------------------
+
+def test_explicit_index_while_on_b_is_not_rejected_against_the_collapsed_list():
+    """Index 5 is a valid K-3 III timed shutter; it is only unreachable while the
+    dial sits on B, so it must not raise a range error (#208)."""
+    mod = load_probe()
+    device = FakePolaris([B_MODE_INFO])
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(
+        device, 8, explicit_index=5
+    )
+    assert (current, index) == (0, 5)
+    assert seconds is None and started_in_b is True
+    assert device.sends == [((268,), {})]
+
+
+def test_explicit_index_equal_to_the_b_slot_is_a_noop():
+    mod = load_probe()
+    device = FakePolaris([B_MODE_INFO])
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(
+        device, 8, explicit_index=0
+    )
+    assert (current, index, label, seconds) == (0, 0, "00:00", None)
+    assert started_in_b is True
+
+
+def test_negative_explicit_index_is_still_rejected():
+    mod = load_probe()
+    try:
+        mod.prepare_bulb_shutter(FakePolaris([B_MODE_INFO]), 8, explicit_index=-1)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a negative index is invalid in any mode")
+
+
+# --- #209: verify must not accept a match across a changing list shape -------
+
+def test_set_shutter_rejects_a_wrong_shape_index_match_and_keeps_polling():
+    """Writing timed index 0 while the body is still on B: a `V:0` in the collapsed
+    list is NOT the timed index 0, so the poll must keep going until the timed
+    list appears (#209)."""
+    mod = load_probe()
+    slept: list[float] = []
+    device = FakePolaris([ack(0), B_MODE_INFO, info(0)])
+    mod.set_shutter(device, 0, expect_bulb_slot=False,
+                    settle_timeout=30.0, poll_interval=1.0, sleep=slept.append)
+    assert len(slept) == 1  # first (collapsed-list) readback was rejected
+    assert device.sends[0] == ((261,), {"payload": "s:0;"})
+
+
+def test_set_shutter_accepts_a_bulb_slot_match_when_that_is_what_is_expected():
+    """The inverse: restoring the B slot must accept the collapsed-list `V:0`."""
+    mod = load_probe()
+    device = FakePolaris([ack(0), B_MODE_INFO])
+    mod.set_shutter(device, 0, expect_bulb_slot=True, settle_timeout=0.0)
+    assert device.sends[0] == ((261,), {"payload": "s:0;"})
+
+
+def test_set_shutter_fails_closed_when_the_shape_never_arrives():
+    """A body that stays on B after a timed write must fail, not report success on
+    the wrong coordinate system (#209)."""
+    mod = load_probe()
+    slept: list[float] = []
+    replies = [ack(5)] + [B_MODE_INFO] * 40
+    device = FakePolaris(replies)
+    clock = iter([0.0] + [i * 5.0 for i in range(1, 41)])
+    real_monotonic = mod.time.monotonic
+    mod.time.monotonic = lambda: next(clock)
+    try:
+        mod.set_shutter(device, 5, expect_bulb_slot=False,
+                        settle_timeout=10.0, poll_interval=5.0, sleep=slept.append)
+    except RuntimeError as exc:
+        assert "still is not reported after 10s" in str(exc)
+    else:
+        raise AssertionError("a timed index that never leaves the B list must fail")
+    finally:
+        mod.time.monotonic = real_monotonic
+
+
+def test_bulb_session_from_b_restores_verifying_against_the_bulb_list():
+    """Full #208 + #209 round trip: start on B, request timed index 5, capture,
+    restore the B slot. The restore's readback is the collapsed list and must be
+    accepted as the B slot, not rejected as a wrong-shape match."""
+    mod = load_probe()
+    device = FakePolaris([
+        B_MODE_INFO,          # prepare: dial is on B
+        ack(5), info(5),      # set timed index 5, verify against the timed list
+        ack(0), B_MODE_INFO,  # restore B slot, verify against the collapsed list
+    ])
+    with mod.bulb_shutter_session(device, 8, explicit_index=5):
+        pass
+    assert [c[1]["payload"] for c in device.sends if c[0][0] == 261] == ["s:5;", "s:0;"]
