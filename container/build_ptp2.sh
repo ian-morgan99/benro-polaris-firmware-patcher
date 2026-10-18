@@ -109,7 +109,12 @@ case "$ACTUAL_VERSION" in
 esac
 if [ ! -x configure ]; then
   echo "[build] generating Autotools files for source checkout"
-  autoreconf -is
+  # -f (force) is required: a git checkout ships none of the auxiliary files
+  # (config.guess/config.sub/install-sh/compile/ar-lib/missing), and `autoreconf -i`
+  # alone does not reliably install them, leaving the generated configure to fail
+  # with "cannot find required auxiliary files". This mirrors upstream autogen.sh
+  # (`autoreconf -fi`). Runs on the container's copy, so the host checkout stays clean.
+  autoreconf -isf
 fi
 cat > /work/out/source-provenance.env <<EOF
 source_kind=$SOURCE_KIND
