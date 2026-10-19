@@ -221,7 +221,8 @@ def main() -> int:
             print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
         shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
-        shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index)
+        shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index,
+                                                ssh_host=f"root@{args.host}")
                            if args.bulb_seconds is not None else nullcontext())
         with shutter_context:
             if args.bulb_seconds is not None:

@@ -469,3 +469,137 @@ def test_bulb_session_from_b_restores_verifying_against_the_bulb_list():
     with mod.bulb_shutter_session(device, 8, explicit_index=5):
         pass
     assert [c[1]["payload"] for c in device.sends if c[0][0] == 261] == ["s:5;", "s:0;"]
+
+
+# ---------------------------------------------------------------------------
+# #206: B mode must be decided from the camera's own exposure mode, not from
+# the shape of the command-268 list. The shape heuristic is wrong in both
+# directions and the false negative is the one that breaks a run: with the dial
+# physically on B on 6.0.0.54.67 the body reported a full 56-entry timed list,
+# the probe wrote a timed index, and the capture was refused with state:-6
+# (docs/evidence/o-v17b-physical-20261019/bulb-refusal-1.txt).
+# ---------------------------------------------------------------------------
+
+# The measured reply, trimmed to the first 17 entries. Index 9 is still the
+# value the body reported (V:9) and the list is still multi-entry, so the
+# list-shape heuristic returns False for it exactly as it did on device.
+B_MODE_WITH_TIMED_LIST = (
+    "268@RD:0;V:9;R:00-01,00-02,00-03,00-04,00-05,00-06,00-07,00-08,00-09,"
+    "00-10,00-15,00-20,00-25,00-30,00-40,00-50,01-00,;#"
+)
+
+# Verbatim shape of the value libgphoto2 builds in _get_Pentax_Conditions
+# (camlibs/ptp2/config.c) for the `pentaxconditions` config widget.
+CONDITIONS_BULB = (
+    "state=0; astro-phase=none; exposure-mode-raw=9; astro-mode=off; "
+    "user-mode-raw=0; drive-mode-raw=0; ISO=0; bulb-timer=none;"
+)
+CONDITIONS_TIMED = CONDITIONS_BULB.replace("exposure-mode-raw=9", "exposure-mode-raw=1")
+
+
+def test_exposure_mode_raw_is_parsed_from_the_conditions_value():
+    mod = load_probe()
+    assert mod.parse_exposure_mode_raw(CONDITIONS_BULB) == 9
+    assert mod.parse_exposure_mode_raw(CONDITIONS_TIMED) == 1
+    # Absent or unparseable must be unknown, never "not B".
+    assert mod.parse_exposure_mode_raw("state=0; astro-phase=none;") is None
+    assert mod.parse_exposure_mode_raw("exposure-mode-raw=none;") is None
+    assert mod.parse_exposure_mode_raw("") is None
+
+
+def test_bulb_exposure_modes_match_the_camera_protocol():
+    """9 = B, 12 = B-off-auto, 20 = Astro Tracer.
+
+    These are the raw exposure-mode values the K-3 III reports for a body that
+    can perform a bulb exposure. They are the same values upstream libgphoto2
+    uses for this exact decision (camlibs/ptp2/pentax-utils.h
+    PENTAX_EXP_MODE_BULB / _BULB_LENS / _ASTROTRACER, consumed by
+    pentax_bulb_action_mode_supported) and the pslr equivalents in
+    camlibs/pentax/pslr.h (PSLR_EXPOSURE_MODE_B = 9, B_OFFAUTO = 12).
+    """
+    mod = load_probe()
+    assert mod.BULB_EXPOSURE_MODES == frozenset({9, 12, 20})
+
+
+def test_exposure_mode_query_is_skipped_without_an_ssh_target():
+    """No device means no query and no noise: the caller falls back silently."""
+    mod = load_probe()
+    assert mod.camera_exposure_mode(None) is None
+    assert mod.camera_exposure_mode("") is None
+
+
+def test_direct_query_says_b_even_though_the_list_looks_timed():
+    """The measured false negative: dial on B, body reporting a timed list.
+
+    Before #206 the shape heuristic returned False here, the probe resolved a
+    timed index and wrote it, and the camera refused the capture with state:-6.
+    The direct query must win and the dial must be left alone.
+    """
+    mod = load_probe()
+    mod.camera_exposure_mode = lambda *a, **k: 9
+    device = FakePolaris([B_MODE_WITH_TIMED_LIST])
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(
+        device, 5, ssh_host="root@192.168.0.1")
+    assert started_in_b is True
+    assert (index, seconds) == (current, None)
+    assert "bulb slot" in label
+    assert device.sends == [((268,), {})], "a timed shutter was written while on B"
+
+
+def test_bulb_session_on_b_with_a_timed_list_writes_nothing():
+    mod = load_probe()
+    mod.camera_exposure_mode = lambda *a, **k: 9
+    device = FakePolaris([B_MODE_WITH_TIMED_LIST])
+    with mod.bulb_shutter_session(device, 5, ssh_host="root@192.168.0.1"):
+        pass
+    assert [c for c in device.sends if c[0][0] == 261] == []
+
+
+def test_direct_query_overrides_a_false_positive_single_entry_list():
+    """A degraded body can report one entry while not being on B (#206 case 1).
+
+    The camera says a timed mode, so the entry must not be silently accepted as
+    the bulb slot; with no usable timed shutter the canary fails loudly instead.
+    """
+    mod = load_probe()
+    mod.camera_exposure_mode = lambda *a, **k: 1
+    device = FakePolaris([B_MODE_INFO])
+    try:
+        mod.prepare_bulb_shutter(device, 5, ssh_host="root@192.168.0.1")
+    except RuntimeError as exc:
+        assert "no numeric shutter options" in str(exc)
+    else:
+        raise AssertionError("a non-B single-entry list was used as the bulb slot")
+
+
+def test_list_shape_is_still_used_when_the_query_is_unavailable():
+    """Fail-open: with no exposure mode the pre-#206 behaviour must remain."""
+    mod = load_probe()
+    mod.camera_exposure_mode = lambda *a, **k: None
+    device = FakePolaris([B_MODE_INFO])
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(
+        device, 5, ssh_host="root@192.168.0.1")
+    assert (current, index, label, seconds) == (0, 0, "00:00", None)
+    assert started_in_b is True
+
+
+def test_explicit_index_is_still_honoured_from_b_with_a_timed_list():
+    """#208 must keep working when the B-mode list is not collapsed."""
+    mod = load_probe()
+    mod.camera_exposure_mode = lambda *a, **k: 9
+    device = FakePolaris([B_MODE_WITH_TIMED_LIST])
+    current, index, label, seconds, started_in_b = mod.prepare_bulb_shutter(
+        device, 5, explicit_index=20, ssh_host="root@192.168.0.1")
+    assert (index, started_in_b) == (20, True)
+    assert "requested from B mode" in label
+
+
+def test_exposure_mode_query_has_a_kill_switch(monkeypatch):
+    """The query opens a second gphoto2 session against a camera pgphoto holds,
+    which has not been observed on hardware; POLARIS_EXPOSURE_MODE_QUERY=0 must
+    be able to turn it off without touching any other behaviour."""
+    mod = load_probe()
+    monkeypatch.setenv("POLARIS_EXPOSURE_MODE_QUERY", "0")
+    assert mod.camera_exposure_mode("root@192.168.0.1") is None
+    monkeypatch.delenv("POLARIS_EXPOSURE_MODE_QUERY", raising=False)
+    assert mod.EXPOSURE_MODE_QUERY_TIMEOUT_S <= 10.0

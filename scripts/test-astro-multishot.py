@@ -235,7 +235,8 @@ def main() -> int:
         print(f"{stamp()} OUTPUT contract=explicit expected_files={expected_files} "
               f"photoFormat_hint={field(camera, 'photoFormat')}", flush=True)
         preview_was_on = suspend_preview(p)
-        shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index)
+        shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index,
+                                                ssh_host=f"root@{args.host}")
                            if args.bulb_seconds is not None else nullcontext())
         with shutter_context:
             if args.bulb_seconds is not None:

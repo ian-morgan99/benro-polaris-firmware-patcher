@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager, nullcontext
 import math
+import os
 import posixpath
 import shlex
 import socket
@@ -278,10 +279,19 @@ def is_bulb_slot_list(options: list[str]) -> bool:
     """True when command 268 reports the collapsed single-entry list the K-3 III
     shows with the dial on ``B`` (measured: ``RD:0;V:0;R:00:00,;``).
 
-    This is a *symptom* of B mode, not a definition of it: a body whose PTP
-    property store is still initialising can also report a single entry
-    (docs/evidence/benro-connect-crash-20261010). It is therefore used only as a
-    heuristic and callers must log a warning when it fires (#206).
+    This is a *symptom* of B mode, not a definition of it, and it is now known to
+    be unreliable in **both** directions (#206):
+
+    * false positive — a body whose PTP property store is still initialising can
+      report a single entry that is not B mode
+      (docs/evidence/benro-connect-crash-20261010);
+    * false negative — with the dial physically on ``B`` on ``6.0.0.54.67`` the
+      body reported a full **56-entry** timed list, not a collapsed one, so this
+      returned False and the probe took the timed path and was refused with
+      ``state:-6`` (docs/evidence/o-v17b-physical-20261019/bulb-refusal-1.txt).
+
+    It is therefore only a fallback, used when the direct exposure-mode query is
+    unavailable; ``camera_exposure_mode`` is the primary signal.
 
     The B slot is a single entry that is not a usable timed shutter — either a
     non-duration label (``00:00`` parses to ``None``) or a zero duration
@@ -295,6 +305,103 @@ def is_bulb_slot_list(options: list[str]) -> bool:
         return False
     seconds = parse_shutter_seconds(options[0])
     return seconds is None or seconds <= 0
+
+
+# Exposure modes the K-3 III reports for a body that can perform a bulb
+# exposure. These are the raw ``exposure-mode-raw`` values from the camera's own
+# PTP_OC_PENTAX_GetAllConditions response, and they match the values upstream
+# libgphoto2 uses for exactly this decision -- camlibs/ptp2/pentax-utils.h
+# PENTAX_EXP_MODE_BULB=9, PENTAX_EXP_MODE_BULB_LENS=12,
+# PENTAX_EXP_MODE_ASTROTRACER=20, consumed by
+# pentax_bulb_action_mode_supported() in camlibs/ptp2/library.c. The pslr
+# equivalents in camlibs/pentax/pslr.h (PSLR_EXPOSURE_MODE_B=9,
+# B_OFFAUTO=12) agree numerically.
+BULB_EXPOSURE_MODES = frozenset({9, 12, 20})
+
+
+def parse_exposure_mode_raw(text: str) -> int | None:
+    """Pull ``exposure-mode-raw`` out of a Pentax Conditions config value.
+
+    The value is the space-separated ``key=value`` string libgphoto2 builds in
+    ``_get_Pentax_Conditions`` (camlibs/ptp2/config.c), e.g.::
+
+        state=0; astro-phase=none; exposure-mode-raw=9; astro-mode=off; ...
+
+    Returns the raw mode, or None when the field is absent or unparseable, so a
+    body that does not answer the query is reported as unknown rather than as
+    "not B" (#206).
+    """
+    for item in text.replace("\n", " ").split(";"):
+        key, sep, value = item.strip().partition("=")
+        if not sep or key.strip() != "exposure-mode-raw":
+            continue
+        try:
+            return int(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
+# Bounded so a camera that is asleep, or a gphoto2 that cannot get the device,
+# costs one short pause instead of stalling the canary. A conditions read is a
+# single PTP transaction; anything slower than this is already not worth waiting
+# for in front of a capture.
+EXPOSURE_MODE_QUERY_TIMEOUT_S = 10.0
+
+
+def camera_exposure_mode(ssh_host: str | None,
+                         ssh_options: list[str] | None = None,
+                         timeout: float = EXPOSURE_MODE_QUERY_TIMEOUT_S) -> int | None:
+    """Query the camera's real exposure mode, or None when it cannot be known.
+
+    This is the direct check #206 asks for. The K-3 III is served by the ptp2
+    camlib, not the pslr one (``camlibs/pentax/library.c`` does not list
+    ``25fb:0189``), so ``pslr_status.exposure_mode`` is not reachable here; the
+    equivalent value is exposed as the ``pentaxconditions`` config widget, which
+    reads ``PTP_OC_PENTAX_GetAllConditions`` and reports
+    ``exposure-mode-raw=<n>``.
+
+    The probe speaks the 9090 socket protocol, which has no command that reports
+    exposure mode (``284 mode:`` is ``1`` in all 39 archived transcripts, in B
+    mode and out of it alike), so the query goes to the device's own gphoto2 over
+    the SSH channel the #192 file check already uses.
+
+    Deliberately fail-open: with no SSH target, the kill switch set, no gphoto2,
+    a camera that is asleep, or a reply we cannot parse, this returns None and
+    the caller falls back to the list-shape heuristic. A diagnostic must never be
+    able to break a capture that would otherwise have run.
+
+    NOT YET VERIFIED ON HARDWARE. This opens a second gphoto2 session against a
+    camera the running ``pgphoto`` already holds, and this project has a history
+    of PTP/USB fragility around concurrent access (docs/CURRENT-STATE.md
+    "camera busy", docs/evidence/o-v16c-context-lifetime-20261009). The query is
+    read-only and bounded, but the interaction has not been observed on a live
+    body. Set ``POLARIS_EXPOSURE_MODE_QUERY=0`` to fall back to the pre-#206
+    behaviour entirely if a run shows any sign of disturbance.
+    """
+    if not ssh_host:
+        return None
+    if os.environ.get("POLARIS_EXPOSURE_MODE_QUERY", "1") == "0":
+        return None
+    env = ("LD_LIBRARY_PATH=/app/lib/stage2:/app/lib "
+           "CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 "
+           "IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2")
+    cmd = f"{env} /app/bin/gphoto2 --get-config pentaxconditions 2>/dev/null"
+    options = ssh_options or ["ssh", "-o", "BatchMode=yes",
+                              "-o", "ConnectTimeout=5"]
+    try:
+        proc = subprocess.run(options + [ssh_host, cmd], capture_output=True,
+                              text=True, timeout=timeout, check=False)
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"{stamp()} EXPOSURE_MODE query failed ({type(exc).__name__}); "
+              f"falling back to list-shape heuristic (#206)", flush=True)
+        return None
+    mode = parse_exposure_mode_raw(proc.stdout)
+    if mode is None:
+        print(f"{stamp()} EXPOSURE_MODE no parsable exposure-mode-raw in the "
+              f"reply (rc={proc.returncode}); falling back to list-shape "
+              f"heuristic (#206)", flush=True)
+    return mode
 
 
 def shutter_options(p: Polaris, timeout: float = 10.0, quiet: bool = False):
@@ -335,6 +442,7 @@ def prepare_bulb_shutter(
     bulb_seconds: float,
     explicit_index: int | None = None,
     timeout: float = 10.0,
+    ssh_host: str | None = None,
 ) -> tuple[int, int, str, float | None, bool]:
     """Return (current index, chosen index, label, seconds, started_in_bulb_slot).
 
@@ -347,46 +455,69 @@ def prepare_bulb_shutter(
     explicit `--bulb-shutter-index` still wins, which is how a device that does
     expose `Bulb` in its list stays testable.
 
-    With the dial on `B` the body reports a single-entry list instead — measured
-    on device (o-v16c-context-lifetime-20261009): `268@RD:0;V:0;R:00:00,;`.
-    That is the bulb slot, not "no numeric options", so it is returned as-is and
-    the dial is left alone; the previous behaviour aborted the whole bulb canary
-    with `command 268 exposed no numeric shutter options`.
+    **How B mode is decided (#206).** The camera's own exposure mode is the
+    primary signal, read through `camera_exposure_mode`; the shape of the 268
+    list is only a fallback when that query is unavailable. This matters because
+    the shape heuristic is wrong in both directions, and the false negative is
+    the one that breaks a run: with the dial physically on `B` on
+    `6.0.0.54.67` the body reported a full 56-entry timed list, the heuristic
+    said "not B", the probe wrote a timed index, and the capture was refused
+    with `state:-6` (docs/evidence/o-v17b-physical-20261019/bulb-refusal-1.txt).
+    When the camera says B and the list looks timed, the dial is now left alone
+    instead of being written.
 
-    The single-entry list is a heuristic for B mode, not a proof (#206), so its
-    detection is centralised in `is_bulb_slot_list` and logged when it fires.
+    ``ssh_host`` is the SSH target used for the direct query, normally the same
+    one the #192 file check uses. `None` (the default) disables the query and
+    leaves the list-shape heuristic in charge, which is what the unit tests and
+    `--no-file-check` runs do. Every decision is logged with the signal that made
+    it, so a transcript always says whether B mode came from the camera or from
+    the fallback heuristic.
+
     When an explicit index is requested while the dial is on B (#208), the
-    collapsed list is not a valid range to validate against: index 5 is a real
+    reported list is not a valid range to validate against: index 5 is a real
     timed shutter on the K-3 III, only unreachable while the dial sits on B. We
-    therefore do not reject it against the one-entry list — we treat the request
-    as "move off B to this timed index", return the current (B-slot) index so the
-    session restores it, and let `set_shutter` verify against the post-write
-    (timed) list (#209).
+    therefore do not reject it against that list — we treat the request as "move
+    off B to this timed index", return the current index so the session restores
+    it, and let `set_shutter` verify against the post-write (timed) list (#209).
     """
     current, options = shutter_options(p, timeout)
     if current is None:
         raise RuntimeError("cannot run Bulb test without a readable current shutter index")
-    in_bulb_slot = is_bulb_slot_list(options)
-    if in_bulb_slot:
+    # Primary signal: ask the camera. Fallback: infer from the list shape (#206).
+    exposure_mode = camera_exposure_mode(ssh_host)
+    in_bulb_slot = exposure_mode in BULB_EXPOSURE_MODES
+    if exposure_mode is not None:
         print(
-            f"{stamp()} NOTE: command 268 reported a single-entry list "
-            f"({options[0]!r}); treating it as the B-mode bulb slot. This is a "
-            f"heuristic — a body still initialising its PTP store can look the "
-            f"same (#206).",
+            f"{stamp()} EXPOSURE_MODE raw={exposure_mode} "
+            f"bulb_mode={in_bulb_slot} (direct query; list shape not consulted "
+            f"for this decision)",
             flush=True,
         )
+    else:
+        in_bulb_slot = is_bulb_slot_list(options)
+        if in_bulb_slot:
+            print(
+                f"{stamp()} NOTE: exposure mode unavailable; command 268 reported "
+                f"a single-entry list ({options[0]!r}), treated as the B-mode "
+                f"bulb slot. This is a heuristic — a body still initialising its "
+                f"PTP store can look the same, and a body genuinely on B can "
+                f"report a full timed list (#206).",
+                flush=True,
+            )
     if explicit_index is not None:
         if explicit_index < 0:
             raise ValueError(f"--bulb-shutter-index {explicit_index} is negative")
         if in_bulb_slot and explicit_index != current:
-            # The dial is on B; the requested timed index is valid on the K-3 III
-            # but not present in the collapsed list. Do not range-check it
-            # against that list (#208). The session will write it via 261 (which
-            # moves the body off B) and restore the B slot afterwards.
+            # The dial is on B. The requested timed index is valid on the K-3 III
+            # but may be absent from the list the body reports while on B (which
+            # is either collapsed or, as measured on .67, a full timed list).
+            # Do not range-check it against that list (#208). The session will
+            # write it via 261 (which moves the body off B) and restore the
+            # original index afterwards.
             print(
                 f"{stamp()} NOTE: dial is on B; --bulb-shutter-index "
-                f"{explicit_index} is not in the collapsed list and will be "
-                f"requested by moving the body off B, then the B slot restored.",
+                f"{explicit_index} will be requested by moving the body off B, "
+                f"then the original index restored.",
                 flush=True,
             )
             return current, explicit_index, f"<timed index {explicit_index} requested from B mode>", None, True
@@ -397,7 +528,26 @@ def prepare_bulb_shutter(
         seconds = parse_shutter_seconds(label)
         return current, index, label, seconds, in_bulb_slot
     if in_bulb_slot:
-        return current, current, options[0], None, True
+        # The camera says it is in B. If the list also collapsed, index 0 *is*
+        # the bulb slot. If it did not collapse — the false negative measured on
+        # .67 — the body is still on B, so the current index is the bulb slot in
+        # the coordinate system the body is actually using. Writing a timed index
+        # here is what produced `state:-6`, so leave the dial alone either way.
+        collapsed = is_bulb_slot_list(options)
+        if not collapsed:
+            print(
+                f"{stamp()} NOTE: camera reports exposure mode "
+                f"{exposure_mode} (B-capable) while command 268 lists "
+                f"{len(options)} timed entries; leaving the dial on B and using "
+                f"the current index instead of writing a timed shutter (#206).",
+                flush=True,
+            )
+        # Report the slot as the bulb slot rather than the timed label that
+        # happens to sit at this index: nothing is written, and the exposure is
+        # bulb-length, not the label's duration. `bulb_actual` stays None so no
+        # caller mistakes it for a resolved timed shutter.
+        label = options[0] if collapsed else f"<bulb slot, index {current}>"
+        return current, current, label, None, True
     index, label, seconds = resolve_shutter_index(options, bulb_seconds)
     return current, index, label, seconds, False
 
@@ -512,10 +662,16 @@ def bulb_shutter_session(
     bulb_seconds: float,
     explicit_index: int | None = None,
     timeout: float = 10.0,
+    ssh_host: str | None = None,
 ):
-    """Select the long-exposure shutter for a capture and restore the prior index."""
+    """Select the long-exposure shutter for a capture and restore the prior index.
+
+    ``ssh_host`` is forwarded to `prepare_bulb_shutter` so B mode can be decided
+    from the camera's own exposure mode rather than the shape of the 268 list
+    (#206).
+    """
     current, bulb_index, bulb_label, bulb_actual, started_in_bulb_slot = prepare_bulb_shutter(
-        p, bulb_seconds, explicit_index, timeout
+        p, bulb_seconds, explicit_index, timeout, ssh_host
     )
     operation_error: BaseException | None = None
     # The body already reports the slot we want (dial on `B`, or a timed list
@@ -697,7 +853,8 @@ def main() -> int:
 
             # ONE capture
             shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
-            shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index)
+            shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index,
+                                                    ssh_host=args.ssh_host)
                                if args.bulb_seconds is not None else nullcontext())
             with shutter_context:
                 if args.bulb_seconds is not None:
