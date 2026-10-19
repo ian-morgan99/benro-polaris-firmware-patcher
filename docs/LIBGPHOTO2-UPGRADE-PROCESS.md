@@ -150,6 +150,34 @@ to `8.0.0.76` a build failure, rather than a device-side discovery.
 
 If a dirty source tree is deliberately used for investigation, it is diagnostic only unless its dirty hash is captured and the exact content is subsequently committed and rebuilt cleanly.
 
+### 3a. Version-pin surface — every place a version string must change
+
+The build verifies the *source* version and fails if it does not match the requested
+one (`container/build_ptp2.sh` reads `configure.ac` and aborts on mismatch). That guard
+covers one input only. The version and its derived module-directory names are also
+pinned in the loader and the manifest generator, and **those are not checked against the
+source** — if they are left behind, the build succeeds, the gate passes, and the device
+silently dlopens a directory that no longer exists. On a libgphoto2 or libgphoto2_port
+version change, all of the following must move together:
+
+| file | what is pinned |
+|---|---|
+| `container/patch.sh` | `LIBGPHOTO2_VERSION` default |
+| `container/stage2_loader.c` | `STAGE2_CAMLIBS_DIR`, `STAGE2_IOLIBS_DIR` (both `#ifndef`-guarded, so they may be overridden at compile time rather than edited) |
+| `scripts/generate-fwpkt-manifest.py` | the mandatory `lib/stage2/...` install paths |
+| `container/stage2_loader.c` | ABI constants and comments tied to the pinned layout (`GP_WIDGET_TEXT`, the `CameraAbilities` `model[128]` note) |
+
+The module-directory scheme itself is upstream-defined and stable —
+`libgphoto2/<project version>` and `libgphoto2_port/<port version>` — so the correct
+edit is mechanical once the new versions are known. The failure mode to guard against is
+forgetting one of them, not getting the scheme wrong.
+
+Before treating a new version as buildable, re-verify the assumptions this repository
+depends on rather than assuming they carried over: the `sed` anchors in
+`container/build_ptp2.sh`, the `_Camera` pad anchor, the exported-symbol assumption that
+removes the trampoline shim, and the name of the upstream test suite the gate skips.
+`docs/LIBGPHOTO2-ALIGNMENT-AUDIT.md` records the last time each was checked and how.
+
 ## 4. Build-time compatibility gates
 
 Before any device install, fail the build if any of these are not proven.
