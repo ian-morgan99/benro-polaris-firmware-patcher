@@ -214,7 +214,18 @@ phase_auth() {
       fi ;;
     *state:-5*|*state:-1*) log "AUTH: camera absent/failed (idle) — OK" ;;
     "") log "AUTH: no 286 reply (camera queries unanswered = idle) — OK" ;;
-    *) log "AUTH: unrecognised camera-state reply — refusing (ALLOW_BUSY=1 to override)"; return 1 ;;
+    *)
+      # The device can answer the 286 query with an unrelated frame (e.g. its
+      # continuous 284 gimbal-telemetry stream sitting on the socket), which is
+      # neither a busy nor a recognised idle reply. Honour the documented
+      # ALLOW_BUSY escape hatch here too — the message always promised it, but
+      # only the state:1 branch implemented it. Confirm idle out-of-band
+      # (a bare 1&286&0&# that returns nothing) before setting ALLOW_BUSY=1.
+      if [ "$ALLOW_BUSY" = "1" ]; then
+        log "AUTH: unrecognised camera-state reply — proceeding because ALLOW_BUSY=1"
+      else
+        log "AUTH: unrecognised camera-state reply — refusing (ALLOW_BUSY=1 to override)"; return 1
+      fi ;;
   esac
   return 0
 }
