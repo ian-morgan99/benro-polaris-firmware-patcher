@@ -1,6 +1,6 @@
 # Current repository state
 
-## 2026-10-19 — `.67` built, gate-GREEN, STAGED + REBOOTED (o-v17b, Color Temperature + CI detail params) — post-reboot verify pending
+## 2026-10-19 — `.67` INSTALLED and VERIFIED on the device (o-v17b, Color Temperature + CI detail params)
 
 **Built and pre-release-gate GREEN: `6.0.0.54.67`, candidate `o-v17b-ci-colortemp-20261018`.**
 Artifact `out/o-v17b-ci-colortemp-20261018/FwPkt.zip` — sha256
@@ -25,30 +25,41 @@ empty-descriptor controls fail closed rather than rendering a zero-choice widget
 Pre-release gate GREEN 2026-10-19 (10 passed / 0 failed / 0 skipped; container
 harness 20, python regression 243, code-780 version patch, FwPkt structural
 validation, firmwareInfo manifest, install-manifest currency, polestar_app Bulb
-branch intact, pgphoto timed-Bulb dispatch present). **Physical qualification
-PENDING — not installed; needs a K-3 III on the bench to confirm each descriptor
-is writable and round-trips (the read-back verification is what makes that check
-honest), and `0xd024` needs confirmation its descriptor enumerates the 255
-sentinel.** `.66` remains the running build and `.55` the last physically tested
-rollback target.
+branch intact, pgphoto timed-Bulb dispatch present). **Installed and verified on
+device 2026-10-19 09:30 local (see below). Physical qualification still PENDING
+— needs a K-3 III on the bench to confirm each descriptor is writable and
+round-trips (the read-back verification is what makes that check honest), and
+`0xd024` needs confirmation its descriptor enumerates the 255 sentinel.** `.55`
+remains the last *physically* tested build and the rollback target.
 
-Install (2026-10-19, ~01:26–01:44 local): the `o-v17a-autonomous-install.sh`
-flow passed WAKE/AUTH (candidate digest matched the manifest; device identity
-OK; camera idle confirmed out-of-band — a bare `1&286&0&#` returns nothing, the
-AUTH refusal was the device's continuous 284 gimbal-telemetry stream, so
-`ALLOW_BUSY=1` was an informed override — see the install-script fix in this
-commit range), STAGED the 68 MB zip with an on-device SHA-256 match and atomic
-rename, but the 812 reboot was UNCERTAIN (device did not go dark within 60s).
-Applied the reliable path instead: removed the stray `.part`, `sync`, plain
-`/sbin/reboot` at 01:44:29. The device has been dark since (reflash is ~1 min,
-so it is very likely up on `.67`), but the host did not rejoin the `polaris_*`
-AP afterwards and NetworkManager is not reachable from this sandbox, so the
-post-reboot manifest verification could not be completed. **To finish in the
-morning:** rejoin the `polaris_*` AP, then run
-`FWPKT_ZIP=$PWD/out/o-v17b-ci-colortemp-20261018/FwPkt.zip \
- scripts/o-v17a-autonomous-install.sh --verify-only`
-— it reads `/app/FwVer` + provenance and SHA-256-checks all 10 manifest files
-against `install-manifest.json`. Expect `FwVer:6.0.0.54.67;date:2026.10.18;`.
+Install (2026-10-19, ~01:26 → 09:30 local) — **VERIFIED**:
+- The `o-v17a-autonomous-install.sh` flow passed WAKE/AUTH (candidate digest
+  matched the manifest; device identity OK; camera idle confirmed out-of-band —
+  the AUTH refusal was the device's continuous 284 gimbal-telemetry stream, so
+  `ALLOW_BUSY=1` was an informed override), and STAGED the 68 MB zip with an
+  on-device SHA-256 match + atomic rename.
+- **Root cause of the first failed attempt:** the on-boot FwPkt watcher consumes
+  the extracted **`FwPkt/` tree** at `/app/sd/FwPkt/`, NOT the zip — a zip-only
+  staging is silently ignored (documented failure mode, issue #58). The device
+  rebooted at 01:44 but came back on `.66` with the zip untouched; the
+  `--verify-only` verdict was `not-installed`.
+- **Fix (tree path, same as `.66`):** the AP link was flapping hard (a single
+  tar/`cat` transfer kept dying at 0 bytes), so instead of re-transferring I
+  **extracted the already-staged `/app/sd/FwPkt.zip` on-device** (`unzip` is
+  present; zip digest `bed0ef63…` confirmed). All 6 `firmwareInfo` MD5s matched
+  on-device; the stray `FwPkt.zip`/`.part` were removed.
+- **Reboot delivery lesson:** `/sbin/reboot` and `812` both *appeared* to fire
+  but the device never actually rebooted — every "went dark" was an AP-link flap
+  and `/proc/uptime` kept climbing (27k+ s, continuous since the 01:44 boot);
+  Mlog/Clog showed zero FwPkt/upgrade/SYS_REBOOT activity. The reliable trigger
+  is a **detached** reboot that survives the SSH drop:
+  `setsid sh -c "sleep 2; sync; /sbin/reboot" &`. Success must be judged by
+  **uptime reset**, not by the link going dark.
+- **Result:** fired the detached reboot at 09:29:02; uptime reset 27872 → 17 and
+  the device came up on `FwVer:6.0.0.54.67;date:2026.10.18;` at 09:30:18.
+  `--verify-only` verdict **verified** — FwVer + provenance
+  (`build_id 6.0.0.54.67-o-v17b-ci-colortemp-20261018`) + all 10 mandatory
+  files match `install-manifest.json`.
 
 Build-pipeline note (this run): two build-script fixes were needed and are
 committed to `main` — `container/build_ptp2.sh` now runs `autoreconf -isf` and,
