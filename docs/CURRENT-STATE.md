@@ -1,5 +1,58 @@
 # Current repository state
 
+## 2026-10-19 — `.68` built and gate-GREEN (o-v17c, libgphoto2 #104 fix for `0xd018`) — awaiting install + re-qualification
+
+**Built and pre-release-gate GREEN: `6.0.0.54.68`, candidate `o-v17c-colortemp-formless`.**
+Artifact `out/o-v17c-colortemp-formless/FwPkt.zip` — sha256
+`14e5761ce06a5ddc5933bfa237771737ed52bd1ca21b13365eac50db8e2e604d`, md5
+`12c7a5fc83295f28ea9a85d829a38b99`, size 68392387. `install-manifest.json`
+generated (10 mandatory files, `stage2_mandatory=true`). Published to
+PrivateResearch at `93d4d04df`. Provenance: libgphoto2 `8e06d39ae`, patcher
+`36d72ae`, camlibs `ptp2,pentax`, build_id `6.0.0.54.68-o-v17c-colortemp-formless`.
+
+**Single purpose:** carry libgphoto2 PR #105 (closes #104), the fix for the one
+control that failed `.67` qualification. `_pentax_prop_get` previously rejected
+every descriptor with `FormFlag == PTP_DPFF_None`, which conflated the
+empty-enumeration Custom Image properties (the case the guard exists for) with
+`0xd018`, a `GetSet` UINT16 whose descriptor carries no form at all. The guard
+now admits a form-less descriptor only when it is `GetSet` **and** of a scalar
+datatype. Consequences, deliberately bounded:
+
+- `Enumeration` with `NumberOfValues == 0` still fails closed → `0xd024`–`0xd026`
+  stay withheld exactly as before.
+- Read-only or non-scalar form-less descriptors still fail closed → support is
+  not inferred from a `GetSet` descriptor alone (libgphoto2 AGENTS.md rule 2).
+- **No range is invented.** The descriptor supplies none, so the control renders
+  as the same plain integer/TEXT widget the generic property path already
+  produces — which is what the capability matrix row already intends
+  ("descriptor-driven"). IMAGE Transmitter 2 has no color-temperature UI at all,
+  so there is no IT2 value list a range could have come from.
+
+Everything else is identical to `.67`: same patcher tree, same stock base, same
+CI controls. Gate GREEN 2026-10-19 (10 passed / 0 failed / 0 skipped; container
+harness 21, python regression 243, code-780 version patch, FwPkt structural
+validation, firmwareInfo manifest, install-manifest currency, polestar_app Bulb
+branch intact, pgphoto timed-Bulb dispatch present).
+
+**Acceptance gate (open):** `pentaxcolortemperature` must get and set on a K-3 III
+with WB switched into a color-temperature mode, cross-checked against the raw
+`other/d018` path, and `0xd024`–`0xd026` must still be withheld. Per the
+async-apply finding, every assertion must read the **named** control from a fresh
+process, batched into a single `gphoto2` invocation to avoid the PTP session
+churn that made one `.67` re-test inconclusive.
+
+`.67` remains the running build; `.55` remains the last *fully* physically tested
+rollback target.
+
+Build-environment note (this run): the sandbox is a Flatpak, so Docker is only
+reachable via `flatpak-spawn --host` — the build, the pre-release gate and the
+`ubireader`-backed manifest generator all have to run that way. Conversely the
+host's git credential helper points at a stale `gh` path, so the PrivateResearch
+upload must run **inside** the sandbox where `gh` is authenticated. The build
+script stops after a RED gate, so a first run that fails only on a missing
+install manifest needs the manifest generated and the gate, version claim and
+publish re-run by hand.
+
 ## 2026-10-19 — `.67` INSTALLED and VERIFIED on the device (o-v17b, Color Temperature + CI detail params)
 
 **Built and pre-release-gate GREEN: `6.0.0.54.67`, candidate `o-v17b-ci-colortemp-20261018`.**
