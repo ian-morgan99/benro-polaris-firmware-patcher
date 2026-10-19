@@ -1,0 +1,95 @@
+2026-10-19T08:48:41Z TX 1&284&2&-100#
+2026-10-19T08:48:41Z RX 785@state:0;#
+2026-10-19T08:48:41Z RX 284@mode:1;state:0;#
+2026-10-19T08:48:41Z TX 1&820&2&-100#
+2026-10-19T08:48:41Z RX 820@ret:-1;#
+2026-10-19T08:48:41Z TX 1&823&2&app:openpolaris-canary-two-shot-cf6e49624cd6483ab1760f2beedde18a;ver:1;#
+2026-10-19T08:48:41Z TX 1&780&2&-100#
+2026-10-19T08:48:41Z RX 780@hw:1.1.1.2;sw:6.0.0.54.67;exAxis:1.0.2.14;sv:1;ov: ;#
+2026-10-19T08:48:41Z FW_VERSION sw=6.0.0.54.67 expected=6.0.0.54.67
+2026-10-19T08:48:41Z RUN source=scripted run_id=cf6e49624cd6483ab1760f2beedde18a; any overlapping manual/app/script capture invalidates this run
+2026-10-19T08:48:41Z TX 1&286&2&-100#
+2026-10-19T08:48:41Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-10-19T08:48:41Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-10-19T08:48:41Z OUTPUT contract=explicit expected_files=1 expected_sp_prefix='/app/sd/normal/SP_' photoFormat_hint=2
+2026-10-19T08:48:41Z TX 1&292&2&-100#
+2026-10-19T08:48:41Z RX 292@state:0;#
+2026-10-19T08:48:41Z PREVIEW initial_state=0
+2026-10-19T08:48:41Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-10-19T08:48:41Z SHOT1 source=scripted request_id=cf6e49624cd6483ab1760f2beedde18a-1 expected_sp_prefix='/app/sd/normal/SP_' capture issued
+2026-10-19T08:48:41Z RX 264@state:1#
+2026-10-19T08:48:41Z SHOT1 CAPTURE state=1 lifecycle=[1]
+2026-10-19T08:48:41Z RX 785@state:0;#
+2026-10-19T08:48:42Z RX 785@state:0;#
+2026-10-19T08:48:43Z RX 785@state:0;#
+2026-10-19T08:48:44Z RX 785@state:0;#
+2026-10-19T08:48:45Z RX 785@state:0;#
+2026-10-19T08:48:46Z RX 785@state:0;#
+2026-10-19T08:48:47Z RX 785@state:0;#
+2026-10-19T08:48:48Z RX 785@state:0;#
+2026-10-19T08:48:49Z RX 785@state:0;#
+2026-10-19T08:48:50Z RX 785@state:0;#
+2026-10-19T08:48:51Z RX 785@state:0;#
+2026-10-19T08:48:52Z RX 785@state:0;#
+2026-10-19T08:48:53Z RX 785@state:0;#
+2026-10-19T08:48:54Z RX 785@state:0;#
+2026-10-19T08:48:55Z RX 785@state:0;#
+2026-10-19T08:48:56Z RX 785@state:0;#
+2026-10-19T08:48:57Z RX 785@state:0;#
+2026-10-19T08:48:58Z RX 785@state:0;#
+2026-10-19T08:48:59Z RX 785@state:0;#
+2026-10-19T08:49:00Z RX 785@state:0;#
+2026-10-19T08:49:02Z RX 785@state:0;#
+2026-10-19T08:49:02Z RX 785@state:0;#
+2026-10-19T08:49:03Z RX 785@state:0;#
+2026-10-19T08:49:04Z RX 264@state:4;#
+2026-10-19T08:49:04Z SHOT1 CAPTURE state=4 lifecycle=[1, 4]
+2026-10-19T08:49:04Z RX 773@type:1;path:/app/sd/normal/SP_0353.dng;size:30454507;cTime:2026-10-19 09:49:07;duration:0;#
+2026-10-19T08:49:04Z SHOT1 FILE /app/sd/normal/SP_0353.dng
+2026-10-19T08:49:04Z RX 775@status:1;totalspace:121866;freespace:110954;usespace:10912;#
+2026-10-19T08:49:04Z SHOT1 STORAGE status:1;totalspace:121866;freespace:110954;usespace:10912;
+2026-10-19T08:49:04Z RX 264@state:0;#
+2026-10-19T08:49:04Z SHOT1 CAPTURE state=0 lifecycle=[1, 4, 0]
+2026-10-19T08:49:04Z SHOT1 IDLE and output obligation confirmed
+2026-10-19T08:49:04Z SHOT1 source=scripted request_id=cf6e49624cd6483ab1760f2beedde18a-1 PASS states=[1, 4, 0] files=['/app/sd/normal/SP_0353.dng'] idle=True stale=None term=None
+2026-10-19T08:49:04Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-10-19T08:49:04Z SHOT2 source=scripted request_id=cf6e49624cd6483ab1760f2beedde18a-2 expected_sp_prefix='/app/sd/normal/SP_' capture issued
+2026-10-19T08:49:04Z RX 264@state:1#
+2026-10-19T08:49:04Z SHOT2 CAPTURE state=1 lifecycle=[1]
+2026-10-19T08:49:04Z RX 785@state:0;#
+2026-10-19T08:49:05Z RX 785@state:0;#
+2026-10-19T08:49:06Z RX 785@state:0;#
+2026-10-19T08:49:07Z RX 785@state:0;#
+2026-10-19T08:49:08Z RX 785@state:0;#
+2026-10-19T08:49:09Z RX 785@state:0;#
+2026-10-19T08:49:10Z RX 785@state:0;#
+2026-10-19T08:49:11Z RX 785@state:0;#
+2026-10-19T08:49:12Z RX 785@state:0;#
+2026-10-19T08:49:13Z RX 785@state:0;#
+2026-10-19T08:49:14Z RX 785@state:0;#
+2026-10-19T08:49:15Z RX 785@state:0;#
+2026-10-19T08:49:16Z RX 785@state:0;#
+2026-10-19T08:49:17Z RX 785@state:0;#
+2026-10-19T08:49:18Z RX 785@state:0;#
+2026-10-19T08:49:19Z RX 785@state:0;#
+2026-10-19T08:49:20Z RX 785@state:0;#
+2026-10-19T08:49:21Z RX 785@state:0;#
+2026-10-19T08:49:22Z RX 785@state:0;#
+2026-10-19T08:49:23Z RX 785@state:0;#
+2026-10-19T08:49:24Z RX 785@state:0;#
+2026-10-19T08:49:25Z RX 785@state:0;#
+2026-10-19T08:49:26Z RX 785@state:0;#
+2026-10-19T08:49:27Z RX 785@state:0;#
+2026-10-19T08:49:27Z RX 264@state:4;#
+2026-10-19T08:49:27Z SHOT2 CAPTURE state=4 lifecycle=[1, 4]
+2026-10-19T08:49:28Z RX 785@state:0;#
+2026-10-19T08:49:29Z RX 785@state:0;#
+2026-10-19T08:49:30Z RX 773@type:1;path:/app/sd/normal/SP_0354.dng;size:28344848;cTime:2026-10-19 09:49:33;duration:0;#
+2026-10-19T08:49:30Z SHOT2 FILE /app/sd/normal/SP_0354.dng
+2026-10-19T08:49:30Z RX 775@status:1;totalspace:121866;freespace:110927;usespace:10939;#
+2026-10-19T08:49:30Z SHOT2 STORAGE status:1;totalspace:121866;freespace:110927;usespace:10939;
+2026-10-19T08:49:30Z RX 264@state:0;#
+2026-10-19T08:49:30Z SHOT2 CAPTURE state=0 lifecycle=[1, 4, 0]
+2026-10-19T08:49:30Z SHOT2 IDLE and output obligation confirmed
+2026-10-19T08:49:30Z SHOT2 source=scripted request_id=cf6e49624cd6483ab1760f2beedde18a-2 PASS states=[1, 4, 0] files=['/app/sd/normal/SP_0354.dng'] idle=True stale=None term=None
+2026-10-19T08:49:30Z MULTI-SHOT PASS shots=2 files=['/app/sd/normal/SP_0353.dng', '/app/sd/normal/SP_0354.dng']

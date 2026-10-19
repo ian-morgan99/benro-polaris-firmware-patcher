@@ -43,3 +43,9 @@ Physical qualification on a K-3 III: confirm `0xd018` and `0xd021`–`0xd029`
 write and round-trip (the read-back verification makes this honest), and confirm
 `0xd024`'s descriptor enumerates the 255 sentinel. `.55` remains the last
 *physically* tested rollback target.
+
+**RESOLVED 2026-10-19** — see `../o-v17b-physical-20261019/SUMMARY.md`.
+`0xd021`/`0xd022` round-trip with an independent raw read-back; `0xd024`–`0xd026`
+enumerate nothing (there is no 255 sentinel) and stay withheld as designed;
+`0xd018` is rejected by the `PTP_DPFF_None` guard while the raw property reads
+and writes fine — libgphoto2 #104.

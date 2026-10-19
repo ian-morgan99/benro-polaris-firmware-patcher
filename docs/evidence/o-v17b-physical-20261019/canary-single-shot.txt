@@ -1,0 +1,53 @@
+2026-10-19T08:44:10Z TX 1&284&2&-100#
+2026-10-19T08:44:10Z RX 785@state:0;#
+2026-10-19T08:44:10Z RX 284@mode:1;state:0;#
+2026-10-19T08:44:10Z TX 1&820&2&-100#
+2026-10-19T08:44:10Z RX 820@ret:-1;#
+2026-10-19T08:44:10Z TX 1&823&2&app:openpolaris-canary-probe;ver:1;#
+2026-10-19T08:44:10Z TX 1&286&2&-100#
+2026-10-19T08:44:10Z RX 286@manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;#
+2026-10-19T08:44:10Z CAMERA manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;
+2026-10-19T08:44:10Z SUMMARY model=pentax k-3 mark iii state=1 photoFormat=2
+2026-10-19T08:44:10Z TX 1&780&2&-100#
+2026-10-19T08:44:10Z RX 780@hw:1.1.1.2;sw:6.0.0.54.67;exAxis:1.0.2.14;sv:1;ov: ;#
+2026-10-19T08:44:10Z FW_VERSION sw=6.0.0.54.67 expected=6.0.0.54.67
+2026-10-19T08:44:10Z TX 1&292&2&-100#
+2026-10-19T08:44:10Z RX 292@state:0;#
+2026-10-19T08:44:10Z PREVIEW initial_state=0
+2026-10-19T08:44:10Z SHOT shot_timeout=180.0s
+2026-10-19T08:44:10Z TX 1&264&4&state:1;bulb:0;c:-1;#
+2026-10-19T08:44:10Z RX 264@state:1#
+2026-10-19T08:44:10Z CAPTURE state=1 lifecycle=[1]
+2026-10-19T08:44:10Z RX 785@state:0;#
+2026-10-19T08:44:11Z RX 785@state:0;#
+2026-10-19T08:44:12Z RX 785@state:0;#
+2026-10-19T08:44:13Z RX 785@state:0;#
+2026-10-19T08:44:14Z RX 785@state:0;#
+2026-10-19T08:44:15Z RX 785@state:0;#
+2026-10-19T08:44:16Z RX 785@state:0;#
+2026-10-19T08:44:17Z RX 785@state:0;#
+2026-10-19T08:44:18Z RX 785@state:0;#
+2026-10-19T08:44:19Z RX 785@state:0;#
+2026-10-19T08:44:20Z RX 785@state:0;#
+2026-10-19T08:44:21Z RX 785@state:0;#
+2026-10-19T08:44:22Z RX 785@state:0;#
+2026-10-19T08:44:23Z RX 785@state:0;#
+2026-10-19T08:44:24Z RX 785@state:0;#
+2026-10-19T08:44:25Z RX 785@state:0;#
+2026-10-19T08:44:26Z RX 785@state:0;#
+2026-10-19T08:44:27Z RX 785@state:0;#
+2026-10-19T08:44:28Z RX 785@state:0;#
+2026-10-19T08:44:29Z RX 785@state:0;#
+2026-10-19T08:44:30Z RX 785@state:0;#
+2026-10-19T08:44:31Z RX 785@state:0;#
+2026-10-19T08:44:32Z RX 785@state:0;#
+2026-10-19T08:44:33Z RX 264@state:4;#
+2026-10-19T08:44:33Z CAPTURE state=4 lifecycle=[1, 4]
+2026-10-19T08:44:33Z RX 785@state:0;#
+2026-10-19T08:44:34Z RX 773@type:1;path:/app/sd/normal/SP_0352.dng;size:28567965;cTime:2026-10-19 09:44:37;duration:0;#
+2026-10-19T08:44:34Z FILE /app/sd/normal/SP_0352.dng
+2026-10-19T08:44:34Z RX 775@status:1;totalspace:121866;freespace:110983;usespace:10883;#
+2026-10-19T08:44:34Z RX 264@state:0;#
+2026-10-19T08:44:34Z CAPTURE state=0 lifecycle=[1, 4, 0]
+2026-10-19T08:44:34Z PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0352.dng']
+2026-10-19T08:44:34Z DONE states=[1, 4, 0] files=['/app/sd/normal/SP_0352.dng']

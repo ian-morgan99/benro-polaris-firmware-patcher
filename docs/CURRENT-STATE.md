@@ -26,10 +26,17 @@ Pre-release gate GREEN 2026-10-19 (10 passed / 0 failed / 0 skipped; container
 harness 20, python regression 243, code-780 version patch, FwPkt structural
 validation, firmwareInfo manifest, install-manifest currency, polestar_app Bulb
 branch intact, pgphoto timed-Bulb dispatch present). **Installed and verified on
-device 2026-10-19 09:30 local (see below). Physical qualification still PENDING
-— needs a K-3 III on the bench to confirm each descriptor is writable and
-round-trips (the read-back verification is what makes that check honest), and
-`0xd024` needs confirmation its descriptor enumerates the 255 sentinel.** `.55`
+device 2026-10-19 09:30 local (see below). PHYSICALLY QUALIFIED PARTIAL 2026-10-19
+(see `evidence/o-v17b-physical-20261019/SUMMARY.md`): capture path PASS
+(single-shot + two-shot, distinct files, no crash); Custom Image
+`0xd021`/`0xd022` round-trip PASS including the signed path; `0xd024`–`0xd026`
+confirmed withheld, and the open `0xd024` question is answered — its descriptor
+enumerates NOTHING, not a 255 sentinel, so withholding stays correct. The
+candidate's headline control FAILS: `0xd018` Color Temperature is unreachable
+through `pentaxcolortemperature` (get and set) although the raw property reads
+`5000` and accepts `4000` — root-caused to the `PTP_DPFF_None` guard in
+`_pentax_prop_get`, filed as libgphoto2 #104. NOT release-qualified as Color
+Temperature support.** `.55`
 remains the last *physically* tested build and the rollback target.
 
 Install (2026-10-19, ~01:26 → 09:30 local) — **VERIFIED**:
