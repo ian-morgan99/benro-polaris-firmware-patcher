@@ -57,6 +57,16 @@ the app expects there, but it does not bear on `.68`.
 
 ## Not covered by this run
 
+- **Manual dial.** Immediately after this run, at 17:52, the operator took a
+  10 s bulb capture with noise reduction ON — that **succeeded** (`SP_0360.dng`,
+  28393553 B, mtime 17:52:12) — then switched the camera to **Manual** and took
+  one shot, which **failed**: `264` returned `state:-1005` and no file was
+  written (`SP_0360.dng` stayed the newest; the next sequence number was never
+  allocated). That is #172 reproduced, and the ordering is the useful part: the
+  same daemon, same session, same camera served bulb+NR successfully seconds
+  before refusing the manual request, so this is not a generally broken capture
+  path. It is pre-existing and unrelated to anything in `.68`, but it means the
+  capture path is qualified for the canary and bulb paths **only**.
 - The full #180 six-scenario matrix (JPEG+RAW / RAW-only × short / long × NR /
   Pixel Shift). This run is one scenario: RAW, short exposure, NR off, Pixel
   Shift off. The other five need camera-side setting changes and are not
@@ -68,9 +78,16 @@ the app expects there, but it does not bear on `.68`.
 
 ## Verdict
 
-`.68` is stable on the K-3 III for the capture path under the project's own
-release bar: three consecutive captures, no first-shot divergence, no daemon
+`.68` is stable on the K-3 III for the canary capture path under the project's
+own release bar: three consecutive captures, no first-shot divergence, no daemon
 restart, no memory or fd growth, no kernel fault. Combined with the qualification
 in `../o-v17c-physical-20261019/SUMMARY.md` (acceptance PASS, blast radius
-proven to be one control, install verified 10/10), this is a solid installed
-candidate.
+proven to be one control, install verified 10/10), it is a solid installed
+candidate **for the paths tested**.
+
+Two things sit outside that verdict and are not `.68` regressions: Manual-dial
+capture is refused with `state:-1005` (#172, reproduced same evening), and a
+PTP session can wedge with the camera still on USB until the camera is power
+cycled (#182, reproduced same evening — the supervisor took no action). Both are
+pre-existing. Neither is a reason to move off `.68`; both are reasons not to
+call the capture path finished.
