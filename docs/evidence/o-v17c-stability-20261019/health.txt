@@ -1,0 +1,16 @@
+### HEALTH BEFORE 15:48:24Z
+uptime=3732
+memfree_kb=1354636
+pid=249 comm=polestar_app rss_kb=11288 fds=18 threads=27
+pid=27532 comm=pgphoto.stage2o rss_kb=12144 fds=11 threads=7
+dmesg_faults=0
+camera=1
+
+### HEALTH AFTER 15:49:57Z
+uptime=3825
+memfree_kb=1260384
+pid=249 comm=polestar_app rss_kb=11312 fds=18 threads=27
+pid=27532 comm=pgphoto.stage2o rss_kb=12392 fds=11 threads=7
+dmesg_faults=0
+camera=1
+
