@@ -1,0 +1,28 @@
+daemon stopped (was 15520)
+### pentaxcihighlightcontrast (d027)  testIndex=5 restoreIndex=4
+  t0 raw=1 widget=0
+  set index=5 rc=0
+  t+20 raw= widget=
+  t+40 raw= widget=
+  restore index=4 rc=1
+  restored t+20 raw= widget=
+### pentaxcishadowcontrast (d028)  testIndex=4 restoreIndex=5
+  t0 raw= widget=
+  set index=4 rc=1
+  t+20 raw= widget=
+  t+40 raw= widget=
+  restore index=5 rc=1
+  restored t+20 raw= widget=
+### pentaxcifinesharpness (d029)  testIndex=0 restoreIndex=1
+  t0 raw= widget=
+  set index=0 rc=1
+  t+20 raw= widget=
+  t+40 raw= widget=
+  restore index=1 rc=1
+  restored t+20 raw= widget=
+### final
+  pentaxcihighlightcontrast=
+  pentaxcishadowcontrast=
+  pentaxcifinesharpness=
+daemon restarted
+DEEP_DONE

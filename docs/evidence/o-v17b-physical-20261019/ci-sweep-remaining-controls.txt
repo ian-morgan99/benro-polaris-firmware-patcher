@@ -1,0 +1,53 @@
+daemon stopped (was 11688)
+### pentaxcikey (/main/other/d023)
+  current-widget='0'
+  current-raw='0'
+  write-index=5 rc=0
+  readback-widget(fresh)='1'
+  readback-raw(fresh)='1'
+  restore='0' rc=0
+  restored-widget(fresh)='0'
+  restored-raw(fresh)='0'
+### pentaxcihighlightcontrast (/main/other/d027)
+  current-widget='0'
+  current-raw='1'
+  write-index=5 rc=0
+  readback-widget(fresh)='1'
+  readback-raw(fresh)='1'
+  restore='0' rc=0
+  restored-widget(fresh)='0'
+  restored-raw(fresh)='1'
+### pentaxcishadowcontrast (/main/other/d028)
+  current-widget='0'
+  current-raw='0'
+  write-index=5 rc=0
+  readback-widget(fresh)='1'
+  readback-raw(fresh)='0'
+  restore='0' rc=0
+  restored-widget(fresh)='0'
+  restored-raw(fresh)='0'
+### pentaxcifinesharpness (/main/other/d029)
+  current-widget='1'
+  current-raw='0'
+  write-index=0 rc=0
+  readback-widget(fresh)='0'
+  readback-raw(fresh)='0'
+  restore='1' rc=0
+  restored-widget(fresh)='1'
+  restored-raw(fresh)='0'
+### read-only descriptor passthroughs
+  d02b: code=0xd02b; datatype=0x0002; getset=1; form=2; enum-count=3; value-bytes=2; value-hex=0000
+  d02d: code=0xd02d; datatype=0x4002; getset=1; form=0; enum-count=0; value-bytes=8; value-hex=0400000000000000
+  write-attempt d02d (expect refusal):
+    Pentax session already open from a previous connection; observing camera state.
+    Pentax init stage vendor enable succeeded; function flags 0x00000000.
+  write-attempt d02b (expect refusal):
+    Pentax session already open from a previous connection; observing camera state.
+    Pentax session already open from a previous connection; observing camera state.
+### final state (must equal originals)
+  pentaxcikey=0
+  pentaxcihighlightcontrast=0
+  pentaxcishadowcontrast=0
+  pentaxcifinesharpness=1
+daemon restarted
+SWEEP_DONE

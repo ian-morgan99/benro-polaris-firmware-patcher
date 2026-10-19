@@ -9,9 +9,13 @@ camlibs `ptp2,pentax`. Dual-path (#38): `/proc/<pgphoto>/maps` loads
 
 ## Verdict
 
-**PARTIAL PASS — capture path qualified; Color Temperature (`0xd018`) is NOT
-usable through its named control; Custom Image `0xd024`–`0xd026` remain
-withheld (as designed).**
+**PARTIAL PASS — capture path qualified; every exposed Custom Image control
+(`0xd021`–`0xd023`, `0xd027`–`0xd029`) writes and round-trips; Color Temperature
+(`0xd018`) is NOT usable through its named control; Custom Image `0xd024`–`0xd026`
+remain withheld (as designed).**
+
+(Verdict unchanged by the later extended-CI addendum below, which completes the
+exposed-control coverage and corrects the raw-property oracle used earlier.)
 
 The candidate's headline feature does not reach a client through the widget the
 candidate added. The underlying property works, but only through the generic
@@ -35,7 +39,7 @@ Stability across all captures: `pgphoto.stage2ondisk` pid **250** and
 `polestar_app` 249 unchanged, no core file, no segfault/OOM in `dmesg`, no
 device reboot.
 
-## Custom Image `0xd021`–`0xd029` — PASS on the exposed subset
+## Custom Image `0xd021`–`0xd029` — PASS on the exposed subset (completed in the addendum)
 
 Via the direct CLI with the shipped Stage-2 stack (daemon stopped, one chained
 gphoto2 session, service restored with `/app/restart_gphoto`):
@@ -156,7 +160,73 @@ With the dial physically on **B**, `268` still reported the 57-entry timed list
 `264 state:1;bulb:5;c:-1;` returned `state:-6` twice. Recorded on #164.
 Transcripts: `bulb-refusal-1.txt`, `bulb-refusal-2.txt`.
 
+## Addendum — extended CI coverage (same day, later session)
+
+The remaining exposed controls were then exercised: `pentaxcikey` (`0xd023`),
+`pentaxcihighlightcontrast` (`0xd027`), `pentaxcishadowcontrast` (`0xd028`),
+`pentaxcifinesharpness` (`0xd029`), plus the read-only descriptor passthroughs
+`pentaxpropd02b` and `pentaxpropd02d`.
+
+### Named widgets — PASS (all four)
+
+Each accepts a write (`rc=0`) and the widget's own value read-back **in a fresh
+process** reflects it; every restore was verified the same way. Note the widget
+`Current:` is the *value* while `--set-config name=N` addresses the *choice
+index*, so writing index 5 on a `-4…+4` control correctly yields `Current: 1`.
+
+| control | before | write (index) | fresh read-back | restore | restored (fresh) |
+|---|---|---|---|---|---|
+| `pentaxcikey` | `0` | 5 | **`1`** | 0 | `0` |
+| `pentaxcihighlightcontrast` | `0` | 5 | **`1`** | 0 | `0` |
+| `pentaxcishadowcontrast` | `0` | 5 | **`1`** | 0 | `0` |
+| `pentaxcifinesharpness` | `1` | 0 | **`0`** | 1 | `1` |
+
+Ranges again come from the camera's own descriptor (`-4…+4`, and `0|1` for fine
+sharpness) — no hard-coded table.
+
+### Correction to the earlier method: raw `d0XX` is NOT a usable oracle here
+
+The raw nodes did **not** track the widgets, and in one case disagreed *before
+any write*:
+
+| property | raw vs widget |
+|---|---|
+| `d023` | agreed (`0`/`0`, then `1`/`1`) |
+| `d027` | raw `1` while widget `0` — **both before the write and after the verified restore** |
+| `d028` | raw stayed `0` while the widget moved to `1` and back |
+| `d029` | raw `0` while the widget moved `1`→`0`→`1` |
+
+So for these Custom-Image properties the raw `/main/other/d0XX` value is either
+asynchronously lagged or differently encoded, and a raw/widget disagreement is
+**not** evidence of a control failure. The reliable oracle is the named widget
+read from a fresh process. (This refines the earlier section, which treated raw
+agreement on `d021`/`d022` as confirmation — that agreement was not reproducible
+here.)
+
+### Deep-settle re-test — inconclusive (methodology, not firmware)
+
+A follow-up intended to settle each write for 20–40 s and re-read produced empty
+reads and `rc=1` writes after the first control, with
+`Pentax session already open from a previous connection` in the output. Cause:
+one `gphoto2` process per read issued back-to-back, i.e. PTP session churn. Not
+a `.67` fault; a correct re-test must batch reads into a single session.
+
+### Read-only descriptor passthroughs — PASS as designed
+
+Both render and are `Readonly: 1`:
+
+- `pentaxpropd02b` → `code=0xd02b; datatype=0x0002; getset=1; form=2;
+  enum-count=3; value-bytes=2; value-hex=0000`
+- `pentaxpropd02d` → `code=0xd02d; datatype=0x4002; getset=1; form=0;
+  enum-count=0; value-bytes=8; value-hex=0400000000000000`
+
+`0xd02d` shows `form=0; enum-count=0`, consistent with the named CI user-filter
+control being withheld (fail-closed) rather than rendered with no value set.
+
 ## Final camera state (restored, verified)
 
-`pentaxdirectwb=auto`, `pentaxcisaturation=0`, `pentaxcihue=0`, `0xd018=5000`
-(as found). Daemon restored via `/app/restart_gphoto`.
+All six Custom-Image controls confirmed neutral from a **fresh session**:
+`pentaxcisaturation=0`, `pentaxcihue=0`, `pentaxcikey=0`,
+`pentaxcihighlightcontrast=0`, `pentaxcishadowcontrast=0`,
+`pentaxcifinesharpness=0`; `pentaxdirectwb=auto`, `0xd018=5000` (as found).
+Daemon restored via `/app/restart_gphoto` after every session.
