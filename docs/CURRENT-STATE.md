@@ -1,5 +1,45 @@
 # Current repository state
 
+## 2026-10-19 — `.67` built and gate-GREEN (o-v17b, Color Temperature + CI detail params) — NOT installed
+
+**Built and pre-release-gate GREEN: `6.0.0.54.67`, candidate `o-v17b-ci-colortemp-20261018`.**
+Artifact `out/o-v17b-ci-colortemp-20261018/FwPkt.zip` — sha256
+`bed0ef63c4e6554fae257fb2a2a2df4bc4086218087947584a2329efccda9efd`, md5
+`537e42dce2c84fd67e542d19878c3a62`, size 68390567. `install-manifest.json`
+generated (10 mandatory files, `stage2_mandatory=true`, zip digest matches;
+extracted hashes spot-checked against the manifest). On-package provenance:
+libgphoto2 `6c6142625` (merged PR #103), patcher `8a7f2bf5`, camlibs
+`ptp2,pentax`, build_id `6.0.0.54.67-o-v17b-ci-colortemp-20261018`.
+
+Content: first candidate exposing the K-3 III white-balance Color Temperature
+(`0xd018`) and detailed Custom Image parameters (`0xd021`–`0xd029`) as
+libgphoto2 controls, plus a read-only descriptor passthrough for the CI user
+filter (`0xd02d`). Model-gated to the K-3 III family; ranges/signedness come
+from the camera's own `GetDevicePropDesc` (no hard-coded table). Includes the
+two Codex P1 fixes from PR #103: bounded read-back verification after every
+write (a PTP `0x2001` acknowledges, does not apply — the raw
+`GetDevicePropValue` is read back and a mismatch fails the write), and
+empty-descriptor controls fail closed rather than rendering a zero-choice widget
+(`0xd024`–`0xd026` return empty enums on the recorded K-3 III).
+
+Pre-release gate GREEN 2026-10-19 (10 passed / 0 failed / 0 skipped; container
+harness 20, python regression 243, code-780 version patch, FwPkt structural
+validation, firmwareInfo manifest, install-manifest currency, polestar_app Bulb
+branch intact, pgphoto timed-Bulb dispatch present). **Physical qualification
+PENDING — not installed; needs a K-3 III on the bench to confirm each descriptor
+is writable and round-trips (the read-back verification is what makes that check
+honest), and `0xd024` needs confirmation its descriptor enumerates the 255
+sentinel.** `.66` remains the running build and `.55` the last physically tested
+rollback target.
+
+Build-pipeline note (this run): two build-script fixes were needed and are
+committed to `main` — `container/build_ptp2.sh` now runs `autoreconf -isf` and,
+for a `git-directory` source, always regenerates autotools rather than trusting
+a stale gitignored `configure` (which aborted with "cannot find required
+auxiliary files"). The install manifest was generated with a local `ubireader`
+library shim because the sandbox's `ubireader` package is missing its `scripts`
+submodule; the manifest content is identical to the container path.
+
 ## 2026-10-17 — `.66` installed on the device (o-v17a, SHIM #6 shipped OFF)
 
 **Installed and verified on device: `6.0.0.54.66`, candidate `o-v17a-shutter-fallback-off-20261012`.**

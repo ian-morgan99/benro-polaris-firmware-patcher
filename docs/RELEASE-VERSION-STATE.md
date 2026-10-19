@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.66
+last_display_fwver=6.0.0.54.67
 ```
 
 ## Consumed-version registry (authoritative)
@@ -17,6 +17,7 @@ reads these lines and refuses to hand out any of them again, **regardless of wha
 entry, only add one when a candidate is claimed.
 
 ```text
+consumed_display_fwver=6.0.0.54.67
 consumed_display_fwver=6.0.0.54.66
 consumed_display_fwver=6.0.0.54.53
 consumed_display_fwver=6.0.0.54.65
@@ -35,6 +36,7 @@ consumed_display_fwver=6.0.0.54.55
 
 | Version | Candidate | Notes |
 | --- | --- | --- |
+| `.67` | o-v17b-ci-colortemp-20261018 | **built 2026-10-19, pre-release gate GREEN (10 passed / 0 failed / 0 skipped); NOT installed — physical qualification on a K-3 III outstanding.** First candidate exposing the K-3 III white-balance Color Temperature (`0xd018`) and detailed Custom Image parameters (`0xd021`–`0xd029`) as libgphoto2 controls, plus a read-only descriptor passthrough for the CI user filter (`0xd02d`). Model-gated to the K-3 III family (`pentax_model_supports_color_temperature` / `pentax_model_supports_ci_detail`); ranges/signedness come from the camera's own `GetDevicePropDesc` via `_get_INT`/`_put_INT` (no hard-coded table). Carries the two Codex P1 fixes from PR #103: bounded read-back verification after every write (a PTP `0x2001` acknowledges, does not apply — read the raw `GetDevicePropValue` back and fail on mismatch), and empty-descriptor controls fail closed instead of rendering a zero-choice widget (`0xd024`–`0xd026` return empty enums on the recorded K-3 III). libgphoto2 `6c6142625` (merged PR #103), patcher `8a7f2bf5` (`main`). Artifact `out/o-v17b-ci-colortemp-20261018/FwPkt.zip` — sha256 `bed0ef63c4e6554fae257fb2a2a2df4bc4086218087947584a2329efccda9efd`, md5 `537e42dce2c84fd67e542d19878c3a62`, size 68390567; `install-manifest.json` present (10 mandatory files, `stage2_mandatory=true`, zip digest matches). Gate detail: container harness 20, python regression 243, code-780 version patch, FwPkt structural validation, firmwareInfo manifest, install-manifest currency, polestar_app Bulb branch intact, pgphoto timed-Bulb dispatch present. `.66` remains the running build and `.55` the last physically tested rollback target until `.67` is staged and qualified. See `out/build-o-v17b.log`. |
 | `.53` | o-v15p | withdrawn artifact |
 | `.54` | o-v15q | installed; reported `6.0.0.54.54` on code 780 |
 | `.55` | o-v15r-supervisor-preload-20261005 | installed 2026-10-05; reports `6.0.0.54.55`. Superseded as the running build by `.59` on 2026-10-06; still the last *physically* tested build, so it remains the rollback target. |
