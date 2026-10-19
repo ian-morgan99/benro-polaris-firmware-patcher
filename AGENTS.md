@@ -2,6 +2,30 @@
 
 These instructions apply to all automated or human-assisted work in this repository.
 
+## Two-agent working agreement
+
+This project is worked by two agents with deliberately separated roles.
+
+- **Development agent (you, in the coding session):** implements code, build, gate and
+  packaging changes; writes and closes implementation issues; produces candidates.
+- **Review/verification agent:** reads content periodically, audits assumptions against
+  source, validates evidence and claims, and posts guidance. It does **not** perform
+  development edits, and it does not restructure documents it did not author.
+
+Rules that keep the two from standing on each other's toes:
+
+- Guidance flows through **issues**, not silent edits into each other's work. The review
+  agent files an issue with acceptance criteria; the development agent implements it and
+  reports back in that issue. `#214` is the model.
+- The review agent may edit its own verification artefacts
+  (`docs/LIBGPHOTO2-ALIGNMENT-AUDIT.md`, evidence reviews). Treat those as **read-only**
+  unless you are asked to change them; cite them, do not rewrite them.
+- Do not edit files another agent has uncommitted changes in. Check `git status` before
+  starting, and leave anything you did not author alone.
+- A claim that something is *correct* is the review agent's to confirm; a claim that
+  something *builds and passes the gate* is yours. Do not upgrade the second into the
+  first in commit messages, issue comments or docs.
+
 ## Documented skills are the source of truth — do not improvise
 
 Before doing any operation that a skill under `.github/skills/` covers, **read
@@ -40,6 +64,32 @@ A libgphoto2 upgrade is a **matched-stack change**, not a camlib-only change. Th
 - the wrapper environment and ABI/symbol assumptions.
 
 Do not conclude an upgrade is correct because `ptp2.so` builds, QEMU passes, or direct `gphoto2` works.
+
+### Assumptions that must be re-verified, not carried over
+
+`docs/LIBGPHOTO2-ALIGNMENT-AUDIT.md` records every assumption this repository makes about
+upstream and the evidence that each one held at the last check. On any version bump or
+upstream rebase, re-verify rather than assume:
+
+- the version-pin surface — `container/patch.sh` (`LIBGPHOTO2_VERSION`),
+  `container/stage2_loader.c` (`STAGE2_CAMLIBS_DIR`, `STAGE2_IOLIBS_DIR`) and
+  `scripts/generate-fwpkt-manifest.py` (mandatory `lib/stage2/...` paths). The
+  `configure.ac` version guard covers **only** the requested version; leaving the loader
+  or manifest behind builds and gates GREEN and ships a stale module directory.
+- the three out-of-tree `sed` anchors in `container/build_ptp2.sh`. Two of them fail
+  **silently** — a moved anchor ships unpatched behaviour with a green build.
+- the `_Camera` pad target and its `awk` anchor, the loader's ABI constants
+  (`GP_WIDGET_TEXT`, `CameraAbilities.model[128]`), the exported-symbol assumption that
+  removes the trampoline shim, and the name of the upstream test suite the gate skips.
+
+### Gate GREEN does not mean the shipped configuration was tested
+
+The gate runs upstream's tests with **meson** (`-Dcamlibs=ptp2,pentax,directory`); the
+shipped libraries are built with **autotools** (`--with-camlibs="ptp2,pentax"
+--without-libxml-2.0 --without-jpeg --without-libcurl`). Different build system,
+different dependency graph. Never justify a link-time or dependency decision by pointing
+at a passing gate — check the shipped artifact (`readelf -d`, `nm -D
+--undefined-only`). Tracked in `#214`.
 
 ## Source/runtime ownership rule
 
@@ -165,6 +215,8 @@ Every upgrade issue must identify which of these need updating and update them b
 - `docs/patcher-gates.md`
 - `docs/CURRENT-STATE.md` and the current candidate's bounded `SUMMARY.md`
 - `docs/LIBGPHOTO2-UPGRADE-PROCESS.md`
+- `docs/LIBGPHOTO2-ALIGNMENT-AUDIT.md` (re-verify and update the dated evidence when an
+  assumption is checked or a version is bumped — owned by the review agent)
 - `docs/FWPKT-PROVENANCE-CONTRACT.md` (registry row for any new/received FwPkt zip)
 - README supported/qualification claims
 - libgphoto2 direct-hardware matrix
