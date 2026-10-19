@@ -1,5 +1,56 @@
 # Current repository state
 
+## 2026-10-19 — `.68` PHYSICALLY QUALIFIED **PASS** — Color Temperature (`0xd018`) works through its named control
+
+`.68` (`o-v17c-colortemp-formless`) is installed and verified on the device and
+**passes its acceptance gate**: `pentaxcolortemperature` now gets and sets on the
+K-3 III with WB in a color-temperature mode, and the raw `other/d018` path agrees
+in both states (`5000` → set `4000` → named control reads `4000`, raw reads
+`4000`). On `.67` the same two commands returned `Error (-1)` and rc=1. Evidence:
+`docs/evidence/o-v17c-physical-20261019/SUMMARY.md`.
+
+Install verification: on-device zip SHA-256 matches the candidate, all six
+`firmwareInfo` MD5s match the staged tree, uptime reset `9373` → `79` proves a
+real reboot, and **10/10 mandatory installed files SHA-256 match** the install
+manifest with the correct `build_id`.
+
+Blast radius is exactly one control, proven rather than argued:
+`--list-all-config` captured with WB=`auto` and with WB=color-temp-1 differs by a
+single added line (`/main/status/pentaxcolortemperature`). No new widget appeared
+for any of the other nine properties that route through the same function.
+
+No regressions: the six working Custom Image controls still read and round-trip
+(`pentaxcisaturation` `0 → +2 → 0`, each value confirmed from a fresh process);
+`0xd024`–`0xd026` are still withheld (`Error (-1)`, absent from the tree) because
+the `Enumeration`/`NumberOfValues == 0` branch is untouched; `pentaxpropd02b` and
+`pentaxpropd02d` still render `Readonly: 1` and refuse writes. Capture path
+qualified twice — before, and again after the qualification procedure had stopped
+and restarted the gphoto daemon — both `lifecycle=[1,4,0]` with a file. No
+segfault/OOM since boot; the only core file on the card is a 0-byte one from
+2026-10-05.
+
+**`.68` is the first build release-qualified as Color Temperature support.** It
+supersedes `.67` for that purpose and becomes the current rollback target; `.55`
+remains the last build qualified before this feature existed.
+
+Two operational findings worth keeping:
+
+- **A post-reboot probe run can report `Could not detect any camera` / `Error
+  (-105)` for every command while the body is plainly on USB.** It cleared by
+  itself in a couple of minutes. Qualification scripts must assert
+  `--auto-detect` succeeds before treating per-control errors as results, or a
+  transient session state gets recorded as a control failure.
+- **A naive append-resume upload can produce a file of the correct size but the
+  wrong digest** on this AP link. `out/upload-chunked.sh` (write each chunk at an
+  explicit `dd seek=` offset, verify a cumulative prefix hash after every chunk)
+  is the reliable method and should be the default for this device.
+
+Still open: K-1 II behaviour of the relaxed branch is untested (expected
+unchanged — the relaxation admits only a `GetSet` scalar and the control is
+model-gated — but that is reasoning, not evidence), and the async-apply
+behaviour found in `.67` is unchanged, so all assertions must keep re-reading
+from a fresh process.
+
 ## 2026-10-19 — `.68` built and gate-GREEN (o-v17c, libgphoto2 #104 fix for `0xd018`) — awaiting install + re-qualification
 
 **Built and pre-release-gate GREEN: `6.0.0.54.68`, candidate `o-v17c-colortemp-formless`.**

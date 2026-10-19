@@ -1,0 +1,63 @@
+### A. the 10 controls routed through the changed function
+
+--- pentaxcisaturation
+Label: Pentax Custom Image Saturation
+Type: RADIO
+Current: 0
+
+--- pentaxcihue
+Label: Pentax Custom Image Hue
+Type: RADIO
+Current: 0
+
+--- pentaxcikey
+Label: Pentax Custom Image Key
+Type: RADIO
+Current: 0
+
+--- pentaxcifiltereffect
+*** Error ***              
+*** Error (-1: 'Unspecified error') ***       
+
+--- pentaxcimonotonetoning
+*** Error ***              
+*** Error (-1: 'Unspecified error') ***       
+
+--- pentaxcitoning
+*** Error ***              
+*** Error (-1: 'Unspecified error') ***       
+
+--- pentaxcifinesharpness
+Label: Pentax Custom Image Fine Sharpness
+Type: RADIO
+Current: 0
+
+--- pentaxcihighlightcontrast
+Label: Pentax Custom Image Highlight Contrast
+Type: RADIO
+Current: 0
+
+--- pentaxcishadowcontrast
+Label: Pentax Custom Image Shadow Contrast
+Type: RADIO
+Current: 0
+
+### B. read-only descriptor passthroughs must refuse writes
+
+--- pentaxpropd02b read
+Label: Pentax Focus Peaking Descriptor
+Readonly: 1
+--- pentaxpropd02b write attempt
+*** Error ***              
+*** Error (-1: 'Unspecified error') ***       
+   (no output above = write accepted; any Error line = correctly refused)
+
+--- pentaxpropd02d read
+Label: Pentax Custom Image User Filter Descriptor
+Readonly: 1
+--- pentaxpropd02d write attempt
+*** Error ***              
+*** Error (-1: 'Unspecified error') ***       
+   (no output above = write accepted; any Error line = correctly refused)
+
+daemon restored: 25923 

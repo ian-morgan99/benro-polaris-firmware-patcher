@@ -1,0 +1,133 @@
+=== identity ===
+FwVer:6.0.0.54.68;date:2026.10.19;
+
+daemon stopped (pid 8151)
+
+### 0. WB -> color-temp-1 (pentaxdirectwb=12)
+$ gphoto2 --set-config /main/status/pentaxdirectwb=12
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+--- rc=0
+
+### 1. named control GET (was Error (-1) on .67)
+$ gphoto2 --get-config /main/status/pentaxcolortemperature
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+| Label: Pentax Color Temperature
+| Readonly: 0
+| Type: TEXT
+| Current: 5000
+| END
+--- rc=0
+
+### 2. raw d018 GET (independent cross-check)
+$ gphoto2 --get-config /main/other/d018
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+| Label: PTP Property 0xd018
+| Readonly: 0
+| Type: TEXT
+| Current: 5000
+| END
+--- rc=0
+
+### 3. named control SET =4000
+$ gphoto2 --set-config /main/status/pentaxcolortemperature=4000
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+--- rc=0
+
+### 4. named control GET from a FRESH process
+$ gphoto2 --get-config /main/status/pentaxcolortemperature
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+| Label: Pentax Color Temperature
+| Readonly: 0
+| Type: TEXT
+| Current: 4000
+| END
+--- rc=0
+
+### 5. raw d018 GET (cross-check the applied value)
+$ gphoto2 --get-config /main/other/d018
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+| Label: PTP Property 0xd018
+| Readonly: 0
+| Type: TEXT
+| Current: 4000
+| END
+--- rc=0
+
+### 6. restore named control =5000
+$ gphoto2 --set-config /main/status/pentaxcolortemperature=5000
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+--- rc=0
+
+### 7. WB -> auto (pentaxdirectwb=0)
+$ gphoto2 --set-config /main/status/pentaxdirectwb=0
+| Pentax session already open from a previous connection; observing camera state.
+| Pentax init stage vendor enable succeeded; function flags 0x00000000.
+--- rc=0
+
+=== regression: 0xd024-0xd026 must still be withheld ===
+--- pentaxcifiltereffect
+  | Pentax session already open from a previous connection; observing camera state.
+  | Pentax init stage vendor enable succeeded; function flags 0x00000000.
+  | 
+  | *** Error ***              
+  | /main not found in configuration tree.
+  | *** Error (-1: 'Unspecified error') ***       
+  | 
+  | For debugging messages, please use the --debug option.
+  | Debugging messages may help finding a solution to your problem.
+  | If you intend to send any error or debug messages to the gphoto
+  | developer mailing list <gphoto-devel@lists.sourceforge.net>, please run
+  | gphoto2 as follows:
+  | 
+  |     env LANG=C gphoto2 --debug --debug-logfile=my-logfile.txt --get-config /main/status/pentaxcifiltereffect
+  | 
+  | Please make sure there is sufficient quoting around the arguments.
+  | 
+  rc=0
+--- pentaxcimonotonetoning
+  | Pentax session already open from a previous connection; observing camera state.
+  | Pentax init stage vendor enable succeeded; function flags 0x00000000.
+  | 
+  | *** Error ***              
+  | /main not found in configuration tree.
+  | *** Error (-1: 'Unspecified error') ***       
+  | 
+  | For debugging messages, please use the --debug option.
+  | Debugging messages may help finding a solution to your problem.
+  | If you intend to send any error or debug messages to the gphoto
+  | developer mailing list <gphoto-devel@lists.sourceforge.net>, please run
+  | gphoto2 as follows:
+  | 
+  |     env LANG=C gphoto2 --debug --debug-logfile=my-logfile.txt --get-config /main/status/pentaxcimonotonetoning
+  | 
+  | Please make sure there is sufficient quoting around the arguments.
+  | 
+  rc=0
+--- pentaxcitioning
+  | Pentax session already open from a previous connection; observing camera state.
+  | Pentax init stage vendor enable succeeded; function flags 0x00000000.
+  | 
+  | *** Error ***              
+  | /main not found in configuration tree.
+  | *** Error (-1: 'Unspecified error') ***       
+  | 
+  | For debugging messages, please use the --debug option.
+  | Debugging messages may help finding a solution to your problem.
+  | If you intend to send any error or debug messages to the gphoto
+  | developer mailing list <gphoto-devel@lists.sourceforge.net>, please run
+  | gphoto2 as follows:
+  | 
+  |     env LANG=C gphoto2 --debug --debug-logfile=my-logfile.txt --get-config /main/status/pentaxcitioning
+  | 
+  | Please make sure there is sufficient quoting around the arguments.
+  | 
+  rc=0
+daemon restored: 9585 

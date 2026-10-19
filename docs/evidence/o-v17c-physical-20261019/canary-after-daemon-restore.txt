@@ -1,0 +1,6 @@
+2026-10-19T15:17:33Z FILE /app/sd/normal/SP_0356.dng
+2026-10-19T15:17:33Z RX 775@status:1;totalspace:121866;freespace:110804;usespace:11061;#
+2026-10-19T15:17:33Z RX 264@state:0;#
+2026-10-19T15:17:33Z CAPTURE state=0 lifecycle=[1, 4, 0]
+2026-10-19T15:17:33Z PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0356.dng']
+2026-10-19T15:17:33Z DONE states=[1, 4, 0] files=['/app/sd/normal/SP_0356.dng']

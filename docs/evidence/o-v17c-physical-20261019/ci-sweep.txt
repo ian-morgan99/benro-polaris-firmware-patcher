@@ -1,0 +1,32 @@
+### A. READS (one session; reads are not subject to async apply)
+Label: Pentax Custom Image Saturation
+Type: RADIO
+Current: 0
+Label: Pentax Custom Image Hue
+Type: RADIO
+Current: 0
+Label: Pentax Custom Image Key
+Type: RADIO
+Current: 0
+Label: Pentax Custom Image Fine Sharpness
+Type: RADIO
+Current: 0
+Label: Pentax Custom Image Shadow Contrast
+Type: RADIO
+Current: 0
+
+### B. WITHHELD 0xd024-0xd026 (expect Error (-1) each)
+pentaxcifiltereffect -> 
+pentaxcimonotonetoning -> 
+pentaxcitoning -> 
+
+### C. WRITE + FRESH-PROCESS READ-BACK (saturation 0 -> +2 -> 0)
+set +2 rc=0
+Current: 2
+restore rc=0
+Current: 0
+
+### D. READ-ONLY passthroughs must refuse writes
+pentaxcirefinement write -> 
+pentaxciuserfilter write -> 
+daemon restored: 23217 
