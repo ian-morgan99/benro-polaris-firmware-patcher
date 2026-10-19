@@ -549,6 +549,13 @@ typedef int (*stage2_gp_camera_capture_preview_fn)(void *camera, void *file,
 static stage2_gp_camera_capture_preview_fn g_real_gp_camera_capture_preview = NULL;
 static int  g_pentax_preview_timeouts = 0;
 static long long g_pentax_preview_backoff_until = 0;
+/* Issue #213: the cooldown branch below is entered once per preview poll, so a
+ * single 30 s window produced hundreds of identical lines and buried every other
+ * diagnostic in Clog (measured: 617 of 621 lines on one session).  Log each
+ * window once and count the repeats instead -- the window, its length and how
+ * many polls it suppressed are all still reported. */
+static long long g_pentax_preview_cooldown_logged_until = 0;
+static unsigned long g_pentax_preview_cooldown_suppressed = 0;
 /* Issue #127: capability-disable for a permanent NOT_SUPPORTED preview result.
  * Once the body/mode reports preview unsupported, stop generating PTP traffic
  * (return the error directly) instead of retrying forever across cooldowns. */
@@ -669,10 +676,30 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
         long long now = stage2_monotonic_secs();
         if (now < g_pentax_preview_backoff_until) {
             int remain_s = (int)(g_pentax_preview_backoff_until - now);
-            fprintf(stderr, "[stage2] preview-backoff: in cooldown (%ds left) -- "
-                            "returning busy without blocking\n", remain_s);
+            if (g_pentax_preview_cooldown_logged_until !=
+                    g_pentax_preview_backoff_until) {
+                g_pentax_preview_cooldown_logged_until =
+                    g_pentax_preview_backoff_until;
+                fprintf(stderr, "[stage2] preview-backoff: in cooldown (%ds left)"
+                                " -- returning busy without blocking (repeat "
+                                "logs for this window suppressed, issue #213)\n",
+                        remain_s);
+            } else {
+                g_pentax_preview_cooldown_suppressed++;
+            }
             return STAGE2_GP_ERROR_CAMERA_BUSY;
         }
+        /* Window elapsed: report what it cost, once.  Keyed on the same value so
+         * a summary can never be emitted for a window we did not log. */
+        if (g_pentax_preview_cooldown_logged_until ==
+                g_pentax_preview_backoff_until &&
+                g_pentax_preview_cooldown_suppressed) {
+            fprintf(stderr, "[stage2] preview-backoff: cooldown window elapsed "
+                            "after %lu suppressed repeat poll(s) (issue #213)\n",
+                    g_pentax_preview_cooldown_suppressed);
+        }
+        g_pentax_preview_cooldown_suppressed = 0;
+        g_pentax_preview_cooldown_logged_until = 0;
     }
 
     /* Issue #121: bounded preview-settle window. Armed only when the PTP session
