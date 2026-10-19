@@ -1,6 +1,6 @@
 # Current repository state
 
-## 2026-10-19 — `.67` built and gate-GREEN (o-v17b, Color Temperature + CI detail params) — NOT installed
+## 2026-10-19 — `.67` built, gate-GREEN, STAGED + REBOOTED (o-v17b, Color Temperature + CI detail params) — post-reboot verify pending
 
 **Built and pre-release-gate GREEN: `6.0.0.54.67`, candidate `o-v17b-ci-colortemp-20261018`.**
 Artifact `out/o-v17b-ci-colortemp-20261018/FwPkt.zip` — sha256
@@ -31,6 +31,24 @@ is writable and round-trips (the read-back verification is what makes that check
 honest), and `0xd024` needs confirmation its descriptor enumerates the 255
 sentinel.** `.66` remains the running build and `.55` the last physically tested
 rollback target.
+
+Install (2026-10-19, ~01:26–01:44 local): the `o-v17a-autonomous-install.sh`
+flow passed WAKE/AUTH (candidate digest matched the manifest; device identity
+OK; camera idle confirmed out-of-band — a bare `1&286&0&#` returns nothing, the
+AUTH refusal was the device's continuous 284 gimbal-telemetry stream, so
+`ALLOW_BUSY=1` was an informed override — see the install-script fix in this
+commit range), STAGED the 68 MB zip with an on-device SHA-256 match and atomic
+rename, but the 812 reboot was UNCERTAIN (device did not go dark within 60s).
+Applied the reliable path instead: removed the stray `.part`, `sync`, plain
+`/sbin/reboot` at 01:44:29. The device has been dark since (reflash is ~1 min,
+so it is very likely up on `.67`), but the host did not rejoin the `polaris_*`
+AP afterwards and NetworkManager is not reachable from this sandbox, so the
+post-reboot manifest verification could not be completed. **To finish in the
+morning:** rejoin the `polaris_*` AP, then run
+`FWPKT_ZIP=$PWD/out/o-v17b-ci-colortemp-20261018/FwPkt.zip \
+ scripts/o-v17a-autonomous-install.sh --verify-only`
+— it reads `/app/FwVer` + provenance and SHA-256-checks all 10 manifest files
+against `install-manifest.json`. Expect `FwVer:6.0.0.54.67;date:2026.10.18;`.
 
 Build-pipeline note (this run): two build-script fixes were needed and are
 committed to `main` — `container/build_ptp2.sh` now runs `autoreconf -isf` and,
