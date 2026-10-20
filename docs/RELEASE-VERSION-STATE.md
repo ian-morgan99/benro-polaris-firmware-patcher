@@ -33,7 +33,46 @@ consumed_display_fwver=6.0.0.54.57
 consumed_display_fwver=6.0.0.54.56
 consumed_display_fwver=6.0.0.54.54
 consumed_display_fwver=6.0.0.54.55
+version_commit_binding=6.0.0.54.68|libgphoto2=8e06d39aea9ff22be9a59a5962263bdf41fc76e7|patcher=36d72ae9ffaa0d234c80fbf935102dd58809a67c
 ```
+
+## Version-to-commit binding (one version, one set of commits)
+
+A display version is a claim about a specific build, so uniqueness has to hold in
+both directions:
+
+| direction | what it prevents |
+|---|---|
+| version → commit set | two different builds reporting the same firmware version in Benro Connect |
+| commit set → version | an unchanged source tree being rebuilt and re-issued as though it were new |
+
+The consumed registry above gives the first. It cannot express the second, and the
+second is what breaks quietly: rebuilding an unchanged tree "to try again" mints a
+fresh number for identical commits, and the app then shows two firmwares that
+cannot possibly behave differently.
+
+So every version claimed from now on is recorded with the exact commits it was
+built from:
+
+Each entry is one line: the key, the version, then the two commits, separated by
+`|`.
+
+```text
+…=<version>|libgphoto2=<sha>|patcher=<sha>
+```
+
+`build-release-candidate.sh` supplies both commits and refuses to claim a version
+from a dirty patcher tree, so a binding describes the build instead of
+approximately describing it. `verify_display_fwver_monotonic.py` enforces both
+directions and fails closed on a malformed entry.
+
+Only `.68` is bound above. It is the current build and both of its commits are
+already recorded and device-verified, so that entry is a fact rather than a
+reconstruction. Earlier versions are deliberately left unbound: their commit sets
+are not reliably recorded, and an unbound historical version still blocks its
+number forever but is never used to infer what commits it contained. Re-issuing an
+old build is therefore refused on its version, not accepted on a guessed commit
+set.
 
 | Version | Candidate | Notes |
 | --- | --- | --- |

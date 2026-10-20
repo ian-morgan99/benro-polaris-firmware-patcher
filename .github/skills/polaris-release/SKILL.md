@@ -18,11 +18,23 @@ From the patcher repository root:
   <candidate-id> <stock-FwPkt.zip-or-dir> <clean-libgphoto2-main> [build-id]
 ```
 
-The script refuses a missing/dirty/detached/non-`main` libgphoto2 checkout.
-It first runs the libgphoto2 Meson deterministic regression pack, then builds
+The script refuses a missing/dirty/detached/non-`main` libgphoto2 checkout, and
+also refuses a **dirty patcher checkout** before doing any expensive work. It
+first runs the libgphoto2 Meson deterministic regression pack, then builds
 from the supplied stock FwPkt, runs the patcher/package deterministic
 pre-release gate, recomputes hashes, and uploads the exact ZIP to
 PrivateResearch. A failure at either layer stops the release.
+
+**One version, one set of commits.** The app-visible version is derived, never
+typed, and when the candidate passes the gate it is claimed *and bound* to the
+exact libgphoto2 and patcher commits it was built from, in
+`docs/RELEASE-VERSION-STATE.md`. Both directions are enforced: a version may
+never describe a second commit set, and an unchanged commit set may never be
+issued under a new version. That is why a dirty patcher tree is refused — a
+binding made from uncommitted work would be a claim about a commit that does not
+describe the build. Commit or stash first, then release. Rebuilding an unchanged
+tree to "try again" is expected to fail here; change something or reuse the
+existing version.
 
 The regression order is therefore: libgphoto2 unit/production-path tests,
 patcher and Stage-2 tests, package/manifest validation, then (only after

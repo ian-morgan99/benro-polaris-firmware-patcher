@@ -39,8 +39,23 @@ case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2
 [ "$(git -C "$SRC" status --porcelain)" = "" ] || { echo "ERROR: libgphoto2 checkout is dirty" >&2; exit 2; }
 BRANCH="$(git -C "$SRC" branch --show-current)"
 [ "$BRANCH" = main ] || { echo "ERROR: libgphoto2 must be on main (got ${BRANCH:-detached})" >&2; exit 2; }
+# A version is bound to the exact commits it was built from, so the patcher tree
+# must be clean too: uncommitted work would make the binding a claim about a
+# commit that does not describe the build. Checked here rather than at claim
+# time so a doomed release does not spend a full build finding out.
+[ "$(git -C "$ROOT" status --porcelain)" = "" ] || {
+  echo "ERROR: patcher checkout is dirty; commit or stash before releasing." >&2
+  echo "       The display version is bound to one exact set of commits, so it" >&2
+  echo "       cannot be claimed from a tree that is not committed." >&2
+  exit 3
+}
 SRC_SHA="$(git -C "$SRC" rev-parse HEAD)"
-echo "Building $ID from libgphoto2 main $SRC_SHA and stock base $BASE"
+# The patcher tree is not required to be clean (this script edits release state
+# as it goes), so record the tree state as well as the commit. A version is
+# bound to the exact commits it was built from, and a dirty tree means the
+# binding is a commit plus uncommitted work rather than a commit alone.
+PATCHER_SHA="$(git -C "$ROOT" rev-parse HEAD)"
+echo "Building $ID from libgphoto2 main $SRC_SHA, patcher $PATCHER_SHA, stock base $BASE"
 
 command -v meson >/dev/null || { echo "ERROR: meson is required for libgphoto2 regression tests" >&2; exit 2; }
 TEST_BUILD="$(mktemp -d "${TMPDIR:-/tmp}/libgphoto2-regression.XXXXXX")"
@@ -118,9 +133,14 @@ bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
 # The candidate is real only once it has passed the gate. Claim the version at
 # that point so a build that fails its tests does not consume a number, while
 # two candidates that both reach this line can never share one.
+# Claiming a version also binds it to these exact commits, in both directions:
+# the version may never describe a different build, and these commits may never
+# be issued under a different version. The tree was proven clean above, and the
+# build writes only to out/ (ignored) and mktemp, so this is the same tree.
 python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" \
   --candidate "$DISPLAY_FWVER" \
-  --state "$VERSION_STATE" --record
+  --state "$VERSION_STATE" --record \
+  --libgphoto2-commit "$SRC_SHA" --patcher-commit "$PATCHER_SHA"
 git -C "$ROOT" add -- "$VERSION_STATE"
 
 bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
