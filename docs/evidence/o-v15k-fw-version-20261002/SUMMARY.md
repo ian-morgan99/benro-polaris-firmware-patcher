@@ -16,7 +16,7 @@ evidence only. The corrected successor is 15l.
 - Patcher `main`: `23f49297ce0de0d03b88075be73e76fdf753cde5`
 - libgphoto2 `main`: `6979070597ebddbaa5f1cff1e56b7597e4594ed2`
 - Display/FwVer: `6.0.0.54.52`
-- PrivateResearch: `firmware-packets/o-v15k-fw-version-20261002/FwPkt.zip`
+- PrivateResearch: `firmware-packets/6.0.0.54.52--o-v15k-fw-version-20261002/FwPkt.zip`
   (artifact commit `d3870b5ea`)
 
 ## Artifact hashes

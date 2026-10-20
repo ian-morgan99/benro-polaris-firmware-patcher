@@ -6,14 +6,25 @@
 #   - public repos (BenroPolarisPatcher, OpenPolaris, libgphoto2 fork) keep
 #     only the registry ROW (hashes + commit links);
 #   - the zip BYTES live here, in the private repo, under
-#     firmware-packets/<registry-id>/.
+#     firmware-packets/<display-version>--<registry-id>/.
+#
+# Folder naming (deliberate, do not revert):
+#   The folder is prefixed with the five-component display version the Benro
+#   Connect app shows (e.g. 6.0.0.54.68--o-v17c-colortemp-formless), because
+#   that is the only identifier a person can actually see on the phone. The
+#   registry id is kept as the suffix because display versions are NOT unique:
+#   nine of them were issued more than once (see the #169 duplicate-version
+#   failure in docs/RELEASE-VERSION-STATE.md), so the version alone cannot
+#   identify a packet. The version is read from the build's own
+#   build-source-provenance.txt and the script fails closed if it is missing --
+#   a packet must never be published under a guessed version.
 #
 # Usage:
 #   bash .github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh \
 #        --build out/k1ii-k3iii-v8-modelgate-20260910 \
 #        --id o-v8 \
-#        [--status candidate] [--note "model-gate fix 0953dde"] \
-#        [--dry-run]
+#        [--display-fwver 6.0.0.54.68] [--status candidate] \
+#        [--note "model-gate fix 0953dde"] [--dry-run]
 #
 # Env:
 #   GH_TOKEN      GitHub token with write access to ian-morgan99/PrivateResearch.
@@ -26,14 +37,15 @@
 #   1. recomputes zip MD5 + SHA-256 from the actual file (never copied forward),
 #   2. runs BOTH offline gates (structural + firmwareInfo manifest),
 #   3. stages FwPkt.zip + README.md (+ build-source-provenance.txt if present)
-#      into firmware-packets/<id>/ in a clean checkout of the private repo,
+#      into firmware-packets/<display-version>--<id>/ in a clean checkout of the
+#      private repo,
 #   4. commits + pushes, then prints a paste-ready registry row for
 #      docs/FWPKT-PROVENANCE-CONTRACT.md.
 set -euo pipefail
 
 PR_REPO="${PR_REPO:-https://github.com/ian-morgan99/PrivateResearch.git}"
 PR_CHECKOUT="${PR_CHECKOUT:-$HOME/Documents/VSCodeProjects/PrivateResearch}"
-BUILD="" ID="" STATUS="candidate" NOTE="" DRY=0
+BUILD="" ID="" STATUS="candidate" NOTE="" DRY=0 DISPLAY_FWVER_ARG=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -41,13 +53,14 @@ while [ $# -gt 0 ]; do
     --id)    ID="$2"; shift 2;;
     --status) STATUS="$2"; shift 2;;
     --note)  NOTE="$2"; shift 2;;
+    --display-fwver) DISPLAY_FWVER_ARG="$2"; shift 2;;
     --dry-run) DRY=1; shift;;
     *) echo "unknown arg: $1" >&2; exit 2;;
   esac
 done
 
 [ -n "$BUILD" ] && [ -n "$ID" ] || {
-  echo "usage: $0 --build <out/<name>> --id <registry-id> [--status S] [--note N] [--dry-run]" >&2
+  echo "usage: $0 --build <out/<name>> --id <registry-id> [--display-fwver 6.0.0.54.N] [--status S] [--note N] [--dry-run]" >&2
   exit 2; }
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
@@ -122,11 +135,32 @@ if [ -f "$BUILD/build-source-provenance.txt" ]; then
 fi
 PATCHER_REF="$(cd "$REPO_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo '?')/$(cd "$REPO_ROOT" && git branch --show-current 2>/dev/null || echo detached)"
 
+# The five-component version the Benro Connect app displays. This is what the
+# published folder is prefixed with, so it must come from the build itself and
+# must never be guessed or copied forward from a previous packet.
+DISPLAY_FWVER="${DISPLAY_FWVER_ARG:-}"
+if [ -z "$DISPLAY_FWVER" ] && [ -f "$BUILD/build-source-provenance.txt" ]; then
+  DISPLAY_FWVER="$(grep -m1 '^display_fwver=' "$BUILD/build-source-provenance.txt" | cut -d= -f2 | tr -d ' \r' || true)"
+fi
+if [ -z "$DISPLAY_FWVER" ]; then
+  echo "FATAL: no display_fwver= in $BUILD/build-source-provenance.txt." >&2
+  echo "       The published folder is named after the app-visible version, so it" >&2
+  echo "       cannot be guessed. Rebuild with the version recorded, or pass" >&2
+  echo "       --display-fwver <6.0.0.54.N> if this build predates that field." >&2
+  exit 1
+fi
+case "$DISPLAY_FWVER" in
+  [0-9]*.[0-9]*.[0-9]*.[0-9]*.[0-9]*) ;;
+  *) echo "FATAL: display_fwver '$DISPLAY_FWVER' is not the five-component form the app shows (expected 6.0.0.54.N)" >&2; exit 1;;
+esac
+DIR_ID="$DISPLAY_FWVER--$ID"
+echo "display version (app-visible): $DISPLAY_FWVER  ->  folder $DIR_ID"
+
 echo "== 3. stage into private repo checkout =="
 if [ "$DRY" = 1 ]; then
   # Dry-run: stage into a temp dir, no git at all (no auth needed).
   STAGE_ROOT="$TMP/pr-stage"
-  STAGE_DIR="$STAGE_ROOT/firmware-packets/$ID"
+  STAGE_DIR="$STAGE_ROOT/firmware-packets/$DIR_ID"
 else
   if [ -d "$PR_CHECKOUT/.git" ]; then
     git -C "$PR_CHECKOUT" fetch origin
@@ -136,17 +170,19 @@ else
     mkdir -p "$(dirname "$PR_CHECKOUT")"
     git clone --depth 1 "$PR_REPO" "$PR_CHECKOUT"
   fi
-  STAGE_DIR="$PR_CHECKOUT/firmware-packets/$ID"
+  STAGE_DIR="$PR_CHECKOUT/firmware-packets/$DIR_ID"
 fi
 mkdir -p "$STAGE_DIR"
 cp "$ZIP" "$STAGE_DIR/FwPkt.zip"
 [ -f "$BUILD/build-source-provenance.txt" ] && cp "$BUILD/build-source-provenance.txt" "$STAGE_DIR/"
 
 cat > "$STAGE_DIR/README.md" <<EOF
-# FwPkt $ID
+# FwPkt $DISPLAY_FWVER — $ID
 
 | field | value |
 |---|---|
+| **version shown in the Benro Connect app** | \`$DISPLAY_FWVER\` |
+| folder | \`firmware-packets/$DIR_ID/\` |
 | registry id | \`$ID\` |
 | zip MD5 | \`$ZIP_MD5\` |
 | zip SHA-256 | \`$ZIP_SHA256\` |
@@ -171,10 +207,10 @@ EOF
 
 echo "== 4. commit + push =="
 if [ "$DRY" = 1 ]; then
-  echo "(dry-run) would commit firmware-packets/$ID and push to $PR_REPO"
+  echo "(dry-run) would commit firmware-packets/$DIR_ID and push to $PR_REPO"
 else
-  git -C "$PR_CHECKOUT" add "firmware-packets/$ID"
-  git -C "$PR_CHECKOUT" commit -m "firmware-packets: add $ID (zip md5 $ZIP_MD5)"
+  git -C "$PR_CHECKOUT" add "firmware-packets/$DIR_ID"
+  git -C "$PR_CHECKOUT" commit -m "firmware-packets: add $DIR_ID (zip md5 $ZIP_MD5)"
   if [ -n "${GH_TOKEN:-}" ]; then
     # push via a token-embedded URL so the token never lands in .git/config
     git -C "$PR_CHECKOUT" push "https://x-access-token:${GH_TOKEN}@github.com/ian-morgan99/PrivateResearch.git" HEAD:main
@@ -185,6 +221,6 @@ fi
 
 echo "== 5. paste-ready registry row (docs/FWPKT-PROVENANCE-CONTRACT.md) =="
 cat <<EOF
-| $ID | \`firmware-packets/$ID/FwPkt.zip\` (ian-morgan99/PrivateResearch, private) | \`$ZIP_MD5\` | \`$(echo "$ZIP_SHA256" | cut -c1-16)\` | \`$APPFS_MD5\` | \`$LIBG_SHA\` | patcher @ \`$PATCHER_REF\` | $STATUS | ${NOTE:-uploaded via fwpkt-private-upload skill} |
+| $ID (\`$DISPLAY_FWVER\`) | \`firmware-packets/$DIR_ID/FwPkt.zip\` (ian-morgan99/PrivateResearch, private) | \`$ZIP_MD5\` | \`$(echo "$ZIP_SHA256" | cut -c1-16)\` | \`$APPFS_MD5\` | \`$LIBG_SHA\` | patcher @ \`$PATCHER_REF\` | $STATUS | ${NOTE:-uploaded via fwpkt-private-upload skill} |
 EOF
 echo "done."

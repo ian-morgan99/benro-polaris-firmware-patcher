@@ -11,7 +11,7 @@ not be installed or used for recovery.
 - display firmware version: `6.0.0.54.53`
 - built from: original stock `firmware/FwPkt.zip`
 - PrivateResearch commit: `6c0ed67ab`
-- private artifact: `firmware-packets/o-v15p-15g-recovery-20261003/FwPkt.zip`
+- private artifact: `firmware-packets/6.0.0.54.53--o-v15p-15g-recovery-20261003/FwPkt.zip`
 - ZIP MD5: `51a112b8fc77b2386d6cf2614395918a`
 - ZIP SHA-256: `fcf815562c07ecf21a003e53f6405c45762bcfb9b51c50c77bf3324154f8ec3c`
 - appfs MD5: `4b1ed228617bcb5e63a85c6779b47ddc`

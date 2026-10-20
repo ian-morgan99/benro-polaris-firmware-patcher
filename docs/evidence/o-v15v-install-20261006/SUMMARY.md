@@ -19,7 +19,7 @@ update version numbers."
 | `appfs.polaris.bin` md5 | `e31baa64438a8a2f934dbb9ddcadf5a2` |
 | gate | **GATE GREEN** — full transcript in `out/build-o-v15v.log` |
 | package output | `out/o-v15v-k1ii-msc-pid-20261006/` |
-| publication | `ian-morgan99/PrivateResearch` @ `70e85fc9f`, path `firmware-packets/o-v15v-k1ii-msc-pid-20261006/FwPkt.zip` |
+| publication | `ian-morgan99/PrivateResearch` @ `70e85fc9f`, path `firmware-packets/6.0.0.54.59--o-v15v-k1ii-msc-pid-20261006/FwPkt.zip` |
 | zip sha256 | `d8380851af6034ee3230ef3a56b93824fcfc743dd3e73e985a82291dd427401b` |
 
 ## 2. Why `.59` supersedes `.58`

@@ -216,7 +216,7 @@ The device reports `/app/FwVer=6.0.0.54.65;date:2026.10.10` and its
 `/app/openpolaris-libgphoto2-provenance.txt` matches the candidate exactly:
 libgphoto2 `2cde4485b` (clean main), patcher `9d0efe0`, build_id
 `6.0.0.54.65-o-v16g-k3iii-timed-bulb-20261010`, camlibs `ptp2,pentax`.
-The candidate ZIP in PrivateResearch (`firmware-packets/o-v16g-k3iii-timed-bulb-20261010/FwPkt.zip`)
+The candidate ZIP in PrivateResearch (`firmware-packets/6.0.0.54.65--o-v16g-k3iii-timed-bulb-20261010/FwPkt.zip`)
 verifies against the recorded hashes (MD5 `4ce76e1a…`, SHA-256 `abee7692…`), and its
 appfs MD5 `28f597774a55aa2f49fdbc48cd099d5a` matches the firmwareInfo manifest.
 Device is healthy: `polestar_app` (pid 249) and `pgphoto.stage2ondisk` (pid 27201)
@@ -673,7 +673,7 @@ the device's UTC label is not treated as independently verified UTC.
   `6f02b20cb1d3e5f27ed99cb4b3f800adb4827dd65396d39fda7c188bb7d70b7b`; appfs MD5
   `889a34781e04edcfd11af38a432a46ee`. PrivateResearch commit
   `3b4693748244636ffe2aaaddd5be30893f790f0a` at
-  `firmware-packets/o-v13s-preserve-pentax-candidate-20260929/FwPkt.zip`.
+  `firmware-packets/6.0.0.54.35--o-v13s-preserve-pentax-candidate-20260929/FwPkt.zip`.
 - Tests: canonical libgphoto2 regression build passed (no-CI serial fixture
   skipped); patcher gate 4/4 green; harness suite 62/62. Extracted appfs from
   the exact ZIP and byte-compared the pgphoto wrapper, Stage-2 runtime, core,
@@ -1604,7 +1604,7 @@ installed or physically qualified.
 - ZIP SHA-256: `a15e564773230375270ccc0f0210b976fa1715e8963059719a872dfd6a7f60ad`
 - appfs MD5: `cef86481bd27ab96f21b60fb094f3ee5`
 - PrivateResearch artifact: `a91dbe62c6ac44d4c39faf9d9672bbfe984e8abb`
-- path: `firmware-packets/o-v15l-fwver-bulb-20261003-r2/FwPkt.zip`
+- path: `firmware-packets/6.0.0.54.52--o-v15l-fwver-bulb-20261003-r2/FwPkt.zip`
 - libgphoto2 tests: `14/14` passed
 - patcher deterministic harness: `17 passed`
 - Python regression suite: `125 passed`
@@ -1649,7 +1649,7 @@ The device has been rolled back to the previously installed 15i artifact.
 - ZIP SHA-256: `308bc9b335b04a2dfe775d4e48a64c5db879ee7b22eacca6f7212ed76bc5e8b2`
 - appfs MD5: `c05ec7dd0c47693c6308ff746b6c9213`
 - PrivateResearch artifact commit: `ac125ae6f`
-- path: `firmware-packets/o-v15m-release-gapfix-20261003/FwPkt.zip`
+- path: `firmware-packets/6.0.0.54.52--o-v15m-release-gapfix-20261003/FwPkt.zip`
 - libgphoto2: `14/14` passed
 - parameterised stock package/display test: **PASSED**
 - patcher deterministic harness: `17` passed
@@ -1691,7 +1691,7 @@ fails.
 - ZIP SHA-256: `51af09b81918f8a99a85ee0df60ba4eb0f0e852fa55f572111ad8009dfd5bf8c`
 - appfs MD5: `02604af91eb9704249cf5a89a46d8df4`
 - PrivateResearch artifact commit: `137f75dc1`
-- path: `firmware-packets/o-v15n-fwver-strcpy-bulb-20261003/FwPkt.zip`
+- path: `firmware-packets/6.0.0.54.52--o-v15n-fwver-strcpy-bulb-20261003/FwPkt.zip`
 - libgphoto2: `14/14` passed
 - parameterised stock package/display test: **PASSED**
 - pre-release gate: `5` passed, `0` failed, `0` skipped
@@ -1733,7 +1733,7 @@ patcher `main` at `c1bbacd`; no candidate containing it has yet been built.
 - ZIP SHA-256: `fcf815562c07ecf21a003e53f6405c45762bcfb9b51c50c77bf3324154f8ec3c`
 - appfs MD5: `4b1ed228617bcb5e63a85c6779b47ddc`
 - PrivateResearch artifact commit: `6c0ed67ab`
-- path: `firmware-packets/o-v15p-15g-recovery-20261003/FwPkt.zip`
+- path: `firmware-packets/6.0.0.54.53--o-v15p-15g-recovery-20261003/FwPkt.zip`
 - libgphoto2 applicable tests: **15 passed, 0 failed**
 - patcher/package gate: **4 passed, 0 failed, 1 prerequisite skip**
 - status: **WITHDRAWN — DO NOT STAGE**

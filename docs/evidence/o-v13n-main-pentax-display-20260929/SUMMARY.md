@@ -76,7 +76,7 @@ qualified by these offline checks.
 
 - Registry ID: `o-v13n-main-pentax-display-20260929`
 - Private artifact:
-  `ian-morgan99/PrivateResearch/firmware-packets/o-v13n-main-pentax-display-20260929/FwPkt.zip`
+  `ian-morgan99/PrivateResearch/firmware-packets/6.0.0.54.22--o-v13n-main-pentax-display-20260929/FwPkt.zip`
 - Private artifact commit: `20ffc40cbfe29a6a480a2be4bb49e0e99411cda4`
 - ZIP MD5: `f98c2aff47ab3c3a2a8bdccb6f709086`
 - ZIP SHA-256: `97c1212da5aa35447da6494d516dfc050b8478d2b67b7778d3ea10760502be76`

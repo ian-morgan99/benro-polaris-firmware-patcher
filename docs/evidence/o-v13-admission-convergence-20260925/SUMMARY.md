@@ -50,7 +50,7 @@ source state. The diagnostic strings `PENTAX_ADMISSION_MODE`, `output-safe` and
 the full admission correlation format are present in the shipped camlib.
 
 Private bytes: `ian-morgan99/PrivateResearch` commit `e7e8f0dc8`, path
-`firmware-packets/o-v13-admission-convergence-20260925/FwPkt.zip`.
+`firmware-packets/6.0.0.54.24--o-v13-admission-convergence-20260925/FwPkt.zip`.
 
 ## Minimum physical acceptance
 

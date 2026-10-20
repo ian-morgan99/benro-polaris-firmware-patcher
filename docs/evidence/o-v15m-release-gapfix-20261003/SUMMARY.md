@@ -28,7 +28,7 @@ version and Bulb test controls. It does not claim physical camera support.
 - libgphoto2 `main`: `e0e5135023165b9a4411bba637076b8ca1e63ed1`
 - Display/FwVer: `6.0.0.54.52`
 - PrivateResearch artifact commit: `ac125ae6f`
-- PrivateResearch path: `firmware-packets/o-v15m-release-gapfix-20261003/FwPkt.zip`
+- PrivateResearch path: `firmware-packets/6.0.0.54.52--o-v15m-release-gapfix-20261003/FwPkt.zip`
 
 ## Artifact hashes
 

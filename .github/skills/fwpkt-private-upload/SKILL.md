@@ -1,13 +1,13 @@
 ---
 name: fwpkt-private-upload
-description: Publish every newly built FwPkt.zip to the PRIVATE ian-morgan99/PrivateResearch repo (firmware-packets/<registry-id>/) so other agents can fetch it online, while keeping the public repos free of firmware bytes. USE FOR: right after any patch-polaris.sh build produces out/<name>/FwPkt.zip; when another agent or machine needs a zip that only exists on this box; backfilling an existing out/ or builds/ zip that was never uploaded. DO NOT USE FOR: staging the zip onto the SD card (fwpkt-update-flow skill), building the zip itself (container/ + patch-polaris.sh), or committing zip bytes to any PUBLIC repo.
+description: Publish every newly built FwPkt.zip to the PRIVATE ian-morgan99/PrivateResearch repo (firmware-packets/<display-version>--<registry-id>/) so other agents can fetch it online, while keeping the public repos free of firmware bytes. USE FOR: right after any patch-polaris.sh build produces out/<name>/FwPkt.zip; when another agent or machine needs a zip that only exists on this box; backfilling an existing out/ or builds/ zip that was never uploaded. DO NOT USE FOR: staging the zip onto the SD card (fwpkt-update-flow skill), building the zip itself (container/ + patch-polaris.sh), or committing zip bytes to any PUBLIC repo.
 ---
 
 # FwPkt private upload — HARD RULE
 
 > **HARD RULE.** Every `FwPkt.zip` this project produces is uploaded to the
 > **private** `ian-morgan99/PrivateResearch` repo under
-> `firmware-packets/<registry-id>/` **in the same session it is built**, before
+> `firmware-packets/<display-version>--<registry-id>/` **in the same session it is built**, before
 > the build is handed off, installed, or discussed. The public repos
 > (`BenroPolarisPatcher`, `OpenPolaris`, the libgphoto2 fork) keep only the
 > registry *row* (hashes + commit links); the zip *bytes* live in
@@ -48,7 +48,7 @@ The script does, in order (all fail-closed):
    updater runs. A mismatch here means the device would silently reject it.
 4. Stages `FwPkt.zip` + a self-describing `README.md` (all four handoff values)
    + `build-source-provenance.txt` into
-   `$PR_CHECKOUT/firmware-packets/<id>/` and commits + pushes to
+   `$PR_CHECKOUT/firmware-packets/<display-version>--<id>/` and commits + pushes to
    `ian-morgan99/PrivateResearch`.
 5. Prints a **paste-ready registry row** for
    `docs/FWPKT-PROVENANCE-CONTRACT.md`.
@@ -57,7 +57,7 @@ Then, in the same session:
 
 6. **Paste the printed row into `docs/FWPKT-PROVENANCE-CONTRACT.md`** and set
    its `path / location` to
-   `` `firmware-packets/<id>/FwPkt.zip` (ian-morgan99/PrivateResearch, private) ``.
+   `` `firmware-packets/<display-version>--<id>/FwPkt.zip` (ian-morgan99/PrivateResearch, private) ``.
    Commit that doc change in the patcher repo. The registry row is the public
    pointer; the bytes stay private.
 
@@ -74,12 +74,22 @@ Then, in the same session:
 ```
 ian-morgan99/PrivateResearch/
 └── firmware-packets/
-    └── <registry-id>/            # e.g. o-v8 — MUST equal the registry id
+    └── <display-version>--<registry-id>/   # e.g. 6.0.0.54.68--o-v17c-colortemp-formless
         ├── FwPkt.zip            # the flashable package (FwPkt/ prefix intact)
         ├── README.md            # all four handoff values + verify commands
         └── build-source-provenance.txt   # if the build produced one
 ```
 
+- **Folder naming.** The prefix is the five-component `display_fwver` — the
+  version the Benro Connect app actually shows — because that is the only
+  identifier visible on the phone. The registry id is kept as the suffix
+  because display versions are **not unique**: nine were issued more than once
+  (the #169 duplicate-version failure in `docs/RELEASE-VERSION-STATE.md`), so
+  a version alone cannot identify a packet. `upload-fwpkt-to-pr.sh` reads the
+  version from the build's own `build-source-provenance.txt` and **fails
+  closed** if it is absent or malformed — never publish under a guessed
+  version. Use `--display-fwver 6.0.0.54.N` only for a build that predates
+  that field.
 - One folder per registry id, **never** overwrite an existing folder's zip.
   A new build gets a new id (o-v9, o-v10, …). If you must re-upload the same
   id with different bytes, that is a *new* row in the registry — bump the id.
@@ -92,7 +102,7 @@ To fetch a build:
 
 ```bash
 git clone --depth 1 https://github.com/ian-morgan99/PrivateResearch.git
-cd PrivateResearch/firmware-packets/<id>
+cd PrivateResearch/firmware-packets/<display-version>--<id>
 md5sum FwPkt.zip        # == registry "zip MD5"
 sha256sum FwPkt.zip     # == registry "zip SHA-256"
 unzip -p FwPkt.zip FwPkt/firmwareInfo | grep '^appfs'   # appfs MD5 == registry
@@ -111,7 +121,7 @@ registry row is *unprovenanced* — do not stage it.
    will trust it because it is "the one in the registry".
 3. **Copying hashes forward** from a doc, a chat message, or an old row.
    Always recompute from the file you are actually uploading.
-4. **Overwriting `firmware-packets/<id>/FwPkt.zip`** with different bytes.
+4. **Overwriting `firmware-packets/<display-version>--<id>/FwPkt.zip`** with different bytes.
    Same id = same bytes, forever.
 5. **Skipping the registry row because "it's only in the private repo".**
    The row lives in the public patcher repo; that is what makes the private

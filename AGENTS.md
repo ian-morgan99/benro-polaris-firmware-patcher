@@ -145,7 +145,7 @@ the libgphoto2 fork) or which agent session produced it — must be traceable by
   share, or the SD card; only the registry row (hashes + commit links) is
   committed. The private zip location now exists: every built zip is uploaded to
   the **private** `ian-morgan99/PrivateResearch` repo under
-  `firmware-packets/<registry-id>/` in the same session it is built — see the
+  `firmware-packets/<display-version>--<registry-id>/` in the same session it is built — see the
   `fwpkt-private-upload` skill (`.github/skills/fwpkt-private-upload/SKILL.md`)
   and its script. The registry row's location column points there; other agents
   fetch the bytes from that repo and verify all four handoff values before

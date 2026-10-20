@@ -67,7 +67,7 @@ output is not visible remains open.
 - ZIP SHA-256: `400d417c90a486ec15b9830b9773b8320b3693f0aa5a69259db126f92d428904`.
 - appfs MD5: `c658bd37c3e70a13ea5f8b4535d8ff97`.
 - PrivateResearch artifact commit: `dade1a7e7`, path
-  `firmware-packets/o-v13v-stage2-direct-20260929/FwPkt.zip`.
+  `firmware-packets/6.0.0.54.41--o-v13v-stage2-direct-20260929/FwPkt.zip`.
 
 ## Changes
 

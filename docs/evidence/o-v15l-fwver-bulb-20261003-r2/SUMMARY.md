@@ -17,7 +17,7 @@ value, displayed as `null`.
 - libgphoto2 `main`: `e0e5135023165b9a4411bba637076b8ca1e63ed1`
 - Display/FwVer: `6.0.0.54.52`
 - PrivateResearch artifact commit: `a91dbe62c6ac44d4c39faf9d9672bbfe984e8abb`
-- PrivateResearch path: `firmware-packets/o-v15l-fwver-bulb-20261003-r2/FwPkt.zip`
+- PrivateResearch path: `firmware-packets/6.0.0.54.52--o-v15l-fwver-bulb-20261003-r2/FwPkt.zip`
 
 ## Artifact hashes
 

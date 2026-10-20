@@ -207,7 +207,7 @@ Before staging a zip on the SD card, it must have a row in
 
 **Where to fetch zips.** Every zip this project builds is uploaded to the
 **private** `ian-morgan99/PrivateResearch` repo under
-`firmware-packets/<registry-id>/FwPkt.zip` (see the `fwpkt-private-upload`
+`firmware-packets/<display-version>--<registry-id>/FwPkt.zip` (see the `fwpkt-private-upload`
 skill). If a registry row's location points there, clone/fetch that folder and
 verify all four handoff values against the row before staging. The public repos
 never contain the zip bytes — only the row.

@@ -6,7 +6,7 @@ Built from the original stock `firmware/FwPkt.zip` on patcher `main`.
 - Build ID: `6.0.0.54.52-o-v15n-fwver-strcpy-bulb`
 - Patcher: [`8e96dec`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/commit/8e96decce989af694c24313ae39c55088d85ac1e)
 - libgphoto2: [`e0e5135`](https://github.com/ian-morgan99/libgphoto2/commit/e0e5135023165b9a4411bba637076b8ca1e63ed1)
-- PrivateResearch: `firmware-packets/o-v15n-fwver-strcpy-bulb-20261003/FwPkt.zip`, commit `137f75dc1`
+- PrivateResearch: `firmware-packets/6.0.0.54.52--o-v15n-fwver-strcpy-bulb-20261003/FwPkt.zip`, commit `137f75dc1`
 - ZIP MD5: `3f55252842ed367b0b0ab36ab439305d`
 - ZIP SHA-256: `51af09b81918f8a99a85ee0df60ba4eb0f0e852fa55f572111ad8009dfd5bf8c`
 - appfs MD5: `02604af91eb9704249cf5a89a46d8df4`

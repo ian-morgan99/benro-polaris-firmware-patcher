@@ -14,7 +14,7 @@ No firmware was installed, and no Polaris or physical camera test was run. Do no
 - libgphoto2 source: [`41fb0826a026d0d4b2fe05c0221f8468f504208d`](https://github.com/ian-morgan99/libgphoto2/commit/41fb0826a026d0d4b2fe05c0221f8468f504208d), `main`
 - Stock FwPkt: `firmware/FwPkt.zip`; MD5 `90bdad511f556f25a2904ae9d2980102`; SHA-256 `f980fe5245a1f85b58d0c2db523402d1af72ddfff782acba99a4eadfdca54d2f`; appfs MD5 `47f2ae680be3a5f5d69aa20e20a2397b`
 - Candidate FwPkt: MD5 `e5fc9735165ad6ce928ad11829b7e03a`; SHA-256 `e26cd48f38f13ca53537cb24b46bd5b4fb41cce2c20c8b72325834287175ebbf`; appfs MD5 `5e8faf6f9493f31a9f3689ca0280ea07`
-- PrivateResearch ZIP commit `f409d5686`; `firmware-packets/o-v16f-bulb-branch-audit-20261010/FwPkt.zip`. Its warning-only README update is commit `4f49da039`; the ZIP bytes and hashes are unchanged.
+- PrivateResearch ZIP commit `f409d5686`; `firmware-packets/6.0.0.54.64--o-v16f-bulb-branch-audit-20261010/FwPkt.zip`. Its warning-only README update is commit `4f49da039`; the ZIP bytes and hashes are unchanged.
 
 ## Validation
 

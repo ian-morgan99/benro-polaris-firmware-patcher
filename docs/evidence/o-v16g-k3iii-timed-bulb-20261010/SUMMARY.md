@@ -17,7 +17,7 @@ This wiring is based on stock-binary disassembly and the direct-PC K-3 III held-
 - Selected camlibs: `ptp2,pentax`; full matched libgphoto2 core/port/ptp2/usb1 stack
 - Stock FwPkt: MD5 `90bdad511f556f25a2904ae9d2980102`; SHA-256 `f980fe5245a1f85b58d0c2db523402d1af72ddfff782acba99a4eadfdca54d2f`; appfs MD5 `47f2ae680be3a5f5d69aa20e20a2397b`
 - Candidate FwPkt: MD5 `4ce76e1a3d4be7830713c2609989b384`; SHA-256 `abee7692bbb50d0fef9147d3cce70fb21eefba9c9f4adb4e0e43a00b6f8e4d7b`; appfs MD5 `28f597774a55aa2f49fdbc48cd099d5a`
-- PrivateResearch ZIP commit: `50b4c108c5a98869b6fcd0c19c04a27dcd10cf7a`; ZIP at `firmware-packets/o-v16g-k3iii-timed-bulb-20261010/FwPkt.zip`. Its patcher-SHA/status README is commit `1050e0ac6`; ZIP bytes and hashes are unchanged.
+- PrivateResearch ZIP commit: `50b4c108c5a98869b6fcd0c19c04a27dcd10cf7a`; ZIP at `firmware-packets/6.0.0.54.65--o-v16g-k3iii-timed-bulb-20261010/FwPkt.zip`. Its patcher-SHA/status README is commit `1050e0ac6`; ZIP bytes and hashes are unchanged.
 
 ## Validation
 

@@ -16,7 +16,7 @@ and identity-proven on hardware. **Physical capture test not yet run** (§6).
 | FwPkt.zip md5 | `94b6b25fcb38be833176d3cd765ee918` |
 | FwPkt.zip sha256 | `73d04ff813e40a35096c09bb3d41ef4dc7ee8be9aad7c416af14225586ced123` |
 | appfs md5 | `06169c8d9b731544bec104a385f6fb98` |
-| published | `ian-morgan99/PrivateResearch` → `firmware-packets/o-v16c-context-lifetime-20261009/FwPkt.zip`, status `candidate` |
+| published | `ian-morgan99/PrivateResearch` → `firmware-packets/6.0.0.54.62--o-v16c-context-lifetime-20261009/FwPkt.zip`, status `candidate` |
 
 libgphoto2 content is PR
 [ian-morgan99/libgphoto2#97](https://github.com/ian-morgan99/libgphoto2/pull/97),

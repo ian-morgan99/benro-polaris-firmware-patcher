@@ -9,7 +9,7 @@
 - ZIP MD5: `fef08d6c994d4296e7f4441ff3528c40`
 - ZIP SHA-256: `0515048034ebef079322eb46528bdefdc8b6b5403cc2737cecfbf9a271ec14d7`
 - appfs MD5: `e7dfc61e03dfbc9b1f9df9af4001122a`
-- PrivateResearch: `firmware-packets/o-v15h-adversarial-bulb-20261002/FwPkt.zip`, commit [`3299e6675`](https://github.com/ian-morgan99/PrivateResearch/commit/3299e6675)
+- PrivateResearch: `firmware-packets/6.0.0.54.51--o-v15h-adversarial-bulb-20261002/FwPkt.zip`, commit [`3299e6675`](https://github.com/ian-morgan99/PrivateResearch/commit/3299e6675)
 
 ## Adversarial review findings and fixes
 

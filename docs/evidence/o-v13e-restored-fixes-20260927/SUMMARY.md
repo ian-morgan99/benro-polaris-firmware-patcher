@@ -44,7 +44,7 @@ transfer, and timeout-phase diagnostics.
 
 - Local artifact: `out/o-v13e-restored-fixes-20260927/FwPkt.zip`
 - Private copy:
-  `ian-morgan99/PrivateResearch/firmware-packets/o-v13e-restored-fixes-20260927/FwPkt.zip`
+  `ian-morgan99/PrivateResearch/firmware-packets/6.0.0.54.29--o-v13e-restored-fixes-20260927/FwPkt.zip`
 - Private artifact commit: `ac518690b`
 - ZIP MD5: `5a3ae51583b4a46c02fd8120314a2bca`
 - ZIP SHA-256:
