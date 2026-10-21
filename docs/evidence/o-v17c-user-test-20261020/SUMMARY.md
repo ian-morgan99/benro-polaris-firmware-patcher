@@ -482,3 +482,42 @@ and that name is what produced this misanalysis — mine included, twice. The us
 therefore small and offline: rename or document the field as the shutter/Tv fraction with the bulb
 timer as its bulb-mode reading, and add a regression case that sets only the Tv fields with no bulb
 mode and asserts the budget scales. No hardware required.
+
+## Follow-on hypothesis: the #122 "skip the idle wait" fast path may be dead on a real camera
+
+Establishing the offset map had a consequence beyond budgeting. `pentax_capture_needs_idle_wait()`
+gates on `conditions->bulb_timer_seconds > 0` with the comment *"Ordinary single-shot captures do not
+need the wait (issue #122)"*. If offset 272 is the shutter numerator in every mode, that condition is
+**not a bulb test** — it is "a shutter speed is set", which is true for essentially every real
+capture. A 1/200 s exposure reports numerator 1, so the predicate is satisfied and the function
+returns 1.
+
+The chain, and exactly where it is inferred:
+
+| Link | Status |
+|---|---|
+| IT2 decodes 272/276 as a fraction, `num==1 → "1/D"` | verified, `MtpDevice.cs:2444` |
+| Our parser puts 272 into `bulb_timer_seconds` | verified, `pentax-utils.c:533` |
+| `needs_idle_wait` returns 1 when that is > 0 | verified, `pentax-utils.c` |
+| A sub-second shutter actually reports numerator 1 at 272 | **inferred** from IT2's decoder; not observed |
+| Therefore the #122 fast path never runs on a real body | follows from the row above |
+
+The existing test does not catch this: it builds `PentaxConditions` with `memset(0)` and asserts
+`!pentax_capture_needs_idle_wait(&g)` — an all-zero blob, which is precisely the state a real camera
+with a shutter set does not produce. The assertion is correct and the scenario is unreachable.
+
+**Severity is low and that is why this is a hypothesis, not a defect report.** `needs_idle_wait` only
+selects a *bounded* post-capture probe, and the loop returns as soon as the camera reports idle — the
+6 s control capture in this session completed normally, which is consistent with either branch. The
+cost is latency on ordinary captures, not lost photographs.
+
+**The test, when a body is next attached:** take an ordinary sub-second capture and check whether the
+post-capture idle-wait path is entered. If it is, the #122 fast path is dead and the correct gate is
+a real bulb-mode test (exposure mode 9/12, as used elsewhere), not a non-zero numerator.
+
+**This is also why the field rename should be a deliberate change rather than a drive-by.** Renaming
+`bulb_timer_seconds` to the shutter/Tv fraction it actually is would make this gate read as a bug on
+sight, and the fix depends on the observation above. Doing it before that observation lands risks
+"fixing" a name while leaving a dead fast path behind — and `libgphoto2` is in upstream-submission
+readiness (`#88`), where a 31-site rename across `config.c`, `library.c` and `pentax-utils.*` wants
+to be its own reviewable change.
