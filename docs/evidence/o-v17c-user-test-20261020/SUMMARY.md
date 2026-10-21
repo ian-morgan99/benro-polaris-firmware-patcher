@@ -114,10 +114,11 @@ The current formula is `frames x exposure + 30 s`, which is wrong in two indepen
    processing. A 70 s pixel-shift capture budgets `(70+1) x 4 + 30 = 314 s` against a real need
    of ≈ 4 x (70 + 70) = 560 s when NR is on.
 
-The same gap applies to a **non-bulb** long exposure: `PentaxConditions` has no shutter-speed
-field (only `bulb_timer_seconds`), so an M-mode 30 s exposure budgets the 60 s base while
-needing 30 + 30 + processing. `pentax_parse_shutter_duration()` already exists
-(`pentax-utils.h:406`) but is not wired into the conditions parse.
+~~The same gap applies to a non-bulb long exposure: `PentaxConditions` has no shutter-speed field
+(only `bulb_timer_seconds`), so an M-mode 30 s exposure budgets the 60 s base while needing
+30 + 30 + processing.~~ **Withdrawn.** `bulb_timer_seconds` *is* the shutter-speed field — offset 272
+is the current Tv numerator in every mode, with 276 as its denominator — so a non-bulb long exposure
+was never unmodelled. The reasoning here was led astray by the field's name; see the final section.
 
 ## Decided design — filed as `ian-morgan99/libgphoto2#106`
 
@@ -174,8 +175,10 @@ the same files. Converting those lines is required for the change to be verifiab
    timeout itself rather than rely on a subsequent request noticing it. (Whether that run also
    consumed a frame number was not checked; the 22:09:53 refusal shows a consumed number is possible,
    but it is not established here.)
-3. **Non-bulb shutter speed.** Wire `pentax_parse_shutter_duration()` into the conditions parse so
-   an M-mode long exposure gets a real ceiling instead of the 60 s base.
+3. ~~Non-bulb shutter speed.~~ **Superseded** — the offset is not missing; 272/276 already carries
+   the set shutter speed in every mode and is already parsed. See *The non-bulb shutter-speed offset
+   is already known* at the end of this file. What remains is a field-name correction, not a
+   discovery.
 
 ## The 40 s timing run: setup notes
 
@@ -234,11 +237,12 @@ success counter**, because a refused request still consumes a frame number.
   exact-value assertions in `tests/test-pentax-utils.c:644-690` and `:747-753`, so the ceiling
   arithmetic in `#106` is verifiable offline without hardware or Docker.
 
-The one item that genuinely needs hardware is the **non-bulb** case: finding the conditions-blob
-offset that carries the set shutter speed, so `frames x 2 x exposure` can be computed when
-`bulb_timer_seconds` is zero. Until then a non-bulb long exposure keeps the 60 s base.
+~~The one item that genuinely needs hardware is the **non-bulb** case: finding the conditions-blob
+offset that carries the set shutter speed.~~ **That was wrong, and the run below is what disproves
+it** — the offset is 272/276, already parsed, and the 40 s non-bulb request proves the field is
+populated in a timed mode. See *The non-bulb shutter-speed offset is already known*.
 
-## Live reproduction on hardware, 2026-10-21 — confirms the model and the residual gap
+## Live reproduction on hardware, 2026-10-21 — confirms the model, and refutes my "residual gap"
 
 Run on the same device (`6.0.0.54.68`, K-3 III) with a fresh battery, after the analysis above.
 The timing measurement had to be taken through the **non-bulb** path, because the bulb path is now
@@ -254,9 +258,11 @@ refused before any exposure — recorded in the following section.
 01:36:52  RX 264@state:0;#                                     <- 71 s later, no state:4, no 773
 ```
 
-**71 s elapsed — the `PENTAX_CAPTURE_TIMEOUT_MS_BASE` floor exactly**, because with
-`bulb_timer_seconds == 0` the budget function has no duration to scale and returns the base. The
-exposure plus its NR dark frame needs ≈80 s, so it was cut off mid-processing.
+**71 s elapsed.** ~~the `PENTAX_CAPTURE_TIMEOUT_MS_BASE` floor exactly~~ — that reading was wrong and
+is corrected below and at the end of this file. 71 s is *not* the 60 s base: under the `.68` code the
+only branch that yields 71 s is the bulb one, `(40+1)×1000 + 30 000`. So offset 272 held **40** even
+though this request carried no bulb field. The exposure plus its NR dark frame needs ≈80 s, so it was
+cut off mid-processing either way.
 
 **The image was destroyed, not delayed.** Checked four hours later: card count unchanged at 539,
 newest file still `SP_0376.dng` from 02:09. No late publication, no orphan. This is the direct
@@ -270,16 +276,20 @@ and implements the scaled allowance — `pentax_processing_allowance_ms()` retur
 `known_exposure_ms + margin` when a duration is known, `margin` alone otherwise. It covers bulb,
 astro-shift and astro-tracer.
 
-This run does not exercise it, for two independent reasons:
+This run does not exercise the fix, for one reason:
 
 1. `.68` was built 2026-10-19, the fix committed 2026-10-20 — the installed library predates it.
-2. More importantly, the run went through the **non-bulb** path, where `known_exposure_ms` is
-   still 0 and the committed fix therefore still yields the flat base. The measured 71 s is
-   precisely what the current code produces for this case.
 
-So the residual gap is confirmed on hardware rather than inferred: **a non-bulb long exposure is
-still budget-bound at 60 s + margin**, and closing it needs the shutter-speed field in the
-conditions blob, not a change to the allowance arithmetic.
+~~2. More importantly, the run went through the non-bulb path, where `known_exposure_ms` is still 0
+and the committed fix therefore still yields the flat base.~~ **Withdrawn.** I had assumed a non-bulb
+request leaves `bulb_timer_seconds` at 0; the 71 s give-up proves it was 40, because no other branch
+produces that number. The field carries the set shutter speed in every mode (see the final section),
+so `23008c229` *does* cover this case — for the same input the current code budgets
+`(40+1) + (40+1) + 30 = 112 s`.
+
+So what this run confirms on hardware is narrower than I first wrote, and more useful: **the old
+flat-margin budget destroyed a real photograph, and the committed fix would have allowed it.** It is
+not evidence of a residual gap in the fix.
 
 ### Control, same session — the fault is specific to long exposures
 
