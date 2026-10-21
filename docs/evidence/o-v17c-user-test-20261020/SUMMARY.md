@@ -413,3 +413,62 @@ in-B case, which is still untested.
   image at the 71 s floor. Short exposures (the 6 s control) are unaffected.
 - The `.68` stability verdict ("3/3 PASS") was obtained on Manual-dial captures and is unaffected,
   but it should not be read as covering bulb.
+
+## The non-bulb shutter-speed offset is already known — the "needs hardware" item is closed offline
+
+The open item said the conditions-blob offset carrying the set shutter speed had to be *found on a
+body*, so that a non-bulb long exposure could be budgeted. It does not need a body, and the offset
+is not missing. **It is 272/276 — the same pair already parsed as `bulb_timer_seconds` /
+`bulb_timer_denominator`.**
+
+IT2 reads those two words as the live shutter speed in every mode, not as a bulb-only field:
+
+```csharp
+num  = BitConverter.ToUInt32(data, 272);
+num2 = BitConverter.ToUInt32(data, 276);
+ConvertFractionalTvValueToString(num, num2, out _TvCurrentValueText);   // the Tv display
+TimeSpan timeSpan = new TimeSpan(0, 0, (int) num);                     // the same word as the bulb timer
+_camBulbTimerValue = ...;
+```
+(`IT2_2625_decompile/RemoteAssistant/MtpDevice.cs:4777-4783`; `ConvertFractionalTvValueToString` at
+`:2444` decodes `den==1 → "N″"`, `num==1 → "1/D"`, else the quotient — a shutter-speed fraction.)
+Enumerating every `BitConverter.ToUInt32(data, N)` in that parser returns **no other candidate** for
+the current shutter value.
+
+Our own tree already treats it that way, in a shipped and qualified path: the shutter-verify loop
+compares the *requested* shutter against these exact fields —
+
+```c
+GP_LOG_D ("Pentax shutter verification attempt %u: requested=%u/%u, conditions=%u/%u", ...
+        conditions.bulb_timer_seconds, conditions.bulb_timer_denominator);
+```
+(`camlibs/ptp2/config.c:11726`) — and that verification works on the body.
+
+### And today's 40 s run proves it on hardware, without meaning to
+
+The 01:35:40 capture was a **non-bulb** request (`--shutter-index 14`, dial on a timed mode, no
+`bulb:` field) and it gave up at **71 s**. Under the `.68` code the only branch that yields 71 s is
+the bulb one, `(40+1)×1000 + 30 000`; the base alone is 60 s and base+margin is 90 s. So offset 272
+held **40** while the camera was in a timed mode. The field carries the set shutter duration in
+non-bulb modes, observed directly.
+
+### What that means for `libgphoto2#106`
+
+The comment I posted this morning asserted the opposite — that `known_exposure_ms` stays 0 for a
+non-bulb exposure and so `23008c229` is a no-op there. That is wrong: `bulb_timer_seconds` is
+non-zero for a non-bulb long exposure, so the committed scaled allowance **already covers it**. For
+the same 40 s input the current code budgets `(40+1) + (40+1) + 30 = 112 s`, above the ≥85 s the
+regression pack pins at `tests/test-pentax-utils.c:709`. The residual gap I described does not
+exist; `.68` lost the frame because it predates the fix, not because the fix has a hole.
+
+Direction of any residual error is safe: because the value is a fraction, a sub-second shutter
+(`1/200`) reads as 1 s and `1″3` reads as 13 s, so the budget is over- rather than under-sized,
+which is the cheap direction by the reasoning in `23008c229`.
+
+### The real defect is the name
+
+`bulb_timer_seconds` is a misleading name for a field that is the current Tv numerator in all modes,
+and that name is what produced this misanalysis — mine included, twice. The useful follow-up is
+therefore small and offline: rename or document the field as the shutter/Tv fraction with the bulb
+timer as its bulb-mode reading, and add a regression case that sets only the Tv fields with no bulb
+mode and asserts the budget scales. No hardware required.
