@@ -595,3 +595,48 @@ increasing order of correctness:
 
 The probe's `--bulb-seconds` path is now qualified as working on `.68` in held-shutter bulb mode,
 which retires the *canary pending* status that has stood on #186 since `.65`.
+
+## Correction to the resolution above: two different app functions, and the 40 s result
+
+The resolution says the app "requests the held-shutter action regardless". The logs show something
+more specific, and it changes the practical guidance.
+
+**The failure and the success go through different app functions.**
+
+| | 12:02 (`-6`) | 12:35 (success) |
+|---|---|---|
+| entry | `captureImage[1485]` | `captureImage[1521]` |
+| bulb helper | `captureBulbImage[1458]` → `ret -6` | `capture_image_with_Bulb[3213]` |
+| app-side timing | none | `bulb time start` … `bulb time end` |
+| result | `PHOTO_RECORD Fail` | `capture bulb Image ret 0` |
+
+So the mode setting does not merely flip a bit the library happens to reject — it selects a different
+app code path, one that **holds the shutter itself and sleeps for the requested duration**
+(`12:40:53.517` → `12:41:33.518` = 40.001 s for `--bulb-seconds 40`).
+
+**Consequence: a 40 s bulb passed on `.68`, which predates the budget fix.**
+
+```
+12:40:53  RX 264@state:1
+12:41:33  bulb time end            (40.001 s)
+12:42:18  PASS lifecycle=[1,4,0] files=['/app/sd/normal/SP_0384.dng']   card 542 -> 543
+```
+
+This is not in tension with the 71 s loss recorded earlier in this file — that was the **non-bulb**
+`--shutter-index` path, where the library owns the whole exposure inside a single
+`gp_camera_capture()` and therefore inside its wait budget. Here the app completes the exposure
+before the library's post-capture collection begins, so the budget never has to cover the exposure
+itself. *(The exact call boundary is inferred from the `boundary=camlib-enter` markers around the
+sleep; the empirical result — 40 s bulb succeeds on a library without the fix — does not depend on
+that inference.)*
+
+**This reverses the practical recommendation given earlier in this document.** For long exposures on
+this body the bulb path in held-shutter mode is the *better* route, not the broken one: it is not
+subject to the capture-wait budget that discarded the 40 s non-bulb frame. The earlier instruction
+"any long-exposure qualification must use the non-bulb shutter-index path until this is fixed" should
+be read as applying only to builds and paths where the bulb mode is unavailable.
+
+Still open, and being measured: how far the working path scales (a 90 s run is in flight), and
+whether the app's own sleep has any ceiling. The `#106` budget work remains correct and worth
+merging — it protects the non-bulb path, which is the path a user reaches when the camera is left in
+its default bulb mode.
