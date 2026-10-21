@@ -640,3 +640,50 @@ Still open, and being measured: how far the working path scales (a 90 s run is i
 whether the app's own sleep has any ceiling. The `#106` budget work remains correct and worth
 merging — it protects the non-bulb path, which is the path a user reaches when the camera is left in
 its default bulb mode.
+
+## Held-shutter bulb is qualified to 90 s — and a further correction to my own account
+
+Five consecutive in-B bulb captures succeeded after the mode change, each preceded by a live 268 read
+confirming the dial was on B:
+
+| Time | Requested | Measured app-side hold | Result | Card |
+|---|---|---|---|---|
+| 12:35 | 5 s | 5.003 s | PASS `SP_0382.dng` | 540 → 541 |
+| 12:37 | 8 s | — | PASS `SP_0383.dng` | 541 → 542 |
+| 12:40 | 40 s | 40.001 s | PASS `SP_0384.dng` | 542 → 543 |
+| 12:42 | 90 s | 89.999 s | PASS `SP_0385.dng` | 543 → 544 |
+| 12:47 | 5 s | — | PASS `SP_0386.dng` | 544 → 545 |
+
+Durations are honoured to the millisecond and every one produced a real file. This retires the
+*canary pending* status that has stood on #186 since `.65`, for the held-shutter bulb mode.
+
+### The app branches on the mode — so "the app ignores the recommendation" is the wrong diagnosis
+
+I wrote above that `polestar_app` requests the held-shutter action regardless and discards the
+library's advice. The two traces show the app taking **different branches inside `captureImage`**:
+
+```
+camera-timed mode : captureImage[1485] -> captureBulbImage[1458]        -> ret -6, PHOTO_RECORD Fail
+held-shutter mode : captureImage[1521] -> capture_image_with_Bulb[3213] -> ret 0, holds shutter itself
+```
+
+Different call sites, different helpers. The app is therefore *mode-aware*, not ignorant — it selects
+an implementation per mode, and the one it selects for camera-timed mode is the one that fails. That
+reframes the fix: not "add a fallback after `-6`", but **why the camera-timed branch uses an
+implementation that the library rejects, when a working one already exists in the same binary.**
+
+What drives that branch is not established — it could read the same capability bit, or key off a
+different setting. That is the question to answer before proposing a change, and it is answerable
+statically from the 264 handler's disassembly.
+
+### Causation: strong, with one gap
+
+The bit was `yes` in every archived sample before 12:28 and `no` in the one sample at 12:28:18, the
+behaviour changed at the same moment, the mechanism is confirmed in code (`library.c:7102` tests
+exactly that bit), and five captures then succeeded. The gap is that the widget's dumps are
+event-driven, so there is a single post-change reading of the bit rather than a series, and the
+reversal has not been observed.
+
+**The one test that closes it:** set the camera back to camera-timed bulb and fire a 5 s request. If
+`-6` returns through `captureBulbImage`, the cause is proven rather than inferred. The camera is
+currently in the working mode, so this needs the setting changed by hand.
