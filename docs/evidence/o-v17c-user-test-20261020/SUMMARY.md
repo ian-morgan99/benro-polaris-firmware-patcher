@@ -521,3 +521,77 @@ sight, and the fix depends on the observation above. Doing it before that observ
 "fixing" a name while leaving a dead fast path behind — and `libgphoto2` is in upstream-submission
 readiness (`#88`), where a 31-site rename across `config.c`, `library.c` and `pentax-utils.*` wants
 to be its own reviewable change.
+
+## RESOLVED — bulb works. The refusal is a mode conflict, and the working configuration is now known
+
+At 12:35 and 12:37 on 2026-10-21, with the dial on B, a bulb capture **succeeded twice**:
+
+```
+12:35:34.953  capture_image_with_Bulb[3230]: ----bulb time start
+12:35:39.956  capture_image_with_Bulb[3267]: ----bulb time end        <- 5.003 s for bulb-seconds 5
+              capture bulb Image ret 0
+              PASS lifecycle=[1, 4, 0] files=['/app/sd/normal/SP_0382.dng']   card 540 -> 541
+12:37:09      repeat at bulb-seconds 8 -> PASS, SP_0383.dng, card 541 -> 542
+```
+
+The duration is honoured exactly, the full `1 → 4 → 0` lifecycle completes, and a real file lands on
+the card. Both runs were preceded by a live 268 read confirming `entries=1 collapsed=True`, so the
+dial was genuinely on B — the precondition that earlier samples lacked.
+
+### The variable that changed
+
+The camera's **`bulb-timer` capability bit**, which the widget prints from
+`capability_flags & PENTAX_CONDITION_BULB_TIMER` (`config.c:9491`). Timestamped samples:
+
+```
+17:24:57  YES      00:42:38  YES      14:37:29  YES
+14:37:44  YES      12:28:18  no   <- operator changed the camera's bulb setting
+```
+
+Every `-6` in this investigation predates 12:28:18; every success postdates it. The bit tracks a
+user-settable camera option, not a fixed capability — which is why 45 of 52 archived samples said
+`yes` and why this was invisible from the library side alone.
+
+### Mechanism, end to end
+
+The camera offers two bulb behaviours. When **camera-timed** bulb is selected the camera sets the
+`BULB_TIMER` bit, and the library deliberately refuses the held-shutter action:
+
+```c
+if (bulb_action_start &&
+    (pre_capture_conditions.capability_flags & PENTAX_CONDITION_BULB_TIMER)) {
+        /* The camera-timed path is intentionally not converted into a
+         * held-shutter action. Normal gp_camera_capture() owns that path. */
+        gp_context_error (context, _("Camera-timed Bulb is active; use normal timed capture …"));
+        return GP_ERROR_NOT_SUPPORTED;                    /* -6, library.c:7102-7113 */
+}
+```
+
+`polestar_app` requests the held-shutter action regardless, discards that instruction, and surfaces
+`-6`. With the **other** bulb mode selected the bit clears, the guard does not fire, the held-shutter
+start/stop runs, and the capture completes — which is exactly what the guard's own message
+prescribes.
+
+### Corrections to this document
+
+- *"the product path has never had a working bulb capture"* — **wrong**. It works in the
+  held-shutter bulb mode. It fails specifically when the camera is set to camera-timed bulb.
+- *"with the dial on B and camera-timed bulb active, bulb fails outright… that question is closed"*
+  — the first half stands, the conclusion does not. The failure is mode-dependent, not absolute.
+- The earlier "dial was on B" error is now fully explained: the 12:02 sample *was* on B and still
+  failed, because the camera was in camera-timed mode. Both conditions are required, and only
+  reading the 268 list plus the capability bit together distinguishes them.
+
+### What actually needs fixing
+
+Not the camera, and not the library — the library's behaviour here is correct and its diagnostic is
+accurate. The defect is that **`polestar_app` ignores the recommendation it receives**. Options, in
+increasing order of correctness:
+
+1. On `-6` from the bulb action, fall back to the normal timed-capture path the error names.
+2. Read the `BULB_TIMER` bit first and choose the path up front, rather than trying one and
+   recovering.
+3. Surface the camera's own message to the user, who can then set the mode deliberately.
+
+The probe's `--bulb-seconds` path is now qualified as working on `.68` in held-shutter bulb mode,
+which retires the *canary pending* status that has stood on #186 since `.65`.
