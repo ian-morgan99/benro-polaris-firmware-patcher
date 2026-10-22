@@ -181,15 +181,49 @@ def wait_for_expected_output_set(
     return observed, new_files, None
 
 
-def effective_shot_timeout(base: float, bulb_seconds: int | None) -> float:
-    """Allow the camera's Bulb hold plus transfer/lifecycle time."""
+# The margin added to the exposure duration to allow for transfer and lifecycle
+# notifications. Chosen from the observed completion path: a 90 s Bulb capture on
+# `.68` reported `state:0` roughly 3-4 s after the shutter opened, but a RAW+JPEG
+# card can take tens of seconds to write, and #191 records completion notifications
+# arriving ~60 s late in ~7% of captures. 90 s covers that without hiding a genuine
+# stall behind an enormous budget. Override with --transfer-margin.
+DEFAULT_TRANSFER_MARGIN_S = 90.0
+
+
+def effective_shot_timeout(base: float, bulb_seconds: int | None,
+                           resolved_seconds: float | None = None,
+                           margin: float = DEFAULT_TRANSFER_MARGIN_S) -> float:
+    """Allow the exposure plus transfer/lifecycle time.
+
+    #207: the budget must be derived from the duration the camera will *actually*
+    hold for, not just the number typed on the command line. Two inputs are
+    therefore considered and the larger wins:
+
+    * ``bulb_seconds`` -- what was requested, which is what the 264 payload sends
+      as ``bulb:N`` and therefore what an app-side hold will last.
+    * ``resolved_seconds`` -- the duration of the shutter slot that
+      `prepare_bulb_shutter` actually selected. In a timed mode this can be
+      *longer* than the request (the list is discrete: asking for 35 s resolves to
+      ``00-40``), and it is ``None`` in B mode, where the collapsed list carries
+      no duration at all and the hold is driven purely by ``bulb:N``.
+
+    Taking the maximum means this can never shorten a budget relative to the old
+    behaviour, so it cannot introduce a new false timeout; it only extends budgets
+    that were genuinely too short. The margin is documented above and configurable
+    rather than hard-coded.
+    """
     if base <= 0:
         raise ValueError("--shot-timeout must be positive")
+    if margin < 0:
+        raise ValueError("--transfer-margin must not be negative")
     if bulb_seconds is None:
         return base
     if bulb_seconds <= 0:
         raise ValueError("--bulb-seconds must be positive")
-    return max(base, float(bulb_seconds + 90))
+    effective = float(bulb_seconds)
+    if resolved_seconds is not None and resolved_seconds > effective:
+        effective = float(resolved_seconds)
+    return max(base, effective + margin)
 
 
 def bulb_capture_payload(seconds: float | None) -> str:
@@ -669,6 +703,11 @@ def bulb_shutter_session(
     ``ssh_host`` is forwarded to `prepare_bulb_shutter` so B mode can be decided
     from the camera's own exposure mode rather than the shape of the 268 list
     (#206).
+
+    Yields ``(index, resolved_seconds)``. ``resolved_seconds`` is the duration of
+    the shutter slot actually selected, or ``None`` in B mode where the collapsed
+    list carries no duration; callers use it to size the capture timeout from what
+    the camera will really do instead of what was typed (#207).
     """
     current, bulb_index, bulb_label, bulb_actual, started_in_bulb_slot = prepare_bulb_shutter(
         p, bulb_seconds, explicit_index, timeout, ssh_host
@@ -692,7 +731,7 @@ def bulb_shutter_session(
             + (" (already selected, no write)" if already_selected else ""),
             flush=True,
         )
-        yield bulb_index
+        yield bulb_index, bulb_actual
     except BaseException as exc:
         # Keep the capture/body/socket failure primary.  Restoration is
         # diagnostic cleanup and must never hide the event we are trying to
@@ -740,6 +779,10 @@ def main() -> int:
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--shot", action="store_true")
     ap.add_argument("--shot-timeout", type=float, default=180.0)
+    ap.add_argument("--transfer-margin", type=float,
+                    default=DEFAULT_TRANSFER_MARGIN_S,
+                    help="seconds added to the exposure duration for transfer and "
+                         "lifecycle notifications when deriving the capture timeout (#207)")
     ap.add_argument("--expected-files", type=int, choices=(1, 2),
                     help="authoritative output obligation required with --shot")
     ap.add_argument("--bulb-seconds", type=float,
@@ -852,13 +895,19 @@ def main() -> int:
                 set_shutter(p, args.shutter_index)
 
             # ONE capture
-            shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
             shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index,
                                                     ssh_host=args.ssh_host)
                                if args.bulb_seconds is not None else nullcontext())
-            with shutter_context:
+            with shutter_context as ctx:
+                # The session yields (index, resolved_seconds); nullcontext yields
+                # None. Size the budget from the resolved duration when known (#207).
+                resolved = ctx[1] if isinstance(ctx, tuple) else None
+                shot_timeout = effective_shot_timeout(
+                    args.shot_timeout, args.bulb_seconds, resolved,
+                    margin=args.transfer_margin)
                 if args.bulb_seconds is not None:
                     print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
+                          f"resolved_shutter_seconds={resolved} "
                           f"shot_timeout={shot_timeout}s", flush=True)
                 else:
                     print(f"{stamp()} SHOT shot_timeout={shot_timeout}s", flush=True)

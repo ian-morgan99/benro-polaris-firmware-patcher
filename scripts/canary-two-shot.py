@@ -40,6 +40,7 @@ Polaris, field, stamp = _cp_mod.Polaris, _cp_mod.field, _cp_mod.stamp
 bulb_capture_payload = _cp_mod.bulb_capture_payload
 bulb_shutter_session = _cp_mod.bulb_shutter_session
 effective_shot_timeout = _cp_mod.effective_shot_timeout
+DEFAULT_TRANSFER_MARGIN_S = _cp_mod.DEFAULT_TRANSFER_MARGIN_S
 read_expected_sw = _cp_mod.read_expected_sw
 
 
@@ -153,6 +154,10 @@ def main() -> int:
     ap.add_argument("--port", type=int, default=9090)
     ap.add_argument("--bind", default="192.168.0.4")
     ap.add_argument("--shot-timeout", type=float, default=180.0)
+    ap.add_argument("--transfer-margin", type=float,
+                    default=DEFAULT_TRANSFER_MARGIN_S,
+                    help="seconds added to the exposure duration for transfer and "
+                         "lifecycle notifications when deriving the capture timeout (#207)")
     ap.add_argument("--expected-files", type=int, choices=(1, 2), required=True,
                     help="authoritative per-exposure output obligation; never inferred from photoFormat")
     ap.add_argument("--expected-sp-prefix", required=True,
@@ -220,13 +225,17 @@ def main() -> int:
             confirmed = p.wait_code(292, 10)
             print(f"{stamp()} PREVIEW confirmed={confirmed}", flush=True)
 
-        shot_timeout = effective_shot_timeout(args.shot_timeout, args.bulb_seconds)
-        shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index,
-                                                ssh_host=f"root@{args.host}")
-                           if args.bulb_seconds is not None else nullcontext())
-        with shutter_context:
+        shot_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index,
+                                             ssh_host=f"root@{args.host}")
+                        if args.bulb_seconds is not None else nullcontext())
+        with shot_context as ctx:
+            resolved = ctx[1] if isinstance(ctx, tuple) else None
+            shot_timeout = effective_shot_timeout(
+                args.shot_timeout, args.bulb_seconds, resolved,
+                margin=args.transfer_margin)
             if args.bulb_seconds is not None:
                 print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
+                      f"resolved_shutter_seconds={resolved} "
                       f"shot_timeout={shot_timeout}s", flush=True)
 
             ok, _records, seen_paths = run_sequence(

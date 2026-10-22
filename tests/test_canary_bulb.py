@@ -603,3 +603,88 @@ def test_exposure_mode_query_has_a_kill_switch(monkeypatch):
     assert mod.camera_exposure_mode("root@192.168.0.1") is None
     monkeypatch.delenv("POLARIS_EXPOSURE_MODE_QUERY", raising=False)
     assert mod.EXPOSURE_MODE_QUERY_TIMEOUT_S <= 10.0
+
+
+# ---------------------------------------------------------------------------
+# #207: the capture timeout must be sized from the duration the camera will
+# actually hold for, not only from the number typed on the command line. The
+# 268 list is discrete, so a request can resolve to a *longer* slot than asked
+# for; budgeting from the request alone then times out a capture that is still
+# legitimately exposing.
+def test_timeout_grows_when_the_resolved_shutter_is_longer_than_requested():
+    mod = load_probe()
+    # 5 s requested, but the list's shortest covering slot is 8 s.
+    assert mod.effective_shot_timeout(30, 5, 8) == 98.0
+
+
+def test_timeout_never_shortens_when_the_list_cannot_cover_the_request():
+    """A list whose longest slot is shorter than the request keeps the old budget.
+
+    This is the safety property: taking max(requested, resolved) means #207 can
+    only ever extend a budget, never introduce a new false timeout.
+    """
+    mod = load_probe()
+    assert mod.effective_shot_timeout(30, 35, 30) == 125.0
+
+
+def test_timeout_in_b_mode_uses_the_requested_hold():
+    """In B mode the collapsed list carries no duration, so resolved is None."""
+    mod = load_probe()
+    assert mod.effective_shot_timeout(30, 5, None) == 95.0
+
+
+def test_transfer_margin_is_configurable_and_documented():
+    mod = load_probe()
+    # The base is a floor: the derived budget may exceed it but never go below it,
+    # so --shot-timeout keeps meaning "at least this long" whatever the margin is.
+    assert mod.effective_shot_timeout(10, 5, None, margin=0) == 10.0
+    assert mod.effective_shot_timeout(2, 5, None, margin=0) == 5.0
+    assert mod.effective_shot_timeout(10, 5, None, margin=30) == 35.0
+    assert mod.DEFAULT_TRANSFER_MARGIN_S == 90.0
+
+
+def test_negative_transfer_margin_is_rejected():
+    mod = load_probe()
+    try:
+        mod.effective_shot_timeout(30, 5, None, margin=-1)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a negative margin must be rejected")
+
+
+def test_session_yields_the_resolved_duration_for_a_timed_slot():
+    mod = load_probe()
+    device = FakePolaris([
+        info(),                              # resolve 8 s -> index 5 (00-08)
+        ack(5), info(5),
+        ack(K3_CURRENT), info(K3_CURRENT),
+    ])
+    with mod.bulb_shutter_session(device, 8) as ctx:
+        index, resolved = ctx
+        assert index == 5
+        assert resolved == 8.0
+
+
+def test_session_yields_no_duration_in_b_mode():
+    mod = load_probe()
+    device = FakePolaris([B_MODE_INFO])
+    with mod.bulb_shutter_session(device, 5) as ctx:
+        index, resolved = ctx
+        assert index == 0
+        assert resolved is None
+
+
+def test_session_yields_the_explicit_index_duration_when_forced():
+    """An explicit index is validated against the timed list (#208); its duration
+    must still reach the caller so the budget reflects it."""
+    mod = load_probe()
+    device = FakePolaris([
+        info(),                              # current 3, timed list
+        ack(6), info(6),                     # select 00-30
+        ack(K3_CURRENT), info(K3_CURRENT),   # restore
+    ])
+    with mod.bulb_shutter_session(device, 45, explicit_index=6) as ctx:
+        index, resolved = ctx
+        assert index == 6
+        assert resolved == 30.0
