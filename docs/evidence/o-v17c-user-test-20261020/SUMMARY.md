@@ -687,3 +687,74 @@ reversal has not been observed.
 **The one test that closes it:** set the camera back to camera-timed bulb and fire a 5 s request. If
 `-6` returns through `captureBulbImage`, the cause is proven rather than inferred. The camera is
 currently in the working mode, so this needs the setting changed by hand.
+
+## Correction (2026-10-22): what those five captures actually prove
+
+Raised in review on #186. The five successes stand and are not being withdrawn —
+`SP_0382` … `SP_0386` are real files produced by real captures. Two claims *about*
+them were overstated.
+
+### 1. "Durations are honoured to the millisecond" is not an exposure measurement
+
+The values in the table (5.003 s, 40.001 s, 89.999 s) come from `polestar_app`'s own
+`bulb time start` … `bulb time end` pair in Mlog. That interval is **how long the app
+held the shutter open**, i.e. how long its own sleep lasted. It is not a measurement of
+how long the sensor was exposed, and the millisecond precision says nothing about the
+exposure at all — it only shows the app's timer is accurate.
+
+The distinction matters because the held-shutter path is exactly the one where the app,
+not the camera, decides when to close the shutter. An app-side hold of 40.001 s is
+consistent with a 40 s exposure but does not establish one: if the shutter command were
+delayed, dropped, or the body ignored part of it, the app's sleep would still read
+40.001 s. Independent confirmation requires the camera's own record — EXIF
+`ExposureTime` (tag 33421) in the produced DNG, cross-checked against
+`ShutterSpeedValue` (37385) — plus the PTP start/stop pair in Clog.
+
+**Status: not yet measured.** `scripts/dng-exposure.py` now exists to read those tags
+without any third-party dependency (self-tested 6/6, both endians, out-of-line RATIONAL
+offsets), but no DNG from this session has been retrieved and parsed. Until that is done
+the correct statement is:
+
+> Held-shutter bulb is qualified to **90 s of application-measured shutter hold**, with
+> five file-producing captures at 5/8/40/90/5 s. Sensor exposure duration is
+> **unverified**.
+
+### 2. A collapsed command-268 list does not prove the dial was on B
+
+The table's caption says each capture was "preceded by a live 268 read confirming the
+dial was on B". #206 already records that this inference is unsound in **both**
+directions: with the dial physically on B on `.67`, the body reported a full **56-entry**
+timed list, not a collapsed one (`docs/evidence/o-v17b-physical-20261019/bulb-refusal-1.txt`),
+and a body whose PTP property store is still initialising can report a single entry that
+is not B mode. A collapsed list is supporting evidence, not a bidirectional mode oracle.
+
+The correct contemporaneous signal is `pentaxconditions` → `exposure-mode-raw` (B = 9),
+read through the existing PTP owner with no competing session — implemented for the probe
+in `c6b426c` and still awaiting its B1/B2 hardware confirmation.
+
+What was actually recorded for these five captures is the 268 list shape, so the dial
+position is **inferred, not observed**. The working mode is also corroborated by the app
+taking the `capture_image_with_Bulb[3213]` branch rather than `captureBulbImage[1458]`,
+which is stronger than the list shape but still indirect.
+
+### What this changes about the conclusion
+
+- **Held-shutter bulb**: qualified to the extent directly demonstrated — five captures,
+  each producing a file, at application-measured holds up to 90 s. Exposure accuracy and
+  dial position are not established.
+- **Camera-timed bulb**: remains separately unqualified, and now has a reproduced failure.
+  On 2026-10-21 evening, with the camera back in camera-timed bulb mode and a healthy
+  battery, a `b:5` request returned `1 -> -6` in the same second with no file and no
+  `boundary=camlib-enter` in the Clog delta (`docs/issue-219-bulb-mode.md`). The reversal
+  gap noted above is therefore closed: the `-6` gate is real and mode-driven.
+- No firmware change is warranted by this correction; it changes what may be claimed, not
+  what works.
+
+### Closing evidence still required
+
+| # | Evidence | How |
+|---|---|---|
+| 1 | Sensor exposure time for the five DNGs | `scripts/dng-exposure.py` on `SP_0382`…`SP_0386` retrieved from the card |
+| 2 | PTP start/stop pair per capture | Clog delta around each request, attributed by byte offset |
+| 3 | Dial position at capture time | `exposure-mode-raw` reading through the existing PTP owner (#206 B1/B2) |
+| 4 | Clean subsequent capture after each | already partly shown by the card count advancing 540 → 545 |
