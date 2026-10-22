@@ -210,8 +210,16 @@ if [ "$FULLSTACK" = "1" ]; then
 fi
 
 # --- optional: fix the upstream "Canon:EOS 5Rm2" model-name typo (R5 Mark II) ---
+#  #214 D3: this was `sed ... || true`, so if upstream ever renames the literal the
+#  build continues and silently ships the misspelled model name. Assert the anchor
+#  first and fail closed, matching the `_reserved_tail` check above.
 if [ "$FIXTYPO" = "1" ]; then
-  sed -i 's/"Canon:EOS 5Rm2"/"Canon:EOS R5m2"/' camlibs/ptp2/library.c || true
+  grep -q '"Canon:EOS 5Rm2"' camlibs/ptp2/library.c \
+    || { echo "[build] ERROR: R5m2 typo anchor not found in camlibs/ptp2/library.c"; exit 1; }
+  sed -i 's/"Canon:EOS 5Rm2"/"Canon:EOS R5m2"/' camlibs/ptp2/library.c
+  grep -q '"Canon:EOS R5m2"' camlibs/ptp2/library.c \
+    || { echo "[build] ERROR: R5m2 typo patch did not apply"; exit 1; }
+  echo "[build] upstream EOS 5Rm2 model-name typo corrected"
 fi
 
 # --- optional: lengthen the Canon cold-start OpenSession timeout (ms) ---------
@@ -223,7 +231,14 @@ fi
 #  (the camera NAKs, it does not stall) until the camera becomes ready, so init
 #  succeeds on the first enumeration instead of storming resets.
 if [ -n "${COLD_START_TIMEOUT_MS:-}" ]; then
+  #  #214 D3: the sed was unchecked and the success line printed unconditionally,
+  #  so a moved anchor shipped the stock 1500 ms window while the log claimed the
+  #  patch applied. Assert the anchor, apply, then verify.
+  grep -qE '#define[[:space:]]+USB_CANON_START_TIMEOUT[[:space:]]+1500' camlibs/ptp2/library.c \
+    || { echo "[build] ERROR: USB_CANON_START_TIMEOUT anchor not found in camlibs/ptp2/library.c"; exit 1; }
   sed -i "s/#define USB_CANON_START_TIMEOUT 1500.*/#define USB_CANON_START_TIMEOUT ${COLD_START_TIMEOUT_MS}\t\/* polaris: cold-start endpoint-ready window *\//" camlibs/ptp2/library.c
+  grep -qE "#define[[:space:]]+USB_CANON_START_TIMEOUT[[:space:]]+${COLD_START_TIMEOUT_MS}\\b" camlibs/ptp2/library.c \
+    || { echo "[build] ERROR: USB_CANON_START_TIMEOUT patch did not apply"; exit 1; }
   echo "[build] USB_CANON_START_TIMEOUT set to ${COLD_START_TIMEOUT_MS}ms"
 fi
 
@@ -232,7 +247,14 @@ fi
 #  drives the viewfinder settle wait (`while time_since(starttime) < 3000`).
 #  Removing it avoids that interaction during live-view startup.
 if [ "${REMOVE_KEEP_DEVICE_ON:-0}" = "1" ]; then
+  #  #214 D3: this was an unchecked global sed followed by an unconditional success
+  #  line. Upstream currently has exactly three such calls; assert the anchor and
+  #  the post-condition so a moved anchor cannot silently ship the heartbeat.
+  grep -q 'CR (camera_keep_device_on (camera));' camlibs/ptp2/library.c \
+    || { echo "[build] ERROR: camera_keep_device_on anchor not found in camlibs/ptp2/library.c"; exit 1; }
   sed -i 's/CR (camera_keep_device_on (camera));/\/* polaris: keepdeviceon disabled *\//g' camlibs/ptp2/library.c
+  grep -q 'CR (camera_keep_device_on (camera));' camlibs/ptp2/library.c \
+    && { echo "[build] ERROR: camera_keep_device_on calls still present after patching"; exit 1; }
   echo "[build] camera_keep_device_on() calls neutralized"
 fi
 

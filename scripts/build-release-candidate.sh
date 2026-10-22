@@ -62,6 +62,14 @@ TEST_BUILD="$(mktemp -d "${TMPDIR:-/tmp}/libgphoto2-regression.XXXXXX")"
 PACKAGE_INPUT="$(mktemp -d "${TMPDIR:-/tmp}/fwpkt-package-input.XXXXXX")"
 trap 'rm -rf "$TEST_BUILD" "$PACKAGE_INPUT"' EXIT
 echo "Running libgphoto2 deterministic regression pack"
+# `directory` is deliberately in the gate camlib set and NOT in the shipped set
+# (#214 D4). Upstream's own regression suite needs it: several tests enumerate
+# cameras through the directory backend, so omitting it drops coverage rather than
+# matching the ship configuration. The shipped libraries come from autotools with
+# --with-camlibs="$POLARIS_CAMLIBS" (ptp2,pentax only), so this build is a test
+# harness, not a rehearsal of what ships -- see #214 D1 for why that gap matters and
+# what would close it (assert the shipped .so set directly rather than trusting a
+# differently-configured build to stand in for it).
 meson setup "$TEST_BUILD" "$SRC" --buildtype=debugoptimized -Dcamlibs=ptp2,pentax,directory >/dev/null
 meson compile -C "$TEST_BUILD"
 echo "SKIP: libgphoto2:test-gp-port (no-ci serial control-line test; host has no supported DTR/CTS fixture)"
