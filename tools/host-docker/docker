@@ -1,0 +1,16 @@
+#!/bin/sh
+# docker -> host Docker, from inside the VS Code Flatpak sandbox.
+#
+# The editor runs as com.visualstudio.code (flatpak), so this shell has no
+# /var/run/docker.sock and no docker binary, even though the host has both.
+# flatpak-spawn --host runs the command in the host's namespace, which is where
+# the Docker daemon and its socket live.
+#
+# Put this directory on PATH and patch-polaris.sh works unmodified: `docker
+# build` streams the context over the API, and `docker run -v <path>` mounts
+# host paths -- both of which resolve because /home/ian is shared.
+#
+# Caveat that bites: anything created in this sandbox's /tmp does NOT exist on
+# the host, so a launcher that extracts an input archive into /tmp and then
+# mounts it will mount nothing. Pass inputs that already live under $HOME.
+exec flatpak-spawn --host docker "$@"
