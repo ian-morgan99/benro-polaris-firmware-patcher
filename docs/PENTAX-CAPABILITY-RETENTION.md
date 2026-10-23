@@ -39,3 +39,17 @@ Keep physical shutter count bounded: normally **three captures per scenario**, n
 GitHub compares confirm that .68 `8e06d39ae` descends from v13g (53 commits), v13i (52), v15g (30). `camlibs/ptp2/Makefile-files` still lists `pentax-publication.c/.h`; `library.c` still includes publication lifecycle calls and bounded session recovery; `tests/test-pentax-reconcile.c` and `tests/test-pentax-bulb-lifecycle.c` remain. These are **source inspections only**. No source change, build, hardware retest or firmware flash occurred in this audit.
 
 Do not revert to v13g/v13i/v15g wholesale: each had independent known defects. First prove a present-day failure, identify the first failing layer, and forward-port only a justified fix with a regression test.
+
+## Additional historical observations pending reconciliation (23 October 2026)
+
+These findings came from the full dated-heading inventory of `docs/CURRENT-STATE.md`; **none is newly physically qualified by this documentation update**.
+
+| Historical evidence | Narrow conclusion | Required follow-up |
+| --- | --- | --- |
+| v12l recovery baseline (September 23), described in September 25 log | A first Pixel Shift RAW+JPEG completion was observed. Earlier v12h was incomplete and v12m crashed after outputs; this is **not** successful complete Pixel Shift qualification | Reconcile exact file set, capture owner, source SHA and camera setting; add manual camera-setting test under #180 |
+| September 29 Stage-2 still-capture dispatch correction | `STAGE2_CAPTURE_TRACE=1` had accidentally interposed an extra call boundary; patcher `b43fd40` made direct dispatch the default | Check current wrapper default, loader slot and packaged binary; preserve regression test |
+| September 29 adapter hardening | iPolar libuvc reference release and idempotent streaming; StarShoot bounded handshake return and symbol checks were reported as host tests | Reconcile #158/#159; don't conflate host build with on-Polaris hardware support |
+| October 2 Bulb review reconciliation | Canaries discovered command 268, required command 277 `ret:0`, shared timeout budgets; OpenPolaris rejected false Manual Bulb success when 264 did not echo state 1 | Verify current OpenPolaris and patcher source, package and tests; don't infer physical Bulb PASS |
+| October 19 .68 qualification caveats | Transient post-reboot -105 while USB attached; property writes may read stale until fresh process | Precondition `--auto-detect` and fresh-process readback in qualification scripts |
+
+[Issue #226](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/226) owns the complete 43-section reconciliation, missing issue links and migration of evidence into enforced gates.
