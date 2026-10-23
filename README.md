@@ -34,13 +34,13 @@ both JPEG and RAW.** See [docs/TESTED.md](docs/TESTED.md).
 flowchart TB
   phone["Benro Connect (iOS / Android)"]
   clients["Other clients / OpenPolaris test tools"]
-  network["Polaris Wi-Fi / command protocol\ncommands 264 capture, 286 identity, 292 preview state, 780 version"]
-  app["polestar_app\nBenro application daemon / protocol routing"]
-  other["Other stock Polaris services\nmount, motion, tracking, networking, storage"]
-  pg["pgphoto camera-control process\nBenro application logic"]
+  network["Polaris Wi-Fi / command protocol<br/>commands 264 capture, 286 identity, 292 preview state, 780 version"]
+  app["polestar_app<br/>Benro application daemon / protocol routing"]
+  other["Other stock Polaris services<br/>mount, motion, tracking, networking, storage"]
+  pg["pgphoto camera-control process<br/>Benro application logic"]
   usb["Linux USB transport / libusb"]
-  body["Pentax / Canon / other supported camera\nmodel-dependent PTP or USB personality"]
-  sd["Polaris SD storage\n/app/sd/normal/ capture files"]
+  body["Pentax / Canon / other supported camera<br/>model-dependent PTP or USB personality"]
+  sd["Polaris SD storage<br/>/app/sd/normal/ capture files"]
   phone --> network
   clients --> network
   network --> app
@@ -57,14 +57,14 @@ The phone does **not** call libgphoto2 directly. `polestar_app` mediates the Ben
 
 ```mermaid
 flowchart TB
-  polestar["polestar_app\nBenro protocol + camera request orchestration"]
-  wrapper["/app/bin/pgphoto\nlauncher / environment / preload"]
-  binary["pgphoto.stage2ondisk\nBenro camera application code\n64 on-disk API trampolines"]
-  loader["libpolaris_stage2.so\nslot setup, dispatch, optional model-gated shims"]
-  core["/app/lib/stage2/libgphoto2.so.6\nnewer core"]
-  port["/app/lib/stage2/libgphoto2_port.so.12\nnewer port core"]
-  cam["ptp2.so\nPentax / Canon vendor PTP logic"]
-  io["usb1.so\nUSB port backend"]
+  polestar["polestar_app<br/>Benro protocol + camera request orchestration"]
+  wrapper["/app/bin/pgphoto<br/>launcher / environment / preload"]
+  binary["pgphoto.stage2ondisk<br/>Benro camera application code<br/>64 on-disk API trampolines"]
+  loader["libpolaris_stage2.so<br/>slot setup, dispatch, optional model-gated shims"]
+  core["/app/lib/stage2/libgphoto2.so.6<br/>newer core"]
+  port["/app/lib/stage2/libgphoto2_port.so.12<br/>newer port core"]
+  cam["ptp2.so<br/>Pentax / Canon vendor PTP logic"]
+  io["usb1.so<br/>USB port backend"]
   usb["Linux USB → camera"]
   store["Polaris file storage / result publication"]
   polestar --> wrapper --> binary
@@ -76,7 +76,7 @@ flowchart TB
   cam --> io --> usb
   binary --> store
   store --> polestar
-  paths["CRITICAL: dynamic camlib/iolib lookup may use\n/app/lib/libgphoto2/2.5.27.1/ptp2.so and\n/app/lib/libgphoto2_port/0.12.0/usb1.so\nnot only stage2 directories"]
+  paths["CRITICAL: dynamic camlib/iolib lookup may use<br/>/app/lib/libgphoto2/2.5.27.1/ptp2.so and<br/>/app/lib/libgphoto2_port/0.12.0/usb1.so<br/>not only stage2 directories"]
   paths -.-> cam
   paths -.-> io
 ```
@@ -116,14 +116,14 @@ The **observed** .68 K-3 III three-shot short-RAW protocol is `264 state:1 → 2
 
 ```mermaid
 flowchart LR
-  stock["User-supplied stock FwPkt\nfirmware / appfs"]
-  fork["Pinned libgphoto2 fork commit\nclean checkout or immutable source"]
-  patch["Patcher scripts\nARM builds + pgphoto binary edits"]
-  bundle["Matched runtime bundle\nwrapper, pgphoto, loader, core, port, ptp2, usb1"]
-  pack["Repack appfs.ubifs / FwPkt\nfirmwareInfo + install manifest"]
-  gates["Fail-closed release gates\nABI, symbols, hashes, version, structure"]
-  device["Polaris firmware update\nreboot + on-device verification"]
-  tests["Physical tests\nmodel, capture, preview, focus, Bulb, recovery"]
+  stock["User-supplied stock FwPkt<br/>firmware / appfs"]
+  fork["Pinned libgphoto2 fork commit<br/>clean checkout or immutable source"]
+  patch["Patcher scripts<br/>ARM builds + pgphoto binary edits"]
+  bundle["Matched runtime bundle<br/>wrapper, pgphoto, loader, core, port, ptp2, usb1"]
+  pack["Repack appfs.ubifs / FwPkt<br/>firmwareInfo + install manifest"]
+  gates["Fail-closed release gates<br/>ABI, symbols, hashes, version, structure"]
+  device["Polaris firmware update<br/>reboot + on-device verification"]
+  tests["Physical tests<br/>model, capture, preview, focus, Bulb, recovery"]
   stock --> patch
   fork --> patch
   patch --> bundle --> pack --> gates --> device --> tests
