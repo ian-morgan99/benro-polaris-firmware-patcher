@@ -1,4 +1,44 @@
 
+## 2026-10-23: measured wall time is roughly TWICE the requested duration (refines the app-side gate)
+
+New measurement, not previously on this thread. On `.69` with the K-3 III, via the normal
+timed path (`--timed-seconds`), state `1 → 4`:
+
+| requested | wall time | ratio |
+|---|---|---|
+| 30 s | **63.5 s** | 2.1× |
+| 40 s | **82.4 s** | 2.1× |
+| 50 s | **102.6 s** | 2.1× |
+
+Clog corroborates independently: `capture_image[3164]:----capture end -83117 ms` for the
+40 s shot (per #218 that negative sign is a logging bug and does not mean failure — all
+three passed, files on card).
+
+Why this matters to the open question above. The user's app-side failures land at roughly
+the **requested** duration ("after around 40s", and again at 30 s), while the body needs
+about **twice** that because long-exposure noise reduction appends a dark frame of its own.
+So an app-side gate that assumes wall time ≈ exposure would declare "shot failed" while the
+camera is legitimately still working — which matches the reported sequence exactly:
+"image is processing" during what should be the exposure, then failure, then recovery
+shortly afterwards once the dark frame lands.
+
+This does not change the conclusion that the `-6` is decided in the app before libgphoto2;
+it supplies a concrete timing signature to test against. A falsifiable check: instrument
+the elapsed time at which the app gives up versus the elapsed time at which the file
+appears, for one 30 s capture. If give-up ≈ 30 s and file ≈ 63 s, the gate is duration-
+naive.
+
+Also verified today so nobody chases it as a bug: **`exposure_phase_ms` in libgphoto2 is
+diagnostic only.** All 15 references in `camlibs/ptp2/library.c` are assignment, clamping,
+or logging (`GP_LOG_D` at 7299, `GP_LOG_E` at 7379). The capture wait loop is bounded by
+`capture_timeout_ms` alone — `} while (waiting_for_timeout (&back_off_wait, started,
+capture_timeout_ms));` at line 7358. So the dark-frame budget added in libgphoto2 `23008c229`
+governs pgphoto's wait correctly, and there is no second timer inside the camlib that could
+produce a ~duration failure.
+
+Evidence: [`evidence/bulb40s-20261023/SUMMARY.md`](evidence/bulb40s-20261023/SUMMARY.md),
+[`evidence/regression-trail-20261023.md`](evidence/regression-trail-20261023.md).
+
 ## 2026-10-21 evening: the -6 is decided in the APP, before libgphoto2 (fresh battery)
 
 Battery went flat mid-session; replaced. Camera re-enumerated on USB as
