@@ -220,6 +220,7 @@ PY_TESTS=(
     tests/test_assert_orphan_wrote.py
     tests/test_capture_outcomes.py
     tests/test_control_liveness.py
+    tests/test_qualification_verdict.py
     tests/test_verify_installed_build.py
     tests/test_verify_shipped_artifacts.py
     tests/test_watch_app_crash.py

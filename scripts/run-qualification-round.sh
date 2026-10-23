@@ -1,34 +1,50 @@
 #!/bin/bash
 # Full qualification round on the installed build.
 #
-# Three bugs in the previous version of this script cost an entire run; each is
-# fixed explicitly here rather than assumed away:
+# #203 rewrote this runner's verdict handling. The previous version could print
+# `DONE — artefacts in ...` after failures inside the round, because it discarded
+# every probe exit code and assembled its result by grepping PASS/FAIL strings.
+# A round is now fail-closed: each case contributes one machine-readable result
+# line, and scripts/qualification-verdict.py decides the gate. Its exit code is
+# this script's exit code.
 #
-#  1. Clog deltas came back zero bytes. The script picked "the newest Clog by
-#     name", but the app does not necessarily write the file that sorts last.
-#     Fixed by snapshotting the size of EVERY Clog_* and diffing whichever ones
-#     actually grew. Clog lines carry no timestamps (#213), so byte-offset
-#     attribution is the only reliable method.
-#  2. The 40 s shutter index came back as a blob of probe log lines, because the
-#     helper printed its transcript to stdout alongside the number. Fixed by
-#     emitting the index on a dedicated fd and grepping for a bare integer.
-#  3. `--shutter-index` then failed with "invalid int value" for the same reason.
+# What that means in practice:
+#   * a probe failure, timeout or crash is a FAIL, never a missing line;
+#   * a case whose precondition cannot be verified is an ERROR, not a pass;
+#   * a SKIP needs a machine-evaluated reason (e.g. the camera's own shutter list
+#     has no such slot) and yields exit 2 — qualified with gaps, not clean;
+#   * every file a case produced is correlated to that case and its EXIF
+#     ExposureTime is compared with the exposure the case claims (#186: an
+#     app-measured hold is not a sensor exposure);
+#   * the preflight must prove a capture is claimable, not just that a model
+#     string came back.
 #
-# Mode is decided from the camera's own exposure-mode-raw (#206), NOT from the
-# shape of the 268 list -- #206 records that heuristic failing in both directions,
-# and the reviewer flagged it on #186. Passing --ssh-host also exercises test B1:
-# a second gphoto2 session against a camera pgphoto already holds, which has never
-# been observed on this hardware.
+# Three older bugs that cost an entire run stay fixed here:
+#   1. Clog deltas came back zero bytes because the script picked "the newest
+#      Clog by name"; the app does not necessarily write the file that sorts
+#      last. Fixed by snapshotting the size of EVERY Clog_* and diffing whichever
+#      ones grew. Clog lines carry no timestamps (#213), so byte-offset
+#      attribution is the only reliable method.
+#   2/3. Shutter index values used to be scraped from probe stdout, which mixed
+#      log lines into the number. No longer needed: the probe resolves and sets
+#      the shutter itself (--timed-seconds) and reports it in its result JSON.
 #
-# Exposure duration is read from EXIF afterwards (#186 review): the app's own
-# 'bulb time start'..'bulb time end' interval is how long it held the shutter, not
-# how long the sensor was exposed.
+# Mode comes from the camera's own exposure-mode-raw (#206), never from the shape
+# of the 268 list — #206 records that heuristic failing in both directions.
+#
+# Deliberately NOT `set -e`: a transient SSH or grep failure must not abort the
+# round and destroy the evidence for the cases that already ran. Every step that
+# matters checks its own status, and the verdict is computed at the end.
+set -uo pipefail
+
 DEV=192.168.0.1
 SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=8 root@$DEV"
 ROOT=/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher
 OUT="$ROOT/out/round-$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$OUT/dng"
+mkdir -p "$OUT/dng" "$OUT/results"
 cd "$ROOT" || exit 1
+RESULTS="$OUT/results.jsonl"
+: > "$RESULTS"
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$OUT/RUN.log"; }
 
 snap() {
@@ -50,7 +66,14 @@ collect_delta() {
     fi
   done < "$snapfile"
 }
-card() { timeout 60 $SSH 'echo "count=$(ls /app/sd/normal/ | wc -l) newest=$(ls /app/sd/normal/ | sort | tail -1)"' 2>/dev/null; }
+
+# Full card listing, so files created during a case can be attributed to it.
+card_listing() {
+  timeout 60 $SSH 'ls /app/sd/normal/ 2>/dev/null | sort' 2>/dev/null
+}
+card() {
+  timeout 60 $SSH 'echo "count=$(ls /app/sd/normal/ 2>/dev/null | wc -l) newest=$(ls /app/sd/normal/ 2>/dev/null | sort | tail -1)"' 2>/dev/null
+}
 
 # The camera's own exposure mode, read through the device gphoto2. B = 9.
 mode() {
@@ -61,82 +84,181 @@ mode() {
     | grep -aoE "exposure-mode-raw=[0-9]+" | head -1
 }
 
+# Pull the produced files for one case and read their EXIF exposure. Returns the
+# first ExposureTime found, or nothing when no file carries one — the verdict
+# treats a missing value as an unsupported claim rather than silence.
+case_exposure() {
+  local f base et=""
+  for f in "$@"; do
+    base=$(basename "$f")
+    timeout 180 $SSH "cat '$f'" > "$OUT/dng/$base" 2>/dev/null
+    if [ ! -s "$OUT/dng/$base" ]; then
+      echo "  dng: $base could not be retrieved" | tee -a "$OUT/RUN.log"
+      continue
+    fi
+    et=$(timeout 120 python3 scripts/dng-exposure.py "$OUT/dng/$base" 2>/dev/null \
+         | grep -oE '\(([0-9]+\.[0-9]+) s\)' | head -1 | tr -dc '0-9.')
+    [ -n "$et" ] && break
+  done
+  printf '%s' "$et"
+}
+
+# One case: run it, capture the probe's exit code and structured result, and
+# append a single verdict line. Never aborts the round.
 run_case() {
   local name="$1"; shift
   log "--- $name ---"
-  echo "  mode-before: $(mode)" | tee -a "$OUT/RUN.log"
   local snapfile="$OUT/$name.snap"; snap > "$snapfile"
-  timeout 320 python3 scripts/canary-probe.py --ssh-host "root@$DEV" "$@" \
-    > "$OUT/$name.log" 2>&1
-  grep -aE "DONE|PASS |FAIL|TIMEOUT|TERMINAL|EXPOSURE_MODE|BULB shutter|resolved_shutter" \
+  local before="$OUT/$name.card-before" after="$OUT/$name.card-after"
+  card_listing > "$before"
+  local rj="$OUT/results/$name.json"
+  local rc=0
+  timeout 420 python3 scripts/canary-probe.py --ssh-host "root@$DEV" \
+    --require-exposure-mode --result-json "$rj" "$@" > "$OUT/$name.log" 2>&1 || rc=$?
+  echo "  probe rc=$rc" | tee -a "$OUT/RUN.log"
+  grep -aE "TIMED|BULB|SHUTTER_OPTIONS|PRECONDITION|PASS |TIMEOUT|TERMINAL|EXPOSURE_MODE" \
     "$OUT/$name.log" | head -8 | tee -a "$OUT/RUN.log"
+
   sleep 4
   collect_delta "$snapfile" "$OUT/$name.clog.txt"
   echo "  clog delta bytes: $(wc -c < "$OUT/$name.clog.txt")" | tee -a "$OUT/RUN.log"
-  grep -aoE "captureBulbImage|capture_image_with_Bulb|Camera-timed Bulb is active|Bulb action requires a readable B|bulb-timer=(yes|no)|bulb time start|bulb time end|capture bulb Image ret [0-9-]+|boundary=camlib-enter|boundary=preconditions-return|boundary=initiate-return|capture wait budget [0-9]+ ms \(exposure phase [0-9]+ ms\)[^|]{0,14}" \
-    "$OUT/$name.clog.txt" | sort | uniq -c | tee -a "$OUT/RUN.log"
-  card | tee -a "$OUT/RUN.log"
+
+  # Correlate every newly created card file to this case (#203). The probe also
+  # reports the files it saw; anything on the card that it did not report is
+  # recorded so an unattributed capture cannot pass unnoticed.
+  card_listing > "$after"
+  local newfiles
+  newfiles=$(comm -13 "$before" "$after" | sed 's|^|/app/sd/normal/|')
+  if [ -n "$newfiles" ]; then
+    echo "  card files created by this case:" | tee -a "$OUT/RUN.log"
+    echo "$newfiles" | sed 's/^/    /' | tee -a "$OUT/RUN.log"
+  fi
+
+  local et=""
+  if [ -n "$newfiles" ]; then
+    et=$(case_exposure "$name" $newfiles)
+    [ -n "$et" ] && echo "  EXIF exposure_time=${et}s" | tee -a "$OUT/RUN.log"
+  fi
+
+  python3 - "$name" "$rc" "$rj" "$et" "$newfiles" >> "$RESULTS" <<'PY'
+import json, sys
+name, rc, path, et, newfiles = sys.argv[1:6]
+try:
+    with open(path) as handle:
+        result = json.load(handle)
+except (OSError, ValueError) as exc:
+    # No result file means the probe died before it could report anything. That
+    # is an ERROR, not a skip: the case ran and its outcome is unknown.
+    print(json.dumps({"case": name, "status": "error", "rc": int(rc),
+                      "reason": f"no result JSON ({type(exc).__name__}: {exc})"}))
+    sys.exit(0)
+result["case"] = name
+result["rc"] = int(rc)
+if et:
+    result["actual_exposure_s"] = float(et)
+card_files = [line for line in newfiles.splitlines() if line.strip()]
+reported = list(result.get("files") or [])
+extra = [f for f in card_files if f not in reported]
+if extra:
+    result["unattributed_files"] = extra
+# Trust the probe's status only when it agrees with its exit code.
+if int(rc) == 0 and result.get("status") != "pass":
+    result["status"] = "error"
+    result["reason"] = f"probe exited 0 but reported status={result.get('status')!r}"
+elif int(rc) != 0 and result.get("status") == "pass":
+    result["status"] = "error"
+    result["reason"] = f"probe reported pass but exited {rc}"
+print(json.dumps(result))
+PY
+  sleep 4
 }
 
-log "=== PREFLIGHT ==="
-timeout 20 bash -c "</dev/tcp/$DEV/9090" 2>/dev/null || { log "ABORT: device not reachable"; exit 1; }
-timeout 90 $SSH 'echo "device_time=$(date +%H:%M:%S) uptime=$(cut -d" " -f1 /proc/uptime)s"
-  echo "camera=$(cat /sys/bus/usb/devices/*/product 2>/dev/null | grep -i pentax | head -1)"
-  echo "camlib_markers_total=$(cat /app/sd/system/log/Clog_* 2>/dev/null | grep -ac boundary=camlib-enter)"' \
-  2>/dev/null | tee -a "$OUT/RUN.log"
-# A camera that is present on USB but not claimable must not be recorded as a
-# control failure -- a post-reboot run once reported -105 for every command while
-# the body was plainly attached.
-timeout 90 python3 scripts/canary-probe.py --probe > "$OUT/preflight-probe.log" 2>&1
-grep -aE "SUMMARY|CAMERA|FAIL" "$OUT/preflight-probe.log" | head -3 | tee -a "$OUT/RUN.log"
-if ! grep -qa "SUMMARY model=" "$OUT/preflight-probe.log"; then
-  log "ABORT: camera not usable (no SUMMARY). Not treating this as a control result."
+# Machine-evaluated applicability: ask the camera what shutter slots exist, so a
+# case that cannot be run is a reasoned SKIP rather than a silent omission.
+shutter_slots() {
+  timeout 90 python3 scripts/canary-probe.py --list-shutters 2>/dev/null \
+    | grep -a '^SHUTTERS_JSON ' | sed 's/^SHUTTERS_JSON //'
+}
+has_slot() {
+  local want="$1" json="$2"
+  [ -n "$json" ] || return 1
+  printf '%s' "$json" | python3 -c '
+import json, sys
+want = float(sys.argv[1])
+try:
+    data = json.load(sys.stdin)
+except ValueError:
+    sys.exit(1)
+for entry in data.get("slots", []):
+    seconds = entry.get("seconds")
+    if seconds is not None and abs(float(seconds) - want) < 1e-6:
+        sys.exit(0)
+sys.exit(1)' "$want"
+}
+
+record_skip() {
+  python3 -c '
+import json, sys
+print(json.dumps({"case": sys.argv[1], "status": "skip", "reason": sys.argv[2]}))
+' "$1" "$2" >> "$RESULTS"
+  log "SKIP $1: $2"
+}
+
+log "=== STEP 0: preflight — prove a capture is claimable ==="
+# A camera that answers with a model string but cannot be captured from must not
+# produce a round full of control failures. Require the camera to report itself
+# attached (code 286 state=1), not merely to answer at all.
+if ! timeout 90 python3 scripts/canary-probe.py --probe > "$OUT/preflight-probe.log" 2>&1; then
+  log "ABORT: preflight probe failed (see preflight-probe.log). No control results recorded."
   exit 1
 fi
+grep -aE "SUMMARY|CAMERA" "$OUT/preflight-probe.log" | head -3 | tee -a "$OUT/RUN.log"
+if ! grep -qa "state=1" "$OUT/preflight-probe.log"; then
+  log "ABORT: camera not in the attached state (code 286 state!=1). Not a control result."
+  exit 1
+fi
+SHUTTERS=$(shutter_slots)
+if [ -z "$SHUTTERS" ]; then
+  log "ABORT: could not read the live shutter list. Applicability cannot be evaluated."
+  exit 1
+fi
+echo "  shutter slots: $(printf '%s' "$SHUTTERS" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(len(d.get("slots",[])), "slots; model=", d.get("model"), "bulb_list=", d.get("bulb_slot_list"))')" | tee -a "$OUT/RUN.log"
+echo "  mode-before-round: $(mode)" | tee -a "$OUT/RUN.log"
 card | tee -a "$OUT/RUN.log"
 
 log "=== STEP 1: bulb 5 s in the CURRENT camera bulb-setting ==="
 run_case bulb5 --shot --expected-files 1 --bulb-seconds 5 --shot-timeout 60
 
-log "=== STEP 2: control, ordinary timed capture (no bulb field) ==="
-run_case timed6s --shot --expected-files 1 --shot-timeout 60
-
-log "=== STEP 3: 40 s NON-bulb exposure (the #106/#172 budget scenario) ==="
-# Emit the index on fd 3 so the probe's transcript cannot contaminate it.
-IDX=$(timeout 90 python3 - "$DEV" 3>&1 >/dev/null <<'PY' 2>/dev/null | grep -aE '^[0-9]+$' | tail -1
-import importlib.util, os, sys
-spec = importlib.util.spec_from_file_location("cp", "scripts/canary-probe.py")
-cp = importlib.util.module_from_spec(spec); spec.loader.exec_module(cp)
-p = cp.Polaris(sys.argv[1], 9090, "192.168.0.4", 10.0)
-try:
-    _, opts = cp.shutter_options(p, quiet=True)
-finally:
-    p.close()
-for i, o in enumerate(opts):
-    if o == "00-40":
-        os.write(3, f"{i}\n".encode())
-        break
-PY
-)
-echo "  resolved 40 s shutter index: '${IDX:-none}'" | tee -a "$OUT/RUN.log"
-if [ -n "$IDX" ]; then
-  run_case timed40s --shot --expected-files 1 --shutter-index "$IDX" --shot-timeout 200
+log "=== STEP 2: control, ordinary timed capture on a verified 6 s shutter ==="
+# --timed-seconds resolves 6 s against the live list, writes it through 261 and
+# polls the readback before capturing. If no slot is exactly 6 s the probe fails
+# rather than shooting some other duration under a `timed6s` label (#203).
+if has_slot 6 "$SHUTTERS"; then
+  run_case timed6s --shot --expected-files 1 --timed-seconds 6 --shot-timeout 90
 else
-  log "  SKIP: 00-40 not in the shutter list (dial not on a timed mode)"
+  record_skip timed6s "camera's command-268 list has no exact 6 s slot"
 fi
 
-log "=== STEP 4: retrieve produced DNGs and read EXIF exposure time (#186) ==="
-NEWEST=$(timeout 60 $SSH 'ls /app/sd/normal/ | sort | tail -3' 2>/dev/null)
-for f in $NEWEST; do
-  timeout 180 $SSH "cat '/app/sd/normal/$f'" > "$OUT/dng/$f" 2>/dev/null
-done
-ls -la "$OUT/dng" | tee -a "$OUT/RUN.log"
-timeout 120 python3 scripts/dng-exposure.py "$OUT"/dng/*.dng 2>&1 | tee -a "$OUT/RUN.log"
+log "=== STEP 3: 40 s NON-bulb exposure (the #106/#172 budget scenario) ==="
+if has_slot 40 "$SHUTTERS"; then
+  run_case timed40s --shot --expected-files 1 --timed-seconds 40 --shot-timeout 150
+else
+  record_skip timed40s "camera's command-268 list has no exact 40 s slot"
+fi
 
-log "=== STEP 5: mode at end of round (did anything drift?) ==="
-echo "  mode-after: $(mode)" | tee -a "$OUT/RUN.log"
+log "=== STEP 4: mode at end of round (did anything drift?) ==="
+echo "  mode-after-round: $(mode)" | tee -a "$OUT/RUN.log"
 
-log "=== STEP 6: pull device logs before they rotate (#213) ==="
+log "=== STEP 5: pull device logs before they rotate (#213) ==="
 timeout 200 $SSH 'cd /app/sd/system/log; cat Mlog_* Clog_*' > "$OUT/device-logs-full.txt" 2>/dev/null
 echo "  saved lines: $(wc -l < "$OUT/device-logs-full.txt")" | tee -a "$OUT/RUN.log"
-log "DONE — artefacts in $OUT"
+
+log "=== STEP 6: verdict ==="
+python3 scripts/qualification-verdict.py --results-file "$RESULTS" | tee -a "$OUT/RUN.log"
+VERDICT=${PIPESTATUS[0]}
+case "$VERDICT" in
+  0) log "QUALIFIED — artefacts in $OUT" ;;
+  2) log "QUALIFIED WITH GAPS — see SKIP lines above; artefacts in $OUT" ;;
+  *) log "NOT QUALIFIED — see PROBLEM lines above; artefacts in $OUT" ;;
+esac
+exit "$VERDICT"

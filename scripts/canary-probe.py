@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager, nullcontext
+import json
 import math
 import os
 import posixpath
@@ -192,7 +193,8 @@ DEFAULT_TRANSFER_MARGIN_S = 90.0
 
 def effective_shot_timeout(base: float, bulb_seconds: int | None,
                            resolved_seconds: float | None = None,
-                           margin: float = DEFAULT_TRANSFER_MARGIN_S) -> float:
+                           margin: float = DEFAULT_TRANSFER_MARGIN_S,
+                           timed_seconds: float | None = None) -> float:
     """Allow the exposure plus transfer/lifecycle time.
 
     #207: the budget must be derived from the duration the camera will *actually*
@@ -216,11 +218,19 @@ def effective_shot_timeout(base: float, bulb_seconds: int | None,
         raise ValueError("--shot-timeout must be positive")
     if margin < 0:
         raise ValueError("--transfer-margin must not be negative")
-    if bulb_seconds is None:
+    if bulb_seconds is None and timed_seconds is None:
         return base
-    if bulb_seconds <= 0:
-        raise ValueError("--bulb-seconds must be positive")
-    effective = float(bulb_seconds)
+    effective = 0.0
+    if bulb_seconds is not None:
+        if bulb_seconds <= 0:
+            raise ValueError("--bulb-seconds must be positive")
+        effective = float(bulb_seconds)
+    if timed_seconds is not None:
+        if timed_seconds <= 0:
+            raise ValueError("--timed-seconds must be positive")
+        # A timed exposure is exactly the slot duration -- there is no app-side
+        # hold to add -- so it stands on its own rather than taking a maximum.
+        effective = max(effective, float(timed_seconds))
     if resolved_seconds is not None and resolved_seconds > effective:
         effective = float(resolved_seconds)
     return max(base, effective + margin)
@@ -248,6 +258,11 @@ def bulb_capture_payload(seconds: float | None) -> str:
 # See docs/evidence/bulb-root-cause-20261005/SUMMARY.md.
 SHUTTER_SET_COMMAND = 261
 SHUTTER_INFO_COMMAND = 268
+
+# A precondition we could not satisfy is a different outcome from a capture that
+# was refused: "we never knew which mode the camera was in" must not be recorded
+# as "the camera rejected the command" (#203).
+EXIT_PRECONDITION = 3
 EV_SET_COMMAND = 260
 
 
@@ -307,6 +322,32 @@ def resolve_shutter_index(options: list[str], seconds: float) -> tuple[int, str,
     if covers:
         return min(covers, key=lambda item: item[2])
     return max(scored, key=lambda item: item[2])
+
+
+def exact_shutter_index(options: list[str], seconds: float) -> tuple[int, str, float]:
+    """Resolve a requested exposure to the option that *is* that duration.
+
+    Deliberately stricter than `resolve_shutter_index`, which will settle for the
+    shortest slot that covers the request. That fallback is right for a Bulb hold
+    (the app closes the shutter, so the slot only has to be long enough) and wrong
+    for a timed qualification case: a run labelled `timed6s` that actually shot
+    `00-08` cannot support a six-second claim, which is exactly the gap #203
+    flagged. Here an absent slot is an error naming what was available.
+    """
+    wanted = float(seconds)
+    for index, option in enumerate(options):
+        duration = parse_shutter_seconds(option)
+        if duration is not None and abs(duration - wanted) < 1e-6:
+            return index, option, duration
+    available = ", ".join(
+        f"{o} ({d:g}s)"
+        for o, d in ((o, parse_shutter_seconds(o)) for o in options)
+        if d is not None and d > 0
+    )
+    raise RuntimeError(
+        f"command 268 has no {wanted:g}s shutter slot, so a timed "
+        f"{wanted:g}s capture cannot be claimed; available: {available or '<none>'}"
+    )
 
 
 def is_bulb_slot_list(options: list[str]) -> bool:
@@ -802,6 +843,25 @@ def main() -> int:
                     help="set the camera shutter to this option-list index via code 261 before "
                          "the capture and LEAVE it set (app path); unlike --bulb-seconds this "
                          "does not wrap the shot in a bulb session")
+    ap.add_argument("--timed-seconds", type=float, default=None,
+                    help="select the shutter slot that IS this many seconds (resolved against "
+                         "the live command 268 list, set through 261 and read back before the "
+                         "capture). Fails if no slot matches exactly, so a timed case label is "
+                         "backed by the shutter the camera actually reports (#203).")
+    ap.add_argument("--require-exposure-mode", action="store_true",
+                    help="qualification mode: refuse to capture unless the camera's own "
+                         "exposure-mode-raw was read successfully. The default path stays "
+                         "fail-open (a diagnostic must not break a capture), but a round that "
+                         "cannot state which mode it shot in cannot claim that mode (#203).")
+    ap.add_argument("--result-json", default=None,
+                    help="write machine-readable facts about this run to PATH (written even "
+                         "on failure) so a qualification runner can aggregate verdicts without "
+                         "grepping prose (#203)")
+    ap.add_argument("--list-shutters", action="store_true",
+                    help="preflight: read the live command 268 shutter list and print it as "
+                         "JSON, then exit without capturing. Lets a qualification runner "
+                         "decide case applicability from what the camera actually offers "
+                         "instead of silently skipping (#203)")
     ap.add_argument("--ssh-host", default=None,
                     help="SSH target used for the #192 file-exists check on a completion "
                          "timeout (default root@<host>)")
@@ -816,8 +876,8 @@ def main() -> int:
     args = ap.parse_args()
     if args.ssh_host is None and not args.no_file_check:
         args.ssh_host = f"root@{args.host}"
-    if not args.probe and not args.shot:
-        ap.error("choose --probe or --shot")
+    if not args.probe and not args.shot and not args.list_shutters:
+        ap.error("choose --probe, --shot or --list-shutters")
     if args.shot and args.expected_files is None:
         ap.error("--shot requires --expected-files 1 or 2; photoFormat is not authoritative")
     if args.shot_timeout <= 0:
@@ -832,6 +892,14 @@ def main() -> int:
         ap.error("--bulb-shutter-index requires --bulb-seconds")
     if args.shutter_index is not None and args.bulb_seconds is not None:
         ap.error("--shutter-index (app path) conflicts with --bulb-seconds (canary path)")
+    if args.timed_seconds is not None and not args.shot:
+        ap.error("--timed-seconds requires --shot")
+    if args.timed_seconds is not None and args.bulb_seconds is not None:
+        ap.error("--timed-seconds (timed exposure) conflicts with --bulb-seconds (Bulb hold)")
+    if args.timed_seconds is not None and args.shutter_index is not None:
+        ap.error("--timed-seconds resolves the index itself; use one of the two")
+    if args.timed_seconds is not None and args.timed_seconds <= 0:
+        ap.error("--timed-seconds must be positive")
     if (args.ev_index is not None or args.keep_preview) and not args.shot:
         ap.error("--ev-index/--keep-preview require --shot")
     if args.expected_sw is not None and not (args.probe or args.shot):
@@ -841,6 +909,34 @@ def main() -> int:
     # Defined before the try so the finally can always reach it.
     filecheck = DeviceFileCheck(
         None if args.no_file_check else args.ssh_host, args.output_dir)
+    # Structured facts for a qualification runner. Populated as the run proceeds
+    # and written in the finally block, so an aborted case still produces a record
+    # -- a missing record must read as "did not run", never as "passed".
+    result = {
+        "status": "error",
+        "rc": None,
+        "verdict": None,
+        "reason": "run did not complete",
+        "expected_files": args.expected_files,
+        "files": [],
+        "mode_before": None,
+        "mode_after": None,
+        "expected_exposure_s": args.timed_seconds,
+        "requested_bulb_s": args.bulb_seconds,
+        "resolved_shutter_label": None,
+        "resolved_shutter_s": None,
+    }
+
+    def write_result() -> None:
+        if not args.result_json:
+            return
+        try:
+            with open(args.result_json, "w") as handle:
+                json.dump(result, handle, indent=2, sort_keys=True)
+                handle.write("\n")
+        except OSError as exc:
+            print(f"{stamp()} RESULT-WRITE-FAILED {args.result_json}: {exc}", flush=True)
+
     try:
         # authenticate
         p.send(284)
@@ -865,7 +961,52 @@ def main() -> int:
 
         if args.probe:
             print(f"{stamp()} PROBE-DONE", flush=True)
+            result["status"] = "pass"
+            result["rc"] = 0
+            result["reason"] = "preflight ok"
             return 0
+
+        if args.list_shutters:
+            # Applicability must be decided from what the camera reports, not from
+            # a hard-coded table: the K-3 III tops out at 00-30 while other bodies
+            # expose longer slots, and a case that silently SKIPs because a slot is
+            # missing is indistinguishable from one that was never attempted (#203).
+            current, options = shutter_options(p)
+            slots = []
+            for index, option in enumerate(options):
+                duration = parse_shutter_seconds(option)
+                slots.append({"index": index, "label": option,
+                              "seconds": duration})
+            payload = {
+                "model": model,
+                "current_index": current,
+                "exposure_mode_raw": camera_exposure_mode(args.ssh_host),
+                "bulb_slot_list": is_bulb_slot_list(options),
+                "options": options,
+                "slots": slots,
+            }
+            print("SHUTTERS_JSON " + json.dumps(payload, sort_keys=True), flush=True)
+            result["status"] = "pass"
+            result["rc"] = 0
+            result["reason"] = "shutter list read"
+            return 0
+
+        # #203: a qualification case must be able to state the mode it shot in.
+        # The capture path stays fail-open by default; --require-exposure-mode
+        # makes an unreadable mode a precondition failure with its own exit code,
+        # so the runner can distinguish "the camera refused" from "we never knew
+        # what the camera was doing".
+        if args.shot:
+            result["mode_before"] = camera_exposure_mode(args.ssh_host)
+            if args.require_exposure_mode and result["mode_before"] is None:
+                print(f"{stamp()} PRECONDITION exposure-mode-raw unavailable; refusing to "
+                      "capture, because a case that cannot state its mode cannot claim it",
+                      flush=True)
+                result["status"] = "error"
+                result["rc"] = EXIT_PRECONDITION
+                result["verdict"] = "mode-unavailable"
+                result["reason"] = "exposure-mode-raw could not be read"
+                return EXIT_PRECONDITION
 
         if args.shot:
             # preview: app-path reproduction keeps live view running; the
@@ -894,6 +1035,20 @@ def main() -> int:
             if args.shutter_index is not None:
                 set_shutter(p, args.shutter_index)
 
+            # A timed case must be shot on the shutter it claims. Resolve against
+            # the live list (indices differ between bodies and between B/timed
+            # shapes), write it, and let set_shutter's polled readback prove the
+            # camera applied it before any capture is attempted (#203).
+            timed_index = timed_label = None
+            if args.timed_seconds is not None:
+                _, options = shutter_options(p)
+                timed_index, timed_label, _ = exact_shutter_index(
+                    options, args.timed_seconds)
+                print(f"{stamp()} TIMED requested={args.timed_seconds:g}s "
+                      f"slot='{timed_label}' index={timed_index}", flush=True)
+                set_shutter(p, timed_index, expect_bulb_slot=False)
+                result["resolved_shutter_label"] = timed_label
+
             # ONE capture
             shutter_context = (bulb_shutter_session(p, args.bulb_seconds, args.bulb_shutter_index,
                                                     ssh_host=args.ssh_host)
@@ -902,9 +1057,13 @@ def main() -> int:
                 # The session yields (index, resolved_seconds); nullcontext yields
                 # None. Size the budget from the resolved duration when known (#207).
                 resolved = ctx[1] if isinstance(ctx, tuple) else None
+                if isinstance(ctx, tuple):
+                    # bulb_shutter_session yields (index, resolved_seconds).
+                    result["resolved_shutter_s"] = ctx[1]
                 shot_timeout = effective_shot_timeout(
                     args.shot_timeout, args.bulb_seconds, resolved,
-                    margin=args.transfer_margin)
+                    margin=args.transfer_margin,
+                    timed_seconds=args.timed_seconds)
                 if args.bulb_seconds is not None:
                     print(f"{stamp()} BULB requested_seconds={args.bulb_seconds} "
                           f"resolved_shutter_seconds={resolved} "
@@ -973,6 +1132,9 @@ def main() -> int:
                               "notification=absent verdict=success", flush=True)
                         print(f"{stamp()} PASS lifecycle={states} files={on_disk} "
                               "via=file-check", flush=True)
+                        result.update(status="pass", rc=0, verdict="success",
+                                      reason="file present, notification late",
+                                      files=list(on_disk))
                         return 0
                     if any(state < 0 for state in states):
                         verdict = "terminal-state"
@@ -985,15 +1147,35 @@ def main() -> int:
                     print(f"{stamp()} TIMEOUT verdict={verdict} states={states} "
                           f"notified_files={files} disk_files={new_files} "
                           "note=no 773/state:4 before deadline", flush=True)
+                    result.update(status="fail", rc=1, verdict=verdict,
+                                  reason=f"no completion before deadline ({verdict})",
+                                  files=list(new_files or []))
                     return 1
                 valid_stem = len({posixpath.splitext(path)[0] for path in files}) == 1
                 ok = (4 in states and 0 in states and len(files) == args.expected_files
                       and valid_stem and not any(s < 0 for s in states))
                 print(f"{stamp()} DONE states={states} files={files}", flush=True)
+                if ok:
+                    result.update(status="pass", rc=0, verdict="success",
+                                  reason="lifecycle complete", files=list(files))
+                else:
+                    bad = [s for s in states if s < 0]
+                    result.update(
+                        status="fail", rc=1,
+                        verdict=f"terminal-state:{bad[0]}" if bad else "incomplete-lifecycle",
+                        reason=f"states={states} files={files}",
+                        files=list(files))
                 return 0 if ok else 1
     finally:
         filecheck.disarm()
         p.close()
+        try:
+            after = camera_exposure_mode(args.ssh_host)
+            if after is not None:
+                result["mode_after"] = after
+        except Exception:  # noqa: BLE001 - a diagnostic cannot fail the run
+            pass
+        write_result()
 
 
 if __name__ == "__main__":
