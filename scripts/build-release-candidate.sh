@@ -136,6 +136,15 @@ PACKAGE_IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
 echo "Running parameterised package/display-version regression"
 bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
   "$PACKAGE_IMAGE" "$PACKAGE_INPUT" "$SRC"
+
+# The gate requires install-manifest.json and refuses the candidate without it, so
+# generate it here rather than relying on someone remembering to. It must be
+# written after patch-polaris.sh has produced the zip: the gate re-reads the zip's
+# SHA-256 and fails if the manifest disagrees with the bytes on disk, so a
+# manifest generated before the final zip exists is stale by construction.
+echo "Generating install manifest"
+python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT"
+
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
 
 # The candidate is real only once it has passed the gate. Claim the version at
