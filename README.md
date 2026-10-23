@@ -155,6 +155,8 @@ The image is a **matched compatibility unit**, not a collection of independently
 
 ---
 
+> **Historical regression protection:** [Pentax capability-retention matrix](docs/PENTAX-CAPABILITY-RETENTION.md) records previously demonstrated RAW+JPEG, Preview, session recovery and Bulb behaviours, current evidence gaps, and mandatory release contracts. Historical PASS does not mean current PASS.
+
 ## Pentax support — engineering history, verified progress and remaining work
 
 This project now includes substantial **Pentax support work**, particularly for the **K-3 Mark III**, **K-1 Mark II** and **K-01**, alongside its original Canon R5 Mark II support. The Pentax work spans the [libgphoto2 fork](https://github.com/ian-morgan99/libgphoto2), Polaris Stage-2 integration, capture/transfer lifecycle, focus, live view, Bulb exposure, firmware build provenance and hardware qualification. **Do not interpret the original R5 II-only disclaimer below as an up-to-date Pentax test matrix**; the evidence and qualifications in this section are more recent and model-specific.
