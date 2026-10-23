@@ -107,13 +107,71 @@ SHUTTER_OPTIONS current=9 options=['00-01',...,'00-30','00-40','00-50','01-00',.
 That is why `--timed-seconds 40/50` resolved to real slots. The doc claim is stale for
 this body/firmware and should not be relied on when choosing a test duration.
 
+## Update — the 30 s repeat, and my own tests broke the reproduction
+
+The user then reported **the same failure at 30 s**. That is the decisive clue: the
+deadline tracks the *requested* duration, not a fixed budget.
+
+I reproduced the app's exact wire request (`out/bulb40s-20261023/app-bulb-repro.py`,
+sending `1&264&4&state:1;bulb:N;c:-1;#` verbatim as seen in Mlog):
+
+| bulb | result | elapsed |
+|---|---|---|
+| 2 s | `state:-6` | 1.3 s |
+| 5 s | `state:-6` | 1.3 s |
+| 10 s | `state:-6` | 1.4 s |
+| 30 s | `state:-6` | 1.4 s |
+
+An **instant refusal**, not the ~duration-then-fail the user sees. Clog:
+
+```
+capture_image_with_Bulb[3213]:----capture with bulb 40000 ms
+Failed to set new configuration value 1 for configuration entry bulb.
+capture_image_with_Bulb[3222]:----CAPTURE bulb start  -6
+```
+
+**Why I cannot reproduce it: my own tests moved the dial off B.** `--list-shutters`
+now reports `current_index: 13`, `bulb_slot_list: false`, a full timed list — because
+my `--timed-seconds 40/50/30` runs each wrote a shutter index through command 261,
+which takes the body off the B dial. The app's bulb path needs the dial on B; with a
+camera-timed shutter active it refuses immediately. I restored index 9 (10 s), which
+is still a timed slot, not B — **the dial must be returned to B physically** before
+this path can be exercised again. That is a hand action; there is no Bulb entry in the
+261 list to write.
+
+## Duration-match evidence (still a hypothesis, but now quantitatively supported)
+
+Measured wall time for these exposures on this body, including the dark frame:
+
+| requested | measured wall (state 1 → 4) | user's reported failure time |
+|---|---|---|
+| 30 s | **63.5 s** | ~30 s |
+| 40 s | **82.4 s** | ~40 s |
+
+The user's failures land at almost exactly the **requested** duration, while the
+camera actually needs roughly **twice** that. Neither ptp2 budget explains it (old
+`exp+30` = 60/71 s; new `2*exp+30` = 90/110 s). The match with the requested value
+points at a timer above pgphoto — most plausibly `polestar_app` treating wall time as
+≈ exposure, so it declares "shot failed" while the camera is still in its noise-
+reduction dark frame. That also fits "it did recover soon after": the file lands once
+the dark frame finishes, after the app has already given up.
+
+**Not proven.** It needs one captured app-side run with the dial on B to confirm which
+component emits the failure and at what elapsed time.
+
 ## Next step needed from you
 
-Live capture is running again (`out/bulb40s-20261023/{Clog,Mlog}-live2.txt`, polling
-every 4 s, appending host-side so Clog truncation cannot destroy evidence). **Please
-run the 40 s Bulb from Benro Connect once more.** I need the app-side request and the
-exact moment it declares failure — that is the only way to tell whether the ~40 s
-failure is an app-side timer or something in our stack.
+1. **Put the dial back on B.** My timed tests moved it to a timed slot, which is why
+every bulb request now returns `state:-6` in ~1.3 s instead of reproducing your
+   failure.
+2. Then run a 30 s Bulb from Benro Connect once. Live capture is running again
+   (`out/bulb40s-20261023/{Clog,Mlog}-live2.txt`, polling every 4 s, appending
+   host-side so Clog truncation cannot destroy evidence).
+
+I need the app-side request and the elapsed time at which it declares failure. If it
+fails at ~30 s while the camera needs ~63 s, the fault is a timer above pgphoto and
+the `.69` dark-frame fix cannot address it — the fix would have to go where that timer
+lives.
 
 ## Artifacts
 
