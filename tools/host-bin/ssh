@@ -1,0 +1,11 @@
+#!/bin/sh
+# ssh -> the host's ssh client, from inside the VS Code Flatpak sandbox.
+#
+# The sandbox blocks outbound LAN traffic, so `ssh root@192.168.0.1` from this
+# shell reports "Connection refused" even when the camera is up and the host can
+# reach it in one ping. That false negative once made a live rig look unplugged.
+# Running through the host namespace fixes it and needs no sandbox reconfiguring.
+#
+# Put tools/host-bin on PATH and scripts/run-qualification-round.sh,
+# scripts/pull-mlog-clog.py and friends talk to the camera unmodified.
+exec flatpak-spawn --host ssh "$@"

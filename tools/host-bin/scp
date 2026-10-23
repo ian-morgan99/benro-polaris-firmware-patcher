@@ -1,0 +1,4 @@
+#!/bin/sh
+# scp -> the host's scp client, from inside the VS Code Flatpak sandbox.
+# See ssh in this directory for why the sandbox cannot reach the camera directly.
+exec flatpak-spawn --host scp "$@"
