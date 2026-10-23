@@ -155,6 +155,57 @@ The image is a **matched compatibility unit**, not a collection of independently
 
 ---
 
+## Pentax support — engineering history, verified progress and remaining work
+
+This project now includes substantial **Pentax support work**, particularly for the **K-3 Mark III**, **K-1 Mark II** and **K-01**, alongside its original Canon R5 Mark II support. The Pentax work spans the [libgphoto2 fork](https://github.com/ian-morgan99/libgphoto2), Polaris Stage-2 integration, capture/transfer lifecycle, focus, live view, Bulb exposure, firmware build provenance and hardware qualification. **Do not interpret the original R5 II-only disclaimer below as an up-to-date Pentax test matrix**; the evidence and qualifications in this section are more recent and model-specific.
+
+### What has been built and investigated
+
+| Workstream | Engineering scope and current interpretation |
+| --- | --- |
+| Pentax PTP protocol | Vendor commands including `0x900F` GetAllConditions, `0x9011` InitiateCapture, `0x9012` TerminateCapture, `0x900B` candidate info, `0x900D` file data, `0x900E` candidate deletion. Their exact parameter, error and abnormal-stop contracts remain under independent comparison with camera/IT2 evidence. |
+| Capture and file transfer | Candidate discovery, RAW and JPEG selection, transfer, publication, deletion, stale-candidate recovery and next-shot admission. A successful file notification does not itself prove every error path or exactly-once publication. |
+| Bulb and exposure modes | Camera-timed versus held/untimed Bulb, requested duration, long exposure, stop/abort safety and manual-dial transition. K-3 III timed Bulb has a recorded physical success, but Manual following Bulb still fails in one reproduced scenario. |
+| Live view and focus | Live-view mode/preview restoration, focus dispatch and session interaction. The K-3 III and K-1 II use different Pentax focus command families; live-view crash and corrupted-preview reports remain model-specific investigations. |
+| Controls | K-3 III Custom Image controls and white-balance colour temperature; scalar property descriptors, writable/read-only handling, and fresh-process readback. The .68 physical qualification verified colour-temperature behaviour and controlled blast radius. |
+| Integration | Benro Connect / `polestar_app` / `pgphoto` / Stage-2 / libgphoto2 / USB. Full-mode and ptp2-only paths differ; the exact running core, port, camlib and iolib must be proven from process maps before blaming a layer. |
+| Firmware and provenance | Version registry, source-commit binding, full image manifest, installed-file hashes, reboot confirmation, rollback policy and physical acceptance gates. A build being green is not equivalent to camera hardware qualification. |
+| Regression testing | Deterministic simulation and physical scenarios covering RAW-only, RAW+JPEG, short/long, NR and Pixel Shift settings, with three repeats per scenario where appropriate. The complete matrix is **not** yet passed. |
+
+### Verified K-3 III baseline and important limitations
+
+The **19 October 2026 physically qualified firmware .68** (`6.0.0.54.68`, candidate `o-v17c-colortemp-formless`) is documented with patcher commit `36d72ae` and libgphoto2 commit `8e06d39ae`, a matched ten-file installed manifest, actual reboot, and working colour-temperature `0xd018` get/set/readback. The six previously working Custom Image controls continued to read and round-trip; empty-enumeration controls remained withheld. See [physical qualification](docs/evidence/o-v17c-physical-20261019/SUMMARY.md), [release state](docs/RELEASE-VERSION-STATE.md) and [current state](docs/CURRENT-STATE.md).
+
+A separate [three-shot stability run](docs/evidence/o-v17c-stability-20261019/SUMMARY.md) produced **three distinct DNG files** (`SP_0357`–`SP_0359`) with app-facing lifecycle `[1,4,0]`, unchanged `polestar_app` and `pgphoto` PIDs, no observed USB loss, and stable file-descriptor counts. **Scope:** K-3 III, RAW, short exposure, noise reduction off, Pixel Shift off. This is **not** a claim of universal capture stability.
+
+After that run, a **10-second Bulb exposure with noise reduction on succeeded** (`SP_0360.dng`), but the subsequent **Manual-dial capture failed** with protocol `264 state:-1005` and no new file ([#172](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/172)). A separate PTP session wedge was observed despite continued USB enumeration ([#182](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/182)). These failures remain open. Firmware `.69` appears in the version/commit registry; **a reserved or built version is not evidence that .69 has been installed or physically qualified**.
+
+### Model-specific scope
+
+| Camera | Evidence / engineering distinction | Do not assume |
+| --- | --- | --- |
+| **Pentax K-3 III** | Main physically tested body, USB `25fb:0189`; newer focus command family `0x9017`, camera controls and .68 capture/Bulb evidence | That timed Bulb success proves held Bulb, Manual transition, preview→capture or RAW+JPEG |
+| **Pentax K-1 II** | Different focus family `0x9016`; prior reports include aperture-order mismatch and lower-half preview corruption | That K-3 III property fixes, focus or preview behaviour automatically generalise |
+| **Pentax K-01** | Private model-sweep research distinguishes `25fb:0130` USB-SCSI from `25fb:0131` generic PTP/MTP personality | That a PTP path covers both USB personalities |
+
+### Where agents should work
+
+**Authoritative execution programme:** [Benro #149](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149). **Research index:** [libgphoto2 #113](https://github.com/ian-morgan99/libgphoto2/issues/113) (twelve investigation avenues; *backlog captured is not research completed*). **Current end-to-end architecture and ownership audit:** [Benro #224](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/224).
+
+| Work to pick up | Existing issue(s) |
+| --- | --- |
+| Independently validate Pentax capture/stop and conditions contracts | [libgphoto2 #112](https://github.com/ian-morgan99/libgphoto2/issues/112), [#114](https://github.com/ian-morgan99/libgphoto2/issues/114) |
+| Compare authorized private Pentax firmware / Image Transmitter 2 evidence | [libgphoto2 #116](https://github.com/ian-morgan99/libgphoto2/issues/116) |
+| Prove transfer, file publication, deletion and next-shot ownership | [libgphoto2 #115](https://github.com/ian-morgan99/libgphoto2/issues/115), [Benro #145](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/145) |
+| Reconcile installed runtime and command ownership | [Benro #224](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/224) |
+| Investigate live view, focus, USB and session recovery | [Benro #146](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/146), [#147](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/147), [#172](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/172), [#182](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/182) |
+| Verify per-model capabilities and historical build differences | [libgphoto2 #117](https://github.com/ian-morgan99/libgphoto2/issues/117), [Benro #223](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/223) |
+| Implement deterministic regression and complete physical qualification | [libgphoto2 #111](https://github.com/ian-morgan99/libgphoto2/issues/111), [Benro #180](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/180), [#222](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/222) |
+
+For implementation, begin with the [architecture diagrams and debugging checklist above](#architecture-map--agent-onboarding-october-2026), [canonical source rules](docs/canonical-pentax-source.md), and the **exact installed commit**. Evidence from the private research repository may inform findings but proprietary firmware/app decompilation must not be copied into public issues. For each proposed fix, state the failure at the first proven layer, smallest justified change, deterministic tests, hardware requirements, regression risk and rollback path.
+
+---
+
 ## Two modes (full is the default)
 
 | Mode | What it swaps | Flag |
