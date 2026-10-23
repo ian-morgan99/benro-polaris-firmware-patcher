@@ -24,6 +24,137 @@ Result on a real R5 Mark II (flash-verified end-to-end): **immediate detection,
 settings that stick, live view, no "no card" warning, and capture that downloads
 both JPEG and RAW.** See [docs/TESTED.md](docs/TESTED.md).
 
+## Architecture map — agent onboarding (October 2026)
+
+> **Scope and confidence.** This is the documented architecture of the camera-control path and firmware packaging, not a claim that every runtime edge has been independently traced on the device. The active installed/qualified build and its exceptions are recorded in [CURRENT-STATE](docs/CURRENT-STATE.md) and [RELEASE-VERSION-STATE](docs/RELEASE-VERSION-STATE.md). **Never substitute GitHub HEAD for the installed libgphoto2 commit.** For detailed binary/ABI evidence see [HOW-IT-WORKS](docs/HOW-IT-WORKS.md); for source selection and upgrade gates see [canonical-pentax-source](docs/canonical-pentax-source.md).
+
+### 1. System context: phone, Polaris, camera and files
+
+```mermaid
+flowchart TB
+  phone["Benro Connect (iOS / Android)"]
+  clients["Other clients / OpenPolaris test tools"]
+  network["Polaris Wi-Fi / command protocol\ncommands 264 capture, 286 identity, 292 preview state, 780 version"]
+  app["polestar_app\nBenro application daemon / protocol routing"]
+  other["Other stock Polaris services\nmount, motion, tracking, networking, storage"]
+  pg["pgphoto camera-control process\nBenro application logic"]
+  usb["Linux USB transport / libusb"]
+  body["Pentax / Canon / other supported camera\nmodel-dependent PTP or USB personality"]
+  sd["Polaris SD storage\n/app/sd/normal/ capture files"]
+  phone --> network
+  clients --> network
+  network --> app
+  app --> pg
+  app --- other
+  pg --> usb --> body
+  pg --> sd
+  app -->|"file notifications / state"| network
+```
+
+The phone does **not** call libgphoto2 directly. `polestar_app` mediates the Benro command protocol and delegates camera work to `pgphoto`. Camera images are eventually surfaced through Polaris storage and the application protocol. This diagram intentionally omits internal motion-controller details not verified by this camera-stack audit.
+
+### 2. The full-mode camera runtime (default patch)
+
+```mermaid
+flowchart TB
+  polestar["polestar_app\nBenro protocol + camera request orchestration"]
+  wrapper["/app/bin/pgphoto\nlauncher / environment / preload"]
+  binary["pgphoto.stage2ondisk\nBenro camera application code\n64 on-disk API trampolines"]
+  loader["libpolaris_stage2.so\nslot setup, dispatch, optional model-gated shims"]
+  core["/app/lib/stage2/libgphoto2.so.6\nnewer core"]
+  port["/app/lib/stage2/libgphoto2_port.so.12\nnewer port core"]
+  cam["ptp2.so\nPentax / Canon vendor PTP logic"]
+  io["usb1.so\nUSB port backend"]
+  usb["Linux USB → camera"]
+  store["Polaris file storage / result publication"]
+  polestar --> wrapper --> binary
+  binary -->|"64 redirected gp_* / gp_port_* boundaries"| loader
+  loader --> core
+  loader --> port
+  core --> cam
+  port --> io
+  cam --> io --> usb
+  binary --> store
+  store --> polestar
+  paths["CRITICAL: dynamic camlib/iolib lookup may use\n/app/lib/libgphoto2/2.5.27.1/ptp2.so and\n/app/lib/libgphoto2_port/0.12.0/usb1.so\nnot only stage2 directories"]
+  paths -.-> cam
+  paths -.-> io
+```
+
+**Why the trampoline exists:** Benro compiled its older libgphoto2 core into `pgphoto`. Merely replacing `ptp2.so` would leave old core behaviour in place. The patcher modifies **64 public API entry points on disk**, redirecting calls through loader-populated slots to the newer core and port. The loader does not rewrite executable text at runtime. The patched binary still owns Benro-specific control logic and non-trampolined functions. The patched core maintains Benro's extended `Camera` structure ABI (the documented 4,140-byte allocation). See [HOW-IT-WORKS](docs/HOW-IT-WORKS.md) for slot layout, ABI checks and crash checkpoints.
+
+**The alternative `--ptp2-only` mode is architecturally different:** it retains the older compiled-in core and applies only the targeted reliability patch plus replacement camlib/iolib. **Never assume a full-mode defect reproduces in ptp2-only mode or vice versa.** Optional Stage-2 shims are gated by feature flags and camera model; Canon R5 II shims are not automatically Pentax shims.
+
+### 3. Capture request, completion and failure boundaries
+
+```mermaid
+sequenceDiagram
+  participant Client as Benro Connect / canary
+  participant App as polestar_app
+  participant PG as pgphoto + Stage-2
+  participant PTP as libgphoto2 ptp2 / USB
+  participant Camera as Pentax
+  participant SD as Polaris SD
+  Client->>App: 264 capture request
+  App->>PG: Camera capture dispatch
+  PG->>PTP: gp_camera_capture (via trampoline)
+  PTP->>Camera: Model-specific PTP commands
+  Note over PTP,Camera: 0x9011 / 0x9012 capture and stop contracts require mode-specific verification
+  Camera-->>PTP: Status / candidate / image bytes
+  Note over PTP,PG: 0x900F conditions, 0x900B/0x900D/0x900E candidate transfer/deletion require lifecycle proof
+  PTP-->>PG: Capture result or error
+  PG->>SD: Publish file(s), when successful
+  PG-->>App: Capture state / path / error
+  App-->>Client: 264 state:1 then state:4 or failure
+  App-->>Client: 773 file notification when available
+  App-->>Client: 264 state:0 on successful close
+```
+
+The **observed** .68 K-3 III three-shot short-RAW protocol is `264 state:1 → 264 state:4 → 773 file → 264 state:0`, three distinct DNGs with stable process IDs. This proves that **one** app-facing capture scenario works, **not** the precise internal PTP sequence or all capture modes. A later 10-second timed Bulb with noise reduction succeeded, followed by a Manual-dial `264 state:-1005` failure with no new file; a separate session wedge left USB physically present. See [stability evidence](docs/evidence/o-v17c-stability-20261019/SUMMARY.md), [#172](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/172) and [#182](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/182). **Do not interpret USB enumeration as a healthy PTP session.**
+
+### 4. Firmware production and installation (separate from runtime)
+
+```mermaid
+flowchart LR
+  stock["User-supplied stock FwPkt\nfirmware / appfs"]
+  fork["Pinned libgphoto2 fork commit\nclean checkout or immutable source"]
+  patch["Patcher scripts\nARM builds + pgphoto binary edits"]
+  bundle["Matched runtime bundle\nwrapper, pgphoto, loader, core, port, ptp2, usb1"]
+  pack["Repack appfs.ubifs / FwPkt\nfirmwareInfo + install manifest"]
+  gates["Fail-closed release gates\nABI, symbols, hashes, version, structure"]
+  device["Polaris firmware update\nreboot + on-device verification"]
+  tests["Physical tests\nmodel, capture, preview, focus, Bulb, recovery"]
+  stock --> patch
+  fork --> patch
+  patch --> bundle --> pack --> gates --> device --> tests
+```
+
+The image is a **matched compatibility unit**, not a collection of independently swappable `.so` files. A successful host-side `gphoto2` test does not establish the packaged `pgphoto` path. Keep stock firmware for recovery; follow [FWPKT provenance](docs/FWPKT-PROVENANCE-CONTRACT.md), [upgrade process](docs/LIBGPHOTO2-UPGRADE-PROCESS.md) and [current release state](docs/RELEASE-VERSION-STATE.md). A displayed version number alone is insufficient: correlate build ID, exact source commits, firmware ZIP hash, installed manifest and **actual mapped libraries**.
+
+### 5. Responsibility / debugging cheat sheet
+
+| Boundary | Owns or controls | Typical evidence and first place to investigate |
+| --- | --- | --- |
+| Benro Connect / protocol | User requests, mode and UI state | Client trace; `264`, `286`, `292`, `773`, `780` responses |
+| `polestar_app` | Benro protocol routing and camera workflow admission | Mlog, command handler, app PID/thread health; [Benro #224](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/224) |
+| `pgphoto.stage2ondisk` | Camera request dispatch, Benro-specific policies and errors | Process logs, command `264` mapping, `-1005`, timeout, daemon ownership |
+| `libpolaris_stage2.so` | ABI trampoline, loader, feature/model-gated shims | `[stage2]` checkpoints, slot resolution, `/proc/PID/maps`, env flags |
+| libgphoto2 core / `ptp2.so` | Camera controls, vendor PTP, capture/candidate/session lifecycle | Exact embedded commit, PTP opcodes and return values; [libgphoto2 #113](https://github.com/ian-morgan99/libgphoto2/issues/113) |
+| Port core / `usb1.so` / kernel | USB transfer and device interface | `/proc/PID/maps`, sysfs enumeration, port errors, USB traces |
+| Camera body | Actual firmware state, dial mode, shutter, NR, Pixel Shift | Per-model evidence, physical observation; [Benro #222](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/222) |
+| Firmware build / installer | Immutable source identity and complete packaged stack | `install-manifest.json`, firmwareInfo hashes, device reboot and installed-file verification |
+
+### 6. First-hour checklist for another agent
+
+1. Read [CURRENT-STATE](docs/CURRENT-STATE.md), [RELEASE-VERSION-STATE](docs/RELEASE-VERSION-STATE.md), this diagram, and [HOW-IT-WORKS](docs/HOW-IT-WORKS.md). Determine **which version is installed**, not just the latest reserved version.
+2. Pin the exact patcher and libgphoto2 SHAs. Identify whether the tested device uses **full mode** or **ptp2-only**. Read `/proc/<pgphoto-pid>/maps` and `/proc/<pgphoto-pid>/exe` before attributing behaviour to a particular `ptp2.so`; verify hashes of the loaded files. Do not restart the daemon merely to gather evidence.
+3. Reproduce at the **lowest appropriate layer**: direct libgphoto2, packaged pgphoto, then Benro Connect. A success in one layer does not qualify the next.
+4. For capture failures record the first divergent transition: client `264`, pgphoto admission, PTP response, candidate discovery, transfer, file publication, `773`, completion and next-shot readiness. Record camera dial, model, firmware, NR, Pixel Shift, RAW/JPEG, live view, timeout and USB/session health.
+5. Compare independently against authorized [PrivateResearch](https://github.com/ian-morgan99/PrivateResearch) (Pentax firmware, Image Transmitter 2, Benro firmware and app evidence). **Do not copy proprietary decompiled code into public issues.** Distinguish direct observation, source assumption and hypothesis.
+6. Keep work in [master Pentax research backlog](https://github.com/ian-morgan99/libgphoto2/issues/113) and [Benro convergence programme #149](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/149). The active end-to-end trace is [#224](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/224). Report source-inspected, deterministic-tested and hardware-verified evidence **separately**.
+
+---
+
 ## Two modes (full is the default)
 
 | Mode | What it swaps | Flag |
