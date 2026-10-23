@@ -77,10 +77,16 @@ def resolve_ubireader(explicit: str | None) -> str | None:
         if not cand:
             continue
         # A wrapper on PATH can be broken (module installed for another
-        # interpreter); probe it the same way the pre-release gate does.
+        # interpreter); probe it the same way the pre-release gate does -- which
+        # means requiring --help to EXIT 0, not merely to run. The probe used to
+        # swallow the exit code, so a wrapper that crashed at import time was
+        # still returned and extraction then failed with "no functional
+        # ubireader" even though a working one sat at /work/bin.
         try:
-            subprocess.run([cand, "--help"], capture_output=True, timeout=30)
-            return cand
+            if subprocess.run(
+                [cand, "--help"], capture_output=True, timeout=30
+            ).returncode == 0:
+                return cand
         except Exception:
             continue
     return None
