@@ -227,7 +227,19 @@ PY_TESTS=(
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
-    ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
+    # The count is not decoration. This gate once printed
+    # `python regression suite ()` and still reported PASS, because a pytest
+    # verbosity flag suppressed the summary line and nothing checked for it. A
+    # suite that ran zero tests exits 0 too, so an exit code alone cannot prove
+    # anything was executed -- require the number, and fail closed without it.
+    PY_COUNT=$(grep -oE '[0-9]+ passed' /tmp/prerelease-pytest.log | tail -1)
+    if [ -z "$PY_COUNT" ]; then
+        bad "python regression suite produced no 'N passed' summary (log: /tmp/prerelease-pytest.log)"
+    elif [ "${PY_COUNT% passed}" -eq 0 ]; then
+        bad "python regression suite collected and ran 0 tests"
+    else
+        ok "python regression suite ($PY_COUNT)"
+    fi
 else
     bad "python regression suite (log: /tmp/prerelease-pytest.log)"
 fi
