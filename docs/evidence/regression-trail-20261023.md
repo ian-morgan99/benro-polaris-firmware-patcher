@@ -24,6 +24,7 @@ dark-frame budget). `.68`→`.69` differs in loader + `ptp2.so`; `pentax.so` and
 | **K-1 II** (`25fb:0183`) | not reproducible | preview only, per user report | slow writes, no focus, no EV, capture failed | `k1ii-mmode-20261023/` |
 | **K-01** | model recognised, JPEG reported | recognition + format readout | nothing further attempted by user | `k01-regression-20261023/` |
 | **iOptron iPolar** (`1233:1455`) | not recognised | — | nothing; device never surfaced | `ipolar-20261023/` |
+| **Orion StarShoot All-in-One** (`16c0:29a0`) | not recognised | — | nothing; adapter never linked | `starshooter-20261023/` |
 
 ## K-3 III — qualified for timed capture, Bulb path still open
 
@@ -140,6 +141,30 @@ Benro Connect. This is **unimplemented scope, not a `.69` regression**.
 
 Still unanswered on hardware (open item #1 of that plan): does attaching the iPolar create
 `/dev/video*` on this kernel? Needs the device plugged in — command is in that summary.
+
+## Orion StarShoot All-in-One — not recognised; adapter compiled but never linked
+
+Same device as **#158** (`docs/ORION-STARSHOOT-ADAPTER-CONTRACT.md` is titled "#158 Orion
+StarShoot All-in-One (16c0:29a0)"). Already unplugged when I probed, so kernel
+enumeration for that session is unverified; historical evidence from 2026-09-29 shows it
+did enumerate as `16c0:29a0` on port `1-1.2`.
+
+Verified against the **shipped `.69` artifact** rather than trusting the plan:
+
+| check | result |
+|---|---|
+| `container/stage2_starshoot_adapter.c/.h` | present (5,209 / 1,512 bytes) |
+| refs in `stage2_loader.c`, `stage2_policy.c/h` | **zero** — no `adapter_init()`, no policy |
+| `patch.sh:457-462` | compile-check only (`-c -o starshoot_adapter.o`) |
+| shipped `libpolaris_stage2.so`, `strings` for `starshoot\|star_shoot\|qhy5` | **0 matches** |
+
+So nothing in `.69` can see the device. Unimplemented scope, not a regression.
+
+Correction to my first reading: I reported libusb absent from `/usr/lib` and `/lib`. It is
+present at **`/app/lib/libusb-1.0.so`**, and `/dev/bus/usb/` exists with bus dirs `001` and
+`008`. That answers adapter-contract open item #3 in the affirmative — libusb is not the
+blocker. The blocker remains contract item #2: identifying the QHY5L-II / INDI protocol for
+`16c0:29a0`.
 
 ## Standing caveat on every row above
 
