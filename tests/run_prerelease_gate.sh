@@ -40,6 +40,8 @@ BULB_SECONDS=""
 BULB_INDEX=""
 EXPECTED_SW=""
 EXPECTED_BUILD_DIR=""
+DEVICE_LIBS=""
+LIBGPHOTO2_SRC=""
 BULB_ARGS=()
 
 while [ $# -gt 0 ]; do
@@ -56,6 +58,8 @@ while [ $# -gt 0 ]; do
         --bulb-shutter-index) BULB_INDEX="${2:?}"; shift 2 ;;
         --expected-sw) EXPECTED_SW="${2:?}"; shift 2 ;;
         --expected-build-dir) EXPECTED_BUILD_DIR="${2:?}"; shift 2 ;;
+        --device-libs)  DEVICE_LIBS="${2:?}"; shift 2 ;;
+        --libgphoto2-src) LIBGPHOTO2_SRC="${2:?}"; shift 2 ;;
         -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
         *) echo "unknown arg: $1" >&2; exit 2 ;;
     esac
@@ -180,29 +184,64 @@ fi
 # ----------------------------------------------------------------------------
 # 2. Coded Python regression tests (scenario routing, stability catalogue,
 #    trace tooling, Bulb variation matrix, astro multi-shot contract, app-burst
-#    wire framing, and canary file-check contract).
-#    These encode the invariants
-#    of everything we believe is working; a new regression must break one.
+#    wire framing, canary file-check contract, capture-outcome classification and
+#    shipped-artifact verification).
+#    These encode the invariants of everything we believe is working; a new
+#    regression must break one.
+#
+#    MAINTENANCE: this explicit list drifted once and five suites -- including
+#    test_verify_installed_build.py, which is directly release-relevant -- went
+#    unrun while the gate still reported GREEN. The list now lives in PY_TESTS below
+#    and the drift guard fails the gate whenever a tests/test_*.py exists that is not
+#    named there, so adding a suite forces a deliberate decision.
+#
+#    Every suite listed must be offline-safe: it may bind loopback and monkeypatch
+#    socket.socket.connect, but must not require the Polaris. Device-dependent work
+#    belongs in section 4, which is opt-in.
 # ----------------------------------------------------------------------------
-if python3 -m pytest -q \
-    tests/test_pentax_scenario_routing.py \
-    tests/test_pentax_stability_scenarios.py \
-    tests/test_pentax_stability_trace.py \
-    tests/test_canary_bulb.py \
-    tests/test_canary_two_shot.py \
-    tests/test_pentax_bulb_variations.py \
-    tests/test_astro_multishot.py \
-    tests/test_display_fwver_monotonic.py \
-    tests/test_agent_sandbox_check.py \
-    tests/test_agent_host_config_check.py \
-    tests/test_app_burst_protocol.py \
-    tests/test_canary_file_check.py \
-    tests/test_pull_mlog_clog.py \
-    tests/test_autonomous_install.py \
-    tests/test_watch_app_crash.py > /tmp/prerelease-pytest.log 2>&1; then
+# Single source of truth: this array is what runs AND what the drift guard below
+# checks against. An earlier version kept the list inline in the pytest invocation
+# and re-extracted it with sed, which is fragile and was itself wrong once.
+PY_TESTS=(
+    tests/test_pentax_scenario_routing.py
+    tests/test_pentax_stability_scenarios.py
+    tests/test_pentax_stability_trace.py
+    tests/test_canary_bulb.py
+    tests/test_canary_two_shot.py
+    tests/test_pentax_bulb_variations.py
+    tests/test_astro_multishot.py
+    tests/test_display_fwver_monotonic.py
+    tests/test_agent_sandbox_check.py
+    tests/test_agent_host_config_check.py
+    tests/test_app_burst_protocol.py
+    tests/test_canary_file_check.py
+    tests/test_pull_mlog_clog.py
+    tests/test_autonomous_install.py
+    tests/test_assert_orphan_wrote.py
+    tests/test_capture_outcomes.py
+    tests/test_control_liveness.py
+    tests/test_verify_installed_build.py
+    tests/test_verify_shipped_artifacts.py
+    tests/test_watch_app_crash.py
+)
+
+if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
     ok "python regression suite ($(grep -o '[0-9]* passed' /tmp/prerelease-pytest.log | tail -1))"
 else
     bad "python regression suite (log: /tmp/prerelease-pytest.log)"
+fi
+
+# Drift guard: fail the gate when a tests/test_*.py exists that this array does not
+# name. A suite nobody runs cannot catch a regression, and that is exactly how
+# test_verify_installed_build.py sat unrun while this gate reported GREEN.
+MISSING_TESTS="$(comm -13 \
+    <(printf '%s\n' "${PY_TESTS[@]}" | sort) \
+    <(ls tests/test_*.py 2>/dev/null | sort))"
+if [ -n "$MISSING_TESTS" ]; then
+    bad "python suites exist but are not run by this gate: $(printf '%s ' $MISSING_TESTS)"
+    echo "      Add each to PY_TESTS above (offline-safe only) or delete the file."
+else
+    ok "python test-list drift guard (${#PY_TESTS[@]} suites, all listed)"
 fi
 
 # ----------------------------------------------------------------------------
@@ -346,6 +385,51 @@ open('$STOCK_FI','wb').write(data)
     fi
 else
     echo "INFO: no --build given; package gates skipped (offline gate only)"
+fi
+
+# ----------------------------------------------------------------------------
+# 3b. Shipped-artifact gates (#214 D1, D2).
+#     The upstream regression suite runs against a meson build configured
+#     -Dcamlibs=ptp2,pentax,directory, while the shipped libraries come from an
+#     autotools build with --without-libxml-2.0 --without-jpeg --without-libcurl.
+#     Same commit, different dependency graph, so those tests never exercise what
+#     actually ships. Rather than reconciling the two configurations, assert the
+#     artifact: every DT_NEEDED of every shipped .so must resolve inside the shipped
+#     tree or from the device runtime, and the loader's compiled-in module directories
+#     plus the manifest's mandatory paths must match the tree that was built.
+#     Needs no device and no container runtime, so it runs whenever a build exists.
+if [ -n "$BUILD" ]; then
+    STAGE2_DIR="$(dirname "$BUILD")/stage2-ondisk"
+    if [ ! -d "$STAGE2_DIR" ]; then
+        # Some candidates stage the tree under the build dir itself.
+        for cand in "$BUILD/../stage2-ondisk" "$BUILD/stage2-ondisk"; do
+            [ -d "$cand" ] && STAGE2_DIR="$(cd "$cand" && pwd)" && break
+        done
+    fi
+    if [ -d "$STAGE2_DIR" ]; then
+        VERIFY_ARGS=("$STAGE2_DIR")
+        if [ -n "$DEVICE_LIBS" ]; then
+            if [ -f "$DEVICE_LIBS" ]; then
+                VERIFY_ARGS+=(--device-libs "$DEVICE_LIBS")
+            else
+                bad "--device-libs file not found: $DEVICE_LIBS"
+            fi
+        else
+            echo "INFO: no --device-libs given; using the built-in allowlist derived from a captured loader trace. Capture \`ls -1 /app/lib\` on the target for an authoritative reading."
+        fi
+        if [ -n "$LIBGPHOTO2_SRC" ] && [ -d "$LIBGPHOTO2_SRC" ]; then
+            VERIFY_ARGS+=(--source "$LIBGPHOTO2_SRC")
+        fi
+        if python3 scripts/verify-shipped-artifacts.py "${VERIFY_ARGS[@]}" \
+                > /tmp/prerelease-shipped-artifacts.log 2>&1; then
+            ok "shipped .so dependencies and version pins"
+        else
+            bad "shipped .so dependencies or version pins (log: /tmp/prerelease-shipped-artifacts.log)"
+            sed -n '1,20p' /tmp/prerelease-shipped-artifacts.log
+        fi
+    else
+        skp "shipped .so dependency and version-pin gates (no stage2-ondisk tree beside $BUILD)"
+    fi
 fi
 
 # ----------------------------------------------------------------------------
