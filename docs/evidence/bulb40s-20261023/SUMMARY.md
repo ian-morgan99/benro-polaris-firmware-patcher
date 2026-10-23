@@ -2,6 +2,21 @@
 
 Date: 2026-10-23. Device `FwVer:6.0.0.54.69`, K-3 III attached, RAW mode.
 
+> **READ THIS FIRST — most of the `state:-6` material below was already resolved on
+> `.68` and I re-derived it here without checking.** Three commits already contain it:
+>
+> | commit | what it already established |
+> |---|---|
+> | `c89da47` (2026-10-21) | **"RESOLVED — bulb works. The refusal is a mode conflict."** Mechanism identified as the `bulb-timer` capability bit (`capability_flags & PENTAX_CONDITION_BULB_TIMER`, `config.c:9491`), which flipped to *no* at 12:28:18 when the operator changed the camera's bulb setting; every `-6` predates that flip. |
+> | `ff39696` (2026-10-21) | **Bulb qualified to 90 s, 5/5** at 5/8/**40**/90/5 s, durations honoured to the millisecond, files on card. Also: *"the app is mode-aware... it branches inside `captureImage` — `captureImage[1485]->captureBulbImage` (camera-timed, -6) versus `captureImage[1521]->capture_image_with_Bulb` (held-shutter, works)."* |
+> | `ac5068c` (2026-10-21) | **"the -6 is decided in the APP, not libgphoto2"** (fresh-battery A/B); reversal hypothesis refuted. Open item: an app-side gate on the dial/mode. |
+>
+> What this file adds that was **not** previously known: the measured wall times proving
+> dark-frame doubling on this body (63.5 / 82.4 / 102.6 s), the `capture end -83117 ms`
+> corroboration, and the note that the live shutter list now runs to `20-00`. The
+> app-side-timer idea below is a *refinement* of #219's open question, not a new finding.
+> Treat the `-6` sections as confirmation of a closed finding, not as open work.
+
 ## Your evidence was destroyed before I could read it
 
 - `/app/Clog.txt` was **0 bytes** when I first looked (mtime 19:04). It is truncated
@@ -73,11 +88,14 @@ capture_image_with_Bulb[3222]:----CAPTURE bulb start  -6
 ```
 
 `library.c:7104-7113` refuses the *start/stop* Bulb action whenever
-`PENTAX_CONDITION_BULB_TIMER` is set, returning `GP_ERROR_NOT_SUPPORTED`. This is
-**pre-existing, not a `.69` regression** — `git merge-base --is-ancestor` confirms
-`697907059` ("add research Pentax Bulb start/stop action") is already in `.68`. It
-refuses for *any* duration: `--bulb-seconds 2` fails identically at once, so it is
-mode-dependent, not duration-dependent.
+`PENTAX_CONDITION_BULB_TIMER` is set, returning `GP_ERROR_NOT_SUPPORTED`. It refuses for
+*any* duration — `--bulb-seconds 2` fails identically at once — so it is mode-dependent,
+not duration-dependent.
+
+**This is the already-closed finding from `c89da47`, not a new discovery.** The bit being
+set again today means the camera's bulb setting has been changed back to camera-timed
+since 2026-10-21, which is exactly the operator-controlled switch that commit identified.
+My `git merge-base` check on `697907059` re-established what was already recorded.
 
 ## The open question — your failure was at ~40 s, not at a budget boundary
 
@@ -158,6 +176,15 @@ the dark frame finishes, after the app has already given up.
 
 **Not proven.** It needs one captured app-side run with the dial on B to confirm which
 component emits the failure and at what elapsed time.
+
+**Framing correction:** this is not a new hypothesis. `ac5068c` already established that
+the `-6` decision is made in the app before libgphoto2, and `ff39696` already located the
+branch inside `captureImage`. The genuinely open part — and it is #219's own open item —
+is *why the camera-timed branch uses an implementation the library rejects when a working
+one is in the same binary*. The refinement this file offers is the timing signature: the
+app appears to declare failure at roughly the requested duration while the body needs
+about twice that (dark frame), which would explain "processing" then "shot failed" with
+no libgphoto2 involvement.
 
 ## Next step needed from you
 
