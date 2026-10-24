@@ -224,12 +224,10 @@ def effective_shot_timeout(base: float, bulb_seconds: int | None,
     if bulb_seconds is not None:
         if bulb_seconds <= 0:
             raise ValueError("--bulb-seconds must be positive")
-        check_test_exposure_limit(bulb_seconds, "--bulb-seconds")
         effective = float(bulb_seconds)
     if timed_seconds is not None:
         if timed_seconds <= 0:
             raise ValueError("--timed-seconds must be positive")
-        check_test_exposure_limit(timed_seconds, "--timed-seconds")
         # A timed exposure is exactly the slot duration -- there is no app-side
         # hold to add -- so it stands on its own rather than taking a maximum.
         effective = max(effective, float(timed_seconds))
@@ -274,8 +272,8 @@ def check_test_exposure_limit(seconds: float | None, which: str) -> None:
         raise ValueError(
             f"{which}={seconds:g}s exceeds the {limit:g}s ceiling for automated "
             f"testing (long exposures heat the sensor). Raise "
-            f"OPENPOLARIS_MAX_TEST_EXPOSURE for a deliberate long-exposure run, or "
-            f"select the slot explicitly with --bulb-shutter-index."
+            f"OPENPOLARIS_MAX_TEST_EXPOSURE=<seconds> for a deliberate "
+            f"long-exposure run."
         )
 
 
@@ -947,6 +945,18 @@ def main() -> int:
         ap.error("--timed-seconds resolves the index itself; use one of the two")
     if args.timed_seconds is not None and args.timed_seconds <= 0:
         ap.error("--timed-seconds must be positive")
+    # Automated testing is capped so a mistyped request cannot silently select a
+    # very long slot: resolve_shutter_index() falls through to the longest entry
+    # when nothing matches, and --bulb-seconds 1200 would otherwise reach the
+    # camera as `20-00`. Enforced here, before any socket is opened, so a bad
+    # request fails without touching the camera. Deliberate long-exposure runs
+    # raise OPENPOLARIS_MAX_TEST_EXPOSURE instead.
+    for which, value in (("--bulb-seconds", args.bulb_seconds),
+                         ("--timed-seconds", args.timed_seconds)):
+        try:
+            check_test_exposure_limit(value, which)
+        except ValueError as exc:
+            ap.error(str(exc))
     if (args.ev_index is not None or args.keep_preview) and not args.shot:
         ap.error("--ev-index/--keep-preview require --shot")
     if args.expected_sw is not None and not (args.probe or args.shot):
