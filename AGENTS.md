@@ -91,6 +91,29 @@ different dependency graph. Never justify a link-time or dependency decision by 
 at a passing gate — check the shipped artifact (`readelf -d`, `nm -D
 --undefined-only`). Tracked in `#214`.
 
+### Attribute telemetry to its actual source before reasoning about it
+
+Autonomous work has twice misattributed battery evidence, and both times the error
+survived into issues and tooling. Verify provenance from the log line that *produces*
+the value, not from a docstring or a summary sentence.
+
+- **Wire code 778 is the GIMBAL battery.** Mlog shows its producer directly:
+  `GimbalUartRxMsgProcTask[378]:Voltage:12.16;capacity:97;ChargeState:1;` followed by
+  `SP_SendMsgToApp ... code[778]`. The voltages (10.7–12.4 V) are a gimbal pack, not a
+  Pentax D-LI (~7.4–8.4 V). Clog — the pgphoto/libgphoto2 side — never emits 778.
+- **The CAMERA battery is `/main/status/batterylevel`**, read through the existing PTP
+  owner (see `docs/evidence/o-v13v-stage2-direct-20260929/`). Do not open a second
+  gphoto2 client to poll it — that contends with pgphoto's session ownership (#206 B1/B2).
+- `docs/evidence/battery-log.csv` contains **gimbal** rows only. It is not camera-battery
+  evidence, and there is currently no recorded camera-battery telemetry anywhere in the
+  repo.
+
+The standing correction: **the camera battery has been a consistent problem; we have never
+had a specific gimbal-battery problem.** #119, closed #66 and the idle-drain report filed
+under #147 are all *camera*-side observations, despite #119's wording ("the Polaris battery
+drains very fast while the camera is connected") being read as gimbal-side for weeks. When
+citing prior power evidence, say which battery it measured and quote the producing log line.
+
 ## Source/runtime ownership rule
 
 When a camera operation fails:

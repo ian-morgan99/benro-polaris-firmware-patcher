@@ -1,11 +1,31 @@
 #!/usr/bin/env python3
-"""Query camera battery (code 778) and append a timestamped reading to the log.
+"""Query the GIMBAL battery (wire code 778) and append a timestamped reading.
 
 Usage:
   python3 scripts/battery-check.py            # query + append to docs/evidence/battery-log.csv
   python3 scripts/battery-check.py --no-log   # query only, print to stdout
 
 Charge-state values observed: 1 = charging, 2 = not charging (full/idle).
+
+!! THIS IS NOT THE CAMERA BATTERY !!
+Code 778 is sourced from the gimbal UART, not from the camera. Mlog proves the
+provenance directly:
+
+    GimbalUartRxMsgProcTask[378]:Voltage:12.16;capacity:97;ChargeState:1;
+    SP_SendMsgToApp success;type[2],code[778],val[capacity:97;charge:1;]
+
+The accompanying Voltage values (10.7-12.4 V across every archived Mlog) are a
+gimbal pack, not a Pentax D-LI battery (~7.4-8.4 V). Nothing in Clog -- the
+pgphoto/libgphoto2 side -- ever emits 778.
+
+For the CAMERA battery read /main/status/batterylevel through the EXISTING PTP
+owner (see docs/evidence/o-v13v-stage2-direct-20260929/). Do NOT open a second
+gphoto2 client to poll it: that contends with pgphoto's session ownership and is
+the same class of interference recorded in #206 B1/B2.
+
+History: this file's docstring previously said "camera battery (code 778)". That
+was wrong, and every row already in docs/evidence/battery-log.csv is gimbal-side.
+Do not use those rows as camera-battery evidence.
 """
 from __future__ import annotations
 
@@ -60,12 +80,12 @@ def main() -> int:
     no_log = "--no-log" in sys.argv
     result = query()
     if result is None:
-        print("battery-check: no 778 response (camera unreachable?)")
+        print("battery-check: no 778 response (gimbal unreachable?)")
         return 1
     cap, charge = result
     ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     state = {0: "unknown", 1: "charging", 2: "not-charging"}.get(charge, f"code-{charge}")
-    print(f"{ts} battery capacity={cap}% charge_state={state} (raw charge={charge})")
+    print(f"{ts} gimbal-battery capacity={cap}% charge_state={state} (raw charge={charge})")
     if not no_log:
         os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
         new = not os.path.exists(LOG_PATH)

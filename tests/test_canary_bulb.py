@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 
+import pytest
+
 
 def load_probe():
     path = Path(__file__).parents[1] / "scripts" / "canary-probe.py"
@@ -688,3 +690,58 @@ def test_session_yields_the_explicit_index_duration_when_forced():
         index, resolved = ctx
         assert index == 6
         assert resolved == 30.0
+
+
+# --- automated-testing exposure ceiling -------------------------------------
+# Long exposures heat the sensor, and resolve_shutter_index() falls through to
+# the longest available slot, so a mistyped request can silently select `20-00`.
+# The ceiling constrains *requested* durations only; an operator who explicitly
+# picks a long slot with --bulb-shutter-index is not restricted.
+
+def test_ceiling_default_is_45_seconds():
+    mod = load_probe()
+    assert mod.max_test_exposure_seconds() == 45.0
+
+
+def test_bulb_request_at_ceiling_is_allowed():
+    mod = load_probe()
+    payload = mod.bulb_capture_payload(45)
+    assert b"bulb:45" in payload or "bulb:45" in payload.decode("utf-8", "replace")
+
+
+def test_bulb_request_above_ceiling_is_blocked():
+    """A 120 s request must fail loudly rather than resolve to a long slot."""
+    mod = load_probe()
+    with pytest.raises(ValueError) as exc:
+        mod.bulb_capture_payload(120)
+    assert "ceiling" in str(exc.value)
+
+
+def test_timed_request_above_ceiling_is_blocked():
+    mod = load_probe()
+    with pytest.raises(ValueError) as exc:
+        mod.effective_shot_timeout(30.0, None, timed_seconds=120)
+    assert "--timed-seconds" in str(exc.value)
+
+
+def test_ceiling_can_be_raised_for_a_deliberate_run(monkeypatch):
+    monkeypatch.setenv("OPENPOLARIS_MAX_TEST_EXPOSURE", "300")
+    mod = load_probe()
+    assert mod.max_test_exposure_seconds() == 300.0
+    mod.bulb_capture_payload(120)  # must not raise
+
+
+def test_ceiling_rejects_nonsense_env_values(monkeypatch):
+    """A typo in the override must not silently disable the guard."""
+    mod = load_probe()
+    for bad in ("bogus", "-5", "0"):
+        monkeypatch.setenv("OPENPOLARIS_MAX_TEST_EXPOSURE", bad)
+        with pytest.raises(ValueError):
+            mod.max_test_exposure_seconds()
+
+
+def test_explicit_slot_selection_is_not_capped():
+    """The ceiling guards requests, not deliberate human slot choices (#208)."""
+    mod = load_probe()
+    # resolved_seconds comes from the slot table, not from a typed request.
+    assert mod.effective_shot_timeout(30.0, None, resolved_seconds=1200.0) >= 1200.0
