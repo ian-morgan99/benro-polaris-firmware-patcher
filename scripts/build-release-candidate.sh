@@ -147,6 +147,21 @@ python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT"
 
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
 
+# Compare the shipped bytes against the previous candidate BEFORE claiming a version.
+# A display version is a claim about behaviour, and two claims that describe identical
+# files are both false. The commit binding cannot catch this: the patcher sha moves when
+# a README is edited, so an unchanged firmware tree still passes it. Runs before --record
+# so a rejected candidate never consumes a number.
+if [ "${SKIP_DIFFERENTIAL:-0}" != "1" ]; then
+  echo "Shipped-artifact differential against the previous candidate"
+  python3 "$ROOT/scripts/verify-candidate-differential.py" \
+    --current "$OUT" --auto-detect || {
+      echo "ERROR: shipped-artifact differential failed; not claiming $DISPLAY_FWVER." >&2
+      echo "       Set SKIP_DIFFERENTIAL=1 only if you have a reason and record it." >&2
+      exit 1
+    }
+fi
+
 # The candidate is real only once it has passed the gate. Claim the version at
 # that point so a build that fails its tests does not consume a number, while
 # two candidates that both reach this line can never share one.

@@ -223,6 +223,7 @@ PY_TESTS=(
     tests/test_qualification_verdict.py
     tests/test_verify_installed_build.py
     tests/test_verify_shipped_artifacts.py
+    tests/test_verify_candidate_differential.py
     tests/test_watch_app_crash.py
 )
 
@@ -344,6 +345,28 @@ open('$STOCK_FI','wb').write(data)
             fi
         else
             bad "install manifest missing for candidate ($CAND_DIR/install-manifest.json; run scripts/generate-fwpkt-manifest.py)"
+        fi
+
+        # Shipped-artifact differential (#214 follow-up). A display version is a claim
+        # about behaviour, so two candidates whose shipped bytes are identical cannot
+        # both be true -- and one version moving several components must describe them
+        # all. The commit binding cannot see either case: the patcher sha moves when a
+        # README is edited. Ground truth this catches: `.69` was registered as carrying
+        # only the dark-frame budget while `libpolaris_stage2.so` also moved.
+        DIFF_LOG="/tmp/prerelease-differential.log"
+        if python3 scripts/verify-candidate-differential.py \
+                --current "$CAND_DIR" --auto-detect > "$DIFF_LOG" 2>&1; then
+            if grep -q '^SKIP:' "$DIFF_LOG"; then
+                skp "shipped-artifact differential: $(grep -m1 '^SKIP:' "$DIFF_LOG" | cut -c7-)"
+            elif grep -q '^WARN:' "$DIFF_LOG"; then
+                ok "shipped-artifact differential (WARN: multi-component version, see $DIFF_LOG)"
+                sed -n '/^WARN:/,/must describe/p' "$DIFF_LOG" | sed 's/^/      /'
+            else
+                ok "shipped-artifact differential ($(grep -cE '^  /app' "$DIFF_LOG") shipped files changed vs previous candidate)"
+            fi
+        else
+            bad "shipped-artifact differential failed (see $DIFF_LOG)"
+            sed 's/^/      /' "$DIFF_LOG" | head -12
         fi
 
         # Audit both the app-side request branch and pgphoto's concrete timed
