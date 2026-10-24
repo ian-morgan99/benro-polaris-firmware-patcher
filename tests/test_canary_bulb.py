@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 
+import pytest
+
 
 def load_probe():
     path = Path(__file__).parents[1] / "scripts" / "canary-probe.py"
@@ -249,7 +251,16 @@ def test_code_780_missing_or_wrong_version_fails_closed():
             raise AssertionError("invalid code-780 version response must fail closed")
 
 
-def test_bulb_timeout_is_shared_across_canary_entry_points():
+def test_bulb_timeout_is_shared_across_canary_entry_points(monkeypatch):
+    """Budget arithmetic must be identical wherever a shot is issued.
+
+    These durations exceed the automated-testing ceiling on purpose: the point
+    under test is the budget formula, not the guard. The override is exactly the
+    escape hatch a deliberate long-exposure run uses, so the arithmetic stays
+    exercised at realistic lengths instead of being silently downgraded to
+    in-ceiling values.
+    """
+    monkeypatch.setenv("OPENPOLARIS_MAX_TEST_EXPOSURE", "600")
     mod = load_probe()
     assert mod.effective_shot_timeout(180, 70) == 180
     assert mod.effective_shot_timeout(120, 300) == 390
@@ -688,3 +699,93 @@ def test_session_yields_the_explicit_index_duration_when_forced():
         index, resolved = ctx
         assert index == 6
         assert resolved == 30.0
+
+
+# --- automated-testing exposure ceiling -------------------------------------
+# Long exposures heat the sensor, and resolve_shutter_index() falls through to
+# the longest available slot, so a mistyped request can silently select `20-00`.
+# The ceiling constrains *requested* durations only; an operator who explicitly
+# picks a long slot with --bulb-shutter-index is not restricted.
+
+def test_ceiling_default_is_45_seconds():
+    mod = load_probe()
+    assert mod.max_test_exposure_seconds() == 45.0
+
+
+def test_bulb_request_at_ceiling_is_allowed():
+    mod = load_probe()
+    # bulb_capture_payload returns str (the wire frame is encoded by the caller),
+    # so assert on str -- a bytes needle here raises TypeError, not a failure.
+    payload = mod.bulb_capture_payload(45)
+    assert isinstance(payload, str)
+    assert "bulb:45" in payload
+
+
+def test_bulb_request_above_ceiling_is_blocked():
+    """A 120 s request must fail loudly rather than resolve to a long slot."""
+    mod = load_probe()
+    with pytest.raises(ValueError) as exc:
+        mod.bulb_capture_payload(120)
+    assert "ceiling" in str(exc.value)
+
+
+def run_probe(*args, env=None):
+    """Invoke canary-probe.py as a subprocess, as the other canary tests do."""
+    import subprocess
+    import sys as _sys
+    root = Path(__file__).parents[1]
+    proc = subprocess.run(
+        [_sys.executable, str(root / "scripts" / "canary-probe.py"), *args],
+        capture_output=True, text=True, timeout=60, env=env, cwd=str(root))
+    return proc
+
+
+def test_timed_request_above_ceiling_is_blocked():
+    """Enforcement lives in argument validation, so it exits before any socket."""
+    proc = run_probe("--host", "127.0.0.1", "--port", "1", "--shot",
+                     "--expected-files", "1", "--timed-seconds", "120")
+    assert proc.returncode == 2
+    assert "ceiling" in (proc.stderr + proc.stdout)
+
+
+def test_ceiling_is_enforced_before_the_camera_is_touched():
+    """A rejected request must fail without connecting.
+
+    Port 1 on loopback is refused instantly, so if the ceiling were checked after
+    the socket was opened this would surface a connection error instead of the
+    ceiling message. That ordering is the point: an over-long exposure must never
+    reach the camera at all.
+    """
+    proc = run_probe("--host", "127.0.0.1", "--port", "1", "--shot",
+                     "--expected-files", "1", "--bulb-seconds", "600")
+    combined = proc.stderr + proc.stdout
+    assert proc.returncode == 2
+    assert "ceiling" in combined
+    assert "connect" not in combined.lower()
+
+
+def test_ceiling_can_be_raised_for_a_deliberate_run(monkeypatch):
+    monkeypatch.setenv("OPENPOLARIS_MAX_TEST_EXPOSURE", "300")
+    mod = load_probe()
+    assert mod.max_test_exposure_seconds() == 300.0
+    mod.bulb_capture_payload(120)  # must not raise
+
+
+def test_ceiling_rejects_nonsense_env_values(monkeypatch):
+    """A typo in the override must not silently disable the guard."""
+    mod = load_probe()
+    for bad in ("bogus", "-5", "0"):
+        monkeypatch.setenv("OPENPOLARIS_MAX_TEST_EXPOSURE", bad)
+        with pytest.raises(ValueError):
+            mod.max_test_exposure_seconds()
+
+
+def test_slot_derived_duration_is_not_capped():
+    """The ceiling guards typed requests, not durations read off the camera.
+
+    ``resolved_seconds`` comes from the live command 268 slot table, so a long
+    slot selected deliberately must widen the budget instead of raising (#208).
+    """
+    mod = load_probe()
+    budget = mod.effective_shot_timeout(30.0, 45, resolved_seconds=1200.0)
+    assert budget >= 1200.0

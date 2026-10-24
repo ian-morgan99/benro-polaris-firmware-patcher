@@ -31,6 +31,15 @@ ASTRO = _load("bulb_variations_astro", "scripts/test-astro-multishot.py")
 PROBE = _load("bulb_variations_probe", "scripts/canary-probe.py")
 
 
+@pytest.fixture(autouse=True)
+def _allow_matrix_exposure_durations(monkeypatch):
+    """The matrix covers 60s and 70s bulb durations to exercise long-exposure
+    lifecycle.  canary-probe caps *requested* test exposures at 45s by default,
+    so raise the ceiling here: this suite asserts protocol behaviour, not the
+    ceiling itself (that is covered in tests/test_canary_bulb.py)."""
+    monkeypatch.setenv("OPENPOLARIS_MAX_TEST_EXPOSURE", "120")
+
+
 def _matrix() -> dict[str, Any]:
     return json.loads(
         (ROOT / "tests/pentax_bulb_variation_matrix.json").read_text(
