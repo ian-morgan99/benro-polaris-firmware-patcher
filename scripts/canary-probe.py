@@ -224,16 +224,59 @@ def effective_shot_timeout(base: float, bulb_seconds: int | None,
     if bulb_seconds is not None:
         if bulb_seconds <= 0:
             raise ValueError("--bulb-seconds must be positive")
+        check_test_exposure_limit(bulb_seconds, "--bulb-seconds")
         effective = float(bulb_seconds)
     if timed_seconds is not None:
         if timed_seconds <= 0:
             raise ValueError("--timed-seconds must be positive")
+        check_test_exposure_limit(timed_seconds, "--timed-seconds")
         # A timed exposure is exactly the slot duration -- there is no app-side
         # hold to add -- so it stands on its own rather than taking a maximum.
         effective = max(effective, float(timed_seconds))
     if resolved_seconds is not None and resolved_seconds > effective:
         effective = float(resolved_seconds)
     return max(base, effective + margin)
+
+
+# Ceiling on exposures this harness *requests during automated testing*. Long
+# exposures generate heat on the sensor, and the K-3 III's command 268 list runs
+# to `20-00` (57 entries, measured on .69 in out/bulb40s-20261023/Clog-live.txt),
+# so a mistyped --bulb-seconds silently resolves to a 20-minute exposure via the
+# longest-available fallthrough in resolve_shutter_index(). The ceiling applies
+# only to requested durations. An operator deliberately choosing a long slot with
+# --bulb-shutter-index is not restricted: that is an explicit human selection.
+# Raise it for a deliberate long-exposure run, e.g.
+#   OPENPOLARIS_MAX_TEST_EXPOSURE=300 scripts/canary-probe.py ...
+MAX_TEST_EXPOSURE_SECONDS = 45.0
+
+
+def max_test_exposure_seconds() -> float:
+    raw = os.environ.get("OPENPOLARIS_MAX_TEST_EXPOSURE")
+    if not raw:
+        return MAX_TEST_EXPOSURE_SECONDS
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise ValueError(
+            f"OPENPOLARIS_MAX_TEST_EXPOSURE must be a number of seconds, got {raw!r}"
+        ) from exc
+    if value <= 0:
+        raise ValueError("OPENPOLARIS_MAX_TEST_EXPOSURE must be positive")
+    return value
+
+
+def check_test_exposure_limit(seconds: float | None, which: str) -> None:
+    """Refuse an automated request for an exposure longer than the test ceiling."""
+    if seconds is None:
+        return
+    limit = max_test_exposure_seconds()
+    if float(seconds) > limit:
+        raise ValueError(
+            f"{which}={seconds:g}s exceeds the {limit:g}s ceiling for automated "
+            f"testing (long exposures heat the sensor). Raise "
+            f"OPENPOLARIS_MAX_TEST_EXPOSURE for a deliberate long-exposure run, or "
+            f"select the slot explicitly with --bulb-shutter-index."
+        )
 
 
 def bulb_capture_payload(seconds: float | None) -> str:
@@ -247,6 +290,7 @@ def bulb_capture_payload(seconds: float | None) -> str:
         return "state:1;bulb:0;c:-1;"
     if seconds <= 0:
         raise ValueError("--bulb-seconds must be positive")
+    check_test_exposure_limit(seconds, "--bulb-seconds")
     return f"state:1;bulb:{int(seconds)};c:-1;"
 
 
@@ -525,10 +569,13 @@ def prepare_bulb_shutter(
     any change, so a later restore can verify against the collapsed list rather
     than the timed list (#209).
 
-    The K-3 III's command 268 list has no `Bulb` entry (it stops at `00-30`), so
-    a long exposure is requested as the nearest available timed shutter.  An
-    explicit `--bulb-shutter-index` still wins, which is how a device that does
-    expose `Bulb` in its list stays testable.
+    The K-3 III's command 268 list has no `Bulb` entry, so a long exposure is
+    requested as the nearest available timed shutter.  Measured on `.69`, that
+    list holds 57 entries running from `00-01` to `20-00`
+    (out/bulb40s-20261023/Clog-live.txt) -- an earlier note here claimed it
+    stopped at `00-30`, which is wrong.  An explicit `--bulb-shutter-index` still
+    wins, which is how a device that does expose `Bulb` in its list stays testable,
+    and how an operator can deliberately choose a long slot.
 
     **How B mode is decided (#206).** The camera's own exposure mode is the
     primary signal, read through `camera_exposure_mode`; the shape of the 268
