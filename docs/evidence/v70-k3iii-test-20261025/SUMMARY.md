@@ -117,3 +117,77 @@ being read**, so the actual request the app sends can be compared with mine.
 Not cutting `.71`. The only shipped-code change between `.69` and `.70` is the poll budget, whose
 effectiveness is still unproven, and nothing measured here identifies a defect in our code that a
 `.71` would fix. Shipping a "final K-3 III" build on this evidence would be guessing.
+
+---
+
+# Third probe: the app's own requests, captured live (19:24-19:26)
+
+A `tail -f /app/Mlog.txt` collector caught what the Benro app actually sends. The device log had
+already rotated and lost it, so this is the only copy. Trimmed to 68 relevant lines in
+`raw/app-bulb-requests-trimmed.log`.
+
+## What the app sent, verbatim
+
+```
+19:24:45  App[24] code:264 val:state:1;bulb:5;c:-1;   -> SP_0443  state:1 then state:-6
+19:24:48  App[24] code:264 val:state:1;bulb:0;c:-1;   -> SP_0444  1 -> 4 -> 0, file written
+19:25:55  App[25] code:264 val:state:1;bulb:2;c:-1;   -> SP_0445  state:1 then state:-6
+19:25:56  App[25] code:264 val:state:1;bulb:2;c:-1;   -> SP_0446  state:1 then state:-6
+19:26:08  App[25] code:264 val:state:1;bulb:2;c:-1;   -> SP_0447  state:1 then state:-6
+19:26:09  App[25] code:264 val:state:1;bulb:2;c:-1;   -> SP_0448  state:1 then state:-6
+```
+
+Every refusal lands ~44 ms after the request. The app forwards the duration to pgphoto as `b:2000`
+(milliseconds), so the value is known at the time of refusal.
+
+## The correction to the report
+
+The operator described "non-timed bulb" failing. What actually failed was **picking a second-count from
+the B list**, which makes the app send a *positive* duration (`bulb:2`, `bulb:5`). The genuinely
+non-timed form (`bulb:0`) worked every time. So the two reported symptoms are one bug, and it is the
+timed path that fails.
+
+## Root cause — our code, one named line
+
+`camlibs/ptp2/library.c:7102`, in `camera_pentax_capture_internal`:
+
+```c
+if (bulb_action_start &&
+    (pre_capture_conditions.capability_flags & PENTAX_CONDITION_BULB_TIMER)) {
+        /* The camera-timed path is intentionally not converted into a held-shutter action. */
+        return GP_ERROR_NOT_SUPPORTED;      /* -6 */
+}
+```
+
+Dial on B with the camera's bulb-timer Custom Setting on **Timed** sets `PENTAX_CONDITION_BULB_TIMER`
+(0x40). pgphoto routes every positive-duration request to the held start/stop action regardless, so our
+library refuses it. Filed as **#239**.
+
+This also corrects #219's leading hypothesis, which attributed these `-6`s to an app-side mode gate. The
+app sends the request; the refusal is ours.
+
+## Why there is no safe fix today
+
+The bulb-action entry point calls `camera_pentax_capture_internal(camera, NULL, context,
+PENTAX_CAPTURE_BULB_START)` — **no duration argument**. pgphoto drives exposure length by calling start,
+sleeping N seconds, then stop. So the library cannot honour a specific N even if the gate were removed:
+the value never arrives. A correct fix needs the duration threaded through the bulb-action API and the
+shutter set before capture, which touches the most heavily qualified capture path in the codebase
+(#95/#120/#173/#177/#186) and requires a rebuild plus hardware iteration to verify.
+
+Simply deleting the gate would be wrong: the app sends a matching stop edge later, and a full timed
+capture on the start edge would leave that stop edge with nothing to stop.
+
+## Why .71 cannot be cut
+
+Provenance from the running device:
+
+```
+git_commit=731d7fbd5b5c590490f2783dd549762fc5dc3b9d
+build_id=6.0.0.54.70-o-v17e-bulb-darkframe-poll-20261025
+```
+
+`git log -1` in libgphoto2 is the same `731d7fbd5`, and the tree is clean. In the patcher, the seven
+commits since the `.70` build (`f2c2e18a`) are all docs and tooling — nothing that ships. A rebuild today
+would produce an appfs functionally identical to `.70`. Cutting `.71` would be a version bump with no
+content, labelled "final K-3 III", over a bug we have diagnosed but not fixed.
