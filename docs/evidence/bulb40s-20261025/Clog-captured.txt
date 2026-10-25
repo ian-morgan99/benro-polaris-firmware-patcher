@@ -1,0 +1,427 @@
+[stage2] preview-backoff: cooldown window elapsed after 730 suppressed repeat poll(s) (issue #213)
+Pentax preview stage get-frame returned 0xa008 (0 bytes, 30 attempts, 1216 ms).
+Pentax preview stage restore-after-frame returned 0x2001.
+[stage2] preview-backoff: 120 consecutive transient failures (last ret=-10) -- backing off 30s (issues #36/#55/#127)
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking (repeat logs for this window suppressed, issue #213)
+[m[07:21:12:341 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1702]:Label: ISO Speed
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1783]:Current: 100
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 100
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 200
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 400
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 800
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 1600
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 3200
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 6400
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 12800
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 25600
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 51200
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 102400
+[m[07:21:12:354 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 204800
+[m[07:21:12:355 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 409600
+[m[07:21:12:355 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 819200
+[m[07:21:12:355 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 1600000
+[m[07:21:12:355 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:12:355 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info iso ret 0 
+[m[07:21:12:355 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[07:21:12:355 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[07:21:12:360 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1702]:Label: Shutter Speed
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1783]:Current: 00:40
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 00-01
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 00-02
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 00-03
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 00-04
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 00-05
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 00-06
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 00-07
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 00-08
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 00-09
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 00-10
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 00-15
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 00-20
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 00-25
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 00-30
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 00-40
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 00-50
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 01-00
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 01-10
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 01-20
+[m[07:21:12:373 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 01-30
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 01-40
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 01-50
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 02-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 02-10
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 02-20
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 02-30
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 02-40
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 02-50
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 03-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 03-10
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 03-20
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 03-30
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 03-40
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 03-50
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 04-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 04-10
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 04-20
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 04-30
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 04-40
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 04-50
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 05-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 06-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 07-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 08-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 09-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 10-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 11-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 12-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 13-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 14-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 15-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 16-00
+[m[07:21:12:374 [1;32mINFO[m-]:print_widget[1787]:Choice: 52 17-00
+[m[07:21:12:375 [1;32mINFO[m-]:print_widget[1787]:Choice: 53 18-00
+[m[07:21:12:375 [1;32mINFO[m-]:print_widget[1787]:Choice: 54 19-00
+[m[07:21:12:375 [1;32mINFO[m-]:print_widget[1787]:Choice: 55 20-00
+[m[07:21:12:375 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:12:375 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret 0 
+[m[07:21:12:375 [1;32mINFO[m-]:updateCaptureInfo[622]:[0;32;31m----shutter speed  0.000000  
+[m[07:21:12:375 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[07:21:12:376 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:14;R:00-01,00-02,00-03,00-04,00-05,00-06,00-07,00-08,00-09,00-10,00-15,00-20,00-25,00-30,00-40,00-50,01-00,01-10,01-20,01-30,01-40,01-50,02-00,02-10,02-20,02-30,02-40,02-50,03-00,03-10,03-20,03-30,03-40,03-50,04-00,04-10,04-20,04-30,04-40,04-50,05-00,06-00,07-00,08-00,09-00,10-00,11-00,12-00,13-00,14-00,15-00,16-00,17-00,18-00,19-00,20-00,;]
+[m[m[07:21:12:378 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[07:21:12:390 [1;32mINFO[m-]:print_widget[1702]:Label: Aperture
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1783]:Current: f/22
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 f/22
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 f/20
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 f/18
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 f/16
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 f/14
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 f/13
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 f/11
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 f/10
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 f/9
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 f/8
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 f/7.1
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 f/6.3
+[m[07:21:12:391 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 f/5.6
+[m[07:21:12:392 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 f/5
+[m[07:21:12:392 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 f/4.5
+[m[07:21:12:392 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 f/4
+[m[07:21:12:392 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 f/3.5
+[m[07:21:12:392 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 f/3.2
+[m[07:21:12:392 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 f/2.8
+[m[07:21:12:392 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:12:392 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info aperture ret 0 
+[m[07:21:12:392 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[07:21:12:392 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[07:21:12:394 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+[m[07:21:12:405 [1;32mINFO[m-]:print_widget[1702]:Label: Exposure Compensation
+[m[07:21:12:405 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:12:405 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:12:405 [1;32mINFO[m-]:print_widget[1783]:Current: 0
+[m[07:21:12:405 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:12:405 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info exposurecompensation ret 0 
+[m[07:21:12:405 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[07:21:12:405 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[07:21:12:406 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1702]:Label: WhiteBalance
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1783]:Current: Automatic
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 Automatic
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 Unknown value 800f
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 Daylight
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 Cloudy
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 Fluorescent- Daylight
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 Fluorescent- Day White
+[m[07:21:12:422 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 Fluorescent- White
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 Fluorescent- Tungsten
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 Unknown value 800d
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 Tungsten
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 Unknown value 800e
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 Unknown value 8007
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 Unknown value 8008
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 Unknown value 8009
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 Unknown value 800a
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 Unknown value 800b
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 Unknown value 800c
+[m[07:21:12:423 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:12:423 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret 0 
+[m[07:21:12:424 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[07:21:12:424 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[07:21:22:855 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[2],code[291],val[state:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 2 command: 291  data: state:1;   --_isInit 1 
+[m[07:21:22:955 [1;32mINFO[m-]:updateCameraViewFinder[3564]:[0;32;31m----updateViewFinder 
+[m[07:21:23:842 [1;32mINFO[m-]:updateCameraViewFinder[3625]:----updateViewFinder enable:1  ret:-1 
+[m[07:21:24:042 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[291],val[state:1;ret:0;]
+[m[m[07:21:24:043 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data: -1   --_isInit 1 
+[m[07:21:24:057 [1;32mINFO[m-]:print_widget[1702]:Label: ISO Speed
+[m[07:21:24:057 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:24:057 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1783]:Current: 100
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 100
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 200
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 400
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 800
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 1600
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 3200
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 6400
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 12800
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 25600
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 51200
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 102400
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 204800
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 409600
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 819200
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 1600000
+[m[07:21:24:058 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:24:058 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info iso ret 0 
+[m[07:21:24:058 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 0  ret 0 
+[m[07:21:24:059 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[07:21:24:060 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data: -1   --_isInit 1 
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1702]:Label: Shutter Speed
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1783]:Current: 00:40
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 00-01
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 00-02
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 00-03
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 00-04
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 00-05
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 00-06
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 00-07
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 00-08
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 00-09
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 00-10
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 00-15
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 00-20
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 00-25
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 00-30
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 00-40
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 00-50
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 01-00
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 01-10
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 01-20
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 01-30
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 01-40
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 01-50
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 02-00
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 02-10
+[m[07:21:24:076 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 02-20
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 02-30
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 02-40
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 02-50
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 03-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 03-10
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 03-20
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 03-30
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 03-40
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 03-50
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 04-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 04-10
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 04-20
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 04-30
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 04-40
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 04-50
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 05-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 06-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 07-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 08-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 09-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 10-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 11-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 12-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 13-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 14-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 15-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 16-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 52 17-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 53 18-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 54 19-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1787]:Choice: 55 20-00
+[m[07:21:24:077 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:24:078 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret 0 
+[m[07:21:24:078 [1;32mINFO[m-]:updateCaptureInfo[622]:[0;32;31m----shutter speed  0.000000  
+[m[07:21:24:078 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 3  ret 0 
+[m[07:21:24:078 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[268],val[RD:0;V:14;R:00-01,00-02,00-03,00-04,00-05,00-06,00-07,00-08,00-09,00-10,00-15,00-20,00-25,00-30,00-40,00-50,01-00,01-10,01-20,01-30,01-40,01-50,02-00,02-10,02-20,02-30,02-40,02-50,03-00,03-10,03-20,03-30,03-40,03-50,04-00,04-10,04-20,04-30,04-40,04-50,05-00,06-00,07-00,08-00,09-00,10-00,11-00,12-00,13-00,14-00,15-00,16-00,17-00,18-00,19-00,20-00,;]
+[m[m[07:21:24:079 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data: -1   --_isInit 1 
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1702]:Label: Aperture
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1783]:Current: f/22
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 f/22
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 f/20
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 f/18
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 f/16
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 f/14
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 f/13
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 f/11
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 f/10
+[m[07:21:24:091 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 f/9
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 f/8
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 f/7.1
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 f/6.3
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 f/5.6
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 f/5
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 f/4.5
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 f/4
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 f/3.5
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 f/3.2
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 f/2.8
+[m[07:21:24:092 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:24:092 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info aperture ret 0 
+[m[07:21:24:092 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 7  ret 0 
+[m[07:21:24:092 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:0;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[07:21:24:093 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data: -1   --_isInit 1 
+[m[07:21:24:104 [1;32mINFO[m-]:print_widget[1702]:Label: Exposure Compensation
+[m[07:21:24:104 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:24:104 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:24:104 [1;32mINFO[m-]:print_widget[1783]:Current: 0
+[m[07:21:24:104 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:24:105 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info exposurecompensation ret 0 
+[m[07:21:24:105 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 2  ret 0 
+[m[07:21:24:105 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[267],val[RD:0;V:0;R:0,;]
+[m[m[07:21:24:106 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1702]:Label: WhiteBalance
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1783]:Current: Automatic
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 Automatic
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 Unknown value 800f
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 Daylight
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 Cloudy
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 Fluorescent- Daylight
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 Fluorescent- Day White
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 Fluorescent- White
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 Fluorescent- Tungsten
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 Unknown value 800d
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 Tungsten
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 Unknown value 800e
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 Unknown value 8007
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 Unknown value 8008
+[m[07:21:24:120 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 Unknown value 8009
+[m[07:21:24:121 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 Unknown value 800a
+[m[07:21:24:121 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 Unknown value 800b
+[m[07:21:24:121 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 Unknown value 800c
+[m[07:21:24:121 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:24:121 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret 0 
+[m[07:21:24:121 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[07:21:24:121 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:0;R:Automatic,Daylight,Cloudy,Fluorescent- Daylight,Fluorescent- Day White,Fluorescent- White,Fluorescent- Tungsten,Tungsten,;]
+[m[m[07:21:24:122 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[4],code[264],val[state:1;focus:-1000;leve:1;b:40000;path:/app/sd/normal/SP_0428.jpg;c:-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 264  data: state:1;focus:-1000;leve:1;b:40000;path:/app/sd/normal/SP_0428.jpg;c:-1   --_isInit 1 
+[m[07:21:24:122 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:1;/app/sd/normal/SP_0428.jpg]
+[m[m[07:21:24:122 [1;32mINFO[m-]:captureImage[1485]:[0;32;31m----will captureImage status:1  focus:-1000  sPath:/app/sd/normal/SP_0428.jpg
+[m[07:21:24:122 [1;32mINFO[m-]:current_shutter[1719]:[0;32;31m----get_current_shutter 111  0 
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1702]:Label: Shutter Speed
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1783]:Current: 00:40
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 00-01
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 00-02
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 00-03
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 00-04
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 00-05
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 00-06
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 00-07
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 00-08
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 00-09
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 00-10
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 00-15
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 00-20
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 00-25
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 00-30
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 00-40
+[m[07:21:24:134 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 00-50
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 01-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 01-10
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 01-20
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 01-30
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 01-40
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 01-50
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 02-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 02-10
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 02-20
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 02-30
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 02-40
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 02-50
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 03-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 03-10
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 03-20
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 03-30
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 03-40
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 03-50
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 04-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 04-10
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 04-20
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 04-30
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 04-40
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 04-50
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 05-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 06-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 07-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 08-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 09-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 10-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 11-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 12-00
+[m[07:21:24:135 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 13-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 14-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 15-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 16-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1787]:Choice: 52 17-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1787]:Choice: 53 18-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1787]:Choice: 54 19-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1787]:Choice: 55 20-00
+[m[07:21:24:136 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:24:136 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret 0 
+[m[07:21:24:136 [1;32mINFO[m-]:updateCaptureInfo[622]:[0;32;31m----shutter speed  0.000000  
+[m[07:21:24:136 [1;32mINFO[m-]:current_shutter[1724]:[0;32;31m----get_current_shutter 22 0
+[m[07:21:24:136 [1;32mINFO[m-]:current_shutter[1735]:[0;32;31m----current_shutter  configInfo:s:00:40;  ret:0  sValue 00:40 
+---bulb11 40000   --- /app/sd/normal/SP_0428.jpg 
+[m[07:21:24:140 [1;32mINFO[m-]:captureImage[1521]:[0;32;31m----capture bulb Image ret 0
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1702]:Label: Image Format
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1783]:Current: RAW
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 JPEG
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 RAW
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 RAW+JPEG
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 TIFF
+[m[07:21:24:143 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[07:21:24:143 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info imageformat ret 0 
+[m[07:21:24:143 [1;32mINFO[m-]:numOfCaptureImage[3018]:----numOfCaptureImage  0
+[m[07:21:24:143 [1;32mINFO[m-]:capture_image_with_Bulb[3213]:----capture with bulb 40000 ms
+[pentax] capture=1 boundary=camlib-enter transfer=0 recovery=0 output_pending=0
+[pentax] capture=1 boundary=preconditions-enter
+[pentax] capture=1 boundary=preconditions-return ptp=0x2001 size=576
+
+*** Error ***              
+Camera-timed Bulb is active; use normal timed capture instead of the start/stop action.
+
+*** Error ***              
+Failed to set new configuration value 1 for configuration entry bulb.
+[m[07:21:24:149 [1;32mINFO[m-]:capture_image_with_Bulb[3222]:----CAPTURE bulb start  -6
+[m[07:21:24:161 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:-6;/app/sd/normal/SP_0428.jpg]
+[m[m[07:21:24:161 [1;32mINFO[m-]:captureBulbImage[1458]:[0;32;31m----captureBulbImage ret -6  p:   ; 
+[stage2] preview-backoff: cooldown window elapsed after 691 suppressed repeat poll(s) (issue #213)
+Pentax preview stage get-frame returned 0xa008 (0 bytes, 30 attempts, 1219 ms).
+Pentax preview stage restore-after-frame returned 0x2001.
+[stage2] preview-backoff: 121 consecutive transient failures (last ret=-10) -- backing off 30s (issues #36/#55/#127)
+[stage2] preview-backoff: in cooldown (30s left) -- returning busy without blocking (repeat logs for this window suppressed, issue #213)

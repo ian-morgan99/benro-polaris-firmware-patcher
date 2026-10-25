@@ -1,0 +1,6 @@
+---bulb11 40000   --- /app/sd/normal/SP_0428.jpg 
+Camera-timed Bulb is active; use normal timed capture instead of the start/stop action.
+Failed to set new configuration value 1 for configuration entry bulb.
+[m[07:21:24:149 [1;32mINFO[m-]:capture_image_with_Bulb[3222]:----CAPTURE bulb start  -6
+[m[07:34:28:849 [1;32mINFO[m-]:captureImageEvent[1339]:[0;32;31m----captureImageEvent:0  Path:IMGP3976.DNG
+[m[07:34:29:150 [1;32mINFO[m-]:capture_image[3164]:----capture end   -83196 ms
