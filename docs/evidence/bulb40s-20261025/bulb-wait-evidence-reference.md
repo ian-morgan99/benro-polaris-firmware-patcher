@@ -69,3 +69,30 @@ Single instruction at `0x102060`: `e3a03f96` (`mov r3, #600`) → `e3023710`
 `e63063e83920dcf9508173113c272cc54ca41f9a51df1afc4e436574aa766e65`; exactly 3 bytes differ from
 the source binary and the file size is unchanged. Full diff:
 `docs/evidence/o-v17e-flash-20261025/byte-diff.txt`.
+
+## The loop's second exit condition (added after review; an earlier comment stated this backwards)
+
+The poll loop has two ways to stop, both at `gpManager.c:3313`:
+
+```
+0x10207c  cmp r2, r3          ; attempts so far vs the budget
+0x102080  bgt #0x10209c       ; out of attempts -> stop and report failure
+0x102084  ldr r3, [pc, #0x260]
+0x102088  ldr r3, [r4, r3]    ; GOT slot 0x2f7564 -> sp_camera (.bss, 0x3787dc)
+0x10208c  ldr r3, [r3]
+0x102090  ldr r3, [r3, #0xd0] ; camera state field
+0x102094  cmp r3, #1
+0x102098  bne #0x101f5c       ; NOT 1 -> keep waiting (0x101f5c is the next poll)
+```
+
+So the loop **continues while the field is not 1** and **stops early when it becomes 1**. An earlier
+comment on #230 stated this the other way round; that was wrong, caused by misreading the GOT setup at
+`0x101ac4` (`ldr r4,[pc,#0x75c]` then `add r4, pc, r4`, giving base `0x2f7000`).
+
+The field is `sp_camera->0xd0`, read through the same GOT slot in sixteen places across pgphoto. Other
+sites compare it to 2 (`gphotoMain.c:267`) and 3 (`SP_camera_main.c:182`), so it holds a small number
+of states rather than being a boolean.
+
+**Unresolved:** whether this field becomes 1 shortly after shutter release on a noise-reduction run. If
+it does, the loop exits before using the raised budget and `.70` has no effect. No log we have covers
+this path — the long-exposure logs are K-1 II on `.65`. Needs an instrumented failing run.

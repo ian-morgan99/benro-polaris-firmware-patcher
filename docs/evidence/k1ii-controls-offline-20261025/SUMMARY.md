@@ -1,137 +1,127 @@
-# K-1 II control failures — offline re-analysis of `Clog_000276.txt`
+# K-1 II control failures — plain-English re-analysis of one log file
 
-Source: `docs/evidence/benro-connect-crash-20261010/raw/Clog_000276.txt`, 12,710 lines.
-**Firmware caveat:** this log is `6.0.0.54.65` / `o-v16g-k3iii-timed-bulb-20261010`. It is the newest
-K-1 II log in the repo, not `.69` or `.70`. Nothing here is re-tested on current firmware.
+**What this is:** I read a 12,710-line debug log from a Benro Polaris gimbal that had a Pentax K-1 II
+mounted. No hardware work was done; everything here comes from that one file.
 
-## What #232 asserts, and what the log actually shows
+**Which firmware:** the log is from `6.0.0.54.65`. It is the newest K-1 II log we have — nothing here
+has been re-checked on `.68`, `.69` or `.70`.
 
-#232 presents `0xd02b` / `0xd035` as a static descriptor-parsing defect. The same two codes parse
-**successfully five times** earlier in the same session:
+---
+
+## Finding 1: issue #232 has the diagnosis backwards
+
+Issue #232 says two camera settings (`0xd02b` = focus peaking, `0xd035` = live-view mode) have a
+broken decoder, so those controls never appear in the app.
+
+**The log shows the opposite.** Those same two settings decoded correctly five times earlier in the
+same session, then failed four times later:
 
 ```
-[14:21:00:394] code=0xd02b; datatype=0x0002; getset=1; form=2; enum-count=3; value-bytes=2
-[21:43:01:633] code=0xd02b; datatype=0x0002; getset=1; form=2; enum-count=3; value-bytes=2
-... 21:43:09, 21:43:33, 21:43:41 — all OK
-[21:44:46:960] code=0xd02b; descriptor-parse=failed; descriptor-bytes=16; descriptor-hex=2bd00440010000020200000040024001
-[21:45:08:690] ... failed   [21:47:36:643] ... failed   [21:51:03:759] ... failed
+14:21  decoded fine
+21:43  decoded fine (four more times)
+21:44  FAILED
+21:45  FAILED
+21:47  FAILED
+21:51  FAILED
 ```
 
-Identical pattern for `0xd035`. A decoder that cannot parse a descriptor cannot parse it five times
-and then fail four — so the defect is not "the parser rejects this shape".
+A decoder that is broken is broken every time. It cannot work five times and then fail four. So the
+decoder is not the problem.
 
-## The failures are gated on camera state, and only on these two codes
+**What actually changed:** the camera started sending back rubbish. When it works, the reply is a
+proper 16-byte description. When it fails:
 
-Every widget dump line carries `state=N`. Bucketing all 76 `code=0x…` lines by nearest preceding state:
+- `0xd035` sends only **6 bytes**. A valid description needs at least 8 bytes just for its header, so
+  there is genuinely nothing to decode.
+- `0xd02b` sends 16 bytes, but one field says "data type = 0", which is not a legal value — and the
+  same setting reports data type 2 when it works.
 
-| code | state=0 | state=3 |
+So "descriptor parse failed" is the **symptom** of the camera sending short or garbage replies, not
+the cause of them.
+
+## Finding 2: nothing is actually missing from the app
+
+Issue #232 also claims these controls never reach the app's menu. I checked all nine times the full
+menu was dumped to the log:
+
+| menu dump | did the description fail? | is the real Focus Peaking control there? |
 |---|---|---|
-| `0x5005` `0x5007` `0x5008` `0x5010` `0xd00f` `0xd013` `0xd01e` | OK, never fail | **OK, never fail** (28 lines) |
-| `0xd02b` | OK ×5 | **FAIL ×4** |
-| `0xd035` | OK ×5 | **FAIL ×4** |
+| 1-5 | no | **yes** |
+| 6-9 | **yes, failed** | **yes** |
 
-At `state=3`, 28 descriptor parses succeed and exactly these two fail. So it is neither a
-session-wide breakage (which re-init would suggest) nor a static shape defect (which #232 suggests).
-It is specific to `0xd02b`/`0xd035` **and** correlated with `state=3`.
+The focus-peaking control shows up every single time, including all four times its description failed.
+It is labelled "Pentax Focus Peaking", type RADIO, current value "off". The two entries that do fail
+are separate read-only diagnostic rows ("...Descriptor"), which exist only to dump raw bytes.
 
-I could not resolve what `state=3` means. `scripts/wait-for-rig.py` documents only `state=1` as
-usable and `state=-5` / `state=-2` for absent/unready bodies; `3` is not defined anywhere in the
-repo. Naming it would be a guess, so I am not naming it.
+**Consequence:** the fix TA suggested — show unparseable descriptors as "unsupported" instead of
+dropping them silently — is solving a problem that is not happening here. Nothing is being dropped,
+and no working control is lost because of it.
 
-## The failing payloads are malformed against DPDS
+## Finding 3: three separate issues are really one problem
 
-Decoded offline with the standard DPDS layout (Min u16, Max u16, FormFlag u8, DataType u16, Access u8):
+Issue #233 asks whether exposure-compensation failures share a cause with #232. They do, and it is
+cleaner than "probably related". Every menu dump in the log carries a camera state number. Sorting the
+failures by that number gives a perfect split with no exceptions:
 
-- `0xd035`, 6 bytes `35d0 0000 0000` — **shorter than the 8-byte DPDS header minimum**. Cannot parse,
-  for a reason that has nothing to do with Pentax semantics.
-- `0xd02b`, 16 bytes `2bd0 0440 01 0000 02 02000000 4002 4001` — parses as `Min=0xd02b Max=0x4004
-  FormFlag=1 DataType=0x0000 Access=2`. `DataType=0x0000` is not a valid PTP datatype, and the OK-case
-  for the same code reports `datatype=0x0002 form=2`. The bytes are not the descriptor the camera
-  returns when it answers normally.
-
-So in the failing state the camera (or the layer above it) is returning truncated/garbage payloads
-for these two properties, and the parse failure is a *symptom* of that, not the cause.
-
-## #233 shares this root cause — confirmed, not hypothesised
-
-#233 asks whether EV readback failures share a cause with #232. Bucketing `exposurecompensation ret`
-by nearest preceding state gives an exact split with no exceptions:
-
-```
-EV ret= 0  nearest-state=0     (14:21:01, 21:43:11)
-EV ret=-1  nearest-state=3     (all 11 occurrences, 21:45:51 onward)
-```
-
-Same for the rest of the cluster:
-
-| symptom | state=0 | state=3 |
+| what broke | when camera state = 0 | when camera state = 3 |
 |---|---|---|
-| `whitebalance ret` | 2 OK | 11 fail |
-| `imageformat ret` | 3 OK | 6 fail |
-| `configuration entry shutterspeed` write fail | 0 | 4 |
-| `configuration entry capturetarget` write fail | 3 | 1 |
+| exposure compensation read | works (2 times) | **fails (11 times)** |
+| white balance read | works (2) | **fails (11)** |
+| image format read | works (3) | **fails (6)** |
+| shutter speed write | never fails (0) | **fails (4)** |
 
-Everything except `capturetarget` tracks state exactly. #232, #233 and the readback half of #235 are
-**one state-gated failure mode**, not three independent defects. Filing them separately — and
-especially treating `descriptor-parse=failed` as the root cause — inverts the causality: the parse
-failure and the `ret -1` readbacks are both downstream of whatever `state=3` does to PTP responses.
+State 0 = everything works. State 3 = basically nothing works. So #232, #233 and the read failures in
+#235 are **one problem**, not three. Fixing the write path alone would not bring exposure compensation
+back, which is exactly the trap TA warned about.
 
-## #234 — TA's error-code correction is right, verified in the headers
+**What I could not find:** what "state 3" means. It is not documented anywhere in our code — our own
+`wait-for-rig.py` only knows state 1 (ready), -5 (no camera) and -2 (present but asleep). I am not
+guessing at a meaning.
 
-`libgphoto2_port/gphoto2/gphoto2-port-result.h`:
+## Finding 4: TA was right about issue #234, and I confirmed it in the source
+
+TA said `ret:-2` means "bad parameters", not "not supported". Checked directly:
 
 ```c
 #define GP_ERROR_BAD_PARAMETERS  -2
 #define GP_ERROR_NOT_SUPPORTED   -6
 ```
 
-So `updateCameraAutoFocus ret:-2` is **BAD_PARAMETERS**, exactly as TA said. It is not a
-capability/unsupported signal, and #234's framing of it as an AF-enable failure is not supported by
-the code.
+So the autofocus failure was mislabelled. Issue #234 has been retitled to say focus is simply
+**untested**, and that one disable call returned -2.
 
-## #234 — one thing I could not resolve, stated rather than guessed
+One thing I looked at and could not settle: the code reads the on/off flag twice and uses it
+**opposite ways** — once inverted, once not. That *could* be a bug, or it could be two different
+settings that legitimately want opposite values. I could not work out which setting each write targets,
+so I am reporting it as unresolved rather than claiming an inversion. TA asked for proof before making
+that claim, and I do not have it.
 
-TA asked whether the firmware demonstrably inverts the `enable` parameter. In pgphoto
-(`updateCameraAutoFocus`, `gpManager.c:3631-3706`, vaddr `0x102fa0`) the argument is stored at
-`[fp,#-0x50]` and read back four times. Two of those reads feed writes with **opposite polarity**:
+## Finding 5: a mistake I published earlier, now corrected
 
-```
-0x103150  gpManager.c:3680   ldr r3,[fp,#-0x50]; cmp r3,#0; moveq r3,#1; movne r3,#0   -> value = !enable
-0x103178  gpManager.c:3681   bl #0x42a3c          (write)
-0x103188  gpManager.c:3683   bne <end>            skip next write if the first returned non-zero
-0x10318c  gpManager.c:3687   ldr r3,[fp,#-0x50]; cmp r3,#0; movne r3,#1; moveq r3,#0   -> value = enable
-0x1031b4  gpManager.c:3688   bl #0x42a3c          (write)
-```
+In my comment on issue #230 (the long-exposure fix) I said the file-waiting loop "breaks when a status
+field is **not** 1". **That is backwards.** Having re-read the machine code carefully:
 
-Both writes pass the same `[fp,#-0x20]` as their first argument, and the first is guarded by
-`cmp r3,#4` on `[fp,#-0x24]` at line 3676. I could **not** resolve `[fp,#-0x20]` to a config-entry
-name — the literal pool entries I dereferenced came back as code pointers, not strings — and I
-could **not** identify what `[fp,#-0x24]` holds either, so `cmp r3,#4` is recorded as an unlabelled
-guard rather than characterised as a datatype test. Consequently I cannot say whether these are two
-different properties (in which case the polarity difference is legitimate) or the same property
-written twice with opposite values (which would be a real bug).
+- while the field is **not** 1, the loop **keeps waiting**
+- when the field **becomes** 1, the loop **stops early**
+- it also stops if it runs out of its attempts (600 before `.70`, 10,000 after)
 
-**I am not claiming an inversion.** TA's condition was "unless the firmware implementation
-demonstrably inverts that parameter", and I have not demonstrated it. This is flagged as unresolved.
+The field turned out to be the camera's own state variable (`sp_camera`, offset `0xd0`), read the same
+way in sixteen places across the program — one of them compares it to 3 and another to 2, so it holds a
+small number of states rather than being a yes/no flag.
 
-## What this changes about the issue set
+**Why this matters for the `.70` fix:** if that state flips to 1 shortly after the shutter closes, the
+loop exits immediately and never uses the extra time I gave it, meaning `.70` would change nothing.
+I cannot tell from this log whether that happens — the log is a K-1 II on old firmware and does not
+cover this path. **This is still the main reason `.70` is installed but not confirmed to work.**
 
-- **#232** should stop treating descriptor parsing as the root cause. The actionable question is what
-  `state=3` does to PTP responses for these two properties, and whether an unparseable descriptor
-  should surface as "unsupported" instead of silently dropping the control — TA's point 3 stands and
-  is still the best available fix.
-- **#233** is not a separate write-path bug; it is the same state-gated readback failure. Fixing the
-  write path alone would leave EV missing, which is exactly the conflation TA warned about.
-- **#234** should be retitled per TA to *focus unqualified / initialization disable returned -2*.
-- **#235** — TA's correction holds: `SP_SET_SHUTTER FAIL` ×4 does not prove the following
-  `bulb:0` frame is a fallback, and `bulb:0` may be the held-shutter form. I did not verify the
-  `264` handler's `bulb==0` branch; that needs hardware.
-- **#217** remains accurate: no K-1 II qualification evidence exists on any build since `.65`, and
-  this analysis is offline log work, not qualification.
+---
 
-## Limits of this analysis
+## What I could not do, and why
 
-Single session, single boot, `.65` firmware, ~9 widget dumps total at `state=3`. The state
-correlation is exact within that sample but the sample is small, and nothing here has been reproduced
-on `.69` or `.70`. Resolving `state=3`, the config-entry names above, and the `264` handler all need
-a K-1 II attached — the rig currently reports `state:-5`.
+- Work out what state 3 means — not documented anywhere we have.
+- Work out which camera setting each autofocus write targets.
+- Re-test any of this on current firmware. The rig currently reports `state:-5`, meaning no camera is
+  attached at all, so nothing here can be confirmed on hardware today.
+
+**Sample size warning:** this is one session, one boot, and only nine menu dumps — four of them in the
+bad state. The pattern is perfectly consistent within that small sample, but it is a small sample.
