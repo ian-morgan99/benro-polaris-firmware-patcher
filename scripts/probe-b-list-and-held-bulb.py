@@ -8,12 +8,18 @@ parse as a duration, plus where the current index points.
 Symptom B -- "non-timed bulb": the app's held-shutter form is state:1;bulb:0;c:-1;
 (bulb zero) or with bulb omitted entirely. Send each and record the state timeline.
 
-Symptom A is read-only. Symptom B sends capture requests but does not write a shutter
-index; on every log so far the held form is refused rather than exposing.
+WARNING -- this script is NOT read-only. Symptom A (reading command 268) is safe, but
+symptom B sends real capture requests. Measured on 2026-10-25 against a live K-3 III,
+both `state:1;bulb:0;c:-1;` and `state:1;c:-1;` fired the shutter and wrote files to
+/app/sd/normal/. An earlier version of this docstring claimed "no captures"; that was
+wrong and cost two real exposures. Pass --no-capture to skip symptom B entirely.
 """
 import importlib.util
+import sys
 import time
 from pathlib import Path
+
+NO_CAPTURE = "--no-capture" in sys.argv
 
 REPO = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("cp", REPO / "scripts" / "canary-probe.py")
@@ -55,8 +61,12 @@ for attempt in (1, 2):
     if attempt == 1:
         time.sleep(1.5)
 
-print("\n===== SYMPTOM B: non-timed (held) bulb =====", flush=True)
-for payload in ("state:1;bulb:0;c:-1;", "state:1;c:-1;"):
+if NO_CAPTURE:
+    print("\n===== SYMPTOM B skipped (--no-capture) =====", flush=True)
+else:
+    print("\n===== SYMPTOM B: non-timed (held) bulb -- THIS WILL FIRE THE SHUTTER =====",
+          flush=True)
+for payload in (() if NO_CAPTURE else ("state:1;bulb:0;c:-1;", "state:1;c:-1;")):
     print(f"{stamp()} TX 264 {payload}", flush=True)
     p.send(264, subtype=4, payload=payload)
     states = []
