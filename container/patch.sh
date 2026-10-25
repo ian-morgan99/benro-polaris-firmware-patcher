@@ -385,6 +385,9 @@ if [ "$MODE" = "ptp2only" ]; then
   python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.patched" --in-place \
     || die "pgphoto timed-Bulb dispatch patch failed"
   log "  positive-duration Pentax K-3 III requests route to the timed Bulb lifecycle"
+  python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.patched" --in-place \
+    || die "pgphoto dark-frame poll budget patch failed"
+  log "  post-release file wait raised from ~6s to 100s so a noise-reduction dark frame is found"
 
   O_UID="$(stat -c %u "$STOCK_PTP2")"; O_GID="$(stat -c %g "$STOCK_PTP2")"; O_MODE="$(stat -c %a "$STOCK_PTP2")"
   inst -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2"           "$STOCK_PTP2"
@@ -411,6 +414,9 @@ else
   python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.base" --in-place \
     || die "pgphoto timed-Bulb dispatch patch failed"
   log "  pgphoto Bulb route: positive-duration K-3 III requests use the timed Bulb lifecycle"
+  python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.base" --in-place \
+    || die "pgphoto dark-frame poll budget patch failed"
+  log "  pgphoto file wait: post-release poll raised from ~6s to 100s for noise-reduction dark frames"
 
   log "full-libgphoto2: on-disk trampolining $(python3 -c "import sys;sys.path.insert(0,'/opt/patcher');import stage2_patch as s;print(len(s.BOUNDARY))") boundary entries…"
   rm -rf "$W/s2"; mkdir -p "$W/s2"
@@ -759,6 +765,9 @@ fi
 python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$STAGE2_BIN" --check \
   || die "post-repack assertion failed: duration-aware Pentax Bulb dispatch missing"
 log "  verified timed Bulb dispatch in repacked pgphoto"
+python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$STAGE2_BIN" --check \
+  || die "post-repack assertion failed: dark-frame post-release file poll budget missing"
+log "  verified 100s post-release file poll in repacked pgphoto"
 STAGE2_LOADER="$APP_VERIFY/lib/stage2/libpolaris_stage2.so"
 if [ ! -f "$STAGE2_LOADER" ]; then
   die "post-repack assertion failed: lib/stage2/libpolaris_stage2.so missing from appfs.ubifs"
