@@ -104,3 +104,50 @@ timer and no libgphoto2 change can address it.
 
 Not attached this session (only `25fb:0189`). #232/#233/#234/#235 cannot be reproduced or fixed
 without a `25fb:0183` body.
+
+## Result 4 — root cause proven statically: pgphoto's post-release file poll is ~6 s
+
+The user's report was the accurate one all along: `.69` does not refuse a 40 s bulb, it times out
+at roughly the requested duration when noise reduction is on. My `-6` repros were self-inflicted —
+`--timed-seconds 40` writes shutter index 14 via command 261, which in B mode arms the camera-timed
+bulb timer, and that is the state `library.c:7104` refuses.
+
+`pgphoto.stage2ondisk` ships **with debug_info and a symbol table**, so `gpManager.c` line numbers
+map directly onto the ARM. Disassembled `capture_image_with_Bulb` (0x101aac, `gpManager.c:3185-3348`,
+md5 `2e3383301c7691a360175ca6889e26c8`) — see `pgphoto-wait-loop.txt`.
+
+Three bounds, all statically derived:
+
+| site | line | effect |
+|---|---|---|
+| `str r1,[fp,#-0xcc]` | 3185 | caller's `duration_ms` stored verbatim; Clog prints it as `capture with bulb %d ms` |
+| `bls #0x101e4c` | 3241 | hold loop exits when `elapsed_ms >= duration_ms` — shutter held for **exactly** N |
+| `setCameraStatus(1)` | 3205 | bulb ON, before the loop |
+| `setCameraStatus(0)` | 3345 | bulb OFF, **after** the loop — so the hold bound also controls release |
+| `mov r0,#0xa` | 3287 | `wait_and_handle_event(timeout = 10 ms)` per poll iteration |
+| `mov r3,#0x258` | 3308 | **600 iterations** while files are still missing → ~6 s budget |
+| `mvn r3,#0` | 3322 | returns -1 ("no file") |
+
+`wait_and_handle_event`'s timeout is milliseconds (`gpManager.c:989` multiplies by `#0x3e8` for µs),
+so the post-release budget is **600 x 10 ms ~= 6 s**. Measured today with NR on, the file lands at
+`capture end -83196 ms` — about **43 s after release**. Six seconds cannot cover a dark frame.
+
+Corroborated by `ff39696`: "Measured app-side hold" for a 40 s request was **40.001 s**, i.e. the
+hold is exact and has no dark-frame allowance. That qualification passed because those runs had no
+dark frame to wait for.
+
+**Why `.68`'s 5/5 did not contradict this:** `o-v17c-user-test-20261020/SUMMARY.md:548` records the
+operator changing the camera's bulb setting at 12:28:18, flipping `PENTAX_CONDITION_BULB_TIMER` from
+`yes` to `no`. Every `-6` predates it, every success postdates it. The bit tracks a user-settable
+camera option, so the working held-shutter path requires that option off — and that is exactly the
+configuration in which the 6 s poll bites.
+
+## Fix shape (not yet applied)
+
+This is a pgphoto byte change, not a libgphoto2 one; `pgphoto.stage2ondisk` is a shipped manifest
+file, so it can be `.70`'s content. The hold bound at 3241 must stay untouched or exposures lengthen.
+Minimal candidate: raise the poll budget at `gpManager.c:3308` (`mov r3,#0x258`). ARM mov immediates
+are 8-bit rotated, so encodable neighbours include `0x960` (2400 → ~24 s) and `0x2580` (9600 → ~96 s).
+A duration-aware budget is better — `[fp,#-0xcc]` is in scope at that point — but needs more than one
+instruction. Not applied: patching firmware needs explicit approval, and validating it live needs the
+camera's bulb-timer option turned off by hand so the held-shutter path is taken.
