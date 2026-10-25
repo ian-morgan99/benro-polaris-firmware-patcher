@@ -69,3 +69,51 @@ ever actually consulted, given the loop exits early once `sp_camera->0xd0` becom
 
 #205 (no dial gate — deliberate, documented), #206/#208/#209 (canary-probe mishandles the B-mode list
 shape — real bugs, but test tooling, not shipped firmware), #173 (bulb duration ignored), #186.
+
+---
+
+# Second probe: dial physically on B, camera bulb-timer set to Timed (19:17)
+
+Operator moved the dial to B and reported the camera's bulb-timer option is on **Timed**. Re-ran.
+
+## Measured
+
+```
+DIAL entries=56 current=0 label='00-01' collapsed=False
+
+REQ state:1;bulb:5;c:-1;      -> states ['1','-6']  files []      (refused at once)
+REQ state:1;bulb:0;c:-1;      -> states ['1','4','0'] files [SP_0442.dng]  (fired, ~5 s)
+```
+
+## What this shows
+
+**Timed bulb is refused `-6` immediately.** This is the documented condition from #219: with the
+camera's own bulb-timer Custom Setting armed, a host-driven timed request is rejected before it reaches
+the capture path. My earlier note in this session said the same thing — every `-6` in the historical
+logs predates the moment that option was turned off by hand, and every success postdates it.
+
+**Non-timed (`bulb:0`) worked.** It fired the shutter and wrote a file. So at the protocol level the
+held form is not refused in this state either.
+
+## This is the inverse of what the operator reported
+
+The report was: non-timed bulb fails, timed works. Measured here: **timed fails with `-6`, non-timed
+works**. Both requests were sent raw over port 9090 in the same session, seconds apart, so the camera
+state is not the difference between them.
+
+That means one of:
+1. The Benro app sends something different from `state:1;bulb:N;c:-1;` — e.g. it writes a shutter index
+   through 261 first, or sets the bulb slot, which changes what the camera arms.
+2. The failure the operator sees is in how the app *reports* the result, not in whether the shutter
+   fired. `bulb:0` returned `duration:0` on the file event; if the app expects a non-zero duration it
+   may show an error over a perfectly good image.
+3. The camera's bulb-timer option differs between my session and theirs.
+
+I cannot distinguish these from raw frames. **I need one app-side capture while `/app/Mlog.txt` is
+being read**, so the actual request the app sends can be compared with mine.
+
+## What I am not doing
+
+Not cutting `.71`. The only shipped-code change between `.69` and `.70` is the poll budget, whose
+effectiveness is still unproven, and nothing measured here identifies a defect in our code that a
+`.71` would fix. Shipping a "final K-3 III" build on this evidence would be guessing.
