@@ -1,0 +1,14 @@
+# .70 byte diff vs .69 (shipped pgphoto.stage2ondisk)
+source sha256: 3e340e9e03744bdc75ba2f3479999abb092468c05e5e27915530ae0cbb99789e
+output sha256: e63063e83920dcf9508173113c272cc54ca41f9a51df1afc4e436574aa766e65
+size both: 7801576 (unchanged)
+live device md5: e496f4d1bc16b252522f36d36976915c (/app/lib/stage2/pgphoto.stage2ondisk)
+
+differing bytes (decimal offset, old octal, new octal):
+ 991329 226  20
+ 991330  77  67
+ 991331 240   2
+
+file offset 991328 -> vaddr 0x102060, capture_image_with_Bulb, gpManager.c:3308
+old word e3a03f96 = mov r3, #600      (~6 s post-release poll)
+new word e3023710 = movw r3, #10000   (100 s post-release poll)
