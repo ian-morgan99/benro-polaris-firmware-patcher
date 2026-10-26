@@ -157,7 +157,7 @@ CAMSTATE_RAW="$(wire_send '1&286&0&#' | tr -d '\r')"
 # gimbal state and 517 attitude frames. That noise is not a camera answer. Read
 # only the 286 frame; if there is none, nothing answered the camera query, which
 # means idle. Only an explicit 286 state:1 is a camera in capture.
-CAMSTATE="$(printf '%s' "$CAMSTATE_RAW" | tr '#' '\n' | grep -E '^286@' | head -1)"
+CAMSTATE="$(printf '%s' "$CAMSTATE_RAW" | tr '#' '\n' | { grep -E '^286@' || true; } | head -1)"
 echo "Camera state (286 frame): ${CAMSTATE:-<none; telemetry-only reply>}"
 case "$CAMSTATE" in
   *state:1*)
