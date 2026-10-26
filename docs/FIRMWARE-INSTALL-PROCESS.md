@@ -93,14 +93,20 @@ version. It is not an install:
   and the flashed image disagree. Any later full reflash silently reverts the
   change while the provenance file still claims the newer build.
 - No `firmwareInfo` MD5 verification happens, so a truncated transfer boots.
-- The installed files get the copying user's ownership rather than root's.
+- Nothing proves the boot was real, and no upgrade record is written.
 
-**Evidence this happened:** `.70` (`o-v17e-bulb-darkframe-poll-20261025`) is running
-on the rig with `/app/FwVer` and `/app/lib/stage2/pgphoto.stage2ondisk` both owned
-by uid `1000` and stamped `Oct 25 14:35`, while the only artifact in
-`docs/evidence/o-v17e-flash-20261025/` is a `byte-diff.txt`. There is no flash
-record, no MD5 verification, and no reboot proof for `.70`. It works, but its
-install is not reproducible and the NAND does not match it.
+**Do not use file ownership to tell a copy from a flash.** Both `.70` and a freshly
+flashed `.71` show `/app/FwVer` and the camlibs owned by uid `1000`, because the
+`appfs` image itself is built with that ownership. The reliable discriminators are:
+the installer's uptime-reset proof, an `SP_EVENT_UPGRADE_SUCCESS` line in Mlog, and
+`SP_DelUpgradeFiles` removing `/app/sd/FwPkt` after a successful flash.
+
+**Evidence of the drift:** `.70` (`o-v17e-bulb-darkframe-poll-20261025`) runs on the
+rig, and its only artifact directory `docs/evidence/o-v17e-flash-20261025/` contains
+a single `byte-diff.txt` — no flash record, no MD5 verification output, no reboot
+proof. Mlog has since rotated, so whether it was flashed or copied can no longer be
+determined from the device. That ambiguity is exactly what this process removes:
+`.71` has a complete record (see `docs/evidence/o-v18a-install-20261026/`).
 
 Direct copies are acceptable **only** as a temporary diagnostic explicitly
 authorised by the user, and they invalidate qualification evidence for that
