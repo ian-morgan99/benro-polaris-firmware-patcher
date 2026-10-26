@@ -51,6 +51,14 @@ trap: they hide the real failure mode and get repeated with new bugs.
 
 Before changing any packaged libgphoto2 component, read and follow `docs/LIBGPHOTO2-UPGRADE-PROCESS.md`.
 
+Before installing any candidate on the device, read and follow
+`docs/FIRMWARE-INSTALL-PROCESS.md`. The only supported install path is
+`scripts/release/release-fwpkt.sh <build-dir>`: it stages the extracted `FwPkt/`
+tree (the on-boot watcher ignores a bare zip — issue #58), verifies every
+`firmwareInfo` MD5 on-device, reboots, proves the boot was real by an uptime reset,
+and fail-closes on build_id plus every mandatory file digest. Never copy files into
+`/app` as an install, and never treat a vanished SSH as a reboot.
+
 A libgphoto2 upgrade is a **matched-stack change**, not a camlib-only change. The load-bearing set includes:
 
 - `/app/bin/pgphoto` wrapper/launcher;
@@ -241,6 +249,8 @@ Every upgrade issue must identify which of these need updating and update them b
 - `docs/LIBGPHOTO2-ALIGNMENT-AUDIT.md` (re-verify and update the dated evidence when an
   assumption is checked or a version is bumped — owned by the review agent)
 - `docs/FWPKT-PROVENANCE-CONTRACT.md` (registry row for any new/received FwPkt zip)
+- `docs/FIRMWARE-INSTALL-PROCESS.md` (the single supported install path; update it if
+  the installer's phases, gates, or failure modes change)
 - README supported/qualification claims
 - libgphoto2 direct-hardware matrix
 - OpenPolaris E2E matrix

@@ -1,0 +1,130 @@
+# Firmware install process — the one supported path
+
+**Status:** active, binding for every agent and every release.
+**Canonical installer:** `scripts/release/release-fwpkt.sh`
+**Rule:** a candidate is installed by staging the extracted `FwPkt/` tree to
+`/app/sd/FwPkt/` and rebooting. Nothing else. No direct copies into `/app`.
+
+## Why this document exists
+
+After ~72 releases, install was still tribal knowledge rather than a scripted,
+deterministic step. Three scripts existed, only one of them correct, nothing in
+the release pipeline referenced it, and there was no document saying which to use.
+That produced real failures, all recorded below. This file plus the wiring in
+`scripts/build-release-candidate.sh` is the fix: every build now prints the exact
+install command for the candidate it just produced.
+
+## The one command
+
+```sh
+./scripts/release/release-fwpkt.sh out/<candidate-id>
+```
+
+Options: `--skip-trigger` (stage + verify, no reboot), `--allow-busy` (only after
+confirming no exposure is in flight), `--max-wait SECS`, `--host IP`.
+
+It performs six phases and fails closed at each:
+
+| # | Phase | Fails closed on |
+|---|---|---|
+| 0 | Gate | zip digest ≠ `install-manifest.json`; unrecognisable device `FwVer`; camera present (code 286 `state:1`); device already at target version |
+| 1 | Pre-flight | SSH unreachable; low space on `/app/sd` |
+| 2 | Stage | tar/stream failure; then removes stray `FwPkt.zip`/`.part` |
+| 3 | Verify | any `firmwareInfo` MD5 mismatch on-device |
+| 4 | Trigger | records `/proc/uptime` before rebooting |
+| 5 | Wait | device not back within `--max-wait`; **uptime did not reset** |
+| 6 | Confirm | `build_id`, both source commits, display version, or any mandatory file SHA-256 mismatch (`scripts/verify-installed-build.sh`) |
+
+## Why the tree, not the zip (issue #58)
+
+The on-boot watcher consumes the **extracted tree** at `/app/sd/FwPkt/`. Staging
+only `FwPkt.zip` is silently ignored. This has repeatedly produced "install
+succeeded" reports against a device that never changed:
+
+> `.67` first attempt staged `FwPkt.zip` and rebooted; the device came back on
+> `.66` with the zip untouched and `--verify-only` returned `not-installed`.
+> — `docs/evidence/o-v17b-install-20261019/INSTALL-VERIFICATION.md`
+
+`release-fwpkt.sh` is the only installer that stages the tree, which is why it is
+canonical. The other two stage the zip and are deprecated:
+
+| script | status | why |
+|---|---|---|
+| `scripts/release/release-fwpkt.sh` | **supported** | stages the tree; verifies MD5s; proves the boot |
+| `scripts/o-v17a-autonomous-install.sh` | deprecated | stages `FwPkt.zip` only → ignored by the watcher (#58) |
+| `scripts/attempt-fwpkt-install.sh` | deprecated | zip-only; expects a padded zip; fires 812 rather than `/sbin/reboot` |
+
+Their useful gates (manifest digest, device identity, camera-idle check, uptime
+proof) have been ported into `release-fwpkt.sh`, so nothing is lost by using it.
+
+## Two traps that produced false "installed" verdicts
+
+**1. An AP-link flap is not a reboot.** During the `.67` install, SSH vanished
+several times and each "went dark" looked like a flash. It was not: Mlog kept
+writing fresh lines, Clog was empty, there were zero `FwPkt`/`upgrade`/`SYS_REBOOT`
+lines, and `/proc/uptime` kept climbing past 27,000 s continuously since boot.
+`/sbin/reboot` was killed mid-flap before it ran.
+
+The installer now records `/proc/uptime` before rebooting and **requires it to be
+lower afterwards**. If it is not, the script exits 5 and says plainly that nothing
+was installed. Do not override this.
+
+**2. Never compare `/app/FwVer` alone.** It does not contain the build_id. An older
+script compared the wrong fields and turned a mismatch into a warning, which let a
+test against `o-v15i` be reported as a test of a later candidate. Confirmation goes
+through `scripts/verify-installed-build.sh`, which compares build_id, both source
+commits, the display version, and every mandatory file's SHA-256.
+
+## Do not copy files into `/app` directly
+
+`/app` is a writable UBIFS volume (`ubi1:ubifs on /app type ubifs (rw,relatime)`),
+so `scp` into `/app/lib/stage2/` appears to work and the device reports the new
+version. It is not an install:
+
+- The NAND `appfs` image still holds the previous firmware, so the running system
+  and the flashed image disagree. Any later full reflash silently reverts the
+  change while the provenance file still claims the newer build.
+- No `firmwareInfo` MD5 verification happens, so a truncated transfer boots.
+- The installed files get the copying user's ownership rather than root's.
+
+**Evidence this happened:** `.70` (`o-v17e-bulb-darkframe-poll-20261025`) is running
+on the rig with `/app/FwVer` and `/app/lib/stage2/pgphoto.stage2ondisk` both owned
+by uid `1000` and stamped `Oct 25 14:35`, while the only artifact in
+`docs/evidence/o-v17e-flash-20261025/` is a `byte-diff.txt`. There is no flash
+record, no MD5 verification, and no reboot proof for `.70`. It works, but its
+install is not reproducible and the NAND does not match it.
+
+Direct copies are acceptable **only** as a temporary diagnostic explicitly
+authorised by the user, and they invalidate qualification evidence for that
+candidate (see `AGENTS.md`). Record it in the candidate's `SUMMARY.md` when done.
+
+## Release process wiring
+
+`scripts/build-release-candidate.sh` now does two things so install cannot be
+forgotten or improvised:
+
+1. Prints the exact command for the candidate it just built:
+   `== 6. install this candidate (the only supported path) ==`
+2. Appends `install_command=...` and `install_status=not-installed` to
+   `build-source-provenance.txt`. A release is not finished until that status
+   changes to `installed-verified` after phase 6 passes.
+
+## Checklist for every install
+
+1. Candidate has a registry row in `docs/FWPKT-PROVENANCE-CONTRACT.md` (zip MD5 +
+   SHA-256, appfs MD5, both commit links). No row → do not stage.
+2. `install-manifest.json` present and zip digest matches (the installer checks
+   this; it must never be bypassed).
+3. Camera idle, or `--allow-busy` only after confirming no exposure is in flight.
+4. Run the installer. Do not interrupt the 5–10 min dark period.
+5. Confirm phase 6 passed and uptime reset was reported.
+6. Update `install_status=installed-verified` in the provenance file, add the dated
+   install record to `docs/CURRENT-STATE.md`, and save evidence under
+   `docs/evidence/<candidate>-install-<date>/`.
+
+## Related
+
+- `docs/FWPKT-PROVENANCE-CONTRACT.md` — artifact registry and handoff values
+- `docs/LIBGPHOTO2-UPGRADE-PROCESS.md` — building a candidate
+- `scripts/verify-installed-build.sh` — the fail-closed identity comparison
+- `docs/evidence/o-v17b-install-20261019/INSTALL-VERIFICATION.md` — both traps, in full

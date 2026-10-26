@@ -180,3 +180,21 @@ bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
   --note "Main-branch reproducible candidate; gate passed; physical test pending."
 echo "Candidate ready: $OUT/FwPkt.zip"
 md5sum "$OUT/FwPkt.zip"; sha256sum "$OUT/FwPkt.zip"
+
+# A candidate is not finished until it has been installed and confirmed on the
+# device, and the only supported way to do that is this installer: it stages the
+# extracted FwPkt/ tree (the on-boot watcher consumes the tree, not the zip —
+# issue #58), verifies every firmwareInfo MD5 on-device, reboots, proves the boot
+# was real by an uptime reset, and fail-closes on build_id plus every mandatory
+# file digest. Printing the exact command here keeps install from becoming tribal
+# knowledge; see docs/FIRMWARE-INSTALL-PROCESS.md.
+echo
+echo "== 6. install this candidate (the only supported path) =="
+echo "  ./scripts/release/release-fwpkt.sh $OUT"
+echo "  # add --skip-trigger to stage+verify without rebooting,"
+echo "  # --allow-busy only after confirming no exposure is in flight"
+echo "  # docs/FIRMWARE-INSTALL-PROCESS.md explains why zip-only staging is ignored"
+{
+  echo "install_command=./scripts/release/release-fwpkt.sh $OUT"
+  echo "install_status=not-installed"
+} >> "$OUT/build-source-provenance.txt"
