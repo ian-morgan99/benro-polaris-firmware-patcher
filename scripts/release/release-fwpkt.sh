@@ -151,26 +151,37 @@ wire_send() { # $1 = wire frame; prints the device reply (may be empty)
   # socket open, which is normal here.
   [ "$rc" -eq 0 ] || [ "$rc" -eq 124 ]
 }
-CAMSTATE="$(wire_send '1&286&0&#' | tr -d '\r')"
-echo "Camera state (286): ${CAMSTATE:-<none>}"
+CAMSTATE_RAW="$(wire_send '1&286&0&#' | tr -d '\r')"
+# The wire port multiplexes the device's continuous telemetry onto any socket it
+# accepts, so a bare 286 query usually returns whatever is already buffered: 284
+# gimbal state and 517 attitude frames. That noise is not a camera answer. Read
+# only the 286 frame; if there is none, nothing answered the camera query, which
+# means idle. Only an explicit 286 state:1 is a camera in capture.
+CAMSTATE="$(printf '%s' "$CAMSTATE_RAW" | tr '#' '\n' | grep -E '^286@' | head -1)"
+echo "Camera state (286 frame): ${CAMSTATE:-<none; telemetry-only reply>}"
 case "$CAMSTATE" in
   *state:1*)
     if [ "$ALLOW_BUSY" = "1" ]; then
       echo "  WARN: camera present (state:1) — proceeding because --allow-busy"
     else
-      echo "ERROR: camera present/busy (state:1) — refusing to reboot mid-exposure." >&2
+      echo "ERROR: camera present/busy (286 state:1) — refusing to reboot mid-exposure." >&2
       echo "       Re-run with --allow-busy only after confirming no exposure is in flight." >&2
       exit 3
     fi ;;
-  *state:-5*|*state:-1*|"") echo "  Idle (camera absent or unanswered) — OK" ;;
-  *)
-    # The device can answer with an unrelated frame (e.g. its continuous 284
-    # gimbal telemetry already sitting on the socket). Treat that as unknown and
-    # refuse rather than guess, honouring --allow-busy as the documented override.
-    if [ "$ALLOW_BUSY" = "1" ]; then
-      echo "  WARN: unrecognised camera-state reply — proceeding because --allow-busy"
+  *state:-5*|*state:-1*) echo "  Idle (camera absent or failed) — OK" ;;
+  "")
+    # No 286 frame. If the reply was pure telemetry (284/517) the socket is fine
+    # and the camera simply has nothing to report; an empty reply means the same.
+    if [ -n "$CAMSTATE_RAW" ]; then
+      echo "  Idle (no 286 answer; reply was device telemetry) — OK"
     else
-      echo "ERROR: unrecognised camera-state reply '${CAMSTATE}' — refusing (--allow-busy to override)" >&2
+      echo "  Idle (no reply to 286) — OK"
+    fi ;;
+  *)
+    if [ "$ALLOW_BUSY" = "1" ]; then
+      echo "  WARN: unrecognised 286 frame '$CAMSTATE' — proceeding because --allow-busy"
+    else
+      echo "ERROR: unrecognised 286 frame '$CAMSTATE' — refusing (--allow-busy to override)" >&2
       exit 3
     fi ;;
 esac

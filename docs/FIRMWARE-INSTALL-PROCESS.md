@@ -57,7 +57,7 @@ canonical. The other two stage the zip and are deprecated:
 Their useful gates (manifest digest, device identity, camera-idle check, uptime
 proof) have been ported into `release-fwpkt.sh`, so nothing is lost by using it.
 
-## Two traps that produced false "installed" verdicts
+## Traps that produced false "installed" verdicts
 
 **1. An AP-link flap is not a reboot.** During the `.67` install, SSH vanished
 several times and each "went dark" looked like a flash. It was not: Mlog kept
@@ -74,6 +74,14 @@ script compared the wrong fields and turned a mismatch into a warning, which let
 test against `o-v15i` be reported as a test of a later candidate. Confirmation goes
 through `scripts/verify-installed-build.sh`, which compares build_id, both source
 commits, the display version, and every mandatory file's SHA-256.
+
+**3. The wire port multiplexes telemetry onto any socket.** Querying code 286
+(camera state) on port 9090 usually returns whatever is already buffered — the
+device's continuous `284@mode:...` gimbal and `517@yaw:...` attitude frames — not a
+camera answer. Reading the whole reply as camera state makes every install look
+busy or unrecognisable. The installer splits the reply on `#`, takes only the frame
+starting `286@`, and treats "no 286 frame" as idle (nothing answered the camera
+query). Only an explicit `286@...state:1` blocks a reboot.
 
 ## Do not copy files into `/app` directly
 
