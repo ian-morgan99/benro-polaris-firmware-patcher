@@ -29,6 +29,7 @@ Offline-safe: shells out to ``git`` against this repository only. No network, no
 """
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -449,7 +450,242 @@ def test_build_toolchain_prerequisites():
 
 
 # ---------------------------------------------------------------------------
-# 4. The gate can fail -- prove it, so a green run means something
+# 4. GPL corresponding source -- the bundle must never ship GPL binaries bare
+# ---------------------------------------------------------------------------
+
+GPL_TEXT = "container/astro/licenses/GPL-2.txt"
+
+# What build-astro.sh must actually *write*, matched at command position. Matching
+# bare filenames is useless -- they also appear in the README text we generate, so
+# deleting the copy command leaves the needle present and the test green. Each
+# pattern must anchor on the command that produces the artifact.
+OFFER_COMMANDS = [
+    (r'^cp\s+\S+\s+"\$LIC/astrometry\.net-', "astrometry.net source copied into licenses/"),
+    (r'^cp\s+\S+\s+"\$LIC/jpeg-', "libjpeg source copied into licenses/"),
+    (r'^tar czf "\$LIC/polaris-build-recipe', "build recipe + GSL shim archived"),
+    (r'^cp\s+\S+\s+"\$LIC/COPYING-GPL-2', "GPL text copied into licenses/"),
+    (r'^cat > "\$SD_ASTRO/SOURCE-OFFER\.txt"', "written offer created inside the card tree"),
+    (r'^cp\s+\S+\s+"\$SD_ASTRO/COPYING-GPL-2', "GPL text copied into the card tree"),
+    (r'sha256sum "\$LIC/', "shipped tarballs fingerprinted"),
+]
+
+
+def _build_script():
+    return (ROOT / "build-astro.sh").read_text(errors="replace")
+
+
+def test_gpl_text_is_vendored():
+    """The GPL text must be in the repo, not fetched at build time.
+
+    A build that downloads the licence text fails offline and can silently ship a
+    bundle with no licence file if the fetch is skipped.
+    """
+    path = ROOT / GPL_TEXT
+    assert path.is_file(), (
+        f"{GPL_TEXT} is missing; build-astro.sh copies it into every bundle."
+    )
+    text = path.read_text(errors="replace")
+    assert "Version 2, June 1991" in text, (
+        f"{GPL_TEXT} does not look like the GPL v2 text -- first line: "
+        f"{text.splitlines()[0] if text else '(empty)'!r}"
+    )
+    assert len(text) > 15000, f"{GPL_TEXT} is truncated ({len(text)} bytes)"
+
+
+def test_build_script_ships_corresponding_source():
+    """polaris-solve/polaris-skysim are GPL v2+; §3 requires source with the binary."""
+    script = _build_script()
+    missing = [why for pat, why in OFFER_COMMANDS
+               if not re.search(pat, script, re.MULTILINE)]
+    assert not missing, (
+        "build-astro.sh no longer produces a complete corresponding-source set:\n"
+        "      " + _fmt(missing)
+    )
+
+
+def test_source_offer_step_is_fail_closed():
+    """A licence failure must remove the GPL binaries, not just print a warning.
+
+    The step runs after the container build (the container is what fetches the
+    tarballs), so by the time it can fail the GPL binaries are already in the
+    bundle. Exiting 1 alone would leave them there for anyone who ignores the
+    exit code -- so the guard deletes them.
+    """
+    script = _build_script()
+    assert "no_source()" in script, "the fail-closed licence guard was removed"
+    body = script.split("no_source(){", 1)[-1].split("\n}", 1)[0]
+    for needle in ("polaris-solve", "polaris-skysim", "exit 1"):
+        assert needle in body, (
+            f"no_source() no longer handles {needle!r}; an incomplete bundle could "
+            "be dragged onto an SD card with GPL binaries and no source"
+        )
+
+
+def test_incomplete_bundle_drops_gpl_binaries(tmp_path):
+    """Behavioural: run build-astro.sh with a stub docker and no cached source.
+
+    This is the only way to test the guard without a cross toolchain or an 11 MB
+    download. The stub stands in for `docker build`/`docker run` and writes the same
+    bundle files the real container would, so the licence step runs against a
+    realistic tree. Expected: exit non-zero AND polaris-solve/polaris-skysim gone.
+    """
+    if not merged():
+        pytest.skip("solver not merged yet")
+
+    work = tmp_path / "repo"
+    shutil.copytree(
+        ROOT, work,
+        ignore=shutil.ignore_patterns("out", ".git", "__pycache__", "*.pyc"),
+        symlinks=True,
+    )
+    stub = tmp_path / "stubbin"
+    stub.mkdir()
+    (stub / "docker").write_text(
+        "#!/bin/sh\n"
+        'for a in "$@"; do case "$a" in run) MODE=run;; build) MODE=build;; esac; done\n'
+        'if [ "$MODE" = run ]; then\n'
+        '  D="$FAKE_OUT/COPY-TO-SD-CARD-ROOT/polaris-astro"\n'
+        '  mkdir -p "$D"\n'
+        '  for b in polaris-solve polaris-extract polaris-skysim polaris-mount '
+        'polaris-httpd polaris-logwatch polaris-match; do : > "$D/$b"; done\n'
+        '  : > "$D/README.txt"\n'
+        'fi\n'
+        "exit 0\n"
+    )
+    (stub / "docker").chmod(0o755)
+
+    out = tmp_path / "out"
+    env = dict(os.environ, PATH=f"{stub}:{os.environ['PATH']}", FAKE_OUT=str(out))
+    proc = subprocess.run(
+        ["sh", "build-astro.sh", "--no-indexes", "--out", str(out),
+         "--src-cache", str(tmp_path / "cold-cache")],
+        cwd=str(work), env=env, capture_output=True, text=True,
+    )
+    card = out / "COPY-TO-SD-CARD-ROOT" / "polaris-astro"
+    assert proc.returncode != 0, (
+        "build succeeded with no corresponding source available; the guard is inert. "
+        f"stdout tail: {proc.stdout[-400:]}"
+    )
+    for gpl in ("polaris-solve", "polaris-skysim"):
+        assert not (card / gpl).exists(), (
+            f"{gpl} survived a failed licence step -- it would be shipped without "
+            "corresponding source, violating GPL v2 §3"
+        )
+    # The MIT/BSD-3 half of the bundle is fine to keep; only the GPL binaries must go.
+    assert (card / "polaris-extract").exists(), (
+        "the guard removed more than the GPL binaries"
+    )
+
+
+def test_bundle_on_disk_is_licence_complete():
+    """If a bundle has been built here, it must be licence-complete.
+
+    Skips when no bundle exists -- out/ is gitignored and CI never builds one.
+    """
+    bundle = ROOT / "out" / "astro-bundle"
+    if not bundle.is_dir():
+        pytest.skip("no bundle built locally (out/ is gitignored)")
+    lic = bundle / "licenses"
+    card = bundle / "COPY-TO-SD-CARD-ROOT" / "polaris-astro"
+    solver = card / "polaris-solve"
+    if not solver.is_file():
+        pytest.skip("bundle has no polaris-solve -- nothing GPL to offer source for")
+    assert lic.is_dir(), (
+        f"{solver} is GPL v2+ but {lic} is absent -- §3 violation"
+    )
+    for name in ("astrometry.net-0.98.tar.gz", "jpeg-9f.tar.gz",
+                 "COPYING-GPL-2.txt", "polaris-build-recipe.tar.gz",
+                 "README-GPL.txt"):
+        assert (lic / name).is_file(), f"licenses/{name} missing from the bundle"
+    for name in ("SOURCE-OFFER.txt", "COPYING-GPL-2.txt"):
+        assert (card / name).is_file(), (
+            f"{name} missing: users drag only COPY-TO-SD-CARD-ROOT/ onto the card, "
+            "so an offer outside it never reaches the device"
+        )
+
+
+def test_bundle_licence_census_matches_the_source():
+    """Re-derive the licence census and check the shipped README-GPL.txt agrees.
+
+    This exists because the first version of that text claimed "176 files, 156 BSD,
+    1 GPL" -- it counted the glob expansion rather than what is compiled, and a
+    regex matched "3-clause BSD" as GPLv3 because it contains a digit. Both errors
+    were invisible to every other check here. Skips unless the source cache is
+    present, since the tree is downloaded at build time and not committed.
+    """
+    cache = ROOT / "out" / ".astro-src-cache"
+    src = next(iter(sorted(cache.glob("astrometry.net-*"))), None)
+    readme = ROOT / "out" / "astro-bundle" / "licenses" / "README-GPL.txt"
+    if src is None or not readme.is_file():
+        pytest.skip("no astrometry.net source cache / bundle to check against")
+
+    # Mirror skip_file() from build_solver.sh.
+    skip = {
+        "md5", "ctmf", "simplexy", "bl-nl", "bl-nl-sort", "dfind2", "tpv",
+        "index_pyutils", "pyspherematch", "jpl", "os-features-test",
+        "qsort_reentrant", "cairoutils", "plotstuff", "dimage", "dallpeaks",
+        "dcen3x3", "dfind", "dmedsmooth", "dobjects", "dselip", "dsmooth",
+        "downsample-fits", "convolve-image", "coadd", "resample", "wcs-resample",
+        "wcs-pv2sip", "wcs-to-tan", "wcsinfo", "hpsplit", "search-index",
+        "get-healpix", "histogram2d", "sparsematrix", "wcs-match",
+    }
+
+    def skipped(p: Path) -> bool:
+        stem = p.stem
+        return (stem in skip or stem.startswith("test_") or stem.endswith("_test")
+                or stem.startswith("kdtree_internal") or stem.startswith("plot")
+                or stem.startswith("image2xy") or stem in
+                {"an-pnmtofits", "an-fitstopnm"})
+
+    counts = {"bsd": 0, "gpl2": 0, "gpl3": 0, "other": 0}
+    total = 0
+    paths = [p for sub in ("util", "libkd", "qfits-an")
+             for p in sorted((src / sub).glob("*.c"))]
+    # build_solver.sh also names these four explicitly rather than by glob.
+    paths += [src / "solver" / n for n in
+              ("solver.c", "quad-utils.c", "verify.c", "tweak2.c")]
+    for p in paths:
+        if not p.is_file() or skipped(p):
+            continue
+        total += 1
+        low = p.read_text(errors="replace").lower()
+        if "3-clause bsd" in low or "bsd style license" in low:
+            counts["bsd"] += 1
+        elif "either version 2 of the license" in low or "gpl v2 or later" in low:
+            counts["gpl2"] += 1
+        elif "version 3 of the license" in low or "gpl v3" in low:
+            counts["gpl3"] += 1
+        else:
+            counts["other"] += 1
+
+    # The claim under test: no GPLv3-only file is compiled, so the binary's
+    # copyleft floor is GPL v2+, not the v3+ astrometry.net's own LICENSE asserts.
+    assert counts["gpl3"] == 0, (
+        f"{counts['gpl3']} GPLv3-only files are in the compiled set; the bundle's "
+        "README-GPL.txt claims the copyleft floor is GPL v2-or-later and would be "
+        "wrong. Re-check which files build_solver.sh skips."
+    )
+    assert counts["gpl2"] > 0, (
+        "no GPL v2+ files found in the compiled set -- if qfits-an really went BSD "
+        "then the bundle is not GPL and the whole source offer is unnecessary"
+    )
+
+    shipped = readme.read_text(errors="replace")
+    # The README states the object count as 100 (99 glob files + our gsl_shim.c).
+    assert f"{total} files from" in shipped or f"{total + 1} objects" in shipped, (
+        f"README-GPL.txt does not match the re-derived compiled file count "
+        f"({total} + gsl_shim.c = {total + 1} objects)"
+    )
+    assert f"{counts['bsd']}  3-clause BSD" in shipped, (
+        f"README-GPL.txt BSD count is wrong; re-derived {counts['bsd']}"
+    )
+    assert f"{counts['gpl2']}  GPL v2-or-later" in shipped, (
+        f"README-GPL.txt GPL count is wrong; re-derived {counts['gpl2']}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 5. The gate can fail -- prove it, so a green run means something
 # ---------------------------------------------------------------------------
 
 def test_no_partial_merge():
@@ -466,6 +702,27 @@ def test_no_partial_merge():
         "partial merge: build entry point is tracked but these are not:\n      "
         + _fmt(missing)
     )
+
+
+def test_offer_patterns_are_not_vacuous():
+    """Deleting any one licence step must actually fail the gate above.
+
+    Substring needles were tried first and were useless: every artifact name also
+    appears in the README text we generate, so commenting out the `cp` left the
+    needle present and the test green. Each pattern is therefore anchored on the
+    command that produces the artifact, and this test proves it by deleting that
+    whole line and re-checking.
+    """
+    script = _build_script()
+    for pat, why in OFFER_COMMANDS:
+        hits = [ln for ln in script.splitlines() if re.search(pat, ln)]
+        assert hits, f"pattern {pat!r} matches nothing already ({why})"
+        stripped = "\n".join(ln for ln in script.splitlines()
+                             if not re.search(pat, ln))
+        assert not re.search(pat, stripped, re.MULTILINE), (
+            f"pattern {pat!r} still matches after its command line was deleted -- "
+            f"it is matching prose, not the step it claims to guard ({why})"
+        )
 
 
 def test_missing_helper_reports_every_gap():

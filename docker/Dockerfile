@@ -53,5 +53,11 @@ RUN set -eux; \
 
 # /in  : read-only mount of the user's stock FwPkt (folder or unzipped)
 # /out : writable mount for the produced custom FwPkt + FwPkt.zip
+#
+# /work is world-writable so a container run with `-u $(id -u)` can create its
+# scratch dirs there. build-astro.sh does exactly that: running as root made it
+# write the bundle as uid 0, and the next run could not delete its own output.
+# patch.sh still runs as root and is unaffected.
+RUN mkdir -p /work && chmod 777 /work
 WORKDIR /work
 ENTRYPOINT ["/opt/patcher/patch.sh"]
