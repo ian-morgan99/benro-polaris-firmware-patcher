@@ -309,7 +309,13 @@ export CFLAGS="-fno-stack-protector ${CFLAGS:-}"
 if [ ! -f config.status ]; then
   ./configure "${CONF_ARGS[@]}" >/dev/null
 fi
-make -j"$(nproc)" >/tmp/make.log 2>&1 || { tail -40 /tmp/make.log; exit 1; }
+make -j"$(nproc)" >/tmp/make.log 2>&1 || {
+  echo "[build] ---- make.log error lines ----"
+  grep -nE "error:|Error [0-9]|undefined reference|collect2|No such file" /tmp/make.log | head -60
+  echo "[build] ---- make.log tail 120 ----"
+  tail -120 /tmp/make.log
+  exit 1
+}
 
 BUILT="$(find camlibs -name ptp2.so | head -1)"
 [ -n "$BUILT" ] || { echo "[build] ptp2.so not produced"; exit 1; }
