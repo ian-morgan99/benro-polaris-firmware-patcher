@@ -81,6 +81,36 @@ empty `/in`, the same layout under the workspace shows `firmwareInfo`. This cost
 full build attempt on `.72` (the regression pack had already passed 16/0 before the
 abort).
 
+## Build-environment prerequisite: the libgphoto2 input must have no build outputs
+
+The wrapper accepts any clean checkout on `main`, and its dirty check is
+`git status --porcelain`. **`build/`, `_build/` and `build-asan/` are gitignored**,
+so a tree full of stale object files passes that check and looks pristine.
+
+`container/build_ptp2.sh` copies the input with `cp -a /libgphoto2-source-input/.`,
+build directories included, so the container reuses objects compiled *before* the
+patcher applied its own edits — most importantly the `_Camera` padding. The build
+then dies at the fail-closed ABI check:
+
+```
+[build] FULLSTACK: struct _Camera padded with _reserved_tail[4120] (-> sizeof 4140)
+[build] FULLSTACK ERROR: gp_camera_new does not allocate 4140 B — _Camera pad failed
+```
+
+The padding message says it applied, and the allocation check still fails, because
+the object was never recompiled. The check is correct to fail closed: a wrong
+`_Camera` size puts Benro's tail reads out of bounds.
+
+Fix is an instant local clone rather than pointing at the development tree:
+
+```sh
+git clone --branch main /path/to/dev/libgphoto2 /tmp/lgp-src   # local: no network
+./scripts/build-release-candidate.sh ... /tmp/lgp-src auto
+```
+
+`.72` avoided this only by accident, because it was built from a fresh clone. This
+cost a full build attempt on `.73`, again after the regression pack had passed 16/0.
+
 ## 1. Scope
 
 ## Standard build command
