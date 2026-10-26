@@ -194,7 +194,13 @@ echo "  ./scripts/release/release-fwpkt.sh $OUT"
 echo "  # add --skip-trigger to stage+verify without rebooting,"
 echo "  # --allow-busy only after confirming no exposure is in flight"
 echo "  # docs/FIRMWARE-INSTALL-PROCESS.md explains why zip-only staging is ignored"
+# Install status lives in its own host-owned file. It must NOT be appended to
+# build-source-provenance.txt: that file is written inside the patcher container
+# and arrives owned by nfsnobody, so a host-side append fails with EACCES and
+# `set -e` aborts the whole build *after* it has already published (observed on
+# .72, where the candidate was built and pushed but the script exited 1).
 {
+  echo "build_id=$BUILD_ID"
   echo "install_command=./scripts/release/release-fwpkt.sh $OUT"
   echo "install_status=not-installed"
-} >> "$OUT/build-source-provenance.txt"
+} > "$OUT/install-status.txt"

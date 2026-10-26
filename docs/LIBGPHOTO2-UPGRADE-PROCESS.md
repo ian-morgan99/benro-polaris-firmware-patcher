@@ -58,6 +58,29 @@ This document exists because a libgphoto2 build can work correctly when invoked 
 
 A future upgrade is therefore **not** complete when the new `ptp2.so` builds, nor when direct `gphoto2` works. It is complete only when the complete packaged runtime is proven and the previously supported camera matrix has not regressed.
 
+## Build-environment prerequisite: TMPDIR must be Docker-visible
+
+`build-release-candidate.sh` extracts the stock FwPkt into `mktemp -d` and mounts
+that directory into the patcher container at `/in`. On this host `/tmp` is **not**
+visible to the Docker daemon, so the mount arrives empty and the run dies with:
+
+```
+[abort] /in/firmwareInfo not found — mount your stock FwPkt at /in
+```
+
+The message blames the input zip, but the zip was extracted correctly; only the
+mount is empty. Run the build with `TMPDIR` inside the workspace instead:
+
+```sh
+mkdir -p .buildtmp
+env TMPDIR="$PWD/.buildtmp" ./scripts/build-release-candidate.sh ...
+```
+
+Verified by mounting a probe directory both ways: a path under `/tmp` shows an
+empty `/in`, the same layout under the workspace shows `firmwareInfo`. This cost a
+full build attempt on `.72` (the regression pack had already passed 16/0 before the
+abort).
+
 ## 1. Scope
 
 ## Standard build command
