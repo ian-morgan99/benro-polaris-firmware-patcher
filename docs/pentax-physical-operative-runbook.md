@@ -269,6 +269,53 @@ The agent must confirm the experiment is armed before issuing that trigger.
 
 Do not assume a K-3 III result is generic until the relevant K-1 II invariant is demonstrated.
 
+## K-1 II qualification matrix (#217)
+
+The K-1 II has no qualification evidence on any build since `.65`, and there was no
+per-criterion list to run against it — only the K-3 III matrix. These criteria exist so
+a K-1 II session produces a pass/fail per control rather than a single "works/doesn't"
+verdict, and so a fix aimed at one body cannot silently regress the other.
+
+Every row needs the four attribution fields below plus the camera's own firmware version.
+Record the raw PTP response code, not just success/failure: several K-1 II defects are
+distinguishable only by code (`-2` BAD_PARAMETERS vs `-1` vs `0x201e`).
+
+| # | Criterion | Method | Pass | Known-failing today |
+|---|---|---|---|---|
+| 1 | USB identity is PTP, not MSC | `lsusb` after attach | `25fb:0183` with a PTP interface | `0182` = MSC, no PTP interface → autodetect finds 0 cameras (#179) |
+| 2 | Silent K-3 III fallback does not fire | check reported model against the attached body | model is K-1 II | a wrong-PID attach has previously been mistaken for a working K-3 III (#179) |
+| 3 | Control tree read | enumerate widget tree, compare to descriptor list | every parsed descriptor appears as a widget | `0xd02b`, `0xd035` fail to parse and never reach the tree (#232) |
+| 4 | Shutter speed write | set a value, then independent raw read-back of the property | written value reads back equal | gphoto refuses the config value **and** `SP_SET_SHUTTER FAIL` in Mlog; app then issues a degenerate `state:1;bulb:0` (#235) |
+| 5 | ISO write | set, raw read-back | reads back equal | writes ineffective (#88) |
+| 6 | Aperture write | set, raw read-back | reads back equal | writes ineffective (#88) |
+| 7 | White balance write | set, raw read-back | reads back equal | writes ineffective (#88) |
+| 8 | Exposure compensation read | read EV | returns a value | `ret -1` eleven times vs two successes; no `code:260` EV traffic ever reaches the app (#233) |
+| 9 | Exposure compensation write | set EV, raw read-back | reads back equal | unmeasured |
+| 10 | Timed capture | one ordinary timed shot | file written, listed, and its shutter matches the request | unmeasured on current builds |
+| 11 | `bulb:N` request | send the app's own `state:1;bulb:N;c:-1;` frame | takes the **stock** path and is not refused with `-6`; behaviour recorded either way | K-1 II is deliberately excluded from the timed-Bulb dispatch gate (#210/#217) — this row exists to prove that exclusion still behaves sanely now the gate is live |
+| 12 | Focus: initialization disable | issue the disable used before AF | returns OK | returned `-2` BAD_PARAMETERS (#234) |
+| 13 | Focus: AF trigger | trigger AF, observe focus movement | focus actually moves | never measured (#234) |
+| 14 | Focus: MF movement | drive MF, measure displacement | displacement matches request | never measured (#234) |
+| 15 | Pixel Shift / NR companion files | one Pixel Shift and one long-NR shot | all companion candidates collected within the poll budget | unmeasured on K-1 II |
+
+### Reading these rows
+
+Rows 4–8 are the same signature as closed issue #59 (`get_single_config -2` for
+capturetarget/shutterspeed/ISO mapping to `ret -1`), so a K-1 II that fails them is not
+new information unless the PTP code differs. Row 3 gates rows 4–9: if a descriptor never
+parses, its control cannot be written at all and the write rows are meaningless until #232
+is fixed. Record row 3 first.
+
+Row 11 is the regression guard for `.71`'s change on the other body. The deferred-capture
+fallback added for #239 is gated to models that support the held-shutter action, so a K-1
+II must not enter it; if it does, that is a gate defect, not a bulb fix working.
+
+### Acceptance
+
+A dated directory under `docs/evidence/` naming the body, its firmware, the candidate
+build_id, and one PASS/FAIL row per criterion above — or an explicit statement of which
+criteria could not be run and why. See #217.
+
 ## Required result attribution
 
 Every result must contain:
