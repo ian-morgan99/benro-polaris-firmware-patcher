@@ -573,13 +573,19 @@ check_registry_hashes
 # "-o", which run() swallowed as rc=2. That is a programming error reported as a
 # device condition, and it wasted a whole install attempt.
 check_rig_tooling_selftest() {
-    local script="$ROOT/scripts/wait-for-rig.py"
-    [ -f "$script" ] || { skp "rig tooling self-test (no wait-for-rig.py)"; return 0; }
-    if python3 "$script" --self-test >/dev/null 2>&1; then
-        ok "rig tooling self-test (wait-for-rig argv well-formed)"
-    else
-        bad "rig tooling self-test (wait-for-rig builds invalid argv: $(python3 "$script" --self-test 2>&1 | head -1))"
-    fi
+    local script failures="" ran=0
+    for name in wait-for-rig.py capture-shutter-list.py; do
+        script="$ROOT/scripts/$name"
+        [ -f "$script" ] || continue
+        ran=$((ran + 1))
+        if python3 "$script" --self-test >/dev/null 2>&1; then
+            ok "rig tooling self-test ($name argv well-formed)"
+        else
+            failures+="$name: $(python3 "$script" --self-test 2>&1 | head -1); "
+        fi
+    done
+    [ "$ran" -gt 0 ] || { skp "rig tooling self-test (no rig scripts present)"; return 0; }
+    [ -z "$failures" ] || bad "rig tooling self-test (invalid argv) -- $failures"
 }
 check_rig_tooling_selftest
 
