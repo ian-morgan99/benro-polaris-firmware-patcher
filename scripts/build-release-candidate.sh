@@ -171,7 +171,11 @@ python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT"
 # evidence later.
 GATE_EVIDENCE="$OUT/gate-transcript.txt"
 mkdir -p "$OUT"
-"$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt" 2>&1 | tee "$GATE_EVIDENCE"
+# Pass the libgphoto2 source so the gate can run its source contracts against the
+# exact tree that produced this candidate. Without it the gate only checks
+# provenance and never runs test-pentax-capture-contract.py, which is the check
+# that would have caught .75's fail-closed shutter write hanging every capture.
+"$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt" --libgphoto2-src "$SRC" 2>&1 | tee "$GATE_EVIDENCE"
 GATE_RC="${PIPESTATUS[0]}"
 if [ "$GATE_RC" -ne 0 ]; then
   echo "ERROR: pre-release gate failed (rc=$GATE_RC); transcript in $GATE_EVIDENCE" >&2

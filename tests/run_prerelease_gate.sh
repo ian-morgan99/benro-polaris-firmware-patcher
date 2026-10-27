@@ -583,6 +583,32 @@ check_rig_tooling_selftest() {
 }
 check_rig_tooling_selftest
 
+# --- libgphoto2 source contracts, run against the exact tree that built this candidate
+# .75 (libgphoto2 e7d0cf1dd) made every timed capture spin forever waiting for a file
+# that never arrives -- a fail-closed shutter write plus an unsupported GetDevicePropValue
+# readback. Nothing in the build caught it, because the gate never ran libgphoto2's own
+# source contract: build-release-candidate.sh did not pass --libgphoto2-src, so the gate
+# only checked provenance. This is the check that would have blocked .75 at build time.
+check_libgphoto2_capture_contract() {
+    if [ -z "$LIBGPHOTO2_SRC" ] || [ ! -d "$LIBGPHOTO2_SRC" ]; then
+        skp "libgphoto2 capture contract (no --libgphoto2-src supplied)"
+        return 0
+    fi
+    local contract="$LIBGPHOTO2_SRC/tests/test-pentax-capture-contract.py"
+    local lib="$LIBGPHOTO2_SRC/camlibs/ptp2/library.c"
+    if [ ! -f "$contract" ] || [ ! -f "$lib" ]; then
+        bad "libgphoto2 capture contract (source tree at $LIBGPHOTO2_SRC lacks tests/test-pentax-capture-contract.py or camlibs/ptp2/library.c)"
+        return 0
+    fi
+    local out
+    if out="$(python3 "$contract" "$lib" 2>&1)"; then
+        ok "libgphoto2 capture contract (timed Bulb fallback reaches the capture)"
+    else
+        bad "libgphoto2 capture contract: $(printf '%s' "$out" | head -1)"
+    fi
+}
+check_libgphoto2_capture_contract
+
 # ----------------------------------------------------------------------------
 # Summary. Green gate = zero runnable failures; skips are reported, never
 # silently green.
