@@ -3,12 +3,12 @@
 
 Two failure modes this exists to handle, both observed on the bench:
 
-  * The Benro Connect app holds the only Wi-Fi/SSH session. When it closes, port
-    22 stops answering while the AP still answers ping -- so a plain `ssh` probe
-    reports "Connection refused" and looks like an unplugged rig. Reconnecting
-    after the app is closed restores it. This script distinguishes the three
-    states (AP down / AP up but sshd closed / sshd open) instead of collapsing
-    them into one boolean.
+  * The AP is up and pgphoto answers on 8080, but no ssh session succeeds. This
+    script reports that as a distinct state rather than collapsing it into
+    "unplugged". It deliberately does not name a cause: nothing here can observe
+    which process holds port 22. (An earlier version blamed the Benro Connect app
+    on no evidence, and in practice the message was produced by a broken ssh
+    probe while sshd was healthy.)
 
   * The Polaris drops its own radio under sustained PTP traffic, and a camera
     body that has been idle reports state=-5 (no camera) or state=-2 (present but
@@ -36,6 +36,13 @@ SSH_OPTS = ["-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes",
 
 
 def run(cmd: list[str], timeout: float) -> tuple[int, str]:
+    if not cmd or cmd[0].startswith("-"):
+        # argv was built wrong (missing program name, or a slice that left a
+        # dangling flag). subprocess would raise FileNotFoundError on "-o" and
+        # the OSError handler below would turn that into rc=2 -- indistinguishable
+        # from "the probe legitimately failed", which is exactly how sshd_open came
+        # to report a healthy sshd as closed for months. Fail loudly instead.
+        return 3, f"BUG: argv does not start with a program: {cmd[:3]!r}"
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         return p.returncode, (p.stdout + p.stderr).strip()
@@ -147,7 +154,17 @@ def ap_up(dev: str, port: int = 8080) -> bool:
 
 
 def sshd_open(dev: str) -> bool:
-    rc, out = run([*SSH_OPTS[:3], f"root@{dev}", "echo up"], 12)
+    """True only if a real BatchMode ssh session succeeds.
+
+    This previously sliced SSH_OPTS[:3], which is ["-o",
+    "StrictHostKeyChecking=no", "-o"] -- a trailing -o with no argument. ssh
+    exits 255 with 'no argument after keyword "root@<dev>"' for *any* host, so
+    this function returned False unconditionally and the caller reported
+    AP_UP_SSHD_CLOSED on a rig whose sshd was perfectly healthy. Verified: the
+    device answers `ssh root@192.168.0.1 'cat /app/FwVer'` with
+    FwVer:6.0.0.54.74 while this probe said sshd was closed.
+    """
+    rc, out = run(["ssh", *SSH_OPTS, f"root@{dev}", "echo up"], 12)
     return rc == 0 and "up" in out
 
 
@@ -162,6 +179,51 @@ def camera_state(dev: str, probe: str) -> tuple[str | None, str | None, str]:
     return None, None, (out.splitlines()[-1] if out else f"probe rc={rc}")
 
 
+def self_test() -> int:
+    """Assert each helper builds a runnable argv, without touching the network.
+
+    This exists because sshd_open() passed an argv with no program name, so
+    subprocess raised FileNotFoundError on "-o", run() swallowed it as rc=2, and
+    the tool reported AP_UP_SSHD_CLOSED against a rig whose sshd was answering
+    fine. A wrong argv is a programming error, not a device state, and must never
+    be reported as one.
+    """
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, timeout):
+        calls.append(list(cmd))
+        return 0, "up"
+
+    global run
+    real_run, run = run, fake_run
+    try:
+        sshd_open("192.168.0.1")
+        camera_state("192.168.0.1", "scripts/canary-probe.py")
+    finally:
+        run = real_run
+
+    failures = []
+    for cmd in calls:
+        if not cmd or cmd[0].startswith("-"):
+            failures.append(f"argv has no program name: {cmd[:3]!r}")
+    if not any(c and c[0] == "ssh" for c in calls):
+        failures.append("sshd_open did not invoke ssh")
+    if not any(c and c[0].endswith("python3") or (c and "canary-probe.py" in " ".join(c))
+               for c in calls):
+        failures.append("camera_state did not invoke the probe")
+    # A dangling -o is the other half of the original bug.
+    for cmd in calls:
+        if "-o" in cmd and cmd.index("-o") == len(cmd) - 1:
+            failures.append(f"dangling -o at end of argv: {cmd!r}")
+
+    if failures:
+        for f in failures:
+            print(f"SELF-TEST FAIL: {f}")
+        return 1
+    print(f"SELF-TEST PASS ({len(calls)} argv(s) well-formed)")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--dev", default=DEV_DEFAULT)
@@ -169,11 +231,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--timeout", type=float, default=300.0,
                     help="total seconds to wait for a usable rig")
     ap.add_argument("--interval", type=float, default=15.0)
+    ap.add_argument("--self-test", action="store_true",
+                    help="assert the helpers build valid argv and exit")
     ap.add_argument("--wifi-iface", default="wlp8s0",
                     help="interface the gimbal must be reachable through; a "
                          "route via any other interface means the address is "
                          "being answered by the home router")
     args = ap.parse_args(argv)
+
+    if args.self_test:
+        return self_test()
 
     deadline = time.monotonic() + args.timeout
     last = "unknown"
@@ -184,8 +251,12 @@ def main(argv: list[str] | None = None) -> int:
         elif not ap_up(args.dev):
             last = "AP_DOWN (no ping) -- is the Polaris powered and associated?"
         elif not sshd_open(args.dev):
-            last = ("AP_UP_SSHD_CLOSED -- the Benro Connect app owns the session; "
-                    "close it (or reconnect) to restore port 22")
+            # State only. The old text asserted a cause ("the Benro Connect app
+            # owns the session") that was never measured: nothing here can see
+            # which process holds port 22, and the message was in fact printed by
+            # a broken probe while sshd was working. Do not re-add a cause.
+            last = ("AP_UP_SSHD_CLOSED -- the AP answers on 8080 but no BatchMode "
+                    "ssh session succeeded; port 22 is not accepting us")
         else:
             model, state, note = camera_state(args.dev, args.probe)
             if state == "1" and model not in (None, "none"):

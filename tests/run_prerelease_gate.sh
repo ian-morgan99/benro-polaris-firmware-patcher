@@ -567,6 +567,22 @@ fi
 
 check_registry_hashes
 
+# --- rig tooling self-tests: a broken probe must not masquerade as a device state
+# wait-for-rig.py reported AP_UP_SSHD_CLOSED for months against a healthy sshd,
+# because its argv had no program name and subprocess raised FileNotFoundError on
+# "-o", which run() swallowed as rc=2. That is a programming error reported as a
+# device condition, and it wasted a whole install attempt.
+check_rig_tooling_selftest() {
+    local script="$ROOT/scripts/wait-for-rig.py"
+    [ -f "$script" ] || { skp "rig tooling self-test (no wait-for-rig.py)"; return 0; }
+    if python3 "$script" --self-test >/dev/null 2>&1; then
+        ok "rig tooling self-test (wait-for-rig argv well-formed)"
+    else
+        bad "rig tooling self-test (wait-for-rig builds invalid argv: $(python3 "$script" --self-test 2>&1 | head -1))"
+    fi
+}
+check_rig_tooling_selftest
+
 # ----------------------------------------------------------------------------
 # Summary. Green gate = zero runnable failures; skips are reported, never
 # silently green.
