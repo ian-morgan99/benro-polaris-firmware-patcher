@@ -111,6 +111,40 @@ fi
 pass=0; fail=0; skip=0
 failed=""; skipped=""
 
+    # --- provenance registry: every recorded hash must match the artifact on disk
+    # A registry row that looks verifiable but is not is worse than no row: a
+    # placeholder SHA-256 was committed once already. Any row whose artifact is
+    # present locally is recomputed and compared; a mismatch is a failure.
+    check_registry_hashes() {
+        local registry="$ROOT/docs/FWPKT-PROVENANCE-CONTRACT.md"
+        [ -f "$registry" ] || { skp "provenance registry hash check (no registry)"; return 0; }
+        local checked=0 bad_rows=""
+        local row id md5 sha art real_md5 real_sha
+        while IFS= read -r row; do
+            id="$(printf '%s' "$row" | sed -n 's/^| \([a-z0-9][a-z0-9._-]*\).*/\1/p')"
+            [ -n "$id" ] || continue
+            md5="$(printf '%s' "$row" | grep -oE '`[0-9a-f]{32}`' | head -1 | tr -d '`')"
+            sha="$(printf '%s' "$row" | grep -oE '`[0-9a-f]{64}`' | head -1 | tr -d '`')"
+            [ -n "$md5" ] || continue
+            art="$ROOT/out/$id/FwPkt.zip"
+            [ -f "$art" ] || continue          # artifact not built here: not checkable
+            real_md5="$(md5sum "$art" | cut -d' ' -f1)"
+            real_sha="$(sha256sum "$art" | cut -d' ' -f1)"
+            checked=$((checked+1))
+            [ "$real_md5" = "$md5" ] || bad_rows="$bad_rows $id(md5)"
+            if [ -n "$sha" ] && [ "$real_sha" != "$sha" ]; then
+                bad_rows="$bad_rows $id(sha256)"
+            fi
+        done < "$registry"
+        if [ "$checked" -eq 0 ]; then
+            skp "provenance registry hash check (no built artifacts to compare)"
+        elif [ -n "$bad_rows" ]; then
+            bad "provenance registry hash check (mismatch:$bad_rows)"
+        else
+            ok "provenance registry hash check ($checked artifact(s) verified against the registry)"
+        fi
+    }
+
 ok()   { pass=$((pass+1)); echo "PASS: $1"; }
 bad()  { fail=$((fail+1)); failed="$failed $1"; echo "FAIL: $1"; }
 skp()  { skip=$((skip+1)); skipped="$skipped $1"; echo "SKIP: $1 (prerequisite unavailable)"; }
@@ -530,6 +564,8 @@ if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
         skp "live device gates (probe failed or camera state!=1 — gimbal off / camera not attached; log: /tmp/prerelease-canary-probe.log)"
     fi
 fi
+
+check_registry_hashes
 
 # ----------------------------------------------------------------------------
 # Summary. Green gate = zero runnable failures; skips are reported, never
