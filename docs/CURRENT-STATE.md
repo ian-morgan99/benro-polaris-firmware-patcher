@@ -1,5 +1,35 @@
 # Current repository state
 
+## 2026-10-27 — `.74` INSTALLED AND VERIFIED — behaviour unqualified (no camera attached)
+
+`.74` (`o-v18d-shutter-list-always-populated`) is installed on the rig and
+verified: pre-release gate GREEN (11 passed, 0 failed, 1 skipped), all six
+`firmwareInfo` MD5s matched on-device before reboot, **uptime reset 28668s ->
+14s** proves a real boot, `INSTALLED BUILD IDENTITY: PASS`, and Mlog records
+`SP_EVENT_UPGRADE_SUCCESS` followed by `SP_DelUpgradeFiles: remove
+/app/sd/FwPkt`. Both fixes are confirmed present in the flashed `ptp2.so`.
+
+It ships two fixes:
+- **timed Bulb duration from the measured hold** (#243) — `.72` captured at the
+  *previous* shot's duration because the pre-shutter admission probe reports the
+  OLD timer;
+- **the shutter list is always populated** (#241) — in B mode with no JPEG the
+  camera returns an empty list, which the device forwarded as
+  `RD:0;V:0;R:00:00,;`, a one-entry list whose only entry is the bogus `00:00`.
+  That is the Benro Connect crash in Bulb non-timed and on a mode-dial change.
+
+**Not qualified.** No camera is attached to the rig (`lsusb` shows only a hub),
+so neither fix has been exercised against hardware. The candidate is "installed,
+canary pending" — never "qualified".
+
+A follow-up commit (`e7d0cf1dd`, libgphoto2) additionally fails closed on a
+failed Bulb shutter write and verifies the write by readback before exposing,
+and gates the empty-list synthesis to the K-3 III only. **That commit is not in
+`.74`** — it needs a `.75`.
+
+Full record, including the corrections to my own earlier claims and the TA
+review findings: `docs/RELEASE-RECORD-2026-10-26.md`.
+
 ## 2026-10-19 — `.68` PHYSICALLY QUALIFIED **PASS** — Color Temperature (`0xd018`) works through its named control
 
 `.68` (`o-v17c-colortemp-formless`) is installed and verified on the device and
