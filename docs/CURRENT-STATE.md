@@ -1,6 +1,42 @@
 # Current repository state
 
-## 2026-10-27 — `.75` BUILT, GATED, REGISTERED — NOT installed: the rig is unreachable
+## 2026-10-27 — `.76` INSTALLED AND VERIFIED — `.75` REVERTED (it regressed captures)
+
+`.76` (`o-v18f-revert-fail-closed-bulb`, libgphoto2 `df9d72745`, patcher `c3d70c9`)
+reverts `.75`. Operator verdict from the rig on `.75`: **"objectively worse than
+.74"** — a capture stayed spinning waiting for a file that never arrived.
+
+Two things in libgphoto2 `e7d0cf1dd` caused it, both in the deferred STOP edge of
+the camera-timed Bulb path:
+
+1. the fail-closed shutter write returned an error and started **no capture**.
+   Neither Benro Connect nor pgphoto surfaces a capture error — they wait for a
+   file — so refusing presents as an endless spinner;
+2. a new `ptp_getdevicepropvalue(PTP_DPC_PENTAX_ShutterSpeed)` readback ran before
+   every capture. That is **not a supported read path** for this property: config.c
+   reads the shutter speed only via `GetDevicePropDesc`'s `CurrentValue`, and of 40
+   `getdevicepropvalue` calls in config.c, none is Pentax/Ricoh. It therefore failed
+   on *every* timed capture, so the refusal fired universally, not rarely.
+
+`.76` guarantees `camlibs/ptp2/library.c` is **byte-identical to `.74`** (`git diff
+8db3785f -- camlibs/ptp2/library.c` is empty) — the capture cycle the operator
+confirmed working. The `#241` model gate and current-value fix in config.c are kept.
+
+**Process failure worth naming:** the gate stayed GREEN on `.75`. It accepted
+`--libgphoto2-src` but only used it for provenance, and `build-release-candidate.sh`
+never passed it — so libgphoto2's own source contract never ran during a build. Now
+wired (`c3d70c9`) and proven: `.75` source → `GATE: RED`, fixed tree → PASS. Gate is
+15/0/1. A regression test (`387bfea59`) forbids any early return in the fallback.
+
+**`.76` status: installed, canary pending — NOT qualified.** No camera attached:
+gimbal healthy (9090 open, pgphoto stable pid 250 no restart loop, load 1.10), but
+USB shows only hub `1a40` + xHCI `1d6b`, no Pentax `0x25fb`, code 286 `model=none
+state=-5`. Per the operator's rule this is the flat-battery / camera-side branch, not
+wider failure. `.74` remains the last build with a positive hardware result.
+
+Release: https://github.com/ian-morgan99/benro-polaris-firmware-patcher/releases/tag/o-v18f-revert-fail-closed-bulb
+
+## 2026-10-27 — `.75` INSTALLED, THEN REVERTED — regressed captures (superseded by `.76`)
 
 `.75` (`o-v18e-fail-closed-bulb-shutter`, libgphoto2 `e7d0cf1dd`, patcher
 `798bd11`) carries the TA review fixes on top of `.74`: the Bulb shutter write
