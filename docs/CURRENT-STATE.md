@@ -1,5 +1,24 @@
 # Current repository state
 
+## 2026-10-27 — `.75` BUILT, GATED, REGISTERED — NOT installed: the rig is unreachable
+
+`.75` (`o-v18e-fail-closed-bulb-shutter`, libgphoto2 `e7d0cf1dd`, patcher
+`798bd11`) carries the TA review fixes on top of `.74`: the Bulb shutter write
+now **fails closed** and is verified by readback before any capture starts, and
+the empty-shutter-list synthesis is gated to the K-3 III only. Gate GREEN,
+registered in `docs/FWPKT-PROVENANCE-CONTRACT.md`.
+
+**It is not on the device.** This host is on Ethernet through the Hitron router,
+and `wlp8s0` has no carrier, so `192.168.0.1` is being answered by the **router**,
+not the gimbal. An earlier reading of "port 80 open, port 22 refused" as "the rig
+is up but sshd is held" was wrong — that is the router's own GoAhead-Webs login
+page. `scripts/wait-for-rig.py` now rejects that case with `WRONG_NETWORK`. See
+`docs/evidence/o-v18e-build-20261027/rig-unreachable.txt`.
+
+To install: associate with the gimbal AP (`polaris_d13e86`) on `wlp8s0`, confirm
+with `scripts/wait-for-rig.py`, then
+`./scripts/release/release-fwpkt.sh out/o-v18e-fail-closed-bulb-shutter`.
+
 ## 2026-10-27 — `.74` INSTALLED AND VERIFIED — behaviour unqualified (no camera attached)
 
 `.74` (`o-v18d-shutter-list-always-populated`) is installed on the rig and
