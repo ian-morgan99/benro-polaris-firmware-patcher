@@ -37,6 +37,24 @@ case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2
 [ -e "$BASE" ] || { echo "ERROR: stock FwPkt not found: $BASE" >&2; exit 2; }
 [ -d "$SRC/.git" ] || { echo "ERROR: libgphoto2 input must have a real .git directory" >&2; exit 2; }
 [ "$(git -C "$SRC" status --porcelain)" = "" ] || { echo "ERROR: libgphoto2 checkout is dirty" >&2; exit 2; }
+# A gitignored build/ directory is invisible to the dirty check above, but
+# container/build_ptp2.sh copies the input with `cp -a`, build directories
+# included, so the container reuses objects compiled BEFORE the patcher applied
+# its own edits -- most importantly the _Camera padding. The build then dies at
+# the fail-closed ABI check with "gp_camera_new does not allocate 4140 B" even
+# though the padding message said it applied. Refuse up front instead of
+# spending a full build to find out. See docs/LIBGPHOTO2-UPGRADE-PROCESS.md.
+for stale in build _build build-asan; do
+  if [ -d "$SRC/$stale" ]; then
+    echo "ERROR: libgphoto2 input contains a stale '$stale/' directory." >&2
+    echo "       It is gitignored, so the dirty check above cannot see it, but" >&2
+    echo "       'cp -a' copies it into the container and the stale objects are" >&2
+    echo "       reused, which fails the _Camera pad check." >&2
+    echo "       Use a clean checkout (a local clone is instant):" >&2
+    echo "         git clone --branch main <repo> /tmp/lgp-src" >&2
+    exit 2
+  fi
+done
 BRANCH="$(git -C "$SRC" branch --show-current)"
 [ "$BRANCH" = main ] || { echo "ERROR: libgphoto2 must be on main (got ${BRANCH:-detached})" >&2; exit 2; }
 # A version is bound to the exact commits it was built from, so the patcher tree
@@ -145,7 +163,28 @@ bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
 echo "Generating install manifest"
 python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT"
 
-"$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
+# Capture the gate transcript into the candidate's own evidence directory. The
+# gate is the release's proof, and AGENTS.md requires its skips to be recorded
+# in the release evidence -- so the transcript is written where the evidence
+# lives rather than left to scroll past in the build log. A SKIP is a
+# prerequisite gap, not a pass, and must be visible to whoever reads the
+# evidence later.
+GATE_EVIDENCE="$OUT/gate-transcript.txt"
+mkdir -p "$OUT"
+"$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt" 2>&1 | tee "$GATE_EVIDENCE"
+GATE_RC="${PIPESTATUS[0]}"
+if [ "$GATE_RC" -ne 0 ]; then
+  echo "ERROR: pre-release gate failed (rc=$GATE_RC); transcript in $GATE_EVIDENCE" >&2
+  exit "$GATE_RC"
+fi
+# Surface the skips explicitly: they are recorded in the transcript, but a
+# reader scanning the build log should not have to hunt for them.
+GATE_SKIPS="$(grep -c '^SKIP:' "$GATE_EVIDENCE" || true)"
+if [ "${GATE_SKIPS:-0}" -gt 0 ]; then
+  echo "NOTE: pre-release gate recorded ${GATE_SKIPS} SKIP(s) -- prerequisite gaps, not passes."
+  echo "      They are listed in $GATE_EVIDENCE and must be recorded in the release evidence."
+  grep '^SKIP:' "$GATE_EVIDENCE" | sed 's/^/      /'
+fi
 
 # Compare the shipped bytes against the previous candidate BEFORE claiming a version.
 # A display version is a claim about behaviour, and two claims that describe identical
