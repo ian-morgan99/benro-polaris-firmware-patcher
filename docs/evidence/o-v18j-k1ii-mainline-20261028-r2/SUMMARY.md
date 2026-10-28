@@ -70,6 +70,19 @@ The result is intentionally recorded as a JPEG capture because that is the file
 the camera returned in this state. This test does not infer a generic image
 format mapping or claim PEF/DNG support.
 
+## Repeat capture — 2026-10-28 23:54 UTC
+
+After the read-only rerun, a second independent ordinary capture also passed:
+
+- software identity remained `6.0.0.54.87`;
+- preview was already idle before capture;
+- lifecycle was `[1,4,0]`;
+- file event reported `/app/sd/normal/SP_0480.jpg`, 2,935,204 bytes;
+- the camera returned to idle without an error or process crash.
+
+Transcript and JSON result: `physical/k1ii-v87-capture-rerun.log` and
+`physical/k1ii-v87-capture-rerun.json` in the candidate output directory.
+
 Polaris liveness also passed 3/3 read-only attempts. The test did not alter
 camera settings and did not run Bulb, persistent live view, focus movement, or
 long-duration capture.
