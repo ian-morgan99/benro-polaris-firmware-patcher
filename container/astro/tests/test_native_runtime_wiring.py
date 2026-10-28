@@ -23,16 +23,20 @@ def test_autosolve_quality_gate_understands_native_result_shape():
 
 def test_boot_exports_solver_configuration_to_daemons():
     text = (ONDISK / "polaris-astro-boot.sh").read_text()
-    assert "export SOLVER_BIN INDEPENDENT_CATALOG CAMERA_MODEL SENSOR_MM" in text
+    assert "export SOLVER_BIN INDEPENDENT_CATALOG INDEPENDENT_CATALOG_DIR" in text
     assert 'SOLVER_BIN="${SOLVER_BIN:-polaris-solve}"' in text
     assert 'INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}"' in text
+    assert 'INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}"' in text
 
 
 def test_catalogue_is_optional_for_reference_bundle_but_installable():
     install = (ONDISK / "install_astro.sh").read_text()
     config = (ONDISK / "site.conf.example").read_text()
     assert 'catalogue.polcat' in install
+    assert 'polaris-solve-independent-search' in install
+    assert 'catalogue-tiles' in install
     assert 'INDEPENDENT_CATALOG=/app/sd/polaris-astro/catalogue.polcat' in config
+    assert 'INDEPENDENT_CATALOG_DIR=/app/sd/polaris-astro/catalogue-tiles' in config
 
 
 def test_end_to_end_session_hooks_are_mode_gated_and_separate():

@@ -198,6 +198,11 @@ $CC -O2 $ARCHFLAGS -o "$OUT/polaris-solve-independent" \
    || die "independent solver link failed"
 log "  linked $OUT/polaris-solve-independent ($(stat -c %s "$OUT/polaris-solve-independent") bytes)"
 
+$CC -O2 $ARCHFLAGS -o "$OUT/polaris-solve-independent-search" \
+   "$HERE/polaris-solve-independent-search.c" -lm \
+   || die "independent native search link failed"
+log "  linked $OUT/polaris-solve-independent-search ($(stat -c %s "$OUT/polaris-solve-independent-search") bytes)"
+
 $CC -O2 $ARCHFLAGS -o "$OUT/polaris-exif-solve" \
    "$HERE/polaris-exif-solve.c" \
    || die "EXIF solve writer link failed"

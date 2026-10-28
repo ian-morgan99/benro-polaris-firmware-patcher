@@ -79,6 +79,10 @@ solve() {
     _radius=$1
     EMBED_SOLVE_EXIF=0 SOLVER_BIN="$SOLVER_BIN" \
     INDEPENDENT_CATALOG="$INDEPENDENT_CATALOG" SENSOR_MM="$SENSOR_MM" \
+    INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
+    INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
+    INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+    INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
     MOUNT_HINT=0 FOCAL_MM="$FOCAL" \
         sh "$ASTRO/polaris-align.sh" "$FRAME" "$FOCAL" "$RA" "$DEC" "$_radius" 2>>"$LOG"
 }

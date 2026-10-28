@@ -28,6 +28,11 @@ INDEXES=${INDEXES:-/app/sd/astrometry}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 CAMERA_MODEL=${CAMERA_MODEL:-}
 SENSOR_MM=${SENSOR_MM:-}
+INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
+INDEPENDENT_CATALOG_DIR=${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}
+INDEPENDENT_CATALOG_MANIFEST=${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}
+INDEPENDENT_MAX_CATALOG=${INDEPENDENT_MAX_CATALOG:-60}
+INDEPENDENT_SCALE_TOL=${INDEPENDENT_SCALE_TOL:-0.15}
 DOWNSAMPLE=${DOWNSAMPLE:-4}
 MAXSTARS=${MAXSTARS:-200}
 # never let one frame block the loop; a mismatched hint can grind for minutes
@@ -115,8 +120,13 @@ done
 if [ "$SOLVER_BIN" = "polaris-solve" ]; then
     [ -n "$IDXARGS" ] || { echo "no Astrometry.net index files in $INDEXES" >&2; exit 2; }
 else
-    [ -n "${INDEPENDENT_CATALOG:-}" ] || { echo "independent solver requires INDEPENDENT_CATALOG" >&2; exit 2; }
-    [ -f "$INDEPENDENT_CATALOG" ] || { echo "missing independent catalogue $INDEPENDENT_CATALOG" >&2; exit 2; }
+    if [ "$SOLVER_BIN" = "polaris-solve-independent-search" ]; then
+        [ -d "$INDEPENDENT_CATALOG_DIR" ] || { echo "missing independent catalogue directory $INDEPENDENT_CATALOG_DIR" >&2; exit 2; }
+        [ -f "$INDEPENDENT_CATALOG_MANIFEST" ] || { echo "missing independent tile manifest $INDEPENDENT_CATALOG_MANIFEST" >&2; exit 2; }
+    else
+        [ -n "${INDEPENDENT_CATALOG:-}" ] || { echo "independent solver requires INDEPENDENT_CATALOG" >&2; exit 2; }
+        [ -f "$INDEPENDENT_CATALOG" ] || { echo "missing independent catalogue $INDEPENDENT_CATALOG" >&2; exit 2; }
+    fi
 fi
 
 STARS=$(mktemp /tmp/polaris-stars.XXXXXX) || exit 1
@@ -184,7 +194,16 @@ solve_with() {
     _scale=$1
     if [ "$SOLVER_BIN" != "polaris-solve" ]; then
         [ -n "$_scale" ] || { echo '{"solved":false,"failure_reason":"focal_length_required"}'; return 1; }
-        set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" --cpulimit "$SOLVE_TIMEOUT" $_scale
+        if [ "$SOLVER_BIN" = "polaris-solve-independent-search" ]; then
+            set -- --catalog-dir "$INDEPENDENT_CATALOG_DIR" --manifest "$INDEPENDENT_CATALOG_MANIFEST" \
+                --solver "$ASTRO/polaris-solve-independent" --stars "$STARS" --width "$W" --height "$H" \
+                --max-catalog "$INDEPENDENT_MAX_CATALOG" --min-matches "${MIN_MATCHES:-12}" \
+                --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
+        else
+            set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" \
+                --cpulimit "$SOLVE_TIMEOUT" --max-catalog "$INDEPENDENT_MAX_CATALOG" \
+                --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
+        fi
         [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
         "$ASTRO/$SOLVER_BIN" "$@"
         return $?
@@ -239,7 +258,13 @@ elif [ -n "$FOCAL" ]; then
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
 fi
 
-[ "$SOLVER_BIN" != "polaris-solve" ] && { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
+[ "$SOLVER_BIN" = "polaris-solve-independent" ] && { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
+[ "$SOLVER_BIN" = "polaris-solve-independent-search" ] && {
+    [ -n "$FOCAL" ] || { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
+    OUT=$(solve_with "--focal-mm $FOCAL --sensor-mm $SENSOR_MM")
+    case "$OUT" in *'"solved":true'*) emit_solution "$OUT";; *) echo "$OUT";; esac
+    exit 0
+}
 [ -n "$TRIED" ] && echo "[polaris-align] $TRIED did not solve -- retrying across ${FOCAL_MIN}-${FOCAL_MAX}mm" >&2
 [ -n "$TRIED" ] || echo "[polaris-align] no focal known -- searching ${FOCAL_MIN}-${FOCAL_MAX}mm" >&2
 OUT=$("$ASTRO/$SOLVER_BIN" $(range_args) $IDXARGS --stars "$STARS" \

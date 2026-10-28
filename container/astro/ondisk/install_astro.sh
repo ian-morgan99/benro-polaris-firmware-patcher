@@ -26,7 +26,7 @@ mkdir -p "$DEST" "$INDEXES"
 # Every one of these is load-bearing for some feature, and a missing one fails
 # SILENTLY at runtime (the feature simply never happens), so they are checked
 # rather than best-effort copied.
-for b in polaris-solve polaris-solve-independent polaris-exif-solve polaris-skysim-independent polaris-extract polaris-mount polaris-httpd \
+for b in polaris-solve polaris-solve-independent polaris-solve-independent-search polaris-exif-solve polaris-skysim-independent polaris-extract polaris-mount polaris-httpd \
          polaris-logwatch polaris-match; do
     [ -f "$SRC/$b" ] || { echo "[astro] MISSING $SRC/$b" >&2; exit 1; }
     cp "$SRC/$b" "$DEST/$b"; chmod +x "$DEST/$b"
@@ -37,6 +37,13 @@ done
 for f in catalogue.polcat catalogue.manifest.json; do
     [ -f "$SRC/$f" ] && cp "$SRC/$f" "$DEST/$f"
 done
+if [ -d "$SRC/catalogue-tiles" ]; then
+    mkdir -p "$DEST/catalogue-tiles"
+    for f in "$SRC"/catalogue-tiles/*.pcat; do
+        [ -f "$f" ] && cp "$f" "$DEST/catalogue-tiles/"
+    done
+fi
+[ -f "$SRC/catalogue-tiles.manifest.json" ] && cp "$SRC/catalogue-tiles.manifest.json" "$DEST/"
 # optional: only needed for simulated-sky testing
 [ -f "$SRC/polaris-skysim" ] && { cp "$SRC/polaris-skysim" "$DEST"/; chmod +x "$DEST/polaris-skysim"; }
 

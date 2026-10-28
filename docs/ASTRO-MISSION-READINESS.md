@@ -51,10 +51,11 @@ updates operate on the Polaris-side copy and currently replace that file via a
 temporary file; loss-safe source/derived-file handling and full EXIF round-trip
 qualification remain tracked follow-up work in issue #247.
 
-The independent native solver also remains selectable beside Astrometry.net.
-The native path is not the default until a real Gaia-derived catalogue,
-wrong-solve corpus, ARM runtime, and device capture path have passed their
-respective gates.
+The independent native solver and its bounded native tile-search front end
+remain selectable beside Astrometry.net. The real Gaia regional/native search
+smoke now passes, but the native path is not the default until an all-sky
+catalogue, wrong-solve corpus, ARM runtime, and device capture path have
+passed their respective gates.
 
 ## Evidence still required before calling the mission complete
 

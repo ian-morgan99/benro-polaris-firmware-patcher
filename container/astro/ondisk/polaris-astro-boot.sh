@@ -56,7 +56,8 @@ SITE=/app/sd/polaris-astro/site.conf
         # disappear at the process boundary.  This is what makes the solver
         # selector and independent catalogue apply consistently to autosolve,
         # guiding, and the HTTP-launched guider.
-        export SOLVER_BIN INDEPENDENT_CATALOG CAMERA_MODEL SENSOR_MM \
+        export SOLVER_BIN INDEPENDENT_CATALOG INDEPENDENT_CATALOG_DIR INDEPENDENT_CATALOG_MANIFEST \
+               INDEPENDENT_MAX_CATALOG INDEPENDENT_SCALE_TOL CAMERA_MODEL SENSOR_MM \
                GOTO_PLATESOLVE GOTO_SOLVE_APPLY GOTO_SOLVE_RECENTER
         echo "site.conf loaded after ${i} tries (lat=$LAT lon=$LON focal=$FOCAL)"
     else
@@ -157,7 +158,7 @@ SITE=/app/sd/polaris-astro/site.conf
             # Every binary the daemons need. polaris-logwatch is autosolve's
             # trigger detector and polaris-match is the guider's drift
             # measurement -- omit either and the feature silently does nothing.
-            for _b in polaris-httpd polaris-solve polaris-solve-independent polaris-exif-solve polaris-skysim-independent polaris-extract \
+            for _b in polaris-httpd polaris-solve polaris-solve-independent polaris-solve-independent-search polaris-exif-solve polaris-skysim-independent polaris-extract \
                       polaris-logwatch polaris-match polaris-skysim \
                       polaris-mount; do
                 [ -f "/app/sd/polaris-astro/$_b" ] \
@@ -281,6 +282,10 @@ SITE=/app/sd/polaris-astro/site.conf
         DRY_RUN="${AUTOSOLVE_DRY_RUN:-1}" \
         SOLVER_BIN="${SOLVER_BIN:-polaris-solve}" \
         INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
+        INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
+        INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
+        INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+        INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
         CAMERA_MODEL="${CAMERA_MODEL:-}" SENSOR_MM="${SENSOR_MM:-}" \
         STUB_FRAME="${STUB_FRAME:-}" STUB_UTC="${STUB_UTC:-}" \
         GUIDE="${GUIDE:-0}" GUIDE_DRY_RUN="${GUIDE_DRY_RUN:-1}" \
@@ -304,6 +309,10 @@ SITE=/app/sd/polaris-astro/site.conf
             LAT="$LAT" LON="$LON" TZ_OFFSET_SEC="$TZ_OFFSET_SEC" \
             SOLVER_BIN="${SOLVER_BIN:-polaris-solve}" \
             INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
+            INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
+            INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
+            INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+            INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
             FOCAL_MM="$FOCAL" SENSOR_MM="${SENSOR_MM:-}" \
             GOTO_SOLVE_APPLY="${GOTO_SOLVE_APPLY:-0}" GOTO_SOLVE_RECENTER="${GOTO_SOLVE_RECENTER:-1}" \
             GOTO_HINT_RADIUS="${GOTO_HINT_RADIUS:-15}" GOTO_FALLBACK_RADIUS="${GOTO_FALLBACK_RADIUS:-60}" \
@@ -322,6 +331,10 @@ SITE=/app/sd/polaris-astro/site.conf
             LAT="$LAT" LON="$LON" FOCAL_MM="$FOCAL" SENSOR_MM="${SENSOR_MM:-}" \
             SOLVER_BIN="${SOLVER_BIN:-polaris-solve}" \
             INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
+            INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
+            INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
+            INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+            INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
             FRAME_CORRECT="${FRAME_CORRECT:-0}" MIN_MATCHES="${MIN_MATCHES:-12}" \
             MAX_SOLVE_RMS_PX="${MAX_SOLVE_RMS_PX:-3.0}" \
             DRIFT_THRESH_DEG="${FRAME_DRIFT_THRESH_DEG:-0.02}" \

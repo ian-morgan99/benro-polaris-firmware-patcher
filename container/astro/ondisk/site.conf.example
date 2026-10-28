@@ -39,6 +39,10 @@ RANGE_TIMEOUT=240
 # binaries on the microSD.
 SOLVER_BIN=polaris-solve
 INDEPENDENT_CATALOG=/app/sd/polaris-astro/catalogue.polcat
+INDEPENDENT_CATALOG_DIR=/app/sd/polaris-astro/catalogue-tiles
+INDEPENDENT_CATALOG_MANIFEST=/app/sd/polaris-astro/catalogue-tiles.manifest.json
+INDEPENDENT_MAX_CATALOG=60
+INDEPENDENT_SCALE_TOL=0.15
 # CAMERA_MODEL=K-3-III
 # SENSOR_MM=23.3
 
