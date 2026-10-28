@@ -40,6 +40,7 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     frame = (ONDISK / "polaris-frame-watch.sh").read_text()
     goto = (ONDISK / "polaris-goto-watch.sh").read_text()
     wrapper = (ONDISK / "polaris-goto-solve.sh").read_text()
+    align = (ONDISK / "polaris-align.sh").read_text()
     httpd = (ROOT / "astro" / "polaris-httpd.c").read_text()
     assert 'AUTO_SOLVE_FRAMES' in boot and 'FRAME_CORRECT' in boot
     assert 'GOTO_SOLVE_WATCH' in boot and 'GOTO_SOLVE_APPLY' in boot
@@ -50,4 +51,5 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'target_ra_deg' in wrapper and 'TARGET_FILE}.tmp.$$' in wrapper
     assert 'target_ra_deg' in frame and 'TARGET_FILE' in frame
     assert 'FALLBACK_RADIUS' in frame and 'run_align' in frame
+    assert 'focal from config' in align and 'emit_solution "$OUT"; exit 0' in align
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd

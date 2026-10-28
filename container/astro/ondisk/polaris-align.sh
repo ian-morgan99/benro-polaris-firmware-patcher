@@ -236,7 +236,7 @@ elif [ -n "$FOCAL" ]; then
     echo "[polaris-align] focal from config: ${FOCAL}mm (frame has no EXIF)" >&2
     TRIED="${FOCAL}mm (config)"
     OUT=$(solve_with "--focal-mm $FOCAL --sensor-mm $SENSOR_MM")
-    case "$OUT" in *'"solved":true'*) echo "$OUT"; exit 0;; esac
+    case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
 fi
 
 [ "$SOLVER_BIN" != "polaris-solve" ] && { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
