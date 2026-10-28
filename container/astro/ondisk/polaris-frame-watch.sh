@@ -29,6 +29,8 @@ TELEMETRY=${FRAME_TELEMETRY:-/app/sd/polaris-astro/frame-telemetry.jsonl}
 ADMISSION=${ADMISSION:-/app/sd/polaris-astro/frame-admission.tsv}
 SESSION_FILE=${SESSION_FILE:-/app/sd/polaris-astro/session-id}
 CAPTURE_EVENT_LEDGER=${CAPTURE_EVENT_LEDGER:-/app/sd/polaris-astro/capture-events.tsv}
+FAILED_DIR=${FRAME_FAILED_DIR:-/app/sd/polaris-astro/failed}
+FRAME_LOCK_DIR=${FRAME_LOCK_DIR:-${STATE}.lock}
 MODE_FILE=${MODE_FILE:-/tmp/polaris-mode}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
@@ -51,6 +53,11 @@ FRAME_REQUIRE_CAPTURE_EVENT=${FRAME_REQUIRE_CAPTURE_EVENT:-1}
 MAX_LOG_BYTES=${FRAME_MAX_LOG_BYTES:-1048576}
 MAX_HISTORY_BYTES=${FRAME_MAX_HISTORY_BYTES:-1048576}
 MAX_TELEMETRY_BYTES=${FRAME_MAX_TELEMETRY_BYTES:-2097152}
+MAX_CAPTURE_EVENT_BYTES=${FRAME_MAX_CAPTURE_EVENT_BYTES:-1048576}
+MAX_FAILED_FRAMES=${FRAME_MAX_FAILED_FRAMES:-20}
+MAX_SOLVE_ATTEMPTS=${FRAME_MAX_SOLVE_ATTEMPTS:-3}
+FRAME_RETRY_DELAY=${FRAME_RETRY_DELAY:-15}
+FRAME_SOLVE_LEASE=${FRAME_SOLVE_LEASE:-300}
 
 SESSION_ID=
 SESSION_START_EPOCH=0
@@ -61,7 +68,23 @@ EXTRA=${CAPTURE_GLOB_EXTRA:-"/app/sd/Lapse/class_*"}
 mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" \
     "$(dirname "$FRAME_STATE")" "$(dirname "$TELEMETRY")" \
     "$(dirname "$STATE")" "$(dirname "$ADMISSION")" \
-    "$(dirname "$SESSION_FILE")" "$(dirname "$CAPTURE_EVENT_LEDGER")" 2>/dev/null
+    "$(dirname "$SESSION_FILE")" "$(dirname "$CAPTURE_EVENT_LEDGER")" \
+    "$FAILED_DIR" 2>/dev/null
+
+# Only one watcher may own the admission ledger.  This is intentionally a
+# mkdir lock rather than a PID check: mkdir is atomic on the SD filesystem and
+# a second boot hook cannot race the first into solving the same frame twice.
+if ! mkdir "$FRAME_LOCK_DIR" 2>/dev/null; then
+    exit 0
+fi
+printf '%s\n' "$$" > "$FRAME_LOCK_DIR/pid" 2>/dev/null || true
+cleanup_lock() {
+    rm -f "$FRAME_LOCK_DIR/pid" 2>/dev/null || true
+    rmdir "$FRAME_LOCK_DIR" 2>/dev/null || true
+}
+stop_watcher() { exit 143; }
+trap cleanup_lock EXIT
+trap stop_watcher INT TERM
 
 trim_file() {
     _path=$1
@@ -71,7 +94,9 @@ trim_file() {
     _bytes=$(wc -c < "$_path" 2>/dev/null | tr -d ' ')
     [ "${_bytes:-0}" -gt "$_limit" ] 2>/dev/null || return 0
     _tmp="${_path}.trim.$$"
-    tail -c "$_limit" "$_path" > "$_tmp" 2>/dev/null && \
+    # Drop a possibly partial first line.  This keeps JSONL/TSV files
+    # parseable after bounding them; raw tail -c would leave a corrupt record.
+    tail -c "$_limit" "$_path" 2>/dev/null | sed '1d' > "$_tmp" 2>/dev/null && \
         mv "$_tmp" "$_path" 2>/dev/null || rm -f "$_tmp" 2>/dev/null
 }
 
@@ -87,32 +112,79 @@ astro_active() {
 }
 
 file_key() {
-    _s=$(wc -c < "$1" 2>/dev/null | tr -d ' ')
-    _t=$(stat -c %Y "$1" 2>/dev/null || echo 0)
-    printf '%s\t%s\t%s\n' "$1" "${_s:-0}" "$_t"
+    _s=$(stat -c '%s' "$1" 2>/dev/null || true)
+    _t=$(stat -c '%Y' "$1" 2>/dev/null || true)
+    _i=$(stat -c '%i' "$1" 2>/dev/null || true)
+    [ -n "$_s" ] && [ -n "$_t" ] && [ -n "$_i" ] || return 1
+    printf '%s\t%s\t%s\t%s\n' "$1" "$_s" "$_t" "$_i"
 }
 
-seen() {
-    [ -r "$STATE" ] && grep -F -x -q "$1" "$STATE" 2>/dev/null
+state_lookup() {
+    _key=$1
+    _path=$(printf '%s\n' "$_key" | awk -F '\t' '{print $1}')
+    _bytes=$(printf '%s\n' "$_key" | awk -F '\t' '{print $2}')
+    _mtime=$(printf '%s\n' "$_key" | awk -F '\t' '{print $3}')
+    _inode=$(printf '%s\n' "$_key" | awk -F '\t' '{print $4}')
+    [ -r "$STATE" ] || return 1
+    awk -F '\t' -v p="$_path" -v b="$_bytes" -v m="$_mtime" -v i="$_inode" \
+        '$1 == p && $2 == b && $3 == m && $4 == i { v=$5 "\t" $6 "\t" $7 "\t" $8; found=1 } END { if (found) print v; else exit 1 }' \
+        "$STATE" 2>/dev/null
 }
 
-remember_current() {
-    _current_key=$(file_key "$1")
-    seen "$_current_key" || printf '%s\n' "$_current_key" >> "$STATE" 2>/dev/null
+state_update() {
+    _key=$1; _status=$2; _attempts=$3; _next=$4; _reason=${5:-}
+    _path=$(printf '%s\n' "$_key" | awk -F '\t' '{print $1}')
+    _bytes=$(printf '%s\n' "$_key" | awk -F '\t' '{print $2}')
+    _mtime=$(printf '%s\n' "$_key" | awk -F '\t' '{print $3}')
+    _inode=$(printf '%s\n' "$_key" | awk -F '\t' '{print $4}')
+    _tmp="${STATE}.tmp.$$"
+    if [ -r "$STATE" ]; then
+        awk -F '\t' -v p="$_path" -v b="$_bytes" -v m="$_mtime" -v i="$_inode" \
+            '$1 != p || $2 != b || $3 != m || $4 != i' "$STATE" > "$_tmp" 2>/dev/null || :
+    else
+        : > "$_tmp" 2>/dev/null || return 1
+    fi
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$_path" "$_bytes" "$_mtime" "$_inode" "$_status" "$_attempts" "$_next" "$_reason" >> "$_tmp" 2>/dev/null || {
+        rm -f "$_tmp" 2>/dev/null; return 1;
+    }
+    mv "$_tmp" "$STATE" 2>/dev/null || { rm -f "$_tmp" 2>/dev/null; return 1; }
+}
+
+state_ready() {
+    _key=$1
+    _row=$(state_lookup "$_key" 2>/dev/null || true)
+    [ -n "$_row" ] || return 0
+    _status=$(printf '%s' "$_row" | awk -F '\t' '{print $1}')
+    _next=$(printf '%s' "$_row" | awk -F '\t' '{print $3}')
+    case "$_status" in
+        baseline|accepted|rejected) return 1 ;;
+        retry|waiting_event|solving)
+            [ "${_next:-0}" -le "$(date +%s)" ] 2>/dev/null
+            return $? ;;
+        *) return 0 ;;
+    esac
 }
 
 # Record the files already present at the point at which the watcher starts or
 # an Astro session begins.  This is an admission boundary, not a solve result:
 # a later file, or a later write to a reused path, has a different key and is
-# processed normally.  Keeping this in the existing state file also preserves
-# compatibility with the pre-admission three-column format.
+# processed normally.  Rows are state records, not a permanent "seen" list:
+# failed solves can retry and stale in-flight work can be reclaimed.
 prime_existing() {
     for _d in $DIRS $EXTRA; do
         [ -d "$_d" ] || continue
         for _f in "$_d"/*.jpg "$_d"/*.JPG "$_d"/*.jpeg "$_d"/*.JPEG; do
             [ -f "$_f" ] || continue
             _key=$(file_key "$_f")
-            seen "$_key" || printf '%s\n' "$_key" >> "$STATE" 2>/dev/null
+            _mtime=$(printf '%s\n' "$_key" | awk -F '\t' '{print $3}')
+            if [ "$FRAME_REQUIRE_CAPTURE_EVENT" = "0" ] || [ "$SESSION_START_EPOCH" -eq 0 ] 2>/dev/null || [ "${_mtime:-0}" -lt "$SESSION_START_EPOCH" ] 2>/dev/null; then
+                state_update "$_key" baseline 0 0 startup
+            elif capture_event_matches "$_f"; then
+                : # A completed event raced the admission scan; leave it eligible.
+            else
+                state_update "$_key" waiting_event 0 "$((SESSION_START_EPOCH + FRAME_RETRY_DELAY))" no_event
+            fi
         done
     done
     : > "$ADMISSION" 2>/dev/null || true
@@ -127,7 +199,75 @@ valid_stable_jpeg() {
     _b=$(wc -c < "$_f" 2>/dev/null | tr -d ' ')
     [ "${_a:-0}" = "${_b:-1}" ] || return 1
     _tail=$(tail -c 2 "$_f" 2>/dev/null | od -An -t x1 | tr -d ' \n')
-    [ "$_tail" = "ffd9" ]
+    [ "$_tail" = "ffd9" ] || return 1
+    # libjpeg is the structural validator.  A starless but structurally valid
+    # frame returns 3 from polaris-extract and remains eligible for solving;
+    # truncated/corrupt JPEGs return a different failure code.
+    if [ -x "$ASTRO/polaris-extract" ]; then
+        "$ASTRO/polaris-extract" --jpeg "$_f" --downsample 8 --max-stars 1 >/dev/null 2>/dev/null
+        _rc=$?
+        [ "$_rc" -eq 0 ] || [ "$_rc" -eq 3 ] || return 1
+    fi
+    return 0
+}
+
+snapshot_frame() {
+    _src=$1
+    valid_stable_jpeg "$_src" || return 1
+    _before=$(file_key "$_src") || return 1
+    _tmp=$(mktemp "${TMPDIR:-/tmp}/polaris-frame.XXXXXX.jpg" 2>/dev/null) || return 1
+    if ! cp "$_src" "$_tmp" 2>/dev/null; then
+        rm -f "$_tmp" 2>/dev/null; return 1
+    fi
+    _after=$(file_key "$_src" 2>/dev/null || true)
+    if [ "$_before" != "$_after" ] || ! valid_stable_jpeg "$_tmp"; then
+        rm -f "$_tmp" 2>/dev/null; return 1
+    fi
+    # The stat key catches normal publication races; cksum catches an unusual
+    # same-size rewrite whose mtime has not advanced at the filesystem tick.
+    _src_crc=$(cksum "$_src" 2>/dev/null | awk '{print $1 "\t" $2}')
+    _tmp_crc=$(cksum "$_tmp" 2>/dev/null | awk '{print $1 "\t" $2}')
+    if [ -z "$_src_crc" ] || [ "$_src_crc" != "$_tmp_crc" ]; then
+        rm -f "$_tmp" 2>/dev/null; return 1
+    fi
+    printf '%s\n' "$_tmp"
+}
+
+preserve_failed() {
+    _snapshot=$1; _source=$2; _json=$3; _attempt=$4
+    [ -f "$_snapshot" ] || return 0
+    mkdir -p "$FAILED_DIR" 2>/dev/null || return 0
+    _stamp=$(date -u '+%Y%m%dT%H%M%SZ')
+    _base=$(basename "$_source")
+    _dest="$FAILED_DIR/${_stamp}.$$.$_attempt.$_base"
+    cp "$_snapshot" "$_dest" 2>/dev/null || return 0
+    printf '%s\n' "$_json" > "$_dest.json" 2>/dev/null || true
+    _n=0
+    for _old in $(ls -1t "$FAILED_DIR"/*.jpg "$FAILED_DIR"/*.JPG "$FAILED_DIR"/*.jpeg "$FAILED_DIR"/*.JPEG 2>/dev/null); do
+        _n=$((_n + 1))
+        [ "$_n" -le "$MAX_FAILED_FRAMES" ] || rm -f "$_old" "$_old.json" 2>/dev/null || true
+    done
+}
+
+writeback_exif_after_quality() {
+    _source=$1; _snapshot=$2; _json=$3; _original_key=$4
+    [ "${EXIF_WRITEBACK:-0}" = "1" ] || return 0
+    [ -x "$ASTRO/polaris-exif-solve" ] || { log "EXIF writeback requested but polaris-exif-solve is missing"; return 1; }
+    _json_tmp="${_snapshot}.json.$$"
+    _out="${_source}.polaris-exif.tmp.$$"
+    printf '%s\n' "$_json" > "$_json_tmp" 2>/dev/null || return 1
+    if ! "$ASTRO/polaris-exif-solve" --in "$_snapshot" --out "$_out" --json "$_json_tmp" >/dev/null 2>>"$LOG"; then
+        rm -f "$_json_tmp" "$_out" 2>/dev/null; return 1
+    fi
+    rm -f "$_json_tmp" 2>/dev/null
+    if ! valid_stable_jpeg "$_out" || [ "$(file_key "$_source" 2>/dev/null || true)" != "$_original_key" ]; then
+        rm -f "$_out" 2>/dev/null
+        log "EXIF writeback refused: source changed or output failed validation"
+        return 1
+    fi
+    mv "$_out" "$_source" 2>/dev/null || { rm -f "$_out" 2>/dev/null; return 1; }
+    log "EXIF solve metadata committed after quality gate for $(basename "$_source")"
+    return 0
 }
 
 # In the safe default mode, a stable JPEG is not enough: the capture/publish
@@ -199,7 +339,10 @@ record_solution() {
     _tmp="${FRAME_STATE}.tmp.$$"
     printf '%s\n' "$_json" > "$_tmp" 2>/dev/null && \
         mv "$_tmp" "$FRAME_STATE" 2>/dev/null || rm -f "$_tmp" 2>/dev/null
-    printf '%s\n' "$_json" > /tmp/polaris-last-frame-solution.json
+    _tmp_last=/tmp/polaris-last-frame-solution.json.tmp.$$
+    printf '%s\n' "$_json" > "$_tmp_last" 2>/dev/null && \
+        mv "$_tmp_last" /tmp/polaris-last-frame-solution.json 2>/dev/null || \
+        rm -f "$_tmp_last" 2>/dev/null
 }
 
 solve_one() {
@@ -208,7 +351,10 @@ solve_one() {
     run_align() {
         _mount_hint=$1
         shift
-        EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-${EXIF_WRITEBACK:-0}} \
+        # The watcher solves an immutable snapshot.  Metadata is committed only
+        # after the quality gate below, so a weak/false solve cannot mutate the
+        # user's JPEG.
+        EMBED_SOLVE_EXIF=0 \
         SOLVER_BIN="$SOLVER_BIN" INDEPENDENT_CATALOG="$INDEPENDENT_CATALOG" \
         INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
         INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
@@ -317,32 +463,54 @@ assess_and_optionally_correct() {
 process() {
     _f=$1
     _key=$(file_key "$_f")
-    seen "$_key" && return 0
+    state_ready "$_key" || return 0
     valid_stable_jpeg "$_f" || return 0
     if ! capture_event_matches "$_f"; then
         log "withholding $(basename "$_f"): no matching capture-completion event"
+        state_update "$_key" waiting_event 0 "$(( $(date +%s) + FRAME_RETRY_DELAY ))" no_event
         return 0
     fi
-    printf '%s\n' "$_key" >> "$STATE" 2>/dev/null
+    _snapshot=$(snapshot_frame "$_f" 2>/dev/null || true)
+    [ -n "$_snapshot" ] || return 0
+    _row=$(state_lookup "$_key" 2>/dev/null || true)
+    _attempt=$(printf '%s' "$_row" | awk -F '\t' '{print $2}')
+    _attempt=${_attempt:-0}
+    _attempt=$((_attempt + 1))
+    state_update "$_key" solving "$_attempt" "$(( $(date +%s) + FRAME_SOLVE_LEASE ))" in_progress
     log "processing completed Astro JPEG $_f"
-    _j=$(solve_one "$_f")
-    trim_file "$HISTORY" "$MAX_HISTORY_BYTES"
-    printf '%s\t%s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$_j" >> "$HISTORY" 2>/dev/null
+    _j=$(solve_one "$_snapshot" 2>/dev/null || true)
+    [ -n "$_j" ] || _j='{"solved":false,"failure_reason":"solver_no_output"}'
     if quality_ok "$_j"; then
+        state_update "$_key" accepted "$_attempt" 0 quality_ok
         record_solution "$_j"
-        # polaris-align may have replaced the local JPEG with its EXIF-enriched
-        # copy. Remember that new key, otherwise the watcher would treat its
-        # own successful write as a fresh capture on the next poll.
-        remember_current "$_f"
+        writeback_exif_after_quality "$_f" "$_snapshot" "$_j" "$_key" || true
+        # The source may now have a new EXIF key.  Record the post-write key so
+        # our own atomic replacement cannot look like a fresh capture.
+        _post_key=$(file_key "$_f" 2>/dev/null || true)
+        [ -n "$_post_key" ] && state_update "$_post_key" accepted "$_attempt" 0 quality_ok
         assess_and_optionally_correct "$_f" "$_j"
     else
-        log "solve rejected for $(basename "$_f"): $_j"
+        preserve_failed "$_snapshot" "$_f" "$_j" "$_attempt"
+        if [ "$_attempt" -lt "$MAX_SOLVE_ATTEMPTS" ] 2>/dev/null; then
+            state_update "$_key" retry "$_attempt" "$(( $(date +%s) + FRAME_RETRY_DELAY ))" quality_rejected
+            log "solve rejected for $(basename "$_f"); retry $_attempt/$MAX_SOLVE_ATTEMPTS: $_j"
+        else
+            state_update "$_key" rejected "$_attempt" 0 quality_rejected
+            log "solve rejected permanently for $(basename "$_f"): $_j"
+        fi
     fi
+    trim_file "$HISTORY" "$MAX_HISTORY_BYTES"
+    printf '%s\t%s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$_j" >> "$HISTORY" 2>/dev/null
+    rm -f "$_snapshot" 2>/dev/null
 }
 
 start_session() {
     SESSION_ID="$(date -u '+%Y%m%dT%H%M%SZ')-$$"
     SESSION_START_EPOCH="$(date +%s)"
+    # Rotate only at the session boundary, before normal capture processing.
+    # Rotating a ledger while gp_file_save() is appending could otherwise lose
+    # a just-published event between the read and atomic rename.
+    trim_file "$CAPTURE_EVENT_LEDGER" "$MAX_CAPTURE_EVENT_BYTES"
     printf '%s\n' "$SESSION_ID" > "${SESSION_FILE}.tmp.$$" 2>/dev/null && \
         mv "${SESSION_FILE}.tmp.$$" "$SESSION_FILE" 2>/dev/null || \
         rm -f "${SESSION_FILE}.tmp.$$" 2>/dev/null

@@ -90,6 +90,11 @@ FRAME_MIN_BYTES=10000
 # an exact path/size/mtime event to /app/sd/polaris-astro/capture-events.tsv.
 # Set 0 only for a controlled local-admission experiment.
 FRAME_REQUIRE_CAPTURE_EVENT=1
+FRAME_MAX_SOLVE_ATTEMPTS=3
+FRAME_RETRY_DELAY=15
+FRAME_SOLVE_LEASE=300
+FRAME_MAX_FAILED_FRAMES=20
+FRAME_MAX_CAPTURE_EVENT_BYTES=1048576
 
 # ---- web UI + Alpaca ------------------------------------------------------
 # 8080 is pgphoto's own MJPG stream; 80, 8081, 9090 and 22 are also taken.

@@ -1,14 +1,17 @@
 /* SPDX-License-Identifier: MIT */
 /*
  * Add one private UserComment EXIF tag while leaving the original JPEG bytes
- * intact after SOI. The caller writes to a same-directory temporary file and
- * atomically renames it only after this program succeeds.
+ * intact after SOI. The writer uses a same-directory temporary file, flushes
+ * and fsyncs it, then atomically renames it and fsyncs the parent directory.
  */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -79,6 +82,28 @@ static int read_text(const char *path, char **text_out, size_t *length_out) {
     return 1;
 }
 
+static int sync_parent_directory(const char *path) {
+    char parent[PATH_MAX];
+    char *slash;
+    int fd;
+    int rc;
+
+    if (strlen(path) >= sizeof(parent)) return 0;
+    strcpy(parent, path);
+    slash = strrchr(parent, '/');
+    if (slash) {
+        if (slash == parent) slash[1] = '\0';
+        else *slash = '\0';
+    } else {
+        strcpy(parent, ".");
+    }
+    fd = open(parent, O_RDONLY);
+    if (fd < 0) return 0;
+    rc = fsync(fd);
+    close(fd);
+    return rc == 0;
+}
+
 int main(int argc, char **argv) {
     const char *input = NULL;
     const char *output = NULL;
@@ -89,6 +114,10 @@ int main(int argc, char **argv) {
     char *json_text = NULL;
     size_t input_size = 0, json_size = 0, app_size, i;
     FILE *file = NULL;
+    char temp_path[PATH_MAX] = {0};
+    int temp_fd = -1;
+    int temp_created = 0;
+    struct stat input_stat;
     unsigned char header[4];
     unsigned segment_length;
     int ok = 0;
@@ -103,6 +132,7 @@ int main(int argc, char **argv) {
     if (!read_all(input, &input_data, &input_size) ||
         !read_text(json, &json_text, &json_size)) goto done;
     if (input_data[0] != 0xff || input_data[1] != 0xd8) goto done;
+    if (stat(input, &input_stat) != 0) goto done;
 
     /* JPEG APP1 length includes its two-byte length field. */
     if (json_size > 65533U - 40U) goto done;
@@ -125,8 +155,14 @@ int main(int argc, char **argv) {
     memcpy(app + 32, prefix, sizeof(prefix) - 1U);
     memcpy(app + 40, json_text, json_size);
 
-    file = fopen(output, "wb");
+    if (snprintf(temp_path, sizeof(temp_path), "%s.tmp.XXXXXX", output) >= (int)sizeof(temp_path)) goto done;
+    temp_fd = mkstemp(temp_path);
+    if (temp_fd < 0) goto done;
+    temp_created = 1;
+    file = fdopen(temp_fd, "wb");
     if (!file) goto done;
+    temp_fd = -1;
+    (void) fchmod(fileno(file), input_stat.st_mode & 07777);
     header[0] = 0xff; header[1] = 0xe1;
     header[2] = (unsigned char)(segment_length >> 8);
     header[3] = (unsigned char)segment_length;
@@ -138,10 +174,15 @@ int main(int argc, char **argv) {
          fsync(fileno(file)) == 0;
     if (fclose(file) != 0) ok = 0;
     file = NULL;
-    if (!ok) unlink(output);
+    if (!ok) goto done;
+    if (rename(temp_path, output) != 0) goto done;
+    temp_created = 0;
+    ok = sync_parent_directory(output);
 
 done:
     if (file) fclose(file);
+    if (temp_fd >= 0) close(temp_fd);
+    if (temp_created) unlink(temp_path);
     free(input_data);
     free(json_text);
     free(app);

@@ -25,6 +25,8 @@ def test_autosolve_quality_gate_understands_native_result_shape():
     assert 'solve_frame "$STUB_FRAME" "$_hra" "$_hdec"' in text
     assert 'solve_frame "$_f" "$_ra" "$_dec"' in text
     assert 'polaris-pointing-model.sh" reset' in text
+    assert 'SESSION_FILE=${SESSION_FILE:-/app/sd/polaris-astro/session-id}' in text
+    assert '"session_id":"%s"' in text
 
 
 def test_boot_exports_solver_configuration_to_daemons():
@@ -60,6 +62,9 @@ def test_exif_writer_flushes_and_validates_atomic_temp_input():
     assert "fsync(fileno(file))" in writer
     assert "write_all" in writer
     assert "if (segment_length > 65535U)" in writer
+    assert "sync_parent_directory" in writer
+    assert "rename(temp_path, output)" in writer
+    assert "unlink(output)" not in writer
 
 
 def test_exif_focal_parser_fails_closed_on_wrapped_offsets():
@@ -116,5 +121,7 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'FRAME_REQUIRE_CAPTURE_EVENT="${FRAME_REQUIRE_CAPTURE_EVENT:-1}"' in boot
     assert 'MAX_TELEMETRY_BYTES' in frame and 'MAX_HISTORY_BYTES' in frame
     assert 'session_id' in wrapper
+    assert 'SESSION_FILE=${SESSION_FILE:-/app/sd/polaris-astro/session-id}' in (ONDISK / "solve-now.sh").read_text()
+    assert '"session_id":"%s"' in (ONDISK / "solve-now.sh").read_text()
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd
     assert '/api/astro/solve' in httpd and 'last-frame-solution.json' in httpd

@@ -33,12 +33,17 @@
 set -u
 ASTRO=${ASTRO:-/app/astro}
 LOG=${LOG:-/app/sd/polaris-autosolve.log}
+SESSION_FILE=${SESSION_FILE:-/app/sd/polaris-astro/session-id}
 DRY_RUN=${DRY_RUN:-1}
 FOCAL=${FOCAL_MM:-400}
 MIN_LOGODDS=${MIN_LOGODDS:-100}
 MIN_MATCHES=${MIN_MATCHES:-12}
 MAX_SOLVE_RMS_PX=${MAX_SOLVE_RMS_PX:-3.0}
 LIVEVIEW_PORT=${LIVEVIEW_PORT:-8080}
+
+current_session_id() {
+    sed -n '1p' "$SESSION_FILE" 2>/dev/null | tr -cd 'A-Za-z0-9._-'
+}
 
 # ---- TEST MODE -------------------------------------------------------------
 # STUB_FRAME  solve THIS image instead of grabbing live view / firing a frame.
@@ -351,10 +356,12 @@ record_solution() {
     LAST_SOLVED_MATCHES=$(echo "$_s" | sed -n 's/.*"matched_count":\([0-9]*\).*/\1/p')
     LAST_SOLVED_JSON=/tmp/polaris-last-solution.json
     TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
+    SESSION_ID=$(current_session_id)
     printf '%s\n' "$_s" > "$LAST_SOLVED_JSON"
     mkdir -p "$(dirname "$TARGET_FILE")" 2>/dev/null
     _target_tmp="${TARGET_FILE}.tmp.$$"
-    printf '{"target_ra_deg":%s,"target_dec_deg":%s,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"updated":"%s"}\n' \
+    printf '{"session_id":"%s","target_ra_deg":%s,"target_dec_deg":%s,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"updated":"%s"}\n' \
+        "$SESSION_ID" \
         "$LAST_SOLVED_RA" "$LAST_SOLVED_DEC" "$LAST_SOLVED_RA" "$LAST_SOLVED_DEC" \
         "${LAST_SOLVED_ROTATION:-0}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" > "$_target_tmp" 2>/dev/null \
         && mv "$_target_tmp" "$TARGET_FILE" 2>/dev/null || rm -f "$_target_tmp" 2>/dev/null

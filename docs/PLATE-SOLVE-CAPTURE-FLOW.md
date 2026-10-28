@@ -51,27 +51,32 @@ There are three materially different flows:
 
 The hook is opt-in: AUTO_SOLVE_FRAMES=1 plus mode:8 and stable-file
 admission are required before a JPEG is sent to the solver. In its safe default
-the watcher additionally requires a capture-completion ledger event; the
-producer is not yet wired into pgphoto, so unattended operation must remain
-disabled until that owner can correlate a transfer event to its exact local
-path.
+the watcher additionally requires a capture-completion ledger event. The
+companion `feature/polaris-capture-events` libgphoto2 branch (commit
+`54cc81439`) emits that event
+from the `gp_file_save()` local-publication boundary for JPEGs under
+`/app/sd`; the embedded pgphoto path still needs an end-to-end device test to
+prove that it uses this boundary for every supported capture mode.
 
 The watcher establishes an admission boundary when it starts and whenever a
 new Astro session opens. Files already present at that boundary are recorded
 as baseline content and are not solved as if they were new Astro captures.
 Subsequent `.jpg`, `.JPG`, `.jpeg`, and `.JPEG` files are admitted after their
-size is stable and their JPEG end marker is present. A reused filename is
-eligible again when its size or modification time changes. This prevents a
-reboot or a mode transition from re-solving an entire old gallery while still
-covering new files published during an enabled session.
+size is stable, their JPEG end marker is present, libjpeg can parse them, and a
+copy made for solving still matches the source's size/mtime/inode/checksum.
+A reused filename is eligible again when its file identity changes. The state
+ledger records baseline, waiting, in-progress, accepted, retry, and terminal
+rejected states; a failed/timeout solve is retried with a bounded lease rather
+than permanently suppressing that frame.
 
 For the safe unattended setting, the watcher also requires a row in
 `/app/sd/polaris-astro/capture-events.tsv` in the form
 `epoch<TAB>absolute-path<TAB>bytes<TAB>mtime`. The row must match the stable
 local file exactly and be from the current Astro session. This is the handoff
-contract the eventual pgphoto/publication producer must implement; until then,
-the watcher records that it withheld the file rather than guessing which
-capture caused it.
+contract between the publication producer and the watcher. If no producer
+event arrives, the watcher records that it withheld the file rather than
+guessing which capture caused it. The event ledger is bounded by the watcher
+and is not a source of image data.
 
 This is a local-admission guarantee, not a camera-transfer guarantee. The
 watcher cannot recover a frame that the camera/head never publishes under
@@ -153,19 +158,22 @@ For any frame explicitly sent to `polaris-align.sh`:
 
 ```text
 local JPEG
+  -> stable/structurally valid check
+  -> immutable temporary snapshot
   -> polaris-extract
   -> local star list with full-resolution coordinates
   -> selected solver
   -> solved=true plus RA/Dec/scale/roll/confidence fields
   -> quality gate in the caller
-  -> polaris-exif-solve writes a temporary JPEG
+  -> optional polaris-exif-solve writeback
   -> successful temporary output is moved over the local input path
 ```
 
-The current EXIF writer is local-only. It writes a unique same-directory
-temporary file, flushes the generated JPEG before returning success, validates
-the JPEG end marker, and only then atomically renames it over the local input;
-on any failure, the original local file is retained. The camera-card file is
+The frame watcher never gives the solver the mutable source path. It solves an
+immutable temporary snapshot and keeps EXIF writeback after the quality gate;
+on a weak/failed solve the source is untouched and a bounded diagnostic copy is
+placed under `/app/sd/polaris-astro/failed/`. The native EXIF writer flushes
+its output before the caller's atomic replacement; the camera-card file is
 outside this operation.
 
 This is stronger crash handling, but it is not a claim of full power-loss
@@ -205,6 +213,7 @@ as something that the head consumes before tracking starts.
 | Camera original | camera SD or camera internal storage | camera-owned | Never modified by the current EXIF path |
 | Failed-solve evidence | `/app/sd/polaris-astro/failed/` | bounded retention | Diagnostic copy, not a source of truth |
 | Last solution | `/tmp/polaris-last-solution.json` | temporary | Runtime state; not durable provenance |
+| Capture event ledger | `/app/sd/polaris-astro/capture-events.tsv` | bounded | Publication evidence, not image data |
 
 The camera-side and Polaris-side files must be treated as separate objects. A
 matching filename or capture announcement is not sufficient proof that the
@@ -218,20 +227,21 @@ The following invariants should hold before this becomes an unattended feature.
 ### Capture and file safety
 
 - Never solve a file while it is still being written.
-- Require a stable size across two observations, a valid JPEG structure, and a
-  completed transfer result.
+- Require a stable size across two observations, libjpeg validation, a
+  completed transfer result, and a source-to-snapshot identity check.
 - Never select a merely newest file without recording the capture event or
   proving it appeared after the triggering event.
 - Start the watcher before entering Astro mode when unattended per-frame
   solving is required. Its admission ledger intentionally excludes files that
   predate the active session.
-- Preserve the original local JPEG. The runtime therefore leaves EXIF
-  write-back disabled unless `EXIF_WRITEBACK=1` is explicitly set for a
-  controlled test. Prefer a sidecar or a new derived file until EXIF
-  round-trip and crash-recovery testing are complete.
+- Preserve the original local JPEG on failed/low-confidence solves. The
+  runtime leaves EXIF write-back disabled unless `EXIF_WRITEBACK=1` is
+  explicitly set for a controlled test; when enabled, it runs only after the
+  quality gate and refuses the replacement if the source identity changed.
 - Use a same-directory temporary file, `fsync`, and atomic rename only after
   validation. Do not unlink the only known-good copy first.
-- Bound failed-frame retention and prevent a full SD card from stopping capture.
+- Bound failed-frame and event-ledger retention and prevent a full SD card from
+  stopping capture.
 
 ### Solver safety
 
