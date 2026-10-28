@@ -9,12 +9,12 @@
     {
       "component": "libgphoto2",
       "summary": "Build the current libgphoto2 main branch, including the merged IMAGE Transmitter 2 format-domain separation and K-1/K-1 II live-view start changes. The open focus audit branch is deliberately not included in this candidate.",
-      "issues": [134, 135]
+      "issues": ["#134", "#135"]
     },
     {
       "component": "patcher",
       "summary": "Build from patcher main, including the merged Stage-2 empty-choice guard and the release identity, manifest, differential, and verified extracted-tree install process.",
-      "issues": [229, 250]
+      "issues": ["#229", "#250"]
     }
   ],
   "validation_focus": [
