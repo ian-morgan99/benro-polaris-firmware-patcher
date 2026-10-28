@@ -2,9 +2,11 @@
 # One-command reproducible candidate build and optional verified deployment.
 #
 # Usage:
-#   ./scripts/release/build-and-install.sh                 # build only
-#   ./scripts/release/build-and-install.sh --install       # build, wake, install
-#   ./scripts/release/build-and-install.sh --install --wait 180
+#   CHANGE_SUMMARY=docs/release-summaries/<candidate>.json \
+#   CANDIDATE_ID=o-v18i-k1ii-k3iii-controlled-20261028 \
+#   DISPLAY_FWVER=6.0.0.54.86 \
+#   BUILD_ID=6.0.0.54.86-o-v18i-k1ii-k3iii-controlled-20261028 \
+#   ./scripts/release/build-and-install.sh --install
 set -euo pipefail
 
 ORIGINAL_ARGS=("$@")
@@ -19,6 +21,7 @@ LIBGPHOTO_REPO="${LIBGPHOTO_REPO:-https://github.com/ian-morgan99/libgphoto2.git
 CANDIDATE_ID="${CANDIDATE_ID:-o-v18g-reproducible-$(date -u +%Y%m%d)}"
 DISPLAY_FWVER="${DISPLAY_FWVER:-6.0.0.54.77}"
 BUILD_ID="${BUILD_ID:-${DISPLAY_FWVER}-${CANDIDATE_ID}}"
+CHANGE_SUMMARY="${CHANGE_SUMMARY:-}"
 INSTALL=0
 WAIT_AP=120
 SCAN=20
@@ -26,7 +29,7 @@ SCAN=20
 usage() {
   sed -n '2,12p' "$0"
   echo
-  echo "Environment overrides: STOCK_FWPKT LIBGPHOTO_REPO CANDIDATE_ID DISPLAY_FWVER BUILD_ID"
+  echo "Environment overrides: STOCK_FWPKT LIBGPHOTO_REPO CANDIDATE_ID DISPLAY_FWVER BUILD_ID CHANGE_SUMMARY"
   exit 2
 }
 
@@ -77,6 +80,17 @@ docker info >/dev/null 2>&1 || {
   echo "ERROR: stock base not found: $STOCK_FWPKT/FwPkt/firmwareInfo" >&2
   exit 2
 }
+[ -n "$CHANGE_SUMMARY" ] || {
+  echo "ERROR: CHANGE_SUMMARY is required; every candidate must state exactly what changed." >&2
+  exit 2
+}
+[ -f "$ROOT/$CHANGE_SUMMARY" ] || [ -f "$CHANGE_SUMMARY" ] || {
+  echo "ERROR: change summary not found: $CHANGE_SUMMARY" >&2
+  exit 2
+}
+if [ -f "$ROOT/$CHANGE_SUMMARY" ]; then
+  CHANGE_SUMMARY="$ROOT/$CHANGE_SUMMARY"
+fi
 
 TMP_SRC="$(mktemp -d /tmp/libgphoto2-release.XXXXXX)"
 cleanup() {
@@ -91,8 +105,9 @@ echo "== clean libgphoto2 source =="
 git clone --branch main --single-branch "$LIBGPHOTO_REPO" "$TMP_SRC"
 
 echo "== build candidate $CANDIDATE_ID ($DISPLAY_FWVER) =="
-"$ROOT/scripts/build-release-candidate.sh" \
-  "$CANDIDATE_ID" "$STOCK_FWPKT" "$TMP_SRC" "$BUILD_ID" "$DISPLAY_FWVER"
+  "$ROOT/scripts/build-release-candidate.sh" \
+  "$CANDIDATE_ID" "$STOCK_FWPKT" "$TMP_SRC" "$BUILD_ID" "$DISPLAY_FWVER" \
+  --change-summary "$CHANGE_SUMMARY"
 
 BUILD_DIR="$ROOT/out/$CANDIDATE_ID"
 if [ "$INSTALL" -eq 0 ]; then

@@ -198,6 +198,20 @@ docker run --rm \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"
 
+# The patcher container runs as root so it can create the firmware filesystem.
+# That leaves the mounted candidate files owned by root, which prevents the
+# host-side release builder from adding its immutable release metadata. Return
+# ownership of the complete output tree to the invoking user before any host
+# validation or publication step runs.
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+echo "[*] returning candidate ownership to host uid=${HOST_UID} gid=${HOST_GID}"
+docker run --rm --user 0 \
+  --entrypoint /bin/sh \
+  -v "$OUT":/out \
+  "$IMG" \
+  -c 'chown -R "$1:$2" /out' sh "$HOST_UID" "$HOST_GID"
+
 echo
 echo "[✓] Output in: $OUT"
 echo "    - $OUT/FwPkt/         (unpacked custom firmware)"
