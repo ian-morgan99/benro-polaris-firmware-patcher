@@ -2,7 +2,7 @@
 
 **Review date:** 2026-10-28
 **Implementation branch:** [`feature/astro-native-platesolve`](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/tree/feature/astro-native-platesolve)
-**Current source checkpoint:** `5912176`
+**Current source checkpoint:** `07d863a`
 
 This is the concise product README for the Astro work. It explains what is
 implemented, what is actually wired together, what has only been tested on a
