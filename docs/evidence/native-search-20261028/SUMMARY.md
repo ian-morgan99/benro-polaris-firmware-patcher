@@ -88,6 +88,12 @@ Observed ratios above the 16-bit on-disk range are discarded rather than
 folded into the saturated key; this corrected a false candidate flood during
 the native implementation check.
 
+Negative contract checks on the same host build returned `search_exhausted`
+for a 150 mm focal-length error, an empty star list, and a deliberately wrong
+RA/Dec hint. Removing that wrong hint and rerunning the indexed all-sky search
+returned the regional solve, which is the fallback now wired into
+`polaris-align.sh`.
+
 ## Qualification boundary
 
 This proves that the device-facing search executable can exercise the native C

@@ -35,6 +35,7 @@ INDEPENDENT_TRIANGLE_INDEX=${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/c
 INDEPENDENT_MAX_CATALOG=${INDEPENDENT_MAX_CATALOG:-120}
 INDEPENDENT_ANCHOR_STARS=${INDEPENDENT_ANCHOR_STARS:-10}
 INDEPENDENT_SCALE_TOL=${INDEPENDENT_SCALE_TOL:-0.15}
+INDEPENDENT_ATTEMPTS=${INDEPENDENT_ATTEMPTS:-40}
 DOWNSAMPLE=${DOWNSAMPLE:-4}
 MAXSTARS=${MAXSTARS:-200}
 # never let one frame block the loop; a mismatched hint can grind for minutes
@@ -57,6 +58,7 @@ echo "[polaris-align] sensor width: ${SENSOR_MM}mm (${SENSOR_SOURCE})${CAMERA_MO
 IMG="$1"
 FOCAL="${2:-}"
 RA="${3:-}"; DEC="${4:-}"; RADIUS="${5:-}"
+USE_HINT=1
 
 [ -n "$IMG" ] || { echo "usage: $0 <image.jpg> [focal_mm] [ra dec radius]" >&2; exit 2; }
 [ -f "$IMG" ] || { echo "no such image: $IMG" >&2; exit 2; }
@@ -202,7 +204,7 @@ solve_with() {
                 --triangle-index "$INDEPENDENT_TRIANGLE_INDEX" \
                 --solver "$ASTRO/polaris-solve-independent" --stars "$STARS" --width "$W" --height "$H" \
                 --max-catalog "$INDEPENDENT_MAX_CATALOG" --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
-                --min-matches "${MIN_MATCHES:-12}" \
+                --attempts "$INDEPENDENT_ATTEMPTS" --min-matches "${MIN_MATCHES:-12}" \
                 --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
         else
             set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" \
@@ -210,13 +212,14 @@ solve_with() {
                 --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
                 --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
         fi
-        [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
+        [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
+            set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
         "$ASTRO/$SOLVER_BIN" "$@"
         return $?
     fi
     set -- $IDXARGS --stars "$STARS" --width "$W" --height "$H" --cpulimit "$SOLVE_TIMEOUT"
     [ -n "$_scale" ] && set -- "$@" $_scale
-    [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
+    [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
         set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
     "$ASTRO/$SOLVER_BIN" "$@"
 }
@@ -266,8 +269,17 @@ fi
 
 [ "$SOLVER_BIN" = "polaris-solve-independent" ] && { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
 [ "$SOLVER_BIN" = "polaris-solve-independent-search" ] && {
-    [ -n "$FOCAL" ] || { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
-    OUT=$(solve_with "--focal-mm $FOCAL --sensor-mm $SENSOR_MM")
+    SEARCH_FOCAL=${FOCAL:-${EXIF_FOCAL:-}}
+    [ -n "$SEARCH_FOCAL" ] || { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
+    [ -n "${OUT:-}" ] || OUT=$(solve_with "--focal-mm $SEARCH_FOCAL --sensor-mm $SENSOR_MM")
+    case "$OUT" in
+        *'"solved":true'*) emit_solution "$OUT"; exit 0;;
+    esac
+    if [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ]; then
+        echo "[polaris-align] indexed hint search failed -- retrying bounded blind search" >&2
+        USE_HINT=0
+        OUT=$(solve_with "--focal-mm $SEARCH_FOCAL --sensor-mm $SENSOR_MM")
+    fi
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT";; *) echo "$OUT";; esac
     exit 0
 }

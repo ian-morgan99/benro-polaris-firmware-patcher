@@ -10,6 +10,11 @@ but that hint is not trusted as truth. The search policy is:
 4. Reject weak, ambiguous, scale-inconsistent, or stale candidates.
 5. If no hint exists, begin from all-sky tile centres and use the same gates.
 
+The device alignment wrapper uses the hint first and, when the indexed hinted
+run produces no accepted result, retries the same focal length with the native
+all-sky index and its separate attempt budget. This keeps a bad mount hint from
+becoming a permanent solve failure without silently widening the first pass.
+
 `polaris-solve-independent-search.c` is the native bounded front end. It scans
 the versioned `tile-*.pcat` directory, uses the native triangle-ratio index to
 rank all-sky candidates, invokes the native C matcher without a shell,

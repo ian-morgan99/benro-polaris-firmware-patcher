@@ -11,6 +11,9 @@ def test_guide_has_a_complete_native_solver_path():
     assert '"scale_arcsec_per_px"' in text
     assert 'polaris-skysim-independent' in text
     assert '--radius "$GUIDE_HINT_RADIUS"' in text
+    assert '--catalog-dir "$INDEPENDENT_CATALOG_DIR"' in text
+    assert '--triangle-index "$INDEPENDENT_TRIANGLE_INDEX"' in text
+    assert 'INDEPENDENT_ATTEMPTS' in text
 
 
 def test_autosolve_quality_gate_understands_native_result_shape():
@@ -67,5 +70,6 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'FALLBACK_RADIUS' in frame and 'run_align' in frame
     assert 'withholding frame correction while field rotation is above threshold' in frame
     assert 'focal from config' in align and 'emit_solution "$OUT"; exit 0' in align
+    assert 'retrying bounded blind search' in align and 'USE_HINT=0' in align
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd
     assert '/api/astro/solve' in httpd and 'last-frame-solution.json' in httpd

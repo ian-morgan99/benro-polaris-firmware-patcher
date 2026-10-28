@@ -37,6 +37,13 @@ FOCAL=${FOCAL_MM:-400}
 LIVEVIEW_PORT=${LIVEVIEW_PORT:-8080}
 INDEXES=${INDEXES:-/app/sd/astrometry}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
+INDEPENDENT_CATALOG_DIR=${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}
+INDEPENDENT_CATALOG_MANIFEST=${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}
+INDEPENDENT_TRIANGLE_INDEX=${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}
+INDEPENDENT_MAX_CATALOG=${INDEPENDENT_MAX_CATALOG:-120}
+INDEPENDENT_ANCHOR_STARS=${INDEPENDENT_ANCHOR_STARS:-10}
+INDEPENDENT_SCALE_TOL=${INDEPENDENT_SCALE_TOL:-0.15}
+INDEPENDENT_ATTEMPTS=${INDEPENDENT_ATTEMPTS:-40}
 MATCH_TOL=${MATCH_TOL:-2.5}
 GUIDE_HINT_RADIUS=${GUIDE_HINT_RADIUS:-60}
 MIN_MATCHES=${MIN_MATCHES:-12}
@@ -141,11 +148,24 @@ anchor() {
               --width "$W" --height "$H" --focal-mm "$FOCAL" --sensor-mm 36 \
               --cpulimit 60 --ra "$RA" --dec "$DEC" --radius "$GUIDE_HINT_RADIUS" \
               2>/dev/null | tail -1)
+    elif [ "$SOLVER_BIN" = "polaris-solve-independent-search" ]; then
+        J=$("$ASTRO/$SOLVER_BIN" --catalog-dir "$INDEPENDENT_CATALOG_DIR" \
+              --manifest "$INDEPENDENT_CATALOG_MANIFEST" \
+              --triangle-index "$INDEPENDENT_TRIANGLE_INDEX" \
+              --solver "$ASTRO/polaris-solve-independent" --stars /tmp/guide_ref.txt \
+              --width "$W" --height "$H" --focal-mm "$FOCAL" --sensor-mm 36 \
+              --ra "$RA" --dec "$DEC" --radius "$GUIDE_HINT_RADIUS" \
+              --max-catalog "$INDEPENDENT_MAX_CATALOG" --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
+              --attempts "$INDEPENDENT_ATTEMPTS" --min-matches "$MIN_MATCHES" \
+              --scale-tol "$INDEPENDENT_SCALE_TOL" \
+              2>/dev/null | tail -1)
     else
         J=$("$ASTRO/$SOLVER_BIN" --catalog "$INDEPENDENT_CATALOG" \
               --stars /tmp/guide_ref.txt --width "$W" --height "$H" \
               --focal-mm "$FOCAL" --sensor-mm 36 --ra "$RA" --dec "$DEC" \
-              --radius "$GUIDE_HINT_RADIUS" --cpulimit 60 2>/dev/null | tail -1)
+              --radius "$GUIDE_HINT_RADIUS" --cpulimit 60 \
+              --max-catalog "$INDEPENDENT_MAX_CATALOG" --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
+              --scale-tol "$INDEPENDENT_SCALE_TOL" 2>/dev/null | tail -1)
     fi
     echo "$J" | grep -q '"solved":true' || { log "  anchor solve failed"; return 1; }
     if [ "$SOLVER_BIN" != "polaris-solve" ]; then
