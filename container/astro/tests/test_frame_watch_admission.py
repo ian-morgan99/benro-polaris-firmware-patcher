@@ -34,6 +34,7 @@ def test_frame_watch_admits_only_new_or_changed_jpegs(tmp_path):
     align = astro / "polaris-align.sh"
     align.write_text(
         '#!/bin/sh\n'
+        'printf \'x\\377\\331\' >> "$1"\n'
         'printf \'{"solved":true,"ra_deg":1,"dec_deg":2,"matched_count":20,"rms_px":1.0,"rotation_deg":3}\\n\'\n'
     )
     align.chmod(align.stat().st_mode | stat.S_IXUSR)

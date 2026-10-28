@@ -71,6 +71,11 @@ seen() {
     [ -r "$STATE" ] && grep -F -x -q "$1" "$STATE" 2>/dev/null
 }
 
+remember_current() {
+    _current_key=$(file_key "$1")
+    seen "$_current_key" || printf '%s\n' "$_current_key" >> "$STATE" 2>/dev/null
+}
+
 # Record the files already present at the point at which the watcher starts or
 # an Astro session begins.  This is an admission boundary, not a solve result:
 # a later file, or a later write to a reused path, has a different key and is
@@ -246,6 +251,10 @@ process() {
     printf '%s\t%s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$_j" >> "$HISTORY" 2>/dev/null
     if quality_ok "$_j"; then
         record_solution "$_j"
+        # polaris-align may have replaced the local JPEG with its EXIF-enriched
+        # copy. Remember that new key, otherwise the watcher would treat its
+        # own successful write as a fresh capture on the next poll.
+        remember_current "$_f"
         assess_and_optionally_correct "$_f" "$_j"
     else
         log "solve rejected for $(basename "$_f"): $_j"
