@@ -41,6 +41,7 @@ def main():
     ap.add_argument("manifest")
     ap.add_argument("output")
     ap.add_argument("--max-catalog", type=int, default=15)
+    ap.add_argument("--ratio-scale", type=int, default=100)
     ap.add_argument("--index-manifest", required=True)
     args = ap.parse_args()
 
@@ -57,14 +58,14 @@ def main():
                             separation_arcsec(triple[1], triple[2])])
             if sides[0] <= 0:
                 continue
-            ratio1 = min(65535, round(RATIO_SCALE * sides[1] / sides[0]))
-            ratio2 = min(65535, round(RATIO_SCALE * sides[2] / sides[0]))
+            ratio1 = min(65535, round(args.ratio_scale * sides[1] / sides[0]))
+            ratio2 = min(65535, round(args.ratio_scale * sides[2] / sides[0]))
             records.append((ratio1, ratio2, tile_id))
 
     records.sort()
     output = Path(args.output)
     with output.open("wb") as fh:
-        fh.write(HEADER.pack(INDEX_MAGIC, 1, len(entries), len(records), RATIO_SCALE))
+        fh.write(HEADER.pack(INDEX_MAGIC, 1, len(entries), len(records), args.ratio_scale))
         for record in records:
             fh.write(TRI_REC.pack(*record))
 
@@ -74,7 +75,7 @@ def main():
         "tile_count": len(entries),
         "record_count": len(records),
         "max_catalog": args.max_catalog,
-        "ratio_scale": RATIO_SCALE,
+        "ratio_scale": args.ratio_scale,
         "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
     }
     Path(args.index_manifest).write_text(json.dumps(index_manifest, indent=2) + "\n")

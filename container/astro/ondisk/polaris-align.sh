@@ -32,7 +32,8 @@ INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polca
 INDEPENDENT_CATALOG_DIR=${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}
 INDEPENDENT_CATALOG_MANIFEST=${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}
 INDEPENDENT_TRIANGLE_INDEX=${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}
-INDEPENDENT_MAX_CATALOG=${INDEPENDENT_MAX_CATALOG:-60}
+INDEPENDENT_MAX_CATALOG=${INDEPENDENT_MAX_CATALOG:-120}
+INDEPENDENT_ANCHOR_STARS=${INDEPENDENT_ANCHOR_STARS:-10}
 INDEPENDENT_SCALE_TOL=${INDEPENDENT_SCALE_TOL:-0.15}
 DOWNSAMPLE=${DOWNSAMPLE:-4}
 MAXSTARS=${MAXSTARS:-200}
@@ -200,11 +201,13 @@ solve_with() {
             set -- --catalog-dir "$INDEPENDENT_CATALOG_DIR" --manifest "$INDEPENDENT_CATALOG_MANIFEST" \
                 --triangle-index "$INDEPENDENT_TRIANGLE_INDEX" \
                 --solver "$ASTRO/polaris-solve-independent" --stars "$STARS" --width "$W" --height "$H" \
-                --max-catalog "$INDEPENDENT_MAX_CATALOG" --min-matches "${MIN_MATCHES:-12}" \
+                --max-catalog "$INDEPENDENT_MAX_CATALOG" --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
+                --min-matches "${MIN_MATCHES:-12}" \
                 --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
         else
             set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" \
                 --cpulimit "$SOLVE_TIMEOUT" --max-catalog "$INDEPENDENT_MAX_CATALOG" \
+                --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
                 --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
         fi
         [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"

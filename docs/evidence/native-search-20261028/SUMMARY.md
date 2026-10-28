@@ -1,9 +1,9 @@
 # Native independent-solver tile-search check
 
 **Date:** 2026-10-28
-**Scope:** host-only native C search front end over the real-Gaia regional
-catalogue used by the paired solver check. This is integration evidence, not
-Polaris or camera qualification.
+**Scope:** host-only native C search front end over a 648-tile Gaia DR3
+package and five rendered scenes. This is integration evidence, not Polaris or
+camera qualification.
 
 ## What changed
 
@@ -17,8 +17,10 @@ policy reference and is not part of the device path.
 
 The production-shaped front-end settings are:
 
-- 60 brightest records per tile;
+- 120 brightest records per tile in the matcher, with 10 observed triangle
+  anchors;
 - 15 brightest records per tile in the triangle-ratio index;
+- 0.1% ratio bins with exact-bin lookup;
 - 0.15 relative scale tolerance;
 - at least 12 unique catalogue matches;
 - early return at 20 matches with RMS no greater than 1.5 px;
@@ -40,43 +42,59 @@ tile manifest SHA-256 is
 `35fc8382cd33073f1decca5592db58038de2f87f5ba515992a4ed318c2d34fb9`.
 The 648 10°×10° tiles occupy about 16 MB, and the 294,840-record native
 triangle index is 2.3 MB with SHA-256
-`08c1d349798d0a7d5ef132df86ca38b59713d9ecf6b9882795a2a06fa7d10d51` (the
-index bytes are unchanged after manifest metadata was added).
+`b432e9d0ee7af86b8a5f412cf10f1f149f9b62942d38df9a22973de239b41601`.
+The tile-manifest SHA-256 is
+`35fc8382cd33073f1decca5592db58038de2f87f5ba515992a4ed318c2d34fb9`.
+The index manifest records ratio scale 1000 and the same source-manifest
+checksum.
 
 The package is a research artefact under `out/` and is not checked into the
 source tree. The generated tile manifest carries the Gaia acknowledgement
 notice; final distribution must retain that notice and the reproducible
 manifest/checksum packaging step.
 
-## All-sky-shaped Gaia smoke
+## Indexed Gaia solve corpus
 
-Input was the 500-record ESA Gaia DR3 regional sample documented in
+The regional input was the 500-record ESA Gaia DR3 sample documented in
 [`dual-solver-gaia-20261028/SUMMARY.md`](../dual-solver-gaia-20261028/SUMMARY.md),
-partitioned into nine 10°×10° tiles. The same 4096×3072 rendered JPEG and
-40-star extraction were used.
+partitioned into nine 10°×10° tiles. Four additional scenes were rendered
+directly from the downloaded 648-tile Gaia package, at RA/Dec/roll
+(5,-5,11), (155,15,29), (255,35,47), and (305,-35,83).
 
 With no RA/Dec hint and a 648-tile, 482,106-record Gaia G<=10 catalogue, the
-native triangle index ranked the correct tile first and returned:
+native triangle index selected the correct tile within the first five
+candidates for every scene. The regional frame returned:
 
 ```json
-{"solved":true,"ra_deg":84.50363698,"dec_deg":-2.69253795,
- "scale_arcsec_per_px":7.263815,"rotation_deg":17.044168,
- "matched_count":25,"rms_px":1.403887,
- "search_attempts":1,"search_mode":"all-sky-triangle-index"}
+{"solved":true,"ra_deg":84.50185836,"dec_deg":-2.69347882,
+ "scale_arcsec_per_px":7.261666,"rotation_deg":17.048751,
+ "matched_count":28,"rms_px":1.678303,
+ "search_attempts":5,"search_mode":"all-sky-triangle-index"}
 ```
 
-The no-hint run returned 25 matches and 1.403887 px RMS in about 0.65 seconds
-wall time and 4.5 MB peak RSS. With the RA 84.5°, Dec -2.7° hint, it returned
-25 matches and 0.912492 px RMS in about 1.6 seconds for the five-attempt
-regional check. The index is 2.3 MB and the tile set is 16 MB before package
-compression.
+The no-hint run returned 28 matches and 1.678303 px RMS in 13.07 seconds for
+the five-attempt run, with 4.8 MB peak RSS. The four additional real-Gaia
+rendered scenes also solved without a hint:
+
+| scene target (RA, Dec, roll) | matches | RMS px | attempts |
+|---|---:|---:|---:|
+| (5, -5, 11) | 23 | 1.544 | 5 |
+| (155, 15, 29) | 12 | 1.065 | 5 |
+| (255, 35, 47) | 17 | 1.231 | 5 |
+| (305, -35, 83) | 15 | 1.078 | 5 |
+
+The index is 2.3 MB and the tile set is 16 MB before package compression.
+Observed ratios above the 16-bit on-disk range are discarded rather than
+folded into the saturated key; this corrected a false candidate flood during
+the native implementation check.
 
 ## Qualification boundary
 
 This proves that the device-facing search executable can exercise the native C
-solver over an indexed all-sky-shaped tile set without Python. It does not yet
-qualify the final Gaia package: the all-sky run used a rendered frame, the
-triangle index needs wrong-solve and epoch/proper-motion testing, and the
-catalogue/index provenance must be packaged atomically. ARM/GLIBC
+solver over an indexed all-sky-shaped tile set without Python, and that the
+real downloaded Gaia tile set can solve a small multi-position rendered corpus.
+It does not yet qualify the final Gaia package: the scenes are rendered rather
+than camera frames, the index needs wrong-solve and epoch/proper-motion testing,
+and the catalogue/index provenance must be packaged atomically. ARM/GLIBC
 compatibility, SD-card resource budget, real camera frames, and physical
 Polaris operation remain open gates.

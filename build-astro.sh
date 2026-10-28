@@ -4,12 +4,13 @@
 #
 #     ./build-astro.sh [--focal-min 14] [--focal-max 400] [--sensor-mm 36]
 #                      [--out DIR] [--no-indexes] [--image NAME] [--catalog FILE]
-#                      [--src-cache DIR]
+#                      [--catalog-package DIR] [--src-cache DIR]
 #
 #  Produces out/astro-bundle/ :
 #     COPY-TO-SD-CARD-ROOT/     <- drag the CONTENTS of this onto the microSD
 #         astrometry/           index files      -> /app/sd/astrometry
 #         polaris-astro/        binaries+scripts -> /app/sd/polaris-astro
+#                             + optional Gaia tile/index package
 #                             + COPYING-GPL-2.txt, SOURCE-OFFER.txt
 #     licenses/                 GPL corresponding source (see below)
 #     README.txt                how to install and test it
@@ -29,7 +30,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FMIN=14; FMAX=400; SENSOR=36; OUT="$HERE/out/astro-bundle"; IMG="polaris-patcher"; WANT_IDX=1; CATALOG=""
+FMIN=14; FMAX=400; SENSOR=36; OUT="$HERE/out/astro-bundle"; IMG="polaris-patcher"; WANT_IDX=1; CATALOG=""; CATALOG_PACKAGE=""
 # Persistent download cache. build_solver.sh defaults SRCCACHE to /work/src inside
 # the container, which is thrown away by --rm -- so today every rebuild re-downloads
 # astrometry.net and libjpeg, and (worse) the exact source that was compiled is
@@ -46,11 +47,14 @@ while [ $# -gt 0 ]; do
     --no-indexes) WANT_IDX=0; shift;;
     --image) IMG="$2"; shift 2;;
     --catalog) CATALOG="$2"; shift 2;;
+    --catalog-package) CATALOG_PACKAGE="$2"; shift 2;;
     --src-cache) SRCCACHE_DIR="$2"; shift 2;;
     -h|--help) sed -n '2,27p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
   esac
 done
+
+SD_ASTRO="$OUT/COPY-TO-SD-CARD-ROOT/polaris-astro"
 
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
@@ -69,7 +73,7 @@ docker run --rm \
   -v "$SRCCACHE_DIR":/work/src \
   -v "$OUT":/out \
   --entrypoint /bin/bash "$IMG" -c \
-  'bash /opt/patcher/astro/build_solver.sh arm /work/out/astro && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-astro && python3 /opt/patcher/astro/embed_webui.py /opt/patcher/astro/webui /tmp/webui.h && for t in polaris-logwatch polaris-match; do arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror /opt/patcher/astro/$t.c -o /work/out/astro/$t -lm || exit 1; done && arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror -I/tmp -I/opt/patcher/astro /opt/patcher/astro/polaris-httpd.c /opt/patcher/astro/polaris-link.c /opt/patcher/astro/polaris-jog.c /opt/patcher/astro/polaris-prog.c /opt/patcher/astro/polaris-astro.c -o /work/out/astro/polaris-httpd -lm && cp /work/out/astro/polaris-solve /work/out/astro/polaris-solve-independent /work/out/astro/polaris-exif-solve /work/out/astro/polaris-extract /work/out/astro/polaris-mount /work/out/astro/polaris-skysim /work/out/astro/polaris-skysim-independent /work/out/astro/polaris-httpd /work/out/astro/polaris-logwatch /work/out/astro/polaris-match /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/*.sh /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/site.conf.example /out/COPY-TO-SD-CARD-ROOT/polaris-astro/'
+  'bash /opt/patcher/astro/build_solver.sh arm /work/out/astro && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-astro && python3 /opt/patcher/astro/embed_webui.py /opt/patcher/astro/webui /tmp/webui.h && for t in polaris-logwatch polaris-match; do arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror /opt/patcher/astro/$t.c -o /work/out/astro/$t -lm || exit 1; done && arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror -I/tmp -I/opt/patcher/astro /opt/patcher/astro/polaris-httpd.c /opt/patcher/astro/polaris-link.c /opt/patcher/astro/polaris-jog.c /opt/patcher/astro/polaris-prog.c /opt/patcher/astro/polaris-astro.c -o /work/out/astro/polaris-httpd -lm && cp /work/out/astro/polaris-solve /work/out/astro/polaris-solve-independent /work/out/astro/polaris-solve-independent-search /work/out/astro/polaris-exif-solve /work/out/astro/polaris-extract /work/out/astro/polaris-mount /work/out/astro/polaris-skysim /work/out/astro/polaris-skysim-independent /work/out/astro/polaris-httpd /work/out/astro/polaris-logwatch /work/out/astro/polaris-match /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/*.sh /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/site.conf.example /out/COPY-TO-SD-CARD-ROOT/polaris-astro/'
 
 if [ "$WANT_IDX" = "1" ]; then
   echo "[*] selecting + downloading index files for ${FMIN}-${FMAX}mm…"
@@ -84,6 +88,19 @@ if [ -n "$CATALOG" ]; then
     cp "${CATALOG%.polcat}.json" "$OUT/COPY-TO-SD-CARD-ROOT/polaris-astro/catalogue.manifest.json"
   fi
   echo "[*] bundled independent POLCAT01 catalogue: $CATALOG"
+fi
+
+if [ -n "$CATALOG_PACKAGE" ]; then
+  [ -d "$CATALOG_PACKAGE/tiles" ] || { echo "error: catalogue package has no tiles/: $CATALOG_PACKAGE" >&2; exit 1; }
+  for f in "$CATALOG_PACKAGE/tiles.json" "$CATALOG_PACKAGE/tiles.ptri" "$CATALOG_PACKAGE/tiles.ptri.json"; do
+    [ -f "$f" ] || { echo "error: catalogue package missing $f" >&2; exit 1; }
+  done
+  mkdir -p "$SD_ASTRO/catalogue-tiles"
+  cp "$CATALOG_PACKAGE"/tiles/*.pcat "$SD_ASTRO/catalogue-tiles/"
+  cp "$CATALOG_PACKAGE/tiles.json" "$SD_ASTRO/catalogue-tiles.manifest.json"
+  cp "$CATALOG_PACKAGE/tiles.ptri" "$SD_ASTRO/catalogue-tiles.ptri"
+  cp "$CATALOG_PACKAGE/tiles.ptri.json" "$SD_ASTRO/catalogue-tiles.ptri.json"
+  echo "[*] bundled native all-sky catalogue package: $CATALOG_PACKAGE"
 fi
 
 # ----------------------------------------------------------------------------
@@ -262,6 +279,12 @@ microSD card, so the card ends up with:
     <SD root>/astrometry/index-41xx.fits
     <SD root>/polaris-astro/polaris-solve, polaris-extract, polaris-mount, *.sh
 
+When the bundle was built with --catalog-package, it also contains
+
+    <SD root>/polaris-astro/catalogue-tiles/*.pcat
+    <SD root>/polaris-astro/catalogue-tiles.manifest.json
+    <SD root>/polaris-astro/catalogue-tiles.ptri[.json]
+
 Put the card back in the Polaris and run once:
 
     /app/sd/polaris-astro/install_astro.sh
@@ -274,6 +297,11 @@ preserved and chained, so ssh keeps working. Undo it all with
 
 The index files are read straight off the card at /app/sd/astrometry and are
 never copied into flash.
+
+The native independent all-sky path is opt-in. Build a Gaia package with
+container/astro/build_gaia_package.sh, pass its output to
+build-astro.sh --catalog-package, and set SOLVER_BIN=polaris-solve-independent-search
+in site.conf only after the ARM and capture qualification gates are complete.
 
 Over ssh instead of sneakernet, the same layout works:
 

@@ -57,7 +57,7 @@ SITE=/app/sd/polaris-astro/site.conf
         # selector and independent catalogue apply consistently to autosolve,
         # guiding, and the HTTP-launched guider.
         export SOLVER_BIN INDEPENDENT_CATALOG INDEPENDENT_CATALOG_DIR INDEPENDENT_CATALOG_MANIFEST INDEPENDENT_TRIANGLE_INDEX \
-               INDEPENDENT_MAX_CATALOG INDEPENDENT_SCALE_TOL CAMERA_MODEL SENSOR_MM \
+               INDEPENDENT_MAX_CATALOG INDEPENDENT_ANCHOR_STARS INDEPENDENT_SCALE_TOL CAMERA_MODEL SENSOR_MM \
                GOTO_PLATESOLVE GOTO_SOLVE_APPLY GOTO_SOLVE_RECENTER
         echo "site.conf loaded after ${i} tries (lat=$LAT lon=$LON focal=$FOCAL)"
     else
@@ -285,7 +285,8 @@ SITE=/app/sd/polaris-astro/site.conf
         INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
         INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
         INDEPENDENT_TRIANGLE_INDEX="${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}" \
-        INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+        INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-120}" \
+        INDEPENDENT_ANCHOR_STARS="${INDEPENDENT_ANCHOR_STARS:-10}" \
         INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
         CAMERA_MODEL="${CAMERA_MODEL:-}" SENSOR_MM="${SENSOR_MM:-}" \
         STUB_FRAME="${STUB_FRAME:-}" STUB_UTC="${STUB_UTC:-}" \
@@ -313,7 +314,8 @@ SITE=/app/sd/polaris-astro/site.conf
             INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
             INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
             INDEPENDENT_TRIANGLE_INDEX="${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}" \
-            INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+            INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-120}" \
+            INDEPENDENT_ANCHOR_STARS="${INDEPENDENT_ANCHOR_STARS:-10}" \
             INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
             FOCAL_MM="$FOCAL" SENSOR_MM="${SENSOR_MM:-}" \
             GOTO_SOLVE_APPLY="${GOTO_SOLVE_APPLY:-0}" GOTO_SOLVE_RECENTER="${GOTO_SOLVE_RECENTER:-1}" \
@@ -336,7 +338,8 @@ SITE=/app/sd/polaris-astro/site.conf
             INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
             INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
             INDEPENDENT_TRIANGLE_INDEX="${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}" \
-            INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+            INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-120}" \
+            INDEPENDENT_ANCHOR_STARS="${INDEPENDENT_ANCHOR_STARS:-10}" \
             INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
             FRAME_CORRECT="${FRAME_CORRECT:-0}" MIN_MATCHES="${MIN_MATCHES:-12}" \
             MAX_SOLVE_RMS_PX="${MAX_SOLVE_RMS_PX:-3.0}" \

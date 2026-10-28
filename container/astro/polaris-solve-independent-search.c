@@ -43,6 +43,12 @@ typedef struct {
 
 static double rad(double x) { return x * M_PI / 180.0; }
 static double deg(double x) { return x * 180.0 / M_PI; }
+static double length2(double x, double y) { return sqrt(x * x + y * y); }
+static double wrap_ra(double value) {
+    while (value < 0) value += 360.0;
+    while (value >= 360.0) value -= 360.0;
+    return value;
+}
 
 static double angular_distance(double ra1, double dec1, double ra2, double dec2) {
     double c = sin(rad(dec1)) * sin(rad(dec2)) +
@@ -143,22 +149,39 @@ static void triangle_index_add_hits(const triangle_index_t *index, double a, dou
                                     double c, int tile_count, int *hits) {
     double sides[3] = {a, b, c};
     uint16_t ratio1, ratio2, query1, query2, found1, found2;
-    int delta1, delta2;
+    int delta1, delta2, delta_limit = 0;
     uint32_t position, tile, target;
     double t;
     if (sides[0] > sides[1]) { t = sides[0]; sides[0] = sides[1]; sides[1] = t; }
     if (sides[1] > sides[2]) { t = sides[1]; sides[1] = sides[2]; sides[2] = t; }
     if (sides[0] > sides[1]) { t = sides[0]; sides[0] = sides[1]; sides[1] = t; }
     if (sides[0] < 3.0) return;
-    ratio1 = (uint16_t)fmin(65535.0, floor(index->ratio_scale * sides[1] / sides[0] + 0.5));
-    ratio2 = (uint16_t)fmin(65535.0, floor(index->ratio_scale * sides[2] / sides[0] + 0.5));
-    for (delta1 = -2; delta1 <= 2; delta1++) for (delta2 = -2; delta2 <= 2; delta2++) {
-        query1 = (uint16_t)((int)ratio1 + delta1 < 0 ? 0 : (int)ratio1 + delta1);
-        query2 = (uint16_t)((int)ratio2 + delta2 < 0 ? 0 : (int)ratio2 + delta2);
+    {
+        double raw1 = floor(index->ratio_scale * sides[1] / sides[0] + 0.5);
+        double raw2 = floor(index->ratio_scale * sides[2] / sides[0] + 0.5);
+        /* The on-disk format saturates catalogue ratios at 65535, but a
+         * query above that range is not equivalent to a saturated triangle.
+         * Dropping it avoids turning very skinny observed triangles into a
+         * large false candidate set at the saturation key. */
+        if (raw1 > 65535.0 || raw2 > 65535.0) return;
+        ratio1 = (uint16_t)raw1;
+        ratio2 = (uint16_t)raw2;
+    }
+    /* The packaged index uses 0.1% bins. Keep the initial lookup exact: a
+     * broad tolerance creates a candidate flood across an all-sky index, and
+     * the native matcher remains the authoritative residual check. */
+    for (delta1 = -delta_limit; delta1 <= delta_limit; delta1++) for (delta2 = -delta_limit; delta2 <= delta_limit; delta2++) {
+        int candidate1 = (int)ratio1 + delta1, candidate2 = (int)ratio2 + delta2;
+        if (candidate1 < 0) candidate1 = 0;
+        if (candidate1 > 65535) candidate1 = 65535;
+        if (candidate2 < 0) candidate2 = 0;
+        if (candidate2 > 65535) candidate2 = 65535;
+        query1 = (uint16_t)candidate1;
+        query2 = (uint16_t)candidate2;
         target = triangle_key(query1, query2);
-        for (position = triangle_index_lower_bound(index, target);
-             position < index->record_count && triangle_index_read(index, position, &found1, &found2, &tile) &&
-             triangle_key(found1, found2) == target; position++) {
+        position = triangle_index_lower_bound(index, target);
+        for (; position < index->record_count && triangle_index_read(index, position, &found1, &found2, &tile) &&
+               triangle_key(found1, found2) == target; position++) {
             if (tile < (uint32_t)tile_count) hits[tile]++;
         }
     }
@@ -185,7 +208,7 @@ static int load_tiles(const char *directory, double ra_bin_width,
                      directory, entry->d_name) >= (int)sizeof(tiles[count].path)) {
             free(tiles); closedir(dir); return 0;
         }
-        tiles[count].ra = fmod((ri + 0.5) * ra_bin_width, 360.0);
+        tiles[count].ra = wrap_ra((ri + 0.5) * ra_bin_width);
         tiles[count].dec = -90.0 + (di + 0.5) * dec_bin_width;
         count++;
     }
@@ -233,12 +256,12 @@ static double json_double(const char *json, const char *key, double fallback) {
 static int run_solver(const char *solver, const tile_t *tile, const char *stars,
                       double width, double height, double focal, double sensor,
                       double ra, double dec, double radius, int max_stars,
-                      int max_catalogue, int minimum_matches, double scale_tol,
+                      int max_catalogue, int anchor_stars, int minimum_matches, double scale_tol,
                       double residual_px, char *result, size_t result_size) {
     int pipefd[2], status;
     pid_t child;
     char width_s[32], height_s[32], focal_s[32], sensor_s[32], ra_s[32], dec_s[32];
-    char radius_s[32], stars_s[16], catalogue_s[16], matches_s[16];
+    char radius_s[32], stars_s[16], catalogue_s[16], anchor_s[16], matches_s[16];
     char scale_tol_s[32], residual_s[32];
     ssize_t used = 0, n;
     if (pipe(pipefd) < 0) return -1;
@@ -251,6 +274,7 @@ static int run_solver(const char *solver, const tile_t *tile, const char *stars,
     snprintf(radius_s, sizeof(radius_s), "%.9g", radius);
     snprintf(stars_s, sizeof(stars_s), "%d", max_stars);
     snprintf(catalogue_s, sizeof(catalogue_s), "%d", max_catalogue);
+    snprintf(anchor_s, sizeof(anchor_s), "%d", anchor_stars);
     snprintf(matches_s, sizeof(matches_s), "%d", minimum_matches);
     snprintf(scale_tol_s, sizeof(scale_tol_s), "%.9g", scale_tol);
     snprintf(residual_s, sizeof(residual_s), "%.9g", residual_px);
@@ -267,6 +291,7 @@ static int run_solver(const char *solver, const tile_t *tile, const char *stars,
               "--focal-mm", focal_s, "--sensor-mm", sensor_s,
               "--ra", ra_s, "--dec", dec_s, "--radius", radius_s,
               "--max-stars", stars_s, "--max-catalog", catalogue_s,
+              "--anchor-stars", anchor_s,
               "--min-matches", matches_s, "--scale-tol", scale_tol_s,
               "--residual-px", residual_s, (char *)NULL);
         _exit(127);
@@ -298,7 +323,7 @@ static void usage(const char *program) {
                     "--focal-mm F [--sensor-mm S] [--manifest FILE] "
                     "[--triangle-index FILE] [--solver FILE] [--ra R --dec D] [--radius D] "
                     "[--step-deg D] [--rings N] [--attempts N] "
-                    "[--max-stars N] [--max-catalog N] [--min-matches N] "
+                    "[--max-stars N] [--max-catalog N] [--anchor-stars N] [--min-matches N] "
                     "[--scale-tol F] [--residual-px F]\n", program);
 }
 
@@ -311,7 +336,7 @@ int main(int argc, char **argv) {
     double ra_bin = 10, dec_bin = 10;
     double scale_tol = 0.15, residual_px = 5;
     int have_ra = 0, have_dec = 0, rings = 5, attempts = 40;
-    int max_stars = 30, max_catalogue = 120, minimum_matches = 12;
+    int max_stars = 30, max_catalogue = 120, anchor_stars = 10, minimum_matches = 12;
     int early_matches = 20;
     double early_rms = 1.5;
     int i, s, t, tried = 0, tile_count, start_count = 0;
@@ -345,6 +370,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--attempts") && i + 1 < argc) attempts = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--max-stars") && i + 1 < argc) max_stars = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--max-catalog") && i + 1 < argc) max_catalogue = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--anchor-stars") && i + 1 < argc) anchor_stars = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--min-matches") && i + 1 < argc) minimum_matches = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--scale-tol") && i + 1 < argc) scale_tol = atof(argv[++i]);
         else if (!strcmp(argv[i], "--residual-px") && i + 1 < argc) residual_px = atof(argv[++i]);
@@ -408,12 +434,12 @@ int main(int argc, char **argv) {
                     for (right = left + 1; right < limit; right++)
                         for (third = right + 1; third < limit; third++)
                             triangle_index_add_hits(&triangle_index,
-                                hypot(observations[left].ra - observations[right].ra,
-                                      observations[left].dec - observations[right].dec) * expected_scale,
-                                hypot(observations[left].ra - observations[third].ra,
-                                      observations[left].dec - observations[third].dec) * expected_scale,
-                                hypot(observations[right].ra - observations[third].ra,
-                                      observations[right].dec - observations[third].dec) * expected_scale,
+                        length2(observations[left].ra - observations[right].ra,
+                                observations[left].dec - observations[right].dec) * expected_scale,
+                                length2(observations[left].ra - observations[third].ra,
+                                        observations[left].dec - observations[third].dec) * expected_scale,
+                                length2(observations[right].ra - observations[third].ra,
+                                        observations[right].dec - observations[third].dec) * expected_scale,
                                 tile_count, hits);
                 candidates = calloc((size_t)tile_count, sizeof(*candidates));
                 if (candidates) {
@@ -451,7 +477,7 @@ int main(int argc, char **argv) {
             result[0] = '\0';
             run_solver(solver, &tiles[tile_id], stars, width, height, focal, sensor,
                        starts[t].ra, starts[t].dec, radius, max_stars,
-                       max_catalogue, minimum_matches, scale_tol, residual_px,
+                       max_catalogue, anchor_stars, minimum_matches, scale_tol, residual_px,
                        result, sizeof(result));
             tried++;
             if (json_bool(result, "solved")) {
@@ -470,13 +496,13 @@ int main(int argc, char **argv) {
     } else {
         for (s = 0; s < start_count && tried < attempts; s++) {
             for (t = 0; t < tile_count && tried < attempts; t++) {
-                double tile_radius = radius + hypot(ra_bin, dec_bin) / 2.0;
+                double tile_radius = radius + length2(ra_bin, dec_bin) / 2.0;
                 if (angular_distance(starts[s].ra, starts[s].dec,
                                      tiles[t].ra, tiles[t].dec) > tile_radius) continue;
                 result[0] = '\0';
                 run_solver(solver, &tiles[t], stars, width, height, focal, sensor,
                            starts[s].ra, starts[s].dec, radius, max_stars,
-                           max_catalogue, minimum_matches, scale_tol, residual_px,
+                           max_catalogue, anchor_stars, minimum_matches, scale_tol, residual_px,
                            result, sizeof(result));
                 tried++;
                 if (json_bool(result, "solved")) {

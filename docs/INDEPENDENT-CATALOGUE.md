@@ -41,3 +41,8 @@ The current Gaia research package uses Gaia DR3 records with
 triangle-ratio index built from the 15 brightest records per tile. A shipped
 package must retain the Gaia acknowledgement, query/selection provenance,
 catalogue checksum, tile-manifest checksum, and index checksum together.
+
+The host package builder is `container/astro/build_gaia_package.sh`. Its output
+can be carried into an Astro bundle with `build-astro.sh --catalog-package`; the
+bundle copies the tile directory, tile manifest, triangle index, and index
+manifest under the names expected by the native search front end.

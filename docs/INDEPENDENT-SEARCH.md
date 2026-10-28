@@ -20,10 +20,15 @@ The native front end is opt-in as `SOLVER_BIN=polaris-solve-independent-search`.
 It requires a tile manifest, a known focal length, a triangle index, and a hard
 attempt budget; it does not make a regional catalogue into a fast blind solver.
 The Astrometry path remains the default until the all-sky tile set, ARM runtime,
-and physical capture gates pass.
+and physical capture gates pass. The bundle builder accepts the generated
+package through `--catalog-package`; the package is still opt-in at runtime.
 
-The production-shaped defaults are 60 bright catalogue records per tile,
+The production-shaped defaults are 120 bright catalogue records per tile,
+with 10 observed triangle anchors,
 0.15 scale tolerance, at least 12 unique matches, and an early exit only at 20
 matches with RMS no greater than 1.5 px. The front end compares successful
 attempts and returns the strongest candidate, rather than accepting the first
-low-residual false candidate.
+low-residual false candidate. The packaged index uses 0.1% ratio bins and
+exact-bin lookup. Queries above the 16-bit ratio range are rejected rather than
+treated as the saturated catalogue key, which prevents skinny observed
+triangles from creating a false candidate flood.

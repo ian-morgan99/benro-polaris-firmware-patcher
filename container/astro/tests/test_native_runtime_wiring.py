@@ -41,6 +41,14 @@ def test_catalogue_is_optional_for_reference_bundle_but_installable():
     assert 'INDEPENDENT_TRIANGLE_INDEX=/app/sd/polaris-astro/catalogue-tiles.ptri' in config
 
 
+def test_bundle_builder_carries_native_search_and_tile_package():
+    build = (ROOT.parent / "build-astro.sh").read_text()
+    assert "polaris-solve-independent-search" in build
+    assert "--catalog-package" in build
+    assert "catalogue-tiles.manifest.json" in build
+    assert "catalogue-tiles.ptri.json" in build
+
+
 def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     boot = (ONDISK / "polaris-astro-boot.sh").read_text()
     frame = (ONDISK / "polaris-frame-watch.sh").read_text()

@@ -53,15 +53,15 @@ qualification remain tracked follow-up work in issue #247.
 
 The independent native solver and its bounded native tile-search front end
 remain selectable beside Astrometry.net. The real Gaia regional/native search
-and host all-sky-package smoke now pass, including a triangle-ratio candidate
-index, but the native path is not the default until that package is installed
-with a clean ARM build and the wrong-solve, runtime, and device-capture gates
-have passed.
+and a five-position host all-sky-package smoke now pass, including a corrected
+triangle-ratio candidate index. The native path is not the default until that
+package is installed with a clean ARM build and the wrong-solve, runtime, and
+device-capture gates have passed.
 
 ## Evidence still required before calling the mission complete
 
 - Host-side Gaia package generation, tile verification, triangle-index
-  verification, and an indexed no-hint synthetic solve now pass. This is not
+  verification, and five indexed no-hint rendered solves now pass. This is not
   yet device-package proof: the exact generated artefacts still need to be
   placed beside a clean ARM build and checked after installation.
 - A captured BenroConnect trace proving the exact calibration and GOTO 519
@@ -84,7 +84,7 @@ Astro solve pipeline with calibration solving, GOTO solve hooks, repeated local
 JPEG solving, local EXIF annotation, and logged drift/rotation assessment;
 per-axis motor-speed correction is not yet qualified.**
 
-## Critical review — 2026-10-28 native-index checkpoint
+## Critical review — 2026-10-28 native-index correctness checkpoint
 
 Against the thirteen-step end goal, steps 1–5 remain existing Benro/camera
 operations and are protected by the new mode gates. Steps 6–10 are wired in
@@ -93,5 +93,6 @@ solving, and local EXIF annotation. Step 11 measures drift and rotation but
 only has a bounded re-centre action; it deliberately does not claim tracking
 correction. Step 12 remains blocked on the exact firmware-backed rate command
 in issue #240. Step 13 is a guarded repeat loop, not a complete tracking
-system. Therefore the architecture is materially closer, but the mission is
-not yet physically usable or release-qualified.
+system. Therefore the architecture is materially closer and the host index is
+now internally consistent, but the mission is not yet physically usable or
+release-qualified.

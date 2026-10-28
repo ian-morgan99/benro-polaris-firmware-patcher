@@ -11,6 +11,7 @@ MAXREC=${MAXREC:-1000000}
 RA_BIN_DEG=${RA_BIN_DEG:-10}
 DEC_BIN_DEG=${DEC_BIN_DEG:-10}
 TRIANGLE_MAX_CATALOG=${TRIANGLE_MAX_CATALOG:-15}
+TRIANGLE_RATIO_SCALE=${TRIANGLE_RATIO_SCALE:-1000}
 QUERY="SELECT source_id,ra,dec,phot_g_mean_mag FROM gaiadr3.gaia_source WHERE phot_g_mean_mag IS NOT NULL AND phot_g_mean_mag <= ${MAX_MAG}"
 
 mkdir -p "$OUT"
@@ -30,7 +31,7 @@ python3 "$ROOT/tools/build_catalogue_tiles.py" "$OUT/gaia.csv" "$OUT/tiles" \
 python3 "$ROOT/tools/verify_catalogue_tiles.py" "$OUT/tiles" "$OUT/tiles.json"
 python3 "$ROOT/tools/build_catalogue_triangle_index.py" "$OUT/tiles" "$OUT/tiles.json" \
     "$OUT/tiles.ptri" --index-manifest "$OUT/tiles.ptri.json" \
-    --max-catalog "$TRIANGLE_MAX_CATALOG"
+    --max-catalog "$TRIANGLE_MAX_CATALOG" --ratio-scale "$TRIANGLE_RATIO_SCALE"
 python3 "$ROOT/tools/verify_catalogue_triangle_index.py" "$OUT/tiles.ptri" \
     "$OUT/tiles.ptri.json" "$OUT/tiles.json"
 

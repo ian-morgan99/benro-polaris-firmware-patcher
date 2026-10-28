@@ -82,7 +82,8 @@ solve() {
     INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
     INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
     INDEPENDENT_TRIANGLE_INDEX="${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}" \
-    INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-60}" \
+    INDEPENDENT_MAX_CATALOG="${INDEPENDENT_MAX_CATALOG:-120}" \
+    INDEPENDENT_ANCHOR_STARS="${INDEPENDENT_ANCHOR_STARS:-10}" \
     INDEPENDENT_SCALE_TOL="${INDEPENDENT_SCALE_TOL:-0.15}" \
     MOUNT_HINT=0 FOCAL_MM="$FOCAL" \
         sh "$ASTRO/polaris-align.sh" "$FRAME" "$FOCAL" "$RA" "$DEC" "$_radius" 2>>"$LOG"
