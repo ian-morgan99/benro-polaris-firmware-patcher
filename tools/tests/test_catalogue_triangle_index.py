@@ -38,3 +38,8 @@ def test_triangle_index_matches_device_tile_order(tmp_path):
     assert (magic, version, tile_count, record_count, ratio_scale) == (
         b"POLTRI01", 1, 1, 4, 100
     )
+    verified = subprocess.run([
+        sys.executable, str(ROOT / "verify_catalogue_triangle_index.py"),
+        str(index), str(index_manifest), str(manifest),
+    ], capture_output=True, text=True, check=True)
+    assert json.loads(verified.stdout)["valid"] is True

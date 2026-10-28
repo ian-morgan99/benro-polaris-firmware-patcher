@@ -19,6 +19,12 @@ def main():
             f.write(MAGIC+struct.pack('<II',1,len(rows)))
             for row in rows: f.write(REC.pack(*row))
         entries.append({'tile':p.stem,'ra_min':ri*a.ra_bin,'ra_max':(ri+1)*a.ra_bin,'dec_min':di*a.dec_bin-90,'dec_max':(di+1)*a.dec_bin-90,'records':len(rows),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
-    manifest={'format':'polaris-independent-tile-set-1','catalogue':'Gaia DR3','ra_bin_deg':a.ra_bin,'dec_bin_deg':a.dec_bin,'selection':f'phot_g_mean_mag <= {a.max_mag}','tile_count':len(entries),'record_count':sum(e['records'] for e in entries),'tiles':entries}
+    manifest={'format':'polaris-independent-tile-set-1','catalogue':'Gaia DR3',
+              'source':'ESA Gaia Archive TAP / gaiadr3.gaia_source',
+              'release':'DR3','epoch':'2016.0',
+              'ra_bin_deg':a.ra_bin,'dec_bin_deg':a.dec_bin,
+              'selection':f'phot_g_mean_mag <= {a.max_mag}',
+              'licence_notice':'ESA Gaia data acknowledgement required; see https://www.cosmos.esa.int/web/gaia/data-access',
+              'tile_count':len(entries),'record_count':sum(e['records'] for e in entries),'tiles':entries}
     Path(a.manifest).write_text(json.dumps(manifest,indent=2)+'\n'); print(json.dumps({'tile_count':len(entries),'record_count':manifest['record_count']})); return 0
 if __name__=='__main__': raise SystemExit(main())

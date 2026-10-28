@@ -37,14 +37,16 @@ WHERE phot_g_mean_mag IS NOT NULL AND phot_g_mean_mag <= 10
 It returned 482,106 records. The downloaded CSV SHA-256 is
 `4205621ab59e287d98920799f2f75c30f729fe5794e55a73253ab3b6d3136af5`; the
 tile manifest SHA-256 is
-`566fe9ff8e0acba6f779923494670c9628f5b86a7546190b04e59bd504bbfe`.
+`35fc8382cd33073f1decca5592db58038de2f87f5ba515992a4ed318c2d34fb9`.
 The 648 10°×10° tiles occupy about 16 MB, and the 294,840-record native
 triangle index is 2.3 MB with SHA-256
-`08c1d349798d0a7d5ef132df86ca38b59713d9ecf6b9882795a2a06fa7d10d51`.
+`08c1d349798d0a7d5ef132df86ca38b59713d9ecf6b9882795a2a06fa7d10d51` (the
+index bytes are unchanged after manifest metadata was added).
 
 The package is a research artefact under `out/` and is not checked into the
-source tree. Its final distribution still needs an explicit Gaia acknowledgement
-and a reproducible manifest/checksum packaging step.
+source tree. The generated tile manifest carries the Gaia acknowledgement
+notice; final distribution must retain that notice and the reproducible
+manifest/checksum packaging step.
 
 ## All-sky-shaped Gaia smoke
 

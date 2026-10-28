@@ -388,8 +388,14 @@ int main(int argc, char **argv) {
         mode = "hinted-corkscrew";
     } else {
         int candidate_count = 0;
-        if (triangle_index_file && triangle_index_open(triangle_index_file, &triangle_index) &&
-            triangle_index.tile_count == (uint32_t)tile_count) {
+        if (triangle_index_file) {
+            if (!triangle_index_open(triangle_index_file, &triangle_index) ||
+                triangle_index.tile_count != (uint32_t)tile_count) {
+                triangle_index_close(&triangle_index);
+                free(observations); free(candidate_order); free(starts); free(tiles);
+                printf("{\"solved\":false,\"failure_reason\":\"invalid_triangle_index\"}\n");
+                return 3;
+            }
             double expected_scale = 206264.806 * atan((sensor / width) / focal);
             int observation_count;
             observations = calloc((size_t)max_stars, sizeof(*observations));
