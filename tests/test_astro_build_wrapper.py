@@ -35,3 +35,8 @@ def test_controlled_astro_builder_records_manifest_and_provenance():
     assert 'build-source-provenance.txt' in text
     assert 'patcher_commit=' in text
     assert 'firmware_flash=not-performed' in text
+
+
+def test_low_level_astro_builder_runs_bash_index_fetcher():
+    text = (ROOT / "build-astro.sh").read_text()
+    assert 'bash "$HERE/container/astro/fetch-indexes.sh"' in text

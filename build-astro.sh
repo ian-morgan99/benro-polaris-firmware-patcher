@@ -81,7 +81,7 @@ docker run --rm \
 
 if [ "$WANT_IDX" = "1" ]; then
   echo "[*] selecting + downloading index files for ${FMIN}-${FMAX}mm…"
-  sh "$HERE/container/astro/fetch-indexes.sh" --focal-min "$FMIN" --focal-max "$FMAX" \
+  bash "$HERE/container/astro/fetch-indexes.sh" --focal-min "$FMIN" --focal-max "$FMAX" \
      --sensor-mm "$SENSOR" --out "$OUT/COPY-TO-SD-CARD-ROOT/astrometry"
 fi
 
