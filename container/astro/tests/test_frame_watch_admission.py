@@ -46,6 +46,10 @@ def test_frame_watch_admits_only_new_or_changed_jpegs(tmp_path):
     state = tmp_path / "state.tsv"
     admission = tmp_path / "admission.tsv"
     frame_state = tmp_path / "last.json"
+    telemetry = tmp_path / "frame-telemetry.jsonl"
+    (tmp_path / "target.json").write_text(
+        '{"target_ra_deg":1,"target_dec_deg":2,"rotation_deg":3}\n'
+    )
 
     env = os.environ.copy()
     env.update(
@@ -59,6 +63,8 @@ def test_frame_watch_admits_only_new_or_changed_jpegs(tmp_path):
             "STATE": str(state),
             "ADMISSION": str(admission),
             "FRAME_STATE": str(frame_state),
+            "TARGET_FILE": str(tmp_path / "target.json"),
+            "FRAME_TELEMETRY": str(telemetry),
             "SOLVER_BIN": "native-test",
             "FRAME_WATCH_POLL": "0.05",
             "FRAME_STABLE_WAIT": "0",
@@ -84,10 +90,16 @@ def test_frame_watch_admits_only_new_or_changed_jpegs(tmp_path):
         # silently discarded by the old path-only deduplication.
         _jpeg(old, b"changed-and-larger")
         _wait_for(lambda: log.read_text().count("old.jpg") >= 1)
+        _wait_for(lambda: history.exists() and len(history.read_text().splitlines()) == 2)
         assert history.exists()
         assert len(history.read_text().splitlines()) == 2
         assert admission.exists()
         assert json.loads(history.read_text().splitlines()[0].split("\t", 1)[1])["solved"]
+        telemetry_rows = [json.loads(line) for line in telemetry.read_text().splitlines()]
+        assert len(telemetry_rows) == 2
+        assert all(row["rate_control"] == "unavailable" for row in telemetry_rows)
+        assert all(row["target_available"] is True for row in telemetry_rows)
+        assert all(row["action"] == "within_tolerance" for row in telemetry_rows)
     finally:
         proc.terminate()
         proc.wait(timeout=3)

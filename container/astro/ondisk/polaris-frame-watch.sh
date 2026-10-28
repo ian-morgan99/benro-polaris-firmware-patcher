@@ -25,6 +25,7 @@ HISTORY=${HISTORY:-/app/sd/polaris-astro/solve-history.jsonl}
 STATE=${STATE:-/app/sd/polaris-astro/solved-jpegs.tsv}
 TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
 FRAME_STATE=${FRAME_STATE:-/app/sd/polaris-astro/last-frame-solution.json}
+TELEMETRY=${FRAME_TELEMETRY:-/app/sd/polaris-astro/frame-telemetry.jsonl}
 ADMISSION=${ADMISSION:-/app/sd/polaris-astro/frame-admission.tsv}
 MODE_FILE=${MODE_FILE:-/tmp/polaris-mode}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
@@ -49,7 +50,8 @@ DIRS=${CAPTURE_DIR:-"/app/sd/normal /app/sd/starskyStack /app/sd/HDR /app/sd/pan
 EXTRA=${CAPTURE_GLOB_EXTRA:-"/app/sd/Lapse/class_*"}
 
 mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" \
-    "$(dirname "$FRAME_STATE")" "$(dirname "$STATE")" "$(dirname "$ADMISSION")" 2>/dev/null
+    "$(dirname "$FRAME_STATE")" "$(dirname "$TELEMETRY")" \
+    "$(dirname "$STATE")" "$(dirname "$ADMISSION")" 2>/dev/null
 
 log() {
     _m="$(date '+%Y-%m-%d %H:%M:%S') $*"
@@ -199,10 +201,15 @@ quality_ok() {
 
 assess_and_optionally_correct() {
     _f=$1; _j=$2
+    _frame_name=$(basename "$_f")
     _ra=$(printf '%s' "$_j" | sed -n 's/.*"ra_deg":\([-0-9.]*\).*/\1/p')
     _dec=$(printf '%s' "$_j" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
     _rot=$(printf '%s' "$_j" | sed -n 's/.*"rotation_deg":\([-0-9.]*\).*/\1/p')
-    [ -n "$_ra" ] && [ -n "$_dec" ] || return 0
+    if [ -z "$_ra" ] || [ -z "$_dec" ]; then
+        printf '{"frame":"%s","solved":true,"target_available":false,"action":"missing_pose","rate_control":"unavailable"}\n' \
+            "$_frame_name" >> "$TELEMETRY" 2>/dev/null
+        return 0
+    fi
     _target=$(target_from_file "$TARGET_FILE" 2>/dev/null || \
               target_from_file /tmp/polaris-last-solution.json 2>/dev/null || true)
     _rotation_bad=0
@@ -218,25 +225,36 @@ assess_and_optionally_correct() {
             fi
         fi
         _drift=$(angular_sep_deg "$_ra" "$_dec" "$_tra" "$_tdec")
+        _action=within_tolerance
         log "frame=$(basename "$_f") solved_ra=$_ra solved_dec=$_dec target_ra=$_tra target_dec=$_tdec drift_deg=$_drift rotation_deg=${_rot:-unknown} rotation_delta_deg=${_rotation_delta:-unknown}"
         _over=$(awk -v d="$_drift" -v t="$DRIFT_THRESH_DEG" 'BEGIN { print (d > t) ? 1 : 0 }')
         if [ "$_over" = "1" ]; then
             _too_big=$(awk -v d="$_drift" -v m="$MAX_CORRECTION_DEG" 'BEGIN { print (d > m) ? 1 : 0 }')
             if [ "$_too_big" = "1" ]; then
+                _action=refused_excessive_drift
                 log "refusing frame correction: drift ${_drift}deg exceeds ${MAX_CORRECTION_DEG}deg"
             elif [ "$_rotation_bad" = "1" ]; then
+                _action=withheld_rotation
                 log "withholding frame correction while field rotation is above threshold"
             elif [ "$FRAME_CORRECT" = "1" ] && [ -n "$LAT" ] && [ -n "$LON" ]; then
+                _action=bounded_goto
                 log "correcting frame drift with bounded goto-radec to target"
                 "$ASTRO/polaris-mount" --host "$MOUNT_HOST" --port "$MOUNT_PORT" \
                     --lat "$LAT" --lon "$LON" goto-radec --ra "$_tra" --dec "$_tdec" \
                     --refine-arcmin 0.1 >>"$LOG" 2>&1 || log "frame correction command failed"
             else
+                _action=correction_disabled
                 log "frame drift exceeds threshold; correction disabled (FRAME_CORRECT=$FRAME_CORRECT)"
             fi
         fi
+        printf '{"frame":"%s","solved":true,"target_available":true,"solved_ra_deg":%s,"solved_dec_deg":%s,"target_ra_deg":%s,"target_dec_deg":%s,"drift_deg":%s,"rotation_deg":%s,"target_rotation_deg":%s,"rotation_delta_deg":%s,"action":"%s","rate_control":"unavailable"}\n' \
+            "$_frame_name" "$_ra" "$_dec" "$_tra" "$_tdec" "$_drift" \
+            "${_rot:-null}" "${_trot:-null}" "${_rotation_delta:-null}" "$_action" \
+            >> "$TELEMETRY" 2>/dev/null
     else
         log "frame=$(basename "$_f") solved_ra=$_ra solved_dec=$_dec (no target anchor)"
+        printf '{"frame":"%s","solved":true,"target_available":false,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"action":"no_target","rate_control":"unavailable"}\n' \
+            "$_frame_name" "$_ra" "$_dec" "${_rot:-null}" >> "$TELEMETRY" 2>/dev/null
     fi
 }
 

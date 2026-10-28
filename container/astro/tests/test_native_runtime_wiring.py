@@ -84,6 +84,7 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'polaris-pointing-model.sh' in wrapper and 'GOTO_MODEL_APPLY' in wrapper
     assert 'GOTO_MODEL_RECORD=1' in (ONDISK / "site.conf.example").read_text()
     assert 'target_ra_deg' in frame and 'TARGET_FILE' in frame
+    assert 'FRAME_TELEMETRY' in frame and 'rate_control":"unavailable' in frame
     assert 'FALLBACK_RADIUS' in frame and 'run_align' in frame
     assert 'withholding frame correction while field rotation is above threshold' in frame
     assert 'focal from config' in align and 'emit_solution "$OUT"; exit 0' in align
