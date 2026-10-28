@@ -20,6 +20,21 @@ install command for the candidate it just produced.
 ./scripts/release/release-fwpkt.sh out/<candidate-id>
 ```
 
+Run the current host-aware wake/preflight before this command when the rig may
+be asleep:
+
+```sh
+./scripts/polaris-preflight.sh --wake --wait 120 --scan 20
+```
+
+This is the supported Bluetooth process. It may route host tools through
+`flatpak-spawn --host`, verifies a held Bluetooth link rather than trusting a
+zero exit from `bluetoothctl connect`, and treats an empty BLE scan as
+inconclusive. If the AP is already visible and the identity/SSH checks pass,
+deployment can proceed without Bluetooth wake. If Bluetooth is unavailable,
+record that as a host wake limitation, not as evidence that the firmware is
+dead or that the rig is asleep.
+
 Options: `--skip-trigger` (stage + verify, no reboot), `--allow-busy` (only after
 confirming no exposure is in flight), `--max-wait SECS`, `--host IP`.
 

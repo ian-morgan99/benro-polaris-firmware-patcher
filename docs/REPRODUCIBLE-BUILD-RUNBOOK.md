@@ -115,6 +115,18 @@ version, differential, or publication workflow.
 
 ## Install only after build acceptance
 
+If the rig may be asleep, establish the target and wake state first:
+
+```sh
+./scripts/polaris-preflight.sh --wake --wait 120 --scan 20
+```
+
+This is the only supported wake procedure. It verifies a held Bluetooth link
+when possible, routes host tools correctly from a sandbox, and treats an empty
+BLE scan as inconclusive. If the AP is already visible and identity/SSH checks
+pass, Bluetooth wake is not required. If Bluetooth is unavailable, record that
+as a host limitation rather than inferring a firmware or rig fault.
+
 ```sh
 ./scripts/release/release-fwpkt.sh out/<candidate-id>
 ```

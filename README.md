@@ -450,6 +450,21 @@ generates the real table from the validated `pgphoto` input.
 
 ## Installing on the Polaris
 
+Before deployment, run the current host-aware preflight. It resolves
+`bluetoothctl`, `nmcli`, `ssh`, and `ip` through the host route when VS Code is
+sandboxed, verifies that a Bluetooth wake link is actually held, and never
+interprets an empty BLE scan as proof that the rig is asleep:
+
+```sh
+./scripts/polaris-preflight.sh --wake --wait 120 --scan 20
+```
+
+Proceed only when the preflight identifies the intended Polaris AP/SSH target.
+If the host cannot reach Bluetooth, the preflight must say that BLE wake is
+unavailable; do not replace this with a bare `bluetoothctl connect` and do not
+call the result a firmware fault. An already-awake rig may still be deployed
+over Wi-Fi when the AP and identity checks pass.
+
 Use **the same SD-card firmware-update procedure you already use for official
 Benro updates**, but with the `FwPkt.zip` this tool produced. The device
 verifies the package (MD5), reboots, and U-Boot writes it.

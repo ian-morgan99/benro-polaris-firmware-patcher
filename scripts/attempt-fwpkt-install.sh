@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# attempt-fwpkt-install.sh — the "one reboot" runbook for Path A.
+# attempt-fwpkt-install.sh — DEPRECATED historical diagnostic for Path A.
 #
 # Chains the whole autonomous SD-card firmware install into a single command
 # so future sessions stop re-entering recon mode:
@@ -38,8 +38,13 @@
 #
 # Pre-flight requirements:
 #   * You are associated with the polaris_* AP.
-#   * The gimbal is powered on and awake (not deep-sleeping). If it is,
-#     wake it first: bluetoothctl connect 48:E7:DA:D4:B5:72
+#   * This script is not the supported installer and must not be used for a
+#     release deployment. It expects the obsolete zip-only staging path and a
+#     bare Bluetooth connect, neither of which is authoritative now.
+#   * For current deployment, run:
+#       ./scripts/polaris-preflight.sh --wake --wait 120 --scan 20
+#     then use scripts/release/release-fwpkt.sh, which stages the extracted
+#     FwPkt/ tree and verifies the reboot and installed identity.
 #   * /app/sd/FwPkt.zip already staged (this script does NOT push anything).
 #
 # See: STATE.md "Decisive next move", layman-summary-2026-08-31.md,
