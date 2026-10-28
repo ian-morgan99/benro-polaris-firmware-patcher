@@ -53,7 +53,7 @@ The hook is opt-in: AUTO_SOLVE_FRAMES=1 plus mode:8 and stable-file
 admission are required before a JPEG is sent to the solver. In its safe default
 the watcher additionally requires a capture-completion ledger event. The
 companion `feature/polaris-capture-events` libgphoto2 branch (commit
-`54cc81439`) emits that event
+`d5bf0d31e`) emits that event
 from the `gp_file_save()` local-publication boundary for JPEGs under
 `/app/sd`; the embedded pgphoto path still needs an end-to-end device test to
 prove that it uses this boundary for every supported capture mode.
