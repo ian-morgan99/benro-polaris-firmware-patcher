@@ -45,8 +45,29 @@ centred"* with a measurement.
 
 ## Install
 
+The supported controlled build entry point on the Astro feature branch is:
+
 ```sh
-./build-astro.sh --out out/astro
+./scripts/build-astro-bundle.sh --id astro-native-platesolve-test \
+  --no-indexes --catalog-package out/gaia-dr3-g10
+```
+
+It runs the focused Astro tests, checks that the checkout is clean and on
+`feature/astro-native-platesolve`, invokes the lower-level `build-astro.sh`,
+and writes a SHA-256 manifest plus source/commit provenance. Use `--force` only
+to replace that exact output directory. The lower-level command remains useful
+for development, but does not provide these branch and provenance gates.
+
+This builds an SD-card bundle only. It does not build, modify, package, or
+flash FwPkt. The firmware release path remains
+`scripts/build-release-candidate.sh`.
+
+For a full fresh bundle, omit `--no-indexes`; the builder will fetch the
+astrometry.net FITS indexes for the configured focal range:
+
+```sh
+./scripts/build-astro-bundle.sh --id astro-native-platesolve-test \
+  --catalog-package out/gaia-dr3-g10
 ```
 
 Copy the **contents** of `out/astro/COPY-TO-SD-CARD-ROOT/` to the root of the
