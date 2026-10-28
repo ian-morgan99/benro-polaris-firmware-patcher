@@ -85,6 +85,24 @@ tests for #240; broaden or replace the APS-C index under a measured resource
 budget; then physical calibration/GOTO/repeated-frame qualification. No live
 motor command or firmware patch is justified by this checkpoint.
 
+## Critical review — 2026-10-28 rate/model checkpoint
+
+The plan now has two additional guarded pieces: accepted GOTO residuals are
+accumulated in a resettable session model, and a host-only rate-frame safety
+harness covers malformed frames, limits, ramping, watchdog expiry and link
+loss. Neither changes the default mount behaviour. `GOTO_MODEL_APPLY` remains
+off, and the rate harness is not a device command path.
+
+This improves the route from repeated GOTO solves to a measurable experiment,
+but it does not close the requested mission. The model is only a first-order
+pointing offset, not a multi-axis calibration; model application has not been
+physically tested. The rate frame's MCU dispatch, units, axis signs, torque
+semantics, STOP priority and watchdog remain unknown. The frame watcher still
+depends on a verified Polaris-side publication for each camera frame, and the
+native compact APS-C blind-search boundary remains open (#248). K-3 III normal
+capture remains untouched because all new controls are opt-in and rate output
+is absent.
+
 The K-3 III APS-C geometry profile (23.3 mm) has a separate host result: the
 hinted native solve passes in one nearest-tile attempt, but the compact
 15-star/tile index does not yet guarantee a five-attempt no-hint solve for the
