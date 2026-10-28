@@ -90,9 +90,12 @@ Because that synthetic catalogue is generated from the observed pixel list, its
 reported rotation is not a fair independent roll measurement. The first fair
 roll comparison is therefore deferred to the real Gaia-catalogue tier.
 
-The next comparison tier uses a real Gaia-derived regional catalogue to render
-and solve a field without Astrometry.net data. The production tier requires an
-all-sky, spatially partitioned catalogue and a false-solve corpus.
+The real Gaia-derived regional tier is now exercised and caught a false
+candidate caused by arbitrary source-ID catalogue truncation; the fix selects
+the brightest eligible regional stars. See
+[`dual-solver-gaia-20261028/SUMMARY.md`](evidence/dual-solver-gaia-20261028/SUMMARY.md).
+The production tier still requires an Astrometry.net index covering the same
+field, an all-sky spatially partitioned catalogue, and a false-solve corpus.
 
 ### 3. Make the independent solver honest and useful
 

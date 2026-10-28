@@ -49,11 +49,14 @@ container/astro/compare-solvers.sh \
 ```
 
 The harness uses one rendered JPEG and one extracted star list for both solver
-front ends. Its first independent catalogue is deliberately synthetic and
-derived from the known test scene, so the result proves the integration and
-matching contract only. It does not prove an all-sky, catalogue-independent
-solve. The next required comparison is a real Gaia regional catalogue, then an
-indexed all-sky catalogue.
+front ends. Its original independent leg is deliberately synthetic and
+derived from the known test scene, so that run proves the integration and
+matching contract only. A separate real-Gaia regional run now exists in
+[`dual-solver-gaia-20261028/SUMMARY.md`](evidence/dual-solver-gaia-20261028/SUMMARY.md)
+and demonstrates a 21-match native solve after a false-candidate fix. It does
+not prove an all-sky, catalogue-independent solve. The next required comparison
+is a fair same-frame Astrometry.net run with an index covering that field,
+followed by an indexed all-sky catalogue.
 
 The native solver's triangle search uses the brightest 15 observations as
 anchors by default and verifies against all accepted observations. The bound is

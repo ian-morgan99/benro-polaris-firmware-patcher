@@ -1,8 +1,8 @@
 # Independent solver usability audit
 
-Status: host research prototype with a passing paired synthetic-frame run. Not
-device-qualified and not safe to select through `SOLVER_BIN` as a production
-default.
+Status: host research prototype with passing paired synthetic and real-Gaia
+regional-frame runs. Not device-qualified and not safe to select through
+`SOLVER_BIN` as a production default.
 
 ## What works
 
@@ -13,7 +13,7 @@ default.
 - Hint/corkscrew search policy and bounded subprocess attempts.
 - Camera-model sensor profiles and EXIF focal-length precedence in the
   existing Astrometry alignment path.
-- Seven deterministic tests pass.
+- Thirteen deterministic tests pass.
 
 ## Native-C tuning pass
 
@@ -59,10 +59,13 @@ multi-frame error distribution are still required.
    all-sky blind solve. The corkscrew wrapper is a host experiment, not the
    device solver.
 3. Candidate search is bounded brute force, not an indexed descriptor lookup;
-   the real Gaia sample took tens of seconds and produced a false candidate
-   before scale gating was added.
+   the real Gaia regional render now solves in roughly 3.8 seconds on the host
+   after selecting the brightest regional records, but remains too expensive
+   and memory-unbounded for an all-sky device catalogue.
 4. The Gaia data currently used is a 500-star regional prototype, not an
-   all-sky production catalogue.
+   all-sky production catalogue. The run also exposed and fixed a real false
+   candidate caused by selecting source-ID order rather than bright stars;
+   see [the evidence summary](evidence/dual-solver-gaia-20261028/SUMMARY.md).
 5. The native independent renderer has no camera distortion,
    vignetting, saturation, or colour/noise calibration.
 6. The first paired run uses a synthetic catalogue derived from the known test
@@ -79,6 +82,8 @@ interface, all-sky index, false-solve gates, and ARM/resource gates are complete
 
 ## Next required stage
 
-Replace the synthetic paired catalogue with a real Gaia regional catalogue,
-record the Astrometry.net versus independent result/timing/resource comparison,
-then build the all-sky Gaia index and benchmark it before any device selection.
+The real Gaia regional catalogue stage and a fair same-frame Astrometry.net
+comparison are now complete; see
+[`dual-solver-gaia-20261028/SUMMARY.md`](evidence/dual-solver-gaia-20261028/SUMMARY.md).
+Next: build the all-sky Gaia index and benchmark it before any device
+selection.

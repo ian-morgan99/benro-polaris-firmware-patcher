@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
     cat_t *catalogue = NULL; obs_t *observations = NULL;
     double *cat_x, *cat_y, *obs_x, *obs_y, *cat_dist;
     int *candidate_pairs;
-    unsigned char *catalogue_used;
+    unsigned char *catalogue_used, *region_selected;
     double best[6] = {0, 0, 0, 0, 0, 0}, best_scale = 0, best_rms = 1e30;
 
     for (i = 1; i < argc; i++) {
@@ -234,20 +234,44 @@ int main(int argc, char **argv) {
     cat_dist = calloc((size_t)max_catalogue * (size_t)max_catalogue, sizeof(*cat_dist));
     candidate_pairs = calloc((size_t)observation_count * 2, sizeof(*candidate_pairs));
     catalogue_used = calloc((size_t)max_catalogue, sizeof(*catalogue_used));
-    if (!cat_x || !cat_y || !obs_x || !obs_y || !cat_dist || !candidate_pairs || !catalogue_used) return 1;
+    region_selected = calloc((size_t)catalogue_count, sizeof(*region_selected));
+    if (!cat_x || !cat_y || !obs_x || !obs_y || !cat_dist || !candidate_pairs ||
+        !catalogue_used || !region_selected) return 1;
     for (i = 0; i < observation_count; i++) { obs_x[i] = observations[i].x - width / 2.0; obs_y[i] = observations[i].y - height / 2.0; }
     {
         double radius_cos = cos(rad(radius));
         double sin_cdec = sin(cdec), cos_cdec = cos(cdec);
-    for (i = 0; i < catalogue_count && used < max_catalogue; i++) {
-        double r = rad(catalogue[i].ra), d = rad(catalogue[i].dec), dr = r - cra;
-        double sin_d = sin(d), cos_d = cos(d);
-        double denominator = sin_d * sin_cdec + cos_d * cos_cdec * cos(dr);
-        if (denominator < radius_cos || denominator <= 0) continue;
-        cat_x[used] = cos_d * sin(dr) / denominator * deg(1) * 3600;
-        cat_y[used] = (sin_d * cos_cdec - cos_d * sin_cdec * cos(dr)) / denominator * deg(1) * 3600;
-        used++;
-    }
+        /* POLCAT01 is stored in stable source-id order, not brightness order.
+         * A fixed catalogue cap must therefore select the brightest stars in
+         * the hinted region; taking the first N records silently discarded the
+         * actual field stars in the Gaia prototype and produced plausible
+         * five-match false candidates. */
+        while (used < max_catalogue) {
+            int brightest = -1;
+            double brightest_mag = 1e30;
+            for (i = 0; i < catalogue_count; i++) {
+                double r, d, dr, denominator;
+                if (region_selected[i]) continue;
+                r = rad(catalogue[i].ra); d = rad(catalogue[i].dec); dr = r - cra;
+                denominator = sin(d) * sin_cdec + cos(d) * cos_cdec * cos(dr);
+                if (denominator < radius_cos || denominator <= 0) continue;
+                if (catalogue[i].mag < brightest_mag) {
+                    brightest = i;
+                    brightest_mag = catalogue[i].mag;
+                }
+            }
+            if (brightest < 0) break;
+            region_selected[brightest] = 1;
+            {
+                double r = rad(catalogue[brightest].ra), d = rad(catalogue[brightest].dec);
+                double dr = r - cra, sin_d = sin(d), cos_d = cos(d);
+                double denominator = sin_d * sin_cdec + cos_d * cos_cdec * cos(dr);
+                cat_x[used] = cos_d * sin(dr) / denominator * deg(1) * 3600;
+                cat_y[used] = (sin_d * cos_cdec - cos_d * sin_cdec * cos(dr)) /
+                              denominator * deg(1) * 3600;
+            }
+            used++;
+        }
     }
     if (used < 3) { printf("{\"solved\":false,\"failure_reason\":\"no_index_coverage\"}\n"); return 3; }
 
@@ -311,5 +335,5 @@ int main(int argc, char **argv) {
         printf("{\"solved\":true,\"ra_deg\":%.8f,\"dec_deg\":%.8f,\"scale_arcsec_per_px\":%.6f,\"rotation_deg\":%.6f,\"parity\":%d,\"matched_count\":%d,\"rms_px\":%.6f,\"catalog\":\"independent-POLCAT01\"}\n", solved_ra, solved_dec, best_scale, deg(atan2(best[2], best[0])), det < 0 ? -1 : 1, best_matches, best_rms);
     }
     free(catalogue); free(observations); free(cat_x); free(cat_y); free(obs_x); free(obs_y);
-    free(cat_dist); free(candidate_pairs); free(catalogue_used); return 0;
+    free(cat_dist); free(candidate_pairs); free(catalogue_used); free(region_selected); return 0;
 }
