@@ -7,7 +7,10 @@
 # already up". Two separate faults hid behind that one fallback, and both were
 # then misattributed to the gimbal:
 #
-#   1. SANDBOX. VS Code here runs as a Flatpak. Inside it /dev/hci0 is absent,
+#   1. SANDBOX. VS Code here runs as a Flatpak. Inside it the Bluetooth adapter
+#      may be absent, even though the host has it. On a normal Linux host the
+#      controller is represented by /sys/class/bluetooth/hci0; /dev/hci0 is not
+#      normally created.
 #      bluetoothctl is not on PATH, AF_BLUETOOTH is seccomp-blocked
 #      (Errno 97), and the proxied system bus exports only login1 — no
 #      org.bluez. The host adapter is fine; the sandbox simply cannot see it.
@@ -63,11 +66,11 @@ set -uo pipefail
 # o-v17a-autonomous-install.sh set BT_MAC themselves (from their own env var).
 : "${BT_MAC:=${POLARIS_BT:-48:E7:DA:D4:B5:72}}"
 
-# Seam for tests: the local-route check is `[ -e /dev/hci0 ]`, which cannot be
-# satisfied inside a container. POLARIS_BT_DEV lets a test point it at any
-# existing path so the local route can be exercised with stub binaries on PATH.
-# Leave unset in production.
-: "${POLARIS_BT_DEV:=/dev/hci0}"
+# Seam for tests: POLARIS_BT_DEV lets a test point the local-route check at any
+# existing path so it can be exercised with stub binaries on PATH. The default
+# is the Linux sysfs controller path; /dev/hci0 is not a normal host device
+# node. Leave the override unset in production.
+: "${POLARIS_BT_DEV:=/sys/class/bluetooth/hci0}"
 BT_CMD=()                 # resolved invocation prefix, e.g. bluetoothctl | flatpak-spawn --host bluetoothctl
 BT_ROUTE="none"           # local | portal | none
 BT_PORTAL_CWD="${POLARIS_PORTAL_CWD:-$PWD}"

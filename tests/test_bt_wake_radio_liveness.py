@@ -174,8 +174,7 @@ def test_probe_module_exists_and_parses():
 
 
 def test_local_route_resolved_when_dev_and_bluez_present(tmp_path):
-    """A normal host must resolve route=local (regression guard: the old code
-    keyed on /dev/hci0 literally and reported 'no adapter' inside a Flatpak)."""
+    """A normal host must resolve route=local without requiring /dev/hci0."""
     _stub_bluetoothctl(tmp_path)
     r = _run_bash('bt_resolve; echo "rc=$? route=$BT_ROUTE"', tmp_path)
     assert "rc=0 route=local" in r.stdout, r.stdout + r.stderr
