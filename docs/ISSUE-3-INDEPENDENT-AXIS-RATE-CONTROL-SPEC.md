@@ -114,10 +114,14 @@ The patcher now contains `container/astro/polaris-rate-plan.c`, a pure native-C
 planner based on that *reference* table. It has no socket or motor side effect,
 selects a common level for all active SLOW axes, returns the two points and
 duty needed for each requested average, and represents zero-rate hold without
-state 0. `test_rate_plan.c` is an offline C test. This is a controlled design
-step, not an implementation of issue #240's unrouted `AC 4A` helper and not a
-hardware qualification. It is not linked into `polaris-httpd`, so normal K-3
-III capture and the current Astro mode are unchanged.
+state 0. `test_rate_plan.c` is an offline C test. A companion pure scheduler
+(`polaris-rate-scheduler.c`) enforces a 75 ms minimum dwell and produces
+logical SLOW transitions or an explicit logical STOP; it deliberately does not
+serialize frames. `test_rate_scheduler.c` is an offline C test. This is a
+controlled design step, not an implementation of issue #240's unrouted `AC
+4A` helper and not a hardware qualification. Neither module is linked into
+`polaris-httpd`, so normal K-3 III capture and the current Astro mode are
+unchanged.
 
 Before this planner can be wired to Astro drift correction, the next gates are:
 

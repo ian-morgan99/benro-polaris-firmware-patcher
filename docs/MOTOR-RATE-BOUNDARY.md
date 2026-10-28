@@ -100,10 +100,14 @@ that *planning* idea. It is deliberately pure: it emits no frame and is not
 linked into `polaris-httpd`. It validates finite rates, chooses one common
 SLOW level, returns adjacent points plus a duty cycle, rejects rates above the
 reference SLOW envelope, and distinguishes an engaged zero-rate hold from a
-stop. `test_rate_plan.c` exercises the planner offline. The remaining runtime
-work is a clock-driven dwell/PWM scheduler, exact target-head calibration, and
-the stop/watchdog/link-loss contract. None of that is authorised to command a
-motor yet.
+stop. `test_rate_plan.c` exercises the planner offline. The companion
+`polaris-rate-scheduler.c` now turns a plan into logical time-share transitions
+while enforcing a conservative 75 ms minimum dwell and the reference 250/500
+ms same-direction/reversing cycles. `test_rate_scheduler.c` verifies that
+behavior and that a stop is an explicit logical event, not a guessed wire
+state. The scheduler still has no socket or wire adapter: exact target-head
+calibration and the stop/watchdog/link-loss contract remain open. None of this
+is authorised to command a motor yet.
 
 No donor source was copied. If any donor code is later reused, retain its MIT
 notice and the immutable source revision in the corresponding provenance.
