@@ -49,8 +49,23 @@ There are three materially different flows:
    admits stable completed JPEGs from the supported local directories.
    Otherwise this remains an explicit/manual solve path.
 
-   The hook is opt-in: AUTO_SOLVE_FRAMES=1 plus mode:8 and stable-file
-   admission are required before a JPEG is sent to the solver.
+The hook is opt-in: AUTO_SOLVE_FRAMES=1 plus mode:8 and stable-file
+admission are required before a JPEG is sent to the solver.
+
+The watcher establishes an admission boundary when it starts and whenever a
+new Astro session opens. Files already present at that boundary are recorded
+as baseline content and are not solved as if they were new Astro captures.
+Subsequent `.jpg`, `.JPG`, `.jpeg`, and `.JPEG` files are admitted after their
+size is stable and their JPEG end marker is present. A reused filename is
+eligible again when its size or modification time changes. This prevents a
+reboot or a mode transition from re-solving an entire old gallery while still
+covering new files published during an enabled session.
+
+This is a local-admission guarantee, not a camera-transfer guarantee. The
+watcher cannot recover a frame that the camera/head never publishes under
+`/app/sd`, and it cannot prove that the Polaris copy is the camera-card
+original. If the watcher is started after a capture has completed, that frame
+is outside its observable admission window and must be submitted explicitly.
 ```
 
 ## Source-level flow
@@ -189,6 +204,9 @@ The following invariants should hold before this becomes an unattended feature.
   completed transfer result.
 - Never select a merely newest file without recording the capture event or
   proving it appeared after the triggering event.
+- Start the watcher before entering Astro mode when unattended per-frame
+  solving is required. Its admission ledger intentionally excludes files that
+  predate the active session.
 - Preserve the original local JPEG. Prefer a sidecar or a new derived file
   until EXIF round-trip and crash-recovery testing are complete.
 - Use a same-directory temporary file, `fsync`, and atomic rename only after

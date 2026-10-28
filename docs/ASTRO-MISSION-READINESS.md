@@ -19,7 +19,7 @@ turn a host build or a simulated solve into hardware qualification.
 | 7. GOTO | `polaris-goto-solve.sh` supports direct GOTO+solve; `polaris-goto-watch.sh` can recognise Astro 519 `track:1` requests | BenroConnect watcher is opt-in and depends on the observed 519 wire fields. Calibration `track:0` is deliberately ignored. Hardware trace validation is still required. |
 | 8. Repeated GOTO refinement | Each accepted solve writes `target.json` and a history record | Sequential refinement is implemented. Heading application is separately gated by `GOTO_SOLVE_APPLY=1`; low-confidence results never move the mount. |
 | 9. Image 1 | Existing camera capture/transfer path publishes local JPEGs | No claim is made for a file that exists only on the camera card. |
-| 10. Solve each image | `polaris-frame-watch.sh` watches the supported Polaris-side directories, waits for stable JPEG completion, solves, and embeds local EXIF by default | Opt-in with `AUTO_SOLVE_FRAMES=1`. It never fires the shutter. Camera-card writeback is not performed. |
+| 10. Solve each image | `polaris-frame-watch.sh` watches the supported Polaris-side directories, admits only new/changed JPEG keys after its session boundary, waits for stable completion, solves, and embeds local EXIF by default | Opt-in with `AUTO_SOLVE_FRAMES=1`. It never fires the shutter. Camera-card writeback is not performed. A frame that was never published locally, or completed before the watcher was active, remains outside the automatic guarantee. |
 | 11. Drift and rotation | Frame watcher compares solved RA/Dec with the current target and logs rotation | Optional bounded re-centre uses `FRAME_CORRECT=1`; it is withheld when rotation exceeds the configured threshold. Rotation is measured and reported, but no axis-rate command is sent. |
 | 12. Adjust motor speed | No qualified firmware per-axis rate primitive is available | Intentionally not implemented through jog commands. Issue [#240](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/240) remains the dependency for exact command discovery, simulator/fault injection, and hardware qualification. |
 | 13. Repeat | Frame watcher loop and solve history provide the repeat boundary | The loop is safe only in opt-in mode and with a known local capture-transfer path. It is not yet a universal every-camera guarantee. |
@@ -57,6 +57,30 @@ and a five-position host all-sky-package smoke now pass, including a corrected
 triangle-ratio candidate index. The native path is not the default until that
 package is installed with a clean ARM build and the wrong-solve, runtime, and
 device-capture gates have passed.
+
+## Critical review — 2026-10-28 capture-loop checkpoint
+
+Against the requested mission, the new admission ledger closes one concrete
+failure mode: enabling the watcher no longer causes old Polaris gallery files
+to be re-solved, and a reused filename is re-admitted when its file key
+changes. The watcher also recognises lower-case and upper-case `.jpg`/`.jpeg`
+variants. The test is host-only; it does not prove that every camera or
+firmware variant publishes every Astro frame under `/app/sd`.
+
+The end goal is therefore still not met. Steps 1–5 remain the existing
+BenroConnect/camera path; steps 6–10 have source-level and host/package
+evidence but no new physical end-to-end run; step 11 can measure drift and
+withhold unsafe corrections; step 12 is blocked on the exact per-axis rate
+contract in issue #240; and step 13 cannot honestly be called complete until
+rate control, local capture publication, and device qualification are closed.
+The compact native index also has a known narrow-field blind-search boundary
+for K-3 III APS-C, tracked in issue #248, while hinted solves pass.
+
+The next work must stay in this order: capture/transfer trace on the exact
+camera and `.73` runtime; host-only rate-command parser/simulator and fault
+tests for #240; broaden or replace the APS-C index under a measured resource
+budget; then physical calibration/GOTO/repeated-frame qualification. No live
+motor command or firmware patch is justified by this checkpoint.
 
 The K-3 III APS-C geometry profile (23.3 mm) has a separate host result: the
 hinted native solve passes in one nearest-tile attempt, but the compact

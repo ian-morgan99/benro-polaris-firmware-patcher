@@ -5,6 +5,10 @@
 # This is deliberately a separate, opt-in daemon.  It only considers files
 # while the head reports mode:8, waits for a stable JPEG, and records every
 # decision.  It never fires the shutter and never touches a camera-side file.
+# The admission ledger is primed before each Astro session, so old gallery
+# files are not mistaken for new Astro captures.  A file is admitted only when
+# its path/size/mtime key has not been seen before; a reused filename with a
+# changed key is therefore eligible again.
 # That boundary is what keeps ordinary K-3 III capture behaviour unchanged.
 #
 # The first implementation measures drift against the current target and can
@@ -21,6 +25,7 @@ HISTORY=${HISTORY:-/app/sd/polaris-astro/solve-history.jsonl}
 STATE=${STATE:-/app/sd/polaris-astro/solved-jpegs.tsv}
 TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
 FRAME_STATE=${FRAME_STATE:-/app/sd/polaris-astro/last-frame-solution.json}
+ADMISSION=${ADMISSION:-/app/sd/polaris-astro/frame-admission.tsv}
 MODE_FILE=${MODE_FILE:-/tmp/polaris-mode}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
@@ -43,7 +48,8 @@ LON=${LON:-}
 DIRS=${CAPTURE_DIR:-"/app/sd/normal /app/sd/starskyStack /app/sd/HDR /app/sd/panorama /app/sd/focusStack /app/sd/sun"}
 EXTRA=${CAPTURE_GLOB_EXTRA:-"/app/sd/Lapse/class_*"}
 
-mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" "$(dirname "$FRAME_STATE")" 2>/dev/null
+mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" \
+    "$(dirname "$FRAME_STATE")" "$(dirname "$STATE")" "$(dirname "$ADMISSION")" 2>/dev/null
 
 log() {
     _m="$(date '+%Y-%m-%d %H:%M:%S') $*"
@@ -62,7 +68,25 @@ file_key() {
 }
 
 seen() {
-    [ -r "$STATE" ] && grep -F -q "$1	" "$STATE" 2>/dev/null
+    [ -r "$STATE" ] && grep -F -x -q "$1" "$STATE" 2>/dev/null
+}
+
+# Record the files already present at the point at which the watcher starts or
+# an Astro session begins.  This is an admission boundary, not a solve result:
+# a later file, or a later write to a reused path, has a different key and is
+# processed normally.  Keeping this in the existing state file also preserves
+# compatibility with the pre-admission three-column format.
+prime_existing() {
+    for _d in $DIRS $EXTRA; do
+        [ -d "$_d" ] || continue
+        for _f in "$_d"/*.jpg "$_d"/*.JPG "$_d"/*.jpeg "$_d"/*.JPEG; do
+            [ -f "$_f" ] || continue
+            _key=$(file_key "$_f")
+            seen "$_key" || printf '%s\n' "$_key" >> "$STATE" 2>/dev/null
+        done
+    done
+    : > "$ADMISSION" 2>/dev/null || true
+    date -u '+%Y-%m-%dT%H:%M:%SZ' > "$ADMISSION" 2>/dev/null || true
 }
 
 valid_stable_jpeg() {
@@ -213,10 +237,10 @@ assess_and_optionally_correct() {
 
 process() {
     _f=$1
-    seen "$_f" && return 0
-    valid_stable_jpeg "$_f" || return 0
     _key=$(file_key "$_f")
-    printf '%s' "$_key" >> "$STATE" 2>/dev/null
+    seen "$_key" && return 0
+    valid_stable_jpeg "$_f" || return 0
+    printf '%s\n' "$_key" >> "$STATE" 2>/dev/null
     log "processing completed Astro JPEG $_f"
     _j=$(solve_one "$_f")
     printf '%s\t%s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$_j" >> "$HISTORY" 2>/dev/null
@@ -228,16 +252,27 @@ process() {
     fi
 }
 
+prime_existing
+_was_active=0
 log "frame watcher started (mode-gated; correction=$FRAME_CORRECT solver=$SOLVER_BIN)"
 while :; do
-    if astro_active; then
+    _active=0
+    astro_active && _active=1
+    if [ "$_active" = "1" ]; then
+        if [ "$_was_active" != "1" ]; then
+            # Files made while Astro was not active are not Astro frames. Mark
+            # them before scanning the first active session.
+            prime_existing
+            log "Astro frame admission opened"
+        fi
         for _d in $DIRS $EXTRA; do
             [ -d "$_d" ] || continue
-            for _f in "$_d"/*.jpg "$_d"/*.JPG; do
+            for _f in "$_d"/*.jpg "$_d"/*.JPG "$_d"/*.jpeg "$_d"/*.JPEG; do
                 [ -f "$_f" ] || continue
                 process "$_f"
             done
         done
     fi
+    _was_active=$_active
     sleep "$POLL"
 done
