@@ -189,9 +189,11 @@ def test_no_route_when_nothing_available(tmp_path):
         "POLARIS_BT_DEV": str(tmp_path / "nonexistent"),
         # Neutralise the /run/host last-resort route too.
         "POLARIS_BT_HOST_BIN": str(tmp_path / "no-such-binary"),
+        # Keep the fixture hermetic: the developer workstation may have a
+        # real bluetoothctl, which would invalidate the no-adapter scenario.
+        "PATH": f"{tmp_path}:/bin:/usr/local/bin:/usr/sbin:/sbin",
     }
     r = _run_bash(
-        'command -v bluetoothctl >/dev/null && exit 99; '
         'bt_resolve; echo "rc=$? route=$BT_ROUTE"', tmp_path, env)
     assert "rc=2 route=none" in r.stdout, r.stdout + r.stderr
 
