@@ -20,6 +20,8 @@
 #     uImage, firmwareInfo, gimbal/) is produced,
 #   - the stage-2 on-disk bundle (install/restore scripts +
 #     libpolaris_stage2.so + ptp2.so) is shipped, and
+#   - the optional legacy usbscsi iolib is built and shipped for the K-5 II
+#     profile,
 #   - the stage-2 loader compiles with the same cross-toolchain
 #     the image uses.
 #
@@ -75,6 +77,7 @@ if ! docker run --rm --name polaris-pentax-e2e \
   -e FIX_R5M2_TYPO=1 \
   -e SELFTEST=0 \
   -e SWAP_USB1=1 \
+  -e POLARIS_ENABLE_USB_SCSI=1 \
   -e ALLOW_DIRTY_SOURCE=0 \
   -e PENTAX=1 \
   -v "$SOURCE:/libgphoto2-source-input:ro" \
@@ -220,7 +223,8 @@ for mapping in \
   'lib/stage2/libgphoto2/2.5.34/ptp2.so:libgphoto2/2.5.34/ptp2.so' \
   'lib/stage2/libgphoto2/2.5.34/pentax.so:libgphoto2/2.5.34/pentax.so' \
   'lib/stage2/libgphoto2/2.5.34/camlibs.manifest:libgphoto2/2.5.34/camlibs.manifest' \
-  'lib/stage2/libgphoto2_port/0.12.2/usb1.so:libgphoto2_port/0.12.2/usb1.so'
+  'lib/stage2/libgphoto2_port/0.12.2/usb1.so:libgphoto2_port/0.12.2/usb1.so' \
+  'lib/stage2/libgphoto2_port/0.12.2/usbscsi.so:libgphoto2_port/0.12.2/usbscsi.so'
 do
   embedded=${mapping%%:*}
   bundled=${mapping#*:}

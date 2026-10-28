@@ -19,7 +19,10 @@ mkdir -p "$SRC" /work/out
 # FULLSTACK=1 : full-libgphoto2 mode (the DEFAULT of the patcher).  Builds the
 # whole 2.5.34 stack -- core (libgphoto2.so.6) + port (libgphoto2_port.so.12) +
 # ptp2 camlib + usb1 iolib -- so the on-disk trampoline loader can dlopen a fresh
-# core/port instead of pgphoto's compiled-in 2.5.27 core.  Two fullstack-only
+# core/port instead of pgphoto's compiled-in 2.5.27 core.  An optional usbscsi
+# iolib is harvested when POLARIS_ENABLE_USB_SCSI=1 for legacy Pentax K-5 II
+# USB-SCSI support; it is off by default so the K-3 III package is unchanged.
+# Two fullstack-only
 # build deltas vs the legacy ptp2-only path:
 #   * NO trampoline shim: the ptp2-only path shims gp_filesystem_set_info_dirty
 #     because the device's on-disk 2.5.27 core predates that symbol; the fullstack
@@ -33,6 +36,11 @@ FULLSTACK="${FULLSTACK:-0}"
 POLARIS_CAMLIBS="${POLARIS_CAMLIBS:-ptp2,pentax}"
 case "$POLARIS_CAMLIBS" in
   *[!a-zA-Z0-9_,-]*|,*|*,|*,,*) echo "[build] ERROR: invalid POLARIS_CAMLIBS=$POLARIS_CAMLIBS"; exit 1;;
+esac
+POLARIS_ENABLE_USB_SCSI="${POLARIS_ENABLE_USB_SCSI:-0}"
+case "$POLARIS_ENABLE_USB_SCSI" in
+  0|1) : ;;
+  *) echo "[build] ERROR: POLARIS_ENABLE_USB_SCSI must be 0 or 1"; exit 1;;
 esac
 
 echo "[build] preparing libgphoto2 $VER"
@@ -76,8 +84,22 @@ if [ -d /libgphoto2-source-input ]; then
   fi
   rm -rf "libgphoto2-$VER"
   mkdir "libgphoto2-$VER"
-  cp -a /libgphoto2-source-input/. "libgphoto2-$VER/"
-  rm -rf "libgphoto2-$VER/.git" "libgphoto2-$VER/build" "libgphoto2-$VER/build-"*
+  if [ -z "$SOURCE_STATUS" ]; then
+    # A clean Git checkout can still contain ignored native-build output such
+    # as config.status, Makefiles, and .libs directories.  Copying those files
+    # makes the cross-build reuse host configuration and can silently produce
+    # a host ELF instead of the required ARM ELF.  Archive only tracked files
+    # for the normal clean-source path; this also makes the source boundary
+    # reproducible for agents working in a previously-built checkout.
+    git -C /libgphoto2-source-input archive --format=tar HEAD \
+      | tar -xf - -C "libgphoto2-$VER"
+  else
+    # Explicit dirty-source opt-in is diagnostic/research-only: preserve the
+    # requested uncommitted files, while the clean path above remains strict.
+    cp -a /libgphoto2-source-input/. "libgphoto2-$VER/"
+    rm -rf "libgphoto2-$VER/.git"
+  fi
+  rm -rf "libgphoto2-$VER/build" "libgphoto2-$VER/build-"*
   echo "[build] using mounted local source (read-only input copied to build workspace)"
 elif [ -f /libgphoto2-source-input ]; then
   SOURCE_KIND=archive
@@ -130,6 +152,7 @@ vanilla_source_explicit=$VANILLA_SOURCE_EXPLICIT
 patcher_commit=${PATCHER_COMMIT:-unknown}
 patcher_dirty_diff_hash=${PATCHER_DIRTY_HASH:-}
 selected_camlibs=$POLARIS_CAMLIBS
+legacy_usbscsi=$POLARIS_ENABLE_USB_SCSI
 EOF
 # Optional human-readable build identifier (issue: patcher-only builds share the
 # same libgphoto2 git_commit, so the device cannot tell e.g. o-v9g from o-v9h).
@@ -334,6 +357,19 @@ done
 IFS=$OLD_IFS
 echo "[build] selected camlibs harvested: $POLARIS_CAMLIBS"
 
+# The K-5 II and K-5 IIs use the legacy pentax camlib over USB-SCSI rather
+# than the modern Pentax PTP path.  Keep this opt-in: modern Polaris builds do
+# not need the extra iolib, while a K-5 II profile must fail closed if it was
+# requested but not produced.
+if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+  USB_SCSI_BUILT="$(find libgphoto2_port -name usbscsi.so | sort | head -1)"
+  [ -n "$USB_SCSI_BUILT" ] || {
+    echo "[build] ERROR: POLARIS_ENABLE_USB_SCSI=1 but usbscsi.so was not produced"; exit 1;
+  }
+  cp "$USB_SCSI_BUILT" /work/out/usbscsi.so
+  echo "[build] usbscsi.so built: $(stat -c %s /work/out/usbscsi.so) bytes"
+fi
+
 # Harvest the usb1 iolib (from libgphoto2_port). Non-fatal here — patch.sh
 # requires it only when the usb1 swap is enabled, and verifies it fully.
 USB1_BUILT="$(find libgphoto2_port -name usb1.so | head -1)"
@@ -375,15 +411,26 @@ if [ "$FULLSTACK" = "1" ]; then
   # Prove the _Camera pad took BEFORE stripping (needs .symtab): the new core's
   # gp_camera_new must calloc 0x102c (=4140) bytes.  Fail closed if not — a wrong
   # size would put Benro's _Camera-tail reads out of bounds.
-  if "$XT-objdump" -d /work/out/libgphoto2.so.6 2>/dev/null \
-       | sed -n '/<gp_camera_new>:/,/^$/p' | grep -qiE '\.word[[:space:]]+0x0*102c|#[[:space:]]*4140'; then
+  # Keep the diagnostic fail-closed without allowing objdump's non-zero status
+  # on an unusual/unsupported ELF variant to hide the actual assembly from the
+  # error report under `set -euo pipefail`.
+  CAMERA_NEW_OBJDUMP="$($XT-objdump -d /work/out/libgphoto2.so.6 2>&1 || true)"
+  CAMERA_NEW_ASM="$(sed -n '/<gp_camera_new>:/,/^$/p' <<<"$CAMERA_NEW_OBJDUMP")"
+  if grep -qiE '\.word[[:space:]]+0x0*102c|#[[:space:]]*4140' <<<"$CAMERA_NEW_ASM"; then
     echo "[build] FULLSTACK: _Camera pad confirmed (gp_camera_new allocates 4140 B)"
   else
-    echo "[build] FULLSTACK ERROR: gp_camera_new does not allocate 4140 B — _Camera pad failed"; exit 1
+    echo "[build] FULLSTACK ERROR: gp_camera_new does not allocate 4140 B — _Camera pad failed"
+    if [ -n "$CAMERA_NEW_ASM" ]; then
+      echo "$CAMERA_NEW_ASM"
+    else
+      echo "$CAMERA_NEW_OBJDUMP" | tail -40
+    fi
+    exit 1
   fi
   # Strip core, ptp2, usb1, but DO NOT strip libgphoto2_port.so.12 - it needs LIBGPHOTO2_5_0 symbols for the new core
-  "$XT-strip" /work/out/libgphoto2.so.6 \
-              /work/out/ptp2.so /work/out/camlibs/*.so /work/out/usb1.so
+  STRIP_TARGETS=(/work/out/libgphoto2.so.6 /work/out/ptp2.so /work/out/camlibs/*.so /work/out/usb1.so)
+  [ "$POLARIS_ENABLE_USB_SCSI" = "1" ] && STRIP_TARGETS+=(/work/out/usbscsi.so)
+  "$XT-strip" "${STRIP_TARGETS[@]}"
   # Refresh hashes after stripping.
   : > /work/out/camlibs.manifest
   for built_camlib in /work/out/camlibs/*.so; do

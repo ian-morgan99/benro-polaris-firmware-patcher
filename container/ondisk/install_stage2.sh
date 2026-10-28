@@ -5,7 +5,8 @@
 # It (1) backs up the real /app/bin/pgphoto to /app/sd/pgphoto.prestage2.bak
 # (ONLY if that backup does not already exist -- so re-runs never overwrite the
 # genuine stock binary with an already-installed wrapper), (2) populates
-# /app/lib/stage2 with the loader + fresh core/port/ptp2/usb1 + the on-disk-
+# /app/lib/stage2 with the loader + fresh core/port/ptp2/usb1 (+ optional
+# usbscsi) + the on-disk-
 # trampolined binary, (3) installs the sh-wrapper as /app/bin/pgphoto, and
 # (4) prints how to resume polestar.
 #
@@ -46,6 +47,13 @@ PORT=$(find_one libgphoto2_port.so.12)
 CAMLIB_SRC="$SRC/libgphoto2/$LIBGPHOTO2_VERSION"
 [ -s "$CAMLIB_SRC/camlibs.manifest" ] || { echo "[install] MISSING camlibs.manifest" >&2; exit 1; }
 USB1=$(find_one "libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so")
+# K-5 II/K-5 IIs use the legacy USB-SCSI transport.  It is optional so the
+# normal K-3 III/K-1 II bundle remains byte-for-byte compatible with bundles
+# that do not contain it.
+USB_SCSI=
+for r in "libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usbscsi.so"; do
+    if [ -f "$SRC/$r" ]; then USB_SCSI="$SRC/$r"; break; fi
+done
 WRAP=$(find_one ondisk/pgphoto.wrapper pgphoto.wrapper)
 USB_SUPERVISOR=$(find_one ondisk/camera_usb_supervisor.sh camera_usb_supervisor.sh)
 
@@ -82,8 +90,11 @@ while read -r _hash camlib_file; do
 done < "$CAMLIB_SRC/camlibs.manifest"
 cp "$CAMLIB_SRC/camlibs.manifest" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/camlibs.manifest"
 cp "$USB1"    "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
+if [ -n "$USB_SCSI" ]; then
+    cp "$USB_SCSI" "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usbscsi.so"
+fi
 cp "$USB_SUPERVISOR" "$STAGE2/camera_usb_supervisor.sh"; chmod +x "$STAGE2/camera_usb_supervisor.sh"
-echo "[install] populated $STAGE2 (loader + core/port + selected camlibs + usb1 + stage2 binary)"
+echo "[install] populated $STAGE2 (loader + core/port + selected camlibs + usb1${USB_SCSI:+ + usbscsi} + stage2 binary)"
 
 # --- 2b. also place fresh ptp2/usb1 at the STOCK camlib/iolib paths -----------
 # The swapped 2.5.34 core dlopens its camlib from the stock on-disk layout
@@ -111,6 +122,16 @@ if [ -n "$STOCK_USB1" ]; then
     [ -e "$STOCK_USB1.prestage2.bak" ] || cp "$STOCK_USB1" "$STOCK_USB1.prestage2.bak"
     cp "$USB1" "$STOCK_USB1"
     echo "[install] placed fresh usb1 at stock iolib path $STOCK_USB1 (backup kept)"
+    if [ -n "$USB_SCSI" ]; then
+        STOCK_USB_SCSI="$(dirname "$STOCK_USB1")/usbscsi.so"
+        if [ -e "$STOCK_USB_SCSI" ]; then
+            [ -e "$STOCK_USB_SCSI.prestage2.bak" ] || cp "$STOCK_USB_SCSI" "$STOCK_USB_SCSI.prestage2.bak"
+        else
+            : > "$STOCK_USB_SCSI.prestage2.absent"
+        fi
+        cp "$USB_SCSI" "$STOCK_USB_SCSI"
+        echo "[install] placed legacy usbscsi at stock iolib path $STOCK_USB_SCSI"
+    fi
 fi
 
 # --- 3. install the self-driving wrapper as /app/bin/pgphoto -----------------
