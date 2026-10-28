@@ -50,6 +50,295 @@
 				"ok"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Polaris BT wake diagnosis",
+			"type": "shell",
+			"command": "echo '=== ADAPTER ==='; ls -l /sys/class/bluetooth 2>&1; ls /dev | grep -i hci || echo 'no /dev/hci*'; echo; echo '=== RFKILL ==='; rfkill list 2>&1; echo; echo '=== BLUEZ DAEMON ==='; systemctl is-active bluetooth 2>&1; pgrep -a bluetoothd || echo 'bluetoothd NOT running'; echo; echo '=== TOOLS ==='; command -v bluetoothctl || echo 'bluetoothctl missing'; echo; echo '=== USB BT DEVICES ==='; lsusb 2>/dev/null | grep -iE 'blue|8087|0a5c|b064' || echo 'lsusb unavailable/no BT usb'; echo; echo '=== KERNEL MODULES ==='; lsmod | grep -iE 'btusb|bluetooth|btbcm|btintel|btmtk' || echo 'no bluetooth modules loaded'; echo; echo '=== DMESG BT (last) ==='; dmesg 2>/dev/null | grep -iE 'blue|hci|btusb' | tail -25 || echo 'dmesg unavailable'",
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Polaris BT stack probe",
+			"type": "shell",
+			"command": "echo '=== FLATPAK/SANDBOX ==='; cat /.flatpak-info 2>&1 | head -20; echo; echo '=== bluetoothd processes visible ==='; for p in /proc/[0-9]*; do c=$(cat $p/comm 2>/dev/null); case \"$c\" in *bluetooth*) echo \"$p -> $c\";; esac; done; echo '(scan done)'; echo; echo '=== dbus sockets ==='; ls -l /run/dbus/ 2>&1; ls -l /run/host/run/dbus/ 2>&1; echo; echo '=== host bluetoothctl ==='; ls -l /run/host/usr/bin/bluetoothctl 2>&1; echo; echo '=== host bluez cache dir ==='; ls /run/host/var/lib/ 2>&1 | head -40",
+			"problemMatcher": []
+		},
+		{
+			"label": "Mlog BT wake evidence scan",
+			"type": "shell",
+			"command": "cd /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/docs/evidence && for f in benro-connect-crash-20261010/raw/Mlog_000276.txt o-v13t-preinstall-state-20260929-132320/Mlog_000171.txt; do echo \"===== $f =====\"; grep -aoE 'SP_EVENT_BT_[A-Z_]+|WifiBtTask\\[[0-9]+\\]: [^;]{0,40}|SP_SetWifiState\\[[0-9]+\\]|SP_ClientCtx(Del|Add): id\\[[0-9]+\\]; type\\[[a-z]+\\]; WifiCount\\[[0-9]+\\]|MsgFromWifiBt --> val\\[[^]]*\\]' \"$f\" | uniq -c | head -60; done",
+			"problemMatcher": []
+		},
+		{
+			"label": "BlueZ reachability probe",
+			"type": "shell",
+			"command": "echo '=== /dev/hci0 present? (scripts gate on this) ==='; ls -l /dev/hci0 2>&1; echo; echo '=== host bluetoothctl via sandbox bus ==='; timeout 8 /run/host/usr/bin/bluetoothctl list 2>&1 | head -10; echo \"rc=$?\"; echo; echo '=== VS Code flatpak metadata (device permissions) ==='; for m in /home/ian/.local/share/flatpak/app/com.visualstudio.code/current/active/metadata /var/lib/flatpak/app/com.visualstudio.code/current/active/metadata; do [ -f \"$m\" ] && { echo \"--- $m\"; sed -n '/\\[Context\\]/,/\\[\\]/p' \"$m\" | head -30; }; done",
+			"problemMatcher": []
+		},
+		{
+			"label": "BlueZ D-Bus vs seccomp check",
+			"type": "shell",
+			"command": "echo '=== /dev contents (device policy) ==='; ls /dev | tr '\\n' ' '; echo; echo; echo '=== bus tools available ==='; command -v gdbus dbus-send 2>&1; echo; echo '=== org.bluez on proxied system bus? ==='; timeout 8 gdbus call --address unix:path=/run/dbus/system_bus_socket --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.ListNames 2>&1 | tr ',' '\\n' | grep -iE 'bluez|NetworkManager|udev' ; echo \"rc=$?\"; echo; echo '=== direct mgmt socket test ==='; python3 - <<'PY'\nimport socket\nprint('AF_BLUETOOTH available:', hasattr(socket,'AF_BLUETOOTH'))\ntry:\n    s=socket.socket(socket.AF_BLUETOOTH, socket.SOCK_RAW, 0)\n    print('mgmt socket: OK')\nexcept Exception as e:\n    print('mgmt socket FAILED:', type(e).__name__, e)\nPY",
+			"problemMatcher": []
+		},
+		{
+			"label": "BlueZ bus and Wi-Fi reachability",
+			"type": "shell",
+			"command": "echo '=== proxied system bus names ==='; timeout 8 gdbus call --address unix:path=/run/dbus/system_bus_socket --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.ListNames 2>&1 | head -c 1200; echo; echo '=== nmcli ==='; command -v nmcli >/dev/null && timeout 12 nmcli -t -f NAME,DEVICE,STATE connection show --active 2>&1 || echo 'nmcli missing in sandbox'; echo; echo '=== polaris AP visible? ==='; timeout 15 nmcli -t -f BSSID,SSID dev wifi list --rescan yes 2>/dev/null | grep -i '48:E7:DA' || echo 'no polaris AP visible / nmcli unavailable'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Mlog BT connect context",
+			"type": "shell",
+			"command": "cd /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/docs/evidence/benro-connect-crash-20261010/raw && sed -e 's/\\x1b\\[[0-9;]*m//g' Mlog_000276.txt | grep -nE 'SP_EVENT_BT_CONNECT|SP_SetWifiState|wifi auto off|hostapd|WifiBtTask|SP_ClientCtx|bt connect|BT_DISCONNECT|advertis' | head -60",
+			"problemMatcher": []
+		},
+		{
+			"label": "Host escape + prior wake logs",
+			"type": "shell",
+			"command": "echo '=== flatpak-spawn available? ==='; command -v flatpak-spawn || echo 'flatpak-spawn missing'; echo; echo '=== host bluetoothctl via flatpak-spawn --host ==='; timeout 12 flatpak-spawn --host bluetoothctl list 2>&1 | head; echo \"rc=$?\"; echo; echo '=== prior keepalive log (what the user actually saw) ==='; ls -l /tmp/polaris-bt-keepalive.log 2>&1; tail -40 /tmp/polaris-bt-keepalive.log 2>/dev/null || echo '(no log in sandbox tmp)'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Live Polaris BT wake diagnosis",
+			"type": "shell",
+			"command": "BT=48:E7:DA:D4:B5:72\necho '=== adapter state ==='; timeout 10 flatpak-spawn --host bluetoothctl show 2>&1 | sed 's/^/  /'\necho; echo '=== cached devices (polaris) ==='; timeout 10 flatpak-spawn --host bluetoothctl devices 2>&1 | grep -i polaris || echo '  not in BlueZ cache'\necho; echo '=== paired/trusted info ==='; timeout 10 flatpak-spawn --host bluetoothctl info $BT 2>&1 | sed 's/^/  /'\necho; echo '=== live advertisement scan (15s) ==='; timeout 25 flatpak-spawn --host bluetoothctl --timeout 15 scan on 2>&1 | grep -iE 'new device|polaris' | head -10 || echo '  NO live advertisement seen in 15s'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Attempt BT wake pulse + AP poll",
+			"type": "shell",
+			"command": "BT=48:E7:DA:D4:B5:72\necho '=== PULSE 1 (host, --timeout 15) ==='\ntimeout 25 flatpak-spawn --host bluetoothctl --timeout 15 connect $BT 2>&1 | sed 's/^/  /'\necho \"rc=$?\"\necho '--- link state immediately after ---'\ntimeout 8 flatpak-spawn --host bluetoothctl info $BT 2>&1 | grep -E 'Connected|Paired|Bonded' | sed 's/^/  /'\necho; echo '=== AP poll (up to 60s) ==='\nfor i in $(seq 1 12); do\n  AP=$(timeout 15 flatpak-spawn --host nmcli -t -f BSSID,SSID dev wifi list --rescan yes 2>/dev/null | grep -i '48:E7:DA' | head -1)\n  if [ -n \"$AP\" ]; then echo \"  AP VISIBLE after ~$((i*5))s: $AP\"; break; fi\n  sleep 5\ndone\n[ -z \"$AP\" ] && echo '  AP never appeared within 60s'\necho; echo '=== host route / reachability ==='; timeout 8 flatpak-spawn --host ip route get 192.168.0.1 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Identity check: who owns 192.168.0.1",
+			"type": "shell",
+			"command": "echo '=== active wifi association (host) ==='; timeout 10 flatpak-spawn --host nmcli -t -f NAME,DEVICE,STATE connection show --active 2>&1 | sed 's/^/  /'\necho; echo '=== current AP BSSID ==='; timeout 10 flatpak-spawn --host nmcli -t -f GENERAL.SSID,GENERAL.BSSID device show wlp8s0 2>&1 | sed 's/^/  /'\necho; echo '=== full wifi scan: any polaris / Benro AP ==='; timeout 20 flatpak-spawn --host nmcli -t -f BSSID,SSID,SIGNAL dev wifi list --rescan yes 2>/dev/null | head -15\necho; echo '=== is 192.168.0.1 the rig or the router? ==='; timeout 6 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=4 -o StrictHostKeyChecking=no root@192.168.0.1 'cat /app/FwVer' 2>&1 | head -3 | sed 's/^/  /'\necho; echo '=== arp for the rig wifi mac .73 ==='; timeout 8 flatpak-spawn --host arping -c2 -I wlp8s0 192.168.0.1 2>&1 | head -6 || ip neigh 2>/dev/null | grep 192.168.0.1",
+			"problemMatcher": []
+		},
+		{
+			"label": "Device-side BLE advertising state",
+			"type": "shell",
+			"command": "SSH=\"timeout 25 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1\"\necho '=== newest Mlog ==='; $SSH 'ls -t /app/yocto/run/customer/Mlog/Mlog_* 2>/dev/null | head -3; ls -t /app/sd/system/log/Mlog_* 2>/dev/null | head -3' 2>&1 | sed 's/^/  /'\necho; echo '=== advertising / BT state transitions in newest Mlog ==='\n$SSH 'F=$(ls -t /app/yocto/run/customer/Mlog/Mlog_* 2>/dev/null | head -1); sed -e \"s/\\x1b\\[[0-9;]*m//g\" \"$F\" | grep -aE \"SP_BlueSetAdvertiseState|Failed to register advertising|SP_EVENT_BT_|advertise (on|off)|wifi auto off|SP_SetWifiState|WifiBtTask\" | tail -40' 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Device-side BLE advertising state (fixed quoting)",
+			"type": "shell",
+			"command": "run() { timeout 30 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 \"$1\"; }\necho '=== BT/advertising transitions, newest Mlog ==='\nrun \"sed -e 's/\\x1b\\[[0-9;]*m//g' /app/sd/system/log/Mlog_000315.log | grep -aE 'SP_BlueSetAdvertiseState|Failed to register advertising|SP_EVENT_BT_|advertise on|advertise off|wifi auto off|SP_SetWifiState|WifiBtTask' | tail -45\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Device BT daemon + advertising registration detail",
+			"type": "shell",
+			"command": "run() { timeout 30 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 \"$1\"; }\necho '=== context around advertise-on at boot ==='\nrun \"sed -e 's/\\x1b\\[[0-9;]*m//g' /app/sd/system/log/Mlog_000315.log | grep -anE 'SP_BlueSetAdvertiseState|Failed to register advertising|Registering|advertising object|bluez|BlueZ|D-Bus|dbus' | head -40\" 2>&1 | sed 's/^/  /'\necho; echo '=== on-device bluetooth processes / adapters ==='\nrun \"ps | grep -iE 'blue|bluetoothd|wifi_bt' | grep -v grep; echo '--- hci:'; ls /sys/class/bluetooth 2>&1; hciconfig 2>&1 | head -12\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Advertising failure frequency + device BT config",
+			"type": "shell",
+			"command": "run() { timeout 30 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 \"$1\"; }\necho '=== advertise-on vs registration-failure counts (last 5 Mlogs) ==='\nrun \"for f in \\$(ls -t /app/sd/system/log/Mlog_*.log | head -5); do on=\\$(sed -e 's/\\x1b\\[[0-9;]*m//g' \\$f | grep -ac 'advertise on'); fail=\\$(sed -e 's/\\x1b\\[[0-9;]*m//g' \\$f | grep -ac 'Failed to register advertising object'); bt=\\$(sed -e 's/\\x1b\\[[0-9;]*m//g' \\$f | grep -ac 'SP_EVENT_BT_CONNECT'); echo \\\"\\$f advertise_on=\\$on reg_fail=\\$fail bt_connect_events=\\$bt\\\"; done\" 2>&1 | sed 's/^/  /'\necho; echo '=== device bluetoothd main.conf ==='\nrun \"cat /app/bluetooth/config/main.conf 2>/dev/null | grep -vE '^\\s*#|^\\s*$' | head -30\" 2>&1 | sed 's/^/  /'\necho; echo '=== device-side bluetoothctl controller state ==='\nrun \"/app/bluetooth/bin/bluetoothctl show 2>&1 | head -25 || ls /app/bluetooth/bin | head -20\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Device BLE controller + advertising instance state",
+			"type": "shell",
+			"command": "run() { timeout 30 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 \"$1\"; }\necho '=== device clock / uptime ==='; run \"date; cat /proc/uptime\" 2>&1 | sed 's/^/  /'\necho; echo '=== hci0 state ==='; run \"cat /sys/class/bluetooth/hci0/state 2>&1; cat /sys/class/bluetooth/hci0/address 2>&1\" 2>&1 | sed 's/^/  /'\necho; echo '=== last advertise-related lines with timestamps (whole log) ==='\nrun \"sed -e 's/\\x1b\\[[0-9;]*m//g' /app/sd/system/log/Mlog_000315.log | grep -aE 'dvertise|SP_EVENT_BT_|wifi auto off|SP_SetWifiState\\[125\\]:SP_SetWifiState\\[0' | tail -25\" 2>&1 | sed 's/^/  /'\necho; echo '=== dbus tools on device ==='; run \"ls /app/bluetooth/bin/ 2>/dev/null | head -30\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Device BLE connections and controller state",
+			"type": "shell",
+			"command": "run() { timeout 30 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 \"$1\"; }\necho '=== device clock/uptime + hci0 state ==='; run \"date; awk '{print \\$1}' /proc/uptime; cat /sys/class/bluetooth/hci0/state; cat /sys/class/bluetooth/hci0/address\" 2>&1 | sed 's/^/  /'\necho; echo '=== hciconfig -a (device) ==='\nrun \"export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib; /app/bluetooth/bin/hciconfig -a 2>&1 | head -25\" 2>&1 | sed 's/^/  /'\necho; echo '=== current LE connections on device ==='\nrun \"export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib; /app/bluetooth/bin/hcitool con 2>&1 | head -15\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Classic vs LE reachability test",
+			"type": "shell",
+			"command": "BT=48:E7:DA:D4:B5:72\necho '=== classic reachability: l2ping ==='; timeout 15 flatpak-spawn --host l2ping -c 3 $BT 2>&1 | tail -6 | sed 's/^/  /'\necho; echo '=== classic SDP browse (is it BR/EDR discoverable?) ==='; timeout 20 flatpak-spawn --host sdptool browse $BT 2>&1 | head -15 | sed 's/^/  /'\necho; echo '=== longer LE scan, any 48:E7:DA advertisement ==='; timeout 35 flatpak-spawn --host bluetoothctl --timeout 30 scan on 2>&1 | grep -iE 'new device|polaris|48:E7' | head -10; echo '(scan window ended)'\necho; echo '=== did our pulse reach the device? newest BT events ==='\ntimeout 30 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 \"date; sed -e 's/\\x1b\\[[0-9;]*m//g' /app/sd/system/log/Mlog_000315.log | grep -aE 'SP_EVENT_BT_|dvertise' | tail -8\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Host adapter scan sanity check",
+			"type": "shell",
+			"command": "echo '=== how many devices does the host BT adapter see in 20s? ==='\nOUT=$(timeout 30 flatpak-spawn --host bluetoothctl --timeout 20 scan on 2>&1)\necho \"$OUT\" | grep -c 'New Device' | sed 's/^/  New Device lines: /'\necho \"$OUT\" | grep 'New Device' | head -8 | sed 's/^/  /'\necho; echo '=== adapter powered / discovering ==='; timeout 10 flatpak-spawn --host bluetoothctl show 2>&1 | grep -E 'Powered|Discovering|Discoverable|Pairable' | sed 's/^/  /'\necho; echo '=== l2ping classic page test (explicit) ==='; timeout 20 flatpak-spawn --host l2ping -c 3 48:E7:DA:D4:B5:72 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify host adapter scanning actually works",
+			"type": "shell",
+			"command": "echo '=== start background scan, poll Discovering ==='\n( timeout 25 flatpak-spawn --host bluetoothctl --timeout 20 scan on > /tmp/scan.txt 2>&1 & )\nsleep 4\ntimeout 8 flatpak-spawn --host bluetoothctl show 2>&1 | grep -E 'Discovering|Powered' | sed 's/^/  during-scan: /'\nsleep 18\necho \"  New Device lines captured: $(grep -c 'New Device' /tmp/scan.txt)\"\ngrep 'New Device' /tmp/scan.txt | head -6 | sed 's/^/  /'\necho; echo '=== dmesg for BT firmware/adapter errors ==='; timeout 15 flatpak-spawn --host dmesg 2>&1 | grep -iE 'blue|hci|btusb|firmware.*intel|Failed to' | tail -20 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Host BT adapter health (journal + driver)",
+			"type": "shell",
+			"command": "echo '=== hci0 driver / device ==='; readlink -f /sys/class/bluetooth/hci0/device 2>&1 | sed 's/^/  /'; cat /sys/class/bluetooth/hci0/device/uevent 2>/dev/null | sed 's/^/  /'\necho; echo '=== bluetoothd version + journal errors ==='; timeout 10 flatpak-spawn --host bluetoothd --version 2>&1 | sed 's/^/  /'\ntimeout 20 flatpak-spawn --host journalctl -u bluetooth --no-pager -n 40 2>&1 | tail -35 | sed 's/^/  /'\necho; echo '=== kernel ring for hci (journalctl -k) ==='; timeout 20 flatpak-spawn --host journalctl -k --no-pager --grep='hci|Bluetooth|btusb' -n 30 2>&1 | tail -30 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Host adapter RX sanity + device advertising retry",
+			"type": "shell",
+			"command": "echo '=== has the host BT adapter connected/scanned anything today? ==='\ntimeout 20 flatpak-spawn --host journalctl -u bluetooth --since 'today' --no-pager 2>&1 | grep -iE 'connected|new device|scan|pair|error|fail|reject|timeout' | tail -25 | sed 's/^/  /'\necho; echo '=== raw scan output (10s, unfiltered) ==='; timeout 20 flatpak-spawn --host bluetoothctl --timeout 10 scan on 2>&1 | head -20 | sed 's/^/  /'\necho; echo '=== device: full advertise sequence at boot (context lines) ==='\ntimeout 30 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 \"sed -e 's/\\x1b\\[[0-9;]*m//g' /app/sd/system/log/Mlog_000315.log | grep -anE 'dvertise' -A2 -B2 | head -40\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Journal during BT connect attempt",
+			"type": "shell",
+			"command": "BT=48:E7:DA:D4:B5:72\nMARK=$(date '+%H:%M:%S')\necho \"mark=$MARK\"\ntimeout 30 flatpak-spawn --host bluetoothctl --timeout 20 connect $BT 2>&1 | sed 's/^/  ctl: /'\nsleep 1\necho '=== bluetoothd journal since mark ==='\ntimeout 20 flatpak-spawn --host journalctl -u bluetooth --since \"$MARK\" --no-pager 2>&1 | grep -viE 'Endpoint|profile.c' | tail -30 | sed 's/^/  /'\necho; echo '=== kernel journal since mark ==='; timeout 20 flatpak-spawn --host journalctl -k --since \"$MARK\" --no-pager 2>&1 | tail -20 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Host adapter RX counters",
+			"type": "shell",
+			"command": "echo '=== hci0 stats before scan ==='; cat /sys/kernel/debug/bluetooth/hci0/statistics/* 2>/dev/null | paste - - 2>/dev/null | head -5 || true\nfor f in rx_bytes rx_packets events errors; do p=/sys/kernel/debug/bluetooth/hci0/statistics/$f; [ -f \"$p\" ] && echo \"  $f=$(cat $p)\"; done\necho '--- (needs root for debugfs; trying sudo -n) ---'\ntimeout 15 flatpak-spawn --host sh -c 'for f in rx_bytes rx_packets events errors; do echo \"  $f=$(cat /sys/kernel/debug/bluetooth/hci0/statistics/$f 2>/dev/null)\"; done'\necho; echo '=== start scan, then re-read RX ==='\n( timeout 25 flatpak-spawn --host bluetoothctl --timeout 20 scan on >/tmp/s2.txt 2>&1 & )\nsleep 12\ntimeout 15 flatpak-spawn --host sh -c 'for f in rx_bytes rx_packets events errors; do echo \"  during-scan $f=$(cat /sys/kernel/debug/bluetooth/hci0/statistics/$f 2>/dev/null)\"; done'\nsleep 10\necho \"  scan results: $(grep -c 'New Device' /tmp/s2.txt) devices\"\necho; echo '=== hci0 info from debugfs ==='; timeout 15 flatpak-spawn --host cat /sys/kernel/debug/bluetooth/hci0/info 2>&1 | head -20 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Host adapter cached devices and connections",
+			"type": "shell",
+			"command": "echo '=== all BlueZ cached devices ==='; timeout 10 flatpak-spawn --host bluetoothctl devices 2>&1 | sed 's/^/  /'\necho; echo '=== currently connected devices ==='; timeout 10 flatpak-spawn --host bluetoothctl devices Connected 2>&1 | sed 's/^/  /'\necho; echo '=== adapter power cycle test (off/on) then rescan ==='\ntimeout 10 flatpak-spawn --host bluetoothctl power off >/dev/null 2>&1; sleep 2\ntimeout 10 flatpak-spawn --host bluetoothctl power on >/dev/null 2>&1; sleep 3\ntimeout 10 flatpak-spawn --host bluetoothctl show 2>&1 | grep -E 'Powered|Discovering' | sed 's/^/  /'\nOUT=$(timeout 30 flatpak-spawn --host bluetoothctl --timeout 25 scan on 2>&1)\necho \"  devices found after power-cycle + 25s scan: $(echo \\\"$OUT\\\" | grep -c 'New Device')\"\necho \"$OUT\" | grep 'New Device' | head -8 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Classic (BR/EDR) discovery test",
+			"type": "shell",
+			"command": "echo '=== classic-transport discovery (rig is ISCAN = classically discoverable) ==='\ntimeout 35 flatpak-spawn --host bluetoothctl <<'EOF' 2>&1 | sed 's/^/  /'\npower on\nmenu scan\ntransport public\nstart\nquit\nEOF\necho; echo '=== cached device details: when did BlueZ last see it? ==='; timeout 10 flatpak-spawn --host bluetoothctl show 48:E7:DA:D4:B5:72 2>&1 | grep -iE 'RSSI|TxPower|Experimental|Icon|Modalias' | sed 's/^/  /'\necho; echo '=== btusb in use / USB device state ==='; timeout 10 flatpak-spawn --host cat /sys/bus/usb/devices/1-11/product 2>&1 | sed 's/^/  /'; timeout 10 flatpak-spawn --host lsusb -t 2>&1 | grep -A3 '1-11' | head -8 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Proper classic BR/EDR discovery",
+			"type": "shell",
+			"command": "echo '=== classic discovery: filter transport public then scan on ==='\ntimeout 40 flatpak-spawn --host bluetoothctl <<'EOF' > /tmp/classic.txt 2>&1\npower on\nmenu scan\ntransport public\nback\nscan on\nquit\nEOF\nsleep 2\necho '--- output ---'; sed 's/^/  /' /tmp/classic.txt | grep -iE 'new device|polaris|48:E7|Discovering|Invalid|error' | head -20\necho \"  New Device lines: $(grep -ci 'New Device' /tmp/classic.txt)\"\necho; echo '=== also try direct connect attempt while classic-discoverable ==='\ntimeout 25 flatpak-spawn --host bluetoothctl --timeout 20 connect 48:E7:DA:D4:B5:72 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "USB autosuspend + adapter RX definitive test",
+			"type": "shell",
+			"command": "echo '=== btusb USB power management (autosuspend kills RX) ==='\nfor d in /sys/bus/usb/devices/*/; do\n  if grep -q '0489' \"$d/idVendor\" 2>/dev/null && grep -q 'e10a' \"$d/idProduct\" 2>/dev/null; then\n    echo \"  device: $d\"\n    echo \"  product: $(cat $d/product 2>/dev/null)\"\n    echo \"  autosuspend: $(cat $d/power/control 2>/dev/null)  (runtime PM)\"\n    echo \"  delay_ms: $(cat $d/power/autosuspend_delay_ms 2>/dev/null)\"\n    echo \"  usbcore autosuspend: $(cat /sys/module/usbcore/parameters/autosuspend 2>/dev/null)\"\n  fi\ndone\necho; echo '=== duplicate-data scan: does ANY advertisement arrive? ==='\ntimeout 30 flatpak-spawn --host bluetoothctl <<'EOF' > /tmp/dup.txt 2>&1\npower on\nmenu scan\nduplicate-data on\nback\nscan on\nquit\nEOF\nsleep 1\ngrep -icE 'new device|changing' /tmp/dup.txt | sed 's/^/  advertisement lines: /'\ngrep -iE 'new device' /tmp/dup.txt | head -5 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Adapter history today + classic inquiry test",
+			"type": "shell",
+			"command": "echo '=== host uptime ==='; timeout 8 flatpak-spawn --host uptime 2>&1 | sed 's/^/  /'\necho; echo '=== full classic scan output ==='; cat /tmp/classic.txt | sed 's/^/  /' | head -30\necho; echo '=== journal: adapter add/reset events today ==='; timeout 20 flatpak-spawn --host journalctl --since today --no-pager 2>&1 | grep -iE 'hci0|bluetooth.*(not |fail|error|reset|unable|timeout)' | tail -25 | sed 's/^/  /'\necho; echo '=== classic inquiry via hcitool (if present) ==='; timeout 25 flatpak-spawn --host sh -c 'command -v hcitool && hcitool scan --flush 2>&1 | head -10 || echo hcitool-missing' 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "USB runtime PM state of BT adapter",
+			"type": "shell",
+			"command": "D=/sys/bus/usb/devices/1-11\necho '=== runtime power state of the BT USB device ==='\nfor f in control runtime_status runtime_usage active children autosuspend_delay_ms connected; do\n  echo \"  $f: $(cat $D/power/$f 2>/dev/null)\"\ndone\necho; echo '=== usb interface 1-11:1.0 (btusb) ==='\nfor f in control runtime_status; do echo \"  iface $f: $(cat $D/1-11:1.0/power/$f 2>/dev/null)\"; done\necho; echo '=== any USB errors on this port? ==='; timeout 20 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -iE 'usb 1-11|usb.*reset|usb.*suspend' | tail -15 | sed 's/^/  /'\necho; echo '=== can we sudo non-interactively? ==='; timeout 8 flatpak-spawn --host sudo -n true 2>&1 | head -2 | sed 's/^/  /'; echo \"  rc=$?\"",
+			"problemMatcher": []
+		},
+		{
+			"label": "Decisive test: adapter awake during raw HCI scan?",
+			"type": "shell",
+			"command": "D=/sys/bus/usb/devices/1-11\necho '=== confirm host sees same sysfs ==='; timeout 8 flatpak-spawn --host cat $D/power/runtime_status 2>&1 | sed 's/^/  host runtime_status: /'\necho; echo '=== start raw-HCI classic inquiry in background ==='\n( timeout 40 flatpak-spawn --host hcitool scan --flush > /tmp/hci_scan.txt 2>&1 & )\nsleep 6\necho \"  during-scan runtime_status: $(cat $D/power/runtime_status 2>/dev/null)\"\necho \"  during-scan runtime_usage:  $(cat $D/power/runtime_usage 2>/dev/null)\"\necho \"  during-scan control:        $(cat $D/power/control 2>/dev/null)\"\nsleep 8\necho \"  later runtime_status:       $(cat $D/power/runtime_status 2>/dev/null)\"\necho '--- hcitool scan results ---'; sed 's/^/  /' /tmp/hci_scan.txt\necho; echo '=== concurrent LE scan while raw socket open ==='\ntimeout 30 flatpak-spawn --host bluetoothctl --timeout 25 scan on > /tmp/le2.txt 2>&1\necho \"  LE devices found: $(grep -c 'New Device' /tmp/le2.txt)\"\ngrep 'New Device' /tmp/le2.txt | head -5 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Final confirmation: adapter TX/RX dead vs rig state",
+			"type": "shell",
+			"command": "echo '=== 1. Rig is awake RIGHT NOW (AP + SSH identity) ==='\ntimeout 20 flatpak-spawn --host nmcli -t -f BSSID,SSID,SIGNAL dev wifi list --rescan yes 2>/dev/null | grep -i '48:E7:DA' | sed 's/^/  AP: /'\ntimeout 15 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@192.168.0.1 'cat /app/FwVer; export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib; /app/bluetooth/bin/hciconfig hci0 2>&1 | sed -n \"1,3p\"' 2>&1 | sed 's/^/  /'\necho; echo '=== 2. Host BT radio: zero RX in every scan mode ==='\nfor m in le classic dup; do\n  case $m in\n    le) timeout 25 flatpak-spawn --host bluetoothctl --timeout 20 scan on > /tmp/m_$m.txt 2>&1;;\n    classic) timeout 30 flatpak-spawn --host hcitool scan --flush > /tmp/m_$m.txt 2>&1;;\n    dup) timeout 25 flatpak-spawn --host bluetoothctl --timeout 20 scan on > /tmp/m_$m.txt 2>&1;;\n  esac\n  echo \"  $m: $(grep -ciE 'new device' /tmp/m_$m.txt) devices found\"\ndone\necho; echo '=== 3. Adapter USB power state after all that ==='\necho \"  runtime_status=$(cat /sys/bus/usb/devices/1-11/power/runtime_status) usage=$(cat /sys/bus/usb/devices/1-11/power/runtime_usage) control=$(cat /sys/bus/usb/devices/1-11/power/control)\"\necho; echo '=== 4. Other USB devices runtime_status (are they also suspended?) ==='\nfor d in /sys/bus/usb/devices/1-*; do [ -f \"$d/power/runtime_status\" ] && echo \"  $(basename $d): $(cat $d/power/runtime_status) (driver=$(cat $d/driver_current 2>/dev/null || grep -m1 . $d/bInterfaceClass 2>/dev/null))\"; done 2>/dev/null | head -12",
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm autosuspend theory + writability",
+			"type": "shell",
+			"command": "D=/sys/bus/usb/devices/1-11\necho '=== foreground hcitool inquiry (exit code + errors) ==='\ntimeout 30 flatpak-spawn --host hcitool scan --flush; echo \"  rc=$?\"\necho; echo '=== PM state immediately after ==='; echo \"  status=$(cat $D/power/runtime_status) usage=$(cat $D/power/runtime_usage)\"\necho; echo '=== who owns power/control (can we fix without sudo?) ==='; ls -l $D/power/control | sed 's/^/  /'\necho; echo '=== is TLP/tuned/power-profiles-daemon forcing autosuspend? ==='\ntimeout 10 flatpak-spawn --host sh -c 'ls /etc/udev/rules.d/ /usr/lib/udev/rules.d/ 2>/dev/null | grep -iE \"usb|power|bt|bluetooth\" | head; command -v tlp powerprofilesctl tuned-adm 2>&1' 2>&1 | sed 's/^/  /'\necho; echo '=== kernel cmdline (usbcore.autosuspend?) ==='; timeout 8 flatpak-spawn --host cat /proc/cmdline 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Isolate PC TX vs RX using the rig as peer",
+			"type": "shell",
+			"command": "D=/sys/bus/usb/devices/1-11\necho '=== 1. autosuspend really off now? ==='\necho \"  control=$(cat $D/power/control) status=$(cat $D/power/runtime_status) usage=$(cat $D/power/runtime_usage)\"\necho; echo '=== 2. clear any leftover discovery filter, rescan ==='\ntimeout 30 flatpak-spawn --host bluetoothctl <<'EOF' > /tmp/clean_scan.txt 2>&1\npower on\nmenu scan\nclear transport\nback\nscan on\nquit\nEOF\ngrep -icE 'new device' /tmp/clean_scan.txt | sed 's/^/  PC LE devices found: /'\ngrep -iE 'error|invalid|failed' /tmp/clean_scan.txt | head -5 | sed 's/^/  /'\necho; echo '=== 3. PC TX test: make PC discoverable, let the RIG scan for it ==='\ntimeout 10 flatpak-spawn --host bluetoothctl discoverable on >/dev/null 2>&1\nsleep 2\ntimeout 10 flatpak-spawn --host bluetoothctl show 2>&1 | grep -E 'Discoverable:|Powered' | sed 's/^/  host: /'\ntimeout 50 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1 'export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib; echo rig-sees:; /app/bluetooth/bin/hcitool scan 2>&1 | head -15' 2>&1 | sed 's/^/  /'\ntimeout 10 flatpak-spawn --host bluetoothctl discoverable off >/dev/null 2>&1\necho; echo '=== 4. kernel log for this adapter since boot ==='\ntimeout 20 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -iE 'btusb|hci|bluetooth|cypress|bcm|firmware' | tail -20 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "PC hci0 TX/RX byte counters before and after scan",
+			"type": "shell",
+			"command": "echo '=== PC hci0 BEFORE ==='\ntimeout 10 flatpak-spawn --host hciconfig -a 2>&1 | grep -E 'hci0:|BD Address|UP|RX bytes|TX bytes|Features' | sed 's/^/  /'\necho; echo '=== run LE scan + classic inquiry ==='\ntimeout 30 flatpak-spawn --host bluetoothctl --timeout 25 scan on > /tmp/s3.txt 2>&1\ntimeout 30 flatpak-spawn --host hcitool inq > /tmp/inq.txt 2>&1\necho \"  LE devices: $(grep -c 'New Device' /tmp/s3.txt)   classic inquiry lines: $(grep -cE '^[0-9A-F]{2}:|Scanning' /tmp/inq.txt)\"\ncat /tmp/inq.txt | sed 's/^/  inq: /'\necho; echo '=== PC hci0 AFTER ==='\ntimeout 10 flatpak-spawn --host hciconfig -a 2>&1 | grep -E 'RX bytes|TX bytes' | sed 's/^/  /'\necho; echo '=== firmware patch load messages (Cypress/BCM) ==='\ntimeout 20 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -iE 'BCM|patch file|Cypress|Error loading|Direct firmware|usb 1-11' | head -20 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Cross-test PC TX vs RX against rig",
+			"type": "shell",
+			"command": "PCBT=4C:23:38:C8:7B:70\nRIGSSH=\"timeout 45 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=6 -o StrictHostKeyChecking=no root@192.168.0.1\"\nexport LD='export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib;'\necho '=== A. PC boot-time hci0 init (Realtek/Cypress firmware load?) ==='\ntimeout 20 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -iE 'rtl|RTL:|hci0|patch|firmware load' | head -25 | sed 's/^/  /'\necho; echo '=== B. PC TX test: PC advertises, rig LE-scans for it ==='\ntimeout 10 flatpak-spawn --host bluetoothctl discoverable on >/dev/null 2>&1\n( timeout 30 flatpak-spawn --host bluetoothctl --timeout 25 scan on > /tmp/pcscan.txt 2>&1 & )\n$RIGSSH \"export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib; timeout 20 /app/bluetooth/bin/hcitool lescan > /tmp/rig_lescan.txt 2>&1; echo rig-lescan-hits:\\$(grep -ci 'beast\\|$PCBT' /tmp/rig_lescan.txt); head -6 /tmp/rig_lescan.txt\" 2>&1 | sed 's/^/  rig: /'\necho \"  PC saw during same window: $(grep -c 'New Device' /tmp/pcscan.txt) devices\"\necho; echo '=== C. rig -> PC page test (rig TX, PC RX) ==='\n$RIGSSH \"export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib; timeout 20 /app/bluetooth/bin/l2ping -c 3 $PCBT 2>&1 | tail -5\" 2>&1 | sed 's/^/  rig: /'\ntimeout 10 flatpak-spawn --host bluetoothctl discoverable off >/dev/null 2>&1\necho; echo '=== D. PC counters after cross-tests ==='\ntimeout 10 flatpak-spawn --host hciconfig -a 2>&1 | grep -E 'RX bytes|TX bytes' | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Missing BT firmware patch check",
+			"type": "shell",
+			"command": "echo '=== 1. any .hcd / brcm firmware load attempts at boot ==='\ntimeout 20 flatpak-spawn --host journalctl -k --no-pager --since '2026-10-25 13:15' --until '2026-10-25 13:17' 2>&1 | grep -iE 'hcd|brcm|BCM|firmware|btusb|hci0|DID|Vendor|Product|USB name|patch|error|fail' | head -30 | sed 's/^/  /'\necho; echo '=== 2. firmware files present on host ==='\ntimeout 10 flatpak-spawn --host sh -c 'ls /lib/firmware/brcm 2>&1 | head -20; echo ---; ls /lib/firmware/*hcd* /lib/firmware/**/*hcd* 2>/dev/null | head' 2>&1 | sed 's/^/  /'\necho; echo '=== 3. exact chip identity ==='\ntimeout 10 flatpak-spawn --host sh -c 'cat /sys/kernel/debug/bluetooth/hci0/identity 2>/dev/null || echo identity-unavailable; lsusb -d 0489:e10a -v 2>/dev/null | grep -iE \"iProduct|idVendor|idProduct|bcdDevice|Serial\" | head' 2>&1 | sed 's/^/  /'\necho; echo '=== 4. rig still awake? ==='\ntimeout 20 flatpak-spawn --host nmcli -t -f BSSID,SSID,SIGNAL dev wifi list --rescan yes 2>/dev/null | grep -i '48:E7:DA' | sed 's/^/  AP: /' || echo '  AP not visible'\ntimeout 12 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@192.168.0.1 'cat /app/FwVer' 2>&1 | head -2 | sed 's/^/  ssh: /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Realtek BT firmware presence",
+			"type": "shell",
+			"command": "echo '=== 1. every kernel line mentioning hci0 or rtl_bt (whole journal) ==='\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -iE 'hci0|rtl_bt|RTL:|Direct firmware load for (rtl|brcm)|firmware.*not found|-2' | head -30 | sed 's/^/  /'\necho; echo '=== 2. rtl_bt firmware dir ==='\ntimeout 10 flatpak-spawn --host sh -c 'ls /lib/firmware/rtl_bt 2>&1 | grep -iE \"8852|8851|8924|8821|8822\" | head -30; echo ---total---; ls /lib/firmware/rtl_bt 2>/dev/null | wc -l' 2>&1 | sed 's/^/  /'\necho; echo '=== 3. modinfo btusb firmware list (what it may request) ==='\ntimeout 10 flatpak-spawn --host sh -c 'modinfo btusb 2>/dev/null | grep -i firmware | head -40' 2>&1 | sed 's/^/  /'\necho; echo '=== 4. full boot-time hci0 block (context) ==='\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -B3 -A6 'HCI Enhanced Setup' | head -30 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Enumerate rtl_bt firmware vs required chip",
+			"type": "shell",
+			"command": "echo '=== all rtl_bt firmware files ==='\ntimeout 10 flatpak-spawn --host ls /lib/firmware/rtl_bt 2>&1 | sed 's/^/  /'\necho; echo '=== any RTL: lines in ANY boot ==='\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -c 'RTL:' | sed 's/^/  RTL: line count = /'\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep 'RTL:' | head -10 | sed 's/^/  /'\necho; echo '=== btusb module params + version ==='\ntimeout 10 flatpak-spawn --host sh -c 'ls /sys/module/btusb/parameters/ 2>/dev/null; uname -r' 2>&1 | sed 's/^/  /'\necho; echo '=== does the kernel alias table know 0489:e10a? ==='\ntimeout 10 flatpak-spawn --host sh -c \"grep -o 'usb:v0489pE10A[^ ]*' /lib/modules/\\$(uname -r)/modules.alias 2>/dev/null | head -3; echo ---; grep -l . /dev/null\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm btusb has no Realtek entry for this chip",
+			"type": "shell",
+			"command": "K=$(timeout 8 flatpak-spawn --host uname -r 2>/dev/null | tr -d '\\r')\necho \"kernel=$K\"\necho '=== modules.alias: any Foxconn 0489 entries at all? ==='\ntimeout 15 flatpak-spawn --host sh -c \"grep -o 'usb:v0489p[0-9A-Fa-f]*' /lib/modules/$K/modules.alias | sort -u | head -30\" 2>&1 | sed 's/^/  /'\necho; echo '=== is 0489:e10a listed anywhere in modules.alias? ==='\ntimeout 15 flatpak-spawn --host sh -c \"grep -ci 'v0489pE10A' /lib/modules/$K/modules.alias\" 2>&1 | sed 's/^/  matches: /'\necho; echo '=== which module claims it (modalias from sysfs) ==='\ntimeout 10 flatpak-spawn --host sh -c 'cat /sys/bus/usb/devices/1-11/1-11:1.0/modalias 2>/dev/null; echo; cat /sys/bus/usb/devices/1-11/1-11:1.0/uevent 2>/dev/null' 2>&1 | sed 's/^/  /'\necho; echo '=== btusb device table: does it know any Realtek 8852/8922 IDs? ==='\ntimeout 15 flatpak-spawn --host sh -c \"grep -o 'usb:v[0-9A-F]*p[0-9A-F]*' /lib/modules/$K/modules.alias | wc -l; modprobe -n -v btusb 2>&1 | head -3\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Final: rig state + no other BT adapter",
+			"type": "shell",
+			"command": "echo '=== rig AP / SSH now ==='\ntimeout 20 flatpak-spawn --host nmcli -t -f BSSID,SSID,SIGNAL dev wifi list --rescan yes 2>/dev/null | grep -i '48:E7:DA' | sed 's/^/  AP: /' || echo '  AP not visible'\ntimeout 12 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@192.168.0.1 'cat /app/FwVer' 2>&1 | head -2 | sed 's/^/  ssh: /'\necho; echo '=== any second BT adapter on the host? ==='\ntimeout 10 flatpak-spawn --host bluetoothctl list 2>&1 | sed 's/^/  /'\ntimeout 10 flatpak-spawn --host ls /sys/class/bluetooth 2>&1 | sed 's/^/  /'\necho; echo '=== decisive: was ANY firmware ever requested for this chip? ==='\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -icE 'Direct firmware load for rtl|rtl_bt|RTL:' | sed 's/^/  rtl firmware-load lines = /'\necho; echo '=== btusb generic class match (why it bound without Realtek setup) ==='\ntimeout 15 flatpak-spawn --host sh -c \"grep -o 'btusb[^ ]*usb:v0489pE10A[^ ]*' /lib/modules/\\$(uname -r)/modules.alias | head; echo '(empty = no specific entry)'\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Identify Realtek chip revision",
+			"type": "shell",
+			"command": "echo '=== PC hci0 full identity ==='\ntimeout 10 flatpak-spawn --host hciconfig -a 2>&1 | grep -E 'BD Address|UP |RX bytes|TX bytes|Features|LMP Version|HCI Version|Manufacturer|Name:' | sed 's/^/  /'\necho; echo '=== compare: rig hci0 (known-working Cypress) ==='\ntimeout 25 flatpak-spawn --host ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@192.168.0.1 'export LD_LIBRARY_PATH=/app/bluetooth/lib:/lib:/usr/lib; /app/bluetooth/bin/hciconfig -a 2>&1 | grep -E \"RX bytes|TX bytes|acl:\"' 2>&1 | sed 's/^/  rig: /'\necho; echo '=== PC: run a scan, then show acl counters again ==='\ntimeout 30 flatpak-spawn --host bluetoothctl --timeout 25 scan on >/dev/null 2>&1\ntimeout 10 flatpak-spawn --host hciconfig hci0 2>&1 | grep -E 'RX bytes|TX bytes' | sed 's/^/  after-scan: /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Qualcomm BT RAM patch presence",
+			"type": "shell",
+			"command": "echo '=== 1. qcom/qca BT firmware files on host ==='\ntimeout 10 flatpak-spawn --host sh -c 'ls /lib/firmware/qcom 2>&1 | grep -iE \"qcrf|qca|htf|wcn\" | head -30; echo ---count---; ls /lib/firmware/qcom 2>/dev/null | wc -l' 2>&1 | sed 's/^/  /'\necho; echo '=== 2. did the kernel ever request QCA firmware? ==='\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -icE 'qca|QCA|qcom|Qualcomm|Direct firmware load' | sed 's/^/  qca/firmware-load lines = /'\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -iE 'Direct firmware load|firmware.*-2|Failed to request' | head -15 | sed 's/^/  /'\necho; echo '=== 3. btusb quirks: is this device treated as generic (no RAM patch)? ==='\ntimeout 15 flatpak-spawn --host sh -c \"grep -o 'usb:v0489pE10A[^ ]*' /lib/modules/\\$(uname -r)/modules.alias | head -3; echo '(empty = btusb bound by generic class match only)'\" 2>&1 | sed 's/^/  /'\necho; echo '=== 4. hci0 event-only growth proof (acl stays 0) ==='\ntimeout 10 flatpak-spawn --host hciconfig hci0 2>&1 | grep -E 'RX bytes|TX bytes' | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "QCA firmware inventory and load attempts",
+			"type": "shell",
+			"command": "echo '=== full /lib/firmware/qcom listing ==='\ntimeout 10 flatpak-spawn --host ls /lib/firmware/qcom 2>&1 | sed 's/^/  /'\necho; echo '=== kernel firmware requests (any vendor) ==='\ntimeout 25 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -iE 'Direct firmware load|Failed to request firmware|firmware not found' | head -20 | sed 's/^/  /'\necho '(end)'\necho; echo '=== bluetoothd boot-time lines (firmware / driver notices) ==='\ntimeout 25 flatpak-spawn --host journalctl -u bluetooth --no-pager --since '2026-10-25 13:14' --until '2026-10-25 13:20' 2>&1 | head -30 | sed 's/^/  /'\necho '(end)'\necho; echo '=== can hci0 be reset without sudo? ==='\ntimeout 10 flatpak-spawn --host hciconfig hci0 reset 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "QCA BT firmware and driver config check",
+			"type": "shell",
+			"command": "echo '=== 1. ANY Bluetooth RAM-patch firmware on this host ==='\ntimeout 10 flatpak-spawn --host sh -c 'find /lib/firmware -maxdepth 3 \\( -iname \"*qcrf*\" -o -iname \"*.htf\" -o -iname \"*nvm*\" -o -iname \"*.hcd\" \\) 2>/dev/null | head -20; echo ---; find /lib/firmware -maxdepth 3 -iname \"*.hcd.zst\" 2>/dev/null | head -10' 2>&1 | sed 's/^/  /'\necho; echo '=== 2. kernel BT config ==='\ntimeout 10 flatpak-spawn --host sh -c 'grep -E \"CONFIG_BT_QCA|CONFIG_BT_USB|CONFIG_BT_HCIBTUSB\" /boot/config-$(uname -r) 2>/dev/null || zcat /proc/config.gz 2>/dev/null | grep -E \"CONFIG_BT_QCA|CONFIG_BT_HCIBTUSB\"' 2>&1 | sed 's/^/  /'\necho; echo '=== 3. btusb module: does it contain QCA setup code at all? ==='\ntimeout 10 flatpak-spawn --host sh -c 'strings /lib/modules/$(uname -r)/kernel/net/bluetooth/btusb.ko* 2>/dev/null | grep -iE \"qcrf|QCA|EDL|Download firmware|SW Version\" | head -15' 2>&1 | sed 's/^/  /'\necho; echo '=== 4. what firmware name would it want for this chip? ==='\ntimeout 10 flatpak-spawn --host sh -c 'strings /lib/modules/$(uname -r)/kernel/net/bluetooth/btusb.ko* 2>/dev/null | grep -E \"^qcrf|^QCA|htf$\" | head -20' 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Is btqca loaded? (QCA RAM-patch module)",
+			"type": "shell",
+			"command": "echo '=== loaded bluetooth modules ==='\ntimeout 10 flatpak-spawn --host sh -c 'grep -E \"^(btusb|btqca|bluetooth|btintel|btrtl|btbcm|btmtk)\" /proc/modules' 2>&1 | sed 's/^/  /'\necho; echo '=== is btqca.ko present but unloaded? ==='\ntimeout 10 flatpak-spawn --host sh -c 'K=$(uname -r); find /lib/modules/$K -name \"btqca*\" -o -name \"btrtl*\" | head; echo ---; modinfo -F depends btqca 2>/dev/null; modinfo -F filename btqca 2>/dev/null' 2>&1 | sed 's/^/  /'\necho; echo '=== QCA RAM patch (.htf) present? ==='\ntimeout 10 flatpak-spawn --host sh -c 'ls /lib/firmware/qca/*.htf* /lib/firmware/qca/*rf_bt* 2>&1 | head -20' 2>&1 | sed 's/^/  /'\necho; echo '=== btqca firmware names it looks for ==='\ntimeout 10 flatpak-spawn --host sh -c 'K=$(uname -r); F=$(find /lib/modules/$K -name \"btqca.ko*\" | head -1); echo \"module=$F\"; strings $F 2>/dev/null | grep -iE \"htf|nvm|QCA_|EDL|Download|patch\" | head -20' 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Has this adapter ever worked + QCA setup attempted?",
+			"type": "shell",
+			"command": "echo '=== 1. Has hci0 EVER found/connected a device (all boots)? ==='\ntimeout 30 flatpak-spawn --host journalctl -u bluetooth --no-pager 2>&1 | grep -icE 'new device|Connected to|Pairing failed|incoming connection' | sed 's/^/  success/discovery lines ever = /'\ntimeout 30 flatpak-spawn --host journalctl -u bluetooth --no-pager 2>&1 | grep -iE 'new device|Connected to' | tail -5 | sed 's/^/  /'\necho; echo '=== 2. Was QCA RAM-patch setup EVER attempted? ==='\ntimeout 30 flatpak-spawn --host journalctl -k --no-pager 2>&1 | grep -icE 'QCA:|btqca|EDL|Download firmware start' | sed 's/^/  QCA setup lines ever = /'\necho; echo '=== 3. btusb built WITHOUT QCA support? ==='\ntimeout 10 flatpak-spawn --host sh -c 'grep -E \"CONFIG_BT_HCIBTUSB_QCA\" /boot/config-$(uname -r) || echo \"  CONFIG_BT_HCIBTUSB_QCA is NOT SET (absent from kernel config)\"' 2>&1 | sed 's/^/  /'\necho; echo '=== 4. BlueZ stored connections on host ==='\ntimeout 10 flatpak-spawn --host sh -c 'ls -la /var/lib/bluetooth/*/ 2>&1 | head -20' 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
+		},
+		{
+			"label": "Does btusb actually call btqca_setup?",
+			"type": "shell",
+			"command": "K=$(uname -r)\necho '=== 1. btusb undefined symbols: is btqca_setup linked in? ==='\ntimeout 15 flatpak-spawn --host sh -c \"F=\\$(find /lib/modules/$K -name 'btusb.ko*' | head -1); if command -v modprobe --help >/dev/null; then true; fi; zcat \\$F 2>/dev/null | strings | grep -E '^bt(qca|rtl|bcm|intel|mtk)_setup\\$' | sort -u\" 2>&1 | sed 's/^/  /'\necho; echo '=== 2. nm-style symbol dump (authoritative) ==='\ntimeout 15 flatpak-spawn --host sh -c \"F=\\$(find /lib/modules/$K -name 'btusb.ko*' | head -1); if command -v objdump >/dev/null; then objdump -T \\$F 2>/dev/null | grep -oE 'bt[a-z]+_setup' | sort -u; elif command -v readelf >/dev/null; then readelf -sW \\$F 2>/dev/null | grep -oE 'bt[a-z]+_setup' | sort -u; else echo 'no binutils'; fi\" 2>&1 | sed 's/^/  /'\necho; echo '=== 3. btqca loaded on demand? ==='\ntimeout 10 flatpak-spawn --host sh -c 'grep -c btqca /proc/modules' 2>&1 | sed 's/^/  btqca in /proc/modules: /'\necho; echo '=== 4. firmware name the QCA path would need ==='\ntimeout 15 flatpak-spawn --host sh -c \"F=\\$(find /lib/modules/$K -name 'btqca.ko*' | head -1); zcat \\$F 2>/dev/null | strings | grep -iE 'htf|nvm_|QCA_|EDL|Patch|Download' | head -25\" 2>&1 | sed 's/^/  /'",
+			"problemMatcher": []
 		}
 	]
 }

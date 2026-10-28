@@ -1,0 +1,31 @@
+=== LE scan 20s (host) ===
+0
+=== classic inquiry (host hcitool) ===
+Scanning ...
+=== PC counters after scans ===
+	RX bytes:8987 acl:0 sco:0 events:601 errors:0
+	TX bytes:7670 acl:0 sco:0 commands:508 errors:0
+
+=== rig counters (known-good Cypress, same session) ===
+	UP RUNNING PSCAN ISCAN 
+	RX bytes:3227 acl:96 sco:0 events:116 errors:0
+	TX bytes:3163 acl:80 sco:0 commands:63 errors:0
+
+=== rig-side advertising defect (Mlog) ===
+153:[m[13:56:04:979 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+154:Failed to register advertising object
+155:[m[13:56:04:980 [1;32mINFO[m-]:SP_BlueSetAdvertiseState[2949]:[0;35madvertise on
+157:[m[13:56:04:981 [1;32mINFO[m-]:SP_SetBleState[81]:ble slave on
+905:[m[m[13:56:06:320 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+3154:[m[m[13:58:55:160 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+3165:[m[m[13:58:58:802 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+4260:[m[m[18:09:34:892 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+4336:[m[m[18:09:40:666 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+4734:[m[m[18:10:07:727 [1;32mINFO[m-]:EventMsgProc[2685]:SP_EVENT_BT_CONNECT
+
+=== advertise_on vs reg_fail across last 5 Mlogs ===
+/app/sd/system/log/Mlog_000316.log advertise_on=2 reg_fail=1
+/app/sd/system/log/Mlog_000315.log advertise_on=2 reg_fail=1
+/app/sd/system/log/Mlog_000314.log advertise_on=2 reg_fail=1
+/app/sd/system/log/Mlog_000312.log advertise_on=2 reg_fail=1
+/app/sd/system/log/Mlog_000310.log advertise_on=2 reg_fail=1

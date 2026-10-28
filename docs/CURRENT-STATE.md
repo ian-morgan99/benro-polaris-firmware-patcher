@@ -1,5 +1,112 @@
 # Current repository state
 
+## Active compatibility warning — `polestar_app` address maps are build-specific
+
+Do not apply historical `polestar_app` reverse-engineering addresses or
+symbols to a new candidate without revalidating the exact extracted binary.
+The attached Polaris checked on 2026-10-25 runs `6.0.0.54.70` and its live
+`polestar_app` SHA-256 is
+`a5e58ffd76670cf9bdc76560a859d2e037ca4320d37bb3c2d93d482cf459ac02`.
+Offline ARM disassembly confirms that `SP_GimbalSetAxsi` remains at
+`0x000636e8` and emits the MCU `J` frame, but the application dispatcher does
+not directly expose it. A different firmware may need different patch sites
+even when it retains the same helper. See
+[`docs/POLESTAR-APP-BUILD-COMPATIBILITY.md`](POLESTAR-APP-BUILD-COMPATIBILITY.md)
+for the required patching gate and the detailed PrivateResearch investigation.
+Every release must also complete the source verification and offset ledger in
+[`docs/FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md`](FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md).
+
+## Active blocker — BLE wake is impossible: the rig never advertises LE
+
+BLE wake **cannot be validated from any Linux host**. The rig does not advertise
+BLE at all, even when fully awake, so `bluetoothctl connect 48:E7:DA:D4:B5:72`
+has nothing to connect to. Proven against an awake, SSH-verified rig
+(`FwVer:6.0.0.54.76`): after clearing the BlueZ cache the **host** radio
+immediately receives an unrelated advertisement, while the rig's MAC is absent:
+
+```
+$ bluetoothctl remove 48:E7:DA:D4:B5:72 && bluetoothctl --timeout 35 scan on
+[NEW] Device 59:B7:EC:B5:78:B2 59-B7-EC-B5-78-B2   <- host radio DOES receive
+   rig MAC absent                                   <- rig advertises nothing
+```
+
+The rig's own log explains it, on every boot (5 of the last 5 Mlogs):
+`SP_BlueSetAdvertiseState: advertise on` → `Failed to register advertising
+object` → retried. BR/EDR still carries connections (`SP_EVENT_BT_CONNECT`,
+`PSCAN ISCAN`), which is why a phone app connects while a Linux BLE client finds
+nothing. Evidence and full detail:
+[`docs/evidence/rig-le-advertising-absent-20261027/SUMMARY.md`](evidence/rig-le-advertising-absent-20261027/SUMMARY.md).
+
+This is a **firmware defect**, not a host or tooling problem. Wake-dependent
+acceptance must be recorded as blocked-on-firmware, not as a regression.
+
+### Two silent bugs that made `polaris-preflight.sh` unusable until now
+
+Found on 2026-10-27 while wiring the portal route. Both failed **silently**, so
+the script always produced a confident-looking wrong answer:
+
+1. **`nmcli -t` escapes colons inside field values.** A BSSID prints as
+   `48\:E7\:DA\:D4\:B5\:73`, so `grep -i "48:E7:DA"` never matched and the AP was
+   always reported absent. Pre-existing — present before any sandbox routing.
+2. **`timeout N <shell-function>` does not run the command.** `timeout` execs a
+   binary, so `timeout 15 run_host nmcli ...` failed with no output. This one was
+   introduced by the portal routing itself.
+
+Either alone made `ap_visible()` return empty, so the script returned
+`ASLEEP`/`BOOTING` against a rig that was awake, associated and serving SSH.
+**Any earlier `ASLEEP` or `BOOTING` verdict from this script is suspect** and
+should be re-checked against `nmcli ... dev wifi list | tr -d '\' | grep polaris`.
+Both are pinned by `tests/test_bt_wake_radio_liveness.py`, which now asserts
+`VERDICT=READY` end-to-end against stubbed host tools. Verified live after the
+fix: `VERDICT=READY fwver=FwVer:6.0.0.54.76;date:2026.10.27; iface=wlp8s0`, exit 0.
+
+### Measurement rules — an empty BLE scan proves nothing
+
+An earlier revision of this section wrongly concluded the host radio was "deaf".
+It is fine. Four measurement bugs caused that, all now pinned by
+`tests/test_bt_wake_radio_liveness.py`:
+
+1. `bluetoothctl` prints `[NEW] Device <MAC>`, **not** `New Device <MAC>` — the
+   pattern every scan in this repo used could never match.
+2. `flatpak-spawn --host` allocates a PTY, so output is colourised even when
+   piped (`[^[[0;92mNEW^[[0m]`). Strip with
+   `sed -r 's/\x1b\[[0-9;]*[a-zA-Z]//g'` before matching anything.
+3. `acl:0` is **not** a deafness signal — LE advertisements arrive as HCI
+   events, not ACL packets, so a scan-only adapter legitimately shows `acl:0`.
+   RX byte growth is equally useless: it counts command-complete responses to
+   our own commands.
+4. `[NEW]` fires once per device (BlueZ cache), so repeat scans of the same room
+   return zero on a healthy radio — three back-to-back scans gave `1, 0, 0`.
+
+Therefore: never infer a dead radio from an empty scan, and never infer that the
+rig is asleep from one. `polaris-bt-probe.sh` returns `LIVENESS_UNKNOWN` rather
+than inventing a `RADIO_DEAF` verdict, and `polaris-preflight.sh` decides
+`ASLEEP` from **AP absence via the Wi-Fi scan**, which does not depend on the
+Bluetooth stack at all.
+
+Prior blockers reading *"host currently has no BT adapter"*
+(`o-v17a-offline-validation-20261012` §8) and the `o-v17a-*` "no BLE
+advertisement seen" entries were one of: sandbox isolation, the wrong grep
+pattern, or the rig genuinely not advertising. None were a dead radio.
+
+### Sandbox note (still true, still easy to misread)
+
+VS Code here is a Flatpak. Inside it `/dev/hci0` is absent, `bluetoothctl` is not
+on PATH, `AF_BLUETOOTH` returns `Errno 97` and the proxied system bus has no
+`org.bluez`. Those are **sandbox restrictions, not host faults** — never cite
+them as evidence about the radio. Host tools are reachable via
+`flatpak-spawn --host`, the same route already used for docker in
+`tests/test_plate_solving_present.py`; run portal commands from a host-visible
+cwd or they fail with "Failed to change to directory".
+
+### Non-blocking host observation
+
+The built-in adapter is Qualcomm (`usb 0489:e10a`, BD `4C:23:38:C8:7B:70`), the
+kernel has `CONFIG_BT_HCIBTUSB_QCA` unset with `btqca` unloaded, and
+`/lib/firmware/qca/` holds 23 `nvm_usb_*` files but no `.htf` RAM patch. That gap
+is real but has **not** been shown to break reception — the adapter demonstrably
+receives LE advertisements. Recorded so it is not lost; it is not a blocker.
+
 ## 2026-10-19 — `.68` PHYSICALLY QUALIFIED **PASS** — Color Temperature (`0xd018`) works through its named control
 
 `.68` (`o-v17c-colortemp-formless`) is installed and verified on the device and
