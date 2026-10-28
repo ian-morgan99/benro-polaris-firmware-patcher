@@ -96,12 +96,13 @@ off, and the rate harness is not a device command path.
 This improves the route from repeated GOTO solves to a measurable experiment,
 but it does not close the requested mission. The model is only a first-order
 pointing offset, not a multi-axis calibration; model application has not been
-physically tested. The rate frame's MCU dispatch, units, axis signs, torque
-semantics, STOP priority and watchdog remain unknown. The frame watcher still
-depends on a verified Polaris-side publication for each camera frame, and the
-native compact APS-C blind-search boundary remains open (#248). K-3 III normal
-capture remains untouched because all new controls are opt-in and rate output
-is absent.
+physically tested. The matching `.73` MCU image and historical `J` handler are
+now identified, but the application exposure/reply path, calibrated units,
+axis signs, torque semantics, STOP priority and watchdog remain unqualified.
+The frame watcher still depends on a verified Polaris-side publication for
+each camera frame, and the native compact APS-C blind-search boundary remains
+open (#248). K-3 III normal capture remains untouched because all new controls
+are opt-in and rate output is absent.
 
 The K-3 III APS-C geometry profile (23.3 mm) has a separate host result: the
 hinted native solve passes in one nearest-tile attempt, but the compact
