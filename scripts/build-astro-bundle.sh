@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Build and fingerprint the additive Astro bundle for the active feature branch.
 #
-# This is deliberately separate from build-release-candidate.sh: it never reads,
-# patches, packages, or flashes FwPkt.  The only output is an Astro bundle that
-# can be copied to the Polaris SD card after its contents have been reviewed.
+# This is deliberately separate from build-release-candidate.sh: this branch's
+# contract is BUILD-ONLY. It never reads, patches, packages, uploads, installs,
+# or flashes FwPkt. The only output is an Astro bundle that can be copied to the
+# Polaris SD card later, after its contents have been reviewed.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -223,6 +224,7 @@ PROVENANCE="$OUT/build-source-provenance.txt"
   echo "docker_image=$IMAGE"
   echo "indexes=$([ "$WANT_INDEXES" = "1" ] && echo enabled || echo disabled)"
   echo "catalogue_package=${CATALOG_PACKAGE:-none}"
+  echo "deployment=not-performed"
   echo "firmware_release=not-produced"
   echo "firmware_flash=not-performed"
   printf 'command='
@@ -238,6 +240,7 @@ AFTER_STATUS="$(git -C "$ROOT" status --porcelain=v1 --untracked-files=all)"
 echo
 echo "Astro bundle ready: $OUT"
 echo "Copy the CONTENTS of $SD_ROOT to the Polaris microSD root."
+echo "Build mode: build-only; deployment was not performed."
 echo "No FwPkt was built, changed, or flashed."
 echo "Manifest: $MANIFEST"
 echo "Provenance: $PROVENANCE"

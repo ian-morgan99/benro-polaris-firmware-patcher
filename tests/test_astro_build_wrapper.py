@@ -13,7 +13,10 @@ def test_controlled_astro_builder_is_present_and_separate_from_firmware_release(
     assert "build-release-candidate.sh" in text
     assert "build-astro.sh" in text
     assert "patch-polaris.sh" not in text
+    assert "upload-fwpkt-to-pr.sh" not in text
+    assert "release-fwpkt.sh" not in text
     assert "FwPkt" in text
+    assert "deployment=not-performed" in text
     assert "firmware_release=not-produced" in text
 
 

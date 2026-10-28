@@ -43,7 +43,18 @@ centred"* with a measurement.
 
 ---
 
-## Install
+## Build — default is build-only
+
+The Astro feature branch deliberately defaults to **build and do not deploy**.
+`scripts/build-astro-bundle.sh` creates and fingerprints the SD-card bundle but
+does not upload it, install it, alter a device, or flash firmware. Copying the
+bundle to an SD card is a separate, reviewed action.
+
+The main-branch firmware release flow has a different contract:
+`scripts/build-release-candidate.sh` builds a release candidate and performs
+its release-side publication steps. Do not use that flow for an Astro bundle.
+
+## Build and install
 
 The supported controlled build entry point on the Astro feature branch is:
 
