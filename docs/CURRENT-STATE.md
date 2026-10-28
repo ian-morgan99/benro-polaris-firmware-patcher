@@ -16,6 +16,27 @@ for the required patching gate and the detailed PrivateResearch investigation.
 Every release must also complete the source verification and offset ledger in
 [`docs/FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md`](FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md).
 
+## 2026-10-28 offline `.73` revalidation
+
+The exact package
+`6.0.0.54.73--o-v18c-bulb-duration-measured-hold/FwPkt.zip` was extracted
+read-only from the PrivateResearch firmware archive. Its `appfs.ubifs` MD5 is
+`cc9a2ba16a2220e8fcf69e90c5bf144b`; the extracted `polestar_app` SHA-256 is
+`a5e58ffd76670cf9bdc76560a859d2e037ca4320d37bb3c2d93d482cf459ac02`, byte-
+identical to the recorded `.70` app binary. The `.73` gimbal binaries are also
+byte-identical to `.70` (`polaris403` SHA-256
+`35f8d0646339715e5e5e5d6ec01743f411d16325bc0b36fd58b590584fedf0b9`,
+`polaris413` SHA-256
+`34d3f4186185c541adb9c8e57b3e2ec13e402dfb4bb3e9b2262cbf03f1a5c112`).
+
+Read-only ARM disassembly of the exact `.73` app re-confirmed
+`SP_GimbalSetAxsi` at `0x000636e8` and `GimbalUartTxMsg` at `0x0005f524`:
+the helper emits the `0xAC 0x4A` seven-byte axis/IEEE-754-float frame. No
+direct caller from `SP_MsgGimbalCmdFromAppProc` was found. This improves
+identity confidence only; J units, command ID, reply semantics, watchdog and
+physical motor behaviour remain unqualified. No firmware was patched, flashed
+or commanded.
+
 ## Active blocker — BLE wake is impossible: the rig never advertises LE
 
 BLE wake **cannot be validated from any Linux host**. The rig does not advertise
