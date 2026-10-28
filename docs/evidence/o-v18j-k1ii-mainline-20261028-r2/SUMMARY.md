@@ -95,6 +95,17 @@ long-duration or streamed-frame client session.
 Transcript: `physical/k1ii-v87-liveview-rerun.log` in the candidate output
 directory.
 
+## Timed B precondition — not run
+
+The canonical timed-B probe was invoked with `--bulb-seconds 5` and
+`--require-exposure-mode`. It correctly refused before sending a capture
+request because the active Polaris `pgphoto` session prevented the secondary
+`gphoto2 --get-config pentaxconditions` query from returning
+`exposure-mode-raw`. The live command-268 list currently contains 56 timed
+values and a `00-00` sentinel, but no B label; that list shape is not a safe
+way to infer the physical dial position. No timed-B exposure was fired by this
+attempt. Transcript: `physical/k1ii-v87-timed-b-precondition.log`.
+
 Polaris liveness also passed 3/3 read-only attempts. The test did not alter
 camera settings and did not run Bulb, persistent live view, focus movement, or
 long-duration capture.
