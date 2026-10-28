@@ -10,6 +10,10 @@ set -euo pipefail
 ORIGINAL_ARGS=("$@")
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# Prefer the system GitHub CLI. Some desktop environments leave a broken
+# /home/ian/.local/bin/gh shim ahead of it; that must not turn a valid build
+# into an authentication failure during PrivateResearch staging.
+export PATH="/usr/bin:/bin:$PATH"
 STOCK_FWPKT="${STOCK_FWPKT:-/home/ian/Documents/VSCodeProjects/PrivateResearch/openpolaris-research/BenroPolarisPatcher/firmware/FwPkt}"
 LIBGPHOTO_REPO="${LIBGPHOTO_REPO:-https://github.com/ian-morgan99/libgphoto2.git}"
 CANDIDATE_ID="${CANDIDATE_ID:-o-v18g-reproducible-$(date -u +%Y%m%d)}"
