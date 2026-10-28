@@ -129,7 +129,7 @@ flowchart LR
   patch --> bundle --> pack --> gates --> device --> tests
 ```
 
-The image is a **matched compatibility unit**, not a collection of independently swappable `.so` files. A successful host-side `gphoto2` test does not establish the packaged `pgphoto` path. Keep stock firmware for recovery; follow [FWPKT provenance](docs/FWPKT-PROVENANCE-CONTRACT.md), [upgrade process](docs/LIBGPHOTO2-UPGRADE-PROCESS.md) and [current release state](docs/RELEASE-VERSION-STATE.md). A displayed version number alone is insufficient: correlate build ID, exact source commits, firmware ZIP hash, installed manifest and **actual mapped libraries**.
+The image is a **matched compatibility unit**, not a collection of independently swappable `.so` files. A successful host-side `gphoto2` test does not establish the packaged `pgphoto` path. Keep stock firmware for recovery; follow the [reproducible build runbook](docs/REPRODUCIBLE-BUILD-RUNBOOK.md), [FWPKT provenance](docs/FWPKT-PROVENANCE-CONTRACT.md), [upgrade process](docs/LIBGPHOTO2-UPGRADE-PROCESS.md) and [current release state](docs/RELEASE-VERSION-STATE.md). A displayed version number alone is insufficient: correlate build ID, exact source commits, firmware ZIP hash, installed manifest and **actual mapped libraries**.
 
 ### 5. Responsibility / debugging cheat sheet
 
