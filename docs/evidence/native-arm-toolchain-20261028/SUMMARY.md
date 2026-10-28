@@ -17,7 +17,7 @@ for the device package.
 
 Source-level use of `fmod()` and `hypot()` was removed from the search front
 end because the modern host toolchain emitted additional newer symbol
-versions. In the canonical ARM bundle, the standalone search ELF is 22,628
+versions. In the canonical ARM bundle, the standalone search ELF is 22,644
 bytes and the matcher is 17,596 bytes; their dynamic symbol versions are
 bounded by GLIBC 2.7 and their dependencies are only libc and libm.
 

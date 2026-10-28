@@ -15,7 +15,7 @@ turn a host build or a simulated solve into hardware qualification.
 | 3. Attach camera | Existing pgphoto/libgphoto2 ownership and transfer path | A local JPEG exists only after the transfer/publication contract completes. |
 | 4. Select Astro mode | `polaris-trackwatch.sh` records `mode:8` in `/tmp/polaris-mode` | New automation refuses to operate outside mode 8. The mode evidence still needs a real BenroConnect trace on each supported firmware. |
 | 5. Pentax StarAF | Existing camera/app autofocus path | This work does not replace or trigger StarAF. Camera focus remains an operator/app responsibility. |
-| 6. Calibrate | `polaris-autosolve.sh` solves a live-view snapshot from the observed calibration sequence | Existing dry-run/quality gates remain. It can apply the established 527/530 path only when explicitly armed. No full-resolution shutter is fired as a side effect. |
+| 6. Calibrate | `polaris-autosolve.sh` solves a live-view snapshot from the observed calibration sequence | Existing dry-run/quality gates remain. It can apply the established 527/530 path only when explicitly armed. Native search uses the focal/RA/Dec hint first and falls back to its bounded indexed blind pass. No full-resolution shutter is fired as a side effect. |
 | 7. GOTO | `polaris-goto-solve.sh` supports direct GOTO+solve; `polaris-goto-watch.sh` can recognise Astro 519 `track:1` requests | BenroConnect watcher is opt-in and depends on the observed 519 wire fields. Calibration `track:0` is deliberately ignored. Hardware trace validation is still required. |
 | 8. Repeated GOTO refinement | Each accepted solve writes `target.json` and a history record | Sequential refinement is implemented. Heading application is separately gated by `GOTO_SOLVE_APPLY=1`; low-confidence results never move the mount. |
 | 9. Image 1 | Existing camera capture/transfer path publishes local JPEGs | No claim is made for a file that exists only on the camera card. |
@@ -91,10 +91,11 @@ per-axis motor-speed correction is not yet qualified.**
 Against the thirteen-step end goal, steps 1–5 remain existing Benro/camera
 operations and are protected by the new mode gates. Steps 6–10 are wired in
 source and host-tested, including calibration/GOTO solve hooks, repeated frame
-solving, and local EXIF annotation. Step 11 measures drift and rotation but
-only has a bounded re-centre action; it deliberately does not claim tracking
-correction. Step 12 remains blocked on the exact firmware-backed rate command
-in issue #240. Step 13 is a guarded repeat loop, not a complete tracking
-system. Therefore the architecture is materially closer and the host index is
-now internally consistent, but the mission is not yet physically usable or
+solving, indexed hint fallback, and local EXIF annotation. Step 11 now compares
+frame roll against the stored target roll rather than treating an absolute
+camera roll as drift; it still has only a bounded re-centre action and does not
+claim tracking correction. Step 12 remains blocked on the exact firmware-backed
+rate command in issue #240. Step 13 is a guarded repeat loop, not a complete
+tracking system. Therefore the architecture is materially closer and the host
+index is internally consistent, but the mission is not yet physically usable or
 release-qualified.

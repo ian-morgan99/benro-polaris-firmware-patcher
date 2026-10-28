@@ -87,11 +87,24 @@ target_from_file() {
     printf '%s %s\n' "$_ra" "$_dec"
 }
 
+target_rotation_from_file() {
+    _tf=$1
+    [ -r "$_tf" ] || return 1
+    sed -n 's/.*"rotation_deg":\([-0-9.]*\).*/\1/p' "$_tf" | head -1
+}
+
 angular_sep_deg() {
     awk -v r1="$1" -v d1="$2" -v r2="$3" -v d2="$4" 'BEGIN {
         p=3.141592653589793/180; x=sin(d1*p)*sin(d2*p)+cos(d1*p)*cos(d2*p)*cos((r1-r2)*p);
         if (x>1) x=1; if (x<-1) x=-1;
         printf "%.6f", atan2(sqrt(1-x*x),x)/p
+    }'
+}
+
+angular_delta_deg() {
+    awk -v a="$1" -v b="$2" 'BEGIN {
+        d=a-b; while (d > 180) d-=360; while (d < -180) d+=360;
+        if (d < 0) d=-d; printf "%.6f", d
     }'
 }
 
@@ -161,18 +174,22 @@ assess_and_optionally_correct() {
     _dec=$(printf '%s' "$_j" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
     _rot=$(printf '%s' "$_j" | sed -n 's/.*"rotation_deg":\([-0-9.]*\).*/\1/p')
     [ -n "$_ra" ] && [ -n "$_dec" ] || return 0
-    _rotation_bad=0
-    if [ -n "$_rot" ] && awk -v r="$_rot" -v t="$ROTATION_THRESH_DEG" 'BEGIN { exit !(sqrt(r*r) > t) }'; then
-        _rotation_bad=1
-        log "field rotation exceeds ${ROTATION_THRESH_DEG}deg; no axis-rate command is sent"
-    fi
-
     _target=$(target_from_file "$TARGET_FILE" 2>/dev/null || \
               target_from_file /tmp/polaris-last-solution.json 2>/dev/null || true)
+    _rotation_bad=0
     if [ -n "$_target" ]; then
         _tra=$(echo "$_target" | awk '{print $1}'); _tdec=$(echo "$_target" | awk '{print $2}')
+        _trot=$(target_rotation_from_file "$TARGET_FILE" 2>/dev/null || true)
+        _rotation_delta=""
+        if [ -n "$_rot" ] && [ -n "$_trot" ]; then
+            _rotation_delta=$(angular_delta_deg "$_rot" "$_trot")
+            if awk -v r="$_rotation_delta" -v t="$ROTATION_THRESH_DEG" 'BEGIN { exit !(r > t) }'; then
+                _rotation_bad=1
+                log "field rotation delta ${_rotation_delta}deg exceeds ${ROTATION_THRESH_DEG}deg; no axis-rate command is sent"
+            fi
+        fi
         _drift=$(angular_sep_deg "$_ra" "$_dec" "$_tra" "$_tdec")
-        log "frame=$(basename "$_f") solved_ra=$_ra solved_dec=$_dec target_ra=$_tra target_dec=$_tdec drift_deg=$_drift rotation_deg=${_rot:-unknown}"
+        log "frame=$(basename "$_f") solved_ra=$_ra solved_dec=$_dec target_ra=$_tra target_dec=$_tdec drift_deg=$_drift rotation_deg=${_rot:-unknown} rotation_delta_deg=${_rotation_delta:-unknown}"
         _over=$(awk -v d="$_drift" -v t="$DRIFT_THRESH_DEG" 'BEGIN { print (d > t) ? 1 : 0 }')
         if [ "$_over" = "1" ]; then
             _too_big=$(awk -v d="$_drift" -v m="$MAX_CORRECTION_DEG" 'BEGIN { print (d > m) ? 1 : 0 }')

@@ -35,8 +35,11 @@ The two solvers are deliberately side by side:
   when the hint is absent or fails.
 - A full solve is an absolute measurement. It must not be run synchronously in
   the capture path or used to issue motion without quality and freshness gates.
-- The independent prototype currently requires a regional catalogue and a
-  focal length plus RA/Dec hint. It is not yet a blind all-sky solver.
+- The independent native path now has a packaged Gaia tile catalogue and
+  triangle-ratio index. A focal length is still required; an RA/Dec hint is
+  used first, with a bounded nearest-tile/all-sky fallback when the hint is
+  absent or fails. This is host-tested and ARM-built, but not yet device
+  qualified.
 - The current guide loop uses relative star matching and small GOTO corrections;
   it does not yet adjust motor rates.
 - PrivateResearch Issue #3 (implementation tracked in patcher issue #240) is the intended per-axis rate-control path, but it is still a
@@ -94,8 +97,11 @@ The real Gaia-derived regional tier is now exercised and caught a false
 candidate caused by arbitrary source-ID catalogue truncation; the fix selects
 the brightest eligible regional stars. See
 [`dual-solver-gaia-20261028/SUMMARY.md`](evidence/dual-solver-gaia-20261028/SUMMARY.md).
-The production tier still requires an Astrometry.net index covering the same
-field, an all-sky spatially partitioned catalogue, and a false-solve corpus.
+The native host package now also contains the spatially partitioned Gaia tile
+catalogue and triangle index, and the real-Gaia corpus exercises both hinted
+and bounded blind search. A same-frame Astrometry.net comparison over that
+real-Gaia corpus, plus device resource and capture-path measurements, remains
+open.
 
 ### 3. Make the independent solver honest and useful
 
@@ -104,8 +110,8 @@ The native solver must progress through these gates:
 1. hint-bounded regional solve with a real Gaia catalogue;
 2. indexed tile loading rather than scanning the whole catalogue;
 3. scale/rotation/parity and residual validation;
-4. bounded corkscrew search around a stale or absent hint;
-5. all-sky blind search with focal-length scale bounds;
+4. bounded corkscrew search around a stale hint, ordered by nearest tile;
+5. all-sky blind search with focal-length scale bounds and indexed candidates;
 6. calibrated JPEG distortion/noise tests;
 7. ARM soft-float build, RSS, CPU, thermal and timeout measurements.
 
@@ -172,8 +178,10 @@ The project must keep these verdicts separate:
 `DEVICE-OFFLINE-QUALIFIED` → `CAPTURE-PATH-QUALIFIED` →
 `EXIF-QUALIFIED` → `POINTING-QUALIFIED` → `RATE-CONTROL-QUALIFIED`.
 
-The current work is targeting `HOST-PAIRED`. It is not yet at
-`CAPTURE-PATH-QUALIFIED`, `POINTING-QUALIFIED`, or `RATE-CONTROL-QUALIFIED`.
+The current work has passed source, host-paired, false-solve, ARM-build, and
+host EXIF smoke gates for the native path. It is not yet at
+`DEVICE-OFFLINE-QUALIFIED`, `CAPTURE-PATH-QUALIFIED`, `POINTING-QUALIFIED`, or
+`RATE-CONTROL-QUALIFIED`.
 
 ## Immediate deliverable at the next pause
 
@@ -184,8 +192,10 @@ The next pause should contain:
 - one Astrometry.net JSON result;
 - one independent-solver JSON result;
 - the command, binary hashes, catalogue manifest and timing;
-- an explicit statement that this first paired catalogue is synthetic and
-  therefore does not yet qualify the independent all-sky method.
+- a host real-Gaia indexed corpus result plus negative-search results;
+- canonical Debian 9 ARM build and staged-package evidence;
+- an explicit statement that device capture/EXIF/pointing and rate-control
+  qualification remain open.
 
 See [DUAL-SOLVER.md](DUAL-SOLVER.md), [INDEPENDENT-SOLVER-USABILITY-AUDIT.md](INDEPENDENT-SOLVER-USABILITY-AUDIT.md), and
 [PLATE-SOLVE-CAPTURE-FLOW.md](PLATE-SOLVE-CAPTURE-FLOW.md) for the current

@@ -88,6 +88,11 @@ Observed ratios above the 16-bit on-disk range are discarded rather than
 folded into the saturated key; this corrected a false candidate flood during
 the native implementation check.
 
+The same regional frame with the correct RA/Dec hint solved in one ordered
+nearest-tile attempt, returning 28 matches and 1.009777 px RMS. A deliberately
+wrong RA/Dec hint exhausted five bounded attempts and returned no solve; the
+alignment wrapper then falls back to the no-hint indexed pass.
+
 Negative contract checks on the same host build returned `search_exhausted`
 for a 150 mm focal-length error, an empty star list, and a deliberately wrong
 RA/Dec hint. Removing that wrong hint and rerunning the indexed all-sky search

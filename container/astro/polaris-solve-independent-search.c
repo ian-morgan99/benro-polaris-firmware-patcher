@@ -32,6 +32,7 @@ typedef struct {
 typedef struct {
     int tile_id;
     int hits;
+    double distance;
 } tile_candidate_t;
 
 typedef struct {
@@ -78,6 +79,14 @@ static int candidate_compare(const void *a, const void *b) {
     const tile_candidate_t *x = (const tile_candidate_t *)a;
     const tile_candidate_t *y = (const tile_candidate_t *)b;
     if (x->hits != y->hits) return y->hits - x->hits;
+    return x->tile_id - y->tile_id;
+}
+
+static int distance_compare(const void *a, const void *b) {
+    const tile_candidate_t *x = (const tile_candidate_t *)a;
+    const tile_candidate_t *y = (const tile_candidate_t *)b;
+    if (x->distance < y->distance) return -1;
+    if (x->distance > y->distance) return 1;
     return x->tile_id - y->tile_id;
 }
 
@@ -401,6 +410,12 @@ int main(int argc, char **argv) {
     starts = calloc((size_t)(attempts + 1), sizeof(*starts));
     if (!starts) { free(candidate_order); free(tiles); return 1; }
     if (have_ra) {
+        candidates = calloc((size_t)tile_count, sizeof(*candidates));
+        if (!candidates) {
+            free(candidate_order); free(starts); free(tiles);
+            printf("{\"solved\":false,\"failure_reason\":\"out_of_memory\"}\n");
+            return 1;
+        }
         start_count = add_start(starts, start_count, attempts + 1, hint_ra, hint_dec);
         for (s = 1; s <= rings && start_count < attempts; s++) {
             int n, total = 8 * s;
@@ -495,12 +510,22 @@ int main(int argc, char **argv) {
         }
     } else {
         for (s = 0; s < start_count && tried < attempts; s++) {
-            for (t = 0; t < tile_count && tried < attempts; t++) {
-                double tile_radius = radius + length2(ra_bin, dec_bin) / 2.0;
-                if (angular_distance(starts[s].ra, starts[s].dec,
-                                     tiles[t].ra, tiles[t].dec) > tile_radius) continue;
+            int nearby = 0;
+            double tile_radius = radius + length2(ra_bin, dec_bin) / 2.0;
+            for (t = 0; t < tile_count; t++) {
+                double distance = angular_distance(starts[s].ra, starts[s].dec,
+                                                   tiles[t].ra, tiles[t].dec);
+                if (distance <= tile_radius) {
+                    candidates[nearby].tile_id = t;
+                    candidates[nearby].distance = distance;
+                    nearby++;
+                }
+            }
+            qsort(candidates, (size_t)nearby, sizeof(*candidates), distance_compare);
+            for (t = 0; t < nearby && tried < attempts; t++) {
+                int tile_id = candidates[t].tile_id;
                 result[0] = '\0';
-                run_solver(solver, &tiles[t], stars, width, height, focal, sensor,
+                run_solver(solver, &tiles[tile_id], stars, width, height, focal, sensor,
                            starts[s].ra, starts[s].dec, radius, max_stars,
                            max_catalogue, anchor_stars, minimum_matches, scale_tol, residual_px,
                            result, sizeof(result));
