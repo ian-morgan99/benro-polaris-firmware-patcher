@@ -127,14 +127,47 @@ check_host_key() {
 
 tcp_open() { (exec 3<>"/dev/tcp/${GIMBAL_HOST}/${GIMBAL_PORT}") 2>/dev/null && { exec 3>&-; return 0; } || return 1; }
 
+# --- Bluetooth reachability --------------------------------------------------
+# Two faults used to hide behind a single silent fallback here:
+#   * `[ -e /dev/hci0 ]` is false inside the VS Code Flatpak even though the
+#     host has an adapter; the portal reaches it (flatpak-spawn --host).
+#   * `bluetoothctl connect` prints "Attempting to connect ..." and exits 0
+#     before BlueZ resolves anything, so "BT connect returned OK" was never
+#     evidence of a delivered pulse (OpenPolaris #97 documents this exact shape
+#     in the Kotlin path).
+# Both are handled by scripts/polaris-bt-probe.sh; wake is now claimed only on a
+# link that is verifiably held.
+BT_PROBE_LIB="$(cd "$(dirname "$0")" && pwd)/polaris-bt-probe.sh"
+if [ -r "$BT_PROBE_LIB" ]; then
+  # shellcheck source=./polaris-bt-probe.sh
+  . "$BT_PROBE_LIB"
+else
+  BT_ROUTE="none"; BT_CMD=()
+  bt_resolve() { return 2; }
+  bt_timeout() { return 127; }
+  bt_exec() { return 127; }
+  bt_wake_pulse() { return 2; }
+  bt_radio_liveness() { BT_LIVENESS_DETAIL="probe module missing"; return 3; }
+fi
+bt_resolve || true
+
 phase_wake() {
-  log "WAKE: attempting BT connect $BT_MAC"
-  if [ -e /dev/hci0 ] && command -v bluetoothctl >/dev/null; then
-    timeout 20 bluetoothctl --timeout 15 connect "$BT_MAC" >/dev/null 2>&1 \
-      && log "WAKE: BT connect returned OK" || log "WAKE: BT connect failed/timed out (may still have woken it)"
-  else
-    log "WAKE: no /dev/hci0 or bluetoothctl — relying on AP/SSH already up"
-  fi
+  case "$BT_ROUTE" in
+    local|portal)
+      log "WAKE: sending BT pulse to $BT_MAC (route=$BT_ROUTE)"
+      # Success means the GATT link is established AND still held 2 s later.
+      if bt_wake_pulse "$BT_MAC"; then
+        log "WAKE: GATT link established and held"
+      else
+        log "WAKE: no held link (bluetoothctl may still exit 0 — see OpenPolaris #97); continuing to probe anyway"
+      fi
+      ;;
+    *)
+      # Loud, not silent. Previously this logged "relying on AP/SSH already up"
+      # and the run proceeded as if a pulse had been sent.
+      log "WAKE: NO BLUETOOTH PATH from this host (route=${BT_ROUTE:-none}; flatpak=$([ -r /.flatpak-info ] && echo yes || echo no)). No wake pulse was sent. Only an already-awake device will be reached — if the rig is asleep this is a HOST limitation, not a firmware fault."
+      ;;
+  esac
   local i
   for i in $(seq 1 $((WAKE_WAIT / 5))); do   # WAKE_WAIT s of 5 s probes
     if tcp_open && ssh_dev "true"; then

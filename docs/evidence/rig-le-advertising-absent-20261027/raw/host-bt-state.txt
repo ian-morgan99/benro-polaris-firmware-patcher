@@ -1,0 +1,53 @@
+=== date ===
+2026-10-27T20:51:10Z
+
+=== host kernel / hostname ===
+Linux beast 7.0.0-38-generic #38~24.04.4-Ubuntu SMP PREEMPT_DYNAMIC Mon Sep 14 16:37:11 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
+beast
+
+=== adapter identity (hciconfig -a, host) ===
+hci0:	Type: Primary  Bus: USB
+	BD Address: 4C:23:38:C8:7B:70  ACL MTU: 1024:7  SCO MTU: 240:8
+	UP RUNNING PSCAN 
+	RX bytes:8506 acl:0 sco:0 events:581 errors:0
+	TX bytes:7548 acl:0 sco:0 commands:493 errors:0
+	Features: 0xff 0xfe 0x0f 0xfe 0xd8 0x3f 0x7b 0x87
+	Packet type: DM1 DM3 DM5 DH1 DH3 DH5 HV1 HV2 HV3 
+	Link policy: RSWITCH HOLD SNIFF 
+	Link mode: PERIPHERAL ACCEPT 
+	Name: 'beast'
+	Class: 0x6c0104
+	Service Classes: Rendering, Capturing, Audio, Telephony
+	Device Class: Computer, Desktop workstation
+	HCI Version: 5.3 (0xc)  Revision: 0x0
+	LMP Version: 5.3 (0xc)  Subversion: 0x7fe5
+	Manufacturer: Qualcomm (29)
+
+
+=== USB ids ===
+active
+usb:v0489pE10Ad0001dcE0dsc01dp01icE0isc01ip01in00
+
+=== kernel config QCA ===
+CONFIG_BT_QCA=m
+CONFIG_BT_HCIBTUSB=m
+CONFIG_BT_HCIBTUSB_AUTOSUSPEND=y
+CONFIG_BT_HCIBTUSB_POLL_SYNC=y
+CONFIG_BT_HCIBTUSB_BCM=y
+CONFIG_BT_HCIBTUSB_MTK=y
+CONFIG_BT_HCIBTUSB_RTL=y
+
+=== loaded modules ===
+btusb 81920 0 - Live 0x0000000000000000
+btmtk 36864 1 btusb, Live 0x0000000000000000
+btrtl 32768 1 btusb, Live 0x0000000000000000
+btbcm 24576 1 btusb, Live 0x0000000000000000
+btintel 69632 1 btusb, Live 0x0000000000000000
+bluetooth 1081344 34 rfcomm,bnep,btusb,btmtk,btrtl,btbcm,btintel, Live 0x0000000000000000
+
+=== RTL/QCA firmware-load attempts ever ===
+0
+
+=== rtl_bt / qca firmware dirs ===
+46
+23

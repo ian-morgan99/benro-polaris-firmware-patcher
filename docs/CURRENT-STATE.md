@@ -1,89 +1,116 @@
 # Current repository state
 
-## 2026-10-27 — `.76` INSTALLED AND VERIFIED — `.75` REVERTED (it regressed captures)
+## 2026-10-27 — `.76` installed and verified; `.75` reverted
 
-`.76` (`o-v18f-revert-fail-closed-bulb`, libgphoto2 `df9d72745`, patcher `c3d70c9`)
-reverts `.75`. Operator verdict from the rig on `.75`: **"objectively worse than
-.74"** — a capture stayed spinning waiting for a file that never arrived.
+`.76` (`o-v18f-revert-fail-closed-bulb`, libgphoto2 `df9d72745`) reverts the `.75` capture regression. Its `camlibs/ptp2/library.c` is byte-identical to the operator-confirmed working `.74` capture path; the `.75` fail-closed shutter write and unsupported shutter readback are not present. The `.76` artifact was installed and verified, but remains unqualified because no Pentax camera was attached. `.74` remains the last positive hardware result.
 
-Two things in libgphoto2 `e7d0cf1dd` caused it, both in the deferred STOP edge of
-the camera-timed Bulb path:
 
-1. the fail-closed shutter write returned an error and started **no capture**.
-   Neither Benro Connect nor pgphoto surfaces a capture error — they wait for a
-   file — so refusing presents as an endless spinner;
-2. a new `ptp_getdevicepropvalue(PTP_DPC_PENTAX_ShutterSpeed)` readback ran before
-   every capture. That is **not a supported read path** for this property: config.c
-   reads the shutter speed only via `GetDevicePropDesc`'s `CurrentValue`, and of 40
-   `getdevicepropvalue` calls in config.c, none is Pentax/Ricoh. It therefore failed
-   on *every* timed capture, so the refusal fired universally, not rarely.
+## Active compatibility warning — `polestar_app` address maps are build-specific
 
-`.76` guarantees `camlibs/ptp2/library.c` is **byte-identical to `.74`** (`git diff
-8db3785f -- camlibs/ptp2/library.c` is empty) — the capture cycle the operator
-confirmed working. The `#241` model gate and current-value fix in config.c are kept.
+Do not apply historical `polestar_app` reverse-engineering addresses or
+symbols to a new candidate without revalidating the exact extracted binary.
+The attached Polaris checked on 2026-10-25 runs `6.0.0.54.70` and its live
+`polestar_app` SHA-256 is
+`a5e58ffd76670cf9bdc76560a859d2e037ca4320d37bb3c2d93d482cf459ac02`.
+Offline ARM disassembly confirms that `SP_GimbalSetAxsi` remains at
+`0x000636e8` and emits the MCU `J` frame, but the application dispatcher does
+not directly expose it. A different firmware may need different patch sites
+even when it retains the same helper. See
+[`docs/POLESTAR-APP-BUILD-COMPATIBILITY.md`](POLESTAR-APP-BUILD-COMPATIBILITY.md)
+for the required patching gate and the detailed PrivateResearch investigation.
+Every release must also complete the source verification and offset ledger in
+[`docs/FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md`](FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md).
 
-**Process failure worth naming:** the gate stayed GREEN on `.75`. It accepted
-`--libgphoto2-src` but only used it for provenance, and `build-release-candidate.sh`
-never passed it — so libgphoto2's own source contract never ran during a build. Now
-wired (`c3d70c9`) and proven: `.75` source → `GATE: RED`, fixed tree → PASS. Gate is
-15/0/1. A regression test (`387bfea59`) forbids any early return in the fallback.
+## Active blocker — BLE wake is impossible: the rig never advertises LE
 
-**`.76` status: installed, canary pending — NOT qualified.** No camera attached:
-gimbal healthy (9090 open, pgphoto stable pid 250 no restart loop, load 1.10), but
-USB shows only hub `1a40` + xHCI `1d6b`, no Pentax `0x25fb`, code 286 `model=none
-state=-5`. Per the operator's rule this is the flat-battery / camera-side branch, not
-wider failure. `.74` remains the last build with a positive hardware result.
+BLE wake **cannot be validated from any Linux host**. The rig does not advertise
+BLE at all, even when fully awake, so `bluetoothctl connect 48:E7:DA:D4:B5:72`
+has nothing to connect to. Proven against an awake, SSH-verified rig
+(`FwVer:6.0.0.54.76`): after clearing the BlueZ cache the **host** radio
+immediately receives an unrelated advertisement, while the rig's MAC is absent:
 
-Release: https://github.com/ian-morgan99/benro-polaris-firmware-patcher/releases/tag/o-v18f-revert-fail-closed-bulb
+```
+$ bluetoothctl remove 48:E7:DA:D4:B5:72 && bluetoothctl --timeout 35 scan on
+[NEW] Device 59:B7:EC:B5:78:B2 59-B7-EC-B5-78-B2   <- host radio DOES receive
+   rig MAC absent                                   <- rig advertises nothing
+```
 
-## 2026-10-27 — `.75` INSTALLED, THEN REVERTED — regressed captures (superseded by `.76`)
+The rig's own log explains it, on every boot (5 of the last 5 Mlogs):
+`SP_BlueSetAdvertiseState: advertise on` → `Failed to register advertising
+object` → retried. BR/EDR still carries connections (`SP_EVENT_BT_CONNECT`,
+`PSCAN ISCAN`), which is why a phone app connects while a Linux BLE client finds
+nothing. Evidence and full detail:
+[`docs/evidence/rig-le-advertising-absent-20261027/SUMMARY.md`](evidence/rig-le-advertising-absent-20261027/SUMMARY.md).
 
-`.75` (`o-v18e-fail-closed-bulb-shutter`, libgphoto2 `e7d0cf1dd`, patcher
-`798bd11`) carries the TA review fixes on top of `.74`: the Bulb shutter write
-now **fails closed** and is verified by readback before any capture starts, and
-the empty-shutter-list synthesis is gated to the K-3 III only. Gate GREEN,
-registered in `docs/FWPKT-PROVENANCE-CONTRACT.md`.
+This is a **firmware defect**, not a host or tooling problem. Wake-dependent
+acceptance must be recorded as blocked-on-firmware, not as a regression.
 
-**It is not on the device.** This host is on Ethernet through the Hitron router,
-and `wlp8s0` has no carrier, so `192.168.0.1` is being answered by the **router**,
-not the gimbal. An earlier reading of "port 80 open, port 22 refused" as "the rig
-is up but sshd is held" was wrong — that is the router's own GoAhead-Webs login
-page. `scripts/wait-for-rig.py` now rejects that case with `WRONG_NETWORK`. See
-`docs/evidence/o-v18e-build-20261027/rig-unreachable.txt`.
+### Two silent bugs that made `polaris-preflight.sh` unusable until now
 
-To install: associate with the gimbal AP (`polaris_d13e86`) on `wlp8s0`, confirm
-with `scripts/wait-for-rig.py`, then
-`./scripts/release/release-fwpkt.sh out/o-v18e-fail-closed-bulb-shutter`.
+Found on 2026-10-27 while wiring the portal route. Both failed **silently**, so
+the script always produced a confident-looking wrong answer:
 
-## 2026-10-27 — `.74` INSTALLED AND VERIFIED — behaviour unqualified (no camera attached)
+1. **`nmcli -t` escapes colons inside field values.** A BSSID prints as
+   `48\:E7\:DA\:D4\:B5\:73`, so `grep -i "48:E7:DA"` never matched and the AP was
+   always reported absent. Pre-existing — present before any sandbox routing.
+2. **`timeout N <shell-function>` does not run the command.** `timeout` execs a
+   binary, so `timeout 15 run_host nmcli ...` failed with no output. This one was
+   introduced by the portal routing itself.
 
-`.74` (`o-v18d-shutter-list-always-populated`) is installed on the rig and
-verified: pre-release gate GREEN (11 passed, 0 failed, 1 skipped), all six
-`firmwareInfo` MD5s matched on-device before reboot, **uptime reset 28668s ->
-14s** proves a real boot, `INSTALLED BUILD IDENTITY: PASS`, and Mlog records
-`SP_EVENT_UPGRADE_SUCCESS` followed by `SP_DelUpgradeFiles: remove
-/app/sd/FwPkt`. Both fixes are confirmed present in the flashed `ptp2.so`.
+Either alone made `ap_visible()` return empty, so the script returned
+`ASLEEP`/`BOOTING` against a rig that was awake, associated and serving SSH.
+**Any earlier `ASLEEP` or `BOOTING` verdict from this script is suspect** and
+should be re-checked against `nmcli ... dev wifi list | tr -d '\' | grep polaris`.
+Both are pinned by `tests/test_bt_wake_radio_liveness.py`, which now asserts
+`VERDICT=READY` end-to-end against stubbed host tools. Verified live after the
+fix: `VERDICT=READY fwver=FwVer:6.0.0.54.76;date:2026.10.27; iface=wlp8s0`, exit 0.
 
-It ships two fixes:
-- **timed Bulb duration from the measured hold** (#243) — `.72` captured at the
-  *previous* shot's duration because the pre-shutter admission probe reports the
-  OLD timer;
-- **the shutter list is always populated** (#241) — in B mode with no JPEG the
-  camera returns an empty list, which the device forwarded as
-  `RD:0;V:0;R:00:00,;`, a one-entry list whose only entry is the bogus `00:00`.
-  That is the Benro Connect crash in Bulb non-timed and on a mode-dial change.
+### Measurement rules — an empty BLE scan proves nothing
 
-**Not qualified.** No camera is attached to the rig (`lsusb` shows only a hub),
-so neither fix has been exercised against hardware. The candidate is "installed,
-canary pending" — never "qualified".
+An earlier revision of this section wrongly concluded the host radio was "deaf".
+It is fine. Four measurement bugs caused that, all now pinned by
+`tests/test_bt_wake_radio_liveness.py`:
 
-A follow-up commit (`e7d0cf1dd`, libgphoto2) additionally fails closed on a
-failed Bulb shutter write and verifies the write by readback before exposing,
-and gates the empty-list synthesis to the K-3 III only. **That commit is not in
-`.74`** — it needs a `.75`.
+1. `bluetoothctl` prints `[NEW] Device <MAC>`, **not** `New Device <MAC>` — the
+   pattern every scan in this repo used could never match.
+2. `flatpak-spawn --host` allocates a PTY, so output is colourised even when
+   piped (`[^[[0;92mNEW^[[0m]`). Strip with
+   `sed -r 's/\x1b\[[0-9;]*[a-zA-Z]//g'` before matching anything.
+3. `acl:0` is **not** a deafness signal — LE advertisements arrive as HCI
+   events, not ACL packets, so a scan-only adapter legitimately shows `acl:0`.
+   RX byte growth is equally useless: it counts command-complete responses to
+   our own commands.
+4. `[NEW]` fires once per device (BlueZ cache), so repeat scans of the same room
+   return zero on a healthy radio — three back-to-back scans gave `1, 0, 0`.
 
-Full record, including the corrections to my own earlier claims and the TA
-review findings: `docs/RELEASE-RECORD-2026-10-26.md`.
+Therefore: never infer a dead radio from an empty scan, and never infer that the
+rig is asleep from one. `polaris-bt-probe.sh` returns `LIVENESS_UNKNOWN` rather
+than inventing a `RADIO_DEAF` verdict, and `polaris-preflight.sh` decides
+`ASLEEP` from **AP absence via the Wi-Fi scan**, which does not depend on the
+Bluetooth stack at all.
+
+Prior blockers reading *"host currently has no BT adapter"*
+(`o-v17a-offline-validation-20261012` §8) and the `o-v17a-*` "no BLE
+advertisement seen" entries were one of: sandbox isolation, the wrong grep
+pattern, or the rig genuinely not advertising. None were a dead radio.
+
+### Sandbox note (still true, still easy to misread)
+
+VS Code here is a Flatpak. Inside it `/dev/hci0` is absent, `bluetoothctl` is not
+on PATH, `AF_BLUETOOTH` returns `Errno 97` and the proxied system bus has no
+`org.bluez`. Those are **sandbox restrictions, not host faults** — never cite
+them as evidence about the radio. Host tools are reachable via
+`flatpak-spawn --host`, the same route already used for docker in
+`tests/test_plate_solving_present.py`; run portal commands from a host-visible
+cwd or they fail with "Failed to change to directory".
+
+### Non-blocking host observation
+
+The built-in adapter is Qualcomm (`usb 0489:e10a`, BD `4C:23:38:C8:7B:70`), the
+kernel has `CONFIG_BT_HCIBTUSB_QCA` unset with `btqca` unloaded, and
+`/lib/firmware/qca/` holds 23 `nvm_usb_*` files but no `.htf` RAM patch. That gap
+is real but has **not** been shown to break reception — the adapter demonstrably
+receives LE advertisements. Recorded so it is not lost; it is not a blocker.
 
 ## 2026-10-19 — `.68` PHYSICALLY QUALIFIED **PASS** — Color Temperature (`0xd018`) works through its named control
 
