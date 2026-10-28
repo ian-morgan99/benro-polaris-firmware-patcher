@@ -70,8 +70,8 @@ astrometry.net FITS indexes for the configured focal range:
   --catalog-package out/gaia-dr3-g10
 ```
 
-Copy the **contents** of `out/astro/COPY-TO-SD-CARD-ROOT/` to the root of the
-Polaris' microSD card:
+Copy the **contents** of `out/<id>/COPY-TO-SD-CARD-ROOT/` (using the `--id`
+chosen above) to the root of the Polaris' microSD card:
 
 ```
 <SD root>/astrometry/index-41xx.fits      index files (~44 MB)
@@ -90,7 +90,7 @@ SD card carries only the (large, static) index files. Two things reach the card 
 the firmware to flash, and the indexes — and there is no install step at all.
 
 ```sh
-./build-astro.sh                              # builds the bundle + indexes
+./scripts/build-astro-bundle.sh --id astro-bundle  # builds the bundle + indexes
 ./patch-polaris.sh --fwpkt FwPkt.bin --astro-autostart
 ```
 

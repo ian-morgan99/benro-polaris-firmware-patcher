@@ -112,6 +112,7 @@ case "$ID" in
   (*[!a-zA-Z0-9._-]*) die "invalid build id: $ID" ;;
 esac
 
+command -v realpath >/dev/null 2>&1 || die "realpath is required"
 ROOT_REAL="$(realpath -m "$ROOT")"
 if [ -z "$OUT" ]; then
   OUT="$ROOT/out/$ID"
@@ -124,6 +125,7 @@ case "$OUT" in
   *) die "output must be below $ROOT/out/: $OUT" ;;
 esac
 [ "$OUT" != "$ROOT_REAL/out" ] || die "refusing to use the whole out/ directory as output"
+[ ! -L "$OUT" ] || die "refusing to use a symlink output: $OUT"
 
 if [[ "$SRC_CACHE" != /* ]]; then
   SRC_CACHE="$ROOT/$SRC_CACHE"
@@ -148,7 +150,6 @@ fi
 git -C "$ROOT" diff --check || die "source whitespace errors detected"
 command -v docker >/dev/null 2>&1 || die "docker is required by build-astro.sh"
 docker info >/dev/null 2>&1 || die "docker daemon is not running"
-command -v realpath >/dev/null 2>&1 || die "realpath is required"
 
 if [ -n "$CATALOG_PACKAGE" ]; then
   if [[ "$CATALOG_PACKAGE" != /* ]]; then
