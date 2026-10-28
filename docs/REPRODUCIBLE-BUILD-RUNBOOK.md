@@ -17,6 +17,12 @@ Do not build from a dirty worktree, detached checkout, feature branch, stale
 build directory, or appliance/runtime checkout. Do not use dirty-source or
 dirty-patcher escape hatches for a release candidate.
 
+The release builder enforces the repository identities as well as cleanliness:
+the patcher must be on `main` with the `ian-morgan99/benro-polaris-firmware-patcher`
+origin, and the libgphoto2 input must be on `main` with the
+`ian-morgan99/libgphoto2` origin. It also rejects stock inputs without
+`FwPkt/firmwareInfo`. A failure before Docker starts is intentional.
+
 ## Prepare the source checkouts
 
 ```sh
@@ -82,6 +88,11 @@ exact source SHAs, stock FwPkt hash, and every recorded skip.
 The build updates `docs/RELEASE-VERSION-STATE.md`. Review that diff, commit it
 with the release documentation, and push it before treating provenance as
 complete. A failed build or an output directory is not a release claim.
+
+Do not substitute `patch-polaris.sh` for this command when producing a release
+candidate. That lower-level command remains available for diagnostics and
+development experiments, but it does not perform the complete source, test,
+version, differential, or publication workflow.
 
 ## Install only after build acceptance
 

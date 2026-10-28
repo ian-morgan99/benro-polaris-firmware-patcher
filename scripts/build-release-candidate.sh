@@ -13,6 +13,25 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
 VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
 
+# Release builds are intentionally narrower than diagnostic builds. This keeps
+# a junior agent from accidentally producing a candidate from a feature branch
+# or a different fork while still allowing ordinary local development to use
+# patch-polaris.sh directly.
+PATCHER_BRANCH="$(git -C "$ROOT" branch --show-current)"
+[ "$PATCHER_BRANCH" = main ] || {
+  echo "ERROR: release builder must run from patcher branch main (got ${PATCHER_BRANCH:-detached})" >&2
+  exit 3
+}
+normalise_remote() {
+  printf '%s\n' "$1" | sed -E 's#\.git$##; s#^git@github\.com:#https://github.com/#; s#^ssh://git@github\.com/#https://github.com/#'
+}
+PATCHER_REMOTE="$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)"
+[ "$(normalise_remote "$PATCHER_REMOTE")" = "https://github.com/ian-morgan99/benro-polaris-firmware-patcher" ] || {
+  echo "ERROR: patcher origin is not ian-morgan99/benro-polaris-firmware-patcher" >&2
+  echo "       origin=${PATCHER_REMOTE:-missing}" >&2
+  exit 3
+}
+
 # Benro Connect displays this value, so two builds must never report the same
 # one. It used to be typed by hand and the baseline advanced by hand as well,
 # which is how several candidates ended up carrying an identical version.
@@ -36,6 +55,12 @@ fi
 case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2;; esac
 [ -e "$BASE" ] || { echo "ERROR: stock FwPkt not found: $BASE" >&2; exit 2; }
 [ -d "$SRC/.git" ] || { echo "ERROR: libgphoto2 input must have a real .git directory" >&2; exit 2; }
+[ -f "$BASE/firmwareInfo" ] || [ -f "$BASE/FwPkt/firmwareInfo" ] || {
+  if [ "${BASE##*.}" = zip ] && unzip -l "$BASE" 2>/dev/null | grep -qE '(^|/)FwPkt/firmwareInfo$'; then :; else
+    echo "ERROR: stock input must contain FwPkt/firmwareInfo" >&2
+    exit 2
+  fi
+}
 [ "$(git -C "$SRC" status --porcelain)" = "" ] || { echo "ERROR: libgphoto2 checkout is dirty" >&2; exit 2; }
 # A gitignored build/ directory is invisible to the dirty check above, but
 # container/build_ptp2.sh copies the input with `cp -a`, build directories
@@ -57,6 +82,12 @@ for stale in build _build build-asan; do
 done
 BRANCH="$(git -C "$SRC" branch --show-current)"
 [ "$BRANCH" = main ] || { echo "ERROR: libgphoto2 must be on main (got ${BRANCH:-detached})" >&2; exit 2; }
+SRC_REMOTE="$(git -C "$SRC" remote get-url origin 2>/dev/null || true)"
+[ "$(normalise_remote "$SRC_REMOTE")" = "https://github.com/ian-morgan99/libgphoto2" ] || {
+  echo "ERROR: libgphoto2 origin is not ian-morgan99/libgphoto2" >&2
+  echo "       origin=${SRC_REMOTE:-missing}" >&2
+  exit 3
+}
 # A version is bound to the exact commits it was built from, so the patcher tree
 # must be clean too: uncommitted work would make the binding a claim about a
 # commit that does not describe the build. Checked here rather than at claim
