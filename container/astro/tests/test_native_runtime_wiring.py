@@ -60,6 +60,13 @@ def test_exif_writer_flushes_and_validates_atomic_temp_input():
     assert "if (segment_length > 65535U)" in writer
 
 
+def test_exif_focal_parser_fails_closed_on_wrapped_offsets():
+    extractor = (ROOT / "astro" / "polaris-extract.c").read_text()
+    assert "exif_span_ok" in extractor
+    assert "rel > len - tiff" in extractor
+    assert "size <= len - off" in extractor
+
+
 def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     boot = (ONDISK / "polaris-astro-boot.sh").read_text()
     frame = (ONDISK / "polaris-frame-watch.sh").read_text()

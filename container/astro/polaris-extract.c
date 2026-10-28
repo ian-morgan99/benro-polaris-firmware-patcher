@@ -105,37 +105,54 @@ static unsigned rd32(const unsigned char* p, int be)
               : ((unsigned)p[3] << 24 | (unsigned)p[2] << 16 | (unsigned)p[1] << 8 | p[0]);
 }
 
+/* Bounds check without the unsigned-offset overflow that would be possible
+ * with the more usual `off + size > len` form. JPEGs arrive from a camera or
+ * network peer, so malformed EXIF must be a fallback, never a process crash. */
+static int exif_span_ok(unsigned off, unsigned size, unsigned len)
+{
+    return off <= len && size <= len - off;
+}
+
 /* returns focal length in mm, or 0 if not found */
 static double exif_focal_mm(const unsigned char* d, unsigned len)
 {
-    unsigned tiff, ifd, n, i, exififd = 0;
+    unsigned tiff, ifd, n, i, exififd = 0, rel;
     int be;
     if (len < 14 || memcmp(d, "Exif\0\0", 6) != 0) return 0.0;
     tiff = 6;
     if (d[tiff] == 'M' && d[tiff + 1] == 'M') be = 1;
     else if (d[tiff] == 'I' && d[tiff + 1] == 'I') be = 0;
     else return 0.0;
-    if (tiff + 8 > len) return 0.0;
-    ifd = tiff + rd32(d + tiff + 4, be);
+    if (!exif_span_ok(tiff, 8, len)) return 0.0;
+    rel = rd32(d + tiff + 4, be);
+    if (rel > len - tiff) return 0.0;
+    ifd = tiff + rel;
 
     /* IFD0: we only want the pointer to the Exif sub-IFD */
-    if (ifd + 2 > len || ifd < tiff) return 0.0;
+    if (!exif_span_ok(ifd, 2, len) || ifd < tiff) return 0.0;
     n = rd16(d + ifd, be);
     for (i = 0; i < n; i++) {
         unsigned e = ifd + 2 + i * 12;
-        if (e + 12 > len) break;
-        if (rd16(d + e, be) == 0x8769) { exififd = tiff + rd32(d + e + 8, be); break; }
+        if (e < ifd || !exif_span_ok(e, 12, len)) break;
+        if (rd16(d + e, be) == 0x8769) {
+            rel = rd32(d + e + 8, be);
+            if (rel > len - tiff) return 0.0;
+            exififd = tiff + rel;
+            break;
+        }
     }
-    if (!exififd || exififd + 2 > len || exififd < tiff) return 0.0;
+    if (exififd < tiff || !exif_span_ok(exififd, 2, len)) return 0.0;
 
     n = rd16(d + exififd, be);
     for (i = 0; i < n; i++) {
         unsigned e = exififd + 2 + i * 12, off, num, den;
-        if (e + 12 > len) break;
+        if (e < exififd || !exif_span_ok(e, 12, len)) break;
         if (rd16(d + e, be) != 0x920A) continue;      /* FocalLength */
         if (rd16(d + e + 2, be) != 5) return 0.0;     /* must be RATIONAL */
-        off = tiff + rd32(d + e + 8, be);
-        if (off + 8 > len || off < tiff) return 0.0;
+        rel = rd32(d + e + 8, be);
+        if (rel > len - tiff) return 0.0;
+        off = tiff + rel;
+        if (!exif_span_ok(off, 8, len) || off < tiff) return 0.0;
         num = rd32(d + off, be);
         den = rd32(d + off + 4, be);
         if (!den) return 0.0;
