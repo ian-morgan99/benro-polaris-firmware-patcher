@@ -54,6 +54,23 @@ sha256sum /absolute/path/to/stock/FwPkt.zip
 
 ## Build a `.77` candidate
 
+For the normal user workflow, use the wrapper:
+
+```sh
+./scripts/release/build-and-install.sh
+```
+
+It automatically resolves host Docker when launched from the VS Code sandbox,
+clones a disposable clean libgphoto2 `main`, runs the complete build, and
+prints the verified deployment command. To build and then deploy in one run:
+
+```sh
+./scripts/release/build-and-install.sh --install
+```
+
+Deployment still stops at the normal preflight, install-manifest, identity, and
+reboot gates. Hardware qualification remains separate.
+
 For this workstation, the retained stock base is in PrivateResearch at:
 
 ```sh
