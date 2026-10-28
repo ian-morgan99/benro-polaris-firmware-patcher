@@ -135,8 +135,10 @@ forgotten or improvised:
 1. Prints the exact command for the candidate it just built:
    `== 6. install this candidate (the only supported path) ==`
 2. Writes `install-status.txt` next to the candidate with `install_command` and
-   `install_status=not-installed`. A release is not finished until that status
-   becomes `installed-verified` after phase 6 passes.
+   `install_status=not-installed`. After phase 6 passes, the supported
+   `release-fwpkt.sh` installer changes that status to `installed-verified` and
+   writes `install-receipt.txt` with the target, device version, ZIP digest, and
+   reboot evidence. A staged-only or fire-and-forget run never gets that status.
 
    It is a separate file on purpose. `build-source-provenance.txt` is written
    inside the patcher container and arrives owned by `nfsnobody`, so appending to
@@ -152,9 +154,9 @@ forgotten or improvised:
 3. Camera idle, or `--allow-busy` only after confirming no exposure is in flight.
 4. Run the installer. Do not interrupt the 5–10 min dark period.
 5. Confirm phase 6 passed and uptime reset was reported.
-6. Set `install_status=installed-verified` in `out/<id>/install-status.txt`, add the
-   dated install record to `docs/CURRENT-STATE.md`, and save evidence under
-   `docs/evidence/<candidate>-install-<date>/`.
+6. Confirm the installer wrote `install_status=installed-verified` and
+   `install-receipt.txt`; add the dated install record to `docs/CURRENT-STATE.md`,
+   and save evidence under `docs/evidence/<candidate>-install-<date>/`.
 
 ## Related
 

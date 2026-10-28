@@ -198,18 +198,22 @@ The handoff record must include:
 The canonical builder invokes the installer automatically after publication.
 It stages the extracted `FwPkt/` tree, verifies every firmwareInfo MD5
 on-device, reboots, proves the boot was real by an uptime reset, and checks the
-exact build/source identity. It then updates the published record to
-`installed-verified` and uploads the receipt and final logs without changing
-the ZIP bytes.
+exact build/source identity. The installer then writes the local
+`install_status=installed-verified` state and receipt without changing the ZIP
+bytes. The release handoff must separately update the published record and
+upload the receipt/final logs using a safe remote-file operation that preserves
+any dirty local PrivateResearch checkout.
 
 The build script accepts only deployment options (`--host`, `--ssh-user`,
 `--max-wait`, `--wake-wait`, and the explicit safety override `--allow-busy`).
 When SSH is initially unavailable, the supported installer automatically tries
 the documented Bluetooth/Wi-Fi wake path before refusing to stage anything.
-It deliberately
-rejects `--skip-trigger` and `--skip-verify` in the normal build wrapper, but
-the standalone installer retains those modes for explicitly labelled staged
-diagnostics.
+It deliberately rejects `--skip-trigger` and `--skip-verify` in the normal build
+wrapper, but the standalone installer retains those modes for explicitly
+labelled staged diagnostics. The standalone installer writes the local receipt
+and changes `install-status.txt` only after phase 6 succeeds; updating the
+durable PrivateResearch README/status is a separate explicit publication step
+that must preserve any dirty local PrivateResearch checkout.
 
 ### 5. Install an already-published candidate manually only through the supported installer
 
@@ -272,4 +276,3 @@ is deliberately marked `BUILT` only. It is an internal diagnostic artifact, not
 an end-user candidate. It must not be called `.83`, and it must not be flashed
 or handed to a tester until the canonical build output has completed deployment
 and runtime verification.
-

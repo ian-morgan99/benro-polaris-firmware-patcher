@@ -1,5 +1,21 @@
 # Current repository state
 
+## 2026-10-28 — `.87` deployed; K-1 II canary partially passed
+
+`.87` (`o-v18j-k1ii-mainline-20261028-r2`) was built from libgphoto2
+`d03a948180592337337782858c6a72064b0938ab` and patcher
+`7f0a3887cdbac23633dde2e3bf4408e062749ed8`, published to PrivateResearch, and
+installed through the canonical extracted-tree path. Polaris rebooted and
+reported the exact build identity `6.0.0.54.87-o-v18j-k1ii-mainline-20261028-r2`.
+
+With a Pentax K-1 Mark II attached, read-only liveness passed 3/3; ISO,
+shutter, and aperture lists were populated; preview closed cleanly; and one
+ordinary capture completed with lifecycle `[1,4,0]` and one JPEG file. This is
+partial Polaris evidence, not full K-1 II qualification: Bulb, persistent live
+view, focus, setting round-trips, direct-PC libgphoto2 behaviour, and the full
+widget tree remain pending. See
+[`docs/evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md`](evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md).
+
 ## 2026-10-27 — `.76` installed and verified; `.75` reverted
 
 `.76` (`o-v18f-revert-fail-closed-bulb`, libgphoto2 `df9d72745`) reverts the `.75` capture regression. Its `camlibs/ptp2/library.c` is byte-identical to the operator-confirmed working `.74` capture path; the `.75` fail-closed shutter write and unsupported shutter readback are not present. The `.76` artifact was installed and verified, but remains unqualified because no Pentax camera was attached. `.74` remains the last positive hardware result.

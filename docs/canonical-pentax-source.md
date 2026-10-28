@@ -4,6 +4,16 @@ This document identifies the libgphoto2 source that the Polaris patcher may cons
 
 Normative upgrade process: [`LIBGPHOTO2-UPGRADE-PROCESS.md`](LIBGPHOTO2-UPGRADE-PROCESS.md).
 
+## Latest candidate source — 2026-10-28
+
+The `.87` Polaris candidate was built from the clean libgphoto2 `main` commit
+`d03a948180592337337782858c6a72064b0938ab` in
+`/home/ian/Documents/VSCodeProjects/LibGphoto2-v86-main`. It is the exact
+source recorded in the installed device provenance and in
+[`docs/evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md`](evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md).
+The K-1 II result is a partial Polaris canary only; this entry does not promote
+the SHA to direct-PC or full camera-matrix qualification.
+
 ## Workspace and installed-lineage distinction — 2026-10-01
 
 The sole maintained library checkout is
