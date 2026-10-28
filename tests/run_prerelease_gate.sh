@@ -258,6 +258,8 @@ PY_TESTS=(
     tests/test_verify_installed_build.py
     tests/test_verify_shipped_artifacts.py
     tests/test_verify_candidate_differential.py
+    tests/test_candidate_identity.py
+    tests/test_release_change_manifest.py
     tests/test_watch_app_crash.py
     tests/test_bt_wake_radio_liveness.py
 )
