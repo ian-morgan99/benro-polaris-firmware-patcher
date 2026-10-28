@@ -26,9 +26,18 @@ AC 4A <axis:u8> <rate:little-endian IEEE-754 float>
 ```
 
 The helper's route, receiver, units, axis mapping and response semantics are
-not established. The shape is therefore a static observation, not an approved
-wire contract. The implementation must not send it until every unknown below
-has been resolved against the exact application and gimbal binaries.
+not all established at the application boundary. The matching `.73`
+`polaris413_2.0.0.22.bin` MCU payload is present and its historical analysis
+identifies the `J` handler at `0x800501c`, but the application dispatcher has
+no direct call to this helper. The shape and MCU lead are therefore not yet an
+approved end-to-end wire contract. The implementation must not send it until
+every unknown below has been resolved against the exact application and gimbal
+binaries.
+
+The `.73` dispatcher covers codes 513--549. Read-only jump-table inspection
+currently shows default paths at 515, 516, 518, 523, 527 and 528. Those slots
+must be checked against every other parser/reply table before one can be
+considered for a new command; no command ID is selected by this specification.
 
 Required semantics, once proven:
 
@@ -44,6 +53,12 @@ Required semantics, once proven:
   from merely queued bytes;
 - the command is mode-gated, lease-bound and unavailable to normal K-3 III
   capture operation.
+
+The current MCU research reports a historical step relationship of roughly
+`rate * 960 * 0.000277 / 1000` per tick for the `J` path. This is a reverse-
+engineered implementation lead, not a calibrated degrees/second contract;
+the conversion must be measured on the target build before it is exposed as a
+public rate value.
 
 ## Evidence gates
 
@@ -64,4 +79,3 @@ Required semantics, once proven:
 Until all five gates pass, the plate solver may report drift and use bounded
    positional correction where already qualified, but it must not adjust motor
    rate.
-

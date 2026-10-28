@@ -19,6 +19,8 @@ The `.73` `polestar_app` is byte-identical to the recorded `.70` app payload.
 The two listed gimbal payloads are also byte-identical to their `.70` records.
 These identities make the static observations reproducible for this payload
 family; they do not establish compatibility with another firmware family.
+The `polaris413` hash is the `polaris413_2.0.0.22.bin` image used by the
+historical MCU `J`/`0x4A` analysis at handler address `0x800501c`.
 
 ## Static observations
 
@@ -27,10 +29,16 @@ family; they do not establish compatibility with another firmware family.
 - The helper constructs `AC 4A`, axis, a little-endian IEEE-754 float, length
   seven and queues the message.
 - No direct call to the helper was found in the full disassembly search.
+- The MCU-side research for the matching `polaris413_2.0.0.22.bin` reports the
+  existing `J` handler and an approximate per-tick step relationship; the
+  rate-unit conversion and hold semantics still require target qualification.
 - `SP_MsgGimbalCmdFromAppProc` dispatches the existing fast-jog controls: 513
   maps to axis 2, 514 to axis 1 and 521 to axis 3. The helper
   `SP_GimbalUartAdjSpeed` emits `AC 41`, axis, signed little-endian int16 speed,
   length five.
+- Its 513--549 jump table currently falls through the default path at 515,
+  516, 518, 523, 527 and 528. These are investigation candidates only; no new
+  command ID is approved.
 
 The last two bullets describe an existing jog path, not independent tracking
 rate control. The app source and the receiving MCU source are not available in
@@ -40,7 +48,7 @@ this checkout, so no source rebuild or binary patch can be claimed.
 
 | Question | Decision |
 |---|---|
-| Can the current native Astro solver safely send `AC 4A`? | No; route and MCU semantics are unproven. |
+| Can the current native Astro solver safely send `AC 4A`? | No; the MCU lead is stronger, but app exposure, reply, units and physical semantics remain unproven. |
 | Can the existing jog path be treated as tracking-rate control? | No; it is a leased fast-jog/deadman path. |
 | Can issue #240 be called resolved from static analysis? | No; physical and MCU contract gates remain open. |
 | Does this work change K-3 III capture code or defaults? | No. |

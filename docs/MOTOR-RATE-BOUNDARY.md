@@ -16,11 +16,24 @@ a controlled protocol capture:
 - STOP priority, acknowledgement/reply, watchdog and disconnect behaviour;
 - forwarding through the 403/413 gimbal path and supported firmware IDs.
 
+The companion research record identifies the MCU image used by the current
+`.73` package as `polaris413_2.0.0.22.bin` (SHA-256
+`34d3f4186185c541adb9c8e57b3e2ec13e402dfb4bb3e9b2262cbf03f1a5c112`) and
+reports a `J`/`0x4A` handler at `0x800501c`. Its historical analysis describes
+an axis-plus-float rate path whose target step is approximately
+`rate * 960 * 0.000277 / 1000` per tick. That strengthens the MCU-side lead,
+but the degree/second conversion and zero/hold semantics still need target
+build and physical revalidation; the application-side exposure is still
+missing.
+
 ## Static `.73` discovery: the existing jog path
 
 Read-only disassembly of the exact `.73` application adds a separate, more
-concrete fact. `SP_MsgGimbalCmdFromAppProc` dispatches the existing fast jog
-controls as follows:
+concrete fact. `SP_MsgGimbalCmdFromAppProc` dispatches application codes
+`513`--`549`; the currently observed jump-table default slots are 515, 516,
+518, 523, 527 and 528. These are candidates for investigation only, not an
+approved new command ID. The existing fast jog controls are dispatched as
+follows:
 
 | app control | axis passed to `SP_GimbalUartAdjSpeed` | MCU frame |
 |---:|---:|---|
@@ -39,9 +52,10 @@ This is useful for controlled jog/deadman experiments, but it is not the
 requested independent tracking-rate primitive. It does not establish physical
 units, the sign convention after the M1/M2/M3 mapping, steady-rate accuracy,
 MCU acknowledgement, or the behaviour of a stopped/disconnected link. The
-`AC 4A` float helper remains unapproved for live use because its dispatcher
-route is still unknown. `tools/polaris_rate_protocol.py` can now parse and
-fault-test both shapes, but still opens no socket and is not bundled.
+`AC 4A` float helper remains unapproved for live use because the application
+dispatcher has no direct caller for it. `tools/polaris_rate_protocol.py` can
+now parse and fault-test both shapes, but still opens no socket and is not
+bundled.
 
 `tools/polaris_rate_protocol.py` is deliberately only a host-side parser and
 safety simulator. It exercises the known frame shape, rejects malformed or
