@@ -83,6 +83,18 @@ After the read-only rerun, a second independent ordinary capture also passed:
 Transcript and JSON result: `physical/k1ii-v87-capture-rerun.log` and
 `physical/k1ii-v87-capture-rerun.json` in the candidate output directory.
 
+## Live view — 2026-10-28 23:55 UTC
+
+Live view was tested independently without taking a photograph. It started
+from `state:0`, acknowledged with `291 state:1;ret:0;`, remained at
+`state:1` for a three-second hold check, and stopped cleanly with
+`291 state:0;ret:0;`. It was restored to its original off state. This proves
+the bounded live-view start/hold/stop path on K-1 II; it does not yet prove a
+long-duration or streamed-frame client session.
+
+Transcript: `physical/k1ii-v87-liveview-rerun.log` in the candidate output
+directory.
+
 Polaris liveness also passed 3/3 read-only attempts. The test did not alter
 camera settings and did not run Bulb, persistent live view, focus movement, or
 long-duration capture.
