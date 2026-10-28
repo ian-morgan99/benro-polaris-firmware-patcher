@@ -58,11 +58,18 @@ triangle-ratio candidate index. The native path is not the default until that
 package is installed with a clean ARM build and the wrong-solve, runtime, and
 device-capture gates have passed.
 
+The K-3 III APS-C geometry profile (23.3 mm) has a separate host result: the
+hinted native solve passes in one nearest-tile attempt, but the compact
+15-star/tile index does not yet guarantee a five-attempt no-hint solve for the
+narrower field. That index-coverage/runtime trade-off is logged in follow-up
+issue #248; the operational policy remains to use the mount RA/Dec hint first.
+
 ## Evidence still required before calling the mission complete
 
 - Host-side Gaia package generation, tile verification, triangle-index
-  verification, five indexed no-hint rendered solves, and the canonical ARM
-  bundle/staged-install checks now pass. The native EXIF writer also passes a
+  verification, five indexed no-hint full-frame rendered solves, a hinted
+  APS-C rendered solve, and the canonical ARM bundle/staged-install checks now
+  pass. The native EXIF writer also passes a
   host JPEG decode/write-back smoke. This is not yet device proof: the package
   still needs sanctioned SD-card installation, post-boot identity, and
   physical capture qualification.

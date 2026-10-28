@@ -93,6 +93,16 @@ nearest-tile attempt, returning 28 matches and 1.009777 px RMS. A deliberately
 wrong RA/Dec hint exhausted five bounded attempts and returned no solve; the
 alignment wrapper then falls back to the no-hint indexed pass.
 
+An APS-C geometry check (23.3 mm sensor, the K-3 III profile) also solved with
+the correct hint in one nearest-tile attempt: 23 matches, 0.944713 px RMS, and
+4.692543 arcsec/pixel. The current compact 15-brightest-stars-per-tile index
+does not yet guarantee the same no-hint coverage for that narrower field: the
+corresponding five-attempt blind run exhausted while the direct matcher and
+hinted run both succeeded. A 30-star-per-tile experiment made that frame pass
+but grew the index from 2.3 MB to about 20.5 MB and produced candidate/runtime
+trade-offs elsewhere. This is recorded as follow-up issue #248 rather than
+changing the production package without a broader corpus and SD-budget test.
+
 Negative contract checks on the same host build returned `search_exhausted`
 for a 150 mm focal-length error, an empty star list, and a deliberately wrong
 RA/Dec hint. Removing that wrong hint and rerunning the indexed all-sky search

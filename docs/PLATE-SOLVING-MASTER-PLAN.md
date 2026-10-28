@@ -40,6 +40,11 @@ The two solvers are deliberately side by side:
   used first, with a bounded nearest-tile/all-sky fallback when the hint is
   absent or fails. This is host-tested and ARM-built, but not yet device
   qualified.
+- The compact production index is currently strongest for the full-frame
+  corpus. The K-3 III APS-C hinted path passes, while a narrow-field blind
+  case exposed an index-coverage/runtime trade-off tracked in patcher issue
+  #248; this is not a reason to widen the index without a renewed SD/runtime
+  test.
 - The current guide loop uses relative star matching and small GOTO corrections;
   it does not yet adjust motor rates.
 - PrivateResearch Issue #3 (implementation tracked in patcher issue #240) is the intended per-axis rate-control path, but it is still a
