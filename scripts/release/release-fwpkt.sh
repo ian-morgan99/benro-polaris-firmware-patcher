@@ -34,6 +34,7 @@
 #   6. Confirm: fail-closed exact comparison of build_id, both source commits,
 #      display version and every mandatory installed file's SHA-256
 set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 BUILD_DIR=""
 HOST="192.168.0.1"
@@ -65,6 +66,7 @@ FWPKT_DIR="$BUILD_DIR/FwPkt"
 [ -d "$FWPKT_DIR" ] || { echo "ERROR: $FWPKT_DIR not found" >&2; exit 2; }
 [ -f "$FWPKT_DIR/firmwareInfo" ] || { echo "ERROR: firmwareInfo missing" >&2; exit 2; }
 [ -f "$FWPKT_DIR/FwVer" ] || { echo "ERROR: candidate FwVer missing" >&2; exit 2; }
+python3 "$ROOT/scripts/verify-candidate-identity.py" "$BUILD_DIR" --require-deployable
 
 # Read the expected build_id from provenance (if present)
 EXPECTED_BUILD_ID=""

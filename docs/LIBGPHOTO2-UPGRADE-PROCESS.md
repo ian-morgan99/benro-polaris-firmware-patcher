@@ -125,8 +125,15 @@ PrivateResearch with a provenance row prompt:
   o-vNN-description-YYYYMMDD \
   firmware/FwPkt.zip \
   /path/to/clean/libgphoto2-main \
-  6.0.0.XX-build-description
+  6.0.0.XX-build-description \
+  --change-summary docs/templates/release-change-summary.json
 ```
+
+The change summary is mandatory. It names the previous candidate's full source
+SHAs, purpose, declared fixes, issue references, validation focus, and known
+limits. The builder calculates every commit since both baselines and writes
+`release-change-manifest.json` plus `RELEASE-IDENTITY.md`; publication refuses
+to proceed if either exact identity record is missing or inconsistent.
 
 Do not build from a detached commit, side branch, dirty checkout, or an
 already-patched appfs. If a historical comparison is required, make it a

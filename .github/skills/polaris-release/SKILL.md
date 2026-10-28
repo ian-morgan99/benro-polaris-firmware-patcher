@@ -15,7 +15,8 @@ From the patcher repository root:
 
 ```sh
 ./scripts/build-release-candidate.sh \
-  <candidate-id> <stock-FwPkt.zip-or-dir> <clean-libgphoto2-main> [build-id]
+  <candidate-id> <stock-FwPkt.zip-or-dir> <clean-libgphoto2-main> [build-id] \
+  --change-summary docs/templates/release-change-summary.json
 ```
 
 The script refuses a missing/dirty/detached/non-`main` libgphoto2 checkout, and
@@ -52,6 +53,12 @@ Record and hand over all of:
 * appfs MD5;
 * PrivateResearch commit and path;
 * gate result and any skipped prerequisites.
+
+`--change-summary` is mandatory. The builder generates
+`release-change-manifest.json` and `RELEASE-IDENTITY.md` containing the exact
+source SHAs, every commit since the declared baselines, stock-package hash,
+ZIP hashes, and appfs hash. The identity verifier and private uploader refuse
+to publish a candidate without these records.
 
 The candidate is **not installed** merely because the script succeeds. Device
 installation must use `fwpkt-update-flow`, followed by runtime provenance and

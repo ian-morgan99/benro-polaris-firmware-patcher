@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "candidate_id": "<previous-published-candidate-id>",
+    "libgphoto2_commit": "<full 40-character SHA>",
+    "patcher_commit": "<full 40-character SHA>"
+  },
+  "purpose": "One sentence saying why this candidate exists",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "Plain-English description of the user-visible or integration change",
+      "issues": ["#000"]
+    }
+  ],
+  "validation_focus": [
+    "Name the regression or hardware scenarios that must be exercised"
+  ],
+  "known_limits": [
+    "Name anything this candidate does not prove"
+  ]
+}
+

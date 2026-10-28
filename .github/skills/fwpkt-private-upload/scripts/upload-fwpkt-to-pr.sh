@@ -66,6 +66,15 @@ done
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 ZIP="$BUILD/FwPkt.zip"
 [ -f "$ZIP" ] || { echo "FATAL: $ZIP not found (build dir must contain FwPkt.zip)" >&2; exit 1; }
+[ -f "$BUILD/release-change-manifest.json" ] || {
+  echo "FATAL: release-change-manifest.json missing; do not publish a candidate without the exact change/commit record." >&2
+  exit 1
+}
+[ -f "$BUILD/RELEASE-IDENTITY.md" ] || {
+  echo "FATAL: RELEASE-IDENTITY.md missing; do not publish an identity-incomplete candidate." >&2
+  exit 1
+}
+python3 "$REPO_ROOT/scripts/verify-candidate-identity.py" "$BUILD" --require-deployable
 
 echo "== 1. fingerprints (recomputed from the actual file) =="
 ZIP_MD5="$(md5sum "$ZIP" | awk '{print $1}')"
@@ -175,6 +184,12 @@ fi
 mkdir -p "$STAGE_DIR"
 cp "$ZIP" "$STAGE_DIR/FwPkt.zip"
 [ -f "$BUILD/build-source-provenance.txt" ] && cp "$BUILD/build-source-provenance.txt" "$STAGE_DIR/"
+[ -f "$BUILD/release-change-manifest.json" ] && cp "$BUILD/release-change-manifest.json" "$STAGE_DIR/"
+[ -f "$BUILD/RELEASE-IDENTITY.md" ] && cp "$BUILD/RELEASE-IDENTITY.md" "$STAGE_DIR/"
+[ -f "$BUILD/install-manifest.json" ] && cp "$BUILD/install-manifest.json" "$STAGE_DIR/"
+[ -f "$BUILD/install-receipt.txt" ] && cp "$BUILD/install-receipt.txt" "$STAGE_DIR/"
+[ -f "$BUILD/build-release-candidate.log" ] && cp "$BUILD/build-release-candidate.log" "$STAGE_DIR/"
+[ -f "$BUILD/install.log" ] && cp "$BUILD/install.log" "$STAGE_DIR/"
 
 cat > "$STAGE_DIR/README.md" <<EOF
 # FwPkt $DISPLAY_FWVER — $ID
@@ -189,6 +204,8 @@ cat > "$STAGE_DIR/README.md" <<EOF
 | appfs MD5 | \`$APPFS_MD5\` |
 | libgphoto2 commit | \`$LIBG_SHA\` |
 | patcher ref | \`$PATCHER_REF\` |
+| release change manifest | \`release-change-manifest.json\` (exact declared changes and generated commit inventories) |
+| release identity | \`RELEASE-IDENTITY.md\` |
 | status | $STATUS |
 | built | $(date -u +%Y-%m-%dT%H:%M:%SZ) from \`${BUILD#*/}\` |
 ${NOTE:+| note | $NOTE |}

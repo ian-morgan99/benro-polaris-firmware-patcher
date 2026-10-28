@@ -4,11 +4,31 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> [display-fwver|auto]" >&2
+  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> [display-fwver|auto] --change-summary FILE" >&2
+  echo "change summary is required: it records the purpose and declared fixes; the script adds exact source commits and artifact hashes" >&2
   exit 2
 }
-[ $# -ge 4 ] && [ $# -le 5 ] || usage
-ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="${5:-auto}"
+[ $# -ge 4 ] || usage
+ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="auto"
+shift 4
+if [ $# -gt 0 ] && [[ "$1" != --* ]]; then
+  DISPLAY_FWVER="$1"
+  shift
+fi
+CHANGE_SUMMARY=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --change-summary)
+      [ $# -ge 2 ] || usage
+      CHANGE_SUMMARY="$2"; shift 2;;
+    *) echo "ERROR: unknown option: $1" >&2; usage;;
+  esac
+done
+[ -n "$CHANGE_SUMMARY" ] || {
+  echo "ERROR: --change-summary FILE is required; every candidate must state exactly what changed." >&2
+  usage
+}
+[ -f "$CHANGE_SUMMARY" ] || { echo "ERROR: change summary not found: $CHANGE_SUMMARY" >&2; exit 2; }
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
 VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
@@ -197,6 +217,26 @@ DISPLAY_FWVER_TEST="$DISPLAY_FWVER" bash "$ROOT/container/test_polaris_pentax_bu
 # manifest generated before the final zip exists is stale by construction.
 echo "Generating install manifest"
 python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT"
+
+echo "Generating immutable release change manifest"
+python3 "$ROOT/scripts/create-release-change-manifest.py" \
+  --summary "$CHANGE_SUMMARY" \
+  --candidate-id "$ID" \
+  --display-fwver "$DISPLAY_FWVER" \
+  --build-id "$BUILD_ID" \
+  --libgphoto2 "$SRC" \
+  --patcher "$ROOT" \
+  --stock "$BASE" \
+  --candidate-dir "$OUT"
+CHANGE_MANIFEST_SHA256="$(sha256sum "$OUT/release-change-manifest.json" | awk '{print $1}')"
+{
+  echo "candidate_id=$ID"
+  echo "release_change_manifest=release-change-manifest.json"
+  echo "release_change_manifest_sha256=$CHANGE_MANIFEST_SHA256"
+} >> "$OUT/build-source-provenance.txt"
+
+echo "Checking candidate identity"
+python3 "$ROOT/scripts/verify-candidate-identity.py" "$OUT" --require-deployable
 
 # Capture the gate transcript into the candidate's own evidence directory. The
 # gate is the release's proof, and AGENTS.md requires its skips to be recorded
