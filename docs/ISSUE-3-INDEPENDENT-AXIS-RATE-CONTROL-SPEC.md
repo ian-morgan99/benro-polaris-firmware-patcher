@@ -54,6 +54,25 @@ Required semantics, once proven:
 - the command is mode-gated, lease-bound and unavailable to normal K-3 III
   capture operation.
 
+## Measurement envelope (not a public command limit)
+
+The physical test must characterize more than the nominal Astro range. The
+following values are acceptance-test points, not permission to expose an
+unbounded rate to the plate-solve loop:
+
+| Test | Requested rate | Required observation |
+|---|---:|---|
+| simultaneous tracking case | M1 `-0.006`, M2 `0`, M3 `+0.2081` deg/s | independent measured rates; stationary axes remain within 1 arcsec |
+| slow single-axis limit | M1 `+/-0.0001` deg/s, then lower if stable | measured rate and M2/M3 within 1 arcsec |
+| fast single-axis characterization | M1 `+/-9.0` deg/s, or the measured safe limit | no cross-axis movement beyond 10 arcsec, with an immediate tested stop |
+
+The fast point is a bench characterization gate only. It must not be used by
+the Astro controller until motor load, acceleration, end-stop and stop-time
+limits are measured. The product-facing envelope remains unset until the MCU
+units and the physical matrix are known. A result that passes position deltas
+but cannot prove acknowledgement, zero-rate hold and disconnect behaviour is
+not a pass.
+
 The current MCU research reports a historical step relationship of roughly
 `rate * 960 * 0.000277 / 1000` per tick for the `J` path. This is a reverse-
 engineered implementation lead, not a calibrated degrees/second contract;
