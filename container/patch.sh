@@ -241,7 +241,7 @@ if [ -e /libgphoto2-source-input ]; then
     LEGACY_MARKER_FILE="$W/legacy-pentax-markers.txt"
     strings "$NEW_LEGACY_PENTAX" > "$LEGACY_MARKER_FILE" || true
     for model in 'Pentax:K5II' 'Pentax:K5IIs'; do
-      grep -F "$model" "$LEGACY_MARKER_FILE" >/dev/null ||
+      grep -Fx -- "$model" "$LEGACY_MARKER_FILE" >/dev/null ||
         die "legacy Pentax camlib lacks required K-5 model: $model"
     done
     log "local-source legacy target models: K-5 II and K-5 IIs present"

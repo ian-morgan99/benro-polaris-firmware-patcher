@@ -272,9 +272,9 @@ done
 rm -f "$PTP2_MARKER_FILE"
 [ -f "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" ] || {
   echo "selected pentax camlib was built but not packaged" >&2; exit 1; }
-(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -F 'Pentax:K5II' >/dev/null) || {
+(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -Fx -- 'Pentax:K5II' >/dev/null) || {
   echo "packaged legacy Pentax camlib lacks K-5 II" >&2; exit 1; }
-(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -F 'Pentax:K5IIs' >/dev/null) || {
+(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -Fx -- 'Pentax:K5IIs' >/dev/null) || {
   echo "packaged legacy Pentax camlib lacks K-5 IIs" >&2; exit 1; }
 (cd "$T/stage2-ondisk/libgphoto2/2.5.34" && sha256sum -c camlibs.manifest) || {
   echo "packaged selected-camlib manifest failed" >&2; exit 1; }
