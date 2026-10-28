@@ -54,6 +54,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Docker bind mounts require host paths. Keep the convenient relative CLI form
+# usable while preserving absolute paths supplied by CI or another checkout.
+case "$OUT" in /*) ;; *) OUT="$HERE/$OUT";; esac
+case "$SRCCACHE_DIR" in /*) ;; *) SRCCACHE_DIR="$HERE/$SRCCACHE_DIR";; esac
 SD_ASTRO="$OUT/COPY-TO-SD-CARD-ROOT/polaris-astro"
 
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found." >&2; exit 1; }

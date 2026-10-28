@@ -83,10 +83,10 @@ distribution and real camera frames are still required.
    are still rendered frames. No ARM deployment, thermal test, hardware
    integration, or false-solve corpus has passed. The five-scene host search
    smoke used 4.8 MB peak RSS and 13.1 s for its five-attempt regional run.
-7. The standalone native C sources cross-compile, but the current host ARM
-   toolchain emits `__libc_start_main@GLIBC_2.34`; a glibc-2.24 sysroot or
-   equivalent startup/runtime solution is still required. See
-   [the ARM toolchain evidence](evidence/native-arm-toolchain-20261028/SUMMARY.md).
+7. The canonical Debian 9 ARM build now passes the ELF gates, and a staged
+   package install preserved the 648-tile data set. No SD-card installation,
+   post-boot identity check, physical camera frame, or thermal/resource run has
+   passed. See [the ARM toolchain evidence](evidence/native-arm-toolchain-20261028/SUMMARY.md).
 
 ## Usability decision
 

@@ -61,9 +61,10 @@ device-capture gates have passed.
 ## Evidence still required before calling the mission complete
 
 - Host-side Gaia package generation, tile verification, triangle-index
-  verification, and five indexed no-hint rendered solves now pass. This is not
-  yet device-package proof: the exact generated artefacts still need to be
-  placed beside a clean ARM build and checked after installation.
+  verification, five indexed no-hint rendered solves, and the canonical ARM
+  bundle/staged-install checks now pass. This is not yet device proof: the
+  package still needs sanctioned SD-card installation, post-boot identity, and
+  physical capture qualification.
 - A captured BenroConnect trace proving the exact calibration and GOTO 519
   fields on the target firmware, including ordering and duplicate behaviour.
 - Two or more physical Astro sessions with a supported Pentax body, showing

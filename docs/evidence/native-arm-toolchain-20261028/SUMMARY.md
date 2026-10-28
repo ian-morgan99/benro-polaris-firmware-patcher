@@ -6,21 +6,28 @@ or executed on Polaris.
 
 ## Result
 
-The full `bash container/astro/build_solver.sh arm ...` gate still stops at the
-existing Astrometry.net binary because the current host cross toolchain emits a
-`GLIBC_2.38` dependency while the target firmware provides glibc 2.24.
+The canonical Debian 9 build image (`polaris-patcher-pentax:latest`, GCC 6.3
+family) now passes the full `bash container/astro/build_solver.sh arm ...`
+gate. The Astrometry.net solver was linked with a reported glibc ceiling of
+2.7 and the allowed `libc.so.6`, `libm.so.6`, and `libpthread.so.0` dependencies.
+The independent matcher, native search front end, extractor, and simulator
+were included in the same ARM build. The host Ubuntu compiler remains a useful
+source check only: it emits `__libc_start_main@GLIBC_2.34` and must not be used
+for the device package.
 
-The independent C matcher and native tile-search front end were also compiled
-directly with the same ARMv7 softfp compiler. Source-level use of `fmod()` and
-`hypot()` was removed from the search front end because that toolchain emitted
-additional newer symbol versions. The latest standalone search ELF is 26,072
-bytes and the matcher is 25,216 bytes; neither requests those newer math
-symbols, but the compiler's startup object still requests
-`__libc_start_main@GLIBC_2.34`.
+Source-level use of `fmod()` and `hypot()` was removed from the search front
+end because the modern host toolchain emitted additional newer symbol
+versions. In the canonical ARM bundle, the standalone search ELF is 22,628
+bytes and the matcher is 17,596 bytes; their dynamic symbol versions are
+bounded by GLIBC 2.7 and their dependencies are only libc and libm.
 
-Therefore the native source is cross-compiler-clean but the installed runtime
-is not yet qualified. Completion requires an ARM sysroot/toolchain based on
-glibc 2.24 (or a separately verified compatible startup/runtime strategy),
-then `readelf`/DT_NEEDED checks, sanctioned package installation, post-boot
-provenance, and physical capture tests. No hardware or firmware state was
-changed during this check.
+The bundled ARM executables were also started under the image's
+`qemu-arm-static -L /usr/arm-linux-gnueabi` environment: their usage/help
+contracts returned as expected. A solve under user-mode emulation was not used
+as hardware qualification.
+
+Therefore the native ARM source and package build are now ELF-qualified and a
+staged `install_astro.sh` copy preserved all 648 tiles plus both manifests.
+The installed device runtime is not yet qualified: it still requires a
+sanctioned SD-card installation, post-boot provenance, and physical capture
+tests. No hardware or firmware state was changed during this check.
