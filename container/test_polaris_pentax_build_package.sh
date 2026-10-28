@@ -120,7 +120,7 @@ BUILDID_TEST="o-v9j-testbuild"
 # Synthetic package regression: use the next value after the committed release
 # baseline so this test exercises the five-component path without blessing a
 # stale version for a future release.
-DISPLAY_FWVER_TEST="6.0.0.54.53"
+DISPLAY_FWVER_TEST="${DISPLAY_FWVER_TEST:-6.0.0.54.53}"
 mkdir -p "$T/out-fwver"
 if docker run --rm --name polaris-pentax-fwver \
   -e MODE=full \

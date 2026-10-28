@@ -182,7 +182,7 @@ if not (target / "firmwareInfo").is_file():
 PY
 PACKAGE_IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
 echo "Running parameterised package/display-version regression"
-bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
+DISPLAY_FWVER_TEST="$DISPLAY_FWVER" bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
   "$PACKAGE_IMAGE" "$PACKAGE_INPUT" "$SRC"
 
 # The gate requires install-manifest.json and refuses the candidate without it, so

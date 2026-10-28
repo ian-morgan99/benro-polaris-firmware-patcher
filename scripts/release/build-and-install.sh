@@ -7,6 +7,8 @@
 #   ./scripts/release/build-and-install.sh --install --wait 180
 set -euo pipefail
 
+ORIGINAL_ARGS=("$@")
+
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 STOCK_FWPKT="${STOCK_FWPKT:-/home/ian/Documents/VSCodeProjects/PrivateResearch/openpolaris-research/BenroPolarisPatcher/firmware/FwPkt}"
 LIBGPHOTO_REPO="${LIBGPHOTO_REPO:-https://github.com/ian-morgan99/libgphoto2.git}"
@@ -51,7 +53,7 @@ if ! command -v docker >/dev/null 2>&1; then
     echo "ERROR: Docker is unavailable and flatpak-spawn is not present." >&2
     exit 2
   }
-  exec flatpak-spawn --host bash "$0" "$@"
+  exec flatpak-spawn --host bash "$0" "${ORIGINAL_ARGS[@]}"
 fi
 
 docker info >/dev/null 2>&1 || {
