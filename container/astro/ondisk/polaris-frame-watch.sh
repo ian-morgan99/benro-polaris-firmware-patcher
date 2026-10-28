@@ -154,6 +154,11 @@ assess_and_optionally_correct() {
     _dec=$(printf '%s' "$_j" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
     _rot=$(printf '%s' "$_j" | sed -n 's/.*"rotation_deg":\([-0-9.]*\).*/\1/p')
     [ -n "$_ra" ] && [ -n "$_dec" ] || return 0
+    _rotation_bad=0
+    if [ -n "$_rot" ] && awk -v r="$_rot" -v t="$ROTATION_THRESH_DEG" 'BEGIN { exit !(sqrt(r*r) > t) }'; then
+        _rotation_bad=1
+        log "field rotation exceeds ${ROTATION_THRESH_DEG}deg; no axis-rate command is sent"
+    fi
 
     _target=$(target_from_file "$TARGET_FILE" 2>/dev/null || \
               target_from_file /tmp/polaris-last-solution.json 2>/dev/null || true)
@@ -166,6 +171,8 @@ assess_and_optionally_correct() {
             _too_big=$(awk -v d="$_drift" -v m="$MAX_CORRECTION_DEG" 'BEGIN { print (d > m) ? 1 : 0 }')
             if [ "$_too_big" = "1" ]; then
                 log "refusing frame correction: drift ${_drift}deg exceeds ${MAX_CORRECTION_DEG}deg"
+            elif [ "$_rotation_bad" = "1" ]; then
+                log "withholding frame correction while field rotation is above threshold"
             elif [ "$FRAME_CORRECT" = "1" ] && [ -n "$LAT" ] && [ -n "$LON" ]; then
                 log "correcting frame drift with bounded goto-radec to target"
                 "$ASTRO/polaris-mount" --host "$MOUNT_HOST" --port "$MOUNT_PORT" \
@@ -178,8 +185,6 @@ assess_and_optionally_correct() {
     else
         log "frame=$(basename "$_f") solved_ra=$_ra solved_dec=$_dec (no target anchor)"
     fi
-    [ -n "$_rot" ] && awk -v r="$_rot" -v t="$ROTATION_THRESH_DEG" 'BEGIN { exit !(sqrt(r*r) > t) }' && \
-        log "field rotation exceeds ${ROTATION_THRESH_DEG}deg; no axis-rate command is sent"
 }
 
 process() {
