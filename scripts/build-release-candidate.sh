@@ -74,7 +74,7 @@ fi
 
 case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2;; esac
 [ -e "$BASE" ] || { echo "ERROR: stock FwPkt not found: $BASE" >&2; exit 2; }
-[ -d "$SRC/.git" ] || { echo "ERROR: libgphoto2 input must have a real .git directory" >&2; exit 2; }
+[ -e "$SRC/.git" ] || { echo "ERROR: libgphoto2 input must have a real git worktree" >&2; exit 2; }
 [ -f "$BASE/firmwareInfo" ] || [ -f "$BASE/FwPkt/firmwareInfo" ] || {
   if [ "${BASE##*.}" = zip ] && unzip -l "$BASE" 2>/dev/null | grep -qE '(^|/)FwPkt/firmwareInfo$'; then :; else
     echo "ERROR: stock input must contain FwPkt/firmwareInfo" >&2
