@@ -34,6 +34,17 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Always retain the complete terminal transcript, including early validation
+# and Docker/host-route failures. The desktop launcher otherwise leaves the
+# only useful diagnosis in a terminal that may already be closed.
+LOG_DIR="$ROOT/out/$CANDIDATE_ID"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/build-and-install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "=== build-and-install $(date -u +%FT%TZ) ==="
+echo "candidate=$CANDIDATE_ID display_fwver=$DISPLAY_FWVER install=$INSTALL"
+trap 'rc=$?; echo "=== build-and-install finished $(date -u +%FT%TZ) rc=$rc ==="; exit "$rc"' EXIT
+
 # VS Code may see the repository but not the host Docker CLI/socket.
 if ! command -v docker >/dev/null 2>&1; then
   command -v flatpak-spawn >/dev/null 2>&1 || {
@@ -62,7 +73,12 @@ docker info >/dev/null 2>&1 || {
 }
 
 TMP_SRC="$(mktemp -d /tmp/libgphoto2-release.XXXXXX)"
-cleanup() { rm -rf "$TMP_SRC"; }
+cleanup() {
+  rc=$?
+  rm -rf "$TMP_SRC"
+  echo "=== build-and-install finished $(date -u +%FT%TZ) rc=$rc ==="
+  return "$rc"
+}
 trap cleanup EXIT
 
 echo "== clean libgphoto2 source =="
