@@ -151,3 +151,20 @@ rate command in issue #240. Step 13 is a guarded repeat loop, not a complete
 tracking system. Therefore the architecture is materially closer and the host
 index is internally consistent, but the mission is not yet physically usable or
 release-qualified.
+
+## Critical review — 2026-10-28 static motor-path checkpoint
+
+The exact `.73` application was rechecked read-only. It contains a concrete
+existing fast-jog path: controls 513/514/521 become five-byte `AC 41` axis plus
+signed-int16 speed messages, and the runtime already wraps those controls in a
+server-side lease/repeat/stop implementation. The host harness now parses and
+fault-tests that shape as well as the separate, still-unrouted `AC 4A` float
+helper.
+
+This narrows issue #240, but it does not close step 12. The jog path is not a
+tracking-rate API; its physical units, axis signs, continuous-rate behaviour,
+MCU acknowledgement, and stop/disconnect semantics still need exact firmware
+and controlled hardware qualification. No new live motor command is wired to
+the plate-solve loop. Steps 6--11 remain guarded source/host capability, not a
+physical mission pass, and the compact APS-C blind-search limitation remains
+open in #248. K-3 III capture code and defaults remain unchanged.

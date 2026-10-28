@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""Host-only safety model for the unqualified Polaris axis-rate frame.
+"""Host-only safety models for unqualified Polaris motion frames.
 
 The exact `.73` app disassembly establishes only this static shape:
 ``AC 4A <axis> <little-endian IEEE-754 float>`` (7 bytes).  It does not
 establish the MCU route, units, axis map, stop/torque semantics, or watchdog.
-This module therefore never opens a socket and never sends a frame.  It is a
-fault-injection harness for the host-side envelope that must exist before any
-future firmware-backed implementation is considered.
+The `.73` app also statically emits the existing fast-jog frame
+``AC 41 <axis> <little-endian signed int16 speed>`` after it receives control
+codes 513, 514 or 521. That is a jog/deadman mechanism, not proof of an
+independent tracking-rate primitive. This module therefore never opens a
+socket and never sends a frame. It is a fault-injection harness for the
+host-side envelopes that must exist before any future firmware-backed
+implementation is considered.
 """
 
 from __future__ import annotations
@@ -21,6 +25,10 @@ from dataclasses import dataclass
 PREFIX = b"\xac\x4a"
 AXES = (1, 2, 3)
 FRAME_SIZE = 7
+JOG_PREFIX = b"\xac\x41"
+JOG_FRAME_SIZE = 5
+JOG_SPEED_MIN = 100
+JOG_SPEED_MAX = 2500
 
 
 class ProtocolError(ValueError):
@@ -47,6 +55,28 @@ def decode_frame(frame: bytes) -> tuple[int, float]:
     if not math.isfinite(rate):
         raise ProtocolError("non-finite rate")
     return axis, rate
+
+
+def encode_jog_frame(axis: int, speed: int) -> bytes:
+    """Encode the app's known fast-jog MCU frame, without sending it."""
+    if axis not in AXES:
+        raise ProtocolError("axis must be 1, 2 or 3")
+    if not isinstance(speed, int) or isinstance(speed, bool):
+        raise ProtocolError("jog speed must be an integer")
+    if not -32768 <= speed <= 32767:
+        raise ProtocolError("jog speed must fit signed int16")
+    return JOG_PREFIX + bytes((axis,)) + struct.pack("<h", speed)
+
+
+def decode_jog_frame(frame: bytes) -> tuple[int, int]:
+    if len(frame) != JOG_FRAME_SIZE:
+        raise ProtocolError(f"expected {JOG_FRAME_SIZE} bytes, got {len(frame)}")
+    if frame[:2] != JOG_PREFIX:
+        raise ProtocolError("unexpected jog command prefix")
+    axis = frame[2]
+    if axis not in AXES:
+        raise ProtocolError("unknown jog axis")
+    return axis, struct.unpack("<h", frame[3:])[0]
 
 
 @dataclass
@@ -109,6 +139,42 @@ class RateSafety:
         return self.stop(reason="link-disconnect")
 
 
+class JogSafety(RateSafety):
+    """Fail-closed model for the known fast-jog/deadman family.
+
+    The 513/514/521 app controls are converted to this five-byte MCU frame by
+    the existing Polaris application. The bounds mirror the observed app
+    contract; they are not a tracking-rate calibration or a hardware claim.
+    """
+
+    def __init__(self, *, max_speed: int = JOG_SPEED_MAX, max_accel: float = 10000.0,
+                 watchdog_s: float = 0.4):
+        if not isinstance(max_speed, int) or not JOG_SPEED_MIN <= max_speed <= JOG_SPEED_MAX:
+            raise ValueError("max_speed must be an integer between the observed jog limits")
+        super().__init__(max_rate=float(max_speed), max_accel=max_accel, watchdog_s=watchdog_s)
+        self.max_speed = max_speed
+
+    def request_jog(self, frame: bytes, *, now: float) -> SafetyState:
+        axis, speed = decode_jog_frame(frame)
+        if speed != 0 and abs(speed) < JOG_SPEED_MIN:
+            raise ProtocolError("non-zero jog speed is below the observed movement floor")
+        if abs(speed) > self.max_speed:
+            raise ProtocolError("requested jog speed exceeds host safety limit")
+        if not math.isfinite(now):
+            raise ValueError("time must be finite")
+        if self.last_update is not None:
+            dt = now - self.last_update
+            if dt < 0:
+                raise ValueError("time moved backwards")
+            if abs(speed - self.rates[axis]) > self.max_accel * dt + 1e-12:
+                raise ProtocolError("jog speed step exceeds host acceleration limit")
+        self.rates[axis] = float(speed)
+        self.last_update = now
+        self.safe_stopped = speed == 0 and all(rate == 0 for rate in self.rates.values())
+        self.reason = "stop-commanded" if speed == 0 else "jog-commanded"
+        return self.state()
+
+
 def _json_state(state: SafetyState) -> str:
     return json.dumps(
         {
@@ -126,6 +192,8 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     dec = sub.add_parser("decode")
     dec.add_argument("hex_frame")
+    jog = sub.add_parser("decode-jog")
+    jog.add_argument("hex_frame")
     sim = sub.add_parser("simulate")
     sim.add_argument("--axis", type=int, required=True)
     sim.add_argument("--rate", type=float, required=True)
@@ -138,6 +206,10 @@ def main() -> int:
     if args.command == "decode":
         axis, rate = decode_frame(bytes.fromhex(args.hex_frame))
         print(json.dumps({"axis": axis, "rate": rate}, sort_keys=True))
+        return 0
+    if args.command == "decode-jog":
+        axis, speed = decode_jog_frame(bytes.fromhex(args.hex_frame))
+        print(json.dumps({"axis": axis, "speed": speed}, sort_keys=True))
         return 0
     safety = RateSafety(max_rate=args.max_rate, max_accel=args.max_accel, watchdog_s=args.watchdog)
     state = safety.request(encode_frame(args.axis, args.rate), now=args.now)

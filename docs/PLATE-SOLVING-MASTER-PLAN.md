@@ -47,9 +47,12 @@ The two solvers are deliberately side by side:
   test.
 - The current guide loop uses relative star matching and small GOTO corrections;
   it does not yet adjust motor rates.
-- PrivateResearch Issue #3 (implementation tracked in patcher issue #240) is the intended per-axis rate-control path, but it is still a
-  firmware-specific analysis/patch/qualification task. It must not be enabled
-  from this plate-solving work until its exact-binary and hardware gates pass.
+- PrivateResearch Issue #3 (implementation tracked in patcher issue #240) is the intended per-axis rate-control path. Its reviewed contract is in
+  [`ISSUE-3-INDEPENDENT-AXIS-RATE-CONTROL-SPEC.md`](ISSUE-3-INDEPENDENT-AXIS-RATE-CONTROL-SPEC.md)
+  and the exact-binary record is in
+  [`POLESTAR-APP-BUILD-COMPATIBILITY.md`](POLESTAR-APP-BUILD-COMPATIBILITY.md).
+  It remains a firmware-specific analysis/patch/qualification task and must
+  not be enabled from this plate-solving work until those gates pass.
 
 ## Work sequence
 
