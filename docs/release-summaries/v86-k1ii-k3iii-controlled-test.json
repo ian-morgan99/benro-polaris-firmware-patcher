@@ -1,0 +1,36 @@
+{
+  "baseline": {
+    "candidate_id": "6.0.0.54.85--o-v18h-it2-image-format-20261028-r1",
+    "libgphoto2_commit": "3fe1c80e08e9ea66019700e07e1522b2ca9f7a06",
+    "patcher_commit": "a7d7b84277053d33024df13be0464ba7e95470f0"
+  },
+  "purpose": "Version 86 packages the corrected IMAGE Transmitter 2 writing-format mapping and records a controlled K-1 II and K-3 III regression campaign against one exact artifact.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "Keep IT2 ShootingFormat, WritingFormatSetting, and RawKind as separate code domains; expose JPEG, RAW, and RAW+JPEG for the K-1/K-1 II/K-3 III family, reject unsupported TIFF, and count a companion only for WritingFormatSetting RAW+JPEG.",
+      "issues": []
+    },
+    {
+      "component": "libgphoto2",
+      "summary": "Preserve model capability gates while keeping K-1 II and K-3 III controls on the source-authorized paths; Monochrome remains separately gated and is not claimed by this candidate.",
+      "issues": []
+    },
+    {
+      "component": "patcher",
+      "summary": "Require and publish the generated release change manifest so the exact source commits, declared fixes, and artifact hashes travel with version 86.",
+      "issues": []
+    }
+  ],
+  "validation_focus": [
+    "Verify post-boot FwVer, build identity, ZIP and install-manifest hashes before attaching either camera.",
+    "On K-3 III and K-1 II separately, record model identity, current image format, shutter-speed list, ISO list, AF With Live View, focus direction, preview, and one RAW capture.",
+    "Exercise RAW-only and RAW+JPEG only when each body advertises that mode; confirm no wait for a file the body did not promise.",
+    "Restore every changed camera setting and repeat a safe read-only probe after disconnect/reconnect."
+  ],
+  "known_limits": [
+    "This candidate does not claim K-3 III Monochrome qualification.",
+    "A two-body controlled test is physical evidence for the recorded scenarios only; it is not libgphoto2-wide or all-mode qualification.",
+    "No shutter or capture action is permitted until the running version and camera model are independently verified."
+  ]
+}
