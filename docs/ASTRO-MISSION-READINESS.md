@@ -17,7 +17,7 @@ turn a host build or a simulated solve into hardware qualification.
 | 5. Pentax StarAF | Existing camera/app autofocus path | This work does not replace or trigger StarAF. Camera focus remains an operator/app responsibility. |
 | 6. Calibrate | `polaris-autosolve.sh` solves a live-view snapshot from the observed calibration sequence | Existing dry-run/quality gates remain. It can apply the established 527/530 path only when explicitly armed. Native search uses the focal/RA/Dec hint first and falls back to its bounded indexed blind pass. No full-resolution shutter is fired as a side effect. |
 | 7. GOTO | `polaris-goto-solve.sh` supports direct GOTO+solve; `polaris-goto-watch.sh` can recognise Astro 519 `track:1` requests | BenroConnect watcher is opt-in and depends on the observed 519 wire fields. Calibration `track:0` is deliberately ignored. Hardware trace validation is still required. |
-| 8. Repeated GOTO refinement | Each accepted solve writes `target.json` and a history record | Sequential refinement is implemented. Heading application is separately gated by `GOTO_SOLVE_APPLY=1`; low-confidence results never move the mount. |
+| 8. Repeated GOTO refinement | Each accepted solve writes `target.json`, a history record, and a session-local tangent-plane residual model | Sequential evidence accumulation is implemented. Model application is separately gated by `GOTO_MODEL_APPLY=1`; heading application is separately gated by `GOTO_SOLVE_APPLY=1`; low-confidence results never move the mount. |
 | 9. Image 1 | Existing camera capture/transfer path publishes local JPEGs | No claim is made for a file that exists only on the camera card. |
 | 10. Solve each image | `polaris-frame-watch.sh` watches the supported Polaris-side directories, admits only new/changed JPEG keys after its session boundary, waits for stable completion, solves, and embeds local EXIF by default | Opt-in with `AUTO_SOLVE_FRAMES=1`. It never fires the shutter. Camera-card writeback is not performed. A frame that was never published locally, or completed before the watcher was active, remains outside the automatic guarantee. |
 | 11. Drift and rotation | Frame watcher compares solved RA/Dec with the current target and logs rotation | Optional bounded re-centre uses `FRAME_CORRECT=1`; it is withheld when rotation exceeds the configured threshold. Rotation is measured and reported, but no axis-rate command is sent. |
@@ -37,9 +37,12 @@ The intended rollout is deliberately staged:
    live-view solve.
 4. Enable completed-frame solving and verify duplicate suppression, stable-file
    admission, solve history, pixel preservation, and EXIF readback.
-5. Only then consider `GOTO_SOLVE_APPLY=1` or `FRAME_CORRECT=1`, with bounded
+5. Review at least three accepted GOTO residuals and the session-local model in
+   dry mode before considering `GOTO_MODEL_APPLY=1`; a model is not a physical
+   axis calibration.
+6. Only then consider `GOTO_SOLVE_APPLY=1` or `FRAME_CORRECT=1`, with bounded
    correction and a physical recovery test.
-6. Do not enable motor-rate adjustment until #240 has an exact firmware-backed
+7. Do not enable motor-rate adjustment until #240 has an exact firmware-backed
    command contract and a hardware qualification record.
 
 ## K-3 III protection

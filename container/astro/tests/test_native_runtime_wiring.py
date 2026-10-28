@@ -22,6 +22,7 @@ def test_autosolve_quality_gate_understands_native_result_shape():
     assert '"rms_px"' in text
     assert 'solve_frame "$STUB_FRAME" "$_hra" "$_hdec"' in text
     assert 'solve_frame "$_f" "$_ra" "$_dec"' in text
+    assert 'polaris-pointing-model.sh" reset' in text
 
 
 def test_boot_exports_solver_configuration_to_daemons():
@@ -66,6 +67,8 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'track:1' in goto and 'track:0' in goto
     assert '--already-there' in wrapper and 'polaris-align.sh' in wrapper
     assert 'target_ra_deg' in wrapper and 'TARGET_FILE}.tmp.$$' in wrapper
+    assert 'polaris-pointing-model.sh' in wrapper and 'GOTO_MODEL_APPLY' in wrapper
+    assert 'GOTO_MODEL_RECORD=1' in (ONDISK / "site.conf.example").read_text()
     assert 'target_ra_deg' in frame and 'TARGET_FILE' in frame
     assert 'FALLBACK_RADIUS' in frame and 'run_align' in frame
     assert 'withholding frame correction while field rotation is above threshold' in frame

@@ -13,6 +13,9 @@
 #   GOTO_SOLVE_RECENTER=1 reissue the target GOTO after that correction
 # Defaults are dry/non-mutating for the correction step. A failed solve never
 # sends a mount command.
+# Accepted residuals are also recorded in a session-local pointing model. That
+# record is observational by default; GOTO_MODEL_APPLY=1 is required before a
+# bounded first-order prediction may alter a direct GOTO command.
 # ============================================================================
 set -u
 
@@ -35,6 +38,9 @@ FALLBACK_RADIUS=${GOTO_FALLBACK_RADIUS:-60}
 SETTLE=${GOTO_SETTLE:-6}
 APPLY=${GOTO_SOLVE_APPLY:-0}
 RECENTER=${GOTO_SOLVE_RECENTER:-1}
+MODEL_RECORD=${GOTO_MODEL_RECORD:-1}
+MODEL_APPLY=${GOTO_MODEL_APPLY:-0}
+MODEL_HELPER=${POINTING_MODEL_HELPER:-$ASTRO/polaris-pointing-model.sh}
 FRAME=""
 ALREADY=0
 RA=""; DEC=""
@@ -57,10 +63,27 @@ done
 [ -n "$LAT" ] && [ -n "$LON" ] || { echo "LAT and LON are required" >&2; exit 2; }
 [ -x "$ASTRO/polaris-align.sh" ] || { echo "missing polaris-align.sh" >&2; exit 2; }
 
+COMMAND_RA=$RA
+COMMAND_DEC=$DEC
+if [ "$ALREADY" != "1" ] && [ "$MODEL_APPLY" = "1" ] && [ -x "$MODEL_HELPER" ]; then
+    _pred=$(
+        POINTING_MODEL_MIN_SAMPLES="${POINTING_MODEL_MIN_SAMPLES:-3}" \
+        POINTING_MODEL_MAX_OFFSET_DEG="${POINTING_MODEL_MAX_OFFSET_DEG:-2.0}" \
+            sh "$MODEL_HELPER" predict "$RA" "$DEC" 2>/dev/null || true
+    )
+    if [ -n "$_pred" ]; then
+        COMMAND_RA=$(echo "$_pred" | awk '{print $1}')
+        COMMAND_DEC=$(echo "$_pred" | awk '{print $2}')
+        log "applying session pointing-model prediction: requested ra=$RA dec=$DEC command ra=$COMMAND_RA dec=$COMMAND_DEC"
+    else
+        log "pointing-model prediction unavailable; using requested GOTO target"
+    fi
+fi
+
 if [ "$ALREADY" != "1" ]; then
-    log "GOTO target ra=$RA dec=$DEC"
+    log "GOTO target ra=$COMMAND_RA dec=$COMMAND_DEC (requested ra=$RA dec=$DEC)"
     "$ASTRO/polaris-mount" --host "$MOUNT_HOST" --port "$MOUNT_PORT" \
-        --lat "$LAT" --lon "$LON" goto-radec --ra "$RA" --dec "$DEC" \
+        --lat "$LAT" --lon "$LON" goto-radec --ra "$COMMAND_RA" --dec "$COMMAND_DEC" \
         --refine-arcmin 0.1 >>"$LOG" 2>&1 || { log "GOTO failed; no solve"; exit 1; }
 fi
 
@@ -123,6 +146,12 @@ SRA=$(echo "$J" | sed -n 's/.*"ra_deg":\([-0-9.]*\).*/\1/p')
 SDEC=$(echo "$J" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
 SROT=$(echo "$J" | sed -n 's/.*"rotation_deg":\([-0-9.]*\).*/\1/p')
 [ -n "$SRA" ] && [ -n "$SDEC" ] || { log "accepted solve has no usable RA/Dec"; echo "$J"; exit 1; }
+
+if [ "$MODEL_RECORD" = "1" ] && [ -x "$MODEL_HELPER" ]; then
+    sh "$MODEL_HELPER" record "$RA" "$DEC" "$SRA" "$SDEC" "${SROT:-0}" \
+        >/dev/null 2>>"$LOG" || log "pointing-model record failed; solve remains accepted"
+fi
+
 mkdir -p "$(dirname "$TARGET_FILE")" 2>/dev/null
 _target_tmp="${TARGET_FILE}.tmp.$$"
 printf '{"target_ra_deg":%s,"target_dec_deg":%s,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"updated":"%s"}\n' \

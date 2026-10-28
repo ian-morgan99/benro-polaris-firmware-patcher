@@ -148,9 +148,13 @@ copy. On any error the original local JPEG remains intact. A solve record must
 include solver name/version, catalogue identity, timestamp, RA, Dec, roll,
 scale, residual, match count, focal source, sensor source and quality verdict.
 
-Pointing and target/rotation attributes are updated transactionally from an
-accepted result. A failed or stale solve changes no motor target and does not
-start tracking.
+Each accepted GOTO solve also records a session-local first-order tangent-plane
+residual model. The model is observational by default; a bounded prediction
+may alter only a direct GOTO when `GOTO_MODEL_APPLY=1` and the
+minimum-sample/maximum-offset gates pass. A fresh calibration resets it, and
+it is not a substitute for an axis model. Pointing and target/rotation
+attributes are updated transactionally from an accepted result. A failed or
+stale solve changes no motor target and does not start tracking.
 
 ### 6. Add calibration and tracking feedback
 

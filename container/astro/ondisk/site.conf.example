@@ -60,6 +60,13 @@ GOTO_SOLVE_RECENTER=1   # re-GOTO after an applied correction
 GOTO_HINT_RADIUS=15
 GOTO_FALLBACK_RADIUS=60
 GOTO_SETTLE=6
+# Accepted GOTO residuals are kept in a session-local tangent-plane model.
+# Recording is observational. Applying the bounded prediction is a separate
+# opt-in and is not recommended until repeated-GOTO logs have been reviewed.
+GOTO_MODEL_RECORD=1
+GOTO_MODEL_APPLY=0
+POINTING_MODEL_MIN_SAMPLES=3
+POINTING_MODEL_MAX_OFFSET_DEG=2.0
 
 # Solve every completed JPEG while mode:8 is active. This never fires the
 # shutter and never touches camera storage. FRAME_CORRECT is separately gated.

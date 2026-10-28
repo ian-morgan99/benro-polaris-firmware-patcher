@@ -870,6 +870,11 @@ LAST_ARM_T=0; LAST_ARM_YAW=""; LAST_ARM_PITCH=""
             # power cycle. If nobody is calibrating, there is nothing to assist.
             log "530 step:1 seen but NO APP IS CONNECTED -- not touching the mount"
         else
+            # A fresh calibration starts a fresh session-local GOTO residual
+            # model. This only clears local state; it sends no mount command.
+            if [ -x "$ASTRO/polaris-pointing-model.sh" ]; then
+                sh "$ASTRO/polaris-pointing-model.sh" reset >/dev/null 2>&1 || true
+            fi
             LAST_ARM_T=$_now
             LAST_ARM_YAW=$LAST_YAW
             LAST_ARM_PITCH=$LAST_PITCH
