@@ -24,6 +24,17 @@ Result on a real R5 Mark II (flash-verified end-to-end): **immediate detection,
 settings that stick, live view, no "no card" warning, and capture that downloads
 both JPEG and RAW.** See [docs/TESTED.md](docs/TESTED.md).
 
+## Polaris Astro plate-solving
+
+The Astro work is a separate, additive feature branch. Its current architecture,
+what is actually wired, evidence, safety boundaries and remaining qualification
+work are documented in the [Astro plate-solving README](docs/ASTRO-README.md).
+
+Short version: the native ARM bundle and guarded host pipeline build
+successfully, but the complete physical capture-to-tracking journey is not yet
+qualified. Astrometry.net remains the default solver; the native-C solver is a
+research alternative. The Astro branch defaults to **build and do not deploy**.
+
 ## Architecture map — agent onboarding (October 2026)
 
 > **Scope and confidence.** This is the documented architecture of the camera-control path and firmware packaging, not a claim that every runtime edge has been independently traced on the device. The active installed/qualified build and its exceptions are recorded in [CURRENT-STATE](docs/CURRENT-STATE.md) and [RELEASE-VERSION-STATE](docs/RELEASE-VERSION-STATE.md). **Never substitute GitHub HEAD for the installed libgphoto2 commit.** For detailed binary/ABI evidence see [HOW-IT-WORKS](docs/HOW-IT-WORKS.md); for source selection and upgrade gates see [canonical-pentax-source](docs/canonical-pentax-source.md).
