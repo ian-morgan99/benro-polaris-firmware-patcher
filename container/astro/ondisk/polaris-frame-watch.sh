@@ -20,6 +20,7 @@ LOG=${LOG:-/app/sd/polaris-astro/frame-watch.log}
 HISTORY=${HISTORY:-/app/sd/polaris-astro/solve-history.jsonl}
 STATE=${STATE:-/app/sd/polaris-astro/solved-jpegs.tsv}
 TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
+FRAME_STATE=${FRAME_STATE:-/app/sd/polaris-astro/last-frame-solution.json}
 MODE_FILE=${MODE_FILE:-/tmp/polaris-mode}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
@@ -30,6 +31,8 @@ STABLE_WAIT=${FRAME_STABLE_WAIT:-2}
 MIN_BYTES=${FRAME_MIN_BYTES:-10000}
 DRIFT_THRESH_DEG=${FRAME_DRIFT_THRESH_DEG:-0.02}
 ROTATION_THRESH_DEG=${FRAME_ROTATION_THRESH_DEG:-1.0}
+HINT_RADIUS=${FRAME_HINT_RADIUS:-15}
+FALLBACK_RADIUS=${FRAME_FALLBACK_RADIUS:-60}
 FRAME_CORRECT=${FRAME_CORRECT:-0}
 MAX_CORRECTION_DEG=${FRAME_MAX_CORRECTION_DEG:-2.0}
 MOUNT_HOST=${MOUNT_HOST:-127.0.0.1}
@@ -40,7 +43,7 @@ LON=${LON:-}
 DIRS=${CAPTURE_DIR:-"/app/sd/normal /app/sd/starskyStack /app/sd/HDR /app/sd/panorama /app/sd/focusStack /app/sd/sun"}
 EXTRA=${CAPTURE_GLOB_EXTRA:-"/app/sd/Lapse/class_*"}
 
-mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" 2>/dev/null
+mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" "$(dirname "$FRAME_STATE")" 2>/dev/null
 
 log() {
     _m="$(date '+%Y-%m-%d %H:%M:%S') $*"
@@ -86,8 +89,7 @@ target_from_file() {
 
 angular_sep_deg() {
     awk -v r1="$1" -v d1="$2" -v r2="$3" -v d2="$4" 'BEGIN {
-        p=3.141592653589793/180; x=sin(d1*p)*sin(d2*p)+
-          cos(d1*p)*cos(d2*p)*cos((r1-r2)*p);
+        p=3.141592653589793/180; x=sin(d1*p)*sin(d2*p)+cos(d1*p)*cos(d2*p)*cos((r1-r2)*p);
         if (x>1) x=1; if (x<-1) x=-1;
         printf "%.6f", atan2(sqrt(1-x*x),x)/p
     }'
@@ -95,16 +97,37 @@ angular_sep_deg() {
 
 record_solution() {
     _json=$1
+    _tmp="${FRAME_STATE}.tmp.$$"
+    printf '%s\n' "$_json" > "$_tmp" 2>/dev/null && \
+        mv "$_tmp" "$FRAME_STATE" 2>/dev/null || rm -f "$_tmp" 2>/dev/null
     printf '%s\n' "$_json" > /tmp/polaris-last-frame-solution.json
 }
 
 solve_one() {
     _f=$1
     [ -x "$ASTRO/polaris-align.sh" ] || { log "missing polaris-align.sh"; return 1; }
-    _out=$(EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-1} \
-           SOLVER_BIN="$SOLVER_BIN" INDEPENDENT_CATALOG="$INDEPENDENT_CATALOG" \
-           SENSOR_MM="$SENSOR_MM" MOUNT_HINT=1 FOCAL_MM="$FOCAL" \
-           sh "$ASTRO/polaris-align.sh" "$_f" "$FOCAL" 2>>"$LOG")
+    run_align() {
+        _mount_hint=$1
+        shift
+        EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-1} \
+        SOLVER_BIN="$SOLVER_BIN" INDEPENDENT_CATALOG="$INDEPENDENT_CATALOG" \
+        SENSOR_MM="$SENSOR_MM" MOUNT_HINT="$_mount_hint" FOCAL_MM="$FOCAL" \
+        HINT_RADIUS="$HINT_RADIUS" \
+            sh "$ASTRO/polaris-align.sh" "$_f" "$FOCAL" "$@" 2>>"$LOG"
+    }
+    _target=$(target_from_file "$TARGET_FILE" 2>/dev/null || \
+              target_from_file /tmp/polaris-last-solution.json 2>/dev/null || true)
+    if [ -n "$_target" ]; then
+        _tra=$(echo "$_target" | awk '{print $1}'); _tdec=$(echo "$_target" | awk '{print $2}')
+        log "solving $(basename "$_f") with target hint ra=$_tra dec=$_tdec radius=${HINT_RADIUS}deg"
+        _out=$(run_align 1 "$_tra" "$_tdec" "$HINT_RADIUS")
+    else
+        _out=$(run_align 1)
+    fi
+    if ! printf '%s' "$_out" | grep -q '"solved":true' && [ -n "$_target" ] && [ "$FALLBACK_RADIUS" != "$HINT_RADIUS" ]; then
+        log "hinted frame solve failed; retrying target radius=${FALLBACK_RADIUS}deg"
+        _out=$(run_align 0 "$_tra" "$_tdec" "$FALLBACK_RADIUS")
+    fi
     printf '%s\n' "$_out" | tail -1
 }
 

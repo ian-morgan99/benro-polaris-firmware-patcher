@@ -49,4 +49,5 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert '--already-there' in wrapper and 'polaris-align.sh' in wrapper
     assert 'target_ra_deg' in wrapper and 'TARGET_FILE}.tmp.$$' in wrapper
     assert 'target_ra_deg' in frame and 'TARGET_FILE' in frame
+    assert 'FALLBACK_RADIUS' in frame and 'run_align' in frame
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd

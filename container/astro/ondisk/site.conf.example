@@ -50,12 +50,21 @@ GOTO_SOLVE_WATCH=0
 GOTO_PLATESOLVE=0       # the Polaris web UI's own GOTO+solve wrapper
 GOTO_SOLVE_APPLY=0      # permit high-confidence 527 heading correction
 GOTO_SOLVE_RECENTER=1   # re-GOTO after an applied correction
+GOTO_HINT_RADIUS=15
+GOTO_FALLBACK_RADIUS=60
+GOTO_SETTLE=6
 
 # Solve every completed JPEG while mode:8 is active. This never fires the
 # shutter and never touches camera storage. FRAME_CORRECT is separately gated.
 AUTO_SOLVE_FRAMES=0
 FRAME_CORRECT=0
 FRAME_DRIFT_THRESH_DEG=0.02
+FRAME_ROTATION_THRESH_DEG=1.0
+FRAME_MAX_CORRECTION_DEG=2.0
+FRAME_HINT_RADIUS=15
+FRAME_FALLBACK_RADIUS=60
+FRAME_STABLE_WAIT=2
+FRAME_MIN_BYTES=10000
 
 # ---- web UI + Alpaca ------------------------------------------------------
 # 8080 is pgphoto's own MJPG stream; 80, 8081, 9090 and 22 are also taken.

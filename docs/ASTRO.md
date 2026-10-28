@@ -11,8 +11,10 @@ laptop in the field.
 
 The authoritative capture/storage/solve safety contract is
 [Plate-solving capture flow and safety contract](PLATE-SOLVE-CAPTURE-FLOW.md).
-In particular, not every JPEG captured by an Astro programme currently enters
-the solver automatically, and EXIF updates affect only the Polaris-side copy.
+The current end-to-end readiness map is
+[ASTRO-MISSION-READINESS.md](ASTRO-MISSION-READINESS.md). In particular, the
+completed-frame watcher is opt-in, and EXIF updates affect only the
+Polaris-side copy.
 
 ---
 
@@ -146,6 +148,36 @@ CAPTURE_ALIGN_FLOW=0
 **Both dry-run flags default to 1 on purpose.** Armed, this writes a heading
 correction and an alignment confirm to a live mount. Run it dry once, read
 `/app/sd/polaris-autosolve.log`, and only then set them to 0.
+
+### Optional GOTO and completed-frame hooks
+
+The bundle also contains two deliberately separate, opt-in hooks for the
+Polaris Astro journey:
+
+```sh
+# Recognise BenroConnect Astro 519 track:1 GOTOs and solve live view after the
+# app's slew. Calibration track:0 is ignored.
+GOTO_SOLVE_WATCH=0
+
+# Make the Polaris web UI use the same GOTO+solve wrapper.
+GOTO_PLATESOLVE=0
+GOTO_SOLVE_APPLY=0      # keep heading correction disabled initially
+GOTO_SOLVE_RECENTER=1
+
+# Solve stable JPEGs already published under the Polaris media directories.
+# This never fires the shutter and never writes the camera card.
+AUTO_SOLVE_FRAMES=0
+FRAME_CORRECT=0
+FRAME_DRIFT_THRESH_DEG=0.02
+FRAME_ROTATION_THRESH_DEG=1.0
+FRAME_MAX_CORRECTION_DEG=2.0
+```
+
+Enable these only after confirming the target firmware's `mode:8` and 519
+records in `/app/sd/polaris-astro/goto-watch.log`. The native solver and the
+Astrometry.net reference solver remain selectable with `SOLVER_BIN`. Motor
+speed changes are not made by these hooks; the firmware-backed per-axis rate
+work remains separately blocked on patcher issue #240.
 
 ---
 

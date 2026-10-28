@@ -306,6 +306,9 @@ SITE=/app/sd/polaris-astro/site.conf
             INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
             FOCAL_MM="$FOCAL" SENSOR_MM="${SENSOR_MM:-}" \
             GOTO_SOLVE_APPLY="${GOTO_SOLVE_APPLY:-0}" GOTO_SOLVE_RECENTER="${GOTO_SOLVE_RECENTER:-1}" \
+            GOTO_HINT_RADIUS="${GOTO_HINT_RADIUS:-15}" GOTO_FALLBACK_RADIUS="${GOTO_FALLBACK_RADIUS:-60}" \
+            GOTO_SETTLE="${GOTO_SETTLE:-6}" MIN_MATCHES="${MIN_MATCHES:-12}" \
+            MAX_SOLVE_RMS_PX="${MAX_SOLVE_RMS_PX:-3.0}" \
                 setsid sh "$ASTRO/polaris-goto-watch.sh" </dev/null >/tmp/goto-watch.out 2>&1 &
         fi
     fi
@@ -321,6 +324,12 @@ SITE=/app/sd/polaris-astro/site.conf
             INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
             FRAME_CORRECT="${FRAME_CORRECT:-0}" MIN_MATCHES="${MIN_MATCHES:-12}" \
             MAX_SOLVE_RMS_PX="${MAX_SOLVE_RMS_PX:-3.0}" \
+            DRIFT_THRESH_DEG="${FRAME_DRIFT_THRESH_DEG:-0.02}" \
+            ROTATION_THRESH_DEG="${FRAME_ROTATION_THRESH_DEG:-1.0}" \
+            MAX_CORRECTION_DEG="${FRAME_MAX_CORRECTION_DEG:-2.0}" \
+            HINT_RADIUS="${FRAME_HINT_RADIUS:-15}" FALLBACK_RADIUS="${FRAME_FALLBACK_RADIUS:-60}" \
+            FRAME_WATCH_POLL="${FRAME_WATCH_POLL:-2}" FRAME_STABLE_WAIT="${FRAME_STABLE_WAIT:-2}" \
+            FRAME_MIN_BYTES="${FRAME_MIN_BYTES:-10000}" \
                 setsid sh "$ASTRO/polaris-frame-watch.sh" </dev/null >/tmp/frame-watch.out 2>&1 &
         fi
     fi
