@@ -7,3 +7,6 @@ def test_k3_profile_is_apsc():
 def test_override_wins():
     p=subprocess.run([sys.executable,str(ROOT/'resolve_camera_geometry.py'),'--model','Pentax K-3 III','--sensor-mm','36'],capture_output=True,text=True,check=True)
     o=json.loads(p.stdout); assert o['sensor_width_mm']==36; assert o['sensor_source']=='override'
+def test_unknown_camera_uses_generic_fallback():
+    p=subprocess.run([sys.executable,str(ROOT/'resolve_camera_geometry.py'),'--model','Some Other Camera'],capture_output=True,text=True,check=True)
+    o=json.loads(p.stdout); assert o['sensor_width_mm']==36.0; assert o['sensor_source']=='generic-default'

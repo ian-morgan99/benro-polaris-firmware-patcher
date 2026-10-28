@@ -1,0 +1,6 @@
+# Built-in compatibility profiles. These are data rows, not solver gates.
+# Add any other camera or instrument as: exact EXIF Model<TAB>sensor width mm
+K-3-III	23.3
+Pentax K-3 III	23.3
+K-1-II	35.9
+Pentax K-1 II	35.9

@@ -12,8 +12,12 @@
 #     LAT / LON                 observer position; REQUIRED for the mount hint
 #     ASTRO=/app/astro          binaries
 #     INDEXES=/app/sd/astrometry   index files (on the microSD)
-#     SENSOR_MM                 explicit sensor width in mm, or a known
-#                               CAMERA_MODEL profile (unknown geometry fails)
+#     SENSOR_MM                 explicit sensor width in mm. If omitted, the
+#                               JPEG's generic EXIF metadata and the optional
+#                               SENSOR_PROFILE_FILE are consulted. An unknown
+#                               camera uses a bounded generic fallback and is
+#                               marked as assumed; set ALLOW_DEFAULT_SENSOR=0
+#                               to fail closed instead.
 #  Override any of them with environment variables.
 #  SOLVER_BIN=polaris-solve-independent selects the alternate solver when it is
 #  installed; the Astrometry.net solver remains the default.
@@ -29,6 +33,12 @@ INDEXES=${INDEXES:-/app/sd/astrometry}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 CAMERA_MODEL=${CAMERA_MODEL:-}
 SENSOR_MM=${SENSOR_MM:-}
+SENSOR_PROFILE_FILE=${SENSOR_PROFILE_FILE:-/app/sd/polaris-astro/camera-sensors.tsv}
+SENSOR_DEFAULT_MM=${SENSOR_DEFAULT_MM:-36}
+SENSOR_MIN_MM=${SENSOR_MIN_MM:-10}
+SENSOR_MAX_MM=${SENSOR_MAX_MM:-54}
+ALLOW_DEFAULT_SENSOR=${ALLOW_DEFAULT_SENSOR:-1}
+INDEPENDENT_SCALE_TOL_ASSUMED=${INDEPENDENT_SCALE_TOL_ASSUMED:-0.60}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
 INDEPENDENT_CATALOG_DIR=${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}
 INDEPENDENT_CATALOG_MANIFEST=${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}
@@ -41,26 +51,6 @@ DOWNSAMPLE=${DOWNSAMPLE:-4}
 MAXSTARS=${MAXSTARS:-200}
 # never let one frame block the loop; a mismatched hint can grind for minutes
 SOLVE_TIMEOUT=${SOLVE_TIMEOUT:-45}
-
-# EXIF currently supplies focal length. Sensor width is normally a camera-model
-# property rather than an EXIF field. Never silently assume full-frame geometry:
-# a wrong sensor width can produce a plausible but incorrect scale and solve.
-if [ -z "$SENSOR_MM" ]; then
-    case "$CAMERA_MODEL" in
-        *K-3*|*K3*) SENSOR_MM=23.3; SENSOR_SOURCE=camera-model-profile ;;
-        *K-1*|*K1*) SENSOR_MM=35.9; SENSOR_SOURCE=camera-model-profile ;;
-        *)
-            if [ "${ALLOW_DEFAULT_SENSOR:-0}" != "1" ]; then
-                echo '{"solved":false,"failure_reason":"sensor_geometry_required"}'
-                exit 6
-            fi
-            SENSOR_MM=36; SENSOR_SOURCE=explicit-default-unknown
-            ;;
-    esac
-else
-    SENSOR_SOURCE=override
-fi
-echo "[polaris-align] sensor width: ${SENSOR_MM}mm (${SENSOR_SOURCE})${CAMERA_MODEL:+ model=$CAMERA_MODEL}" >&2
 
 IMG="$1"
 FOCAL="${2:-}"
@@ -162,6 +152,56 @@ W=$(sed -n 's/^# full resolution \([0-9]*\) x .*/\1/p' "$STARS")
 H=$(sed -n 's/^# full resolution [0-9]* x \([0-9]*\)/\1/p' "$STARS")
 [ -n "$W" ] && [ -n "$H" ] || { echo '{"solved":false,"error":"no image size"}'; exit 3; }
 
+# Physical sensor width is not a required standard EXIF field. Resolve it in
+# an order that is useful for every camera type:
+#   explicit SENSOR_MM -> exact configured model profile -> EXIF 35 mm eq ->
+#   bounded generic default. The model is metadata, never a camera allow-list.
+EXIF_FOCAL=$(sed -n 's/^# exif focal-mm \([0-9][0-9.]*\).*/\1/p' "$STARS" | head -1)
+EXIF_CAMERA_MODEL=$(sed -n 's/^# exif camera-model //p' "$STARS" | head -1)
+EXIF_FOCAL35=$(sed -n 's/^# exif focal35-mm \([0-9][0-9.]*\).*/\1/p' "$STARS" | head -1)
+PROFILE_MODEL=${CAMERA_MODEL:-$EXIF_CAMERA_MODEL}
+SENSOR_SOURCE=${SENSOR_SOURCE:-}
+SENSOR_ASSUMED=0
+
+sensor_profile_value() {
+    _model=$1
+    [ -n "$_model" ] && [ -r "$SENSOR_PROFILE_FILE" ] || return 0
+    awk -F '\t' -v model="$_model" '
+        $0 !~ /^[[:space:]]*#/ && NF >= 2 && $1 == model { print $2; exit }
+    ' "$SENSOR_PROFILE_FILE" 2>/dev/null | sed -n 's/^\([0-9][0-9.]*\)$/\1/p' | head -1
+}
+
+_profile_sensor=$(sensor_profile_value "$PROFILE_MODEL")
+if [ -n "$SENSOR_MM" ]; then
+    SENSOR_SOURCE=override
+elif [ -n "$_profile_sensor" ]; then
+    SENSOR_MM=$_profile_sensor
+    SENSOR_SOURCE=model-profile
+elif [ -n "$EXIF_FOCAL" ] && [ -n "$EXIF_FOCAL35" ]; then
+    SENSOR_MM=$(awk -v f="$EXIF_FOCAL" -v e="$EXIF_FOCAL35" \
+        'BEGIN { if (f > 0 && e > 0) printf "%.6f", 36 * f / e }')
+    SENSOR_SOURCE=exif-35mm-equivalent
+else
+    if [ "$ALLOW_DEFAULT_SENSOR" != "1" ]; then
+        echo '{"solved":false,"failure_reason":"sensor_geometry_required"}'
+        exit 6
+    fi
+    SENSOR_MM=$SENSOR_DEFAULT_MM
+    SENSOR_SOURCE=generic-default
+    SENSOR_ASSUMED=1
+fi
+
+if ! awk -v s="$SENSOR_MM" -v lo="$SENSOR_MIN_MM" -v hi="$SENSOR_MAX_MM" \
+    'BEGIN { exit !(s >= 1 && s <= 100 && lo >= 1 && hi >= lo) }'; then
+    echo '{"solved":false,"failure_reason":"invalid_sensor_geometry"}'
+    exit 6
+fi
+SOLVE_SCALE_TOL=$INDEPENDENT_SCALE_TOL
+if [ "$SENSOR_ASSUMED" = "1" ]; then
+    SOLVE_SCALE_TOL=$INDEPENDENT_SCALE_TOL_ASSUMED
+fi
+echo "[polaris-align] sensor width: ${SENSOR_MM}mm (${SENSOR_SOURCE})${PROFILE_MODEL:+ model=$PROFILE_MODEL} assumed=$SENSOR_ASSUMED" >&2
+
 # ---- pixel scale: EXIF first, then config, then a realistic lens range -----
 #
 # A WRONG FOCAL MAKES THE SOLVE IMPOSSIBLE, NOT SLOW. The scale search is
@@ -175,7 +215,6 @@ H=$(sed -n 's/^# full resolution [0-9]* x \([0-9]*\)/\1/p' "$STARS")
 # we use the configured focal, and if there is neither -- or the focal we tried
 # does not solve -- we search the whole range of focal lengths that could
 # plausibly be on this mount rather than guessing a single wrong one.
-EXIF_FOCAL=$(sed -n 's/^# exif focal-mm \([0-9][0-9.]*\).*/\1/p' "$STARS" | head -1)
 FOCAL_MIN=${FOCAL_MIN:-8}          # ultra-wide
 FOCAL_MAX=${FOCAL_MAX:-3000}       # long telephoto; nothing realistic exceeds this
 
@@ -210,6 +249,27 @@ FOCAL_OVERRIDE_FILE=${FOCAL_OVERRIDE_FILE:-/app/sd/polaris-astro/focal-override}
     FOCAL_OVERRIDE=$(sed -n 's/^\([0-9][0-9.]*\)$/\1/p' "$FOCAL_OVERRIDE_FILE" | head -1)
 FOCAL_OVERRIDE=${FOCAL_OVERRIDE:-}
 
+# Return the scale constraint for one focal estimate. With an assumed sensor
+# we give Astrometry.net the full bounded sensor range, and give the independent
+# solver a deliberately wider acceptance band. A verified transform still
+# reports the measured scale, so this broadens admission without changing the
+# final pointing geometry.
+solver_scale_args() {
+    _f=$1
+    if [ "$SENSOR_ASSUMED" = "1" ] && [ "$SOLVER_BIN" = "polaris-solve" ]; then
+        awk -v lo="$SENSOR_MIN_MM" -v hi="$SENSOR_MAX_MM" -v w="$W" -v f="$_f" \
+            'BEGIN {
+                if (f > 0 && w > 0) {
+                    a = 206264.806 * atan2((lo / w) / f, 1) * 0.85;
+                    b = 206264.806 * atan2((hi / w) / f, 1) * 1.15;
+                    printf "--scale-low %.6f --scale-high %.6f", a, b;
+                }
+            }'
+    else
+        printf '%s\n' "--focal-mm $_f --sensor-mm $SENSOR_MM"
+    fi
+}
+
 solve_with() {
     _scale=$1
     if [ "$SOLVER_BIN" != "polaris-solve" ]; then
@@ -220,12 +280,12 @@ solve_with() {
                 --solver "$ASTRO/polaris-solve-independent" --stars "$STARS" --width "$W" --height "$H" \
                 --max-catalog "$INDEPENDENT_MAX_CATALOG" --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
                 --attempts "$INDEPENDENT_ATTEMPTS" --min-matches "${MIN_MATCHES:-12}" \
-                --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
+                --scale-tol "$SOLVE_SCALE_TOL" $_scale
         else
             set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" \
                 --cpulimit "$SOLVE_TIMEOUT" --max-catalog "$INDEPENDENT_MAX_CATALOG" \
                 --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
-                --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale
+                --scale-tol "$SOLVE_SCALE_TOL" $_scale
         fi
         [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
             set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
@@ -241,10 +301,11 @@ solve_with() {
 
 # arcsec/pixel bounds implied by the focal range. Long lens -> small scale.
 range_args() {
-    awk -v s="$SENSOR_MM" -v w="$W" -v fmin="$FOCAL_MIN" -v fmax="$FOCAL_MAX" 'BEGIN{
-        pix = s / w;
-        lo  = 206264.806 * atan2(pix / fmax, 1) * 0.9;
-        hi  = 206264.806 * atan2(pix / fmin, 1) * 1.1;
+    _smin=$SENSOR_MM; _smax=$SENSOR_MM
+    [ "$SENSOR_ASSUMED" = "1" ] && { _smin=$SENSOR_MIN_MM; _smax=$SENSOR_MAX_MM; }
+    awk -v smin="$_smin" -v smax="$_smax" -v w="$W" -v fmin="$FOCAL_MIN" -v fmax="$FOCAL_MAX" 'BEGIN{
+        lo  = 206264.806 * atan2((smin / w) / fmax, 1) * 0.9;
+        hi  = 206264.806 * atan2((smax / w) / fmin, 1) * 1.1;
         printf "--scale-low %.6f --scale-high %.6f", lo, hi }'
 }
 
@@ -256,7 +317,7 @@ if [ -n "$FOCAL_OVERRIDE" ]; then
         echo "[polaris-align] focal: MANUAL OVERRIDE ${FOCAL_OVERRIDE}mm" >&2
     fi
     TRIED="${FOCAL_OVERRIDE}mm (manual)"
-    OUT=$(solve_with "--focal-mm $FOCAL_OVERRIDE --sensor-mm $SENSOR_MM")
+    OUT=$(solve_with "$(solver_scale_args "$FOCAL_OVERRIDE")")
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
 elif [ -n "$EXIF_FOCAL" ]; then
     if [ -n "$FOCAL" ] && [ "$FOCAL" != "$EXIF_FOCAL" ]; then
@@ -265,12 +326,12 @@ elif [ -n "$EXIF_FOCAL" ]; then
         echo "[polaris-align] focal from EXIF: ${EXIF_FOCAL}mm" >&2
     fi
     TRIED="${EXIF_FOCAL}mm (exif)"
-    OUT=$(solve_with "--focal-mm $EXIF_FOCAL --sensor-mm $SENSOR_MM")
+    OUT=$(solve_with "$(solver_scale_args "$EXIF_FOCAL")")
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
 elif [ -n "$CACHED_FOCAL" ]; then
     echo "[polaris-align] no EXIF (live view?) -- using ${CACHED_FOCAL}mm from the last frame that had it" >&2
     TRIED="${CACHED_FOCAL}mm (cached)"
-    OUT=$(solve_with "--focal-mm $CACHED_FOCAL --sensor-mm $SENSOR_MM")
+    OUT=$(solve_with "$(solver_scale_args "$CACHED_FOCAL")")
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
     # a cached focal that no longer solves is worse than none -- drop it so we
     # do not pay for it on every subsequent frame
@@ -278,7 +339,7 @@ elif [ -n "$CACHED_FOCAL" ]; then
 elif [ -n "$FOCAL" ]; then
     echo "[polaris-align] focal from config: ${FOCAL}mm (frame has no EXIF)" >&2
     TRIED="${FOCAL}mm (config)"
-    OUT=$(solve_with "--focal-mm $FOCAL --sensor-mm $SENSOR_MM")
+    OUT=$(solve_with "$(solver_scale_args "$FOCAL")")
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
 fi
 
@@ -286,14 +347,14 @@ fi
 [ "$SOLVER_BIN" = "polaris-solve-independent-search" ] && {
     SEARCH_FOCAL=${FOCAL:-${EXIF_FOCAL:-}}
     [ -n "$SEARCH_FOCAL" ] || { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
-    [ -n "${OUT:-}" ] || OUT=$(solve_with "--focal-mm $SEARCH_FOCAL --sensor-mm $SENSOR_MM")
+    [ -n "${OUT:-}" ] || OUT=$(solve_with "$(solver_scale_args "$SEARCH_FOCAL")")
     case "$OUT" in
         *'"solved":true'*) emit_solution "$OUT"; exit 0;;
     esac
     if [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ]; then
         echo "[polaris-align] indexed hint search failed -- retrying bounded blind search" >&2
         USE_HINT=0
-        OUT=$(solve_with "--focal-mm $SEARCH_FOCAL --sensor-mm $SENSOR_MM")
+        OUT=$(solve_with "$(solver_scale_args "$SEARCH_FOCAL")")
     fi
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT";; *) echo "$OUT";; esac
     exit 0

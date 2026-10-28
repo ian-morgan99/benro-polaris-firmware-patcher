@@ -1,5 +1,14 @@
 {
-  "Pentax K-3 III": {"sensor_width_mm": 23.3, "sensor_class": "APS-C"},
-  "Pentax K-1 II": {"sensor_width_mm": 35.9, "sensor_class": "full-frame"},
-  "default": {"sensor_width_mm": 36.0, "sensor_class": "unknown-full-frame-assumption"}
+  "schema": "polaris-camera-geometry-v1",
+  "profiles": {
+    "Pentax K-3 III": {"sensor_width_mm": 23.3, "sensor_class": "APS-C"},
+    "Pentax K-1 II": {"sensor_width_mm": 35.9, "sensor_class": "full-frame"}
+  },
+  "default": {
+    "sensor_width_mm": 36.0,
+    "sensor_class": "generic-assumption",
+    "min_sensor_width_mm": 10.0,
+    "max_sensor_width_mm": 54.0
+  },
+  "note": "Runtime model profiles are supplied as exact-model TSV rows in SENSOR_PROFILE_FILE; no camera model is allow-listed by the solver."
 }

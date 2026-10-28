@@ -22,6 +22,17 @@ CONF=/app/sd/polaris-astro/site.conf
 
 mkdir -p "$DEST" "$INDEXES"
 
+# Camera geometry is an extensible data file, not a camera allow-list. Preserve
+# a user's edited profile and seed the bundled compatibility rows only once.
+PROFILE_DIR=/app/sd/polaris-astro
+mkdir -p "$PROFILE_DIR"
+if [ ! -f "$PROFILE_DIR/camera-sensors.tsv" ] && [ -f "$SRC/camera-sensors.tsv" ]; then
+    cp "$SRC/camera-sensors.tsv" "$PROFILE_DIR/camera-sensors.tsv"
+fi
+if [ -f "$SRC/camera-sensors.tsv.example" ] && [ ! -f "$PROFILE_DIR/camera-sensors.tsv.example" ]; then
+    cp "$SRC/camera-sensors.tsv.example" "$PROFILE_DIR/camera-sensors.tsv.example"
+fi
+
 # ---- binaries -------------------------------------------------------------
 # Every one of these is load-bearing for some feature, and a missing one fails
 # SILENTLY at runtime (the feature simply never happens), so they are checked

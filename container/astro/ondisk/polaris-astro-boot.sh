@@ -57,7 +57,8 @@ SITE=/app/sd/polaris-astro/site.conf
         # selector and independent catalogue apply consistently to autosolve,
         # guiding, and the HTTP-launched guider.
         export SOLVER_BIN INDEPENDENT_CATALOG INDEPENDENT_CATALOG_DIR INDEPENDENT_CATALOG_MANIFEST INDEPENDENT_TRIANGLE_INDEX \
-               INDEPENDENT_MAX_CATALOG INDEPENDENT_ANCHOR_STARS INDEPENDENT_SCALE_TOL INDEPENDENT_ATTEMPTS CAMERA_MODEL SENSOR_MM \
+               INDEPENDENT_MAX_CATALOG INDEPENDENT_ANCHOR_STARS INDEPENDENT_SCALE_TOL INDEPENDENT_SCALE_TOL_ASSUMED \
+               INDEPENDENT_ATTEMPTS CAMERA_MODEL SENSOR_MM SENSOR_PROFILE_FILE SENSOR_DEFAULT_MM SENSOR_MIN_MM SENSOR_MAX_MM \
                ALLOW_DEFAULT_SENSOR EXIF_WRITEBACK \
                GOTO_PLATESOLVE GOTO_SOLVE_APPLY GOTO_SOLVE_RECENTER GOTO_MODEL_RECORD GOTO_MODEL_APPLY \
                POINTING_MODEL_MIN_SAMPLES POINTING_MODEL_MAX_OFFSET_DEG \
@@ -334,7 +335,7 @@ SITE=/app/sd/polaris-astro/site.conf
     fi
 
     # Optional solve-every-completed-JPEG daemon. It is mode-gated and never
-    # fires the shutter, so it cannot alter normal K-3 III operation outside
+    # fires the shutter, so it cannot alter normal camera operation outside
     # Astro mode. FRAME_CORRECT is deliberately separate from solving.
     if [ "${AUTO_SOLVE_FRAMES:-0}" = "1" ] && [ -x "$ASTRO/polaris-frame-watch.sh" ]; then
         if ! pgrep -f "polaris-frame-watch" >/dev/null 2>&1; then

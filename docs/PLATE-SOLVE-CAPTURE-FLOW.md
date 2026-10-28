@@ -169,6 +169,24 @@ local JPEG
   -> successful temporary output is moved over the local input path
 ```
 
+### Camera-neutral geometry
+
+This path is not gated on a Pentax or K-3 III camera. Any camera that produces
+a local JPEG can enter the same extractor and either solver. Focal length is
+read from EXIF first, with the configured/cached value used for live-view or
+metadata-poor frames. Physical sensor width is resolved in this order:
+
+1. explicit `SENSOR_MM`;
+2. an exact model row in `SENSOR_PROFILE_FILE` (tab-separated model and width);
+3. EXIF `FocalLengthIn35mmFilm`, when present, which derives the physical width;
+4. the bounded generic 10--54 mm sensor range, centred on a 36 mm fallback.
+
+The fourth case is labelled `sensor_source=generic-default` and widens the
+scale admission gate; it does not turn a weak match into an accepted solve.
+Set `ALLOW_DEFAULT_SENSOR=0` when a deployment would rather fail closed until
+the camera's physical sensor width is configured. No camera model is an
+allow-list, and no camera-specific capture hook is required by the solver.
+
 The frame watcher never gives the solver the mutable source path. It solves an
 immutable temporary snapshot and keeps EXIF writeback after the quality gate;
 on a weak/failed solve the source is untouched and a bounded diagnostic copy is
@@ -247,7 +265,9 @@ The following invariants should hold before this becomes an unattended feature.
 
 - A solver failure must have no mount side effect.
 - A solve must include a trustworthy focal source and sensor geometry, or be
-  marked incomplete rather than silently using the wrong default.
+  marked as using the bounded generic geometry. Generic geometry requires the
+  same independent match/residual quality gates and must not silently receive
+  a higher confidence than a measured/profiled geometry.
 - Require independent quality evidence: minimum matches, residual threshold,
   scale plausibility, hint distance, and catalogue/index provenance.
 - Reject results that only echo the RA/Dec hint without demonstrating image

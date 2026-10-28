@@ -46,12 +46,19 @@ INDEPENDENT_MAX_CATALOG=120
 INDEPENDENT_ANCHOR_STARS=10
 INDEPENDENT_SCALE_TOL=0.15
 INDEPENDENT_ATTEMPTS=40
-# CAMERA_MODEL=K-3-III
+# Camera geometry is camera-agnostic. SENSOR_MM is the most reliable option;
+# otherwise the solver checks the JPEG's EXIF 35 mm-equivalent focal length and
+# then an exact model in SENSOR_PROFILE_FILE. A bounded generic fallback keeps
+# cameras with sparse EXIF usable and widens the scale gate while marking the
+# result as assumed. Set ALLOW_DEFAULT_SENSOR=0 to fail closed instead.
+# CAMERA_MODEL=any exact EXIF model
 # SENSOR_MM=23.3
-# One of CAMERA_MODEL or SENSOR_MM is required for a real solve. Unknown
-# geometry is rejected rather than silently treated as full-frame. Set
-# ALLOW_DEFAULT_SENSOR=1 only for a deliberately bounded experiment.
-ALLOW_DEFAULT_SENSOR=0
+SENSOR_PROFILE_FILE=/app/sd/polaris-astro/camera-sensors.tsv
+SENSOR_DEFAULT_MM=36
+SENSOR_MIN_MM=10
+SENSOR_MAX_MM=54
+ALLOW_DEFAULT_SENSOR=1
+INDEPENDENT_SCALE_TOL_ASSUMED=0.60
 # EXIF write-back is disabled until device metadata preservation/readback has
 # been qualified. Set to 1 only for that controlled test.
 EXIF_WRITEBACK=0

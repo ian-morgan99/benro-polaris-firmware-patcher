@@ -285,9 +285,10 @@ In priority order:
   is deliberately withheld; `FRAME_REQUIRE_CAPTURE_EVENT=0` is test-only.
 - **Storage exhaustion:** the watcher trims its log, history and telemetry to
   bounded sizes and resets its admission ledger at the session boundary.
-- **False scale confidence:** an unknown camera model no longer defaults to
-  36mm full-frame geometry. Configure `CAMERA_MODEL` or `SENSOR_MM`; the
-  deliberate experimental escape hatch is `ALLOW_DEFAULT_SENSOR=1`.
+- **Camera-neutral scale handling:** `SENSOR_MM`, an exact model profile, or
+  EXIF 35 mm-equivalent metadata is preferred. Unknown cameras use the
+  bounded generic geometry and wider scale gate, marked as assumed; set
+  `ALLOW_DEFAULT_SENSOR=0` to fail closed.
 - **Metadata damage:** solve results are still recorded in telemetry/history,
   but image replacement is disabled by default until the native EXIF writer's
   preservation and readback behaviour is qualified against real camera JPEGs.

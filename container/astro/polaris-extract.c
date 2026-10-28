@@ -113,6 +113,109 @@ static int exif_span_ok(unsigned off, unsigned size, unsigned len)
     return off <= len && size <= len - off;
 }
 
+/* Read one printable ASCII value from IFD0.  Camera model is useful for a
+ * sensor profile lookup, but it is only a hint: the caller may override it
+ * with an explicit sensor width and no camera brand is special-cased here. */
+static int exif_ifd0_ascii(const unsigned char* d, unsigned len, unsigned tag,
+                           char* out, size_t outlen)
+{
+    unsigned tiff, ifd, n, i, rel, off, count;
+    int be;
+    size_t used = 0;
+    if (!out || outlen < 2 || len < 14 || memcmp(d, "Exif\0\0", 6) != 0) return 0;
+    tiff = 6;
+    if (d[tiff] == 'M' && d[tiff + 1] == 'M') be = 1;
+    else if (d[tiff] == 'I' && d[tiff + 1] == 'I') be = 0;
+    else return 0;
+    if (!exif_span_ok(tiff, 8, len)) return 0;
+    rel = rd32(d + tiff + 4, be);
+    if (rel > len - tiff) return 0;
+    ifd = tiff + rel;
+    if (!exif_span_ok(ifd, 2, len)) return 0;
+    n = rd16(d + ifd, be);
+    for (i = 0; i < n; i++) {
+        unsigned e;
+        if (i > (len - ifd - 2U) / 12U) break;
+        e = ifd + 2U + i * 12U;
+        if (!exif_span_ok(e, 12, len) || rd16(d + e, be) != tag) continue;
+        if (rd16(d + e + 2, be) != 2) return 0; /* ASCII */
+        count = rd32(d + e + 4, be);
+        if (count == 0) return 0;
+        if (count <= 4) off = e + 8;
+        else {
+            rel = rd32(d + e + 8, be);
+            if (rel > len - tiff) return 0;
+            off = tiff + rel;
+        }
+        if (off < tiff || !exif_span_ok(off, count, len)) return 0;
+        while (count-- && used + 1 < outlen) {
+            unsigned char c = d[off++];
+            if (!c) break;
+            if (c == '\r' || c == '\n' || c == '\t' || c < 0x20 || c > 0x7e) c = ' ';
+            out[used++] = (char)c;
+        }
+        while (used && out[used - 1] == ' ') used--;
+        out[used] = '\0';
+        return used > 0;
+    }
+    return 0;
+}
+
+/* EXIF's optional 35 mm-equivalent focal length lets us derive physical
+ * sensor width without knowing the camera model: sensor_mm ~= 36 * actual /
+ * equivalent.  This is the generic-camera path; it is intentionally not a
+ * brand-specific profile embedded in the solver. */
+static double exif_focal35_mm(const unsigned char* d, unsigned len)
+{
+    unsigned tiff, ifd, exififd = 0, n, i, rel, type, count, value;
+    int be;
+    if (len < 14 || memcmp(d, "Exif\0\0", 6) != 0) return 0.0;
+    tiff = 6;
+    if (d[tiff] == 'M' && d[tiff + 1] == 'M') be = 1;
+    else if (d[tiff] == 'I' && d[tiff + 1] == 'I') be = 0;
+    else return 0.0;
+    if (!exif_span_ok(tiff, 8, len)) return 0.0;
+    rel = rd32(d + tiff + 4, be);
+    if (rel > len - tiff) return 0.0;
+    ifd = tiff + rel;
+    if (!exif_span_ok(ifd, 2, len)) return 0.0;
+    n = rd16(d + ifd, be);
+    for (i = 0; i < n; i++) {
+        unsigned e;
+        if (i > (len - ifd - 2U) / 12U) break;
+        e = ifd + 2U + i * 12U;
+        if (!exif_span_ok(e, 12, len)) break;
+        if (rd16(d + e, be) == 0x8769) {
+            rel = rd32(d + e + 8, be);
+            if (rel <= len - tiff) exififd = tiff + rel;
+        }
+        if (rd16(d + e, be) != 0xA405) continue;
+        type = rd16(d + e + 2, be);
+        count = rd32(d + e + 4, be);
+        if (count != 1 || (type != 3 && type != 4)) return 0.0;
+        value = type == 3 ? rd16(d + e + 8, be) : rd32(d + e + 8, be);
+        return value > 0 && value < 1000 ? (double)value : 0.0;
+    }
+    /* Most writers place A405 in the Exif sub-IFD, while some place it in
+     * IFD0. Accept both layouts because this is camera metadata, not a model
+     * specific contract. */
+    if (exififd >= tiff && exif_span_ok(exififd, 2, len)) {
+        n = rd16(d + exififd, be);
+        for (i = 0; i < n; i++) {
+            unsigned e;
+            if (i > (len - exififd - 2U) / 12U) break;
+            e = exififd + 2U + i * 12U;
+            if (!exif_span_ok(e, 12, len) || rd16(d + e, be) != 0xA405) continue;
+            type = rd16(d + e + 2, be);
+            count = rd32(d + e + 4, be);
+            if (count != 1 || (type != 3 && type != 4)) return 0.0;
+            value = type == 3 ? rd16(d + e + 8, be) : rd32(d + e + 8, be);
+            return value > 0 && value < 1000 ? (double)value : 0.0;
+        }
+    }
+    return 0.0;
+}
+
 /* returns focal length in mm, or 0 if not found */
 static double exif_focal_mm(const unsigned char* d, unsigned len)
 {
@@ -233,7 +336,8 @@ int main(int argc, char** argv) {
     int focus_metric = 0;   /* print one sharpness line for autofocus, no stars */
     int thumb_max = 0;      /* >0: emit a colour JPEG thumbnail of this max dim, no stars */
     double focal_mm = 0.0;                 /* from EXIF; 0 = unknown */
-    char focalbuf[32];
+    char focalbuf[32], exif_model[128] = "";
+    double focal35_mm = 0.0;
     int y_bottom = 1;                 /* FITS convention by default */
     double ksigma = 5.0;
     int i;
@@ -292,8 +396,13 @@ int main(int argc, char** argv) {
         jpeg_saved_marker_ptr m;
         for (m = cinfo.marker_list; m; m = m->next) {
             if (m->marker == JPEG_APP0 + 1) {
-                focal_mm = exif_focal_mm(m->data, m->data_length);
-                if (focal_mm > 0) break;
+                if (focal_mm <= 0) focal_mm = exif_focal_mm(m->data, m->data_length);
+                if (!exif_model[0])
+                    (void)exif_ifd0_ascii(m->data, m->data_length, 0x0110,
+                                          exif_model, sizeof exif_model);
+                if (focal35_mm <= 0)
+                    focal35_mm = exif_focal35_mm(m->data, m->data_length);
+                if (focal_mm > 0 && exif_model[0] && focal35_mm > 0) break;
             }
         }
     }
@@ -519,9 +628,9 @@ int main(int argc, char** argv) {
     if (stats)
         fprintf(stderr,
                 "[extract] %dx%d decoded at 1/%d (full %dx%d), bg=%.1f noise=%.2f "
-                "thresh=%.1f stars=%d focal=%s  %.3f s\n",
+                "thresh=%.1f stars=%d focal=%s model=%s  %.3f s\n",
                 W, H, ds, fullW, fullH, bg, noise, bg + ksigma * noise, nstars,
-                focalbuf,
+                focalbuf, exif_model[0] ? exif_model : "unknown",
                 (tv1.tv_sec - tv0.tv_sec) + (tv1.tv_usec - tv0.tv_usec) * 1e-6);
 
     printf("# polaris-extract: %s\n# full resolution %d x %d\n# y-origin: %s\n",
@@ -530,6 +639,10 @@ int main(int argc, char** argv) {
      * live-view frames, which carry no EXIF -- the caller falls back there. */
     if (focal_mm > 0)
         printf("# exif focal-mm %.4f\n", focal_mm);
+    if (focal35_mm > 0)
+        printf("# exif focal35-mm %.0f\n", focal35_mm);
+    if (exif_model[0])
+        printf("# exif camera-model %s\n", exif_model);
     for (i = 0; i < nstars; i++) {
         double yy = y_bottom ? (fullH - 1 - stars[i].y) : stars[i].y;
         printf("%.3f %.3f %.1f\n", stars[i].x, yy, stars[i].flux);

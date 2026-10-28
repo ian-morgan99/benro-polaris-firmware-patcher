@@ -9,7 +9,7 @@
 # files are not mistaken for new Astro captures.  A file is admitted only when
 # its path/size/mtime key has not been seen before; a reused filename with a
 # changed key is therefore eligible again.
-# That boundary is what keeps ordinary K-3 III capture behaviour unchanged.
+# That boundary is what keeps ordinary camera capture behaviour unchanged.
 #
 # The first implementation measures drift against the current target and can
 # optionally re-centre with the already-qualified bounded GOTO path.  It does

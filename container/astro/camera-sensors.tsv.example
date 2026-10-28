@@ -1,0 +1,4 @@
+# Exact camera model (EXIF Model or CAMERA_MODEL)<TAB>physical sensor width in mm
+# Keep this file camera-agnostic: add any body or instrument used with Polaris.
+# Example:
+# My Camera Body	23.5
