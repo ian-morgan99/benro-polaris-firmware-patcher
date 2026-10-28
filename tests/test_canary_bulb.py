@@ -774,10 +774,22 @@ def test_ceiling_can_be_raised_for_a_deliberate_run(monkeypatch):
 def test_ceiling_rejects_nonsense_env_values(monkeypatch):
     """A typo in the override must not silently disable the guard."""
     mod = load_probe()
-    for bad in ("bogus", "-5", "0"):
+    for bad in ("bogus", "-5", "0", "nan", "inf", "-inf"):
         monkeypatch.setenv("OPENPOLARIS_MAX_TEST_EXPOSURE", bad)
         with pytest.raises(ValueError):
             mod.max_test_exposure_seconds()
+
+
+@pytest.mark.parametrize("option", ("--bulb-seconds", "--timed-seconds"))
+@pytest.mark.parametrize("value", ("nan", "inf", "-inf"))
+def test_non_finite_exposure_requests_are_rejected_before_connect(option, value):
+    """NaN/Infinity must not fall through to the longest camera shutter slot."""
+    proc = run_probe("--host", "127.0.0.1", "--port", "1", "--shot",
+                     "--expected-files", "1", f"{option}={value}")
+    combined = proc.stderr + proc.stdout
+    assert proc.returncode == 2
+    assert "finite and positive" in combined
+    assert "connect" not in combined.lower()
 
 
 def test_slot_derived_duration_is_not_capped():
