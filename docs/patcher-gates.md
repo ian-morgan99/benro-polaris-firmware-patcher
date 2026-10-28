@@ -20,6 +20,7 @@ that silently disables a guard we just put in.
 | `REMOVE_EXIT_REMOTEMODE` | `0` (ptp2-only: `1`) | `build_ptp2.sh` | Strips the `SetRemoteMode` toggle added in 2.5.34's `camera_exit`. |
 | `SELFTEST` | `0` | `patch.sh` | After flash, qemu-emulates `dlopen` of the stage-2 bundle (needs `qemu-arm-static` on host). |
 | `SWAP_USB1` | `1` (full mode: `1` unconditionally) | `patch.sh` | Stage libusb-1.0.so.0 so the fresh `usb1.so` (built against system glibc) can find it. |
+| `POLARIS_ENABLE_USB_SCSI` | `0` (release runbook: enabled) | `patch.sh`, `build_ptp2.sh` | Opt-in legacy `usbscsi.so` packaging for Pentax K-5 II/K-5 IIs; the normal direct launcher stays unchanged, while `scripts/build-release-candidate.sh` enables it. |
 
 `TRAMP_ADDR` and `LIBGPHOTO2_VERSION` are positional/required, not "gates".
 

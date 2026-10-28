@@ -125,6 +125,11 @@ meson test -C "$TEST_BUILD" --no-suite no-ci --print-errorlogs
 
 PATCH_ARGS=(--fwpkt "$(realpath "$BASE")" \
   --libgphoto2-source "$(realpath "$SRC")" --out "$OUT" --build-id "$BUILD_ID")
+# The release path deliberately includes the optional legacy Pentax transport.
+# It is inert for K-1 II/K-3 III PTP bodies, while making the same candidate
+# usable by the K-5 II/K-5 IIs USB-SCSI/MSC camlib. Direct diagnostic invocations
+# of patch-polaris.sh remain opt-in so the historical default stays unchanged.
+PATCH_ARGS+=(--enable-usb-scsi)
 # Do not apply the retired polestar_app Bulb patch. It zeroed bulb_ms and
 # forced the plain-capture branch, bypassing the non-zero Bulb request path.
 if [ -n "$DISPLAY_FWVER" ]; then
