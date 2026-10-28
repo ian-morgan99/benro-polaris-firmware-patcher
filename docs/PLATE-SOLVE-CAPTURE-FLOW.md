@@ -50,7 +50,11 @@ There are three materially different flows:
    Otherwise this remains an explicit/manual solve path.
 
 The hook is opt-in: AUTO_SOLVE_FRAMES=1 plus mode:8 and stable-file
-admission are required before a JPEG is sent to the solver.
+admission are required before a JPEG is sent to the solver. In its safe default
+the watcher additionally requires a capture-completion ledger event; the
+producer is not yet wired into pgphoto, so unattended operation must remain
+disabled until that owner can correlate a transfer event to its exact local
+path.
 
 The watcher establishes an admission boundary when it starts and whenever a
 new Astro session opens. Files already present at that boundary are recorded
@@ -60,6 +64,14 @@ size is stable and their JPEG end marker is present. A reused filename is
 eligible again when its size or modification time changes. This prevents a
 reboot or a mode transition from re-solving an entire old gallery while still
 covering new files published during an enabled session.
+
+For the safe unattended setting, the watcher also requires a row in
+`/app/sd/polaris-astro/capture-events.tsv` in the form
+`epoch<TAB>absolute-path<TAB>bytes<TAB>mtime`. The row must match the stable
+local file exactly and be from the current Astro session. This is the handoff
+contract the eventual pgphoto/publication producer must implement; until then,
+the watcher records that it withheld the file rather than guessing which
+capture caused it.
 
 This is a local-admission guarantee, not a camera-transfer guarantee. The
 watcher cannot recover a frame that the camera/head never publishes under
@@ -213,8 +225,10 @@ The following invariants should hold before this becomes an unattended feature.
 - Start the watcher before entering Astro mode when unattended per-frame
   solving is required. Its admission ledger intentionally excludes files that
   predate the active session.
-- Preserve the original local JPEG. Prefer a sidecar or a new derived file
-  until EXIF round-trip and crash-recovery testing are complete.
+- Preserve the original local JPEG. The runtime therefore leaves EXIF
+  write-back disabled unless `EXIF_WRITEBACK=1` is explicitly set for a
+  controlled test. Prefer a sidecar or a new derived file until EXIF
+  round-trip and crash-recovery testing are complete.
 - Use a same-directory temporary file, `fsync`, and atomic rename only after
   validation. Do not unlink the only known-good copy first.
 - Bound failed-frame retention and prevent a full SD card from stopping capture.

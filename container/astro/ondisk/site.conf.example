@@ -48,6 +48,13 @@ INDEPENDENT_SCALE_TOL=0.15
 INDEPENDENT_ATTEMPTS=40
 # CAMERA_MODEL=K-3-III
 # SENSOR_MM=23.3
+# One of CAMERA_MODEL or SENSOR_MM is required for a real solve. Unknown
+# geometry is rejected rather than silently treated as full-frame. Set
+# ALLOW_DEFAULT_SENSOR=1 only for a deliberately bounded experiment.
+ALLOW_DEFAULT_SENSOR=0
+# EXIF write-back is disabled until device metadata preservation/readback has
+# been qualified. Set to 1 only for that controlled test.
+EXIF_WRITEBACK=0
 
 # Post-GOTO solve. This watches BenroConnect's Astro 519 commands and solves a
 # live-view frame after each track:1 GOTO. Calibration's track:0 command is not
@@ -79,6 +86,10 @@ FRAME_HINT_RADIUS=15
 FRAME_FALLBACK_RADIUS=60
 FRAME_STABLE_WAIT=2
 FRAME_MIN_BYTES=10000
+# Safe default: the frame watcher requires the capture/publish owner to append
+# an exact path/size/mtime event to /app/sd/polaris-astro/capture-events.tsv.
+# Set 0 only for a controlled local-admission experiment.
+FRAME_REQUIRE_CAPTURE_EVENT=1
 
 # ---- web UI + Alpaca ------------------------------------------------------
 # 8080 is pgphoto's own MJPG stream; 80, 8081, 9090 and 22 are also taken.

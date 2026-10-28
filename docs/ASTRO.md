@@ -14,7 +14,9 @@ The authoritative capture/storage/solve safety contract is
 The current end-to-end readiness map is
 [ASTRO-MISSION-READINESS.md](ASTRO-MISSION-READINESS.md). In particular, the
 completed-frame watcher is opt-in, and EXIF updates affect only the
-Polaris-side copy.
+Polaris-side copy. EXIF write-back is additionally disabled by default until
+metadata preservation and readback are qualified; set `EXIF_WRITEBACK=1` only
+for that controlled test.
 
 ---
 

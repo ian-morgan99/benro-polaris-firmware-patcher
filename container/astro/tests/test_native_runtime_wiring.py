@@ -1,3 +1,5 @@
+import os
+import subprocess
 from pathlib import Path
 
 
@@ -67,6 +69,21 @@ def test_exif_focal_parser_fails_closed_on_wrapped_offsets():
     assert "size <= len - off" in extractor
 
 
+def test_align_rejects_unknown_sensor_geometry_before_solver_access():
+    align = ONDISK / "polaris-align.sh"
+    env = os.environ.copy()
+    env.update({"CAMERA_MODEL": "", "SENSOR_MM": "", "ALLOW_DEFAULT_SENSOR": "0"})
+    result = subprocess.run(
+        ["sh", str(align), "/tmp/no-such-image.jpg"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 6
+    assert '"failure_reason":"sensor_geometry_required"' in result.stdout
+
+
 def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     boot = (ONDISK / "polaris-astro-boot.sh").read_text()
     frame = (ONDISK / "polaris-frame-watch.sh").read_text()
@@ -91,5 +108,13 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'retrying bounded blind search' in align and 'USE_HINT=0' in align
     assert 'mktemp "${IMG}.polaris-exif.tmp.XXXXXX"' in align
     assert 'tail -c 2' in align and 'original image preserved' in align
+    assert 'sensor_geometry_required' in align
+    assert 'ALLOW_DEFAULT_SENSOR' in align
+    assert 'EXIF_WRITEBACK:-0' in align
+    assert 'SESSION_FILE' in frame and 'session_target_from_file' in frame
+    assert 'FRAME_REQUIRE_CAPTURE_EVENT' in frame and 'capture_event_matches' in frame
+    assert 'FRAME_REQUIRE_CAPTURE_EVENT="${FRAME_REQUIRE_CAPTURE_EVENT:-1}"' in boot
+    assert 'MAX_TELEMETRY_BYTES' in frame and 'MAX_HISTORY_BYTES' in frame
+    assert 'session_id' in wrapper
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd
     assert '/api/astro/solve' in httpd and 'last-frame-solution.json' in httpd

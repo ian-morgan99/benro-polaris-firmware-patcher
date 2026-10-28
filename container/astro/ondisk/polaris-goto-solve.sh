@@ -23,6 +23,7 @@ ASTRO=${ASTRO:-/app/astro}
 LOG=${LOG:-/app/sd/polaris-astro/goto-solve.log}
 HISTORY=${HISTORY:-/app/sd/polaris-astro/goto-history.jsonl}
 TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
+SESSION_FILE=${SESSION_FILE:-/app/sd/polaris-astro/session-id}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
 FOCAL=${FOCAL_MM:-}
@@ -44,6 +45,15 @@ MODEL_HELPER=${POINTING_MODEL_HELPER:-$ASTRO/polaris-pointing-model.sh}
 FRAME=""
 ALREADY=0
 RA=""; DEC=""
+
+SESSION_ID=${ASTRO_SESSION_ID:-}
+if [ -z "$SESSION_ID" ] && [ -r "$SESSION_FILE" ]; then
+    SESSION_ID=$(head -1 "$SESSION_FILE" 2>/dev/null || true)
+fi
+case "$SESSION_ID" in
+    *[!A-Za-z0-9._:-]*) SESSION_ID=unknown ;;
+esac
+SESSION_ID=${SESSION_ID:-unknown}
 
 mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" 2>/dev/null
 log() { _m="$(date '+%Y-%m-%d %H:%M:%S') $*"; echo "$_m" >> "$LOG" 2>/dev/null; echo "$_m" >&2; }
@@ -154,8 +164,8 @@ fi
 
 mkdir -p "$(dirname "$TARGET_FILE")" 2>/dev/null
 _target_tmp="${TARGET_FILE}.tmp.$$"
-printf '{"target_ra_deg":%s,"target_dec_deg":%s,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"updated":"%s"}\n' \
-    "$RA" "$DEC" "$SRA" "$SDEC" "${SROT:-0}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" > "$_target_tmp" 2>/dev/null \
+printf '{"session_id":"%s","target_ra_deg":%s,"target_dec_deg":%s,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"updated":"%s"}\n' \
+    "$SESSION_ID" "$RA" "$DEC" "$SRA" "$SDEC" "${SROT:-0}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" > "$_target_tmp" 2>/dev/null \
     && mv "$_target_tmp" "$TARGET_FILE" 2>/dev/null || { rm -f "$_target_tmp" 2>/dev/null; log "could not publish target record"; exit 1; }
 
 if [ "$APPLY" = "1" ]; then

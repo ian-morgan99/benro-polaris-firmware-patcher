@@ -12,7 +12,8 @@
 #     LAT / LON                 observer position; REQUIRED for the mount hint
 #     ASTRO=/app/astro          binaries
 #     INDEXES=/app/sd/astrometry   index files (on the microSD)
-#     SENSOR_MM=36              full frame
+#     SENSOR_MM                 explicit sensor width in mm, or a known
+#                               CAMERA_MODEL profile (unknown geometry fails)
 #  Override any of them with environment variables.
 #  SOLVER_BIN=polaris-solve-independent selects the alternate solver when it is
 #  installed; the Astrometry.net solver remains the default.
@@ -42,13 +43,19 @@ MAXSTARS=${MAXSTARS:-200}
 SOLVE_TIMEOUT=${SOLVE_TIMEOUT:-45}
 
 # EXIF currently supplies focal length. Sensor width is normally a camera-model
-# property rather than an EXIF field, so resolve a conservative profile unless
-# the caller supplied an explicit override.
+# property rather than an EXIF field. Never silently assume full-frame geometry:
+# a wrong sensor width can produce a plausible but incorrect scale and solve.
 if [ -z "$SENSOR_MM" ]; then
     case "$CAMERA_MODEL" in
         *K-3*|*K3*) SENSOR_MM=23.3; SENSOR_SOURCE=camera-model-profile ;;
         *K-1*|*K1*) SENSOR_MM=35.9; SENSOR_SOURCE=camera-model-profile ;;
-        *) SENSOR_MM=36; SENSOR_SOURCE=default-unknown ;;
+        *)
+            if [ "${ALLOW_DEFAULT_SENSOR:-0}" != "1" ]; then
+                echo '{"solved":false,"failure_reason":"sensor_geometry_required"}'
+                exit 6
+            fi
+            SENSOR_MM=36; SENSOR_SOURCE=explicit-default-unknown
+            ;;
     esac
 else
     SENSOR_SOURCE=override
@@ -65,7 +72,7 @@ USE_HINT=1
 [ -x "$ASTRO/polaris-extract" ] || { echo "missing $ASTRO/polaris-extract" >&2; exit 2; }
 [ -x "$ASTRO/$SOLVER_BIN" ] || { echo "missing solver $ASTRO/$SOLVER_BIN (set SOLVER_BIN=polaris-solve or install the alternate solver)" >&2; exit 2; }
 
-EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-1}
+EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-${EXIF_WRITEBACK:-0}}
 embed_solve_exif() {
     _result=$1
     [ "$EMBED_SOLVE_EXIF" = "1" ] || return 0

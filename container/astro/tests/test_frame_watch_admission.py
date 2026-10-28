@@ -47,9 +47,8 @@ def test_frame_watch_admits_only_new_or_changed_jpegs(tmp_path):
     admission = tmp_path / "admission.tsv"
     frame_state = tmp_path / "last.json"
     telemetry = tmp_path / "frame-telemetry.jsonl"
-    (tmp_path / "target.json").write_text(
-        '{"target_ra_deg":1,"target_dec_deg":2,"rotation_deg":3}\n'
-    )
+    target = tmp_path / "target.json"
+    session = tmp_path / "session-id"
 
     env = os.environ.copy()
     env.update(
@@ -64,11 +63,13 @@ def test_frame_watch_admits_only_new_or_changed_jpegs(tmp_path):
             "ADMISSION": str(admission),
             "FRAME_STATE": str(frame_state),
             "TARGET_FILE": str(tmp_path / "target.json"),
+            "SESSION_FILE": str(session),
             "FRAME_TELEMETRY": str(telemetry),
             "SOLVER_BIN": "native-test",
             "FRAME_WATCH_POLL": "0.05",
             "FRAME_STABLE_WAIT": "0",
             "FRAME_MIN_BYTES": "1",
+            "FRAME_REQUIRE_CAPTURE_EVENT": "0",
             "MIN_MATCHES": "12",
             "MAX_SOLVE_RMS_PX": "3",
         }
@@ -78,6 +79,11 @@ def test_frame_watch_admits_only_new_or_changed_jpegs(tmp_path):
         time.sleep(0.15)
         mode.write_text("8\n")
         time.sleep(0.15)
+        _wait_for(session.exists)
+        target.write_text(
+            '{"session_id":"%s","target_ra_deg":1,"target_dec_deg":2,"rotation_deg":3}\n'
+            % session.read_text().strip()
+        )
 
         # Existing gallery content is admitted as the session baseline.
         assert not history.exists() or not history.read_text().strip()

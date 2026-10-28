@@ -57,6 +57,13 @@ The current implementation reaches the measurement and guarded-hook stages.
 It does not yet close the physical capture, mount-control, or tracking-rate
 stages.
 
+This checkpoint tightens the highest-probability failure boundaries: every
+completed-frame watcher run gets a new session identity, old target records are
+rejected as hints, admission/history/telemetry files are bounded, unknown
+camera geometry fails closed, and EXIF write-back is now an explicit opt-in
+(`EXIF_WRITEBACK=1`) until preservation and readback have been proven on the
+device. These are safety gates, not evidence that the physical path is ready.
+
 No Astro-specific libgphoto2 change was required. The Astro layer consumes the
 existing camera transfer/publication path and deliberately treats a JPEG as
 eligible only after it exists on Polaris storage.
@@ -121,7 +128,7 @@ tested; it does not mean that the exact Benro firmware and camera have passed.
 | Repeated GOTO refinement | `target.json`, history and session pointing model | Model records observations; `GOTO_MODEL_APPLY=0` | No physical accuracy improvement demonstrated |
 | Completed JPEG admission | Stable size/JPEG-end-marker, mode gate, session boundary and path/size/mtime deduplication | `AUTO_SOLVE_FRAMES=0` | Host tests pass; local publication from the target camera remains unproven |
 | Solve each local JPEG | EXIF focal first, camera sensor profile, RA/Dec hint, bounded fallback | Astrometry.net via `SOLVER_BIN=polaris-solve` | Host and ARM smoke; no real camera/device solve |
-| Local EXIF result | Atomic local replacement and validation | Enabled by the solve path | Host/QEMU tested; no device round-trip |
+| Local EXIF result | Atomic local replacement and validation | Explicit `EXIF_WRITEBACK=1` opt-in | Host/QEMU tested; no device round-trip |
 | Drift/rotation measurement | Frame watcher writes JSONL action telemetry | Measurement only | Host logic tested; no physical drift session |
 | Positional correction | Bounded existing GOTO can be selected | `FRAME_CORRECT=0` | Not physically qualified |
 | Motor-speed adjustment | No live per-axis rate command is connected | Unavailable; telemetry says `rate_control:unavailable` | Blocked on issue [#240](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/240) / PrivateResearch Issue #3 |
@@ -266,6 +273,29 @@ In priority order:
 8. **Protect the existing camera path.** Repeat the K-3 III regression matrix
    after any integration change; no Astro result is a reason to weaken normal
    capture or camera recovery.
+
+## Risks tightened in the current checkpoint
+
+- **Stale target contamination:** a new mode-8 session gets a fresh ID. The
+  frame watcher only uses a target record written in that session, so a prior
+  night's target cannot silently become the RA/Dec hint or drift anchor.
+- **Accidental frame attribution:** the safe watcher default now requires an
+  exact capture-completion ledger row (`epoch`, path, bytes and mtime) from the
+  capture/publish owner. Until that producer is wired, automatic frame solving
+  is deliberately withheld; `FRAME_REQUIRE_CAPTURE_EVENT=0` is test-only.
+- **Storage exhaustion:** the watcher trims its log, history and telemetry to
+  bounded sizes and resets its admission ledger at the session boundary.
+- **False scale confidence:** an unknown camera model no longer defaults to
+  36mm full-frame geometry. Configure `CAMERA_MODEL` or `SENSOR_MM`; the
+  deliberate experimental escape hatch is `ALLOW_DEFAULT_SENSOR=1`.
+- **Metadata damage:** solve results are still recorded in telemetry/history,
+  but image replacement is disabled by default until the native EXIF writer's
+  preservation and readback behaviour is qualified against real camera JPEGs.
+
+The remaining high-consequence risks are not safely solvable by a host-only
+patch: capture-event correlation, a single mount-command arbiter including the
+HTTP server, network authentication, native-index coverage on the target SD,
+and physical firmware/rate qualification. They remain explicit release gates.
 
 ## Evidence and detailed documents
 

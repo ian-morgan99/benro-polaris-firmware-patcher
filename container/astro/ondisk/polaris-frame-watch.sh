@@ -27,6 +27,8 @@ TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
 FRAME_STATE=${FRAME_STATE:-/app/sd/polaris-astro/last-frame-solution.json}
 TELEMETRY=${FRAME_TELEMETRY:-/app/sd/polaris-astro/frame-telemetry.jsonl}
 ADMISSION=${ADMISSION:-/app/sd/polaris-astro/frame-admission.tsv}
+SESSION_FILE=${SESSION_FILE:-/app/sd/polaris-astro/session-id}
+CAPTURE_EVENT_LEDGER=${CAPTURE_EVENT_LEDGER:-/app/sd/polaris-astro/capture-events.tsv}
 MODE_FILE=${MODE_FILE:-/tmp/polaris-mode}
 SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
@@ -45,16 +47,37 @@ MOUNT_HOST=${MOUNT_HOST:-127.0.0.1}
 MOUNT_PORT=${MOUNT_PORT:-9090}
 LAT=${LAT:-}
 LON=${LON:-}
+FRAME_REQUIRE_CAPTURE_EVENT=${FRAME_REQUIRE_CAPTURE_EVENT:-1}
+MAX_LOG_BYTES=${FRAME_MAX_LOG_BYTES:-1048576}
+MAX_HISTORY_BYTES=${FRAME_MAX_HISTORY_BYTES:-1048576}
+MAX_TELEMETRY_BYTES=${FRAME_MAX_TELEMETRY_BYTES:-2097152}
+
+SESSION_ID=
+SESSION_START_EPOCH=0
 
 DIRS=${CAPTURE_DIR:-"/app/sd/normal /app/sd/starskyStack /app/sd/HDR /app/sd/panorama /app/sd/focusStack /app/sd/sun"}
 EXTRA=${CAPTURE_GLOB_EXTRA:-"/app/sd/Lapse/class_*"}
 
 mkdir -p "$(dirname "$LOG")" "$(dirname "$HISTORY")" \
     "$(dirname "$FRAME_STATE")" "$(dirname "$TELEMETRY")" \
-    "$(dirname "$STATE")" "$(dirname "$ADMISSION")" 2>/dev/null
+    "$(dirname "$STATE")" "$(dirname "$ADMISSION")" \
+    "$(dirname "$SESSION_FILE")" "$(dirname "$CAPTURE_EVENT_LEDGER")" 2>/dev/null
+
+trim_file() {
+    _path=$1
+    _limit=$2
+    [ -f "$_path" ] || return 0
+    [ "${_limit:-0}" -gt 0 ] 2>/dev/null || return 0
+    _bytes=$(wc -c < "$_path" 2>/dev/null | tr -d ' ')
+    [ "${_bytes:-0}" -gt "$_limit" ] 2>/dev/null || return 0
+    _tmp="${_path}.trim.$$"
+    tail -c "$_limit" "$_path" > "$_tmp" 2>/dev/null && \
+        mv "$_tmp" "$_path" 2>/dev/null || rm -f "$_tmp" 2>/dev/null
+}
 
 log() {
     _m="$(date '+%Y-%m-%d %H:%M:%S') $*"
+    trim_file "$LOG" "$MAX_LOG_BYTES"
     echo "$_m" >> "$LOG" 2>/dev/null
     echo "$_m" >&2
 }
@@ -107,6 +130,24 @@ valid_stable_jpeg() {
     [ "$_tail" = "ffd9" ]
 }
 
+# In the safe default mode, a stable JPEG is not enough: the capture/publish
+# owner must append `epoch<TAB>path<TAB>bytes<TAB>mtime` to this ledger. This
+# prevents an unrelated file written during Astro mode from being credited as
+# the result of a camera capture. Set FRAME_REQUIRE_CAPTURE_EVENT=0 only for a
+# controlled local-admission experiment while the producer is being wired.
+capture_event_matches() {
+    _f=$1
+    [ "$FRAME_REQUIRE_CAPTURE_EVENT" = "0" ] && return 0
+    [ -r "$CAPTURE_EVENT_LEDGER" ] || return 1
+    _key=$(file_key "$_f")
+    _bytes=$(echo "$_key" | awk -F '\t' '{print $2}')
+    _mtime=$(echo "$_key" | awk -F '\t' '{print $3}')
+    awk -F '\t' -v start="$SESSION_START_EPOCH" -v path="$_f" \
+        -v bytes="$_bytes" -v mtime="$_mtime" \
+        '($1 >= start && $2 == path && $3 == bytes && $4 == mtime) { found=1 } END { exit !found }' \
+        "$CAPTURE_EVENT_LEDGER" 2>/dev/null
+}
+
 target_from_file() {
     _tf=$1
     [ -r "$_tf" ] || return 1
@@ -116,6 +157,20 @@ target_from_file() {
     [ -n "$_dec" ] || _dec=$(sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p' "$_tf" | head -1)
     [ -n "$_ra" ] && [ -n "$_dec" ] || return 1
     printf '%s %s\n' "$_ra" "$_dec"
+}
+
+# A target from a previous Astro session must never become a hint or drift
+# anchor for the next one. GOTO writes the session id; the mtime check also
+# protects older target formats which predate that field.
+session_target_from_file() {
+    _tf=$1
+    [ -r "$_tf" ] || return 1
+    [ "$SESSION_START_EPOCH" -gt 0 ] 2>/dev/null || return 1
+    _mtime=$(stat -c %Y "$_tf" 2>/dev/null || echo 0)
+    [ "${_mtime:-0}" -ge "$SESSION_START_EPOCH" ] 2>/dev/null || return 1
+    _sid=$(sed -n 's/.*"session_id":"\([^"]*\)".*/\1/p' "$_tf" | head -1)
+    [ -n "$_sid" ] && [ "$_sid" = "$SESSION_ID" ] || return 1
+    target_from_file "$_tf"
 }
 
 target_rotation_from_file() {
@@ -153,7 +208,7 @@ solve_one() {
     run_align() {
         _mount_hint=$1
         shift
-        EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-1} \
+        EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-${EXIF_WRITEBACK:-0}} \
         SOLVER_BIN="$SOLVER_BIN" INDEPENDENT_CATALOG="$INDEPENDENT_CATALOG" \
         INDEPENDENT_CATALOG_DIR="${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}" \
         INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}" \
@@ -166,8 +221,7 @@ solve_one() {
         HINT_RADIUS="$HINT_RADIUS" \
             sh "$ASTRO/polaris-align.sh" "$_f" "$FOCAL" "$@" 2>>"$LOG"
     }
-    _target=$(target_from_file "$TARGET_FILE" 2>/dev/null || \
-              target_from_file /tmp/polaris-last-solution.json 2>/dev/null || true)
+    _target=$(session_target_from_file "$TARGET_FILE" 2>/dev/null || true)
     if [ -n "$_target" ]; then
         _tra=$(echo "$_target" | awk '{print $1}'); _tdec=$(echo "$_target" | awk '{print $2}')
         log "solving $(basename "$_f") with target hint ra=$_tra dec=$_tdec radius=${HINT_RADIUS}deg"
@@ -206,12 +260,12 @@ assess_and_optionally_correct() {
     _dec=$(printf '%s' "$_j" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
     _rot=$(printf '%s' "$_j" | sed -n 's/.*"rotation_deg":\([-0-9.]*\).*/\1/p')
     if [ -z "$_ra" ] || [ -z "$_dec" ]; then
-        printf '{"frame":"%s","solved":true,"target_available":false,"action":"missing_pose","rate_control":"unavailable"}\n' \
-            "$_frame_name" >> "$TELEMETRY" 2>/dev/null
+        trim_file "$TELEMETRY" "$MAX_TELEMETRY_BYTES"
+        printf '{"session_id":"%s","frame":"%s","solved":true,"target_available":false,"action":"missing_pose","rate_control":"unavailable"}\n' \
+            "$SESSION_ID" "$_frame_name" >> "$TELEMETRY" 2>/dev/null
         return 0
     fi
-    _target=$(target_from_file "$TARGET_FILE" 2>/dev/null || \
-              target_from_file /tmp/polaris-last-solution.json 2>/dev/null || true)
+    _target=$(session_target_from_file "$TARGET_FILE" 2>/dev/null || true)
     _rotation_bad=0
     if [ -n "$_target" ]; then
         _tra=$(echo "$_target" | awk '{print $1}'); _tdec=$(echo "$_target" | awk '{print $2}')
@@ -247,14 +301,16 @@ assess_and_optionally_correct() {
                 log "frame drift exceeds threshold; correction disabled (FRAME_CORRECT=$FRAME_CORRECT)"
             fi
         fi
-        printf '{"frame":"%s","solved":true,"target_available":true,"solved_ra_deg":%s,"solved_dec_deg":%s,"target_ra_deg":%s,"target_dec_deg":%s,"drift_deg":%s,"rotation_deg":%s,"target_rotation_deg":%s,"rotation_delta_deg":%s,"action":"%s","rate_control":"unavailable"}\n' \
-            "$_frame_name" "$_ra" "$_dec" "$_tra" "$_tdec" "$_drift" \
+        trim_file "$TELEMETRY" "$MAX_TELEMETRY_BYTES"
+        printf '{"session_id":"%s","frame":"%s","solved":true,"target_available":true,"solved_ra_deg":%s,"solved_dec_deg":%s,"target_ra_deg":%s,"target_dec_deg":%s,"drift_deg":%s,"rotation_deg":%s,"target_rotation_deg":%s,"rotation_delta_deg":%s,"action":"%s","rate_control":"unavailable"}\n' \
+            "$SESSION_ID" "$_frame_name" "$_ra" "$_dec" "$_tra" "$_tdec" "$_drift" \
             "${_rot:-null}" "${_trot:-null}" "${_rotation_delta:-null}" "$_action" \
             >> "$TELEMETRY" 2>/dev/null
     else
         log "frame=$(basename "$_f") solved_ra=$_ra solved_dec=$_dec (no target anchor)"
-        printf '{"frame":"%s","solved":true,"target_available":false,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"action":"no_target","rate_control":"unavailable"}\n' \
-            "$_frame_name" "$_ra" "$_dec" "${_rot:-null}" >> "$TELEMETRY" 2>/dev/null
+        trim_file "$TELEMETRY" "$MAX_TELEMETRY_BYTES"
+        printf '{"session_id":"%s","frame":"%s","solved":true,"target_available":false,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"action":"no_target","rate_control":"unavailable"}\n' \
+            "$SESSION_ID" "$_frame_name" "$_ra" "$_dec" "${_rot:-null}" >> "$TELEMETRY" 2>/dev/null
     fi
 }
 
@@ -263,9 +319,14 @@ process() {
     _key=$(file_key "$_f")
     seen "$_key" && return 0
     valid_stable_jpeg "$_f" || return 0
+    if ! capture_event_matches "$_f"; then
+        log "withholding $(basename "$_f"): no matching capture-completion event"
+        return 0
+    fi
     printf '%s\n' "$_key" >> "$STATE" 2>/dev/null
     log "processing completed Astro JPEG $_f"
     _j=$(solve_one "$_f")
+    trim_file "$HISTORY" "$MAX_HISTORY_BYTES"
     printf '%s\t%s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$_j" >> "$HISTORY" 2>/dev/null
     if quality_ok "$_j"; then
         record_solution "$_j"
@@ -279,6 +340,19 @@ process() {
     fi
 }
 
+start_session() {
+    SESSION_ID="$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+    SESSION_START_EPOCH="$(date +%s)"
+    printf '%s\n' "$SESSION_ID" > "${SESSION_FILE}.tmp.$$" 2>/dev/null && \
+        mv "${SESSION_FILE}.tmp.$$" "$SESSION_FILE" 2>/dev/null || \
+        rm -f "${SESSION_FILE}.tmp.$$" 2>/dev/null
+    # Admission is session-scoped. Old state must not make a reused filename
+    # look solved in the new session, and it must not grow without bound.
+    : > "$STATE" 2>/dev/null || true
+    prime_existing
+    log "Astro session started id=$SESSION_ID"
+}
+
 prime_existing
 _was_active=0
 log "frame watcher started (mode-gated; correction=$FRAME_CORRECT solver=$SOLVER_BIN)"
@@ -289,7 +363,7 @@ while :; do
         if [ "$_was_active" != "1" ]; then
             # Files made while Astro was not active are not Astro frames. Mark
             # them before scanning the first active session.
-            prime_existing
+            start_session
             log "Astro frame admission opened"
         fi
         for _d in $DIRS $EXTRA; do
