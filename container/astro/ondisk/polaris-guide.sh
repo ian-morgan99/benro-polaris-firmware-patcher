@@ -27,6 +27,7 @@
 # ============================================================================
 set -u
 ASTRO=${ASTRO:-/app/astro}
+SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
 LOG=${LOG:-/app/sd/polaris-guide.log}
 DRY_RUN=${DRY_RUN:-1}
 INTERVAL=${INTERVAL:-30}              # seconds between checks
@@ -35,7 +36,11 @@ MAX_CORRECTION_DEG=${MAX_CORRECTION_DEG:-2.0}
 FOCAL=${FOCAL_MM:-400}
 LIVEVIEW_PORT=${LIVEVIEW_PORT:-8080}
 INDEXES=${INDEXES:-/app/sd/astrometry}
+INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
 MATCH_TOL=${MATCH_TOL:-2.5}
+GUIDE_HINT_RADIUS=${GUIDE_HINT_RADIUS:-60}
+MIN_MATCHES=${MIN_MATCHES:-12}
+MAX_SOLVE_RMS_PX=${MAX_SOLVE_RMS_PX:-3.0}
 MOUNT_HOST=${MOUNT_HOST:-127.0.0.1}
 MOUNT_PORT=${MOUNT_PORT:-9090}
 SIM_STATUS=${SIM_STATUS:-}
@@ -79,6 +84,15 @@ log() { echo "$(date +%H:%M:%S) $*" >> "$LOG"; echo "$(date +%H:%M:%S) $*" >&2; 
 
 idx_args() { for f in "$INDEXES"/index-*.fits; do [ -f "$f" ] && printf ' --index %s' "$f"; done; }
 
+solver_args() {
+    if [ "$SOLVER_BIN" = "polaris-solve" ]; then
+        idx_args
+    else
+        [ -f "$INDEPENDENT_CATALOG" ] || return 1
+        printf ' --catalog %s' "$INDEPENDENT_CATALOG"
+    fi
+}
+
 # CAPTURE_MODE=render is the SIMULATOR camera: ask the sim where it is REALLY
 # pointing and draw that patch of sky. Lets guiding be exercised with real motor
 # commands and no hardware.
@@ -93,9 +107,15 @@ grab() {
         _tdec=$(sed -n 's/.*"true_dec_deg": *\([-0-9.]*\).*/\1/p' /tmp/guide_sim.json)
         [ -n "$_tra" ] || return 1
         rm -f "$1"
-        "$ASTRO/polaris-skysim" $(idx_args) --ra "$_tra" --dec "$_tdec" \
-            --focal-mm "$FOCAL" --sensor-mm 36 --width 960 --height 640 \
-            --out "$1" >/dev/null 2>&1
+        if [ "$SOLVER_BIN" = "polaris-solve" ]; then
+            "$ASTRO/polaris-skysim" $(idx_args) --ra "$_tra" --dec "$_tdec" \
+                --focal-mm "$FOCAL" --sensor-mm 36 --width 960 --height 640 \
+                --out "$1" >/dev/null 2>&1
+        else
+            "$ASTRO/polaris-skysim-independent" --catalog "$INDEPENDENT_CATALOG" \
+                --ra "$_tra" --dec "$_tdec" --focal-mm "$FOCAL" --sensor-mm 36 \
+                --width 960 --height 640 --out "$1" >/dev/null 2>&1
+        fi
         [ -s "$1" ]
         return $?
     fi
@@ -116,11 +136,30 @@ anchor() {
     extract /tmp/guide_ref.jpg /tmp/guide_ref.txt
     W=$(sed -n 's/^# full resolution \([0-9]*\) x .*/\1/p' /tmp/guide_ref.txt)
     H=$(sed -n 's/^# full resolution [0-9]* x \([0-9]*\)/\1/p' /tmp/guide_ref.txt)
-    J=$("$ASTRO/polaris-solve" $(idx_args) --stars /tmp/guide_ref.txt \
-          --width "$W" --height "$H" --focal-mm "$FOCAL" --sensor-mm 36 \
-          --cpulimit 60 2>/dev/null | tail -1)
+    if [ "$SOLVER_BIN" = "polaris-solve" ]; then
+        J=$("$ASTRO/$SOLVER_BIN" $(solver_args) --stars /tmp/guide_ref.txt \
+              --width "$W" --height "$H" --focal-mm "$FOCAL" --sensor-mm 36 \
+              --cpulimit 60 --ra "$RA" --dec "$DEC" --radius "$GUIDE_HINT_RADIUS" \
+              2>/dev/null | tail -1)
+    else
+        J=$("$ASTRO/$SOLVER_BIN" --catalog "$INDEPENDENT_CATALOG" \
+              --stars /tmp/guide_ref.txt --width "$W" --height "$H" \
+              --focal-mm "$FOCAL" --sensor-mm 36 --ra "$RA" --dec "$DEC" \
+              --radius "$GUIDE_HINT_RADIUS" --cpulimit 60 2>/dev/null | tail -1)
+    fi
     echo "$J" | grep -q '"solved":true' || { log "  anchor solve failed"; return 1; }
+    if [ "$SOLVER_BIN" != "polaris-solve" ]; then
+        _matches=$(echo "$J" | sed -n 's/.*"matched_count":\([0-9]*\).*/\1/p')
+        _rms=$(echo "$J" | sed -n 's/.*"rms_px":\([-0-9.]*\).*/\1/p')
+        [ -n "$_matches" ] && [ "$_matches" -ge "$MIN_MATCHES" ] || {
+            log "  native anchor rejected: matched=${_matches:-missing} (need >=$MIN_MATCHES)"; return 1;
+        }
+        awk -v r="$_rms" -v m="$MAX_SOLVE_RMS_PX" 'BEGIN { exit !(r <= m) }' || {
+            log "  native anchor rejected: rms_px=${_rms:-missing} (limit $MAX_SOLVE_RMS_PX)"; return 1;
+        }
+    fi
     PIXSCALE=$(echo "$J" | sed -n 's/.*"pixscale_arcsec":\([0-9.]*\).*/\1/p')
+    [ -n "$PIXSCALE" ] || PIXSCALE=$(echo "$J" | sed -n 's/.*"scale_arcsec_per_px":\([0-9.]*\).*/\1/p')
     ARA=$(echo  "$J" | sed -n 's/.*"ra_deg":\([-0-9.]*\).*/\1/p')
     ADEC=$(echo "$J" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
     log "  anchored at ra=$ARA dec=$ADEC, pixel scale ${PIXSCALE}\"/px ($(grep -vc '^#' /tmp/guide_ref.txt) stars)"

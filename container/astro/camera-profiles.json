@@ -1,0 +1,5 @@
+{
+  "Pentax K-3 III": {"sensor_width_mm": 23.3, "sensor_class": "APS-C"},
+  "Pentax K-1 II": {"sensor_width_mm": 35.9, "sensor_class": "full-frame"},
+  "default": {"sensor_width_mm": 36.0, "sensor_class": "unknown-full-frame-assumption"}
+}

@@ -788,7 +788,9 @@ static void serve_snapshot(int fd) {
 /* ===========================================================================
  * Media gallery
  *
- * Captured JPEGs land on the Polaris SD next to us (docs/CAPTURE-PATH.md):
+ * Captured JPEGs land on the Polaris SD next to us (see
+ * docs/PLATE-SOLVE-CAPTURE-FLOW.md for the ownership and qualification
+ * boundary):
  *   /app/sd/{normal,starskyStack,HDR,panorama,focusStack,sun} and
  *   /app/sd/Lapse/class_* . We list them, serve a small cached colour thumbnail
  * per photo (polaris-extract --thumb), and stream the full frame on demand. The

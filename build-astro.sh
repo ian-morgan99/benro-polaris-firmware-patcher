@@ -3,7 +3,7 @@
 #  Build the on-device plate solver bundle (macOS / Linux).
 #
 #     ./build-astro.sh [--focal-min 14] [--focal-max 400] [--sensor-mm 36]
-#                      [--out DIR] [--no-indexes] [--image NAME]
+#                      [--out DIR] [--no-indexes] [--image NAME] [--catalog FILE]
 #                      [--src-cache DIR]
 #
 #  Produces out/astro-bundle/ :
@@ -29,7 +29,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FMIN=14; FMAX=400; SENSOR=36; OUT="$HERE/out/astro-bundle"; IMG="polaris-patcher"; WANT_IDX=1
+FMIN=14; FMAX=400; SENSOR=36; OUT="$HERE/out/astro-bundle"; IMG="polaris-patcher"; WANT_IDX=1; CATALOG=""
 # Persistent download cache. build_solver.sh defaults SRCCACHE to /work/src inside
 # the container, which is thrown away by --rm -- so today every rebuild re-downloads
 # astrometry.net and libjpeg, and (worse) the exact source that was compiled is
@@ -45,6 +45,7 @@ while [ $# -gt 0 ]; do
     --out) OUT="$2"; shift 2;;
     --no-indexes) WANT_IDX=0; shift;;
     --image) IMG="$2"; shift 2;;
+    --catalog) CATALOG="$2"; shift 2;;
     --src-cache) SRCCACHE_DIR="$2"; shift 2;;
     -h|--help) sed -n '2,27p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
@@ -68,12 +69,21 @@ docker run --rm \
   -v "$SRCCACHE_DIR":/work/src \
   -v "$OUT":/out \
   --entrypoint /bin/bash "$IMG" -c \
-  'bash /opt/patcher/astro/build_solver.sh arm /work/out/astro && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-astro && python3 /opt/patcher/astro/embed_webui.py /opt/patcher/astro/webui /tmp/webui.h && for t in polaris-logwatch polaris-match; do arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror /opt/patcher/astro/$t.c -o /work/out/astro/$t -lm || exit 1; done && arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror -I/tmp -I/opt/patcher/astro /opt/patcher/astro/polaris-httpd.c /opt/patcher/astro/polaris-link.c /opt/patcher/astro/polaris-jog.c /opt/patcher/astro/polaris-prog.c /opt/patcher/astro/polaris-astro.c -o /work/out/astro/polaris-httpd -lm && cp /work/out/astro/polaris-solve /work/out/astro/polaris-extract /work/out/astro/polaris-mount /work/out/astro/polaris-skysim /work/out/astro/polaris-httpd /work/out/astro/polaris-logwatch /work/out/astro/polaris-match /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/*.sh /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/site.conf.example /out/COPY-TO-SD-CARD-ROOT/polaris-astro/'
+  'bash /opt/patcher/astro/build_solver.sh arm /work/out/astro && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-astro && python3 /opt/patcher/astro/embed_webui.py /opt/patcher/astro/webui /tmp/webui.h && for t in polaris-logwatch polaris-match; do arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror /opt/patcher/astro/$t.c -o /work/out/astro/$t -lm || exit 1; done && arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror -I/tmp -I/opt/patcher/astro /opt/patcher/astro/polaris-httpd.c /opt/patcher/astro/polaris-link.c /opt/patcher/astro/polaris-jog.c /opt/patcher/astro/polaris-prog.c /opt/patcher/astro/polaris-astro.c -o /work/out/astro/polaris-httpd -lm && cp /work/out/astro/polaris-solve /work/out/astro/polaris-solve-independent /work/out/astro/polaris-exif-solve /work/out/astro/polaris-extract /work/out/astro/polaris-mount /work/out/astro/polaris-skysim /work/out/astro/polaris-skysim-independent /work/out/astro/polaris-httpd /work/out/astro/polaris-logwatch /work/out/astro/polaris-match /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/*.sh /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/site.conf.example /out/COPY-TO-SD-CARD-ROOT/polaris-astro/'
 
 if [ "$WANT_IDX" = "1" ]; then
   echo "[*] selecting + downloading index files for ${FMIN}-${FMAX}mm…"
   sh "$HERE/container/astro/fetch-indexes.sh" --focal-min "$FMIN" --focal-max "$FMAX" \
      --sensor-mm "$SENSOR" --out "$OUT/COPY-TO-SD-CARD-ROOT/astrometry"
+fi
+
+if [ -n "$CATALOG" ]; then
+  [ -f "$CATALOG" ] || { echo "error: catalogue not found: $CATALOG" >&2; exit 1; }
+  cp "$CATALOG" "$OUT/COPY-TO-SD-CARD-ROOT/polaris-astro/catalogue.polcat"
+  if [ -f "${CATALOG%.polcat}.json" ]; then
+    cp "${CATALOG%.polcat}.json" "$OUT/COPY-TO-SD-CARD-ROOT/polaris-astro/catalogue.manifest.json"
+  fi
+  echo "[*] bundled independent POLCAT01 catalogue: $CATALOG"
 fi
 
 # ----------------------------------------------------------------------------

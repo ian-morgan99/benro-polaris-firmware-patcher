@@ -26,10 +26,16 @@ mkdir -p "$DEST" "$INDEXES"
 # Every one of these is load-bearing for some feature, and a missing one fails
 # SILENTLY at runtime (the feature simply never happens), so they are checked
 # rather than best-effort copied.
-for b in polaris-solve polaris-extract polaris-mount polaris-httpd \
+for b in polaris-solve polaris-solve-independent polaris-exif-solve polaris-skysim-independent polaris-extract polaris-mount polaris-httpd \
          polaris-logwatch polaris-match; do
     [ -f "$SRC/$b" ] || { echo "[astro] MISSING $SRC/$b" >&2; exit 1; }
     cp "$SRC/$b" "$DEST/$b"; chmod +x "$DEST/$b"
+done
+# A native solve is not usable without its separately versioned POLCAT01 data.
+# Keep this optional so the Astrometry.net-only bundle remains installable, but
+# copy the catalogue and manifest when the bundle contains them.
+for f in catalogue.polcat catalogue.manifest.json; do
+    [ -f "$SRC/$f" ] && cp "$SRC/$f" "$DEST/$f"
 done
 # optional: only needed for simulated-sky testing
 [ -f "$SRC/polaris-skysim" ] && { cp "$SRC/polaris-skysim" "$DEST"/; chmod +x "$DEST/polaris-skysim"; }

@@ -5,7 +5,7 @@
 #     polaris-align.sh <image.jpg> [focal_mm] [ra_hint dec_hint radius_deg]
 #
 #  Chains our two binaries: polaris-extract (JPEG -> star list) and
-#  polaris-solve (star list -> RA/Dec/roll/scale). Prints the solver's JSON on
+#  selected solver (star list -> RA/Dec/roll/scale). Prints the solver's JSON on
 #  stdout and nothing else, so a caller can parse it.
 #
 #  Defaults assume the Polaris' own layout:
@@ -14,6 +14,8 @@
 #     INDEXES=/app/sd/astrometry   index files (on the microSD)
 #     SENSOR_MM=36              full frame
 #  Override any of them with environment variables.
+#  SOLVER_BIN=polaris-solve-independent selects the alternate solver when it is
+#  installed; the Astrometry.net solver remains the default.
 #
 #  A position hint is worth ~50x on a narrow field -- MEASURED ON THE DEVICE:
 #  a 4.5 deg field (400mm on full frame) solves in 7.3 s with a 15 deg hint and
@@ -23,11 +25,27 @@
 # ============================================================================
 ASTRO=${ASTRO:-/app/astro}
 INDEXES=${INDEXES:-/app/sd/astrometry}
-SENSOR_MM=${SENSOR_MM:-36}
+SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
+CAMERA_MODEL=${CAMERA_MODEL:-}
+SENSOR_MM=${SENSOR_MM:-}
 DOWNSAMPLE=${DOWNSAMPLE:-4}
 MAXSTARS=${MAXSTARS:-200}
 # never let one frame block the loop; a mismatched hint can grind for minutes
 SOLVE_TIMEOUT=${SOLVE_TIMEOUT:-45}
+
+# EXIF currently supplies focal length. Sensor width is normally a camera-model
+# property rather than an EXIF field, so resolve a conservative profile unless
+# the caller supplied an explicit override.
+if [ -z "$SENSOR_MM" ]; then
+    case "$CAMERA_MODEL" in
+        *K-3*|*K3*) SENSOR_MM=23.3; SENSOR_SOURCE=camera-model-profile ;;
+        *K-1*|*K1*) SENSOR_MM=35.9; SENSOR_SOURCE=camera-model-profile ;;
+        *) SENSOR_MM=36; SENSOR_SOURCE=default-unknown ;;
+    esac
+else
+    SENSOR_SOURCE=override
+fi
+echo "[polaris-align] sensor width: ${SENSOR_MM}mm (${SENSOR_SOURCE})${CAMERA_MODEL:+ model=$CAMERA_MODEL}" >&2
 
 IMG="$1"
 FOCAL="${2:-}"
@@ -36,6 +54,28 @@ RA="${3:-}"; DEC="${4:-}"; RADIUS="${5:-}"
 [ -n "$IMG" ] || { echo "usage: $0 <image.jpg> [focal_mm] [ra dec radius]" >&2; exit 2; }
 [ -f "$IMG" ] || { echo "no such image: $IMG" >&2; exit 2; }
 [ -x "$ASTRO/polaris-extract" ] || { echo "missing $ASTRO/polaris-extract" >&2; exit 2; }
+[ -x "$ASTRO/$SOLVER_BIN" ] || { echo "missing solver $ASTRO/$SOLVER_BIN (set SOLVER_BIN=polaris-solve or install the alternate solver)" >&2; exit 2; }
+
+EMBED_SOLVE_EXIF=${EMBED_SOLVE_EXIF:-1}
+embed_solve_exif() {
+    _result=$1
+    [ "$EMBED_SOLVE_EXIF" = "1" ] || return 0
+    [ -x "$ASTRO/polaris-exif-solve" ] || { echo "[polaris-align] EXIF writer unavailable; leaving image unchanged" >&2; return 0; }
+    _meta=$(mktemp /tmp/polaris-solve-meta.XXXXXX) || return 0
+    _tmp="${IMG}.polaris-exif.tmp"
+    printf '{"polaris_solve":%s,"focal_mm":%s,"sensor_width_mm":%s,"sensor_source":"%s"}\n' \
+        "$_result" "${EXIF_FOCAL:-${FOCAL:-0}}" "$SENSOR_MM" "$SENSOR_SOURCE" > "$_meta"
+    if "$ASTRO/polaris-exif-solve" --in "$IMG" --out "$_tmp" --json "$_meta" 2>/dev/null \
+       && [ -s "$_tmp" ]; then
+        mv "$_tmp" "$IMG"
+        echo "[polaris-align] embedded validated solve in EXIF: $IMG" >&2
+    else
+        rm -f "$_tmp" 2>/dev/null
+        echo "[polaris-align] EXIF embedding failed; original image preserved" >&2
+    fi
+    rm -f "$_meta" 2>/dev/null
+}
+emit_solution() { embed_solve_exif "$1"; echo "$1"; }
 
 # ---- derive a pointing hint from the mount if we were not given one --------
 MOUNT_HINT=${MOUNT_HINT:-1}
@@ -72,7 +112,12 @@ for f in "$INDEXES"/index-*.fits; do
     [ -f "$f" ] || continue
     IDXARGS="$IDXARGS --index $f"
 done
-[ -n "$IDXARGS" ] || { echo "no index files in $INDEXES" >&2; exit 2; }
+if [ "$SOLVER_BIN" = "polaris-solve" ]; then
+    [ -n "$IDXARGS" ] || { echo "no Astrometry.net index files in $INDEXES" >&2; exit 2; }
+else
+    [ -n "${INDEPENDENT_CATALOG:-}" ] || { echo "independent solver requires INDEPENDENT_CATALOG" >&2; exit 2; }
+    [ -f "$INDEPENDENT_CATALOG" ] || { echo "missing independent catalogue $INDEPENDENT_CATALOG" >&2; exit 2; }
+fi
 
 STARS=$(mktemp /tmp/polaris-stars.XXXXXX) || exit 1
 trap 'rm -f "$STARS"' EXIT
@@ -137,11 +182,18 @@ FOCAL_OVERRIDE=${FOCAL_OVERRIDE:-}
 
 solve_with() {
     _scale=$1
+    if [ "$SOLVER_BIN" != "polaris-solve" ]; then
+        [ -n "$_scale" ] || { echo '{"solved":false,"failure_reason":"focal_length_required"}'; return 1; }
+        set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" --cpulimit "$SOLVE_TIMEOUT" $_scale
+        [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
+        "$ASTRO/$SOLVER_BIN" "$@"
+        return $?
+    fi
     set -- $IDXARGS --stars "$STARS" --width "$W" --height "$H" --cpulimit "$SOLVE_TIMEOUT"
     [ -n "$_scale" ] && set -- "$@" $_scale
     [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
         set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
-    "$ASTRO/polaris-solve" "$@"
+    "$ASTRO/$SOLVER_BIN" "$@"
 }
 
 # arcsec/pixel bounds implied by the focal range. Long lens -> small scale.
@@ -162,7 +214,7 @@ if [ -n "$FOCAL_OVERRIDE" ]; then
     fi
     TRIED="${FOCAL_OVERRIDE}mm (manual)"
     OUT=$(solve_with "--focal-mm $FOCAL_OVERRIDE --sensor-mm $SENSOR_MM")
-    case "$OUT" in *'"solved":true'*) echo "$OUT"; exit 0;; esac
+    case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
 elif [ -n "$EXIF_FOCAL" ]; then
     if [ -n "$FOCAL" ] && [ "$FOCAL" != "$EXIF_FOCAL" ]; then
         echo "[polaris-align] focal: EXIF says ${EXIF_FOCAL}mm, config says ${FOCAL}mm -- trusting EXIF" >&2
@@ -171,12 +223,12 @@ elif [ -n "$EXIF_FOCAL" ]; then
     fi
     TRIED="${EXIF_FOCAL}mm (exif)"
     OUT=$(solve_with "--focal-mm $EXIF_FOCAL --sensor-mm $SENSOR_MM")
-    case "$OUT" in *'"solved":true'*) echo "$OUT"; exit 0;; esac
+    case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
 elif [ -n "$CACHED_FOCAL" ]; then
     echo "[polaris-align] no EXIF (live view?) -- using ${CACHED_FOCAL}mm from the last frame that had it" >&2
     TRIED="${CACHED_FOCAL}mm (cached)"
     OUT=$(solve_with "--focal-mm $CACHED_FOCAL --sensor-mm $SENSOR_MM")
-    case "$OUT" in *'"solved":true'*) echo "$OUT"; exit 0;; esac
+    case "$OUT" in *'"solved":true'*) emit_solution "$OUT"; exit 0;; esac
     # a cached focal that no longer solves is worse than none -- drop it so we
     # do not pay for it on every subsequent frame
     rm -f "$FOCAL_CACHE" 2>/dev/null
@@ -187,8 +239,10 @@ elif [ -n "$FOCAL" ]; then
     case "$OUT" in *'"solved":true'*) echo "$OUT"; exit 0;; esac
 fi
 
+[ "$SOLVER_BIN" != "polaris-solve" ] && { echo '{"solved":false,"failure_reason":"independent_solver_needs_known_focal"}'; exit 6; }
 [ -n "$TRIED" ] && echo "[polaris-align] $TRIED did not solve -- retrying across ${FOCAL_MIN}-${FOCAL_MAX}mm" >&2
 [ -n "$TRIED" ] || echo "[polaris-align] no focal known -- searching ${FOCAL_MIN}-${FOCAL_MAX}mm" >&2
-exec "$ASTRO/polaris-solve" $(range_args) $IDXARGS --stars "$STARS" \
+OUT=$("$ASTRO/$SOLVER_BIN" $(range_args) $IDXARGS --stars "$STARS" \
      --width "$W" --height "$H" --cpulimit "$RANGE_TIMEOUT" \
-     ${RA:+--ra "$RA"} ${DEC:+--dec "$DEC"} ${RADIUS:+--radius "$RADIUS"}
+     ${RA:+--ra "$RA"} ${DEC:+--dec "$DEC"} ${RADIUS:+--radius "$RADIUS"})
+case "$OUT" in *'"solved":true'*) emit_solution "$OUT";; *) echo "$OUT";; esac

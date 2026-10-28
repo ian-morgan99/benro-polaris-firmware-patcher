@@ -33,6 +33,15 @@ FOCAL_MIN=8
 FOCAL_MAX=3000
 RANGE_TIMEOUT=240
 
+# Solver selection. Astrometry.net remains the default/reference path. The
+# native solver is opt-in until a real Gaia corpus and the target ARM runtime
+# have been qualified. Its catalogue is a POLCAT01 file supplied beside the
+# binaries on the microSD.
+SOLVER_BIN=polaris-solve
+INDEPENDENT_CATALOG=/app/sd/polaris-astro/catalogue.polcat
+# CAMERA_MODEL=K-3-III
+# SENSOR_MM=23.3
+
 # ---- web UI + Alpaca ------------------------------------------------------
 # 8080 is pgphoto's own MJPG stream; 80, 8081, 9090 and 22 are also taken.
 POLARIS_HTTPD_PORT=8090
@@ -56,6 +65,7 @@ AUTOSOLVE_DRY_RUN=1
 # for you -- a wrong alignment is worse than no alignment.
 MIN_LOGODDS=100
 MIN_MATCHES=12
+MAX_SOLVE_RMS_PX=3.0
 
 # How well centred before it will confirm (deg). 0.15 is ~9 arcmin.
 CENTRE_TOL_DEG=0.15

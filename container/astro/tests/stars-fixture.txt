@@ -1,0 +1,6 @@
+# x y flux; generated from the catalogue fixture with scale 10 px/degree
+500 400 100
+501 400 90
+500 401 80
+501 401 70
+499 400 60

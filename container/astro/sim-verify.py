@@ -76,6 +76,8 @@ def main():
     ap.add_argument("--skysim", default="./polaris-skysim")
     ap.add_argument("--extract", default="./polaris-extract")
     ap.add_argument("--solve", default="./polaris-solve")
+    ap.add_argument("--solver-independent", default=None,
+                    help="optional alternate solver used instead of --solve")
     ap.add_argument("--index", action="append", default=[])
     ap.add_argument("--focal-mm", type=float, default=400.0)
     ap.add_argument("--cam-width", type=int, default=8192)
@@ -87,6 +89,8 @@ def main():
     tmpdir = tempfile.mkdtemp(prefix="polaris-simcam-")
     if a.camera and not a.index:
         print("--camera needs at least one --index"); return 2
+    if a.solver_independent:
+        a.solve = a.solver_independent
     sim = subprocess.Popen(
         [sys.executable, a.sim, "--port", str(a.port), "--status-port", str(a.status_port),
          "--lat", str(a.lat), "--lon", str(a.lon), "--az-error", str(a.az_error),

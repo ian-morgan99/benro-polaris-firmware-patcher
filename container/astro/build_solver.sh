@@ -187,6 +187,22 @@ $CC $CFLAGS -I"$JPEGBUILD" -I"$JPEGSRC" -o "$OUT/polaris-skysim" \
    || die "polaris-skysim link failed"
 log "  linked $OUT/polaris-skysim ($(stat -c %s "$OUT/polaris-skysim") bytes)"
 
+# ---- independent catalogue renderer: native, no Python/Pillow ------------
+$CC -O2 $ARCHFLAGS -I"$JPEGBUILD" -I"$JPEGSRC" -o "$OUT/polaris-skysim-independent" \
+   "$HERE/polaris-skysim-independent.c" "$JPEGBUILD/.libs/libjpeg.a" -lm \
+   || die "independent skysim link failed"
+log "  linked $OUT/polaris-skysim-independent ($(stat -c %s "$OUT/polaris-skysim-independent") bytes)"
+
+$CC -O2 $ARCHFLAGS -o "$OUT/polaris-solve-independent" \
+   "$HERE/polaris-solve-independent.c" -lm \
+   || die "independent solver link failed"
+log "  linked $OUT/polaris-solve-independent ($(stat -c %s "$OUT/polaris-solve-independent") bytes)"
+
+$CC -O2 $ARCHFLAGS -o "$OUT/polaris-exif-solve" \
+   "$HERE/polaris-exif-solve.c" \
+   || die "EXIF solve writer link failed"
+log "  linked $OUT/polaris-exif-solve ($(stat -c %s "$OUT/polaris-exif-solve") bytes)"
+
 # ---- polaris-mount: the mount protocol client (MIT, no dependencies) ------
 $CC -O2 $ARCHFLAGS -o "$OUT/polaris-mount" "$HERE/polaris-mount.c" -lm \
   || die "polaris-mount link failed"

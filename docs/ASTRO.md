@@ -9,6 +9,11 @@ laptop in the field.
 > [What is and is not verified](#what-is-and-is-not-verified). Read that section
 > before trusting this on a night you care about.
 
+The authoritative capture/storage/solve safety contract is
+[Plate-solving capture flow and safety contract](PLATE-SOLVE-CAPTURE-FLOW.md).
+In particular, not every JPEG captured by an Astro programme currently enters
+the solver automatically, and EXIF updates affect only the Polaris-side copy.
+
 ---
 
 ## What it does
@@ -181,15 +186,17 @@ lens solvable; that needs finer indexes — see `fetch-indexes.sh`.
 
 ---
 
-## Capture: images land on BOTH cards
+## Capture: supported full-frame transfers can land on BOTH cards
 
-The patcher configures capture so a frame is written to the **camera's own
-memory card** *and* downloaded to the **Polaris microSD**. The RAW stays on the
-camera; only the JPEG (~9.4 MB) crosses the wire, which is all the solver needs.
+On the specifically qualified camera/firmware path, a frame is written to the
+**camera's own memory card** and a JPEG is downloaded to the **Polaris microSD**.
+The RAW stays on the camera; the transferred JPEG is what the solver needs.
+This is not a guarantee for every camera model or every Astro capture
+programme: transfer completion must be proven before a local frame is queued.
 
 This required fixing two upstream libgphoto2 bugs — see
 [UPSTREAM-LIBGPHOTO2-BUGS.md](UPSTREAM-LIBGPHOTO2-BUGS.md) and
-[CAPTURE-PATH.md](CAPTURE-PATH.md). Measured announcement latency is ~0.94 s
+[PLATE-SOLVING-CAPTURE-FLOW.md](PLATE-SOLVING-CAPTURE-FLOW.md). Measured announcement latency is ~0.94 s
 against pgphoto's 7.03 s budget.
 
 ---
@@ -448,7 +455,7 @@ no head, camera, or focuser.
 
 ### Media gallery
 
-Captured JPEGs land on the Polaris SD (see [CAPTURE-PATH.md](CAPTURE-PATH.md))
+Captured JPEGs land on the Polaris SD (see [Plate-solving capture flow and safety contract](PLATE-SOLVE-CAPTURE-FLOW.md))
 under `/app/sd/{normal,starskyStack,HDR,panorama,focusStack,sun}` and
 `/app/sd/Lapse/class_*`. The **Gallery** tab browses them. The head exposes no
 thumbnail endpoint — the phone app pulls whole ~9 MB frames one at a time — so,
@@ -729,10 +736,14 @@ It refuses to start in two cases, both deliberate:
 - **The mount is not aligned** — guiding issues slews, and slewing against an
   unknown pointing is worse than drifting.
 
-Corrections are small slews rather than rate adjustments, because the mount
-exposes no axis-rate primitive. `GUIDE=1` in `site.conf` additionally lets
-autosolve start the guider by itself after a successful alignment; left at 0,
-guiding only happens when you press the button.
+Corrections are currently small slews rather than rate adjustments because no
+axis-rate primitive is exposed or qualified in the current Astro runtime.
+PrivateResearch Issue #3 (implementation tracked in patcher issue #240)
+investigates exposing the Polaris MCU's existing per-axis float-rate
+path; it is a separate firmware-specific qualification gate. `GUIDE=1` in
+`site.conf` additionally lets autosolve start the guider by itself after a
+successful alignment; left at 0, guiding only happens when you press the
+button.
 
 ---
 
@@ -981,8 +992,8 @@ error. A clock fault would show as ~105° of RA, not fractions of a degree.
   a real alignment. That run has not happened yet.
 - **Any camera other than the R5 Mark II**, and any firmware other than 4.0.0.32.
 - **The camera cold-start delay is NOT fixed.** After a cold start
-  `gp_camera_init` times out on PTP for minutes and shots fail until it clears.
-  Diagnosed, not solved — see [CAPTURE-PATH.md](CAPTURE-PATH.md). Three
+`gp_camera_init` times out on PTP for minutes and shots fail until it clears.
+  Diagnosed, not solved — see [PLATE-SOLVING-CAPTURE-FLOW.md](PLATE-SOLVING-CAPTURE-FLOW.md). Three
   plausible-looking fixes were tried and disproved by the logs.
 - **Concurrent AP+station across two BANDS crashes the firmware.** Same channel
   works; different bands takes the whole device down. See
@@ -1003,8 +1014,10 @@ what previously sent a night's debugging in the wrong direction.
   will eventually degrade matching, at which point the guider re-anchors with a
   full solve rather than correcting wrongly. That is the intended failure mode,
   not a silent one.
-- **Corrections are small slews, not rate adjustments.** No axis-rate primitive
-  is exposed by the mount, so a guide correction is a `goto-radec`.
+- **Corrections are currently small slews, not rate adjustments.** PrivateResearch
+  Issue #3 (implementation tracked in patcher issue #240) is
+  the planned independent-axis-rate path, but it is not yet exposed or
+  hardware-qualified by this runtime.
 - **Live view is 960×640** and that is the ceiling: Canon exposes no live-view
   size control through libgphoto2 2.5.34 (`liveviewsize` is a Nikon property).
 

@@ -51,6 +51,12 @@ SITE=/app/sd/polaris-astro/site.conf
     done
     if [ -f "$SITE" ]; then
         . "$SITE"
+        # These are deliberately exported: the daemons are started with setsid
+        # below, so a variable merely sourced into this shell would otherwise
+        # disappear at the process boundary.  This is what makes the solver
+        # selector and independent catalogue apply consistently to autosolve,
+        # guiding, and the HTTP-launched guider.
+        export SOLVER_BIN INDEPENDENT_CATALOG CAMERA_MODEL SENSOR_MM
         echo "site.conf loaded after ${i} tries (lat=$LAT lon=$LON focal=$FOCAL)"
     else
         echo "no $SITE after ${i} tries -- microSD not mounted?"
@@ -150,7 +156,7 @@ SITE=/app/sd/polaris-astro/site.conf
             # Every binary the daemons need. polaris-logwatch is autosolve's
             # trigger detector and polaris-match is the guider's drift
             # measurement -- omit either and the feature silently does nothing.
-            for _b in polaris-httpd polaris-solve polaris-extract \
+            for _b in polaris-httpd polaris-solve polaris-solve-independent polaris-exif-solve polaris-skysim-independent polaris-extract \
                       polaris-logwatch polaris-match polaris-skysim \
                       polaris-mount; do
                 [ -f "/app/sd/polaris-astro/$_b" ] \
@@ -272,12 +278,16 @@ SITE=/app/sd/polaris-astro/site.conf
         echo "starting autosolve (dry_run=${AUTOSOLVE_DRY_RUN:-1} focal=${FOCAL}mm)"
         LAT="$LAT" LON="$LON" FOCAL_MM="$FOCAL" \
         DRY_RUN="${AUTOSOLVE_DRY_RUN:-1}" \
+        SOLVER_BIN="${SOLVER_BIN:-polaris-solve}" \
+        INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
+        CAMERA_MODEL="${CAMERA_MODEL:-}" SENSOR_MM="${SENSOR_MM:-}" \
         STUB_FRAME="${STUB_FRAME:-}" STUB_UTC="${STUB_UTC:-}" \
         GUIDE="${GUIDE:-0}" GUIDE_DRY_RUN="${GUIDE_DRY_RUN:-1}" \
         GUIDE_ON_TRACK="${GUIDE_ON_TRACK:-1}" \
         GUIDE_INTERVAL="${GUIDE_INTERVAL:-30}" GUIDE_THRESH="${GUIDE_THRESH:-60}" \
         CENTRE_TOL_DEG="${CENTRE_TOL_DEG:-0.15}" MAX_ALIGN_ALT="${MAX_ALIGN_ALT:-65}" \
         MIN_LOGODDS="${MIN_LOGODDS:-100}" MIN_MATCHES="${MIN_MATCHES:-12}" \
+        MAX_SOLVE_RMS_PX="${MAX_SOLVE_RMS_PX:-3.0}" \
         FOCAL_MIN="${FOCAL_MIN:-8}" FOCAL_MAX="${FOCAL_MAX:-3000}" \
         RANGE_TIMEOUT="${RANGE_TIMEOUT:-240}" KEEP_FAILED="${KEEP_FAILED:-20}" \
         setsid sh "$ASTRO/polaris-autosolve.sh" </dev/null >/tmp/autosolve.out 2>&1 &

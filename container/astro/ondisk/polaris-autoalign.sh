@@ -54,6 +54,8 @@
 # ============================================================================
 ASTRO=${ASTRO:-/app/astro}
 INDEXES=${INDEXES:-/app/sd/astrometry}
+SOLVER_BIN=${SOLVER_BIN:-polaris-solve}
+INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
 # Where the app drops a captured frame depends on which mode it is in:
 #   /app/sd/normal          single shots
 #   /app/sd/starskyStack    star/astro stacking
@@ -96,9 +98,18 @@ DRY_RUN=${DRY_RUN:-0}
 log() { msg="$(date -u '+%H:%M:%S') $*"; echo "$msg" >> "$LOG"; echo "$msg" >&2; }
 
 [ -n "${LAT:-}" ] && [ -n "${LON:-}" ] || { echo "set LAT and LON" >&2; exit 2; }
-[ -x "$ASTRO/polaris-solve" ] || { echo "missing $ASTRO/polaris-solve" >&2; exit 2; }
+[ -x "$ASTRO/$SOLVER_BIN" ] || { echo "missing solver $ASTRO/$SOLVER_BIN" >&2; exit 2; }
 
 idx_args() { for f in "$INDEXES"/index-*.fits; do [ -f "$f" ] && printf ' --index %s' "$f"; done; }
+
+solver_args() {
+    if [ "$SOLVER_BIN" = "polaris-solve" ]; then
+        idx_args
+    else
+        [ -f "$INDEPENDENT_CATALOG" ] || return 1
+        printf ' --catalog %s' "$INDEPENDENT_CATALOG"
+    fi
+}
 
 # ---- fire the shutter, wait for the frame to land -------------------------
 capture() {
@@ -127,10 +138,18 @@ capture() {
         rdec=$(awk -v d="$rdec" -v o="${RENDER_OFFSET_DEC:-0}" 'BEGIN{printf "%.6f", d+o}')
         [ -n "$rra" ] && [ -n "$rdec" ] || { log "no pose to render from"; return 1; }
         log "rendering the sky at ra=$rra dec=$rdec (no camera involved)"
-        "$ASTRO/polaris-skysim" $(idx_args) --ra "$rra" --dec "$rdec" \
-            --focal-mm "$FOCAL_MM" --sensor-mm "$SENSOR_MM" \
-            --width "${RENDER_W:-4096}" --height "${RENDER_H:-2732}" \
-            --out "$out" >/dev/null 2>&1 || { log "render failed"; return 1; }
+        if [ "$SOLVER_BIN" = "polaris-solve" ]; then
+            "$ASTRO/polaris-skysim" $(idx_args) --ra "$rra" --dec "$rdec" \
+                --focal-mm "$FOCAL_MM" --sensor-mm "$SENSOR_MM" \
+                --width "${RENDER_W:-4096}" --height "${RENDER_H:-2732}" \
+                --out "$out" >/dev/null 2>&1 || { log "render failed"; return 1; }
+        else
+            "$ASTRO/polaris-skysim-independent" --catalog "$INDEPENDENT_CATALOG" \
+                --ra "$rra" --dec "$rdec" --focal-mm "$FOCAL_MM" \
+                --sensor-mm "$SENSOR_MM" --width "${RENDER_W:-4096}" \
+                --height "${RENDER_H:-2732}" --out "$out" >/dev/null 2>&1 \
+                || { log "render failed"; return 1; }
+        fi
         echo "$out"; return 0
     fi
     before=$(newest_frame)
@@ -199,9 +218,16 @@ solve_frame() {
     H=$(sed -n 's/^# full resolution [0-9]* x \([0-9]*\)/\1/p' "$stars")
     [ -n "$W" ] && [ -n "$H" ] || { rm -f "$stars"; return 1; }
 
-    sol=$("$ASTRO/polaris-solve" $(idx_args) --stars "$stars" --width "$W" --height "$H" \
-          --focal-mm "$FOCAL_MM" --sensor-mm "$SENSOR_MM" --scale-tol 0.35 \
-          --cpulimit "$SOLVE_TIMEOUT" $hint 2>/dev/null)
+    if [ "$SOLVER_BIN" = "polaris-solve" ]; then
+        sol=$("$ASTRO/$SOLVER_BIN" $(solver_args) --stars "$stars" --width "$W" --height "$H" \
+              --focal-mm "$FOCAL_MM" --sensor-mm "$SENSOR_MM" --scale-tol 0.35 \
+              --cpulimit "$SOLVE_TIMEOUT" $hint 2>/dev/null)
+    else
+        [ -n "$FOCAL_MM" ] || { rm -f "$stars"; log "native solver needs focal length"; return 1; }
+        sol=$("$ASTRO/$SOLVER_BIN" --catalog "$INDEPENDENT_CATALOG" --stars "$stars" \
+              --width "$W" --height "$H" --focal-mm "$FOCAL_MM" --sensor-mm "$SENSOR_MM" \
+              --cpulimit "$SOLVE_TIMEOUT" $hint 2>/dev/null)
+    fi
     rm -f "$stars"
     echo "$sol" | grep -q '"solved":true' || { log "no solve: $sol"; return 1; }
 
@@ -209,12 +235,16 @@ solve_frame() {
     dec=$(echo "$sol" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
     lo=$(echo  "$sol" | sed -n 's/.*"logodds":\([-0-9.]*\).*/\1/p')
     nm=$(echo  "$sol" | sed -n 's/.*"nmatch":\([0-9]*\).*/\1/p')
-
-    # Quality gate. A BAD solve pushed into 530 corrupts a good compass
-    # alignment -- strictly worse than doing nothing. So refuse anything
-    # marginal and leave the user's own confirm standing.
-    if [ "$(echo "$lo" | cut -d. -f1)" -lt "$MIN_LOGODDS" ] 2>/dev/null || \
-       [ "${nm:-0}" -lt "$MIN_MATCHES" ] 2>/dev/null; then
+    if [ "$SOLVER_BIN" != "polaris-solve" ]; then
+        nm=$(echo "$sol" | sed -n 's/.*"matched_count":\([0-9]*\).*/\1/p')
+        rms=$(echo "$sol" | sed -n 's/.*"rms_px":\([-0-9.]*\).*/\1/p')
+        if [ "${nm:-0}" -lt "$MIN_MATCHES" ] 2>/dev/null || \
+           [ -z "$rms" ] || ! awk -v r="$rms" -v m="${MAX_SOLVE_RMS_PX:-3.0}" 'BEGIN { exit !(r <= m) }'; then
+            log "REJECTED by quality gate: matched=$nm rms_px=${rms:-missing} (need >=$MIN_MATCHES and rms <=${MAX_SOLVE_RMS_PX:-3.0})"
+            return 1
+        fi
+    elif [ "$(echo "$lo" | cut -d. -f1)" -lt "$MIN_LOGODDS" ] 2>/dev/null || \
+         [ "${nm:-0}" -lt "$MIN_MATCHES" ] 2>/dev/null; then
         log "REJECTED by quality gate: logodds=$lo nmatch=$nm (need >=$MIN_LOGODDS/$MIN_MATCHES)"
         return 1
     fi

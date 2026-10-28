@@ -19,7 +19,8 @@
 #        will not let the user take a full frame anyway, so we cannot rely on
 #        one existing)
 #     2. solve it, hinted by the 519 target
-#     3. if the live-view solve fails, fire a FULL capture and solve that
+#     3. if the live-view solve fails, leave the dialog alone; the user can
+#        confirm manually or take a separate full frame and run solve-now.sh
 #     4. on a good solve, correct the heading (527, via polaris-mount align)
 #     5. confirm for the user (530 step:2 with the 519 values), dismissing
 #        the dialog
@@ -36,6 +37,7 @@ DRY_RUN=${DRY_RUN:-1}
 FOCAL=${FOCAL_MM:-400}
 MIN_LOGODDS=${MIN_LOGODDS:-100}
 MIN_MATCHES=${MIN_MATCHES:-12}
+MAX_SOLVE_RMS_PX=${MAX_SOLVE_RMS_PX:-3.0}
 LIVEVIEW_PORT=${LIVEVIEW_PORT:-8080}
 
 # ---- TEST MODE -------------------------------------------------------------
@@ -325,11 +327,31 @@ solve_frame() {
 
 good_solve() {
     echo "$1" | grep -q '"solved":true' || return 1
+    if [ "${SOLVER_BIN:-polaris-solve}" != "polaris-solve" ]; then
+        _nm=$(echo "$1" | sed -n 's/.*"matched_count":\([0-9]*\).*/\1/p')
+        _rms=$(echo "$1" | sed -n 's/.*"rms_px":\([-0-9.]*\).*/\1/p')
+        [ -n "$_nm" ] && [ "$_nm" -ge "$MIN_MATCHES" ] || return 1
+        [ -n "$_rms" ] || return 1
+        awk -v r="$_rms" -v m="$MAX_SOLVE_RMS_PX" 'BEGIN { exit !(r <= m) }'
+        return $?
+    fi
     _lo=$(echo "$1" | sed -n 's/.*"logodds":\([0-9.]*\).*/\1/p')
     _nm=$(echo "$1" | sed -n 's/.*"nmatch":\([0-9]*\).*/\1/p')
     [ -n "$_lo" ] && [ -n "$_nm" ] || return 1
     # integer compare; logodds is large when the solve is real
     [ "${_lo%%.*}" -ge "$MIN_LOGODDS" ] && [ "$_nm" -ge "$MIN_MATCHES" ]
+}
+
+record_solution() {
+    _s=$1
+    LAST_SOLVED_RA=$(echo "$_s" | sed -n 's/.*"ra_deg":\([-0-9.]*\).*/\1/p')
+    LAST_SOLVED_DEC=$(echo "$_s" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
+    LAST_SOLVED_ROTATION=$(echo "$_s" | sed -n 's/.*"rotation_deg":\([-0-9.]*\).*/\1/p')
+    LAST_SOLVED_SCALE=$(echo "$_s" | sed -n 's/.*"scale_arcsec_per_px":\([-0-9.]*\).*/\1/p')
+    LAST_SOLVED_MATCHES=$(echo "$_s" | sed -n 's/.*"matched_count":\([0-9]*\).*/\1/p')
+    LAST_SOLVED_JSON=/tmp/polaris-last-solution.json
+    printf '%s\n' "$_s" > "$LAST_SOLVED_JSON"
+    log "SOLVED ra=$LAST_SOLVED_RA dec=$LAST_SOLVED_DEC rotation=${LAST_SOLVED_ROTATION:-unknown} scale=${LAST_SOLVED_SCALE:-unknown} matches=${LAST_SOLVED_MATCHES:-unknown}"
 }
 
 
@@ -583,7 +605,7 @@ handle_arm() {
     # everything downstream of the pixels.
     if [ -n "$STUB_FRAME" ]; then
         log "STUB: solving $STUB_FRAME (utc=${STUB_UTC:-now})"
-        _sol=$(solve_frame "$STUB_FRAME" "" "")
+        _sol=$(solve_frame "$STUB_FRAME" "$_hra" "$_hdec")
         if good_solve "$_sol"; then
             log "stub solve OK"
         else
@@ -591,10 +613,8 @@ handle_arm() {
             log "  solver said: $(echo "$_sol" | tail -c 200)"
             return 1
         fi
-        _ra=$(echo  "$_sol" | sed -n "s/.*\"ra_deg\":\([-0-9.]*\).*/\1/p")
-        _dec=$(echo "$_sol" | sed -n "s/.*\"dec_deg\":\([-0-9.]*\).*/\1/p")
-        log "SOLVED ra=$_ra dec=$_dec"
-    LAST_SOLVED_RA="$_ra"; LAST_SOLVED_DEC="$_dec"
+        record_solution "$_sol"
+        _ra="$LAST_SOLVED_RA"; _dec="$LAST_SOLVED_DEC"
         apply_correction "$_ra" "$_dec" "$_yaw" "$_pitch"
         return $?
     fi
@@ -638,10 +658,8 @@ handle_arm() {
         return 1
     fi
 
-    _ra=$(echo  "$_sol" | sed -n 's/.*"ra_deg":\([-0-9.]*\).*/\1/p')
-    _dec=$(echo "$_sol" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
-    log "SOLVED ra=$_ra dec=$_dec"
-    LAST_SOLVED_RA="$_ra"; LAST_SOLVED_DEC="$_dec"
+    record_solution "$_sol"
+    _ra="$LAST_SOLVED_RA"; _dec="$LAST_SOLVED_DEC"
 
     apply_correction "$_ra" "$_dec" "$_yaw" "$_pitch" "$_fep"
     return $?
@@ -660,8 +678,12 @@ start_guiding() {
     fi
     log "starting the guider on ra=$1 dec=$2 (dry_run=${GUIDE_DRY_RUN:-$DRY_RUN})"
     LAT="$LAT" LON="$LON" FOCAL_MM="$FOCAL" \
+    SOLVER_BIN="${SOLVER_BIN:-polaris-solve}" \
+    INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
+    CAMERA_MODEL="${CAMERA_MODEL:-}" SENSOR_MM="${SENSOR_MM:-}" \
     DRY_RUN="${GUIDE_DRY_RUN:-$DRY_RUN}" \
     INTERVAL="${GUIDE_INTERVAL:-30}" THRESH_ARCSEC="${GUIDE_THRESH:-60}" \
+    MIN_MATCHES="${MIN_MATCHES:-12}" MAX_SOLVE_RMS_PX="${MAX_SOLVE_RMS_PX:-3.0}" \
         setsid sh "$ASTRO/polaris-guide.sh" --ra "$1" --dec "$2" \
         </dev/null >/tmp/guide.out 2>&1 &
 }
@@ -729,7 +751,7 @@ apply_correction() {
 
         _f=$(grab_frame) || { log "no frame to verify centring"; break; }
         _vfep=$(frame_epoch "$_f")
-        _v=$(solve_frame "$_f" "" "")
+        _v=$(solve_frame "$_f" "$_ra" "$_dec")
         good_solve "$_v" || { log "verification solve failed"; break; }
         _vra=$(echo  "$_v" | sed -n 's/.*"ra_deg":\([-0-9.]*\).*/\1/p')
         _vdec=$(echo "$_v" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
