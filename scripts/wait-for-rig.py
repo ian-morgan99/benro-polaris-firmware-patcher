@@ -170,7 +170,10 @@ def sshd_open(dev: str) -> bool:
 
 def camera_state(dev: str, probe: str) -> tuple[str | None, str | None, str]:
     """Return (model, state, note) from the canary probe's SUMMARY line."""
-    rc, out = run([sys.executable, probe, "--probe"], 90)
+    # Keep the camera query on the same device that passed the route and SSH
+    # checks.  The probe defaults to 192.168.0.1; omitting --host here made
+    # --dev silently check SSH on one rig and camera state on another (#203).
+    rc, out = run([sys.executable, probe, "--host", dev, "--probe"], 90)
     for line in out.splitlines():
         if "SUMMARY model=" in line:
             fields = dict(item.split("=", 1) for item in line.split()
@@ -211,6 +214,8 @@ def self_test() -> int:
     if not any(c and c[0].endswith("python3") or (c and "canary-probe.py" in " ".join(c))
                for c in calls):
         failures.append("camera_state did not invoke the probe")
+    if not any("--host" in c and "192.168.0.1" in c for c in calls):
+        failures.append("camera_state did not pass the selected device as --host")
     # A dangling -o is the other half of the original bug.
     for cmd in calls:
         if "-o" in cmd and cmd.index("-o") == len(cmd) - 1:
