@@ -68,10 +68,9 @@ BRANCH="$(git -C "$SRC" branch --show-current)"
   exit 3
 }
 SRC_SHA="$(git -C "$SRC" rev-parse HEAD)"
-# The patcher tree is not required to be clean (this script edits release state
-# as it goes), so record the tree state as well as the commit. A version is
-# bound to the exact commits it was built from, and a dirty tree means the
-# binding is a commit plus uncommitted work rather than a commit alone.
+# The patcher tree must also be clean. The script records the exact patcher
+# commit below, and the release-state update happens only after all build and
+# gate work has passed. A dirty tree would make the commit binding incomplete.
 PATCHER_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 echo "Building $ID from libgphoto2 main $SRC_SHA, patcher $PATCHER_SHA, stock base $BASE"
 
