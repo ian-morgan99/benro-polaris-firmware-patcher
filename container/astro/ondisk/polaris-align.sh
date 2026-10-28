@@ -71,13 +71,21 @@ embed_solve_exif() {
     [ "$EMBED_SOLVE_EXIF" = "1" ] || return 0
     [ -x "$ASTRO/polaris-exif-solve" ] || { echo "[polaris-align] EXIF writer unavailable; leaving image unchanged" >&2; return 0; }
     _meta=$(mktemp /tmp/polaris-solve-meta.XXXXXX) || return 0
-    _tmp="${IMG}.polaris-exif.tmp"
+    # Keep the replacement in the source directory so rename is atomic, but
+    # use a unique name so two explicitly launched solve jobs cannot clobber
+    # one another's temporary output.
+    _tmp=$(mktemp "${IMG}.polaris-exif.tmp.XXXXXX") || { rm -f "$_meta"; return 0; }
     printf '{"polaris_solve":%s,"focal_mm":%s,"sensor_width_mm":%s,"sensor_source":"%s"}\n' \
         "$_result" "${EXIF_FOCAL:-${FOCAL:-0}}" "$SENSOR_MM" "$SENSOR_SOURCE" > "$_meta"
     if "$ASTRO/polaris-exif-solve" --in "$IMG" --out "$_tmp" --json "$_meta" 2>/dev/null \
-       && [ -s "$_tmp" ]; then
-        mv "$_tmp" "$IMG"
-        echo "[polaris-align] embedded validated solve in EXIF: $IMG" >&2
+       && [ -s "$_tmp" ] \
+       && [ "$(tail -c 2 "$_tmp" 2>/dev/null | od -An -t x1 | tr -d ' \n')" = "ffd9" ]; then
+        if mv "$_tmp" "$IMG" 2>/dev/null; then
+            echo "[polaris-align] embedded validated solve in EXIF: $IMG" >&2
+        else
+            rm -f "$_tmp" 2>/dev/null
+            echo "[polaris-align] EXIF replacement failed; original image preserved" >&2
+        fi
     else
         rm -f "$_tmp" 2>/dev/null
         echo "[polaris-align] EXIF embedding failed; original image preserved" >&2

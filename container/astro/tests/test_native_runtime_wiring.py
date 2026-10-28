@@ -53,6 +53,13 @@ def test_bundle_builder_carries_native_search_and_tile_package():
     assert "catalogue-tiles.ptri.json" in build
 
 
+def test_exif_writer_flushes_and_validates_atomic_temp_input():
+    writer = (ROOT / "astro" / "polaris-exif-solve.c").read_text()
+    assert "fsync(fileno(file))" in writer
+    assert "write_all" in writer
+    assert "if (segment_length > 65535U)" in writer
+
+
 def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     boot = (ONDISK / "polaris-astro-boot.sh").read_text()
     frame = (ONDISK / "polaris-frame-watch.sh").read_text()
@@ -74,5 +81,7 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'withholding frame correction while field rotation is above threshold' in frame
     assert 'focal from config' in align and 'emit_solution "$OUT"; exit 0' in align
     assert 'retrying bounded blind search' in align and 'USE_HINT=0' in align
+    assert 'mktemp "${IMG}.polaris-exif.tmp.XXXXXX"' in align
+    assert 'tail -c 2' in align and 'original image preserved' in align
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd
     assert '/api/astro/solve' in httpd and 'last-frame-solution.json' in httpd

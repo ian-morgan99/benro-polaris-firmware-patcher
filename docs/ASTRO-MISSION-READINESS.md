@@ -50,9 +50,9 @@ The intended rollout is deliberately staged:
 The new path is mode-gated, opt-in, and asynchronous. It does not alter the
 normal K-3 III capture function, camera ownership, StarAF controls, or the
 existing capture recovery code. It does not issue a shutter command. EXIF
-updates operate on the Polaris-side copy and currently replace that file via a
-temporary file; loss-safe source/derived-file handling and full EXIF round-trip
-qualification remain tracked follow-up work in issue #247.
+updates operate on the Polaris-side copy and replace that file only after a
+validated, flushed temporary output; directory durability and full EXIF
+round-trip qualification remain tracked follow-up work in issue #247.
 
 The independent native solver and its bounded native tile-search front end
 remain selectable beside Astrometry.net. The real Gaia regional/native search

@@ -150,9 +150,15 @@ local JPEG
   -> successful temporary output is moved over the local input path
 ```
 
-The current EXIF writer is local-only. On success, the local Polaris file is
-replaced; on EXIF-writer failure, the original local file is retained. The
-camera-card file is outside this operation.
+The current EXIF writer is local-only. It writes a unique same-directory
+temporary file, flushes the generated JPEG before returning success, validates
+the JPEG end marker, and only then atomically renames it over the local input;
+on any failure, the original local file is retained. The camera-card file is
+outside this operation.
+
+This is stronger crash handling, but it is not a claim of full power-loss
+qualification: directory-entry durability and camera/gallery round-trip
+behaviour still require the acceptance tests below.
 
 This replacement is not yet a release-grade archival contract. Before enabling
 automatic processing of user photographs, we must prove that the writer:
