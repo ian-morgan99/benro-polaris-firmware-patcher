@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.78
+last_display_fwver=6.0.0.54.85
 ```
 
 ## Consumed-version registry (authoritative)
@@ -18,6 +18,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.67
+consumed_display_fwver=6.0.0.54.85
 consumed_display_fwver=6.0.0.54.78
 consumed_display_fwver=6.0.0.54.77
 consumed_display_fwver=6.0.0.54.76
@@ -54,6 +55,7 @@ version_commit_binding=6.0.0.54.75|libgphoto2=e7d0cf1ddf40ce956c4aa62f8e50514355
 version_commit_binding=6.0.0.54.76|libgphoto2=df9d7274565a5c0ebf310b9e7bfec75c28a8dabc|patcher=27f01f5658f8a6b8c2499bbb19a202b84074aa09
 version_commit_binding=6.0.0.54.77|libgphoto2=c7eeaeda90ecdff87a5bbd03a2cfc0e03ffcbcae|patcher=2799e90989e007b38b523fe8630af9e7c3d4afbe
 version_commit_binding=6.0.0.54.78|libgphoto2=d4f2df913ae9b6eec6830f79465179554a75d366|patcher=09e72c81a4bd0b6b1af82020f96326992daff323
+version_commit_binding=6.0.0.54.85|libgphoto2=3fe1c80e08e9ea66019700e07e1522b2ca9f7a06|patcher=006ab000fb9e884b3559a2455877bf633834dc31
 ```
 
 ## Version-to-commit binding (one version, one set of commits)
