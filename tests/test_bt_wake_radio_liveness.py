@@ -345,6 +345,20 @@ def test_ap_detection_unescapes_nmcli_colons(tmp_path):
         echo "FwVer:6.0.0.54.76;date:2026.10.27;"
         exit 0
     ''')
+    # Keep the service probe hermetic. The preflight script deliberately uses
+    # real TCP checks; without this stub the test accidentally probes whatever
+    # currently owns 192.168.0.1 on the host and can report BOOTING instead of
+    # testing the escaped-colon AP parsing at all.
+    _write(tmp_path / "timeout", '''
+        #!/usr/bin/env bash
+        if [ "$1" = "4" ] && [ "$2" = "bash" ] && [ "$3" = "-c" ]; then
+            case "$4" in
+                *"/dev/tcp/192.168.0.1/22"*) exit 0;;
+                *) exit 1;;
+            esac
+        fi
+        exec /usr/bin/timeout "$@"
+    ''')
 
     env = {
         "PATH": f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}",

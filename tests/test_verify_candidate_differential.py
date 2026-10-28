@@ -119,6 +119,20 @@ def test_missing_mandatory_file_fails(tmp_path):
     assert "mandatory file set differs" in proc.stdout
 
 
+def test_optional_legacy_usbscsi_addition_is_reported_and_allowed(tmp_path):
+    """K-5 II support adds one explicitly optional transport to the package."""
+    usbscsi = "/app/lib/stage2/libgphoto2_port/0.12.2/usbscsi.so"
+    prev = make_candidate(tmp_path, "o-v18g", "6.0.0.54.78", BASE)
+    cur_digests = dict(BASE)
+    cur_digests[usbscsi] = "5" * 64
+    cur_digests["/app/lib/stage2/libgphoto2/2.5.34/ptp2.so"] = "6" * 64
+    cur = make_candidate(tmp_path, "o-v18h", "6.0.0.54.85", cur_digests)
+    proc = run("--previous", str(prev), "--current", str(cur))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "optional legacy transport file set changed" in proc.stdout
+    assert "added optional file" in proc.stdout
+
+
 def test_missing_manifest_is_a_failure_not_a_skip(tmp_path):
     empty = tmp_path / "o-v18a"
     empty.mkdir()

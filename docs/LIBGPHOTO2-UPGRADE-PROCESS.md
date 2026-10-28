@@ -542,7 +542,7 @@ The patcher should grow deterministic tests that fail when these invariants brea
 9. **shim containment** — model-specific shims return false/no-op for representative other vendors;
 10. **manifest completeness** — all load-bearing camera-stack files have hashes and source provenance;
 11. **no direct-SSH release path** — release tooling/docs may not deploy replacement camera binaries directly to `/app`;
-12. **previous-candidate differential** — unexpected changes outside the declared camera-stack file set fail the build/review gate.
+12. **previous-candidate differential** — unexpected changes outside the declared camera-stack file set fail the build/review gate. The only allowed file-set exception is the explicitly optional K-5 II/K-5 IIs `usbscsi.so`; adding or removing it is reported as a warning and must be described in the release record.
 
 Physical tests remain mandatory; automation protects the integration contract but cannot replace real camera qualification.
 
