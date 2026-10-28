@@ -168,3 +168,20 @@ and controlled hardware qualification. No new live motor command is wired to
 the plate-solve loop. Steps 6--11 remain guarded source/host capability, not a
 physical mission pass, and the compact APS-C blind-search limitation remains
 open in #248. K-3 III capture code and defaults remain unchanged.
+
+## Critical review — 2026-10-28 native bundle checkpoint
+
+The native C focal-length parser is now bounds-safe for malformed/wrapped EXIF
+offsets, and the rebuilt ARM bundle passed its ABI/dependency/licence checks,
+staged-install checks, QEMU usage smoke and QEMU EXIF write-back smoke. The
+same-frame two-solver host smoke also still passes: Astrometry.net was slightly
+faster in that run, while the independent result matched its deliberately
+paired catalogue exactly. The evidence is recorded in
+[`native-arm-bundle-20261028`](evidence/native-arm-bundle-20261028/SUMMARY.md)
+and [`dual-solver-overnight-20261028`](evidence/dual-solver-overnight-20261028/SUMMARY.md).
+
+This closes another source/package gate, not the mission. There is still no
+sanctioned SD installation, post-boot identity, local camera-publication trace,
+physical calibration/GOTO/frame loop, or qualified motor-rate correction. The
+runtime therefore remains opt-in and K-3 III-safe by default; no new live
+motor path has been enabled.
