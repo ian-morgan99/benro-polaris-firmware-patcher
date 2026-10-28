@@ -97,4 +97,40 @@ public rate value.
 
 Until all five gates pass, the plate solver may report drift and use bounded
    positional correction where already qualified, but it must not adjust motor
-   rate.
+rate.
+
+## Native-C host route assessed against an independent reference
+
+The public MIT project [ogecko/alpaca-benro-polaris](https://github.com/ogecko/alpaca-benro-polaris/tree/2295f6e9835370e9f3e44d5aad4ddcc730e40ba9)
+at commit `2295f6e9835370e9f3e44d5aad4ddcc730e40ba9` provides a useful
+independent design reference for the already observed 532/533/534 SLOW and
+513/514/521 FAST paths. It reports a shared SLOW level, per-axis direction and
+state, time-sharing between adjacent rungs, no state-0 use while holding, and
+50 ms FAST refresh. Its reported SLOW table puts sidereal speed below the
+lowest single SLOW rung, so a low-rate controller must time-share opposite
+state-1 directions rather than pretending that a level is a continuous rate.
+
+The patcher now contains `container/astro/polaris-rate-plan.c`, a pure native-C
+planner based on that *reference* table. It has no socket or motor side effect,
+selects a common level for all active SLOW axes, returns the two points and
+duty needed for each requested average, and represents zero-rate hold without
+state 0. `test_rate_plan.c` is an offline C test. This is a controlled design
+step, not an implementation of issue #240's unrouted `AC 4A` helper and not a
+hardware qualification. It is not linked into `polaris-httpd`, so normal K-3
+III capture and the current Astro mode are unchanged.
+
+Before this planner can be wired to Astro drift correction, the next gates are:
+
+1. remeasure the SLOW table on the exact target firmware, axis, load and
+   battery conditions;
+2. implement and test a clock-driven dwell/PWM scheduler that never changes a
+   SLOW point before the target MCU's measured minimum dwell;
+3. prove stop, link-loss, process-exit and reconnect behavior against a fake
+   head and then supervised hardware;
+4. decide whether the J/`AC 4A` route is preferable after its units,
+   dispatcher, acknowledgement, zero-hold and watchdog semantics are proven;
+5. only then expose a feature-gated controller to the Astro plate-solve loop.
+
+The donor measurements and algorithm are evidence to reproduce, not target
+hardware facts. No donor source was copied; any future reuse must preserve its
+MIT notice and immutable revision.

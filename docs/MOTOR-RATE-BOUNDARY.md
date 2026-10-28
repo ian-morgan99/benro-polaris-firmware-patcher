@@ -19,12 +19,19 @@ a controlled protocol capture:
 The companion research record identifies the MCU image used by the current
 `.73` package as `polaris413_2.0.0.22.bin` (SHA-256
 `34d3f4186185c541adb9c8e57b3e2ec13e402dfb4bb3e9b2262cbf03f1a5c112`) and
-reports a `J`/`0x4A` handler at `0x800501c`. Its historical analysis describes
-an axis-plus-float rate path whose target step is approximately
-`rate * 960 * 0.000277 / 1000` per tick. That strengthens the MCU-side lead,
-but the degree/second conversion and zero/hold semantics still need target
-build and physical revalidation; the application-side exposure is still
-missing.
+reports a `J`/`0x4A` handler at `0x800501c`. A new fail-closed static check of
+that exact image confirms the local float sequence: the handler reads the
+axis-selected input at packet-state offset `0x0e`, multiplies it by a
+per-axis state value at `0x21c`, then by the literal `0.0002770000137`, and
+divides by `1000.0`. The per-axis records have a `0x64`-byte stride. This is
+stronger than the earlier approximate note, but it still does not assign
+degrees/second units: the timer cadence, scale origin, state ownership and
+physical conversion remain open. State `3` also forwards the input as message
+`0x25`, so the complete 403/413/astro routing still needs qualification.
+
+`tools/polaris_gimbal_rate_static.py` reproduces these checks against the
+exact hash and emits a JSON evidence record. It remains analysis-only: no
+binary is written and no rate frame is sent.
 
 ## Static `.73` discovery: the existing jog path
 
@@ -62,6 +69,44 @@ safety simulator. It exercises the known frame shape, rejects malformed or
 non-finite values, enforces a caller-supplied maximum rate and acceleration,
 and forces all simulated axes to zero on watchdog expiry or link disconnect.
 It opens no socket and is not copied into the Polaris runtime bundle.
+
+## Independent host-side reference: the shared SLOW ladder
+
+The public MIT project [ogecko/alpaca-benro-polaris](https://github.com/ogecko/alpaca-benro-polaris/tree/2295f6e9835370e9f3e44d5aad4ddcc730e40ba9)
+provides an independent host-side design and published hardware measurements
+for the existing app controls. Its `SpeedCoordinator` treats 532/533/534 as
+a shared-level SLOW ladder, mixes adjacent rates by time-sharing, keeps a
+holding axis away from state 0, and refreshes 513/514/521 FAST commands every
+50 ms. The recorded SLOW values are approximately:
+
+| level | state 1 (deg/s) | state 2 (deg/s) |
+|---:|---:|---:|
+| 1 | 0.0059 | 0.0119 |
+| 2 | 0.0179 | 0.0295 |
+| 3 | 0.0474 | 0.0593 |
+| 4 | 0.0896 | 0.1193 |
+| 5 | 0.2088 | 0.2402 |
+
+This is useful corroboration and a design reference, not evidence that this
+head has the same calibration. In particular, sidereal tracking is about
+`0.004178 deg/s`, below the reference level-1 state-1 rate. A controller must
+therefore mix opposite state-1 directions for a low positive/negative rate or
+an engaged zero-rate hold; it must never use state 0 as the low-rate substitute.
+The 50 ms FAST refresh and donor calibration are also not a substitute for
+proving this firmware's watchdog and physical units.
+
+`container/astro/polaris-rate-plan.c` is the first native-C implementation of
+that *planning* idea. It is deliberately pure: it emits no frame and is not
+linked into `polaris-httpd`. It validates finite rates, chooses one common
+SLOW level, returns adjacent points plus a duty cycle, rejects rates above the
+reference SLOW envelope, and distinguishes an engaged zero-rate hold from a
+stop. `test_rate_plan.c` exercises the planner offline. The remaining runtime
+work is a clock-driven dwell/PWM scheduler, exact target-head calibration, and
+the stop/watchdog/link-loss contract. None of that is authorised to command a
+motor yet.
+
+No donor source was copied. If any donor code is later reused, retain its MIT
+notice and the immutable source revision in the corresponding provenance.
 
 The next safe gate is to replace the unknowns with an exact MCU-backed
 contract, then run the same fault cases against a protocol simulator: bad
