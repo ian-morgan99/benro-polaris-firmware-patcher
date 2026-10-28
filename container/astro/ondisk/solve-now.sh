@@ -100,6 +100,13 @@ echo "$SOL" | grep -q '"solved":true' || { echo "[solve-now] NOT SOLVED" >&2; ex
 RA=$(echo "$SOL"  | sed -n 's/.*"ra_deg":\([-0-9.]*\).*/\1/p')
 DEC=$(echo "$SOL" | sed -n 's/.*"dec_deg":\([-0-9.]*\).*/\1/p')
 echo "[solve-now] SOLVED  RA=$RA  Dec=$DEC" >&2
+mkdir -p /app/sd/polaris-astro 2>/dev/null
+TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
+TARGET_TMP="${TARGET_FILE}.tmp.$$"
+printf '{"target_ra_deg":%s,"target_dec_deg":%s,"solved_ra_deg":%s,"solved_dec_deg":%s,"updated":"%s"}\n' \
+    "$RA" "$DEC" "$RA" "$DEC" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+    > "$TARGET_TMP" 2>/dev/null && mv "$TARGET_TMP" "$TARGET_FILE" 2>/dev/null || \
+    { rm -f "$TARGET_TMP" 2>/dev/null; echo "[solve-now] could not publish target record" >&2; exit 1; }
 
 if [ "$APPLY" = "1" ]; then
     # ------------------------------------------------------------------

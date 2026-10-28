@@ -350,7 +350,14 @@ record_solution() {
     LAST_SOLVED_SCALE=$(echo "$_s" | sed -n 's/.*"scale_arcsec_per_px":\([-0-9.]*\).*/\1/p')
     LAST_SOLVED_MATCHES=$(echo "$_s" | sed -n 's/.*"matched_count":\([0-9]*\).*/\1/p')
     LAST_SOLVED_JSON=/tmp/polaris-last-solution.json
+    TARGET_FILE=${TARGET_FILE:-/app/sd/polaris-astro/target.json}
     printf '%s\n' "$_s" > "$LAST_SOLVED_JSON"
+    mkdir -p "$(dirname "$TARGET_FILE")" 2>/dev/null
+    _target_tmp="${TARGET_FILE}.tmp.$$"
+    printf '{"target_ra_deg":%s,"target_dec_deg":%s,"solved_ra_deg":%s,"solved_dec_deg":%s,"rotation_deg":%s,"updated":"%s"}\n' \
+        "$LAST_SOLVED_RA" "$LAST_SOLVED_DEC" "$LAST_SOLVED_RA" "$LAST_SOLVED_DEC" \
+        "${LAST_SOLVED_ROTATION:-0}" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" > "$_target_tmp" 2>/dev/null \
+        && mv "$_target_tmp" "$TARGET_FILE" 2>/dev/null || rm -f "$_target_tmp" 2>/dev/null
     log "SOLVED ra=$LAST_SOLVED_RA dec=$LAST_SOLVED_DEC rotation=${LAST_SOLVED_ROTATION:-unknown} scale=${LAST_SOLVED_SCALE:-unknown} matches=${LAST_SOLVED_MATCHES:-unknown}"
 }
 

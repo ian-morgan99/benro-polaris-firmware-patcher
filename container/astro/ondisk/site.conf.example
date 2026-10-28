@@ -42,6 +42,21 @@ INDEPENDENT_CATALOG=/app/sd/polaris-astro/catalogue.polcat
 # CAMERA_MODEL=K-3-III
 # SENSOR_MM=23.3
 
+# Post-GOTO solve. This watches BenroConnect's Astro 519 commands and solves a
+# live-view frame after each track:1 GOTO. Calibration's track:0 command is not
+# treated as a GOTO. Keep correction disabled until the dry-run logs have been
+# reviewed on the actual mount.
+GOTO_SOLVE_WATCH=0
+GOTO_PLATESOLVE=0       # the Polaris web UI's own GOTO+solve wrapper
+GOTO_SOLVE_APPLY=0      # permit high-confidence 527 heading correction
+GOTO_SOLVE_RECENTER=1   # re-GOTO after an applied correction
+
+# Solve every completed JPEG while mode:8 is active. This never fires the
+# shutter and never touches camera storage. FRAME_CORRECT is separately gated.
+AUTO_SOLVE_FRAMES=0
+FRAME_CORRECT=0
+FRAME_DRIFT_THRESH_DEG=0.02
+
 # ---- web UI + Alpaca ------------------------------------------------------
 # 8080 is pgphoto's own MJPG stream; 80, 8081, 9090 and 22 are also taken.
 POLARIS_HTTPD_PORT=8090

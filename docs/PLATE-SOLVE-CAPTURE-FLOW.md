@@ -45,7 +45,12 @@ There are three materially different flows:
        -> camera/head stacking path
        -> starskyStack or another capture directory
 
-   This path currently has no automatic plate-solve or EXIF-update hook.
+   When AUTO_SOLVE_FRAMES=1 and mode:8 is recorded, the opt-in frame watcher
+   admits stable completed JPEGs from the supported local directories.
+   Otherwise this remains an explicit/manual solve path.
+
+   The hook is opt-in: AUTO_SOLVE_FRAMES=1 plus mode:8 and stable-file
+   admission are required before a JPEG is sent to the solver.
 ```
 
 ## Source-level flow
@@ -109,9 +114,11 @@ JPEG back to the camera card.
 ### Astro stacking/lapse capture
 
 `/api/astro/capture` starts the head's 272 Astro/lapse programme. It is a
-separate capture feature and currently does not enqueue each resulting JPEG for
-solving or EXIF annotation. The gallery can see files under `/app/sd`, but
-visibility in the gallery is not the same as automatic solver processing.
+separate capture feature. The opt-in `polaris-frame-watch.sh` can now process
+stable files under the supported output directories, including `starskyStack`,
+but the watcher is not proof that every firmware variant publishes every
+programme output locally. The gallery can see files under `/app/sd`, but
+visibility in the gallery is not the same as a completed transfer record.
 
 ## Solve and EXIF flow
 
@@ -246,9 +253,10 @@ but is not sufficient audit evidence by itself.
 3. **Separate source and derived images.** Change automatic EXIF processing to
    write a derived file or a recoverable backup until round-trip qualification
    passes.
-4. **Add an Astro capture watcher.** Watch all supported capture directories and
-   enqueue only new JPEGs from a known completed capture, rather than treating
-   every newest file as a solve candidate.
+4. **Qualify the Astro capture watcher.** The initial mode-gated watcher now
+   watches all supported directories, waits for a stable JPEG end marker, and
+   records duplicate suppression. It still needs per-firmware capture-event
+   correlation and physical qualification before it can be called universal.
 5. **Harden EXIF validation.** Decode before/after and compare pixels; read back
    the exact solve fields; test existing camera EXIF and MakerNotes.
 6. **Harden independent-solver acceptance.** Add false-positive tests with

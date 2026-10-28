@@ -56,7 +56,8 @@ SITE=/app/sd/polaris-astro/site.conf
         # disappear at the process boundary.  This is what makes the solver
         # selector and independent catalogue apply consistently to autosolve,
         # guiding, and the HTTP-launched guider.
-        export SOLVER_BIN INDEPENDENT_CATALOG CAMERA_MODEL SENSOR_MM
+        export SOLVER_BIN INDEPENDENT_CATALOG CAMERA_MODEL SENSOR_MM \
+               GOTO_PLATESOLVE GOTO_SOLVE_APPLY GOTO_SOLVE_RECENTER
         echo "site.conf loaded after ${i} tries (lat=$LAT lon=$LON focal=$FOCAL)"
     else
         echo "no $SITE after ${i} tries -- microSD not mounted?"
@@ -291,6 +292,37 @@ SITE=/app/sd/polaris-astro/site.conf
         FOCAL_MIN="${FOCAL_MIN:-8}" FOCAL_MAX="${FOCAL_MAX:-3000}" \
         RANGE_TIMEOUT="${RANGE_TIMEOUT:-240}" KEEP_FAILED="${KEEP_FAILED:-20}" \
         setsid sh "$ASTRO/polaris-autosolve.sh" </dev/null >/tmp/autosolve.out 2>&1 &
+    fi
+
+    # Optional post-GOTO plate solving for BenroConnect's own 519 commands.
+    # The watcher only accepts track:1 while mode:8 is active, so calibration's
+    # track:0 519 cannot trigger it. It owns no motion; correction remains a
+    # separate explicit GOTO_SOLVE_APPLY gate.
+    if [ "${GOTO_SOLVE_WATCH:-0}" = "1" ] && [ -x "$ASTRO/polaris-goto-watch.sh" ]; then
+        if ! pgrep -f "polaris-goto-watch" >/dev/null 2>&1; then
+            echo "starting BenroConnect GOTO solve watcher (apply=${GOTO_SOLVE_APPLY:-0})"
+            LAT="$LAT" LON="$LON" TZ_OFFSET_SEC="$TZ_OFFSET_SEC" \
+            SOLVER_BIN="${SOLVER_BIN:-polaris-solve}" \
+            INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
+            FOCAL_MM="$FOCAL" SENSOR_MM="${SENSOR_MM:-}" \
+            GOTO_SOLVE_APPLY="${GOTO_SOLVE_APPLY:-0}" GOTO_SOLVE_RECENTER="${GOTO_SOLVE_RECENTER:-1}" \
+                setsid sh "$ASTRO/polaris-goto-watch.sh" </dev/null >/tmp/goto-watch.out 2>&1 &
+        fi
+    fi
+
+    # Optional solve-every-completed-JPEG daemon. It is mode-gated and never
+    # fires the shutter, so it cannot alter normal K-3 III operation outside
+    # Astro mode. FRAME_CORRECT is deliberately separate from solving.
+    if [ "${AUTO_SOLVE_FRAMES:-0}" = "1" ] && [ -x "$ASTRO/polaris-frame-watch.sh" ]; then
+        if ! pgrep -f "polaris-frame-watch" >/dev/null 2>&1; then
+            echo "starting completed-frame solver (correction=${FRAME_CORRECT:-0})"
+            LAT="$LAT" LON="$LON" FOCAL_MM="$FOCAL" SENSOR_MM="${SENSOR_MM:-}" \
+            SOLVER_BIN="${SOLVER_BIN:-polaris-solve}" \
+            INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}" \
+            FRAME_CORRECT="${FRAME_CORRECT:-0}" MIN_MATCHES="${MIN_MATCHES:-12}" \
+            MAX_SOLVE_RMS_PX="${MAX_SOLVE_RMS_PX:-3.0}" \
+                setsid sh "$ASTRO/polaris-frame-watch.sh" </dev/null >/tmp/frame-watch.out 2>&1 &
+        fi
     fi
 } >> "$LOG" 2>&1 &
 

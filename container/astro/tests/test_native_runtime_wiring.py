@@ -33,3 +33,20 @@ def test_catalogue_is_optional_for_reference_bundle_but_installable():
     config = (ONDISK / "site.conf.example").read_text()
     assert 'catalogue.polcat' in install
     assert 'INDEPENDENT_CATALOG=/app/sd/polaris-astro/catalogue.polcat' in config
+
+
+def test_end_to_end_session_hooks_are_mode_gated_and_separate():
+    boot = (ONDISK / "polaris-astro-boot.sh").read_text()
+    frame = (ONDISK / "polaris-frame-watch.sh").read_text()
+    goto = (ONDISK / "polaris-goto-watch.sh").read_text()
+    wrapper = (ONDISK / "polaris-goto-solve.sh").read_text()
+    httpd = (ROOT / "astro" / "polaris-httpd.c").read_text()
+    assert 'AUTO_SOLVE_FRAMES' in boot and 'FRAME_CORRECT' in boot
+    assert 'GOTO_SOLVE_WATCH' in boot and 'GOTO_SOLVE_APPLY' in boot
+    assert 'MODE_FILE' in frame and '"8"' in frame
+    assert 'MODE_FILE' in goto and '"8"' in goto
+    assert 'track:1' in goto and 'track:0' in goto
+    assert '--already-there' in wrapper and 'polaris-align.sh' in wrapper
+    assert 'target_ra_deg' in wrapper and 'TARGET_FILE}.tmp.$$' in wrapper
+    assert 'target_ra_deg' in frame and 'TARGET_FILE' in frame
+    assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd

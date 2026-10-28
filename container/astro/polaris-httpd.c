@@ -3435,11 +3435,27 @@ static void handle(int fd) {
         }
         utc_arg(ub, sizeof ub);
         /* Background it so the browser is not held for the ~10 s slew; the astro
-         * tab polls position. goto-radec tracks by default. */
-        snprintf(cmd, sizeof cmd,
-            "timeout -t 60 %s/polaris-mount --host %s --port %d --lat %.6f --lon %.6f %s "
-            "goto-radec --refine-arcmin 0.1 --ra %.6f --dec %.6f >/dev/null 2>&1 &",
-            g_astro, g_mount_host, g_mount_port, g_lat, g_lon, ub, ra_deg, dec_deg);
+         * tab polls position. goto-radec tracks by default. When explicitly
+         * enabled, use the same post-GOTO solve wrapper as the BenroConnect
+         * watcher: it captures live view after arrival, validates the solve,
+         * records the target, and only applies 527 when GOTO_SOLVE_APPLY=1. */
+        if (getenv("GOTO_PLATESOLVE") && !strcmp(getenv("GOTO_PLATESOLVE"), "1"))
+            snprintf(cmd, sizeof cmd,
+                "timeout -t 180 env LAT=%.6f LON=%.6f FOCAL_MM=%.0f "
+                "SOLVER_BIN=%s INDEPENDENT_CATALOG=%s "
+                "GOTO_SOLVE_APPLY=%s GOTO_SOLVE_RECENTER=%s "
+                "sh %s/polaris-goto-solve.sh --ra %.6f --dec %.6f >/dev/null 2>&1 &",
+                g_lat, g_lon, g_focal,
+                getenv("SOLVER_BIN") ? getenv("SOLVER_BIN") : "polaris-solve",
+                getenv("INDEPENDENT_CATALOG") ? getenv("INDEPENDENT_CATALOG") : "/app/sd/polaris-astro/catalogue.polcat",
+                getenv("GOTO_SOLVE_APPLY") ? getenv("GOTO_SOLVE_APPLY") : "0",
+                getenv("GOTO_SOLVE_RECENTER") ? getenv("GOTO_SOLVE_RECENTER") : "1",
+                g_astro, ra_deg, dec_deg);
+        else
+            snprintf(cmd, sizeof cmd,
+                "timeout -t 60 %s/polaris-mount --host %s --port %d --lat %.6f --lon %.6f %s "
+                "goto-radec --refine-arcmin 0.1 --ra %.6f --dec %.6f >/dev/null 2>&1 &",
+                g_astro, g_mount_host, g_mount_port, g_lat, g_lon, ub, ra_deg, dec_deg);
         if (system(cmd) == -1) {}
         { char nesc[128]; json_escape(nm, nesc, sizeof nesc);
           snprintf(out, sizeof out,

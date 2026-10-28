@@ -22,10 +22,16 @@
 # ===========================================================================
 ASTRO=${ASTRO:-/app/astro}
 OUT=${TRACK_FILE:-/tmp/polaris-track}
+MODE_OUT=${MODE_FILE:-/tmp/polaris-mode}
 
 [ -x "$ASTRO/polaris-logwatch" ] || { echo "missing $ASTRO/polaris-logwatch" >&2; exit 2; }
 
-"$ASTRO/polaris-logwatch" --match "track:" | while read -r line; do
+"$ASTRO/polaris-logwatch" --match "track:" --match "mode:" | while read -r line; do
+    mode=$(printf '%s' "$line" | sed -n 's/.*mode:\([0-9-][0-9]*\).*/\1/p' | tail -1)
+    [ -n "$mode" ] && {
+        prev_mode=$(cat "$MODE_OUT" 2>/dev/null)
+        [ "$mode" = "$prev_mode" ] || printf '%s\n' "$mode" > "$MODE_OUT"
+    }
     t=$(printf '%s' "$line" | sed -n 's/.*track:\([0-9-][0-9]*\).*/\1/p' | tail -1)
     [ -n "$t" ] || continue
     prev=$(cat "$OUT" 2>/dev/null)

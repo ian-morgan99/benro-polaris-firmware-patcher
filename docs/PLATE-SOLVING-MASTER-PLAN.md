@@ -4,6 +4,8 @@ Status: active implementation plan. The existing Astrometry.net path remains
 the default and the independent native-C path is a research alternative. No
 firmware or motor-control claim is made by a host build or a simulated solve.
 
+The current end-to-end readiness review is [ASTRO-MISSION-READINESS.md](ASTRO-MISSION-READINESS.md).
+
 ## Objective
 
 For every eligible JPEG captured by Benro Polaris Astro mode, preserve the
