@@ -3403,6 +3403,17 @@ static void handle(int fd) {
         astro_status_json(out, sizeof out);
         respond_json(fd, out); return;
     }
+    /* Read-only plate-solve state for the web UI and external clients. The
+     * shell hooks publish these JSON files atomically; expose them without
+     * making the HTTP daemon parse or mutate the solve state. */
+    if (!strcmp(path, "/api/astro/solve")) {
+        char target[1024], frame[2048], out[4096];
+        read_file("/app/sd/polaris-astro/target.json", target, sizeof target);
+        read_file("/app/sd/polaris-astro/last-frame-solution.json", frame, sizeof frame);
+        snprintf(out, sizeof out, "{\"target\":%s,\"last_frame\":%s}",
+                 target[0] ? target : "null", frame[0] ? frame : "null");
+        respond_json(fd, out); return;
+    }
 
     /* GOTO a catalogue target: slew to RA/Dec and track it. The catalogue lives
      * in the browser (fixed J2000 coordinates); this just points the head. Uses

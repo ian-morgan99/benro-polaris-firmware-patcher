@@ -53,3 +53,4 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert 'FALLBACK_RADIUS' in frame and 'run_align' in frame
     assert 'focal from config' in align and 'emit_solution "$OUT"; exit 0' in align
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd
+    assert '/api/astro/solve' in httpd and 'last-frame-solution.json' in httpd

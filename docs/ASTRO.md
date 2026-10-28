@@ -830,6 +830,7 @@ in their own sections above.
 | `/api/astro/track` | POST | Sidereal/lunar tracking on/off. |
 | `/api/astro/goto` | POST | Preview (no confirm) or GOTO+track a catalogue target (`confirm=1`). |
 | `/api/astro/capture` | POST | Start the in-head astro capture sequence (`confirm=1`). |
+| `/api/astro/solve` | GET | Read-only target and last accepted frame-solve JSON from the opt-in hooks. |
 | `/api/astro/autofocus` | GET/POST | HFR focus sweep — status + V-curve; `confirm=1` starts, `stop=1` aborts. |
 | `/api/astro/limits` | GET/POST | Travel-limit state; releasing (state:1) needs `attest=1` (see the safety note). |
 
