@@ -1,0 +1,32 @@
+{
+  "baseline": {
+    "candidate_id": "6.0.0.54.86--o-v18i-k1ii-k3iii-controlled-20261028-r4",
+    "libgphoto2_commit": "83240b36a8f128f67eb7e0f68dc10045547b0b47",
+    "patcher_commit": "02c71dabd7b4ee22dafb458c1955da83ea62ac15"
+  },
+  "purpose": "Version 87 is a reproducible mainline candidate for direct K-1 II qualification. It carries the libgphoto2 main branch after version 86 and the patcher main branch after the version 86 artifact; it is intended to prove the clean build, publication, deployment, and post-boot identity path before controlled K-1 II testing.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "Build the current libgphoto2 main branch, including the merged IMAGE Transmitter 2 format-domain separation and K-1/K-1 II live-view start changes. The open focus audit branch is deliberately not included in this candidate.",
+      "issues": [134, 135]
+    },
+    {
+      "component": "patcher",
+      "summary": "Build from patcher main, including the merged Stage-2 empty-choice guard and the release identity, manifest, differential, and verified extracted-tree install process.",
+      "issues": [229, 250]
+    }
+  ],
+  "validation_focus": [
+    "Verify post-boot FwVer, build_id, source commits, ZIP digest, install-manifest digest, and mandatory installed-file hashes.",
+    "Confirm the running device is the K-1 II before camera operations.",
+    "Record the standard K-1 II controls and their advertised values, including image format, shutter speeds, ISO, AF With Live View, focus controls, preview/live view, and capture.",
+    "Use one controlled variable at a time, capture the direct libgphoto2/Polaris logs, and restore every changed camera setting.",
+    "Treat successful deployment and library responses as separate from physical camera qualification; record any crash, timeout, stale widget, or client failure as a separate result."
+  ],
+  "known_limits": [
+    "This candidate does not claim K-3 III Monochrome qualification.",
+    "The focus-direction and AF-release changes from PR #137 are not included because that branch is not merged to libgphoto2 main.",
+    "A successful K-1 II run covers only the recorded scenarios and does not qualify every Pentax model or every capture mode."
+  ]
+}
