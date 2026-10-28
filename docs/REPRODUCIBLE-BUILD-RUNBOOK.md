@@ -54,13 +54,32 @@ sha256sum /absolute/path/to/stock/FwPkt.zip
 
 ## Build a `.77` candidate
 
+For this workstation, the retained stock base is in PrivateResearch at:
+
+```sh
+STOCK_FWPKT=/home/ian/Documents/VSCodeProjects/PrivateResearch/openpolaris-research/BenroPolarisPatcher/firmware/FwPkt
+LIBGPHOTO2=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2
+```
+
+That directory contains the nested `FwPkt/firmwareInfo` package and its
+adjacent `SOURCE.md` record. It is the stock base input, not a previously
+patched candidate from `PrivateResearch/firmware-packets/`. Do not substitute
+the `.74`, `.75`, or `.76` candidate ZIPs as the source base for a new release.
+Verify the input before building:
+
+```sh
+test -f "$STOCK_FWPKT/FwPkt/firmwareInfo"
+git -C "$LIBGPHOTO2" status --porcelain
+sha256sum "$STOCK_FWPKT/FwPkt/firmwareInfo"
+```
+
 From the patcher checkout:
 
 ```sh
 ./scripts/build-release-candidate.sh \
   o-v18g-reproducible-20261028 \
-  /absolute/path/to/stock/FwPkt.zip \
-  /absolute/path/to/libgphoto2-build \
+  "$STOCK_FWPKT" \
+  "$LIBGPHOTO2" \
   auto \
   auto
 ```
