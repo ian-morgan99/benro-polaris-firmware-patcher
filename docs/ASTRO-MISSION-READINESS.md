@@ -62,8 +62,9 @@ device-capture gates have passed.
 
 - Host-side Gaia package generation, tile verification, triangle-index
   verification, five indexed no-hint rendered solves, and the canonical ARM
-  bundle/staged-install checks now pass. This is not yet device proof: the
-  package still needs sanctioned SD-card installation, post-boot identity, and
+  bundle/staged-install checks now pass. The native EXIF writer also passes a
+  host JPEG decode/write-back smoke. This is not yet device proof: the package
+  still needs sanctioned SD-card installation, post-boot identity, and
   physical capture qualification.
 - A captured BenroConnect trace proving the exact calibration and GOTO 519
   fields on the target firmware, including ordering and duplicate behaviour.
