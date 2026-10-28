@@ -30,8 +30,14 @@ host prototype format; the device format will be versioned after the solver
 benchmarks establish the required spatial partition and memory budget.
 
 Pointing is not a required camera input. Focal length is the normal geometry
-input and constrains angular scale; RA/Dec is an optional speed hint. A
-no-hint solve must use an all-sky spatial/triangle index. The current regional
-prototype returns `blind_search_index_required` until that index exists, rather
-than treating a missing pointing hint as a solve failure or guessing a
-position.
+input and constrains angular scale; RA/Dec is an optional speed hint. The
+direct regional matcher returns `blind_search_index_required` without a hint;
+the native search front end supplies the required all-sky spatial/triangle
+index and remains bounded by an explicit attempt budget. A missing or
+incompatible index fails closed rather than guessing a position.
+
+The current Gaia research package uses Gaia DR3 records with
+`phot_g_mean_mag <= 10`, epoch 2016.0, 10°×10° spatial tiles, and a separate
+triangle-ratio index built from the 15 brightest records per tile. A shipped
+package must retain the Gaia acknowledgement, query/selection provenance,
+catalogue checksum, tile-manifest checksum, and index checksum together.

@@ -31,6 +31,7 @@ SENSOR_MM=${SENSOR_MM:-}
 INDEPENDENT_CATALOG=${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}
 INDEPENDENT_CATALOG_DIR=${INDEPENDENT_CATALOG_DIR:-/app/sd/polaris-astro/catalogue-tiles}
 INDEPENDENT_CATALOG_MANIFEST=${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}
+INDEPENDENT_TRIANGLE_INDEX=${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}
 INDEPENDENT_MAX_CATALOG=${INDEPENDENT_MAX_CATALOG:-60}
 INDEPENDENT_SCALE_TOL=${INDEPENDENT_SCALE_TOL:-0.15}
 DOWNSAMPLE=${DOWNSAMPLE:-4}
@@ -123,6 +124,7 @@ else
     if [ "$SOLVER_BIN" = "polaris-solve-independent-search" ]; then
         [ -d "$INDEPENDENT_CATALOG_DIR" ] || { echo "missing independent catalogue directory $INDEPENDENT_CATALOG_DIR" >&2; exit 2; }
         [ -f "$INDEPENDENT_CATALOG_MANIFEST" ] || { echo "missing independent tile manifest $INDEPENDENT_CATALOG_MANIFEST" >&2; exit 2; }
+        [ -f "$INDEPENDENT_TRIANGLE_INDEX" ] || { echo "missing independent triangle index $INDEPENDENT_TRIANGLE_INDEX" >&2; exit 2; }
     else
         [ -n "${INDEPENDENT_CATALOG:-}" ] || { echo "independent solver requires INDEPENDENT_CATALOG" >&2; exit 2; }
         [ -f "$INDEPENDENT_CATALOG" ] || { echo "missing independent catalogue $INDEPENDENT_CATALOG" >&2; exit 2; }
@@ -196,6 +198,7 @@ solve_with() {
         [ -n "$_scale" ] || { echo '{"solved":false,"failure_reason":"focal_length_required"}'; return 1; }
         if [ "$SOLVER_BIN" = "polaris-solve-independent-search" ]; then
             set -- --catalog-dir "$INDEPENDENT_CATALOG_DIR" --manifest "$INDEPENDENT_CATALOG_MANIFEST" \
+                --triangle-index "$INDEPENDENT_TRIANGLE_INDEX" \
                 --solver "$ASTRO/polaris-solve-independent" --stars "$STARS" --width "$W" --height "$H" \
                 --max-catalog "$INDEPENDENT_MAX_CATALOG" --min-matches "${MIN_MATCHES:-12}" \
                 --scale-tol "$INDEPENDENT_SCALE_TOL" $_scale

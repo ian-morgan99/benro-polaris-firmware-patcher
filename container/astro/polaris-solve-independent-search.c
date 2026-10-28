@@ -29,6 +29,18 @@ typedef struct {
     double ra, dec;
 } point_t;
 
+typedef struct {
+    int tile_id;
+    int hits;
+} tile_candidate_t;
+
+typedef struct {
+    FILE *file;
+    uint32_t tile_count;
+    uint32_t record_count;
+    uint32_t ratio_scale;
+} triangle_index_t;
+
 static double rad(double x) { return x * M_PI / 180.0; }
 static double deg(double x) { return x * 180.0 / M_PI; }
 
@@ -54,6 +66,102 @@ static int tile_compare(const void *a, const void *b) {
     if (x->ra < y->ra) return -1;
     if (x->ra > y->ra) return 1;
     return 0;
+}
+
+static int candidate_compare(const void *a, const void *b) {
+    const tile_candidate_t *x = (const tile_candidate_t *)a;
+    const tile_candidate_t *y = (const tile_candidate_t *)b;
+    if (x->hits != y->hits) return y->hits - x->hits;
+    return x->tile_id - y->tile_id;
+}
+
+static int load_observations(const char *filename, point_t *observations, int maximum) {
+    FILE *file = fopen(filename, "r");
+    char line[256];
+    int count = 0;
+    if (!file) return 0;
+    while (count < maximum && fgets(line, sizeof(line), file)) {
+        if (line[0] == '#' || !line[0]) continue;
+        if (sscanf(line, "%lf %lf", &observations[count].ra,
+                   &observations[count].dec) >= 2) count++;
+    }
+    fclose(file);
+    return count;
+}
+
+static int triangle_index_open(const char *filename, triangle_index_t *index) {
+    char magic[8];
+    uint32_t version;
+    index->file = fopen(filename, "rb");
+    if (!index->file) return 0;
+    if (fread(magic, 1, 8, index->file) != 8 ||
+        memcmp(magic, "POLTRI01", 8) != 0 ||
+        fread(&version, sizeof(version), 1, index->file) != 1 ||
+        fread(&index->tile_count, sizeof(index->tile_count), 1, index->file) != 1 ||
+        fread(&index->record_count, sizeof(index->record_count), 1, index->file) != 1 ||
+        fread(&index->ratio_scale, sizeof(index->ratio_scale), 1, index->file) != 1 ||
+        version != 1 || index->ratio_scale == 0) {
+        fclose(index->file); index->file = NULL; return 0;
+    }
+    return 1;
+}
+
+static void triangle_index_close(triangle_index_t *index) {
+    if (index->file) fclose(index->file);
+    index->file = NULL;
+}
+
+static int triangle_index_read(const triangle_index_t *index, uint32_t position,
+                               uint16_t *ratio1, uint16_t *ratio2,
+                               uint32_t *tile_id) {
+    uint16_t ratios[2];
+    long offset = 24L + (long)position * 8L;
+    if (position >= index->record_count || fseek(index->file, offset, SEEK_SET) != 0 ||
+        fread(ratios, sizeof(ratios), 1, index->file) != 1 ||
+        fread(tile_id, sizeof(*tile_id), 1, index->file) != 1) return 0;
+    *ratio1 = ratios[0]; *ratio2 = ratios[1];
+    return 1;
+}
+
+static uint32_t triangle_key(uint16_t ratio1, uint16_t ratio2) {
+    return ((uint32_t)ratio1 << 16) | ratio2;
+}
+
+static uint32_t triangle_index_lower_bound(const triangle_index_t *index, uint32_t target) {
+    uint32_t low = 0, high = index->record_count;
+    while (low < high) {
+        uint32_t middle = low + (high - low) / 2, tile;
+        uint16_t ratio1, ratio2;
+        if (!triangle_index_read(index, middle, &ratio1, &ratio2, &tile)) return index->record_count;
+        if (triangle_key(ratio1, ratio2) < target) low = middle + 1;
+        else high = middle;
+    }
+    return low;
+}
+
+static void triangle_index_add_hits(const triangle_index_t *index, double a, double b,
+                                    double c, int tile_count, int *hits) {
+    double sides[3] = {a, b, c};
+    uint16_t ratio1, ratio2, query1, query2, found1, found2;
+    int delta1, delta2;
+    uint32_t position, tile, target;
+    double t;
+    if (sides[0] > sides[1]) { t = sides[0]; sides[0] = sides[1]; sides[1] = t; }
+    if (sides[1] > sides[2]) { t = sides[1]; sides[1] = sides[2]; sides[2] = t; }
+    if (sides[0] > sides[1]) { t = sides[0]; sides[0] = sides[1]; sides[1] = t; }
+    if (sides[0] < 3.0) return;
+    ratio1 = (uint16_t)fmin(65535.0, floor(index->ratio_scale * sides[1] / sides[0] + 0.5));
+    ratio2 = (uint16_t)fmin(65535.0, floor(index->ratio_scale * sides[2] / sides[0] + 0.5));
+    for (delta1 = -2; delta1 <= 2; delta1++) for (delta2 = -2; delta2 <= 2; delta2++) {
+        query1 = (uint16_t)((int)ratio1 + delta1 < 0 ? 0 : (int)ratio1 + delta1);
+        query2 = (uint16_t)((int)ratio2 + delta2 < 0 ? 0 : (int)ratio2 + delta2);
+        target = triangle_key(query1, query2);
+        for (position = triangle_index_lower_bound(index, target);
+             position < index->record_count && triangle_index_read(index, position, &found1, &found2, &tile) &&
+             triangle_key(found1, found2) == target; position++) {
+            if (tile < (uint32_t)tile_count) hits[tile]++;
+        }
+    }
 }
 
 static int load_tiles(const char *directory, double ra_bin_width,
@@ -188,7 +296,7 @@ static int add_start(point_t *starts, int count, int capacity, double ra, double
 static void usage(const char *program) {
     fprintf(stderr, "usage: %s --catalog-dir DIR --stars FILE --width W --height H "
                     "--focal-mm F [--sensor-mm S] [--manifest FILE] "
-                    "[--solver FILE] [--ra R --dec D] [--radius D] "
+                    "[--triangle-index FILE] [--solver FILE] [--ra R --dec D] [--radius D] "
                     "[--step-deg D] [--rings N] [--attempts N] "
                     "[--max-stars N] [--max-catalog N] [--min-matches N] "
                     "[--scale-tol F] [--residual-px F]\n", program);
@@ -196,6 +304,7 @@ static void usage(const char *program) {
 
 int main(int argc, char **argv) {
     const char *catalog_dir = NULL, *manifest = NULL, *stars = NULL;
+    const char *triangle_index_file = NULL;
     const char *solver = "polaris-solve-independent";
     double width = 0, height = 0, focal = 0, sensor = 36;
     double hint_ra = 0, hint_dec = 0, radius = 15, step = 5;
@@ -208,6 +317,10 @@ int main(int argc, char **argv) {
     int i, s, t, tried = 0, tile_count, start_count = 0;
     tile_t *tiles = NULL;
     point_t *starts = NULL;
+    int *candidate_order = NULL;
+    tile_candidate_t *candidates = NULL;
+    point_t *observations = NULL;
+    triangle_index_t triangle_index = {0};
     char result[16384];
     char best_result[16384];
     int best_matches = 0;
@@ -217,6 +330,7 @@ int main(int argc, char **argv) {
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--catalog-dir") && i + 1 < argc) catalog_dir = argv[++i];
         else if (!strcmp(argv[i], "--manifest") && i + 1 < argc) manifest = argv[++i];
+        else if (!strcmp(argv[i], "--triangle-index") && i + 1 < argc) triangle_index_file = argv[++i];
         else if (!strcmp(argv[i], "--solver") && i + 1 < argc) solver = argv[++i];
         else if (!strcmp(argv[i], "--stars") && i + 1 < argc) stars = argv[++i];
         else if (!strcmp(argv[i], "--width") && i + 1 < argc) width = atof(argv[++i]);
@@ -256,8 +370,10 @@ int main(int argc, char **argv) {
     }
     if (attempts < 0) attempts = 0;
     if (attempts == 0) attempts = tile_count;
+    candidate_order = calloc((size_t)tile_count, sizeof(*candidate_order));
+    if (!candidate_order) { free(tiles); return 1; }
     starts = calloc((size_t)(attempts + 1), sizeof(*starts));
-    if (!starts) { free(tiles); return 1; }
+    if (!starts) { free(candidate_order); free(tiles); return 1; }
     if (have_ra) {
         start_count = add_start(starts, start_count, attempts + 1, hint_ra, hint_dec);
         for (s = 1; s <= rings && start_count < attempts; s++) {
@@ -271,21 +387,64 @@ int main(int argc, char **argv) {
         }
         mode = "hinted-corkscrew";
     } else {
-        for (t = 0; t < tile_count && start_count < attempts; t++) {
-            start_count = add_start(starts, start_count, attempts + 1,
-                                    tiles[t].ra, tiles[t].dec);
+        int candidate_count = 0;
+        if (triangle_index_file && triangle_index_open(triangle_index_file, &triangle_index) &&
+            triangle_index.tile_count == (uint32_t)tile_count) {
+            double expected_scale = 206264.806 * atan((sensor / width) / focal);
+            int observation_count;
+            observations = calloc((size_t)max_stars, sizeof(*observations));
+            int *hits = calloc((size_t)tile_count, sizeof(*hits));
+            if (observations && hits &&
+                (observation_count = load_observations(stars, observations, max_stars)) >= 3) {
+                int left, right;
+                int third, limit = observation_count < 15 ? observation_count : 15;
+                for (left = 0; left < limit; left++)
+                    for (right = left + 1; right < limit; right++)
+                        for (third = right + 1; third < limit; third++)
+                            triangle_index_add_hits(&triangle_index,
+                                hypot(observations[left].ra - observations[right].ra,
+                                      observations[left].dec - observations[right].dec) * expected_scale,
+                                hypot(observations[left].ra - observations[third].ra,
+                                      observations[left].dec - observations[third].dec) * expected_scale,
+                                hypot(observations[right].ra - observations[third].ra,
+                                      observations[right].dec - observations[third].dec) * expected_scale,
+                                tile_count, hits);
+                candidates = calloc((size_t)tile_count, sizeof(*candidates));
+                if (candidates) {
+                    for (t = 0; t < tile_count; t++) if (hits[t] > 0) {
+                        candidates[candidate_count].tile_id = t;
+                        candidates[candidate_count].hits = hits[t];
+                        candidate_count++;
+                    }
+                    qsort(candidates, (size_t)candidate_count, sizeof(*candidates), candidate_compare);
+                    for (t = 0; t < candidate_count; t++) candidate_order[t] = candidates[t].tile_id;
+                }
+            }
+            free(hits);
+            if (candidate_count > 0) mode = "all-sky-triangle-index";
+            else triangle_index_close(&triangle_index);
         }
-        mode = "all-sky-tile-centres";
+        if (!candidate_count) {
+            for (t = 0; t < tile_count; t++) candidate_order[t] = t;
+            candidate_count = tile_count;
+            mode = "all-sky-tile-centres";
+        }
+        for (t = 0; t < candidate_count && start_count < attempts; t++) {
+            start_count = add_start(starts, start_count, attempts + 1,
+                                    tiles[candidate_order[t]].ra,
+                                    tiles[candidate_order[t]].dec);
+        }
     }
     if (!have_ra) {
         /* A blind tile-centre pass has one unambiguous tile per attempt.  Do
          * not try every neighbouring tile for the first sky position: that
          * would spend the whole budget around one patch and never reach the
          * rest of the all-sky catalogue. */
-        for (t = 0; t < tile_count && tried < attempts; t++) {
+        for (t = 0; t < start_count && tried < attempts; t++) {
+            int tile_id = candidate_order[t];
             result[0] = '\0';
-            run_solver(solver, &tiles[t], stars, width, height, focal, sensor,
-                       tiles[t].ra, tiles[t].dec, radius, max_stars,
+            run_solver(solver, &tiles[tile_id], stars, width, height, focal, sensor,
+                       starts[t].ra, starts[t].dec, radius, max_stars,
                        max_catalogue, minimum_matches, scale_tol, residual_px,
                        result, sizeof(result));
             tried++;
@@ -341,9 +500,11 @@ int main(int argc, char **argv) {
         } else {
             printf("%s\n", best_result);
         }
-        free(starts); free(tiles); return 0;
+        triangle_index_close(&triangle_index);
+        free(observations); free(candidates); free(candidate_order); free(starts); free(tiles); return 0;
     }
     printf("{\"solved\":false,\"failure_reason\":\"search_exhausted\","
            "\"attempts\":%d,\"search_mode\":\"%s\"}\n", tried, mode);
-    free(starts); free(tiles); return 7;
+    triangle_index_close(&triangle_index);
+    free(observations); free(candidates); free(candidate_order); free(starts); free(tiles); return 7;
 }

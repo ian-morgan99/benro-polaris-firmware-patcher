@@ -14,8 +14,8 @@ regional-frame runs. Not device-qualified and not safe to select through
 - Camera-model sensor profiles and EXIF focal-length precedence in the
   existing Astrometry alignment path.
 - Thirteen deterministic tests pass.
-- Native C tile-search front end with bounded hint/corkscrew and all-sky tile
-  centre policy; no Python runtime is required on the device path.
+- Native C tile-search front end with bounded hint/corkscrew and triangle-index
+  all-sky candidate policy; no Python runtime is required on the device path.
 
 ## Native-C tuning pass
 
@@ -57,9 +57,10 @@ multi-frame error distribution are still required.
 1. The independent solver and sky renderer now have native C host/ARM build
    paths, and the runtime selector supplies the regional catalogue arguments.
    The paired harness has run successfully on one host frame.
-2. The native solver still requires a spatially partitioned catalogue and the
-   native search front end is bounded; it is not yet a production-scale blind
-   all-sky solve. The nine-tile smoke is a regional check, not all-sky coverage.
+2. The native solver still requires a spatially partitioned catalogue and
+   triangle index and the native search front end is bounded; it is not yet a
+   production-scale blind all-sky qualification. The nine-tile smoke is a
+   regional check, not all-sky coverage.
 3. Candidate search is bounded brute force, not an indexed descriptor lookup;
    the real Gaia regional render now solves in roughly 3.8 seconds on the host
    after selecting the brightest regional records, but remains too expensive

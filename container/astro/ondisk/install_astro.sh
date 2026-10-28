@@ -44,6 +44,8 @@ if [ -d "$SRC/catalogue-tiles" ]; then
     done
 fi
 [ -f "$SRC/catalogue-tiles.manifest.json" ] && cp "$SRC/catalogue-tiles.manifest.json" "$DEST/"
+[ -f "$SRC/catalogue-tiles.ptri" ] && cp "$SRC/catalogue-tiles.ptri" "$DEST/"
+[ -f "$SRC/catalogue-tiles.ptri.json" ] && cp "$SRC/catalogue-tiles.ptri.json" "$DEST/"
 # optional: only needed for simulated-sky testing
 [ -f "$SRC/polaris-skysim" ] && { cp "$SRC/polaris-skysim" "$DEST"/; chmod +x "$DEST/polaris-skysim"; }
 

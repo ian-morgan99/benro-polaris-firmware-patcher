@@ -53,9 +53,9 @@ qualification remain tracked follow-up work in issue #247.
 
 The independent native solver and its bounded native tile-search front end
 remain selectable beside Astrometry.net. The real Gaia regional/native search
-smoke now passes, but the native path is not the default until an all-sky
-catalogue, wrong-solve corpus, ARM runtime, and device capture path have
-passed their respective gates.
+smoke now passes, including a triangle-ratio candidate index, but the native
+path is not the default until an all-sky catalogue package, wrong-solve corpus,
+ARM runtime, and device capture path have passed their respective gates.
 
 ## Evidence still required before calling the mission complete
 

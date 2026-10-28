@@ -27,6 +27,7 @@ def test_boot_exports_solver_configuration_to_daemons():
     assert 'SOLVER_BIN="${SOLVER_BIN:-polaris-solve}"' in text
     assert 'INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}"' in text
     assert 'INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}"' in text
+    assert 'INDEPENDENT_TRIANGLE_INDEX="${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}"' in text
 
 
 def test_catalogue_is_optional_for_reference_bundle_but_installable():
@@ -37,6 +38,7 @@ def test_catalogue_is_optional_for_reference_bundle_but_installable():
     assert 'catalogue-tiles' in install
     assert 'INDEPENDENT_CATALOG=/app/sd/polaris-astro/catalogue.polcat' in config
     assert 'INDEPENDENT_CATALOG_DIR=/app/sd/polaris-astro/catalogue-tiles' in config
+    assert 'INDEPENDENT_TRIANGLE_INDEX=/app/sd/polaris-astro/catalogue-tiles.ptri' in config
 
 
 def test_end_to_end_session_hooks_are_mode_gated_and_separate():
