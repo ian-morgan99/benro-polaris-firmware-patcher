@@ -188,6 +188,8 @@ grep -q 'local-source Pentax candidate marker: present' "$T/build.log" || {
   echo "Pentax marker gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
 grep -q 'local-source target models: K-1 II and K-3 III present' "$T/build.log" || {
   echo "K-1 II/K-3 III image model gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
+grep -q 'local-source legacy target models: K-5 II and K-5 IIs present' "$T/build.log" || {
+  echo "K-5 II/K-5 IIs legacy camlib gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
 
 # 5) The on-disk stage-2 bundle is shipped.
 [ -f "$T/stage2-ondisk/ondisk/install_stage2.sh" ] || { echo "missing install_stage2.sh" >&2; exit 1; }
@@ -270,6 +272,10 @@ done
 rm -f "$PTP2_MARKER_FILE"
 [ -f "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" ] || {
   echo "selected pentax camlib was built but not packaged" >&2; exit 1; }
+(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -F 'Pentax:K5II' >/dev/null) || {
+  echo "packaged legacy Pentax camlib lacks K-5 II" >&2; exit 1; }
+(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -F 'Pentax:K5IIs' >/dev/null) || {
+  echo "packaged legacy Pentax camlib lacks K-5 IIs" >&2; exit 1; }
 (cd "$T/stage2-ondisk/libgphoto2/2.5.34" && sha256sum -c camlibs.manifest) || {
   echo "packaged selected-camlib manifest failed" >&2; exit 1; }
 # And the trampolined on-disk core binary is shipped.

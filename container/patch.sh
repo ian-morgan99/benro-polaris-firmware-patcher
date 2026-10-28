@@ -234,6 +234,18 @@ if [ -e /libgphoto2-source-input ]; then
     fi
   done
   log "local-source target models: K-1 II and K-3 III present"
+  if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+    NEW_LEGACY_PENTAX="$NEW_CAMLIB_DIR/pentax.so"
+    [ -f "$NEW_LEGACY_PENTAX" ] ||
+      die "legacy USB-SCSI requested but selected legacy Pentax camlib is missing"
+    LEGACY_MARKER_FILE="$W/legacy-pentax-markers.txt"
+    strings "$NEW_LEGACY_PENTAX" > "$LEGACY_MARKER_FILE" || true
+    for model in 'Pentax:K5II' 'Pentax:K5IIs'; do
+      grep -F "$model" "$LEGACY_MARKER_FILE" >/dev/null ||
+        die "legacy Pentax camlib lacks required K-5 model: $model"
+    done
+    log "local-source legacy target models: K-5 II and K-5 IIs present"
+  fi
 elif [ "$MODE" = "full" ]; then
   [ "${ALLOW_VANILLA_SOURCE:-0}" = "1" ] ||
     die "full mode lacks required libgphoto2 source input"
