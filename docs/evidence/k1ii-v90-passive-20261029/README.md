@@ -64,3 +64,28 @@ They remain unqualified and must not be represented as fixed by the 90-second
 startup window. Use the preserved on-device logs, if accessible again, to trace
 individual request boundaries and the first divergence before changing a
 camera protocol path.
+
+## Earlier v89 snapshot and candidate startup cost
+
+An existing local snapshot, `/tmp/k1ii-polaris-logs.GpBKBK/Clog.txt`, has
+SHA-256 `310d6011c88a8fc5384ff83c3a252f1443794537bde49799f843723696afc6d7`.
+It is a temporary file and is not an archived v90 log. In one v89 startup the
+last timestamp before a missing `autofocusdrive` report was 19:05:33.631; the
+report appeared at 19:05:38.933. The Stage-2 guard reported `GP_OK without
+widget for autofocusdrive; returning CAMERA_BUSY` in between, without its own
+timestamp. This 5.302-second interval is not proof of any single PTP operation's
+duration. The subsequent `updateCameraViewFinder` interval was 6.341 seconds
+and ended with `ret:-1`; `updateCameraAutoFocus` then took 5.413 seconds and
+also returned `-1`.
+
+Offline disassembly shows `checkWidgetForName` calls `_find_widget_by_name`,
+which invokes `gp_camera_get_single_config` and, for any nonzero result, calls
+`gp_camera_get_config` to search the full configuration tree. This is a
+candidate explanation for expensive repeat enumeration when a control is absent
+or temporarily unavailable; the snapshot does not time the individual calls.
+The lookup routine's 588 bytes at `0x0f26d0` are identical in the recorded v89
+and v90 pgphoto artifacts (SHA-256
+`122fe7132bc9ec154222bffcbb45bd4cec08dd8394ae864eaf3e8599d51ee961`). The
+complete binaries differ. Do not infer that every v90 delay has this cause,
+or skip a control without proving its model-specific availability and preserving
+non-Pentax behavior. The detailed follow-up is on issue #253.
