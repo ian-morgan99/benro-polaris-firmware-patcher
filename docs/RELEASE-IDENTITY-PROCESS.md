@@ -258,6 +258,14 @@ camera model, USB identity, mode, card/output settings, operation, expected
 result, actual result, logs, and restoration/cleanup. Only then may the record
 be promoted to `PHYSICALLY-QUALIFIED`, and only for the tested matrix.
 
+For v90 and every later candidate, execute the complete post-deployment gate in
+[`docs/POST-V90-REGRESSION-GATE.md`](POST-V90-REGRESSION-GATE.md). It is the
+release checklist for repeating the offline gate, proving the exact runtime,
+running the direct libgphoto2 and packaged Polaris layers, and retaining the
+previously qualified Canon and Pentax camera behaviours. A partial canary is
+evidence for only the rows it actually exercised; it does not close the full
+regression gate.
+
 ## What must never happen again
 
 - `.83`, `.84`, and a commit SHA are not interchangeable names.
