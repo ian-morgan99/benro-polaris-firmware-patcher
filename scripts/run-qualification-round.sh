@@ -39,7 +39,10 @@ set -uo pipefail
 
 DEV=192.168.0.1
 SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=8 root@$DEV"
-ROOT=/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher
+# Resolve the checkout from this script, rather than silently switching to an
+# unrelated clone. This matters when the release candidate was built from a
+# clean worktree such as /home/ian/polaris-build-73.
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/round-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$OUT/dng" "$OUT/results"
 cd "$ROOT" || exit 1

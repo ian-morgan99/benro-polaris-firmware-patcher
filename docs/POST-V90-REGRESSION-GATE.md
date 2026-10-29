@@ -18,9 +18,9 @@ exact installed identity and recorded per camera and per layer.
 | Publication | [PrivateResearch v90 packet](https://github.com/ian-morgan99/PrivateResearch/tree/main/firmware-packets/6.0.0.54.90--o-v18m-k1ii-pgphoto-readiness-20261029) |
 
 If any identity value differs, stop. Do not interpret the test as v90
-evidence. The v90 package is not installed until the documented Bluetooth/Wi-Fi
-wake and `release-fwpkt.sh` process completes; an asleep Polaris is a blocked
-deployment, not a failed camera test.
+evidence. v90 is now installed-verified on Polaris using the documented
+Bluetooth/Wi-Fi wake and `release-fwpkt.sh` process. The receipt is published
+with the packet; physical camera qualification is still pending.
 
 ## Gate 0 — exact runtime identity
 
