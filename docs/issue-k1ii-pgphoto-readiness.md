@@ -51,9 +51,14 @@ initialisation time enough room to complete while retaining a hard upper bound.
 
 `container/test_restart_gphoto_readiness.sh` proves both sides of the contract:
 
-1. a simulated slow init publishes 8080 after three seconds and succeeds;
-2. a simulated hung init never publishes 8080 and fails within the configured
-   five-second test bound.
+1. a simulated slow init publishes 8080 after 21 seconds — beyond the old
+   production 20-second bound — and succeeds with one pgphoto launch;
+2. a simulated hung init never publishes 8080 and fails within a configured
+   one-second bound, with an elapsed-time assertion that fails against the old
+   hard-coded helper.
+
+The slow case is intentionally longer than the old limit. A shorter delay would
+be a false regression test because both the old and fixed helpers would pass it.
 
 The existing launch-lock, supervisor debounce, quarantine, and restart-budget
 tests remain required. Hardware qualification must still confirm K-1 II and

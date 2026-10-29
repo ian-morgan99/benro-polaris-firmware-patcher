@@ -639,6 +639,8 @@ Inspect via `git cat-file -p v0.3.0-pentax-hdmi-combined-720p60`.
   limit falsely failed the rebind while the process was still enumerating the
   K-1 II controls, causing supervisor retries and painfully slow value setting.
 - Added `container/test_restart_gphoto_readiness.sh`, covering slow readiness
-  and fail-closed hung startup.
+  and fail-closed hung startup. The slow case now crosses the old 20-second
+  bound and the hung case verifies the configured timeout by elapsed time, so
+  the regression is red on the parent revision.
 - Evidence and hardware qualification plan: `docs/issue-k1ii-pgphoto-readiness.md`.
 - This is a patcher/runtime fix; no libgphoto2 source change is included.
