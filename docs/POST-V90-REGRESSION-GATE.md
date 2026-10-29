@@ -94,6 +94,11 @@ overwrites the saved result after the cancel branch enters it. Correcting the
 branch condition alone therefore does not establish that cancellation remains
 visible to the caller, or that the physical shutter closes. Review the complete
 stop, error and file-publication lifecycle before clearing this block.
+`tools/audit_polaris_bulb_cancel.py` runs the relevant v90 ARM instructions
+with simulated callbacks and exits nonzero while a successful stop hides the
+cancel result. It requires the exact v90 pgphoto binary, an ARM objdump,
+`pyelftools`, and `unicorn`; it never writes the supplied binary or contacts a device.
+Its result is an offline regression diagnostic, not proof of physical closure.
 
 After Gate 0 passes, perform the read-only checks and any separately approved
 ordinary M-mode checks below without invoking the blocked round. Keep the
