@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Route positive-duration Pentax Bulb requests to pgphoto's timed Bulb helper."""
+"""Route safe Pentax Bulb requests to pgphoto's timed Bulb helper.
+
+The stock pgphoto capture dispatcher passes the wheel value as ``bTime`` to
+``capture_image_with_Burst``.  On the colour K-3 III a positive value must use
+the Bulb lifecycle, but only when the camera's live Pentax conditions say that
+the body is in B/lens-B/Astro mode.  A positive value in ordinary Manual mode
+must remain on the normal capture path; sending it to the held-Bulb action is
+what turns a perfectly ordinary M capture into a misleading ``shoot failed``.
+
+The helper also had a generic cancellation hole: its ``GP_ERROR_CANCEL`` branch
+returned before the normal stop path.  The patch below makes cancellation enter
+that path, which constructs and invokes the same stop callback used by natural
+completion, so the shutter is not left open.
+"""
 import argparse
 import os
 import re
@@ -12,20 +25,39 @@ from elftools.elf.elffile import ELFFile
 
 BURST_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DD0AC)
 BULB_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DDD2F, 0xE24DD004)
-TRAMPOLINE_SIZE = 0x140
+# The original trampoline only checked the model.  The live conditions query
+# and its literal strings need a larger, still page-local code cave.
+TRAMPOLINE_SIZE = 0x220
+
+# The stock helper's cancellation edge is stable in the supported pgphoto
+# binary: ``beq`` at capture_image_with_Bulb+0x330 jumped straight to the common
+# return tail, bypassing the normal stop path.  The stop path begins at +0x3a4
+# and constructs/invokes the existing stop callback later in that path.  Keep
+# both anchors explicit and verify the old target before changing it.
+BULB_CANCEL_OFFSET = 0x330
+BULB_CANCEL_OLD_TARGET_OFFSET = 0x748
+BULB_CANCEL_STOP_PATH_OFFSET = 0x3a4
 
 # Code-cave sub-layout (the trampoline is hand-assembled ARM; see
 # build_trampoline). The literal pool and match strings sit after the code. The
-# 128-byte getCameraName destination buffer is NOT here: the code cave lives in
+# Stack-backed getCameraName/conditions destination buffer is NOT here: the code cave lives in
 # the read-only (R+X) text segment, and getCameraName copies the lowercased
 # model name into its r0 argument, so the buffer is allocated on the stack at
 # run time (sub sp). getCameraName always returns 0 (issue #210), so the model
 # check inspects the buffer contents, never the return value.
-LITERAL_POOL = 0x100
-PENTAX_TEXT = 0x110
-MODEL_TEXT = 0x120
-MONO_TEXT = 0x130
-NAME_BUF_BYTES = 136  # 128-byte name + 8-byte guard, keeps sp 8-byte aligned
+LITERAL_POOL = 0x160
+PENTAX_TEXT = 0x180
+MODEL_TEXT = 0x190
+MONO_TEXT = 0x1A0
+CONDITIONS_KEY_TEXT = 0x1B0
+MODE_9_TEXT = 0x1C4
+MODE_12_TEXT = 0x1DC
+MODE_20_TEXT = 0x1F4
+# The same stack buffer is reused for the model name and the
+# ``pentaxconditions`` text widget.  The latter is currently under 1 KiB; keep
+# the full value writable so gp_widget_get_value cannot overrun the capture
+# arguments while the mode gate is checking it.
+NAME_BUF_BYTES = 2048
 OBJDUMP = os.environ.get("OBJDUMP", "arm-linux-gnueabi-objdump")
 
 
@@ -37,9 +69,10 @@ def symbol_value(elf, name):
         for symbol in section.iter_symbols():
             if symbol.name == name and symbol.entry["st_shndx"] != "SHN_UNDEF":
                 hits.append((symbol.entry["st_value"], symbol.entry["st_size"]))
-    if len(hits) != 1:
-        raise ValueError("expected one defined %s symbol, found %d" % (name, len(hits)))
-    return hits[0]
+    unique = sorted(set(hits))
+    if len(unique) != 1:
+        raise ValueError("expected one defined %s symbol, found %d" % (name, len(unique)))
+    return unique[0]
 
 
 def va_to_offset(elf, address):
@@ -62,25 +95,17 @@ def encode_branch(source, target, condition=0xE, link=False):
     return (condition << 28) | 0x0A000000 | (0x01000000 if link else 0) | immediate
 
 
-def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
+def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
+                     camera_global, camera_get_single_config,
+                     widget_get_value, widget_free, strstr):
     # Hand-assembled ARM. Entry registers are the stock burst arguments:
     #   r0 = status, r1 = duration (bTime), r2 = newFiles.
     # Positive-duration, status-0 Pentax K-3 III (non-Monochrome) requests are
-    # routed to capture_image_with_Bulb(status, duration, newFiles) and its
-    # result returned; everything else reconstructs the stock prologue and
-    # resumes capture_image_with_Burst unchanged.
-    #
-    # Why there is no runtime "is the dial on B?" gate here (issue #205): the
-    # app's capture request is `state:1;bulb:N;c:-1;` and N is the *requested
-    # exposure duration*. Across every captured session log the normal-capture
-    # path is always `bulb:0` and a positive `bulb:N` appears only on an explicit
-    # long-exposure request (docs/evidence/*/raw/Mlog_*: 108x bulb:0, 124x
-    # bulb:N>0, never a positive N on a plain timed capture). So r1 > 0 already
-    # *is* the app's explicit "expose for N seconds" signal; a timed-shutter
-    # capture never reaches this branch with a positive duration. Gating on the
-    # physical dial would only suppress the timed helper for the exact requests
-    # it exists to serve (the app drives the duration, not the dial), so the
-    # duration check is the correct and sufficient gate.
+    # routed to capture_image_with_Bulb(status, duration, newFiles) only after
+    # a same-session ``pentaxconditions`` read confirms raw exposure mode 9, 12
+    # or 20 (B, lens-B or Astro).  If the query fails, or reports ordinary M,
+    # the stock burst helper is used.  This is one bounded pre-capture read,
+    # not a polling loop.
     #
     # Three correctness constraints the previous trampoline got wrong (issue #210):
     #   1. getCameraName copies the lowercased model name into its r0 destination
@@ -91,19 +116,24 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
     #      saved on entry and reloaded before the timed-Bulb call.
     #   3. After the timed-Bulb call the trampoline must return, not fall through
     #      into the stock burst body (which would capture twice).
-    fallback = 0x80            # reconstruct prologue + resume (nothing pushed)
-    restore_fallback = 0x78    # drop buffer + reload args, then fall to fallback
-    do_bulb = 0x6C             # drop buffer + reload args, then tail-call Bulb
+    do_bulb = 0x100            # drop buffer + reload args, then tail-call Bulb
+    restore_fallback = 0x10C   # drop buffer + reload args, then fall to fallback
+    fallback = 0x114           # reconstruct prologue + resume (nothing pushed)
     pentax_lit = LITERAL_POOL
     model_lit = LITERAL_POOL + 4
     mono_lit = LITERAL_POOL + 8
+    conditions_key_lit = LITERAL_POOL + 12
+    mode_9_lit = LITERAL_POOL + 16
+    mode_12_lit = LITERAL_POOL + 20
+    mode_20_lit = LITERAL_POOL + 24
+    camera_global_lit = LITERAL_POOL + 28
 
-    def ldr_pc(instr_off, literal_off):
-        # ldr r1, [pc, #imm]; PC during execution is instr address + 8.
+    def ldr_pc(instr_off, literal_off, register=1):
+        # ldr rN, [pc, #imm]; PC during execution is instr address + 8.
         imm = literal_off - (instr_off + 8)
         if not 0 <= imm < 0x1000 or imm & 3:
             raise ValueError("literal pool entry is out of ldr range")
-        return 0xE59F1000 | imm
+        return 0xE59F0000 | (register << 12) | imm
 
     def br(instr_off, target, link=False, condition=0xE):
         # Branch at blob offset instr_off (address cave + instr_off) to target.
@@ -112,10 +142,15 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
     MOV_R0_SP = 0xE1A0000D
     PUSH_ARGS = 0xE92D4007     # push {r0, r1, r2, lr}
     POP_ARGS = 0xE8BD4007      # pop  {r0, r1, r2, lr}
-    SUB_SP_BUF = 0xE24DD088    # sub sp, sp, #136
-    ADD_SP_BUF = 0xE28DD088    # add sp, sp, #136
+    SUB_SP_BUF = 0xE24DDB02    # sub sp, sp, #2048
+    ADD_SP_BUF = 0xE28DDB02    # add sp, sp, #2048
+    ADD_R1_SP_4 = 0xE28D1004
+    ADD_R0_SP_4 = 0xE28D0004
     CMP_R0 = 0xE3500000
     CMP_R1 = 0xE3510000
+    MOV_R2_SP = 0xE1A0200D
+    MOV_R3_0 = 0xE3A03000
+    LDR_R0_SP = 0xE59D0000
 
     words = {
         0x00: CMP_R1,
@@ -144,23 +179,69 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
         0x5C: ldr_pc(0x5C, mono_lit),                            # ldr r1, ="Monochrome"
         0x60: br(0x60, strcasestr, link=True),                   # bl strcasestr
         0x64: CMP_R0,
-        0x68: br(0x68, cave + restore_fallback, condition=0x1),  # bne restore (Monochrome)
+        0x68: br(0x68, cave + restore_fallback, condition=0x1),   # bne restore (Monochrome)
+        # Query the same-session Pentax Conditions widget.  The widget pointer
+        # is at sp; the 2044-byte value buffer is at sp+4.  Any failure falls
+        # through to the stock path, never into a held shutter action.
+        0x6C: ldr_pc(0x6C, camera_global_lit, register=0),        # &camera
+        0x70: 0xE5900000,                                        # ldr r0, [r0]
+        0x74: ldr_pc(0x74, conditions_key_lit),                   # "pentaxconditions"
+        0x78: MOV_R2_SP,                                         # widget ** at sp
+        0x7C: MOV_R3_0,
+        0x80: br(0x80, camera_get_single_config, link=True),
+        0x84: CMP_R0,
+        0x88: br(0x88, cave + restore_fallback, condition=0x1),   # bne unknown
+        0x8C: LDR_R0_SP,
+        0x90: CMP_R0,
+        0x94: br(0x94, cave + restore_fallback, condition=0x0),   # beq unknown
+        0x98: ADD_R1_SP_4,                                      # value buffer
+        0x9C: br(0x9C, widget_get_value, link=True),
+        0xA0: CMP_R0,
+        0xA4: br(0xA4, cave + 0xF0, condition=0x1),               # bne free/fallback
+        0xA8: LDR_R0_SP,
+        0xAC: br(0xAC, widget_free, link=True),
+        0xB0: ADD_R0_SP_4,                                      # conditions text
+        0xB4: ldr_pc(0xB4, mode_9_lit),
+        0xB8: br(0xB8, strstr, link=True),
+        0xBC: CMP_R0,
+        0xC0: br(0xC0, cave + do_bulb, condition=0x1),            # bne B
+        0xC4: ADD_R0_SP_4,
+        0xC8: ldr_pc(0xC8, mode_12_lit),
+        0xCC: br(0xCC, strstr, link=True),
+        0xD0: CMP_R0,
+        0xD4: br(0xD4, cave + do_bulb, condition=0x1),            # bne lens-B
+        0xD8: ADD_R0_SP_4,
+        0xDC: ldr_pc(0xDC, mode_20_lit),
+        0xE0: br(0xE0, strstr, link=True),
+        0xE4: CMP_R0,
+        0xE8: br(0xE8, cave + do_bulb, condition=0x1),            # bne Astro
+        0xEC: br(0xEC, cave + restore_fallback),                 # ordinary M/unknown
+        # Failure from gp_widget_get_value still releases the widget before
+        # falling back; no failed read is accepted.
+        0xF0: LDR_R0_SP,
+        0xF4: br(0xF4, widget_free, link=True),
+        0xF8: br(0xF8, cave + restore_fallback),
         # do_bulb: reload the original arguments, then tail-call the timed helper
         # so its result is returned directly to the original caller.
-        0x6C: ADD_SP_BUF,
-        0x70: POP_ARGS,
-        0x74: br(0x74, bulb),                                    # b capture_image_with_Bulb
+        0x100: ADD_SP_BUF,
+        0x104: POP_ARGS,
+        0x108: br(0x108, bulb),                                  # b capture_image_with_Bulb
         # restore_fallback: drop the buffer, reload args, then run the stock path.
-        0x78: ADD_SP_BUF,
-        0x7C: POP_ARGS,
+        0x10C: ADD_SP_BUF,
+        0x110: POP_ARGS,
         # fallback: reconstruct the prologue clobbered by the entry branch.
-        0x80: BURST_PROLOGUE[0],
-        0x84: BURST_PROLOGUE[1],
-        0x88: BURST_PROLOGUE[2],
-        0x8C: br(0x8C, burst + 12),                              # b burst_resume
+        0x114: BURST_PROLOGUE[0],
+        0x118: BURST_PROLOGUE[1],
+        0x11C: BURST_PROLOGUE[2],
+        0x120: br(0x120, burst + 12),                            # b burst_resume
         pentax_lit: cave + PENTAX_TEXT,
         model_lit: cave + MODEL_TEXT,
         mono_lit: cave + MONO_TEXT,
+        conditions_key_lit: cave + CONDITIONS_KEY_TEXT,
+        mode_9_lit: cave + MODE_9_TEXT,
+        mode_12_lit: cave + MODE_12_TEXT,
+        mode_20_lit: cave + MODE_20_TEXT,
+        camera_global_lit: camera_global,
     }
     blob = bytearray(TRAMPOLINE_SIZE)
     for offset, word in words.items():
@@ -168,6 +249,10 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr):
     blob[PENTAX_TEXT:PENTAX_TEXT + 7] = b"pentax\0"
     blob[MODEL_TEXT:MODEL_TEXT + 13] = b"K-3 Mark III\0"
     blob[MONO_TEXT:MONO_TEXT + 11] = b"Monochrome\0"
+    blob[CONDITIONS_KEY_TEXT:CONDITIONS_KEY_TEXT + 17] = b"pentaxconditions\0"
+    blob[MODE_9_TEXT:MODE_9_TEXT + 21] = b"exposure-mode-raw=9;\0"
+    blob[MODE_12_TEXT:MODE_12_TEXT + 22] = b"exposure-mode-raw=12;\0"
+    blob[MODE_20_TEXT:MODE_20_TEXT + 22] = b"exposure-mode-raw=20;\0"
     return bytes(blob)
 
 
@@ -189,10 +274,34 @@ def call_instructions(path):
     pattern = re.compile(r"^\s*([0-9a-f]+):\s+bl\s+([0-9a-f]+)\s+<([^>]+)>", re.M)
     for match in pattern.finditer(output):
         calls.append((int(match.group(1), 16), int(match.group(2), 16), match.group(3)))
-    plt = re.search(r"^\s*([0-9a-f]+)\s+<strcasestr@plt>:", output, re.M)
-    if not plt:
-        raise ValueError("strcasestr@plt is missing")
-    return calls, int(plt.group(1), 16), output
+    strcasestr_plt = re.search(r"^\s*([0-9a-f]+)\s+<strcasestr@plt>:", output, re.M)
+    strstr_plt = re.search(r"^\s*([0-9a-f]+)\s+<strstr@plt>:", output, re.M)
+    if not strcasestr_plt or not strstr_plt:
+        raise ValueError("strcasestr@plt or strstr@plt is missing")
+    return (calls, int(strcasestr_plt.group(1), 16),
+            int(strstr_plt.group(1), 16), output)
+
+
+def bulb_cancel_patch_word(bulb, target):
+    """Return the unconditional branch to the normal stop path."""
+    return encode_branch(bulb + BULB_CANCEL_OFFSET, target)
+
+
+def patch_bulb_cancel(data, offsets, addresses):
+    """Make cancellation enter the helper's normal stop path."""
+    cancel_off = offsets["bulb"] + BULB_CANCEL_OFFSET
+    source = addresses["bulb"] + BULB_CANCEL_OFFSET
+    old_target = addresses["bulb"] + BULB_CANCEL_OLD_TARGET_OFFSET
+    stop_target = addresses["bulb"] + BULB_CANCEL_STOP_PATH_OFFSET
+    old_word = struct.unpack_from("<I", data, cancel_off)[0]
+    if old_word == bulb_cancel_patch_word(addresses["bulb"], stop_target):
+        return bytes(data), False
+    if old_word != encode_branch(source, old_target, condition=0x0):
+        raise ValueError("capture_image_with_Bulb cancel branch is not the verified stock edge")
+    patched = bytearray(data)
+    struct.pack_into("<I", patched, cancel_off,
+                     bulb_cancel_patch_word(addresses["bulb"], stop_target))
+    return bytes(patched), True
 
 
 def patch_data(data, offsets, addresses, segment):
@@ -210,9 +319,16 @@ def patch_data(data, offsets, addresses, segment):
         marker = build_trampoline(
             marker_cave, addresses["burst"], addresses["bulb"],
             addresses["manufacturer"], addresses["name"], addresses["strcasestr"],
+            addresses["camera_global"], addresses["camera_get_single_config"],
+            addresses["widget_get_value"], addresses["widget_free"],
+            addresses["strstr"],
         )
         if (existing_branch == marker_branch and
-                bytes(data[marker_off:marker_off + TRAMPOLINE_SIZE]) == marker):
+                bytes(data[marker_off:marker_off + TRAMPOLINE_SIZE]) == marker and
+                struct.unpack_from("<I", data,
+                    offsets["bulb"] + BULB_CANCEL_OFFSET)[0] ==
+                    bulb_cancel_patch_word(addresses["bulb"],
+                        addresses["bulb"] + BULB_CANCEL_STOP_PATH_OFFSET)):
             return bytes(data), False
 
     if existing_branch != BURST_PROLOGUE[0] or original_burst != BURST_PROLOGUE:
@@ -230,6 +346,9 @@ def patch_data(data, offsets, addresses, segment):
     trampoline = build_trampoline(
         cave, addresses["burst"], addresses["bulb"],
         addresses["manufacturer"], addresses["name"], addresses["strcasestr"],
+        addresses["camera_global"], addresses["camera_get_single_config"],
+        addresses["widget_get_value"], addresses["widget_free"],
+        addresses["strstr"],
     )
     cave_symbol_off = offsets["bulb_function"]
     original_bulb_helper = tuple(struct.unpack_from("<I", data, cave_symbol_off + offset)[0]
@@ -248,6 +367,8 @@ def patch_data(data, offsets, addresses, segment):
     patched = bytearray(data)
     struct.pack_into("<I", patched, burst_off, expected_branch)
     patched[cave_off:cave_off + len(trampoline)] = trampoline
+    patched, _ = patch_bulb_cancel(patched, offsets, addresses)
+    patched = bytearray(patched)
     phdr = segment["phdr_offset"]
     struct.pack_into("<I", patched, phdr + 16, current_filesz + TRAMPOLINE_SIZE)
     struct.pack_into("<I", patched, phdr + 20, current_memsz + TRAMPOLINE_SIZE)
@@ -264,10 +385,14 @@ def inspect_binary(path):
         bulb_function, bulb_function_size = symbol_value(elf, "captureBulbImage")
         manufacturer, _ = symbol_value(elf, "getCameraManufacturer")
         name, _ = symbol_value(elf, "getCameraName")
+        camera_global, _ = symbol_value(elf, "camera")
+        camera_get_single_config, _ = symbol_value(elf, "gp_camera_get_single_config")
+        widget_get_value, _ = symbol_value(elf, "gp_widget_get_value")
+        widget_free, _ = symbol_value(elf, "gp_widget_free")
         capture, capture_size = symbol_value(elf, "captureImage")
         if burst_size < 12 or bulb_size == 0 or bulb_function_size < 16 or capture_size == 0:
             raise ValueError("pgphoto capture functions have unexpected sizes")
-        calls, strcasestr, disassembly = call_instructions(path)
+        calls, strcasestr, strstr, disassembly = call_instructions(path)
         if not re.search(r"^\s*0*%x\s+<captureImage>:" % capture, disassembly, re.M):
             raise ValueError("captureImage disassembly/symbol anchor mismatch")
         if not re.search(r"^\s*0*%x\s+<capture_image_with_Burst>:" % burst, disassembly, re.M):
@@ -321,10 +446,19 @@ def inspect_binary(path):
             "bulb": bulb,
             "manufacturer": manufacturer,
             "name": name,
+            "camera_global": camera_global,
+            "camera_get_single_config": camera_get_single_config,
+            "widget_get_value": widget_get_value,
+            "widget_free": widget_free,
+            "strstr": strstr,
             "strcasestr": strcasestr,
         }
+        # ``camera`` is a writable global in .bss, so it has no file-backed
+        # offset.  The trampoline embeds its virtual address as a literal; it
+        # is never read through the file-offset map.
         offsets = {
             key: va_to_offset(elf, value) for key, value in addresses.items()
+            if key != "camera_global"
         }
         offsets["bulb_function"] = va_to_offset(elf, bulb_function)
         data = bytearray(binary_data)
@@ -350,7 +484,7 @@ def main():
         if changed:
             print("[polaris_bulb_dispatch] FATAL: timed Bulb dispatch marker missing", file=sys.stderr)
             return 1
-        print("[polaris_bulb_dispatch] verified duration-aware Pentax dispatch")
+        print("[polaris_bulb_dispatch] verified K-3 III live-mode Bulb dispatch and cancel-to-stop")
         return 0
 
     if changed:
@@ -370,7 +504,7 @@ def main():
         else:
             with open(output_path, "wb") as output:
                 output.write(patched)
-        print("[polaris_bulb_dispatch] patched %s: positive-duration K-3 III requests use timed Bulb action" % output_path)
+        print("[polaris_bulb_dispatch] patched %s: K-3 III live-mode gate, cancel-to-stop, and timed Bulb route" % output_path)
     else:
         print("[polaris_bulb_dispatch] already patched (unique verified dispatch)")
     return 0

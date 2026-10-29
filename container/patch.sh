@@ -428,7 +428,7 @@ if [ "$MODE" = "ptp2only" ]; then
   log "  pgphoto reliability patches: 17 bytes (gates + resetUsb + list-files + focus idle wait) ✓"
   python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.patched" --in-place \
     || die "pgphoto timed-Bulb dispatch patch failed"
-  log "  positive-duration Pentax K-3 III requests route to the timed Bulb lifecycle"
+  log "  K-3 III live B-mode gate + cancel-to-stop + timed Bulb route installed"
   python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.patched" --in-place \
     || die "pgphoto dark-frame poll budget patch failed"
   log "  post-release file wait raised from ~6s to 100s so a noise-reduction dark frame is found"
@@ -463,7 +463,7 @@ else
   log "  base: 17-byte reliability patch (resetUsb + list-files + 3 gates + focus idle wait) md5=$(md5sum "$W/pgphoto.base"|cut -d' ' -f1)"
   python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.base" --in-place \
     || die "pgphoto timed-Bulb dispatch patch failed"
-  log "  pgphoto Bulb route: positive-duration K-3 III requests use the timed Bulb lifecycle"
+  log "  pgphoto Bulb route: live B-mode gate + cancel-to-stop + timed Bulb lifecycle"
   python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.base" --in-place \
     || die "pgphoto dark-frame poll budget patch failed"
   log "  pgphoto file wait: post-release poll raised from ~6s to 100s for noise-reduction dark frames"
@@ -823,8 +823,8 @@ if [ ! -f "$STAGE2_BIN" ]; then
   die "post-repack assertion failed: lib/stage2/pgphoto.stage2ondisk missing from appfs.ubifs"
 fi
 python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$STAGE2_BIN" --check \
-  || die "post-repack assertion failed: duration-aware Pentax Bulb dispatch missing"
-log "  verified timed Bulb dispatch in repacked pgphoto"
+  || die "post-repack assertion failed: K-3 III live-mode Bulb dispatch/cancel guard missing"
+log "  verified K-3 III live-mode Bulb dispatch and cancel-to-stop in repacked pgphoto"
 python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$STAGE2_BIN" --check \
   || die "post-repack assertion failed: dark-frame post-release file poll budget missing"
 log "  verified 100s post-release file poll in repacked pgphoto"

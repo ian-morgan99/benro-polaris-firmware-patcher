@@ -14,6 +14,11 @@ addresses = {
     "manufacturer": 0x4100,
     "name": 0x4200,
     "strcasestr": 0x4300,
+    "camera_global": 0x4400,
+    "camera_get_single_config": 0x4500,
+    "widget_get_value": 0x4600,
+    "widget_free": 0x4700,
+    "strstr": 0x4800,
 }
 offsets = {key: value - base for key, value in addresses.items()}
 offsets["bulb_function"] = 0x300
@@ -35,6 +40,14 @@ for i, word in enumerate(patch.BURST_PROLOGUE):
     struct.pack_into("<I", data, offsets["burst"] + i * 4, word)
 for i, word in enumerate(patch.BULB_PROLOGUE):
     struct.pack_into("<I", data, offsets["bulb_function"] + i * 4, word)
+struct.pack_into(
+    "<I", data, offsets["bulb"] + patch.BULB_CANCEL_OFFSET,
+    patch.encode_branch(
+        addresses["bulb"] + patch.BULB_CANCEL_OFFSET,
+        addresses["bulb"] + patch.BULB_CANCEL_OLD_TARGET_OFFSET,
+        condition=0x0,
+    ),
+)
 indirect_bulb_pointer_offset = 0x400
 struct.pack_into("<I", data, indirect_bulb_pointer_offset, base + offsets["bulb_function"])
 
@@ -61,11 +74,11 @@ check(branch_target(addresses["burst"], entry) == cave,
 tramp = patched[cave_off:cave_off + patch.TRAMPOLINE_SIZE]
 word = lambda offset: struct.unpack_from("<I", tramp, offset)[0]
 check(word(0) == 0xE3510000 and (word(4) >> 28) == 0xD and
-      branch_target(cave + 4, word(4)) == cave + 0x80,
+      branch_target(cave + 4, word(4)) == cave + 0x114,
       "zero or negative duration falls back to the stock burst helper")
-check((word(0x74) >> 24) == 0xEA and branch_target(cave + 0x74, word(0x74)) == addresses["bulb"],
-      "only positive Pentax K-3 III duration tail-calls the timed Bulb helper")
-check(branch_target(cave + 0x8C, word(0x8C)) == addresses["burst"] + 12,
+check((word(0x108) >> 24) == 0xEA and branch_target(cave + 0x108, word(0x108)) == addresses["bulb"],
+      "only positive Pentax K-3 III B-mode duration tail-calls the timed Bulb helper")
+check(branch_target(cave + 0x120, word(0x120)) == addresses["burst"] + 12,
       "fallback reconstructs original burst prologue then resumes stock code")
 # Issue #210: getCameraName always returns 0, so the model gate must inspect the
 # name buffer (not the return value), must not clobber the capture arguments,
@@ -74,15 +87,48 @@ check(word(0x34) == 0xE1A0000D and (word(0x38) >> 24) == 0xEB and
       branch_target(cave + 0x38, word(0x38)) == addresses["name"],
       "getCameraName is given a writable stack buffer, not the strcasestr result")
 check(word(0x3C) == 0xE3500000 and (word(0x40) >> 28) == 0x1 and
-      branch_target(cave + 0x40, word(0x40)) == cave + 0x78,
+      branch_target(cave + 0x40, word(0x40)) == cave + 0x10C,
       "a getCameraName error (nonzero return) falls back instead of matching")
-check(word(0x44) == 0xE1A0000D and word(0x58) == 0xE1A0000D,
+check(word(0x44) == 0xE1A0000D and word(0x58) == 0xE1A0000D and
+      (word(0x68) >> 28) == 0x1 and
+      branch_target(cave + 0x68, word(0x68)) == cave + 0x10C,
       "the model and Monochrome checks search the name buffer, not a stale pointer")
-check(word(0x6C) == 0xE28DD088 and word(0x70) == 0xE8BD4007,
+check(word(0x100) == 0xE28DDB02 and word(0x104) == 0xE8BD4007,
       "the timed-Bulb path restores the original (status, duration, files) arguments")
-check(word(0x78) == 0xE28DD088 and word(0x7C) == 0xE8BD4007 and
-      word(0x80) == patch.BURST_PROLOGUE[0],
+check(word(0x10C) == 0xE28DDB02 and word(0x110) == 0xE8BD4007 and
+      word(0x114) == patch.BURST_PROLOGUE[0],
       "the fallback path restores arguments then reconstructs the burst prologue")
+check(struct.unpack_from("<I", patched,
+      offsets["bulb"] + patch.BULB_CANCEL_OFFSET)[0] ==
+      patch.bulb_cancel_patch_word(addresses["bulb"],
+          addresses["bulb"] + patch.BULB_CANCEL_STOP_PATH_OFFSET),
+      "Bulb cancellation reaches the existing normal stop path")
+check(tramp[patch.CONDITIONS_KEY_TEXT:patch.CONDITIONS_KEY_TEXT + 17] ==
+      b"pentaxconditions\0" and
+      tramp[patch.MODE_9_TEXT:patch.MODE_9_TEXT + 21] ==
+      b"exposure-mode-raw=9;\0" and
+      tramp[patch.MODE_12_TEXT:patch.MODE_12_TEXT + 22] ==
+      b"exposure-mode-raw=12;\0" and
+      tramp[patch.MODE_20_TEXT:patch.MODE_20_TEXT + 22] ==
+      b"exposure-mode-raw=20;\0",
+      "live Pentax B/lens-B/Astro mode markers are encoded")
+check((word(0x80) >> 24) == 0xEB and
+      branch_target(cave + 0x80, word(0x80)) == addresses["camera_get_single_config"] and
+      (word(0x9C) >> 24) == 0xEB and
+      branch_target(cave + 0x9C, word(0x9C)) == addresses["widget_get_value"] and
+      (word(0xAC) >> 24) == 0xEB and
+      branch_target(cave + 0xAC, word(0xAC)) == addresses["widget_free"] and
+      (word(0xF4) >> 24) == 0xEB and
+      branch_target(cave + 0xF4, word(0xF4)) == addresses["widget_free"],
+      "the mode gate uses one same-session conditions/widget read and frees it")
+check((word(0xB8) >> 24) == 0xEB and
+      branch_target(cave + 0xB8, word(0xB8)) == addresses["strstr"] and
+      branch_target(cave + 0xEC, word(0xEC)) == cave + 0x10C,
+      "ordinary Manual or unknown mode falls back to the stock burst path")
+check((word(0xA4) >> 28) == 0x1 and
+      branch_target(cave + 0xA4, word(0xA4)) == cave + 0xF0 and
+      branch_target(cave + 0xF8, word(0xF8)) == cave + 0x10C,
+      "a failed widget value read is freed before falling back")
 check(tramp[patch.PENTAX_TEXT:patch.PENTAX_TEXT + 7] == b"pentax\0" and
       tramp[patch.MODEL_TEXT:patch.MODEL_TEXT + 13] == b"K-3 Mark III\0" and
       tramp[patch.MONO_TEXT:patch.MONO_TEXT + 11] == b"Monochrome\0",
