@@ -27,7 +27,7 @@ BURST_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DD0AC)
 BULB_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DDD2F, 0xE24DD004)
 # The original trampoline only checked the model.  The live conditions query
 # and its literal strings need a larger, still page-local code cave.
-TRAMPOLINE_SIZE = 0x220
+TRAMPOLINE_SIZE = 0x240
 
 # The stock helper's cancellation edge is stable in the supported pgphoto
 # binary: ``beq`` at capture_image_with_Bulb+0x330 jumped straight to the common
@@ -45,18 +45,16 @@ BULB_CANCEL_STOP_PATH_OFFSET = 0x3a4
 # model name into its r0 argument, so the buffer is allocated on the stack at
 # run time (sub sp). getCameraName always returns 0 (issue #210), so the model
 # check inspects the buffer contents, never the return value.
-LITERAL_POOL = 0x160
-PENTAX_TEXT = 0x180
-MODEL_TEXT = 0x190
-MONO_TEXT = 0x1A0
-CONDITIONS_KEY_TEXT = 0x1B0
-MODE_9_TEXT = 0x1C4
-MODE_12_TEXT = 0x1DC
-MODE_20_TEXT = 0x1F4
-# The same stack buffer is reused for the model name and the
-# ``pentaxconditions`` text widget.  The latter is currently under 1 KiB; keep
-# the full value writable so gp_widget_get_value cannot overrun the capture
-# arguments while the mode gate is checking it.
+LITERAL_POOL = 0x180
+PENTAX_TEXT = 0x1A0
+MODEL_TEXT = 0x1B0
+MONO_TEXT = 0x1C0
+CONDITIONS_KEY_TEXT = 0x1D0
+MODE_9_TEXT = 0x1E4
+MODE_12_TEXT = 0x1FC
+MODE_20_TEXT = 0x214
+# The name uses this stack buffer.  Afterwards sp holds the widget pointer and
+# sp+4 holds either its type or the char * borrowed from the widget.
 NAME_BUF_BYTES = 2048
 OBJDUMP = os.environ.get("OBJDUMP", "arm-linux-gnueabi-objdump")
 
@@ -97,15 +95,16 @@ def encode_branch(source, target, condition=0xE, link=False):
 
 def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
                      camera_global, camera_get_single_config,
-                     widget_get_value, widget_free, strstr):
+                     widget_get_type, widget_get_value, widget_free, strstr):
     # Hand-assembled ARM. Entry registers are the stock burst arguments:
     #   r0 = status, r1 = duration (bTime), r2 = newFiles.
     # Positive-duration, status-0 Pentax K-3 III (non-Monochrome) requests are
     # routed to capture_image_with_Bulb(status, duration, newFiles) only after
     # a same-session ``pentaxconditions`` read confirms raw exposure mode 9, 12
-    # or 20 (B, lens-B or Astro).  If the query fails, or reports ordinary M,
-    # the stock burst helper is used.  This is one bounded pre-capture read,
-    # not a polling loop.
+    # or 20 (B, lens-B or Astro).  The stock burst helper is used for a
+    # successfully read non-B mode.  A
+    # failed/invalid read for the selected model returns CAMERA_BUSY instead of
+    # starting an exposure with an unknown mode.  This is one bounded read.
     #
     # Three correctness constraints the previous trampoline got wrong (issue #210):
     #   1. getCameraName copies the lowercased model name into its r0 destination
@@ -116,9 +115,9 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
     #      saved on entry and reloaded before the timed-Bulb call.
     #   3. After the timed-Bulb call the trampoline must return, not fall through
     #      into the stock burst body (which would capture twice).
-    do_bulb = 0x100            # drop buffer + reload args, then tail-call Bulb
-    restore_fallback = 0x10C   # drop buffer + reload args, then fall to fallback
-    fallback = 0x114           # reconstruct prologue + resume (nothing pushed)
+    do_bulb = 0x11C            # free widget, restore arguments, tail-call Bulb
+    restore_fallback = 0x130   # drop buffer + reload args, then fall to fallback
+    fallback = 0x138           # reconstruct prologue + resume (nothing pushed)
     pentax_lit = LITERAL_POOL
     model_lit = LITERAL_POOL + 4
     mono_lit = LITERAL_POOL + 8
@@ -145,7 +144,7 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
     SUB_SP_BUF = 0xE24DDB02    # sub sp, sp, #2048
     ADD_SP_BUF = 0xE28DDB02    # add sp, sp, #2048
     ADD_R1_SP_4 = 0xE28D1004
-    ADD_R0_SP_4 = 0xE28D0004
+    LDR_R0_SP_4 = 0xE59D0004
     CMP_R0 = 0xE3500000
     CMP_R1 = 0xE3510000
     MOV_R2_SP = 0xE1A0200D
@@ -181,59 +180,78 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
         0x64: CMP_R0,
         0x68: br(0x68, cave + restore_fallback, condition=0x1),   # bne restore (Monochrome)
         # Query the same-session Pentax Conditions widget.  The widget pointer
-        # is at sp; the 2044-byte value buffer is at sp+4.  Any failure falls
-        # through to the stock path, never into a held shutter action.
+        # is at sp; a type/char-pointer slot is at sp+4.  A failed read returns
+        # an error; it must not start a stock capture of unknown mode.
         0x6C: ldr_pc(0x6C, camera_global_lit, register=0),        # &camera
         0x70: 0xE5900000,                                        # ldr r0, [r0]
         0x74: ldr_pc(0x74, conditions_key_lit),                   # "pentaxconditions"
         0x78: MOV_R2_SP,                                         # widget ** at sp
-        0x7C: MOV_R3_0,
+        0x7C: br(0x7C, cave + 0x164),                           # initialise widget output
         0x80: br(0x80, camera_get_single_config, link=True),
         0x84: CMP_R0,
-        0x88: br(0x88, cave + restore_fallback, condition=0x1),   # bne unknown
+        0x88: br(0x88, cave + 0x148, condition=0x1),            # bne error
         0x8C: LDR_R0_SP,
         0x90: CMP_R0,
-        0x94: br(0x94, cave + restore_fallback, condition=0x0),   # beq unknown
-        0x98: ADD_R1_SP_4,                                      # value buffer
-        0x9C: br(0x9C, widget_get_value, link=True),
+        0x94: br(0x94, cave + 0x148, condition=0x0),            # beq error
+        0x98: ADD_R1_SP_4,                                      # int *type
+        0x9C: br(0x9C, widget_get_type, link=True),
         0xA0: CMP_R0,
-        0xA4: br(0xA4, cave + 0xF0, condition=0x1),               # bne free/fallback
-        0xA8: LDR_R0_SP,
-        0xAC: br(0xAC, widget_free, link=True),
-        0xB0: ADD_R0_SP_4,                                      # conditions text
-        0xB4: ldr_pc(0xB4, mode_9_lit),
-        0xB8: br(0xB8, strstr, link=True),
-        0xBC: CMP_R0,
-        0xC0: br(0xC0, cave + do_bulb, condition=0x1),            # bne B
-        0xC4: ADD_R0_SP_4,
-        0xC8: ldr_pc(0xC8, mode_12_lit),
-        0xCC: br(0xCC, strstr, link=True),
-        0xD0: CMP_R0,
-        0xD4: br(0xD4, cave + do_bulb, condition=0x1),            # bne lens-B
-        0xD8: ADD_R0_SP_4,
-        0xDC: ldr_pc(0xDC, mode_20_lit),
-        0xE0: br(0xE0, strstr, link=True),
-        0xE4: CMP_R0,
-        0xE8: br(0xE8, cave + do_bulb, condition=0x1),            # bne Astro
-        0xEC: br(0xEC, cave + restore_fallback),                 # ordinary M/unknown
-        # Failure from gp_widget_get_value still releases the widget before
-        # falling back; no failed read is accepted.
-        0xF0: LDR_R0_SP,
-        0xF4: br(0xF4, widget_free, link=True),
-        0xF8: br(0xF8, cave + restore_fallback),
-        # do_bulb: reload the original arguments, then tail-call the timed helper
-        # so its result is returned directly to the original caller.
-        0x100: ADD_SP_BUF,
-        0x104: POP_ARGS,
-        0x108: br(0x108, bulb),                                  # b capture_image_with_Bulb
+        0xA4: br(0xA4, cave + 0x158, condition=0x1),
+        0xA8: LDR_R0_SP_4,
+        0xAC: 0xE3500002,                                       # GP_WIDGET_TEXT == 2
+        0xB0: br(0xB0, cave + 0x158, condition=0x1),
+        0xB4: LDR_R0_SP,
+        0xB8: ADD_R1_SP_4,                                      # char **value
+        0xBC: br(0xBC, widget_get_value, link=True),
+        0xC0: CMP_R0,
+        0xC4: br(0xC4, cave + 0x158, condition=0x1),
+        0xC8: LDR_R0_SP_4,                                      # borrowed char *
+        0xCC: CMP_R0,
+        0xD0: br(0xD0, cave + 0x158, condition=0x0),
+        0xD4: ldr_pc(0xD4, mode_9_lit),
+        0xD8: br(0xD8, strstr, link=True),
+        0xDC: CMP_R0,
+        0xE0: br(0xE0, cave + do_bulb, condition=0x1),
+        0xE4: LDR_R0_SP_4,
+        0xE8: ldr_pc(0xE8, mode_12_lit),
+        0xEC: br(0xEC, strstr, link=True),
+        0xF0: CMP_R0,
+        0xF4: br(0xF4, cave + do_bulb, condition=0x1),
+        0xF8: LDR_R0_SP_4,
+        0xFC: ldr_pc(0xFC, mode_20_lit),
+        0x100: br(0x100, strstr, link=True),
+        0x104: CMP_R0,
+        0x108: br(0x108, cave + do_bulb, condition=0x1),
+        0x10C: br(0x10C, cave + 0x110),
+        # Keep the widget alive throughout all searches, then free exactly once.
+        0x110: LDR_R0_SP,
+        0x114: br(0x114, widget_free, link=True),
+        0x118: br(0x118, cave + restore_fallback),
+        0x11C: LDR_R0_SP,
+        0x120: br(0x120, widget_free, link=True),
+        0x124: ADD_SP_BUF,
+        0x128: POP_ARGS,
+        0x12C: br(0x12C, bulb),
         # restore_fallback: drop the buffer, reload args, then run the stock path.
-        0x10C: ADD_SP_BUF,
-        0x110: POP_ARGS,
+        0x130: ADD_SP_BUF,
+        0x134: POP_ARGS,
         # fallback: reconstruct the prologue clobbered by the entry branch.
-        0x114: BURST_PROLOGUE[0],
-        0x118: BURST_PROLOGUE[1],
-        0x11C: BURST_PROLOGUE[2],
-        0x120: br(0x120, burst + 12),                            # b burst_resume
+        0x138: BURST_PROLOGUE[0],
+        0x13C: BURST_PROLOGUE[1],
+        0x140: BURST_PROLOGUE[2],
+        0x144: br(0x144, burst + 12),
+        # GP_ERROR_CAMERA_BUSY (-110) means no shot was started.  Free any
+        # successfully returned widget before returning to the original caller.
+        0x148: ADD_SP_BUF,
+        0x14C: POP_ARGS,
+        0x150: 0xE3E0006D,                                      # mvn r0, #109
+        0x154: 0xE12FFF1E,                                      # bx lr
+        0x158: LDR_R0_SP,
+        0x15C: br(0x15C, widget_free, link=True),
+        0x160: br(0x160, cave + 0x148),
+        0x164: MOV_R3_0,
+        0x168: 0xE58D3000,                                      # str r3, [sp]
+        0x16C: br(0x16C, cave + 0x80),
         pentax_lit: cave + PENTAX_TEXT,
         model_lit: cave + MODEL_TEXT,
         mono_lit: cave + MONO_TEXT,
@@ -283,8 +301,8 @@ def call_instructions(path):
 
 
 def bulb_cancel_patch_word(bulb, target):
-    """Return the unconditional branch to the normal stop path."""
-    return encode_branch(bulb + BULB_CANCEL_OFFSET, target)
+    """Retarget only the stock cancel condition to the normal stop path."""
+    return encode_branch(bulb + BULB_CANCEL_OFFSET, target, condition=0x0)
 
 
 def patch_bulb_cancel(data, offsets, addresses):
@@ -320,7 +338,7 @@ def patch_data(data, offsets, addresses, segment):
             marker_cave, addresses["burst"], addresses["bulb"],
             addresses["manufacturer"], addresses["name"], addresses["strcasestr"],
             addresses["camera_global"], addresses["camera_get_single_config"],
-            addresses["widget_get_value"], addresses["widget_free"],
+            addresses["widget_get_type"], addresses["widget_get_value"], addresses["widget_free"],
             addresses["strstr"],
         )
         if (existing_branch == marker_branch and
@@ -347,7 +365,7 @@ def patch_data(data, offsets, addresses, segment):
         cave, addresses["burst"], addresses["bulb"],
         addresses["manufacturer"], addresses["name"], addresses["strcasestr"],
         addresses["camera_global"], addresses["camera_get_single_config"],
-        addresses["widget_get_value"], addresses["widget_free"],
+        addresses["widget_get_type"], addresses["widget_get_value"], addresses["widget_free"],
         addresses["strstr"],
     )
     cave_symbol_off = offsets["bulb_function"]
@@ -387,6 +405,7 @@ def inspect_binary(path):
         name, _ = symbol_value(elf, "getCameraName")
         camera_global, _ = symbol_value(elf, "camera")
         camera_get_single_config, _ = symbol_value(elf, "gp_camera_get_single_config")
+        widget_get_type, _ = symbol_value(elf, "gp_widget_get_type")
         widget_get_value, _ = symbol_value(elf, "gp_widget_get_value")
         widget_free, _ = symbol_value(elf, "gp_widget_free")
         capture, capture_size = symbol_value(elf, "captureImage")
@@ -448,6 +467,7 @@ def inspect_binary(path):
             "name": name,
             "camera_global": camera_global,
             "camera_get_single_config": camera_get_single_config,
+            "widget_get_type": widget_get_type,
             "widget_get_value": widget_get_value,
             "widget_free": widget_free,
             "strstr": strstr,

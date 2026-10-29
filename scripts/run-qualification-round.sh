@@ -37,6 +37,14 @@
 # matters checks its own status, and the verdict is computed at the end.
 set -uo pipefail
 
+# The round contains an unconditional Bulb capture.  The dispatch and cancel
+# path in v89/v90 has known safety defects (patcher #251).  Stop before any
+# device access or output creation until the round is redesigned around a
+# verified, exact-build safety clearance.  An environment variable must not
+# bypass this guard.
+echo 'BLOCKED: qualification round includes an unqualified Bulb capture; see patcher #251.' >&2
+exit 2
+
 DEV=192.168.0.1
 SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=8 root@$DEV"
 # Resolve the checkout from this script, rather than silently switching to an

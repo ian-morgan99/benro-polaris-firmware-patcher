@@ -24,6 +24,12 @@ that silently disables a guard we just put in.
 
 `TRAMP_ADDR` and `LIBGPHOTO2_VERSION` are positional/required, not "gates".
 
+The offline deterministic gate also requires the Python `unicorn` package.
+`container/test_polaris_bulb_dispatch_arm.sh` executes the generated ARM
+dispatcher with widget-ABI stubs and exercises both outcomes of the cancel
+branch. A missing emulator is a failure, not a skipped release check. These
+tests do not replace the required packaged-runtime and physical-camera tests.
+
 ## 2. Audit — each gate is fail-closed
 
 ### 2.1 `ALLOW_DIRTY_SOURCE` (default 0)

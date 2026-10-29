@@ -37,6 +37,12 @@ Save the installer receipt, the complete installer log, the device `FwVer`,
 the on-device provenance file, uptime before/after, and the firmwareInfo
 verification. No camera operation is allowed before this gate passes.
 
+Subsequent operator testing reported a K-1 II physical failure on v90: B-mode
+initiation crashed Benro Connect, and M-mode testing showed reconnects, very
+slow controls and capture, and unreliable writes. The earlier no-camera result
+at installation remains a separate observation. v90 is **not K-1 II qualified**
+and must not be promoted on the strength of its verified installation.
+
 ## Gate 1 — repeat the offline and packaged regression gate
 
 Run the gate against the exact candidate directory and the exact libgphoto2
@@ -76,18 +82,23 @@ not be copied into this record.
 
 ## Gate 3 — packaged Polaris local path (Layer B)
 
-After Gate 0 passes, run the existing fail-closed qualification runner from
-the canonical patcher checkout:
+The standard qualification runner is **BLOCKED**: it includes an automatic
+Bulb shot and the v89/v90 Bulb dispatch and cancellation paths have unresolved
+defects ([#251](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/251)).
+Do not run Bulb capture or cancel on these builds. Record the Bulb cases as
+BLOCKED, not passed. A replacement runner requires a verified clearance bound
+to the exact build before it can make a Bulb request.
 
-```sh
-bash scripts/run-qualification-round.sh
-```
+Offline disassembly of v90 also shows that the common Bulb stop callback
+overwrites the saved result after the cancel branch enters it. Correcting the
+branch condition alone therefore does not establish that cancellation remains
+visible to the caller, or that the physical shutter closes. Review the complete
+stop, error and file-publication lifecycle before clearing this block.
 
-It must retain the round directory, per-case JSON, Mlog/Clog evidence, card
-inventory, EXIF timing, and machine verdict. The standard round covers the
-camera's current Bulb slot, a verified 6-second timed slot, and a 40-second
-non-Bulb slot. A skip is a gap, not a pass. Do not repeat a shutter after an
-ambiguous result merely to obtain a green line.
+After Gate 0 passes, perform the read-only checks and any separately approved
+ordinary M-mode checks below without invoking the blocked round. Keep the
+per-case evidence and do not repeat a shutter after an ambiguous result merely
+to obtain a green line.
 
 Run the following control matrix separately for each attached body, recording
 PASS, FAIL, BLOCKED, or UNRUN:
