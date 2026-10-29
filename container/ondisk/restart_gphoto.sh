@@ -31,7 +31,14 @@ STAGE2_BIN=${OPENPOLARIS_PGPHOTO_BINARY:-/app/lib/stage2/pgphoto.stage2ondisk}
 LOG=${OPENPOLARIS_PGPHOTO_LOG:-/app/Clog.txt}
 PORT_HEX=1F90   # 8080 in hex (for /proc/net/tcp grep)
 WAIT_MAX=10     # seconds to wait for clean exit after TERM
-START_WAIT_MAX=20  # stage2 + camera init can take more than five seconds
+# K-1 II camera discovery/configuration can take about 40 seconds while the
+# process is alive and making progress. A 20-second limit caused the helper
+# to report a false startup failure, after which the USB supervisor retried the
+# rebind and made value-setting painfully slow. This remains a bounded
+# readiness wait: the port must actually listen, and a hung process still
+# fails closed. Keep an override for deterministic tests and future measured
+# camera-specific tuning without changing the safe default.
+START_WAIT_MAX=${OPENPOLARIS_PGPHOTO_START_WAIT_MAX:-90}
 
 # --- helpers ---------------------------------------------------------------
 
@@ -182,7 +189,9 @@ if [ ! -d "$PROC_ROOT/$NEWPID" ] || ! pid_is_pgphoto "$NEWPID"; then
 fi
 echo "[restart_gphoto] pgphoto running (PID $NEWPID)"
 
-# Wait for the port to come up (MJPG-Streamer binds during init).
+# Wait for the port to come up (MJPG-Streamer binds after camera/session init).
+# This is a readiness condition, not a fixed sleep: return immediately when
+# the listener appears, or fail closed when the bounded startup window expires.
 i=0
 while [ $i -lt "$START_WAIT_MAX" ]; do
     if port_in_use; then

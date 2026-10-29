@@ -631,3 +631,14 @@ annotation records:
 - Release state (`round-trip verified (NOT device validated)`)
 
 Inspect via `git cat-file -p v0.3.0-pentax-hdmi-combined-720p60`.
+
+## Pending next candidate — K-1 II pgphoto readiness (#253)
+
+- `container/ondisk/restart_gphoto.sh` now gives a progressing K-1 II camera
+  initialisation a bounded 90-second readiness window. The previous 20-second
+  limit falsely failed the rebind while the process was still enumerating the
+  K-1 II controls, causing supervisor retries and painfully slow value setting.
+- Added `container/test_restart_gphoto_readiness.sh`, covering slow readiness
+  and fail-closed hung startup.
+- Evidence and hardware qualification plan: `docs/issue-k1ii-pgphoto-readiness.md`.
+- This is a patcher/runtime fix; no libgphoto2 source change is included.
