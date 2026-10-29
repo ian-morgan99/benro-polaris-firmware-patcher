@@ -89,3 +89,37 @@ and v90 pgphoto artifacts (SHA-256
 complete binaries differ. Do not infer that every v90 delay has this cause,
 or skip a control without proving its model-specific availability and preserving
 non-Pentax behavior. The detailed follow-up is on issue #253.
+
+## v90 app-facing EV response after reconnection
+
+The operator re-established the connection through Benro Connect on Android.
+At 22:49 UTC the PC was again associated with the verified Polaris BSSID, and
+the device still reported v90, the same camera and the same pgphoto and
+polestar PIDs. Uptime continued, so the earlier Wi-Fi loss was not a reboot.
+Only small filtered log tails were read; no camera request, capture, setting
+change or daemon restart was sent by this investigation.
+
+At 22:46:37.417 Clog shows pgphoto receiving the EV request. At 22:46:38.451
+it logs `getCameraConfig from local configType 2 ret 0` and sends
+`code[267],val[RD:0;V:;R:;]`; Mlog shows that same empty result forwarded to
+the app. A 22:46:35.346 upstream request-to-response interval was approximately
+3.1 seconds, including time queued behind other settings requests. These are
+device log timestamps, not a measured Android gesture-to-screen latency.
+
+In the pinned pgphoto binary, `deal_camera_control_handler` calls
+`waitCameraIdle(500)`; the idle loop sleeps 2 ms per busy iteration. On timeout
+the handler returns `-2110`. `getCameraConfig` recognizes that value and calls
+`getLocalCameraParamInfo`, which returns a cache pointer for EV without checking
+whether the fields have been populated. It then formats the returned fields as
+a successful response. The approximately 1.034-second EV handler interval is
+consistent with this path; it does not establish what held the busy status.
+
+The private Benro Connect source shows that its EV parser treats `RD:0` as
+available, defaults an unparseable selection index, and retains the range for
+the picker. Its UI catches EV numeric-conversion errors and can retain an empty
+entry. This explains an empty/invalid selector; it does not prove the earlier
+app crash. Simply returning an error from `getCameraConfig` is not an established
+fix: its caller sends the formatted response only after success, so the client
+may instead receive no response. The first-divergence investigation and safe
+unavailable/retry contract remain open in
+[issue #253](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/253#issuecomment-6510351294).
