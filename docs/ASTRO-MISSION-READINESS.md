@@ -21,7 +21,7 @@ turn a host build or a simulated solve into hardware qualification.
 | 9. Image 1 | Existing camera capture/transfer path publishes local JPEGs | No claim is made for a file that exists only on the camera card. |
 | 10. Solve each image | `polaris-frame-watch.sh` watches the supported Polaris-side directories, admits only new/changed JPEG keys after its session boundary, waits for stable completion, solves, and can embed local EXIF when explicitly enabled | Opt-in with `AUTO_SOLVE_FRAMES=1`; `EXIF_WRITEBACK=0` by default. It never fires the shutter. Camera-card writeback is not performed. A frame that was never published locally, or completed before the watcher was active, remains outside the automatic guarantee. |
 | 11. Drift and rotation | Frame watcher compares solved RA/Dec with the current target and logs rotation | Optional bounded re-centre uses `FRAME_CORRECT=1`; it is withheld when rotation exceeds the configured threshold. Structured per-frame telemetry records drift, rotation, action and the explicit `rate_control:unavailable` boundary; no axis-rate command is sent. |
-| 12. Adjust motor speed | No qualified firmware per-axis rate primitive is available | Intentionally not implemented through jog commands. Issue [#240](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/240) remains the dependency for exact command discovery, simulator/fault injection, and hardware qualification. |
+| 12. Adjust motor speed | Host-only native-C planner, scheduler, known-SLOW wire formatter and fake-head safety model | No live command is sent. Issue [#240](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/240) remains the dependency for exact MCU command discovery, target calibration, and hardware qualification. |
 | 13. Repeat | Frame watcher loop and solve history provide the repeat boundary | The loop is safe only in opt-in mode and with a known local capture-transfer path. It is not yet a universal every-camera guarantee. |
 
 ## Safe enablement order
@@ -80,18 +80,21 @@ The compact native index also has a known narrow-field blind-search boundary
 for K-3 III APS-C, tracked in issue #248, while hinted solves pass.
 
 The next work must stay in this order: capture/transfer trace on the exact
-camera and `.73` runtime; host-only rate-command parser/simulator and fault
-tests for #240; broaden or replace the APS-C index under a measured resource
-budget; then physical calibration/GOTO/repeated-frame qualification. No live
-motor command or firmware patch is justified by this checkpoint.
+camera and `.73` runtime; replace the host-only rate model with an exact
+MCU-backed contract and target calibration for #240; broaden or replace the
+APS-C index under a measured resource budget; then physical
+calibration/GOTO/repeated-frame qualification. No live motor command or
+firmware patch is justified by this checkpoint.
 
 ## Critical review — 2026-10-28 rate/model checkpoint
 
-The plan now has two additional guarded pieces: accepted GOTO residuals are
-accumulated in a resettable session model, and a host-only rate-frame safety
+The plan now has three additional guarded pieces: accepted GOTO residuals are
+accumulated in a resettable session model; a host-only rate-frame safety
 harness covers malformed frames, limits, ramping, watchdog expiry and link
-loss. Neither changes the default mount behaviour. `GOTO_MODEL_APPLY` remains
-off, and the rate harness is not a device command path.
+loss; and the native-C scheduler's known-SLOW output is checked through a
+fail-closed formatter and fake head. Neither changes the default mount
+behaviour. `GOTO_MODEL_APPLY` remains off, and the rate code is not a device
+command path.
 
 This improves the route from repeated GOTO solves to a measurable experiment,
 but it does not close the requested mission. The model is only a first-order

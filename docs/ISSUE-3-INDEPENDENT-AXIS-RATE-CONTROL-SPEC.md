@@ -119,18 +119,23 @@ state 0. `test_rate_plan.c` is an offline C test. A companion pure scheduler
 logical SLOW transitions or an explicit logical STOP; it deliberately does not
 serialize frames. `test_rate_scheduler.c` is an offline C test. This is a
 controlled design step, not an implementation of issue #240's unrouted `AC
-4A` helper and not a hardware qualification. Neither module is linked into
-`polaris-httpd`, so normal K-3 III capture and the current Astro mode are
-unchanged.
+4A` helper and not a hardware qualification. `polaris-rate-wire.c` now formats
+the known 532/533/534 SLOW application controls without calling
+`polaris-link`, and `polaris-rate-fake-head.c` tests canonical payloads,
+explicit STOP ordering, stale timestamps and the host-side lease timeout.
+These are host-only seams; neither is linked into `polaris-httpd`, so normal
+K-3 III capture and the current Astro mode are unchanged.
 
-Before this planner can be wired to Astro drift correction, the next gates are:
+Before this planner can be wired to Astro drift correction, the remaining gates
+are:
 
 1. remeasure the SLOW table on the exact target firmware, axis, load and
    battery conditions;
 2. implement and test a clock-driven dwell/PWM scheduler that never changes a
    SLOW point before the target MCU's measured minimum dwell;
-3. prove stop, link-loss, process-exit and reconnect behavior against a fake
-   head and then supervised hardware;
+3. replace the host fake-head assumptions with the target MCU's proven stop,
+   link-loss, process-exit and reconnect behavior, then repeat the tests on
+   supervised hardware;
 4. decide whether the J/`AC 4A` route is preferable after its units,
    dispatcher, acknowledgement, zero-hold and watchdog semantics are proven;
 5. only then expose a feature-gated controller to the Astro plate-solve loop.
