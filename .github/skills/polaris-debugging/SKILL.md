@@ -178,6 +178,19 @@ qualification run. The watchdog may relaunch pgphoto after roughly 30 seconds,
 so keep the direct test bounded and always restore service with the packaged
 `/app/restart_gphoto` helper.
 
+**Device timeout syntax differs from the host.** On the v90 device,
+BusyBox 1.26.2 requires `timeout -t SECONDS COMMAND`; host-style
+`timeout SECONDS COMMAND` tries to execute `SECONDS` and fails. An agent used
+the host syntax for both the diagnostic and its cleanup on 2026-10-29: the
+lookup never ran and the cleanup failed after pgphoto had stopped. Check the
+device's `timeout --help` before an on-device bounded command. Ensure cleanup
+can invoke the packaged restart even if a timeout wrapper is unavailable, and
+do not race an existing restart lock. Verify the new process and listener after
+restoration; an already-open camera session or a listening port alone does not
+prove settings, capture, or app recovery. Direct-on-Polaris evidence also does
+not replace the exact-SHA, directly attached PC test required by AGENTS.md
+before changing libgphoto2 for a consumer-discovered failure.
+
 Interpreting results (the source/runtime ownership rule from `AGENTS.md`):
 
 - **Direct CLI FAILS** with camera attached → candidate libgphoto2 defect
