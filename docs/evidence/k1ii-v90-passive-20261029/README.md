@@ -168,3 +168,20 @@ No K-1 II was attached to the PC, so there is no direct EV result. When the
 operator can attach it, verify the exact USB identity and loaded modules again,
 run a single read-only generic EV lookup with debug tracing, and classify the
 first failing operation before changing libgphoto2.
+
+## Older K-3 III comparison
+
+The retained `.65` boot-276 K-3 III investigation also contains an empty EV
+reply. At 21:45:40.546 on 2026-10-10,
+`docs/evidence/benro-connect-crash-20261010/raw/Clog_000276.txt` line 8520
+shows `code[267],val[RD:0;V:;R:;]`; the matching Mlog lines 80528–80529
+show receipt and forwarding to the app. The same Clog shows empty WB replies
+at 21:45:35.369 and 21:45:41.579. The Clog SHA-256 is
+`25fbeb732273c26cba6345a3e2b4bf897c63205d0cdf35e09a56a260eea53205`.
+The older evidence identifies `.65`, libgphoto2 `2cde4485b`, patcher
+`9d0efe0`, and K-3 III in a session with USB flapping. This establishes that
+the empty payload is not unique to v90 or the K-1 II; it does not prove that
+both sessions failed for the same reason, or that either empty payload caused
+an Android crash. The older summary asserts a crash cause from correlation;
+its raw logs do not contain an Android exception, so treat that claim as a
+hypothesis pending client-side evidence.
