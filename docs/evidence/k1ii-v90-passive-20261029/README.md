@@ -123,3 +123,27 @@ fix: its caller sends the formatted response only after success, so the client
 may instead receive no response. The first-divergence investigation and safe
 unavailable/retry contract remain open in
 [issue #253](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/253#issuecomment-6510351294).
+
+## Interrupted direct-on-Polaris attempt
+
+The operator subsequently authorised changes to the live session but could not
+move the camera to the PC. A read-only direct-on-Polaris lookup was planned,
+with pgphoto to be restarted afterwards. The diagnostic stopped verified
+pgphoto PID `16080` at about 22:58 UTC, but did **not** run the gphoto2 lookup:
+the device's BusyBox `timeout` requires `-t SECS`, and the diagnostic used the
+host syntax `timeout SECS`. The same mistake prevented its cleanup from invoking
+the restart helper. No direct-library EV result or debug trace was produced.
+
+A manual call to the packaged `/app/restart_gphoto` then reported that another
+restart already held its lock; that existing restart launched pgphoto PID
+`29386`. By 22:58:41, TCP 8080 was listening and subsequent Clog messages
+reported successful preview-frame transfers, with one earlier incomplete-frame
+error. On restart, Clog reported an already-open Pentax session and an
+observe-only state; full settings, capture, and app recovery were not verified.
+In the resumed session Clog also recorded another empty cached WB response.
+Do not treat the listener or frame-transfer messages as complete qualification.
+No firmware files or camera settings were changed by the diagnostic.
+
+The local diagnostic script was corrected to use BusyBox `timeout -t`, but was
+not rerun: the user cannot physically recover the camera at present and a
+further session interruption risks preserving or worsening a stale session.
