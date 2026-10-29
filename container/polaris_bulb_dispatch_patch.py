@@ -8,10 +8,12 @@ the body is in B/lens-B/Astro mode.  A positive value in ordinary Manual mode
 must remain on the normal capture path; sending it to the held-Bulb action is
 what turns a perfectly ordinary M capture into a misleading ``shoot failed``.
 
-The helper also had a generic cancellation hole: its ``GP_ERROR_CANCEL`` branch
-returned before the normal stop path.  The patch below makes cancellation enter
-that path, which constructs and invokes the same stop callback used by natural
-completion, so the shutter is not left open.
+The helper's ``GP_ERROR_CANCEL`` branch returned before the normal stop path.
+This experimental patch redirects that branch to the stop callback, but does
+not preserve the cancellation result and cannot distinguish a held exposure
+from the deferred camera-timed path. In the latter path the stop callback may
+start a new exposure. It is not a complete or hardware-qualified fix; the
+release and Bulb qualification gates must remain blocked.
 """
 import argparse
 import os
@@ -27,7 +29,7 @@ BURST_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DD0AC)
 BULB_PROLOGUE = (0xE92D4810, 0xE28DB008, 0xE24DDD2F, 0xE24DD004)
 # The original trampoline only checked the model.  The live conditions query
 # and its literal strings need a larger, still page-local code cave.
-TRAMPOLINE_SIZE = 0x240
+TRAMPOLINE_SIZE = 0x300
 
 # The stock helper's cancellation edge is stable in the supported pgphoto
 # binary: ``beq`` at capture_image_with_Bulb+0x330 jumped straight to the common
@@ -45,14 +47,12 @@ BULB_CANCEL_STOP_PATH_OFFSET = 0x3a4
 # model name into its r0 argument, so the buffer is allocated on the stack at
 # run time (sub sp). getCameraName always returns 0 (issue #210), so the model
 # check inspects the buffer contents, never the return value.
-LITERAL_POOL = 0x180
-PENTAX_TEXT = 0x1A0
-MODEL_TEXT = 0x1B0
-MONO_TEXT = 0x1C0
-CONDITIONS_KEY_TEXT = 0x1D0
-MODE_9_TEXT = 0x1E4
-MODE_12_TEXT = 0x1FC
-MODE_20_TEXT = 0x214
+LITERAL_POOL = 0x240
+PENTAX_TEXT = 0x260
+MODEL_TEXT = 0x270
+MONO_TEXT = 0x280
+CONDITIONS_KEY_TEXT = 0x290
+MODE_KEY_TEXT = 0x2A4
 # The name uses this stack buffer.  Afterwards sp holds the widget pointer and
 # sp+4 holds either its type or the char * borrowed from the widget.
 NAME_BUF_BYTES = 2048
@@ -122,9 +122,7 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
     model_lit = LITERAL_POOL + 4
     mono_lit = LITERAL_POOL + 8
     conditions_key_lit = LITERAL_POOL + 12
-    mode_9_lit = LITERAL_POOL + 16
-    mode_12_lit = LITERAL_POOL + 20
-    mode_20_lit = LITERAL_POOL + 24
+    mode_key_lit = LITERAL_POOL + 16
     camera_global_lit = LITERAL_POOL + 28
 
     def ldr_pc(instr_off, literal_off, register=1):
@@ -208,21 +206,21 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
         0xC8: LDR_R0_SP_4,                                      # borrowed char *
         0xCC: CMP_R0,
         0xD0: br(0xD0, cave + 0x158, condition=0x0),
-        0xD4: ldr_pc(0xD4, mode_9_lit),
+        0xD4: ldr_pc(0xD4, mode_key_lit),
         0xD8: br(0xD8, strstr, link=True),
         0xDC: CMP_R0,
-        0xE0: br(0xE0, cave + do_bulb, condition=0x1),
-        0xE4: LDR_R0_SP_4,
-        0xE8: ldr_pc(0xE8, mode_12_lit),
-        0xEC: br(0xEC, strstr, link=True),
-        0xF0: CMP_R0,
-        0xF4: br(0xF4, cave + do_bulb, condition=0x1),
-        0xF8: LDR_R0_SP_4,
-        0xFC: ldr_pc(0xFC, mode_20_lit),
-        0x100: br(0x100, strstr, link=True),
-        0x104: CMP_R0,
-        0x108: br(0x108, cave + do_bulb, condition=0x1),
-        0x10C: br(0x10C, cave + 0x110),
+        0xE0: br(0xE0, cave + 0x158, condition=0x0),          # missing field
+        0xE4: LDR_R0_SP_4 | 0x00001000,                         # r1 = text base
+        0xE8: 0xE0402001,                                       # distance from text base
+        0xEC: 0xE3520002,
+        0xF0: br(0xF0, cave + 0x158, condition=0x3),          # no preceding delimiter
+        0xF4: 0xE5501002,                                       # preceding ';'
+        0xF8: 0xE351003B,
+        0xFC: br(0xFC, cave + 0x158, condition=0x1),
+        0x100: 0xE5501001,                                      # preceding space
+        0x104: 0xE3510020,
+        0x108: br(0x108, cave + 0x158, condition=0x1),
+        0x10C: br(0x10C, cave + 0x180),                          # parse bounded value
         # Keep the widget alive throughout all searches, then free exactly once.
         0x110: LDR_R0_SP,
         0x114: br(0x114, widget_free, link=True),
@@ -252,13 +250,55 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
         0x164: MOV_R3_0,
         0x168: 0xE58D3000,                                      # str r3, [sp]
         0x16C: br(0x16C, cave + 0x80),
+        # Parse the canonical, unsigned one- or two-digit %u field, requiring
+        # its semicolon and an IT2 ExpMode.cs value (0..31).  A malformed or
+        # unknown value is an error, not permission to start a stock capture.
+        # The widget remains alive until the free paths below are reached.
+        0x180: 0xE2800012,                                      # skip 18-byte key
+        0x184: 0xE4D01001,                                      # first digit
+        0x188: 0xE3510030,
+        0x18C: br(0x18C, cave + 0x158, condition=0x3),
+        0x190: 0xE3510039,
+        0x194: br(0x194, cave + 0x158, condition=0x8),
+        0x198: 0xE2411030,
+        0x19C: 0xE4D02001,
+        0x1A0: 0xE352003B,
+        0x1A4: br(0x1A4, cave + 0x1D8, condition=0x0),
+        0x1A8: 0xE3510000,                                      # reject leading zero
+        0x1AC: br(0x1AC, cave + 0x158, condition=0x0),
+        0x1B0: 0xE3520030,
+        0x1B4: br(0x1B4, cave + 0x158, condition=0x3),
+        0x1B8: 0xE3520039,
+        0x1BC: br(0x1BC, cave + 0x158, condition=0x8),
+        0x1C0: 0xE2422030,
+        0x1C4: 0xE0811101,
+        0x1C8: 0xE0821081,                                      # 10*first + second
+        0x1CC: 0xE5D02000,
+        0x1D0: 0xE352003B,
+        0x1D4: br(0x1D4, cave + 0x158, condition=0x1),
+        0x1D8: br(0x1D8, cave + 0x200),                          # reject duplicate keys
+        0x1E0: 0xE3510009,
+        0x1E4: br(0x1E4, cave + do_bulb, condition=0x0),
+        0x1E8: 0xE351000C,
+        0x1EC: br(0x1EC, cave + do_bulb, condition=0x0),
+        0x1F0: 0xE3510014,
+        0x1F4: br(0x1F4, cave + do_bulb, condition=0x0),
+        0x1F8: br(0x1F8, cave + 0x110),                          # known non-B mode
+        0x200: 0xE58D1008,                                      # save mode over strstr
+        0x204: 0xE2400001,                                      # include first semicolon
+        0x208: ldr_pc(0x208, mode_key_lit),
+        0x20C: br(0x20C, strstr, link=True),                     # search remainder
+        0x210: CMP_R0,
+        0x214: br(0x214, cave + 0x158, condition=0x1),
+        0x218: 0xE59D1008,
+        0x21C: 0xE351001F,
+        0x220: br(0x220, cave + 0x158, condition=0x8),
+        0x224: br(0x224, cave + 0x1E0),
         pentax_lit: cave + PENTAX_TEXT,
         model_lit: cave + MODEL_TEXT,
         mono_lit: cave + MONO_TEXT,
         conditions_key_lit: cave + CONDITIONS_KEY_TEXT,
-        mode_9_lit: cave + MODE_9_TEXT,
-        mode_12_lit: cave + MODE_12_TEXT,
-        mode_20_lit: cave + MODE_20_TEXT,
+        mode_key_lit: cave + MODE_KEY_TEXT,
         camera_global_lit: camera_global,
     }
     blob = bytearray(TRAMPOLINE_SIZE)
@@ -268,9 +308,7 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
     blob[MODEL_TEXT:MODEL_TEXT + 13] = b"K-3 Mark III\0"
     blob[MONO_TEXT:MONO_TEXT + 11] = b"Monochrome\0"
     blob[CONDITIONS_KEY_TEXT:CONDITIONS_KEY_TEXT + 17] = b"pentaxconditions\0"
-    blob[MODE_9_TEXT:MODE_9_TEXT + 21] = b"exposure-mode-raw=9;\0"
-    blob[MODE_12_TEXT:MODE_12_TEXT + 22] = b"exposure-mode-raw=12;\0"
-    blob[MODE_20_TEXT:MODE_20_TEXT + 22] = b"exposure-mode-raw=20;\0"
+    blob[MODE_KEY_TEXT:MODE_KEY_TEXT + 19] = b"exposure-mode-raw=\0"
     return bytes(blob)
 
 

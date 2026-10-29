@@ -108,13 +108,9 @@ check(struct.unpack_from("<I", patched, offsets["bulb"] + patch.BULB_CANCEL_OFFS
       "cancel branch retains its original EQ condition")
 check(tramp[patch.CONDITIONS_KEY_TEXT:patch.CONDITIONS_KEY_TEXT + 17] ==
       b"pentaxconditions\0" and
-      tramp[patch.MODE_9_TEXT:patch.MODE_9_TEXT + 21] ==
-      b"exposure-mode-raw=9;\0" and
-      tramp[patch.MODE_12_TEXT:patch.MODE_12_TEXT + 22] ==
-      b"exposure-mode-raw=12;\0" and
-      tramp[patch.MODE_20_TEXT:patch.MODE_20_TEXT + 22] ==
-      b"exposure-mode-raw=20;\0",
-      "live Pentax B/lens-B/Astro mode markers are encoded")
+      tramp[patch.MODE_KEY_TEXT:patch.MODE_KEY_TEXT + 19] ==
+      b"exposure-mode-raw=\0",
+      "live Pentax conditions and bounded exposure-mode key are encoded")
 check((word(0x80) >> 24) == 0xEB and
       branch_target(cave + 0x80, word(0x80)) == addresses["camera_get_single_config"] and
       branch_target(cave + 0x9C, word(0x9C)) == addresses["widget_get_type"] and
@@ -124,8 +120,9 @@ check((word(0x80) >> 24) == 0xEB and
       "the mode gate uses one same-session conditions/widget read and frees it")
 check((word(0xD8) >> 24) == 0xEB and
       branch_target(cave + 0xD8, word(0xD8)) == addresses["strstr"] and
-      branch_target(cave + 0x10C, word(0x10C)) == cave + 0x110,
-      "ordinary Manual or unknown mode falls back to the stock burst path")
+      branch_target(cave + 0x10C, word(0x10C)) == cave + 0x180 and
+      branch_target(cave + 0x1F8, word(0x1F8)) == cave + 0x110,
+      "recognized non-B mode frees the widget and uses the stock burst path")
 check((word(0xC4) >> 28) == 0x1 and
       branch_target(cave + 0xC4, word(0xC4)) == cave + 0x158 and
       branch_target(cave + 0x160, word(0x160)) == cave + 0x148,

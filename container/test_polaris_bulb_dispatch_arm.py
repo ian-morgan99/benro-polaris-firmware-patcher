@@ -13,7 +13,10 @@ import pytest
 unicorn = pytest.importorskip("unicorn")
 from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM, UC_HOOK_CODE
 from unicorn.arm_const import (UC_ARM_REG_CPSR, UC_ARM_REG_LR, UC_ARM_REG_PC,
-                               UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2,
+                               UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3,
+                               UC_ARM_REG_R4, UC_ARM_REG_R5, UC_ARM_REG_R6, UC_ARM_REG_R7,
+                               UC_ARM_REG_R8, UC_ARM_REG_R9, UC_ARM_REG_R10, UC_ARM_REG_R11,
+                               UC_ARM_REG_R12,
                                UC_ARM_REG_SP)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "container"))
@@ -37,7 +40,7 @@ def _cstring(machine, address):
 
 
 def _run(*, model="PENTAX K-3 Mark III", vendor="PENTAX", mode=8,
-         duration=5, status=0, failure=None):
+         duration=5, status=0, failure=None, conditions=None, guarded_text=False):
     machine = Uc(UC_ARCH_ARM, UC_MODE_ARM)
     machine.mem_map(0x10000, 0x50000)
     blob = patch.build_trampoline(CAVE, BURST, BULB, MANUFACTURER, NAME,
@@ -45,13 +48,21 @@ def _run(*, model="PENTAX K-3 Mark III", vendor="PENTAX", mode=8,
                                   GET_VALUE, FREE, STRSTR)
     machine.mem_write(CAVE, blob)
     machine.mem_write(GLOBAL, struct.pack("<I", 0x1234))
-    machine.mem_write(TEXT, (f"exposure-mode-raw={mode};").encode() + b"\0")
+    if conditions is None:
+        conditions = f"state=0; astro-phase=inactive/other; exposure-mode-raw={mode}; astro-mode=no;"
+    text_bytes = conditions.encode() + b"\0"
+    text_addr = 0x60000 - len(text_bytes) if guarded_text else TEXT
+    machine.mem_write(text_addr, text_bytes)
     machine.mem_write(VENDOR, vendor.encode() + b"\0")
     machine.reg_write(UC_ARM_REG_SP, STACK)
     machine.reg_write(UC_ARM_REG_R0, status)
     machine.reg_write(UC_ARM_REG_R1, duration & 0xFFFFFFFF)
     machine.reg_write(UC_ARM_REG_R2, 0xACDC)
     machine.reg_write(UC_ARM_REG_LR, 0x18000)
+    saved_registers = (UC_ARM_REG_R4, UC_ARM_REG_R5, UC_ARM_REG_R6, UC_ARM_REG_R7,
+                       UC_ARM_REG_R8, UC_ARM_REG_R9, UC_ARM_REG_R10, UC_ARM_REG_R11)
+    for index, register in enumerate(saved_registers):
+        machine.reg_write(register, 0x12340000 + index)
     state = {"freed": 0, "widget": False, "searches": 0, "result": None}
 
     def put32(addr, value):
@@ -61,9 +72,21 @@ def _run(*, model="PENTAX K-3 Mark III", vendor="PENTAX", mode=8,
         r0 = uc.reg_read(UC_ARM_REG_R0)
         r1 = uc.reg_read(UC_ARM_REG_R1)
         if address in (BULB, BURST + 12, 0x18000):
+            for index, register in enumerate(saved_registers):
+                if address == BURST + 12 and register == UC_ARM_REG_R11:
+                    continue  # the reconstructed stock prologue sets fp
+                assert uc.reg_read(register) == 0x12340000 + index
+            expected_sp = STACK - 12 - 0xAC if address == BURST + 12 else STACK
+            assert uc.reg_read(UC_ARM_REG_SP) == expected_sp
+            if address == BURST + 12:
+                assert uc.reg_read(UC_ARM_REG_R11) == STACK - 4
+                assert struct.unpack("<III", uc.mem_read(STACK - 12, 12)) == (
+                    0x12340000, 0x12340007, 0x18000)
             state["result"] = (address, r0, r1, uc.reg_read(UC_ARM_REG_R2))
             uc.emu_stop()
             return
+        if address in (MANUFACTURER, NAME, CASESTR, GET_CONFIG, GET_TYPE, GET_VALUE, FREE, STRSTR):
+            assert uc.reg_read(UC_ARM_REG_SP) % 8 == 0, "AAPCS call stack must be aligned"
         if address == MANUFACTURER:
             result = VENDOR
         elif address == NAME:
@@ -91,21 +114,26 @@ def _run(*, model="PENTAX K-3 Mark III", vendor="PENTAX", mode=8,
         elif address == GET_VALUE:
             assert r0 == WIDGET and state["widget"] and not state["freed"]
             # GP_WIDGET_TEXT writes a char * into the caller's slot.
-            put32(r1, 0 if failure == "null-text" else TEXT)
+            put32(r1, 0 if failure == "null-text" else text_addr)
             result = -1 if failure == "value" else 0
         elif address == STRSTR:
             assert state["widget"] and not state["freed"]
-            assert r0 == TEXT, "must pass the returned pointer, not its stack slot"
+            assert text_addr <= r0 < text_addr + len(text_bytes), "must pass the live text, not its stack slot"
             state["searches"] += 1
-            result = r0 if _cstring(uc, r1) in _cstring(uc, r0) else 0
+            match = _cstring(uc, r0).find(_cstring(uc, r1))
+            result = r0 + match if match >= 0 else 0
         elif address == FREE:
             assert r0 == WIDGET and state["widget"] and not state["freed"]
             state["freed"] += 1
             # Poisoning makes any subsequent use of the borrowed text invalid.
-            uc.mem_write(TEXT, b"\0")
+            uc.mem_write(text_addr, b"\0")
             result = 0
         else:
             return
+        # AAPCS permits callees to overwrite r1-r3 and r12.  Poison them so
+        # the trampoline must reload any values needed after an external call.
+        for register in (UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3, UC_ARM_REG_R12):
+            uc.reg_write(register, 0xDEADC0DE)
         uc.reg_write(UC_ARM_REG_R0, result & 0xFFFFFFFF)
         uc.reg_write(UC_ARM_REG_PC, uc.reg_read(UC_ARM_REG_LR))
 
@@ -126,13 +154,50 @@ def test_live_b_modes_route_to_bulb_while_widget_alive(mode):
 
 
 @pytest.mark.parametrize("kwargs", [
-    {"mode": 8}, {"mode": 99}, {"model": "PENTAX K-1 Mark II", "mode": 9},
+    {"mode": 8}, {"model": "PENTAX K-1 Mark II", "mode": 9},
     {"model": "PENTAX K-3 Mark III Monochrome", "mode": 9},
     {"vendor": "Canon", "mode": 9}, {"duration": 0, "mode": 9},
     {"duration": -1, "mode": 9}, {"status": 1, "mode": 9},
 ])
 def test_other_paths_fall_back_with_original_arguments(kwargs):
     assert _run(**kwargs)["result"][0] == BURST + 12
+
+
+@pytest.mark.parametrize("mode", [n for n in range(32) if n not in (9, 12, 20)])
+def test_recognized_non_b_modes_keep_stock_capture(mode):
+    assert _run(mode=mode)["result"][0] == BURST + 12
+
+
+@pytest.mark.parametrize("conditions", [
+    "state=0; astro-mode=no;", "state=0; exposure-mode-raw=;",
+    "state=0; exposure-mode-raw=9", "state=0; exposure-mode-raw=9x;",
+    "state=0; exposure-mode-raw=-1;", "state=0; exposure-mode-raw=09;",
+    "state=0; exposure-mode-raw=32;", "state=0; exposure-mode-raw=99;",
+    "state=0; exposure-mode-raw=100;", "state=0; fakeexposure-mode-raw=9;",
+    "state=0; exposure-mode-raw=8; exposure-mode-raw=9;",
+    "state=0; exposure-mode-raw=9; exposure-mode-raw=8;",
+    "state=0; exposure-mode-raw=8; exposure-mode-raw=;",
+    "state=0; exposure-mode-raw=9;exposure-mode-raw=8;",
+    "exposure-mode-raw=9; state=0; exposure-mode-raw=8;",
+    "state=0; exposure-mode-raw=12; exposure-mode-raw=8;",
+    "state=0; exposure-mode-raw=8; exposure-mode-raw=12;",
+])
+def test_invalid_mode_never_starts_a_capture(conditions):
+    assert _run(conditions=conditions)["result"][0] == 0x18000
+
+
+@pytest.mark.parametrize("conditions, destination", [
+    ("state=0; exposure-mode-raw=9;", BULB),
+    ("state=0; exposure-mode-raw=8;", BURST + 12),
+    ("state=0; exposure-mode-raw=9", 0x18000),
+    ("state=0; exposure-mode-raw=", 0x18000),
+    ("state=0; exposure-mode-raw=12;", BULB),
+    ("state=0; exposure-mode-raw=20;", BULB),
+    ("state=0; exposure-mode-raw=12", 0x18000),
+    ("state=0; exposure-mode-raw=20", 0x18000),
+])
+def test_text_ending_at_guard_page(conditions, destination):
+    assert _run(conditions=conditions, guarded_text=True)["result"][0] == destination
 
 
 @pytest.mark.parametrize("failure", ["config", "no-output", "null-widget", "type", "wrong-type", "value", "null-text"])

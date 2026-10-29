@@ -66,3 +66,37 @@ and unrelated camera paths; then conduct separately gated, supervised
 hardware qualification. A code-only change to make the return value look like
 cancel is insufficient. The WIP qualification runner remains blocked before
 device access and the cancellation regression remains deliberately failing.
+
+## Isolated dispatcher hardening (not release clearance)
+
+The WIP dispatcher previously searched the conditions text for three Bulb
+strings; every other non-null text, including a missing field or unknown value,
+was treated as permission to use the stock capture path. The branch now parses
+the canonical `; exposure-mode-raw=%u;` field emitted by the exact library
+`config.c:_get_Pentax_Conditions`. It accepts the values 0–31 listed in
+`IT2_2625_decompile/RemoteAssistant/ExpMode.cs`, sends 9, 12 and 20 to the
+existing Bulb path, and leaves the other recognized values on the stock path.
+Missing keys, malformed or out-of-range values, and duplicate exact
+`exposure-mode-raw=` keys return camera-busy for cameras selected by the
+current name gate instead of starting a capture. The parser does not detect
+every possible misspelling of a duplicate field.
+An enum value does not by itself
+prove a particular camera supports that mode; it is used only to distinguish a
+recognized non-B value from an invalid field in this existing dispatcher.
+
+The ARM emulator executes all 32 recognized values, invalid/missing/exact-key
+duplicates and terminated strings against a guard page, alongside other-model,
+zero-duration and widget-lifetime checks: 74 tests pass. These stubs do not
+prove the full target ABI or behavior with corrupt widget internals; they do
+clobber caller-saved registers and verify call-stack alignment and restoration.
+The guard-page cases exercise the emitted parser and a simulated `strstr`, not
+the target libc implementation.
+The prior dispatcher fails the new missing/unknown field cases. The exact v90
+ELF accepts the revised patch and its idempotence check in memory; the full
+cancellation-return test still fails, as expected. This is an offline partial
+fix only. It does not establish the behavior of a physical K-3 III, repair the
+deferred cancellation contract, or lift any release or Bulb-test block. The
+independent reviewer also identified that the existing manufacturer/model
+substring checks are not an exact product identity and that the cancellation
+patch affects the shared helper; both remain release blockers. The parser
+validates the mode field, not every other field in the conditions text.
