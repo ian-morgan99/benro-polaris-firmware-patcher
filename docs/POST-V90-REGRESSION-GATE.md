@@ -99,6 +99,12 @@ with simulated callbacks and exits nonzero while a successful stop hides the
 cancel result. It requires the exact v90 pgphoto binary, an ARM objdump,
 `pyelftools`, and `unicorn`; it never writes the supplied binary or contacts a device.
 Its result is an offline regression diagnostic, not proof of physical closure.
+In this work-in-progress branch, the deterministic gate runs that audit via
+`container/test_polaris_bulb_cancel_return.sh`. Set `POLARIS_V90_PGPHOTO` to
+the recorded v90 binary and `OBJDUMP` to a working ARM objdump. Missing inputs
+are failures, not skips. The gate is expected to remain red until an actual
+cancel-return fix passes the audit; never interpret earlier green results for
+the partial dispatcher change as release clearance.
 
 After Gate 0 passes, perform the read-only checks and any separately approved
 ordinary M-mode checks below without invoking the blocked round. Keep the
