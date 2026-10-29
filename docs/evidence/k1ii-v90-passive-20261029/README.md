@@ -147,3 +147,24 @@ No firmware files or camera settings were changed by the diagnostic.
 The local diagnostic script was corrected to use BusyBox `timeout -t`, but was
 not rerun: the user cannot physically recover the camera at present and a
 further session interruption risks preserving or worsening a stale session.
+
+## Prepared direct-PC build, no attached camera
+
+The clean source checkout at libgphoto2 commit
+`63a894b0821a510fc40244c5cc4ef84a5220a91c` was built into the isolated prefix
+`/tmp/k1ii-v90-direct.AYgHxEM9/prefix`, with `ptp2`, `pentax`, `directory`,
+`libusb1`, `usbscsi`, and Pentax research capture enabled. The host gphoto2
+client reported libgphoto2 `2.5.34` using that prefix; loader diagnostics showed
+the isolated core, port and `ptp2` module paths. The `--version` and camera
+list checks did not open a camera. This is the same source SHA, not the same
+binary build: host Meson dependencies and build options differ from the shipped
+ARM/autotools build. The temporary prefix may not survive a system cleanup.
+
+The first unfiltered Meson test run inadvertently included the upstream
+`no-ci` hardware-oriented `test-gp-port`: it enumerated a host USB port and
+failed with bad parameters before establishing an open device; 18 other tests
+passed. A repeat explicitly excluded `no-ci` and all 18 selected tests passed.
+No K-1 II was attached to the PC, so there is no direct EV result. When the
+operator can attach it, verify the exact USB identity and loaded modules again,
+run a single read-only generic EV lookup with debug tracing, and classify the
+first failing operation before changing libgphoto2.
