@@ -1,0 +1,38 @@
+{
+  "baseline": {
+    "candidate_id": "o-v18k-k1ii-k3iii-controls-20261029",
+    "libgphoto2_commit": "63a894b0821a510fc40244c5cc4ef84a5220a91c",
+    "patcher_commit": "613b9d140299add55caee24c0a3ece4e46fa0a42"
+  },
+  "purpose": "Publish v90 with the bounded pgphoto startup-readiness fix identified from direct K-1 II Polaris logs, while preserving the v89 libgphoto2 and K-3 III control stack.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "Extend restart_gphoto readiness from the measured 20-second false-failure window to a bounded 90-second wait for the actual 8080 listener, with an explicit environment override for deterministic tests and future measured tuning.",
+      "issues": ["#253"]
+    },
+    {
+      "component": "tests",
+      "summary": "Add deterministic coverage proving that slow pgphoto readiness succeeds while a hung startup still fails closed, and run the existing deterministic regression suite.",
+      "issues": ["#253"]
+    },
+    {
+      "component": "docs",
+      "summary": "Record the direct v89 K-1 II startup evidence, the readiness-window root cause, the exact fix, and the remaining hardware qualification gates.",
+      "issues": ["#253"]
+    }
+  ],
+  "known_limits": [
+    "No libgphoto2 source change is included in v90; the libgphoto2 input remains 63a894b0821a510fc40244c5cc4ef84a5220a91c.",
+    "The K-1 II hardware acceptance run must verify one startup without restart churn, normal value-setting latency, preview, ordinary capture, and restoration against the installed v90 identity.",
+    "K-3 III ordinary-control regression remains required after installation; timed-B/cancellation remains unqualified under #251 and is not claimed fixed by v90.",
+    "A successful offline gate, publication, or install identity check does not by itself prove camera behaviour."
+  ],
+  "validation_focus": [
+    "Verify the v90 package records the exact libgphoto2 and patcher commits, stock input hash, ZIP hashes, install manifest, and generated release-change manifest.",
+    "Run the canonical pre-release gate and retain its complete transcript with all prerequisite skips explicit.",
+    "Deploy through polaris-preflight.sh --wake and release-fwpkt.sh, then verify the device reports 6.0.0.54.90 and the exact on-device provenance.",
+    "On K-1 II, compare startup and setting-write latency with v89 and confirm no pgphoto readiness retry occurs while the camera initialises.",
+    "On K-3 III, verify startup, populated controls, preview, and ordinary M capture before any separate controlled Bulb qualification."
+  ]
+}
