@@ -52,11 +52,21 @@ git -C libgphoto2-build rev-parse HEAD
 sha256sum /absolute/path/to/stock/FwPkt.zip
 ```
 
-## Build a `.77` candidate
+## Build the next candidate
 
-For the normal user workflow, use the wrapper:
+First prepare and commit a candidate-specific change summary using
+`docs/templates/release-change-summary.json`. Replace every placeholder with
+the previous published candidate's exact source SHAs, the intended fixes, and
+the remaining qualification limits. The template itself is not a valid release
+summary. Do not declare #251 fixed until its remaining acceptance gates pass.
+
+For the normal user workflow, use the wrapper from the clean patcher `main`
+worktree. On this workstation that is currently `/home/ian/polaris-build-73`;
+the separate `BenroPolarisPatcher` checkout has Astro work and is not the
+release source. Verify the branch and status each time.
 
 ```sh
+CHANGE_SUMMARY=docs/release-summaries/your-reviewed-candidate.json \
 ./scripts/release/build-and-install.sh
 ```
 
@@ -65,8 +75,16 @@ clones a disposable clean libgphoto2 `main`, runs the complete build, and
 prints the verified deployment command. To build and then deploy in one run:
 
 ```sh
+CHANGE_SUMMARY=docs/release-summaries/your-reviewed-candidate.json \
 ./scripts/release/build-and-install.sh --install
 ```
+
+The desktop icons call this same wrapper. They cannot supply a reviewed change
+summary themselves: without `CHANGE_SUMMARY`, the wrapper stops before cloning
+or building and records the reason in its log. Use the command above for a
+reviewed release. The wrapper delegates display-version and build-ID selection
+to the canonical builder using `auto`; it must never default to `.77` or any
+other previously used version.
 
 Deployment still stops at the normal preflight, install-manifest, identity, and
 reboot gates. Hardware qualification remains separate.
@@ -75,7 +93,7 @@ For this workstation, the retained stock base is in PrivateResearch at:
 
 ```sh
 STOCK_FWPKT=/home/ian/Documents/VSCodeProjects/PrivateResearch/openpolaris-research/BenroPolarisPatcher/firmware/FwPkt
-LIBGPHOTO2=/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2
+LIBGPHOTO2=/home/ian/Documents/VSCodeProjects/LibGphoto2-v86-main
 ```
 
 That directory contains the nested `FwPkt/firmwareInfo` package and its
@@ -86,6 +104,7 @@ Verify the input before building:
 
 ```sh
 test -f "$STOCK_FWPKT/FwPkt/firmwareInfo"
+git -C "$LIBGPHOTO2" branch --show-current  # must print main
 git -C "$LIBGPHOTO2" status --porcelain
 sha256sum "$STOCK_FWPKT/FwPkt/firmwareInfo"
 ```
@@ -94,17 +113,19 @@ From the patcher checkout:
 
 ```sh
 ./scripts/build-release-candidate.sh \
-  o-v18g-reproducible-20261028 \
+  o-main-your-unique-candidate \
   "$STOCK_FWPKT" \
   "$LIBGPHOTO2" \
   auto \
-  auto
+  auto \
+  --change-summary docs/release-summaries/your-reviewed-candidate.json
 ```
 
-The final `auto` values derive a valid unused display version and matching
-build ID. If `.77` is specifically required, first verify it is not already
-consumed in `docs/RELEASE-VERSION-STATE.md`, then pass the exact display version
-only after the candidate identity has been agreed.
+The two `auto` values derive a valid unused display version and matching
+build ID. `LibGphoto2-v86-main` is a historical folder name, not the source
+version: the recorded commit is authoritative. The adjacent
+`LibGphoto2/libgphoto2` worktree is currently a feature branch and is rejected
+as a release input. The wrapper avoids that ambiguity by cloning remote `main`.
 
 The script performs, in order:
 

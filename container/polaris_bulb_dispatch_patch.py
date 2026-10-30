@@ -8,10 +8,11 @@ the body is in B/lens-B/Astro mode.  A positive value in ordinary Manual mode
 must remain on the normal capture path; sending it to the held-Bulb action is
 what turns a perfectly ordinary M capture into a misleading ``shoot failed``.
 
-The helper also had a generic cancellation hole: its ``GP_ERROR_CANCEL`` branch
-returned before the normal stop path.  The patch below makes cancellation enter
-that path, which constructs and invokes the same stop callback used by natural
-completion, so the shutter is not left open.
+The helper's ``GP_ERROR_CANCEL`` branch returned before the normal stop path.
+This partial patch preserves the branch condition while retargeting it to that
+path. It does not yet preserve cancellation through cleanup or distinguish a
+held exposure from the deferred camera-timed case. See issue #251 before using
+this as a firmware candidate; physical shutter closure is not established.
 """
 import argparse
 import os
@@ -53,10 +54,8 @@ CONDITIONS_KEY_TEXT = 0x1B0
 MODE_9_TEXT = 0x1C4
 MODE_12_TEXT = 0x1DC
 MODE_20_TEXT = 0x1F4
-# The same stack buffer is reused for the model name and the
-# ``pentaxconditions`` text widget.  The latter is currently under 1 KiB; keep
-# the full value writable so gp_widget_get_value cannot overrun the capture
-# arguments while the mode gate is checking it.
+# The name uses this stack buffer. Afterwards sp holds the widget pointer and
+# sp+4 holds the char * borrowed from the widget; text is not copied here.
 NAME_BUF_BYTES = 2048
 OBJDUMP = os.environ.get("OBJDUMP", "arm-linux-gnueabi-objdump")
 

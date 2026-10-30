@@ -3,9 +3,7 @@
 #
 # Usage:
 #   CHANGE_SUMMARY=docs/release-summaries/<candidate>.json \
-#   CANDIDATE_ID=o-v18i-k1ii-k3iii-controlled-20261028 \
-#   DISPLAY_FWVER=6.0.0.54.86 \
-#   BUILD_ID=6.0.0.54.86-o-v18i-k1ii-k3iii-controlled-20261028 \
+#   CANDIDATE_ID=o-main-<unique-candidate-id> \
 #   ./scripts/release/build-and-install.sh --install
 set -euo pipefail
 
@@ -18,9 +16,12 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 export PATH="/usr/bin:/bin:$PATH"
 STOCK_FWPKT="${STOCK_FWPKT:-/home/ian/Documents/VSCodeProjects/PrivateResearch/openpolaris-research/BenroPolarisPatcher/firmware/FwPkt}"
 LIBGPHOTO_REPO="${LIBGPHOTO_REPO:-https://github.com/ian-morgan99/libgphoto2.git}"
-CANDIDATE_ID="${CANDIDATE_ID:-o-v18g-reproducible-$(date -u +%Y%m%d)}"
-DISPLAY_FWVER="${DISPLAY_FWVER:-6.0.0.54.77}"
-BUILD_ID="${BUILD_ID:-${DISPLAY_FWVER}-${CANDIDATE_ID}}"
+CANDIDATE_ID="${CANDIDATE_ID:-o-main-$(date -u +%Y%m%dT%H%M%SZ)}"
+# The canonical builder owns version selection and binds it to the source
+# commits. Never reuse a historical display version or derive an "auto-..."
+# build ID here. Explicit, reviewed overrides still pass through its checks.
+DISPLAY_FWVER="${DISPLAY_FWVER:-auto}"
+BUILD_ID="${BUILD_ID:-auto}"
 CHANGE_SUMMARY="${CHANGE_SUMMARY:-}"
 INSTALL=0
 WAIT_AP=120
@@ -51,7 +52,7 @@ mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/build-and-install.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 echo "=== build-and-install $(date -u +%FT%TZ) ==="
-echo "candidate=$CANDIDATE_ID display_fwver=$DISPLAY_FWVER install=$INSTALL"
+echo "candidate=$CANDIDATE_ID requested_display_fwver=$DISPLAY_FWVER requested_build_id=$BUILD_ID install=$INSTALL"
 trap 'rc=$?; echo "=== build-and-install finished $(date -u +%FT%TZ) rc=$rc ==="; exit "$rc"' EXIT
 
 # VS Code may see the repository but not the host Docker CLI/socket.

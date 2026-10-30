@@ -1,0 +1,6 @@
+0308393632dd41d974bd1064e61942655131fe5392959a334cf24623d1bd4a62  /tmp/polaris-stock-patch.j3dojN/extracted/958962934/ubifs/bin/pgphoto
+[polaris_bulb_dispatch] patched /tmp/polaris-stock-patch.j3dojN/extracted/958962934/ubifs/bin/pgphoto.patched: K-3 III live-mode gate, cancel-to-stop, and timed Bulb route
+[polaris_bulb_dispatch] verified K-3 III live-mode Bulb dispatch and cancel-to-stop
+[polaris_bulb_dispatch] already patched (unique verified dispatch)
+0308393632dd41d974bd1064e61942655131fe5392959a334cf24623d1bd4a62  /tmp/polaris-stock-patch.j3dojN/extracted/958962934/ubifs/bin/pgphoto
+6575e3b272e108a0c83c8750bb9dc83bbbf1ebdbf3c66ecacf3d69d0a9875da0  /tmp/polaris-stock-patch.j3dojN/extracted/958962934/ubifs/bin/pgphoto.patched
