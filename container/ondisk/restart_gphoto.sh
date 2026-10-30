@@ -15,7 +15,7 @@
 #   2. Verify /proc/$pid/cmdline still names a pgphoto process
 #   3. TERM → bounded wait for process exit AND TCP/8080 unbind → KILL fallback
 #   4. Start replacement, record its PID atomically
-#   5. Verify liveness + 8080 ownership before declaring success
+#   5. Check liveness + an 8080 listener; listener ownership remains unverified
 #
 # Also sets a restart-in-progress marker so the polestar watchdog
 # (checkGphotoTask) can detect an in-flight restart and not race it (#34).
@@ -194,6 +194,13 @@ echo "[restart_gphoto] pgphoto running (PID $NEWPID)"
 # the listener appears, or fail closed when the bounded startup window expires.
 i=0
 while [ $i -lt "$START_WAIT_MAX" ]; do
+    # The first liveness check happened before entering this loop. Check again
+    # so an exited process is not reported ready just because a listener appears.
+    # This does not prove listener ownership or rule out same-command PID reuse.
+    if ! pid_is_pgphoto "$NEWPID"; then
+        echo "[restart_gphoto] FAIL: pgphoto exited during readiness wait (PID $NEWPID); check $LOG" >&2
+        exit 1
+    fi
     if port_in_use; then
         echo "[restart_gphoto] OK: port 8080 listening — restart successful"
         exit 0

@@ -83,6 +83,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 #include "stage2_policy.h"
 
@@ -1047,6 +1048,96 @@ typedef int (*stage2_gp_camera_set_single_config_fn)(void *camera,
 static stage2_gp_camera_set_single_config_fn
     g_real_gp_camera_set_single_config = NULL;
 
+/* Optional issue #253 timing. This records API call durations, not individual
+ * PTP operations or proof that a requested setting was applied. It is OFF by
+ * default and never reads or changes a widget value. Preserve the wrapped
+ * call's result and errno even if the clock or logging fails. */
+typedef struct _Camera Stage2Camera;
+typedef struct _CameraWidget Stage2CameraWidget;
+typedef struct _GPContext Stage2Context;
+typedef int (*stage2_gp_camera_get_config_fn)(Stage2Camera *camera,
+                                              Stage2CameraWidget **widget,
+                                              Stage2Context *context);
+static stage2_gp_camera_get_config_fn g_real_gp_camera_get_config = NULL;
+
+static int stage2_config_timing_enabled(void)
+{
+    const char *value = getenv("STAGE2_CONFIG_TIMING");
+    return value && strcmp(value, "1") == 0;
+}
+
+static void stage2_config_timing_log(const char *operation, const char *name,
+                                     int ret, int started,
+                                     const struct timespec *start)
+{
+    struct timespec end;
+    if (!started || clock_gettime(CLOCK_MONOTONIC, &end) != 0 ||
+        end.tv_sec < start->tv_sec ||
+        (end.tv_sec == start->tv_sec && end.tv_nsec < start->tv_nsec))
+        return;
+    fprintf(stderr, "[stage2] config-timing pid=%ld tid=%ld op=%s name=%s core-ret=%d "
+                    "start=%lld.%09ld end=%lld.%09ld\n",
+            (long)getpid(), (long)syscall(SYS_gettid), operation, name ? name : "-", ret,
+            (long long)start->tv_sec, start->tv_nsec,
+            (long long)end.tv_sec, end.tv_nsec);
+}
+
+static int stage2_timed_get_single(void *camera, const char *name,
+                                   void **widget, void *context)
+{
+    if (!stage2_config_timing_enabled())
+        return g_real_gp_camera_get_single_config(camera, name, widget, context);
+    struct timespec start;
+    int original_errno = errno;
+    int started = clock_gettime(CLOCK_MONOTONIC, &start) == 0;
+    errno = original_errno;
+    int ret = g_real_gp_camera_get_single_config(camera, name, widget, context);
+    int saved_errno = errno;
+    stage2_config_timing_log("get-single", name, ret, started, &start);
+    errno = saved_errno;
+    return ret;
+}
+
+static int stage2_timed_set_single(void *camera, const char *name,
+                                   void *widget, void *context)
+{
+    if (!stage2_config_timing_enabled())
+        return g_real_gp_camera_set_single_config(camera, name, widget, context);
+    struct timespec start;
+    int original_errno = errno;
+    int started = clock_gettime(CLOCK_MONOTONIC, &start) == 0;
+    errno = original_errno;
+    int ret = g_real_gp_camera_set_single_config(camera, name, widget, context);
+    int saved_errno = errno;
+    stage2_config_timing_log("set-single", name, ret, started, &start);
+    errno = saved_errno;
+    return ret;
+}
+
+/* This wrapper is installed only when timing was explicitly enabled at
+ * process start; otherwise gp_camera_get_config remains direct-to-core. */
+static int stage2_timed_get_config(Stage2Camera *camera, Stage2CameraWidget **widget,
+                                   Stage2Context *context)
+{
+    struct timespec start;
+    int original_errno = errno;
+    int started = clock_gettime(CLOCK_MONOTONIC, &start) == 0;
+    errno = original_errno;
+    int ret = g_real_gp_camera_get_config(camera, widget, context);
+    int saved_errno = errno;
+    stage2_config_timing_log("get-tree", NULL, ret, started, &start);
+    errno = saved_errno;
+    return ret;
+}
+
+static void *stage2_config_tree_slot_target(void *target)
+{
+    if (!stage2_config_timing_enabled())
+        return target;
+    g_real_gp_camera_get_config = (stage2_gp_camera_get_config_fn)target;
+    return (void *)&stage2_timed_get_config;
+}
+
 /* Loader-internal wrapper installed in gp_camera_set_config's slot (see the fill
  * loop).  Normal (non-signal) context, so fprintf/getenv/dlsym are fine. */
 static int stage2_shim_gp_camera_set_config(void *camera, void *widget,
@@ -1155,11 +1246,10 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
     {
         const char *tether = getenv("STAGE2_TETHER_CAPTURE");
         if (!tether || strcmp(tether, "0") == 0)
-            return g_real_gp_camera_set_single_config(camera, name, widget,
-                                                      context);
+            return stage2_timed_set_single(camera, name, widget, context);
     }
     if (!stage2_camera_uses_r5_shims(camera))
-        return g_real_gp_camera_set_single_config(camera, name, widget, context);
+        return stage2_timed_set_single(camera, name, widget, context);
 
     /* Tether ON: only capturetarget is rewritten; every other name (iso,
      * shutterspeed, aperture, ...) passes straight through.  The name is given
@@ -1185,7 +1275,7 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
 
     /* Hand the (possibly rewritten) config to the real core and return its
      * result -- unchanged for ISO/shutter/etc. */
-    return g_real_gp_camera_set_single_config(camera, name, widget, context);
+    return stage2_timed_set_single(camera, name, widget, context);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1291,7 +1381,7 @@ static int stage2_shim_gp_camera_get_single_config(void *camera, const char *nam
         return -1;
     }
 
-    int ret = g_real_gp_camera_get_single_config(camera, name, widget_out, context);
+    int ret = stage2_timed_get_single(camera, name, widget_out, context);
     if (ret == 0) {
         /* A choice widget is only successful if it contains choices.  This is
          * deliberately model-independent; the camera/app may transiently be
@@ -1869,6 +1959,14 @@ static void stage2_ondisk_init(void)
          * after a successful init.  All other non-shimmed slots go DIRECT to the
          * core/port target.  Match by EXACT boundary symbol name (robust to slot
          * ordering). */
+        if (strcmp(name, "gp_camera_get_config") == 0) {
+            void *target = stage2_config_tree_slot_target(t);
+            slot_store(STAGE2_SLOTS[i].slot, target);
+            if (target != t)
+                fprintf(stderr, "[stage2] config-timing: full-tree timing enabled\n");
+            filled++;
+            continue;
+        }
         if (strcmp(name, "gp_camera_init") == 0) {
             slot_store(STAGE2_SLOTS[i].slot, (void *)&stage2_shim_gp_camera_init);
             fprintf(stderr, "[stage2] storage: gp_camera_init slot -> shim "
