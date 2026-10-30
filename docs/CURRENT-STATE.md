@@ -1,5 +1,21 @@
 # Current repository state
 
+## 2026-10-30 — source-only #251 follow-up; no new firmware
+
+Authorized delivery work remains on `main` in `/home/ian/polaris-build-73`.
+The K-3 III dispatcher now checks widget type, initializes output slots,
+validates the exposure-mode field, and matches the exact registered label.
+Executable ARM tests are in the offline test list. libgphoto2 and the shared
+Bulb stop path are unchanged by this follow-up.
+
+**#251 remains open and release-blocking.** The exact-binary diagnostic still
+returns success after a cancelled wait and successful stop. Deferred timed
+cancellation and physical closure are not fixed or qualified. No firmware,
+publication, deployment or camera test occurred. See the
+[current handoff](ISSUE-251-HANDOFF.md) and
+[evidence](evidence/issue-251-dispatch-20261030/README.md). The dated installed
+build entries below are historical, not a fresh device-version assertion.
+
 ## 2026-10-28 — `.87` deployed; K-1 II canary partially passed
 
 `.87` (`o-v18j-k1ii-mainline-20261028-r2`) was built from libgphoto2

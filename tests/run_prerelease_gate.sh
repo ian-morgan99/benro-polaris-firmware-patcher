@@ -246,6 +246,7 @@ PY_TESTS=(
     tests/test_astro_multishot.py
     tests/test_display_fwver_monotonic.py
     tests/test_build_and_install_entrypoint.py
+    tests/test_polaris_bulb_dispatch_arm.py
     tests/test_agent_sandbox_check.py
     tests/test_agent_host_config_check.py
     tests/test_app_burst_protocol.py

@@ -41,6 +41,33 @@ The clean libgphoto2 `main` worktree at this check is
 `LibGphoto2/libgphoto2` worktree is a feature branch, not the release input.
 No libgphoto2 source changed during this recovery.
 
+## Dispatcher follow-up on main (2026-10-30)
+
+The reviewed widget/type/mode checks are now on main, with two additional
+corrections found during executable testing: clearing the reused text-output
+slot (otherwise an omitted output can turn type `2` into a pointer), and
+matching the exact registered `Pentax:K-3 Mark III (MTP mode)` abilities label
+instead of a model-name substring. The label comparison ignores case.
+
+Failed/invalid widget reads and missing/malformed/out-of-range/duplicate exact
+mode fields return camera-busy for the selected K-3 III without entering a
+capture helper. Valid modes 9/12/20 retain the existing Bulb route; other
+recognized values retain stock capture. Other models, nonpositive durations
+and nonzero status retain stock dispatch. This does not establish the safety
+of the Bulb helper itself.
+
+The trampoline grows from `0x220` to `0x300` bytes (224 bytes) for these checks.
+It still makes one same-session conditions read, not a polling loop. No new
+vendor opcode, retry, capture timing, library or shared stop-path change is
+included. The archived WIP was not merged wholesale.
+
+The executable ARM tests are registered in the offline gate. Unicorn 2.1.4
+was installed only in `/tmp/polaris-251-arm-tests-20261030`, not in the system
+environment. Missing Unicorn explicitly skips those tests and never counts as
+physical qualification. The recovered exact-binary diagnostic is on main as
+`tools/audit_polaris_bulb_cancel.py` and still fails. See the
+[follow-up evidence](evidence/issue-251-dispatch-20261030/README.md).
+
 ## What prevented progress and what was repaired
 
 The Codex sandbox runner failed before executing any command with
@@ -84,9 +111,9 @@ or operated on a camera during this recovery. No release version was consumed.
 
 ## Remaining #251 work, in order
 
-1. Review the preserved type/null/mode checks against the current dispatcher;
-   main's partial fix does not include them. Preserve the stock path for other
-   models and verify the exact K-3 III identity gate.
+1. Type/null/mode and exact abilities-label checks are now implemented and
+   ARM-tested. Installed-ABI/hardware confirmation is still owed. The label
+   check is not a new USB identity probe or proof of physical support.
 2. Distinguish normal expiry, message stop (`264/state:0`) and context cancel.
    Preserve cancellation and stop errors through cleanup and file handling.
 3. Ensure cancelling a deferred camera-timed start cannot issue a new exposure,
@@ -101,6 +128,9 @@ or operated on a camera during this recovery. No release version was consumed.
    short exposures, stop on the first mismatch, and verify physical closure,
    publication and recovery before longer tests. Do not run the existing full
    qualification round on v89/v90: it contains an automatic Bulb shot.
+6. Complete the other original criteria separately: missing timed-B shutter
+   list, exposure duration rather than pre-delay, Manual wheel behavior and
+   transitions/recovery. Dispatcher tests do not close those physical gates.
 
 The immutable local diagnostic input is
 `out/o-v18m-k1ii-pgphoto-readiness-20261029/stage2-ondisk/ondisk/pgphoto.stage2ondisk`,
