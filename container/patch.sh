@@ -506,6 +506,14 @@ else
   fi
   log "  loader: md5=$LOADER_MD5 ABI=$LFLAGS (R5-II gate present, issue #27)"
 
+  # Dormant diagnostic utility: no startup hook and no camera API dependencies.
+  # Ship it through the same firmware/provenance path as the loader (#253).
+  $XT-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror \
+      /opt/patcher/stage2_config_receiver.c -o "$W/s2/stage2-config-receiver" \
+      || die "config timing receiver compile failed"
+  RFLAGS="$($XT-readelf -h "$W/s2/stage2-config-receiver" | awk -F: '/Flags/{print $2}')"
+  grep -q 'soft-float' <<<"$RFLAGS" || die "config receiver ABI mismatch:$RFLAGS"
+
   # #158/#159 adapter compile-check: prove the camera adapters build with the
   # same cross toolchain + soft-float ABI as the loader. These are NOT yet
   # linked into libpolaris_stage2.so (full link is the next step); this gate
@@ -548,6 +556,7 @@ else
     "$STAGE2" "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION" "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION"
   inst -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/libpolaris_stage2.so"  "$STAGE2/libpolaris_stage2.so"
   inst -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/pgphoto.stage2ondisk"  "$STAGE2/pgphoto.stage2ondisk"
+  inst -m 755 -o "$P_UID" -g "$P_GID" "$W/s2/stage2-config-receiver" "$STAGE2/stage2-config-receiver"
   inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_CORE"                   "$STAGE2/libgphoto2.so.6"
   inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PORT"                   "$STAGE2/libgphoto2_port.so.12"
   inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_PTP2"                   "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/ptp2.so"
@@ -832,6 +841,8 @@ STAGE2_LOADER="$APP_VERIFY/lib/stage2/libpolaris_stage2.so"
 if [ ! -f "$STAGE2_LOADER" ]; then
   die "post-repack assertion failed: lib/stage2/libpolaris_stage2.so missing from appfs.ubifs"
 fi
+cmp "$W/s2/stage2-config-receiver" "$APP_VERIFY/lib/stage2/stage2-config-receiver" \
+  || die "post-repack assertion failed: config timing receiver missing or changed"
 CORE_LIB="$APP_VERIFY/lib/stage2/libgphoto2.so.6"
 if [ ! -f "$CORE_LIB" ]; then
   die "post-repack assertion failed: lib/stage2/libgphoto2.so.6 missing from appfs.ubifs"
@@ -941,6 +952,7 @@ if [ "$MODE" = "full" ]; then
   rm -rf "$BUN"; mkdir -p "$BUN/ondisk" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION" "$BUN/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION"
   cp "$W/s2/libpolaris_stage2.so"  "$BUN/ondisk/"
   cp "$W/s2/pgphoto.stage2ondisk"  "$BUN/ondisk/"
+  cp "$W/s2/stage2-config-receiver" "$BUN/ondisk/"
   cp "$W/pgphoto.wrapper" "$BUN/ondisk/"   # generated from .in (see above)
   cp /opt/patcher/ondisk/install_stage2.sh "$BUN/ondisk/"
   cp /opt/patcher/ondisk/restore_stock.sh  "$BUN/ondisk/"

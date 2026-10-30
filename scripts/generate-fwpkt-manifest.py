@@ -65,6 +65,10 @@ LEGACY_USB_SCSI_FILE = (
     "lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
     "lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
 )
+CONFIG_RECEIVER_FILE = (
+    "lib/stage2/stage2-config-receiver",
+    "lib/stage2/stage2-config-receiver",
+)
 
 
 def sha256_file(path: str) -> str:
@@ -147,6 +151,10 @@ def main() -> int:
     legacy_usbscsi = os.path.join(appfs_root, LEGACY_USB_SCSI_FILE[1])
     if os.path.isfile(legacy_usbscsi):
         manifest_files.append(LEGACY_USB_SCSI_FILE)
+    # Historical candidates predate the receiver. When shipped, bind its exact
+    # bytes into the candidate's installed-file verification like other tools.
+    if os.path.isfile(os.path.join(appfs_root, CONFIG_RECEIVER_FILE[1])):
+        manifest_files.append(CONFIG_RECEIVER_FILE)
 
     files = []
     missing = []
