@@ -34,10 +34,12 @@ cat > "$TMP/wrapper" <<'EOF'
 #!/bin/sh
 PR="$OPENPOLARIS_PROC_ROOT"
 BIN="$OPENPOLARIS_PGPHOTO_BINARY"
-mkdir -p "$PR/$$"
+mkdir -p "$PR/$$/fd"
 printf '%s' "$BIN" > "$PR/$$/cmdline"
+cp "/proc/$$/stat" "$PR/$$/stat"
+ln -s 'socket:[4242]' "$PR/$$/fd/7"
 # Simulate MJPG-Streamer binding :1F90 (8080) during init.
-printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A\n' > "$PR/net/tcp"
+printf '0: 00000000:1F90 00000000:0000 0A 0:0 00:0 0 0 0 4242\n' > "$PR/net/tcp"
 trap 'rm -f "$PR/net/tcp"; rm -rf "$PR/$$"; exit 0' TERM
 while :; do sleep 0.3 & wait $!; done
 EOF

@@ -15,12 +15,12 @@
 #   2. Verify /proc/$pid/cmdline still names a pgphoto process
 #   3. TERM → bounded wait for process exit AND TCP/8080 unbind → KILL fallback
 #   4. Start replacement, record its PID atomically
-#   5. Check liveness + an 8080 listener; listener ownership remains unverified
+#   5. Match the 8080 listener to a socket fd held by the same new pgphoto
 #
 # Also sets a restart-in-progress marker so the polestar watchdog
 # (checkGphotoTask) can detect an in-flight restart and not race it (#34).
 #
-# BusyBox-safe: uses only /proc, kill, sleep, grep, tr, mv. No pgrep/pkill.
+# BusyBox-safe: uses /proc and shell utilities including awk/readlink. No pgrep/pkill.
 
 RUN_DIR=${OPENPOLARIS_RUN_DIR:-/var/run}
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
@@ -51,15 +51,44 @@ port_in_use() {
             "$netfile" 2>/dev/null && return 0
     done
     return 1
-    return 1
 }
 
 pid_is_pgphoto() {
-    # Verify /proc/$1/cmdline contains "pgphoto" (matches both the wrapper
-    # path /app/bin/pgphoto and the stage2 binary pgphoto.stage2ondisk).
+    # Match the exact post-exec binary, not a command merely mentioning pgphoto.
     [ -d "$PROC_ROOT/$1" ] || return 1
     CMD=$(tr '\0' '\n' < "$PROC_ROOT/$1/cmdline" 2>/dev/null | head -1)
     [ "$CMD" = "$STAGE2_BIN" ]
+}
+
+pid_start_time() {
+    # Field 22 follows the parenthesised comm, which can contain spaces or ')'.
+    # After stripping through the last ') ', starttime is field 20.
+    awk '{ sub(/^.*\) /, ""); if ($20 ~ /^[0-9]+$/) print $20; else exit 1 }' \
+        "$PROC_ROOT/$1/stat" 2>/dev/null
+}
+
+same_new_pgphoto() {
+    pid_is_pgphoto "$NEWPID" &&
+        [ "$(pid_start_time "$NEWPID")" = "$NEW_START_TIME" ]
+}
+
+pid_owns_listener() {
+    # A LISTEN row alone is insufficient: match its inode to this process's
+    # socket descriptors. Unreadable/missing proc entries cannot prove readiness.
+    for netfile in "$PROC_ROOT/net/tcp" "$PROC_ROOT/net/tcp6"; do
+        [ -r "$netfile" ] || continue
+        inodes=$(awk -v port=":${PORT_HEX}" \
+            '$2 ~ (port "$") && $4 == "0A" && $10 ~ /^[0-9]+$/ && $10 != "0" { print $10 }' \
+            "$netfile" 2>/dev/null) || continue
+        [ -n "$inodes" ] || continue
+        for fd in "$PROC_ROOT/$1/fd"/*; do
+            link=$(readlink "$fd" 2>/dev/null) || continue
+            for inode in $inodes; do
+                [ "$link" = "socket:[$inode]" ] && return 0
+            done
+        done
+    done
+    return 1
 }
 
 # --- step 0: acquire restart lock (prevents watchdog race, issue #34) ------
@@ -187,6 +216,11 @@ if [ ! -d "$PROC_ROOT/$NEWPID" ] || ! pid_is_pgphoto "$NEWPID"; then
     echo "[restart_gphoto] FAIL: pgphoto exited immediately (PID $NEWPID); check $LOG"
     exit 1
 fi
+NEW_START_TIME=$(pid_start_time "$NEWPID")
+if [ -z "$NEW_START_TIME" ]; then
+    echo "[restart_gphoto] FAIL: cannot verify pgphoto process identity (PID $NEWPID)" >&2
+    exit 1
+fi
 echo "[restart_gphoto] pgphoto running (PID $NEWPID)"
 
 # Wait for the port to come up (MJPG-Streamer binds after camera/session init).
@@ -194,20 +228,17 @@ echo "[restart_gphoto] pgphoto running (PID $NEWPID)"
 # the listener appears, or fail closed when the bounded startup window expires.
 i=0
 while [ $i -lt "$START_WAIT_MAX" ]; do
-    # The first liveness check happened before entering this loop. Check again
-    # so an exited process is not reported ready just because a listener appears.
-    # This does not prove listener ownership or rule out same-command PID reuse.
-    if ! pid_is_pgphoto "$NEWPID"; then
-        echo "[restart_gphoto] FAIL: pgphoto exited during readiness wait (PID $NEWPID); check $LOG" >&2
+    if ! same_new_pgphoto; then
+        echo "[restart_gphoto] FAIL: pgphoto exited or changed identity during readiness wait (PID $NEWPID); check $LOG" >&2
         exit 1
     fi
-    if port_in_use; then
-        echo "[restart_gphoto] OK: port 8080 listening — restart successful"
+    if pid_owns_listener "$NEWPID" && same_new_pgphoto; then
+        echo "[restart_gphoto] OK: port 8080 listening, owned by pgphoto (PID $NEWPID) — restart successful"
         exit 0
     fi
     sleep 1
     i=$((i+1))
 done
 
-echo "[restart_gphoto] FAIL: pgphoto stayed alive but port 8080 did not become ready" >&2
+echo "[restart_gphoto] FAIL: pgphoto stayed alive but did not own a port 8080 listener" >&2
 exit 1

@@ -7,5 +7,5 @@ cc -O0 -std=gnu11 -Wall -Wextra -Werror \
     -I"$(dirname "$0")" -I"$(dirname "$0")/testdata" \
     "$(dirname "$0")/test_stage2_config_timing.c" \
     "$(dirname "$0")/stage2_policy.c" \
-    -o "$work/test_stage2_config_timing" -ldl
+    -o "$work/test_stage2_config_timing" -ldl -pthread
 "$work/test_stage2_config_timing"

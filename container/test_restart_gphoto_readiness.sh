@@ -20,14 +20,17 @@ cat > "$TMP/wrapper-slow" <<'EOF'
 #!/bin/sh
 PR="$OPENPOLARIS_PROC_ROOT"
 BIN="$OPENPOLARIS_PGPHOTO_BINARY"
-mkdir -p "$PR/$$"
+mkdir -p "$PR/$$/fd"
 printf '%s' "$BIN" > "$PR/$$/cmdline"
+# Exercise stat's parenthesised comm parsing with spaces and another ')'.
+sed 's/([^)]*)/(pgphoto ) worker)/' "/proc/$$/stat" > "$PR/$$/stat"
 (
     # Exceed the old 20-second loop plus its two-second initial check.
     sleep 24 & sleeper=$!
     trap 'wait "$sleeper" 2>/dev/null || :; exit 0' TERM INT
     wait "$sleeper"
-    printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A\n' > "$PR/net/tcp"
+    ln -s 'socket:[4242]' "$PR/$$/fd/7"
+    printf '0: 00000000:1F90 00000000:0000 0A 0:0 00:0 0 0 0 4242\n' > "$PR/net/tcp"
 ) &
 child=$!
 printf '%s\n' "$child" > "$OPENPOLARIS_TEST_CHILD_FILE"
@@ -41,6 +44,7 @@ PR="$OPENPOLARIS_PROC_ROOT"
 BIN="$OPENPOLARIS_PGPHOTO_BINARY"
 mkdir -p "$PR/$$"
 printf '%s' "$BIN" > "$PR/$$/cmdline"
+cp "/proc/$$/stat" "$PR/$$/stat"
 trap 'wait "$sleeper" 2>/dev/null || :; rm -rf "$PR/$$"; exit 0' TERM INT
 while :; do sleep 0.2 & sleeper=$!; wait "$sleeper" || :; done
 EOF
@@ -50,11 +54,12 @@ PR="$OPENPOLARIS_PROC_ROOT"
 BIN="$OPENPOLARIS_PGPHOTO_BINARY"
 mkdir -p "$PR/$$"
 printf '%s' "$BIN" > "$PR/$$/cmdline"
+cp "/proc/$$/stat" "$PR/$$/stat"
 (
     sleep 3 & sleeper=$!
     trap 'wait "$sleeper" 2>/dev/null || :; exit 0' TERM INT
     wait "$sleeper"
-    printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A\n' > "$PR/net/tcp"
+    printf '0: 00000000:1F90 00000000:0000 0A 0:0 00:0 0 0 0 4242\n' > "$PR/net/tcp"
 ) &
 child=$!
 printf '%s\n' "$child" > "$OPENPOLARIS_TEST_CHILD_FILE"
@@ -64,7 +69,43 @@ wait "$sleeper"
 rm -rf "$PR/$$"
 exit 0
 EOF
-chmod +x "$TMP/wrapper-slow" "$TMP/wrapper-hung" "$TMP/wrapper-dies"
+cat > "$TMP/wrapper-listener" <<'EOF'
+#!/bin/sh
+PR="$OPENPOLARIS_PROC_ROOT"
+mkdir -p "$PR/$$/fd"
+printf '%s' "$OPENPOLARIS_PGPHOTO_BINARY" > "$PR/$$/cmdline"
+cp "/proc/$$/stat" "$PR/$$/stat"
+netfile=tcp
+address=00000000:1F90
+state=0A
+inode=4242
+case "$OPENPOLARIS_TEST_CASE" in
+    ipv6) netfile=tcp6; address=00000000000000000000000000000000:1F90 ;;
+    unrelated) inode=4243 ;;
+    connected) state=01 ;;
+    wrong-port) address=00000000:1F91 ;;
+    no-stat) rm -f "$PR/$$/stat" ;;
+esac
+ln -s 'socket:[4242]' "$PR/$$/fd/7"
+child=
+if [ "$OPENPOLARIS_TEST_CASE" = reused ]; then
+    (
+        sleep 2.5 & sleeper=$!
+        trap 'wait "$sleeper" 2>/dev/null || :; exit 0' TERM INT
+        wait "$sleeper"
+        awk '{$22 += 1; print}' "$PR/$$/stat" > "$PR/$$/stat.new"
+        mv "$PR/$$/stat.new" "$PR/$$/stat"
+        printf '0: %s 00000000:0000 %s 0:0 00:0 0 0 0 %s\n' "$address" "$state" "$inode" > "$PR/net/$netfile"
+    ) &
+    child=$!
+    printf '%s\n' "$child" > "$OPENPOLARIS_TEST_CHILD_FILE"
+else
+    printf '0: %s 00000000:0000 %s 0:0 00:0 0 0 0 %s\n' "$address" "$state" "$inode" > "$PR/net/$netfile"
+fi
+trap 'wait $child "$sleeper" 2>/dev/null || :; rm -rf "$PR/$$"; exit 0' TERM INT
+while :; do sleep 0.2 & sleeper=$!; wait "$sleeper" || :; done
+EOF
+chmod +x "$TMP/wrapper-slow" "$TMP/wrapper-hung" "$TMP/wrapper-dies" "$TMP/wrapper-listener"
 
 run_restart() {
     wrapper=$1
@@ -75,6 +116,7 @@ run_restart() {
     OPENPOLARIS_PGPHOTO_BINARY="$BIN" \
     OPENPOLARIS_PGPHOTO_LOG="$LOGF" \
     OPENPOLARIS_TEST_CHILD_FILE="$TMP/child.pid" \
+    OPENPOLARIS_TEST_CASE="${TEST_CASE:-}" \
     OPENPOLARIS_PGPHOTO_START_WAIT_MAX="${TEST_WAIT_MAX:-90}" \
         sh "$RESTART" > "$output" 2>&1
 }
@@ -89,7 +131,8 @@ stop_test_process() {
         "/bin/sh
 $TMP/wrapper-slow"|"/bin/sh
 $TMP/wrapper-hung"|"/bin/sh
-$TMP/wrapper-dies") kill "$pid" 2>/dev/null || true ;;
+$TMP/wrapper-dies"|"/bin/sh
+$TMP/wrapper-listener") kill "$pid" 2>/dev/null || true ;;
         *) return 0 ;;
     esac
     # The fake wrapper reaps its own short-lived children before exiting.
@@ -115,7 +158,7 @@ cleanup_launched() {
         stop_test_process "$(cat "$TMP/child.pid" 2>/dev/null || true)" || return 1
     fi
     rm -f "$TMP/child.pid"
-    rm -f "$RUN/openpolaris-pgphoto.pid" "$PROC/net/tcp"
+    rm -f "$RUN/openpolaris-pgphoto.pid" "$PROC/net/tcp" "$PROC/net/tcp6"
     rm -rf "$PROC"/[0-9]*
 }
 
@@ -140,7 +183,7 @@ trap 'exit 130' HUP INT TERM
 # The longer bounded readiness wait must allow it to finish.
 OUT_SLOW=$TMP/slow.out
 run_restart "$TMP/wrapper-slow" "$OUT_SLOW"
-grep -q 'OK: port 8080 listening' "$OUT_SLOW"
+grep -q 'OK: port 8080 listening, owned by pgphoto' "$OUT_SLOW"
 cleanup_launched
 
 # A process that never publishes readiness must still fail closed at the bound.
@@ -151,7 +194,7 @@ TEST_WAIT_MAX=1 run_restart "$TMP/wrapper-hung" "$OUT_HUNG" || rc=$?
 FINISHED=$(date +%s)
 test "$rc" -ne 0
 test "$((FINISHED - STARTED))" -lt 8
-grep -q 'FAIL: pgphoto stayed alive but port 8080 did not become ready' "$OUT_HUNG"
+grep -q 'FAIL: pgphoto stayed alive but did not own a port 8080 listener' "$OUT_HUNG"
 cleanup_launched
 
 # A process that dies after the initial check must not be marked successful
@@ -161,7 +204,34 @@ OUT_DEAD=$TMP/dead.out
 rc=0
 TEST_WAIT_MAX=5 run_restart "$TMP/wrapper-dies" "$OUT_DEAD" || rc=$?
 test "$rc" -ne 0
-grep -q 'FAIL: pgphoto exited during readiness wait' "$OUT_DEAD"
+grep -q 'FAIL: pgphoto exited or changed identity during readiness wait' "$OUT_DEAD"
 cleanup_launched
 
-echo 'PASS: restart_gphoto waits for slow readiness but fails closed on hung startup (issue #253)'
+# Neither another process's listener nor a non-listening/wrong-port socket is
+# evidence of readiness, even while the new pgphoto is still alive.
+for TEST_CASE in unrelated connected wrong-port; do
+    output=$TMP/$TEST_CASE.out
+    rc=0
+    TEST_WAIT_MAX=1 run_restart "$TMP/wrapper-listener" "$output" || rc=$?
+    test "$rc" -ne 0
+    grep -q 'FAIL: pgphoto stayed alive but did not own a port 8080 listener' "$output"
+    cleanup_launched
+done
+for TEST_CASE in ipv4 ipv6; do
+    output=$TMP/$TEST_CASE.out
+    TEST_WAIT_MAX=1 run_restart "$TMP/wrapper-listener" "$output"
+    grep -q 'OK: port 8080 listening, owned by pgphoto' "$output"
+    cleanup_launched
+done
+rc=0
+TEST_CASE=no-stat TEST_WAIT_MAX=1 run_restart "$TMP/wrapper-listener" "$TMP/no-stat.out" || rc=$?
+test "$rc" -ne 0
+grep -q 'FAIL: cannot verify pgphoto process identity' "$TMP/no-stat.out"
+cleanup_launched
+rc=0
+TEST_CASE=reused TEST_WAIT_MAX=5 run_restart "$TMP/wrapper-listener" "$TMP/reused.out" || rc=$?
+test "$rc" -ne 0
+grep -q 'FAIL: pgphoto exited or changed identity during readiness wait' "$TMP/reused.out"
+cleanup_launched
+
+echo 'PASS: slow/hung startup, exited/reused PID, IPv4/IPv6 ownership, unrelated/non-listening/wrong-port sockets (issue #253)'

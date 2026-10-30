@@ -83,7 +83,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <sys/syscall.h>
+#include <netinet/in.h>
 
 #include "stage2_policy.h"
 
@@ -1059,11 +1061,47 @@ typedef int (*stage2_gp_camera_get_config_fn)(Stage2Camera *camera,
                                               Stage2CameraWidget **widget,
                                               Stage2Context *context);
 static stage2_gp_camera_get_config_fn g_real_gp_camera_get_config = NULL;
+#define STAGE2_CONFIG_TIMING_LIMIT 128U
+static int g_config_timing_socket = -1;
+static struct sockaddr_in g_config_timing_destination;
+static atomic_uint g_config_timing_attempts = 0;
+
+/* Enable once, before the slots are published. An explicit loopback port is
+ * required; no receiver means packets are dropped, never buffered to disk.
+ * Diagnostic records are lossy and capped, and contain no widget values. */
+static void stage2_config_timing_init(void)
+{
+    const char *enabled = getenv("STAGE2_CONFIG_TIMING");
+    const char *port_text = getenv("STAGE2_CONFIG_TIMING_PORT");
+    char *end = NULL;
+    unsigned long port;
+
+    if (g_config_timing_socket >= 0 || !enabled || strcmp(enabled, "1") != 0 ||
+        !port_text || !*port_text)
+        return;
+    for (const char *p = port_text; *p; p++)
+        if (*p < '0' || *p > '9')
+            return;
+    errno = 0;
+    port = strtoul(port_text, &end, 10);
+    if (errno || !end || *end || port < 1024 || port > 65535)
+        return;
+    int fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+    if (fd < 0)
+        return;
+    memset(&g_config_timing_destination, 0, sizeof(g_config_timing_destination));
+    g_config_timing_destination.sin_family = AF_INET;
+    g_config_timing_destination.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    g_config_timing_destination.sin_port = htons((uint16_t)port);
+    atomic_store_explicit(&g_config_timing_attempts, 0, memory_order_relaxed);
+    g_config_timing_socket = fd;
+}
 
 static int stage2_config_timing_enabled(void)
 {
-    const char *value = getenv("STAGE2_CONFIG_TIMING");
-    return value && strcmp(value, "1") == 0;
+    return g_config_timing_socket >= 0 &&
+        atomic_load_explicit(&g_config_timing_attempts, memory_order_relaxed) <
+            STAGE2_CONFIG_TIMING_LIMIT;
 }
 
 static void stage2_config_timing_log(const char *operation, const char *name,
@@ -1075,11 +1113,24 @@ static void stage2_config_timing_log(const char *operation, const char *name,
         end.tv_sec < start->tv_sec ||
         (end.tv_sec == start->tv_sec && end.tv_nsec < start->tv_nsec))
         return;
-    fprintf(stderr, "[stage2] config-timing pid=%ld tid=%ld op=%s name=%s core-ret=%d "
-                    "start=%lld.%09ld end=%lld.%09ld\n",
-            (long)getpid(), (long)syscall(SYS_gettid), operation, name ? name : "-", ret,
-            (long long)start->tv_sec, start->tv_nsec,
+    unsigned int seq = atomic_load_explicit(&g_config_timing_attempts, memory_order_relaxed);
+    do {
+        if (seq >= STAGE2_CONFIG_TIMING_LIMIT)
+            return;
+    } while (!atomic_compare_exchange_strong_explicit(&g_config_timing_attempts,
+        &seq, seq + 1, memory_order_relaxed, memory_order_relaxed));
+    char record[256];
+    int len = snprintf(record, sizeof(record),
+            "config-timing seq=%u pid=%ld tid=%ld op=%s name=%.64s core-ret=%d "
+            "start=%lld.%09ld end=%lld.%09ld\n",
+            seq + 1, (long)getpid(), (long)syscall(SYS_gettid), operation,
+            name ? name : "-", ret, (long long)start->tv_sec, start->tv_nsec,
             (long long)end.tv_sec, end.tv_nsec);
+    if (len > 0 && (size_t)len < sizeof(record))
+        (void)sendto(g_config_timing_socket, record, (size_t)len,
+            MSG_DONTWAIT | MSG_NOSIGNAL,
+            (const struct sockaddr *)&g_config_timing_destination,
+            sizeof(g_config_timing_destination));
 }
 
 static int stage2_timed_get_single(void *camera, const char *name,
@@ -1119,6 +1170,8 @@ static int stage2_timed_set_single(void *camera, const char *name,
 static int stage2_timed_get_config(Stage2Camera *camera, Stage2CameraWidget **widget,
                                    Stage2Context *context)
 {
+    if (!stage2_config_timing_enabled())
+        return g_real_gp_camera_get_config(camera, widget, context);
     struct timespec start;
     int original_errno = errno;
     int started = clock_gettime(CLOCK_MONOTONIC, &start) == 0;
@@ -1940,6 +1993,9 @@ static void stage2_ondisk_init(void)
     }
     g_last_ckpt = "dlopen port ok";
     fprintf(stderr, "[stage2] dlopen port ok\n");
+
+    /* Configure this optional diagnostic once before publishing any slots. */
+    stage2_config_timing_init();
 
     /* Resolve each boundary symbol and store it into its slot. */
     unsigned filled = 0, unresolved = 0;
