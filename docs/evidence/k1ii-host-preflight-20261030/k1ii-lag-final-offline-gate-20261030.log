@@ -1,0 +1,16 @@
+=== Polaris pre-release gate (2026-10-30T09:00:38Z) ===
+FAIL: container deterministic harness (exit 1; log: /tmp/prerelease-deterministic.log)
+PASS: python regression suite (393 passed)
+PASS: python test-list drift guard (25 suites, all listed)
+PASS: agent host check: scripts/check-agent-sandbox.py (VERDICT=SANDBOX_OK sandbox=enabled prerequisites=present)
+PASS: agent host check: scripts/check-agent-host-config.py (VERDICT=CONFIG_OK pins=present settings=/home/ian/.config/Code - Insiders/User/settings.json,.vscode/settings.json)
+PASS: code-780 version patch (exact copy, memset length preserved)
+INFO: no --build given; package gates skipped (offline gate only)
+SKIP: provenance registry hash check (no built artifacts to compare) (prerequisite unavailable)
+PASS: rig tooling self-test (wait-for-rig.py argv well-formed)
+PASS: rig tooling self-test (capture-shutter-list.py argv well-formed)
+PASS: libgphoto2 capture contract (timed Bulb fallback reaches the capture)
+=== Pre-release gate summary: 8 passed, 1 failed, 1 skipped ===
+Skipped: provenance registry hash check (no built artifacts to compare)
+Failed: container deterministic harness (exit 1; log: /tmp/prerelease-deterministic.log)
+GATE: RED — do not stage/install the FwPkt until the failed checks pass.

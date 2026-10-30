@@ -1,0 +1,70 @@
+ 1/19 no-ci - libgphoto2:test-gp-port         FAIL            0.02s   exit status 1
+>>> LD_LIBRARY_PATH=/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libgphoto2_port ASAN_OPTIONS=halt_on_error=1:abort_on_error=1:print_summary=1 UBSAN_OPTIONS=halt_on_error=1:abort_on_error=1:print_summary=1:print_stacktrace=1 IOLIBS=/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1 MALLOC_PERTURB_=169 MESON_TEST_ITERATION=1 MSAN_OPTIONS=halt_on_error=1:abort_on_error=1:print_summary=1:print_stacktrace=1 /home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/tests/test-gp-port
+――――――――――――――――――――――――――――――――――――― ✀  ―――――――――――――――――――――――――――――――――――――
+localedir has been set to /home/ian/Documents/VSCodeProjects/LibGphoto2/prefix-k1ii-readonly-63a894b/share/locale (compile-time default)
+Using ltdl to load io-drivers from '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1'...
+Called for filename '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1'.
+Loaded '' ('^usb:') from '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1'.
+Loaded 'Universal Serial Bus' ('usb:008,002') from '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1'.
+Loaded 'Universal Serial Bus' ('usb:001,005') from '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1'.
+Loaded 'Universal Serial Bus' ('usb:001,002') from '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1'.
+Loaded 'Universal Serial Bus' ('usb:001,004') from '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1'.
+Called for filename '/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1.so'.
+'/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1/usb1.so' already loaded
+############
+Counting entries (5 available)...
+4 regular entries available.
+############ There are 4 IO-drivers installed on your system.
+############
+Getting info of entry 0 (5 available)...
+Creating new device...
+Setting port timeout to 5000 milliseconds.
+Setting settings...
+(old int=0, conf=-1, alt=-1) port usb:008,002, (new int=0, conf=-1, alt=-1) port usb:008,002
+lowlevel libusb1 port not yet opened, no need for libusb changes
+Setting port timeout to 500 milliseconds.
+Setting settings...
+(old int=0, conf=-1, alt=-1) port usb:008,002, (new int=48, conf=1400468596, alt=0) port 
+lowlevel libusb1 port not yet opened, no need for libusb changes
+Opening USB port...
+()
+Invalid parameters: 's && (s[1] != '\0')' is NULL/FALSE.
+Invalid parameters: 'port->pl->d' is NULL/FALSE.
+Could not open device: Bad parameters
+――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+ 2/19 libgphoto2:test-port-list               OK              0.02s
+ 3/19 libgphoto2:test-ptp-context             OK              0.02s
+ 4/19 libgphoto2:test-ptp-folder-root         OK              0.02s
+ 5/19 libgphoto2:test-pentax-legacy-parsers   OK              0.02s
+ 6/19 libgphoto2:test-pentax-capture-contract OK              0.02s
+ 7/19 libgphoto2:test-pentax-bulb-lifecycle   OK              0.02s
+ 8/19 libgphoto2:test-pentax-publication      OK              0.01s
+ 9/19 libgphoto2:test-uvc-device-table        OK              0.01s
+10/19 libgphoto2:test-pentax-aperture-alias   OK              0.01s
+11/19 libgphoto2:test-i18n                    OK              0.01s
+12/19 libgphoto2:test-endian                  OK              0.01s
+13/19 libgphoto2:print-libgphoto2-version     OK              0.01s
+14/19 libgphoto2:test-gphoto2                 FAIL            0.01s   exit status 1
+>>> LD_LIBRARY_PATH=/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2:/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libgphoto2_port MALLOC_PERTURB_=89 CAMLIBS=/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/camlibs/ptp2 ASAN_OPTIONS=halt_on_error=1:abort_on_error=1:print_summary=1 UBSAN_OPTIONS=halt_on_error=1:abort_on_error=1:print_summary=1:print_stacktrace=1 IOLIBS=/home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/libgphoto2_port/libusb1 MESON_TEST_ITERATION=1 MSAN_OPTIONS=halt_on_error=1:abort_on_error=1:print_summary=1:print_stacktrace=1 /home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/tests/test-gphoto2
+――――――――――――――――――――――――――――――――――――― ✀  ―――――――――――――――――――――――――――――――――――――
+Creating camera...
+Setting model...
+ERROR: Unknown model
+――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+
+15/19 libgphoto2:test-filesys                 OK              0.01s
+16/19 libgphoto2:test-init-localedir          OK              0.01s
+17/19 libgphoto2:test-camera-list             OK              0.01s
+18/19 libgphoto2:test-pentax-reconcile        OK              1.20s
+19/19 libgphoto2:test-pentax-utils            OK              3.50s
+
+Summary of Failures:
+
+ 1/19 no-ci - libgphoto2:test-gp-port         FAIL            0.02s   exit status 1
+14/19 libgphoto2:test-gphoto2                 FAIL            0.01s   exit status 1
+
+Ok:                17  
+Fail:              2   
+
+Full log written to /home/ian/Documents/VSCodeProjects/LibGphoto2/build-k1ii-readonly-63a894b/meson-logs/testlog.txt

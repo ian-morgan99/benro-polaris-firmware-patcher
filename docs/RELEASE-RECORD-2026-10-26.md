@@ -82,7 +82,7 @@ Recorded because the record is only useful if it includes what was wrong.
 | claim | status |
 |---|---|
 | "25 of 35 app connections die after code 266" | **retracted** — 21 of those were single-frame probes whose only message is 266; the 13 real sessions end across seven codes with no concentration |
-| "no stop = crash" | **retracted** — the control shows normal captures are equally "no stop"; the Bulb stop is code 265, not `264 state:0` |
+| "no stop = crash" | **retracted** — absence of a stop message alone does not prove a crash. **Protocol correction, 2026-10-30:** the inspected Benro Connect reference uses code **264 with `state:0`** for ordinary photo/Bulb stop; code **265 is the ISO query**. See [the source anchors and limits](evidence/k1ii-offline-handoff-20261030.md#android-reference-correction). |
 | "stack overflow in the preview shim" | **disproven** — `sizeof(CameraAbilities)` is 2504, it fits in the 4096 buffer |
 | "pgphoto segfaults in the non-timed session" | **wrong** — `CRASH sig` appears in zero captured `Clog_*`; the 60–107 re-init cycles are external `restart_gphoto` restarts |
 | "the ASCII-`pc` SIGSEGVs are this session" | **wrong** — they are in `stage2-crash-20261008.log` and the 190-repro, different sessions and dates |
