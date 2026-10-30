@@ -116,15 +116,27 @@ check((word(0x80) >> 24) == 0xEB and
       branch_target(cave + 0x80, word(0x80)) == addresses["camera_get_single_config"] and
       (word(0x9C) >> 24) == 0xEB and
       branch_target(cave + 0x9C, word(0x9C)) == addresses["widget_get_value"] and
-      (word(0xAC) >> 24) == 0xEB and
-      branch_target(cave + 0xAC, word(0xAC)) == addresses["widget_free"] and
+      word(0xA8) == 0xE59D0004 and word(0xAC) == 0xE3500000 and
+      (word(0xB0) >> 28) == 0x0 and
+      branch_target(cave + 0xB0, word(0xB0)) == cave + 0xF0 and
+      (word(0x128) >> 24) == 0xEB and
+      branch_target(cave + 0x128, word(0x128)) == addresses["widget_free"] and
+      (word(0x134) >> 24) == 0xEB and
+      branch_target(cave + 0x134, word(0x134)) == addresses["widget_free"] and
       (word(0xF4) >> 24) == 0xEB and
       branch_target(cave + 0xF4, word(0xF4)) == addresses["widget_free"],
       "the mode gate uses one same-session conditions/widget read and frees it")
 check((word(0xB8) >> 24) == 0xEB and
       branch_target(cave + 0xB8, word(0xB8)) == addresses["strstr"] and
-      branch_target(cave + 0xEC, word(0xEC)) == cave + 0x10C,
+      branch_target(cave + 0xEC, word(0xEC)) == cave + 0x130 and
+      branch_target(cave + 0x138, word(0x138)) == cave + 0x10C,
       "ordinary Manual or unknown mode falls back to the stock burst path")
+check(branch_target(cave + 0xC0, word(0xC0)) == cave + 0x124 and
+      branch_target(cave + 0xD4, word(0xD4)) == cave + 0x124 and
+      branch_target(cave + 0xE8, word(0xE8)) == cave + 0x124 and
+      word(0x124) == 0xE59D0000 and
+      branch_target(cave + 0x12C, word(0x12C)) == cave + 0x100,
+      "each confirmed Bulb mode frees its widget before timed Bulb dispatch")
 check((word(0xA4) >> 28) == 0x1 and
       branch_target(cave + 0xA4, word(0xA4)) == cave + 0xF0 and
       branch_target(cave + 0xF8, word(0xF8)) == cave + 0x10C,

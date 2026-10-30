@@ -145,7 +145,7 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
     SUB_SP_BUF = 0xE24DDB02    # sub sp, sp, #2048
     ADD_SP_BUF = 0xE28DDB02    # add sp, sp, #2048
     ADD_R1_SP_4 = 0xE28D1004
-    ADD_R0_SP_4 = 0xE28D0004
+    LDR_R0_SP_4 = 0xE59D0004
     CMP_R0 = 0xE3500000
     CMP_R1 = 0xE3510000
     MOV_R2_SP = 0xE1A0200D
@@ -180,9 +180,9 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
         0x60: br(0x60, strcasestr, link=True),                   # bl strcasestr
         0x64: CMP_R0,
         0x68: br(0x68, cave + restore_fallback, condition=0x1),   # bne restore (Monochrome)
-        # Query the same-session Pentax Conditions widget.  The widget pointer
-        # is at sp; the 2044-byte value buffer is at sp+4.  Any failure falls
-        # through to the stock path, never into a held shutter action.
+        # Query the same-session Pentax Conditions widget. For GP_WIDGET_TEXT,
+        # gp_widget_get_value stores a char * through the output pointer at
+        # sp+4. The returned text remains owned by the widget until it is freed.
         0x6C: ldr_pc(0x6C, camera_global_lit, register=0),        # &camera
         0x70: 0xE5900000,                                        # ldr r0, [r0]
         0x74: ldr_pc(0x74, conditions_key_lit),                   # "pentaxconditions"
@@ -198,24 +198,24 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
         0x9C: br(0x9C, widget_get_value, link=True),
         0xA0: CMP_R0,
         0xA4: br(0xA4, cave + 0xF0, condition=0x1),               # bne free/fallback
-        0xA8: LDR_R0_SP,
-        0xAC: br(0xAC, widget_free, link=True),
-        0xB0: ADD_R0_SP_4,                                      # conditions text
+        0xA8: LDR_R0_SP_4,                                      # char *conditions
+        0xAC: CMP_R0,
+        0xB0: br(0xB0, cave + 0xF0, condition=0x0),              # beq null text
         0xB4: ldr_pc(0xB4, mode_9_lit),
         0xB8: br(0xB8, strstr, link=True),
         0xBC: CMP_R0,
-        0xC0: br(0xC0, cave + do_bulb, condition=0x1),            # bne B
-        0xC4: ADD_R0_SP_4,
+        0xC0: br(0xC0, cave + 0x124, condition=0x1),             # bne B; free then Bulb
+        0xC4: LDR_R0_SP_4,
         0xC8: ldr_pc(0xC8, mode_12_lit),
         0xCC: br(0xCC, strstr, link=True),
         0xD0: CMP_R0,
-        0xD4: br(0xD4, cave + do_bulb, condition=0x1),            # bne lens-B
-        0xD8: ADD_R0_SP_4,
+        0xD4: br(0xD4, cave + 0x124, condition=0x1),             # bne lens-B
+        0xD8: LDR_R0_SP_4,
         0xDC: ldr_pc(0xDC, mode_20_lit),
         0xE0: br(0xE0, strstr, link=True),
         0xE4: CMP_R0,
-        0xE8: br(0xE8, cave + do_bulb, condition=0x1),            # bne Astro
-        0xEC: br(0xEC, cave + restore_fallback),                 # ordinary M/unknown
+        0xE8: br(0xE8, cave + 0x124, condition=0x1),             # bne Astro
+        0xEC: br(0xEC, cave + 0x130),                           # ordinary M/unknown
         # Failure from gp_widget_get_value still releases the widget before
         # falling back; no failed read is accepted.
         0xF0: LDR_R0_SP,
@@ -226,6 +226,13 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
         0x100: ADD_SP_BUF,
         0x104: POP_ARGS,
         0x108: br(0x108, bulb),                                  # b capture_image_with_Bulb
+        # Free only after the live conditions text has been checked.
+        0x124: LDR_R0_SP,
+        0x128: br(0x128, widget_free, link=True),
+        0x12C: br(0x12C, cave + do_bulb),
+        0x130: LDR_R0_SP,
+        0x134: br(0x134, widget_free, link=True),
+        0x138: br(0x138, cave + restore_fallback),
         # restore_fallback: drop the buffer, reload args, then run the stock path.
         0x10C: ADD_SP_BUF,
         0x110: POP_ARGS,
@@ -283,8 +290,8 @@ def call_instructions(path):
 
 
 def bulb_cancel_patch_word(bulb, target):
-    """Return the unconditional branch to the normal stop path."""
-    return encode_branch(bulb + BULB_CANCEL_OFFSET, target)
+    """Retarget the stock cancel-only BEQ without changing its condition."""
+    return encode_branch(bulb + BULB_CANCEL_OFFSET, target, condition=0x0)
 
 
 def patch_bulb_cancel(data, offsets, addresses):
