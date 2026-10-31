@@ -160,7 +160,7 @@ def _run_bash(script: str, bin_dir: Path, extra_env: dict[str, str] | None = Non
     if extra_env:
         env.update(extra_env)
     return subprocess.run(
-        ["bash", "-c", f'. "{PROBE}"\n{script}'],
+        ["/bin/bash", "-c", f'. "{PROBE}"\n{script}'],
         capture_output=True, text=True, env=env, cwd=str(ROOT), timeout=120,
     )
 
@@ -189,6 +189,9 @@ def test_no_route_when_nothing_available(tmp_path):
         "POLARIS_BT_DEV": str(tmp_path / "nonexistent"),
         # Neutralise the /run/host last-resort route too.
         "POLARIS_BT_HOST_BIN": str(tmp_path / "no-such-binary"),
+        # Make the negative control independent of whether the workstation
+        # happens to have a real bluetoothctl on its host PATH.
+        "PATH": str(tmp_path),
     }
     r = _run_bash(
         'command -v bluetoothctl >/dev/null && exit 99; '
