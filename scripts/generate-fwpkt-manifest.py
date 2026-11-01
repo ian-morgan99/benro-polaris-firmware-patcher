@@ -22,6 +22,7 @@ the running firmware depends on:
   /app/lib/stage2/libgphoto2/2.5.34/ptp2.so
   /app/lib/stage2/libgphoto2/2.5.34/pentax.so
   /app/lib/stage2/libgphoto2_port/0.12.2/usb1.so
+  /app/lib/stage2/libgphoto2_port/0.12.2/usbscsi.so (K-5 II profile only)
   /app/openpolaris-libgphoto2-provenance.txt
 
 The stage2ondisk predicate (issue #199 review finding 4): the manifest records
@@ -60,6 +61,10 @@ MANDATORY_FILES = [
     ("lib/stage2/libgphoto2_port/0.12.2/usb1.so", "lib/stage2/libgphoto2_port/0.12.2/usb1.so"),
     ("openpolaris-libgphoto2-provenance.txt", "openpolaris-libgphoto2-provenance.txt"),
 ]
+LEGACY_USB_SCSI_FILE = (
+    "lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
+    "lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
+)
 
 
 def sha256_file(path: str) -> str:
@@ -138,9 +143,14 @@ def main() -> int:
     # Machine-checkable stage2 predicate: does this candidate ship a lib/stage2 tree?
     stage2_mandatory = os.path.isdir(os.path.join(appfs_root, "lib", "stage2"))
 
+    manifest_files = list(MANDATORY_FILES)
+    legacy_usbscsi = os.path.join(appfs_root, LEGACY_USB_SCSI_FILE[1])
+    if os.path.isfile(legacy_usbscsi):
+        manifest_files.append(LEGACY_USB_SCSI_FILE)
+
     files = []
     missing = []
-    for device_rel, appfs_rel in MANDATORY_FILES:
+    for device_rel, appfs_rel in manifest_files:
         src = os.path.join(appfs_root, appfs_rel)
         if not os.path.isfile(src):
             missing.append(device_rel)

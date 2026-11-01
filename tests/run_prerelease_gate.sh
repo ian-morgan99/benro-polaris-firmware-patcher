@@ -111,6 +111,40 @@ fi
 pass=0; fail=0; skip=0
 failed=""; skipped=""
 
+    # --- provenance registry: every recorded hash must match the artifact on disk
+    # A registry row that looks verifiable but is not is worse than no row: a
+    # placeholder SHA-256 was committed once already. Any row whose artifact is
+    # present locally is recomputed and compared; a mismatch is a failure.
+    check_registry_hashes() {
+        local registry="$ROOT/docs/FWPKT-PROVENANCE-CONTRACT.md"
+        [ -f "$registry" ] || { skp "provenance registry hash check (no registry)"; return 0; }
+        local checked=0 bad_rows=""
+        local row id md5 sha art real_md5 real_sha
+        while IFS= read -r row; do
+            id="$(printf '%s' "$row" | sed -n 's/^| \([a-z0-9][a-z0-9._-]*\).*/\1/p')"
+            [ -n "$id" ] || continue
+            md5="$(printf '%s' "$row" | grep -oE '`[0-9a-f]{32}`' | head -1 | tr -d '`')"
+            sha="$(printf '%s' "$row" | grep -oE '`[0-9a-f]{64}`' | head -1 | tr -d '`')"
+            [ -n "$md5" ] || continue
+            art="$ROOT/out/$id/FwPkt.zip"
+            [ -f "$art" ] || continue          # artifact not built here: not checkable
+            real_md5="$(md5sum "$art" | cut -d' ' -f1)"
+            real_sha="$(sha256sum "$art" | cut -d' ' -f1)"
+            checked=$((checked+1))
+            [ "$real_md5" = "$md5" ] || bad_rows="$bad_rows $id(md5)"
+            if [ -n "$sha" ] && [ "$real_sha" != "$sha" ]; then
+                bad_rows="$bad_rows $id(sha256)"
+            fi
+        done < "$registry"
+        if [ "$checked" -eq 0 ]; then
+            skp "provenance registry hash check (no built artifacts to compare)"
+        elif [ -n "$bad_rows" ]; then
+            bad "provenance registry hash check (mismatch:$bad_rows)"
+        else
+            ok "provenance registry hash check ($checked artifact(s) verified against the registry)"
+        fi
+    }
+
 ok()   { pass=$((pass+1)); echo "PASS: $1"; }
 bad()  { fail=$((fail+1)); failed="$failed $1"; echo "FAIL: $1"; }
 skp()  { skip=$((skip+1)); skipped="$skipped $1"; echo "SKIP: $1 (prerequisite unavailable)"; }
@@ -210,9 +244,9 @@ PY_TESTS=(
     tests/test_canary_two_shot.py
     tests/test_pentax_bulb_variations.py
     tests/test_astro_multishot.py
-    tests/test_astro_build_wrapper.py
-    tests/test_bt_wake_radio_liveness.py
     tests/test_display_fwver_monotonic.py
+    tests/test_build_and_install_entrypoint.py
+    tests/test_polaris_bulb_dispatch_arm.py
     tests/test_agent_sandbox_check.py
     tests/test_agent_host_config_check.py
     tests/test_app_burst_protocol.py
@@ -226,8 +260,10 @@ PY_TESTS=(
     tests/test_verify_installed_build.py
     tests/test_verify_shipped_artifacts.py
     tests/test_verify_candidate_differential.py
+    tests/test_candidate_identity.py
+    tests/test_release_change_manifest.py
     tests/test_watch_app_crash.py
-    tests/test_plate_solving_present.py
+    tests/test_bt_wake_radio_liveness.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
@@ -533,6 +569,56 @@ if [ "$CANARY" = "1" ] || [ "$TWO_SHOT" = "1" ]; then
         skp "live device gates (probe failed or camera state!=1 — gimbal off / camera not attached; log: /tmp/prerelease-canary-probe.log)"
     fi
 fi
+
+check_registry_hashes
+
+# --- rig tooling self-tests: a broken probe must not masquerade as a device state
+# wait-for-rig.py reported AP_UP_SSHD_CLOSED for months against a healthy sshd,
+# because its argv had no program name and subprocess raised FileNotFoundError on
+# "-o", which run() swallowed as rc=2. That is a programming error reported as a
+# device condition, and it wasted a whole install attempt.
+check_rig_tooling_selftest() {
+    local script failures="" ran=0
+    for name in wait-for-rig.py capture-shutter-list.py; do
+        script="$ROOT/scripts/$name"
+        [ -f "$script" ] || continue
+        ran=$((ran + 1))
+        if python3 "$script" --self-test >/dev/null 2>&1; then
+            ok "rig tooling self-test ($name argv well-formed)"
+        else
+            failures+="$name: $(python3 "$script" --self-test 2>&1 | head -1); "
+        fi
+    done
+    [ "$ran" -gt 0 ] || { skp "rig tooling self-test (no rig scripts present)"; return 0; }
+    [ -z "$failures" ] || bad "rig tooling self-test (invalid argv) -- $failures"
+}
+check_rig_tooling_selftest
+
+# --- libgphoto2 source contracts, run against the exact tree that built this candidate
+# .75 (libgphoto2 e7d0cf1dd) made every timed capture spin forever waiting for a file
+# that never arrives -- a fail-closed shutter write plus an unsupported GetDevicePropValue
+# readback. Nothing in the build caught it, because the gate never ran libgphoto2's own
+# source contract: build-release-candidate.sh did not pass --libgphoto2-src, so the gate
+# only checked provenance. This is the check that would have blocked .75 at build time.
+check_libgphoto2_capture_contract() {
+    if [ -z "$LIBGPHOTO2_SRC" ] || [ ! -d "$LIBGPHOTO2_SRC" ]; then
+        skp "libgphoto2 capture contract (no --libgphoto2-src supplied)"
+        return 0
+    fi
+    local contract="$LIBGPHOTO2_SRC/tests/test-pentax-capture-contract.py"
+    local lib="$LIBGPHOTO2_SRC/camlibs/ptp2/library.c"
+    if [ ! -f "$contract" ] || [ ! -f "$lib" ]; then
+        bad "libgphoto2 capture contract (source tree at $LIBGPHOTO2_SRC lacks tests/test-pentax-capture-contract.py or camlibs/ptp2/library.c)"
+        return 0
+    fi
+    local out
+    if out="$(python3 "$contract" "$lib" 2>&1)"; then
+        ok "libgphoto2 capture contract (timed Bulb fallback reaches the capture)"
+    else
+        bad "libgphoto2 capture contract: $(printf '%s' "$out" | head -1)"
+    fi
+}
+check_libgphoto2_capture_contract
 
 # ----------------------------------------------------------------------------
 # Summary. Green gate = zero runnable failures; skips are reported, never

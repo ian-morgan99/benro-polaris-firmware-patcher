@@ -1,5 +1,42 @@
 # Current repository state
 
+## 2026-10-30 — source-only #251 follow-up; no new firmware
+
+Authorized delivery work remains on `main` in `/home/ian/polaris-build-73`.
+The K-3 III dispatcher now checks widget type, initializes output slots,
+validates the exposure-mode field, and matches the exact registered label.
+Executable ARM tests are in the offline test list. libgphoto2 and the shared
+Bulb stop path are unchanged by this follow-up.
+
+**#251 remains open and release-blocking.** The exact-binary diagnostic still
+returns success after a cancelled wait and successful stop. Deferred timed
+cancellation and physical closure are not fixed or qualified. No firmware,
+publication, deployment or camera test occurred. See the
+[current handoff](ISSUE-251-HANDOFF.md) and
+[evidence](evidence/issue-251-dispatch-20261030/README.md). The dated installed
+build entries below are historical, not a fresh device-version assertion.
+
+## 2026-10-28 — `.87` deployed; K-1 II canary partially passed
+
+`.87` (`o-v18j-k1ii-mainline-20261028-r2`) was built from libgphoto2
+`d03a948180592337337782858c6a72064b0938ab` and patcher
+`7f0a3887cdbac23633dde2e3bf4408e062749ed8`, published to PrivateResearch, and
+installed through the canonical extracted-tree path. Polaris rebooted and
+reported the exact build identity `6.0.0.54.87-o-v18j-k1ii-mainline-20261028-r2`.
+
+With a Pentax K-1 Mark II attached, read-only liveness passed 3/3; ISO,
+shutter, and aperture lists were populated; preview closed cleanly; and one
+ordinary capture completed with lifecycle `[1,4,0]` and one JPEG file. This is
+partial Polaris evidence, not full K-1 II qualification: Bulb, persistent live
+view, focus, setting round-trips, direct-PC libgphoto2 behaviour, and the full
+widget tree remain pending. See
+[`docs/evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md`](evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md).
+
+## 2026-10-27 — `.76` installed and verified; `.75` reverted
+
+`.76` (`o-v18f-revert-fail-closed-bulb`, libgphoto2 `df9d72745`) reverts the `.75` capture regression. Its `camlibs/ptp2/library.c` is byte-identical to the operator-confirmed working `.74` capture path; the `.75` fail-closed shutter write and unsupported shutter readback are not present. The `.76` artifact was installed and verified, but remains unqualified because no Pentax camera was attached. `.74` remains the last positive hardware result.
+
+
 ## Active compatibility warning — `polestar_app` address maps are build-specific
 
 Do not apply historical `polestar_app` reverse-engineering addresses or
@@ -15,27 +52,6 @@ even when it retains the same helper. See
 for the required patching gate and the detailed PrivateResearch investigation.
 Every release must also complete the source verification and offset ledger in
 [`docs/FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md`](FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md).
-
-## 2026-10-28 offline `.73` revalidation
-
-The exact package
-`6.0.0.54.73--o-v18c-bulb-duration-measured-hold/FwPkt.zip` was extracted
-read-only from the PrivateResearch firmware archive. Its `appfs.ubifs` MD5 is
-`cc9a2ba16a2220e8fcf69e90c5bf144b`; the extracted `polestar_app` SHA-256 is
-`a5e58ffd76670cf9bdc76560a859d2e037ca4320d37bb3c2d93d482cf459ac02`, byte-
-identical to the recorded `.70` app binary. The `.73` gimbal binaries are also
-byte-identical to `.70` (`polaris403` SHA-256
-`35f8d0646339715e5e5e5d6ec01743f411d16325bc0b36fd58b590584fedf0b9`,
-`polaris413` SHA-256
-`34d3f4186185c541adb9c8e57b3e2ec13e402dfb4bb3e9b2262cbf03f1a5c112`).
-
-Read-only ARM disassembly of the exact `.73` app re-confirmed
-`SP_GimbalSetAxsi` at `0x000636e8` and `GimbalUartTxMsg` at `0x0005f524`:
-the helper emits the `0xAC 0x4A` seven-byte axis/IEEE-754-float frame. No
-direct caller from `SP_MsgGimbalCmdFromAppProc` was found. This improves
-identity confidence only; J units, command ID, reply semantics, watchdog and
-physical motor behaviour remain unqualified. No firmware was patched, flashed
-or commanded.
 
 ## Active blocker — BLE wake is impossible: the rig never advertises LE
 

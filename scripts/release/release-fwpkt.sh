@@ -34,6 +34,7 @@
 #   6. Confirm: fail-closed exact comparison of build_id, both source commits,
 #      display version and every mandatory installed file's SHA-256
 set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 BUILD_DIR=""
 HOST="192.168.0.1"
@@ -43,6 +44,8 @@ SKIP_VERIFY=0
 MAX_WAIT=900
 ALLOW_BUSY=0
 GIMBAL_PORT=9090
+UPTIME_BEFORE=""
+UPTIME_AFTER=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -65,6 +68,7 @@ FWPKT_DIR="$BUILD_DIR/FwPkt"
 [ -d "$FWPKT_DIR" ] || { echo "ERROR: $FWPKT_DIR not found" >&2; exit 2; }
 [ -f "$FWPKT_DIR/firmwareInfo" ] || { echo "ERROR: firmwareInfo missing" >&2; exit 2; }
 [ -f "$FWPKT_DIR/FwVer" ] || { echo "ERROR: candidate FwVer missing" >&2; exit 2; }
+python3 "$ROOT/scripts/verify-candidate-identity.py" "$BUILD_DIR" --require-deployable
 
 # Read the expected build_id from provenance (if present)
 EXPECTED_BUILD_ID=""
@@ -344,3 +348,31 @@ fi
 
 echo
 echo "=== release-fwpkt.sh complete ==="
+
+# Leave a machine-readable handoff beside the candidate only after the full
+# install path has passed.  The build step deliberately starts this file at
+# `not-installed`; never turn a staged-only or fire-and-forget run into an
+# installed claim.
+if [ "$SKIP_TRIGGER" = "0" ] && [ "$SKIP_VERIFY" = "0" ]; then
+  DEVICE_FWVER="$(ssh -o BatchMode=yes "$SSH" 'cat /app/FwVer 2>/dev/null' | tr -d '\r\n')"
+  VERIFIED_AT="$(date -u +%FT%TZ)"
+  {
+    echo "build_id=$EXPECTED_BUILD_ID"
+    echo "target=$SSH"
+    echo "display_fwver=$TARGET_FWVER"
+    echo "device_fwver=$DEVICE_FWVER"
+    echo "zip_sha256=$ACTUAL_ZIP_SHA256"
+    echo "uptime_before=${UPTIME_BEFORE:-unknown}"
+    echo "uptime_after=${UPTIME_AFTER:-unknown}"
+    echo "verified_at=$VERIFIED_AT"
+    echo "install_status=installed-verified"
+  } > "$BUILD_DIR/install-receipt.txt"
+  {
+    echo "build_id=$EXPECTED_BUILD_ID"
+    echo "install_command=./scripts/release/release-fwpkt.sh $BUILD_DIR"
+    echo "install_status=installed-verified"
+    echo "verified_at=$VERIFIED_AT"
+  } > "$BUILD_DIR/install-status.txt"
+  echo "Install receipt: $BUILD_DIR/install-receipt.txt"
+  echo "Install status: installed-verified"
+fi

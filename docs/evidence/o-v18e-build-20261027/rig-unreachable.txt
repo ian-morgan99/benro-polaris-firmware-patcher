@@ -1,0 +1,47 @@
+=== rig reachability, 2026-10-27 ===
+
+CORRECTION: an earlier version of this file recorded "port 80 OPEN" and inferred
+"the rig is up but sshd is not listening". That was WRONG. The host answering
+192.168.0.1 on port 80 is the HOME ROUTER, not the gimbal.
+
+Proof:
+
+    $ curl -A 'VSCode-LMStudio-Bridge' http://192.168.0.1/login.html
+    <title>Log in to Common Router - Hitron Technologies
+
+The router serves GoAhead-Webs on port 80 -- the same banner the gimbal uses --
+so a banner check cannot tell them apart. The discriminator is the route:
+
+    $ python3 scripts/wait-for-rig.py
+    NOT_READY WRONG_NETWORK -- 192.168.0.1 is answered via enp11s0, not wlp8s0;
+    that is the home router sharing the address, not the gimbal. Associate to the
+    gimbal AP (polaris_*) on wlp8s0.
+
+    /sys/class/net/wlp8s0/carrier  -> 0     (not associated)
+    /sys/class/net/wlp8s0/operstate -> down
+    /sys/class/net/enp11s0/carrier  -> 1     (Ethernet, carries the default route)
+
+So: the host is on Ethernet via the Hitron router, and wlp8s0 is down. The gimbal
+has not been reachable at all during this window -- every "port 22 refused" and
+"port 80 open" observation was the router. This is the exact failure mode
+docs/FIRMWARE-INSTALL-PROCESS.md and the fwpkt-update-flow skill warn about
+("reject the Hitron route and wait for the Polaris BSSID plus wlp8s0 route").
+
+State of the candidates:
+  .74 -- genuinely installed and verified earlier today over a real SSH session
+         to the gimbal (uptime reset 28668s -> 14s, build_id read back from the
+         device). That verification stands.
+  .75 -- built, gate GREEN, registered. NOT installed: no path to the rig.
+
+Both sanctioned install paths need something we do not currently have:
+  1. SD card physically moved to the gimbal + power-cycle (no card in a reader
+     on this host), or
+  2. the documented remote equivalent, which stages /app/sd/FwPkt over SSH --
+     and SSH requires association to the gimbal AP on wlp8s0.
+
+No bypass was attempted. The skill prohibits direct NAND edits over SSH and
+records that a previous session doing exactly that bricked the device.
+
+Action required (physical): associate this host with the gimbal AP
+(polaris_d13e86, BSSID 48:E7:DA:D4:B5:73) on wlp8s0, then re-run
+scripts/wait-for-rig.py and install .75 via scripts/release/release-fwpkt.sh.

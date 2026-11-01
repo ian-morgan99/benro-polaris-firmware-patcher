@@ -24,6 +24,7 @@
 #     --selftest           qemu-emulate the driver load (R5 II registration)
 #     --no-fix-typo        do NOT correct the upstream "EOS 5Rm2" model typo
 #     --no-usb1            (ptp2-only) do NOT swap the usb1 iolib; patch ptp2 + pgphoto only
+#     --enable-usb-scsi    include the optional legacy Pentax K-5 II/K-5 IIs transport
 #     --pentax-max-capture-size BYTES  cap Pentax capture file-size (default 268435456 = 256 MiB)
 #                                       Issue #2: libgphoto2's 2 GiB default is unsafe on Polaris RAM.
 #     --ssh-key FILE|KEY   opt-in: authorise a public key for root SSH debugging
@@ -45,7 +46,7 @@
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; CAMLIBS="ptp2,pentax"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; DISPLAY_FWVER=""
+FWPKT=""; VER="2.5.34"; VER_SET=0; PORTVER="0.12.2"; CAMLIBS="ptp2,pentax"; LGSRC=""; ALLOW_DIRTY=0; ALLOW_DIRTY_PATCHER=0; ALLOW_VANILLA=0; OUT="$HERE/out"; SELFTEST=0; FIXTYPO=1; SWAPUSB1=1; ENABLE_USB_SCSI=0; IMG="polaris-patcher"; MODE="full"; PENTAX_MAX_CAPTURE_SIZE="268435456"; SSHKEY=""; BUILDID=""; DISPLAY_FWVER=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -62,12 +63,13 @@ while [ $# -gt 0 ]; do
     --selftest) SELFTEST=1; shift;;
     --no-fix-typo) FIXTYPO=0; shift;;
     --no-usb1) SWAPUSB1=0; shift;;
+    --enable-usb-scsi) ENABLE_USB_SCSI=1; shift;;
     --pentax-max-capture-size) PENTAX_MAX_CAPTURE_SIZE="$2"; shift 2;;
     --ssh-key) SSHKEY="$2"; shift 2;;
     --build-id) BUILDID="$2"; shift 2;;
     --display-fwver) DISPLAY_FWVER="$2"; shift 2;;
     --image) IMG="$2"; shift 2;;
-    -h|--help) sed -n '2,26p' "$0"; exit 0;;
+    -h|--help) sed -n '2,32p' "$0"; exit 0;;
     *) echo "unknown option: $1" >&2; exit 1;;
   esac
 done
@@ -184,6 +186,7 @@ docker run --rm \
   -e PENTAX_MAX_CAPTURE_SIZE="$PENTAX_MAX_CAPTURE_SIZE" \
   -e FIX_R5M2_TYPO="$FIXTYPO" -e SELFTEST="$SELFTEST" \
   -e SWAP_USB1="$SWAPUSB1" \
+  -e POLARIS_ENABLE_USB_SCSI="$ENABLE_USB_SCSI" \
   -e ALLOW_DIRTY_SOURCE="$ALLOW_DIRTY" \
   -e PATCHER_COMMIT="$PATCHER_COMMIT" \
   -e PATCHER_DIRTY_HASH="$PATCHER_DIRTY_HASH" \
@@ -194,6 +197,20 @@ docker run --rm \
   "$@" \
   -v "$IN":/in:ro -v "$OUT":/out \
   "$IMG"
+
+# The patcher container runs as root so it can create the firmware filesystem.
+# That leaves the mounted candidate files owned by root, which prevents the
+# host-side release builder from adding its immutable release metadata. Return
+# ownership of the complete output tree to the invoking user before any host
+# validation or publication step runs.
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+echo "[*] returning candidate ownership to host uid=${HOST_UID} gid=${HOST_GID}"
+docker run --rm --user 0 \
+  --entrypoint /bin/sh \
+  -v "$OUT":/out \
+  "$IMG" \
+  -c 'chown -R "$1:$2" /out' sh "$HOST_UID" "$HOST_GID"
 
 echo
 echo "[✓] Output in: $OUT"

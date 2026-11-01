@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# o-v17a-autonomous-install.sh — wake Polaris via BT, stage o-v17a FwPkt to SD,
+# o-v17a-autonomous-install.sh — DEPRECATED historical installer.
+#
+# Do not use this script for a release deployment. The supported process is
+# `polaris-preflight.sh --wake ...` followed by `release/release-fwpkt.sh`.
+#
+# Historical purpose: wake Polaris via BT, stage o-v17a FwPkt to SD,
 # reboot via 812, and verify the install against the immutable candidate
 # manifest (issue #199 review of commit 304e899).
 #

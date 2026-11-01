@@ -1,0 +1,8 @@
+FAIL: cancellation or stop failure was not preserved
+PASS: v90 exact marker verified; reconstructed ELF layout accepts current dispatcher patch and idempotent recheck
+LIMIT: in-memory diagnostic only; not a stock firmware build or hardware qualification
+CANCEL input=-52, stub stop result=0, subsequent saved result=0
+OPEN DEFECT: successful stop overwrites the saved cancellation; complete return-path fix required
+CANCEL input=-52, stub stop result=-1, subsequent saved result=-1
+FULL RETURN: cancel=-52 stop=0 return=0 fake-events=[2, 4]
+FULL RETURN: cancel=-52 stop=-1 return=-1 fake-events=[]

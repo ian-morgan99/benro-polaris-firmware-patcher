@@ -39,4 +39,3 @@ No SD card was changed, no firmware was flashed, no mount command was sent,
 and no physical K-3 III capture was performed. Installation provenance,
 post-boot identity, local JPEG publication, and hardware qualification remain
 open gates.
-

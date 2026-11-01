@@ -40,4 +40,3 @@ physical-night evidence remain required.
 
 This is host-only. It did not install or flash firmware, contact a Polaris,
 write a camera card, command a motor, or qualify K-3 III behaviour.
-

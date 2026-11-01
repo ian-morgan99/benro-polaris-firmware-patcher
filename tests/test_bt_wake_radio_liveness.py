@@ -160,7 +160,7 @@ def _run_bash(script: str, bin_dir: Path, extra_env: dict[str, str] | None = Non
     if extra_env:
         env.update(extra_env)
     return subprocess.run(
-        ["/bin/bash", "-c", f'. "{PROBE}"\n{script}'],
+        ["bash", "-c", f'. "{PROBE}"\n{script}'],
         capture_output=True, text=True, env=env, cwd=str(ROOT), timeout=120,
     )
 
@@ -174,8 +174,7 @@ def test_probe_module_exists_and_parses():
 
 
 def test_local_route_resolved_when_dev_and_bluez_present(tmp_path):
-    """A normal host must resolve route=local (regression guard: the old code
-    keyed on /dev/hci0 literally and reported 'no adapter' inside a Flatpak)."""
+    """A normal host must resolve route=local without requiring /dev/hci0."""
     _stub_bluetoothctl(tmp_path)
     r = _run_bash('bt_resolve; echo "rc=$? route=$BT_ROUTE"', tmp_path)
     assert "rc=0 route=local" in r.stdout, r.stdout + r.stderr
@@ -189,12 +188,11 @@ def test_no_route_when_nothing_available(tmp_path):
         "POLARIS_BT_DEV": str(tmp_path / "nonexistent"),
         # Neutralise the /run/host last-resort route too.
         "POLARIS_BT_HOST_BIN": str(tmp_path / "no-such-binary"),
-        # Make the negative control independent of whether the workstation
-        # happens to have a real bluetoothctl on its host PATH.
-        "PATH": str(tmp_path),
+        # Keep the fixture hermetic: the developer workstation may have a
+        # real bluetoothctl, which would invalidate the no-adapter scenario.
+        "PATH": f"{tmp_path}:/bin:/usr/local/bin:/usr/sbin:/sbin",
     }
     r = _run_bash(
-        'command -v bluetoothctl >/dev/null && exit 99; '
         'bt_resolve; echo "rc=$? route=$BT_ROUTE"', tmp_path, env)
     assert "rc=2 route=none" in r.stdout, r.stdout + r.stderr
 
@@ -345,6 +343,20 @@ def test_ap_detection_unescapes_nmcli_colons(tmp_path):
         #!/usr/bin/env bash
         echo "FwVer:6.0.0.54.76;date:2026.10.27;"
         exit 0
+    ''')
+    # Keep the service probe hermetic. The preflight script deliberately uses
+    # real TCP checks; without this stub the test accidentally probes whatever
+    # currently owns 192.168.0.1 on the host and can report BOOTING instead of
+    # testing the escaped-colon AP parsing at all.
+    _write(tmp_path / "timeout", '''
+        #!/usr/bin/env bash
+        if [ "$1" = "4" ] && [ "$2" = "bash" ] && [ "$3" = "-c" ]; then
+            case "$4" in
+                *"/dev/tcp/192.168.0.1/22"*) exit 0;;
+                *) exit 1;;
+            esac
+        fi
+        exec /usr/bin/timeout "$@"
     ''')
 
     env = {

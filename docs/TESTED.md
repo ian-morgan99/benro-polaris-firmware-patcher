@@ -1,6 +1,21 @@
 # What has (and has not) been tested
 
-## Target firmware — the ONLY one tested
+## Latest Polaris candidate — partial K-1 II evidence (2026-10-28)
+
+Candidate `.87` (`o-v18j-k1ii-mainline-20261028-r2`) was built from
+libgphoto2 `d03a948180592337337782858c6a72064b0938ab` and patcher
+`7f0a3887cdbac23633dde2e3bf4408e062749ed8`, published, installed, and
+runtime-verified on Polaris. A physical Pentax K-1 Mark II canary passed:
+3/3 liveness checks, populated ISO/shutter/aperture lists, preview close, and
+one ordinary capture completing with lifecycle `[1,4,0]` and one JPEG file.
+
+This is **partial Polaris evidence**, not full camera qualification. Bulb,
+persistent live view, focus, setting writes/restoration, direct-PC
+libgphoto2 qualification, and the complete widget tree remain untested on
+this candidate. The exact record is
+[`docs/evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md`](evidence/o-v18j-k1ii-mainline-20261028-r2/SUMMARY.md).
+
+## Historical Canon baseline — separately qualified
 
 | | |
 |---|---|

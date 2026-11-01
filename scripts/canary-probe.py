@@ -258,8 +258,8 @@ def max_test_exposure_seconds() -> float:
         raise ValueError(
             f"OPENPOLARIS_MAX_TEST_EXPOSURE must be a number of seconds, got {raw!r}"
         ) from exc
-    if value <= 0:
-        raise ValueError("OPENPOLARIS_MAX_TEST_EXPOSURE must be positive")
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError("OPENPOLARIS_MAX_TEST_EXPOSURE must be finite and positive")
     return value
 
 
@@ -267,6 +267,8 @@ def check_test_exposure_limit(seconds: float | None, which: str) -> None:
     """Refuse an automated request for an exposure longer than the test ceiling."""
     if seconds is None:
         return
+    if not math.isfinite(float(seconds)) or float(seconds) <= 0:
+        raise ValueError(f"{which} must be finite and positive")
     limit = max_test_exposure_seconds()
     if float(seconds) > limit:
         raise ValueError(
@@ -925,12 +927,15 @@ def main() -> int:
         ap.error("choose --probe, --shot or --list-shutters")
     if args.shot and args.expected_files is None:
         ap.error("--shot requires --expected-files 1 or 2; photoFormat is not authoritative")
-    if args.shot_timeout <= 0:
-        ap.error("--shot-timeout must be positive")
+    if not math.isfinite(args.shot_timeout) or args.shot_timeout <= 0:
+        ap.error("--shot-timeout must be finite and positive")
+    if not math.isfinite(args.transfer_margin) or args.transfer_margin < 0:
+        ap.error("--transfer-margin must be finite and non-negative")
     if not math.isfinite(args.file_check_wait) or args.file_check_wait < 0:
         ap.error("--file-check-wait must be finite and non-negative")
-    if args.bulb_seconds is not None and args.bulb_seconds <= 0:
-        ap.error("--bulb-seconds must be positive")
+    if (args.bulb_seconds is not None and
+            (not math.isfinite(args.bulb_seconds) or args.bulb_seconds <= 0)):
+        ap.error("--bulb-seconds must be finite and positive")
     if args.bulb_seconds is not None and not args.shot:
         ap.error("--bulb-seconds requires --shot")
     if args.bulb_shutter_index is not None and args.bulb_seconds is None:
@@ -943,8 +948,9 @@ def main() -> int:
         ap.error("--timed-seconds (timed exposure) conflicts with --bulb-seconds (Bulb hold)")
     if args.timed_seconds is not None and args.shutter_index is not None:
         ap.error("--timed-seconds resolves the index itself; use one of the two")
-    if args.timed_seconds is not None and args.timed_seconds <= 0:
-        ap.error("--timed-seconds must be positive")
+    if (args.timed_seconds is not None and
+            (not math.isfinite(args.timed_seconds) or args.timed_seconds <= 0)):
+        ap.error("--timed-seconds must be finite and positive")
     # Automated testing is capped so a mistyped request cannot silently select a
     # very long slot: resolve_shutter_index() falls through to the longest entry
     # when nothing matches, and --bulb-seconds 1200 would otherwise reach the

@@ -43,6 +43,15 @@ COMPONENTS = {
     "pgphoto.stage2ondisk": "pgphoto wrapper",
 }
 
+# The normal candidate contains the PTP stack plus the USB transport used by
+# ordinary cameras.  The release flow may also add this deliberately optional
+# transport for K-5 II/K-5 IIs support.  A change to any other path remains a
+# hard file-set failure; this allowlist prevents the optional legacy transport
+# from being mistaken for an accidental package drift.
+OPTIONAL_FILE_SET = {
+    "/app/lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
+}
+
 FWVER_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)\.(\d+)\.(\d+)")
 
 
@@ -131,17 +140,27 @@ def main() -> int:
     print(f"comparing {name_prev} ({'.'.join(map(str, prev_v))}) -> "
           f"{name_cur} ({'.'.join(map(str, cur_v))})")
 
-    if set(cur_files) != set(prev_files):
-        only_cur = sorted(set(cur_files) - set(prev_files))
-        only_prev = sorted(set(prev_files) - set(cur_files))
-        print("FAIL: the mandatory file set differs between candidates")
-        for p in only_cur:
-            print(f"  only in current: {p}")
-        for p in only_prev:
-            print(f"  only in previous: {p}")
-        return 1
+    only_cur = sorted(set(cur_files) - set(prev_files))
+    only_prev = sorted(set(prev_files) - set(cur_files))
+    file_set_delta = set(only_cur) | set(only_prev)
+    if file_set_delta:
+        if file_set_delta <= OPTIONAL_FILE_SET:
+            print("WARN: optional legacy transport file set changed")
+            for p in only_cur:
+                print(f"  added optional file: {p}")
+            for p in only_prev:
+                print(f"  removed optional file: {p}")
+        else:
+            print("FAIL: the mandatory file set differs between candidates")
+            for p in only_cur:
+                print(f"  only in current: {p}")
+            for p in only_prev:
+                print(f"  only in previous: {p}")
+            return 1
 
-    changed = [p for p in sorted(cur_files) if cur_files[p] != prev_files[p]]
+    changed = [p for p in sorted(set(cur_files) & set(prev_files))
+               if cur_files[p] != prev_files[p]]
+    changed.extend(file_set_delta)
 
     # Failure mode A: a new version number describing identical shipped bytes.
     if not changed:

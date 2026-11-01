@@ -1,0 +1,18 @@
+=== Polaris pre-release gate (2026-10-27T02:56:45Z) ===
+PASS: container deterministic harness (21 passed)
+PASS: python regression suite (360 passed)
+PASS: python test-list drift guard (22 suites, all listed)
+PASS: agent host check: scripts/check-agent-sandbox.py (VERDICT=SANDBOX_OK sandbox=enabled prerequisites=present)
+PASS: agent host check: scripts/check-agent-host-config.py (VERDICT=CONFIG_OK pins=present settings=/home/ian/.config/Code - Insiders/User/settings.json,.vscode/settings.json)
+PASS: code-780 version patch (exact copy, memset length preserved)
+PASS: FwPkt structural validation (/home/ian/polaris-build-73/out/o-v18e-fail-closed-bulb-shutter/FwPkt)
+SKIP: firmwareInfo manifest gate (no stock firmware/FwPkt.zip in repo) (prerequisite unavailable)
+PASS: install manifest present and current (zip sha256 matches /home/ian/polaris-build-73/out/o-v18e-fail-closed-bulb-shutter)
+PASS: shipped-artifact differential (3 shipped files changed vs previous candidate)
+PASS: polestar_app original Bulb branch intact in repacked appfs
+PASS: pgphoto timed Bulb dispatch present in repacked appfs
+INFO: no --device-libs given; using the built-in allowlist derived from a captured loader trace. Capture `ls -1 /app/lib` on the target for an authoritative reading.
+PASS: shipped .so dependencies and version pins
+=== Pre-release gate summary: 12 passed, 0 failed, 1 skipped ===
+Skipped: firmwareInfo manifest gate (no stock firmware/FwPkt.zip in repo)
+GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence).

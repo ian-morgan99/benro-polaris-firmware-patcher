@@ -1,0 +1,206 @@
+# Reproducible Polaris candidate build
+
+This is the canonical procedure for producing a Benro Polaris firmware
+candidate from the current patcher `main` and Pentax/libgphoto2 `main`. It
+produces a candidate package and evidence; it does not by itself prove camera
+operation or authorise installation.
+
+## Required inputs
+
+- a clean patcher checkout on `main`;
+- a clean `ian-morgan99/libgphoto2` checkout on `main`;
+- the exact stock Benro `FwPkt` folder or `FwPkt.zip`, retained unchanged;
+- Docker, Python 3, Meson, and normal build dependencies;
+- a unique candidate ID and an unused display firmware version.
+
+Do not build from a dirty worktree, detached checkout, feature branch, stale
+build directory, or appliance/runtime checkout. Do not use dirty-source or
+dirty-patcher escape hatches for a release candidate.
+
+The release builder enforces the repository identities as well as cleanliness:
+the patcher must be on `main` with the `ian-morgan99/benro-polaris-firmware-patcher`
+origin, and the libgphoto2 input must be on `main` with the
+`ian-morgan99/libgphoto2` origin. It also rejects stock inputs without
+`FwPkt/firmwareInfo`. A failure before Docker starts is intentional.
+
+## Prepare the source checkouts
+
+```sh
+git clone https://github.com/ian-morgan99/benro-polaris-firmware-patcher.git patcher-build
+git clone https://github.com/ian-morgan99/libgphoto2.git libgphoto2-build
+
+cd patcher-build
+git switch main
+git pull --ff-only origin main
+git status --porcelain
+
+cd ../libgphoto2-build
+git switch main
+git pull --ff-only origin main
+git status --porcelain
+```
+
+Both `git status --porcelain` commands must produce no output. The libgphoto2
+checkout must not contain `build/`, `_build/`, or `build-asan/`; these are
+ignored by Git but can be copied into Docker and reuse stale objects.
+
+Record the source identities before building:
+
+```sh
+git -C patcher-build rev-parse HEAD
+git -C libgphoto2-build rev-parse HEAD
+sha256sum /absolute/path/to/stock/FwPkt.zip
+```
+
+## Build the next candidate
+
+First prepare and commit a candidate-specific change summary using
+`docs/templates/release-change-summary.json`. Replace every placeholder with
+the previous published candidate's exact source SHAs, the intended fixes, and
+the remaining qualification limits. The template itself is not a valid release
+summary. Do not declare #251 fixed until its remaining acceptance gates pass.
+
+For the normal user workflow, use the wrapper from the clean patcher `main`
+worktree. On this workstation that is currently `/home/ian/polaris-build-73`;
+the separate `BenroPolarisPatcher` checkout has Astro work and is not the
+release source. Verify the branch and status each time.
+
+```sh
+CHANGE_SUMMARY=docs/release-summaries/your-reviewed-candidate.json \
+./scripts/release/build-and-install.sh
+```
+
+It automatically resolves host Docker when launched from the VS Code sandbox,
+clones a disposable clean libgphoto2 `main`, runs the complete build, and
+prints the verified deployment command. To build and then deploy in one run:
+
+```sh
+CHANGE_SUMMARY=docs/release-summaries/your-reviewed-candidate.json \
+./scripts/release/build-and-install.sh --install
+```
+
+The desktop icons call this same wrapper. They cannot supply a reviewed change
+summary themselves: without `CHANGE_SUMMARY`, the wrapper stops before cloning
+or building and records the reason in its log. Use the command above for a
+reviewed release. The wrapper delegates display-version and build-ID selection
+to the canonical builder using `auto`; it must never default to `.77` or any
+other previously used version.
+
+Deployment still stops at the normal preflight, install-manifest, identity, and
+reboot gates. Hardware qualification remains separate.
+
+For this workstation, the retained stock base is in PrivateResearch at:
+
+```sh
+STOCK_FWPKT=/home/ian/Documents/VSCodeProjects/PrivateResearch/openpolaris-research/BenroPolarisPatcher/firmware/FwPkt
+LIBGPHOTO2=/home/ian/Documents/VSCodeProjects/LibGphoto2-v86-main
+```
+
+That directory contains the nested `FwPkt/firmwareInfo` package and its
+adjacent `SOURCE.md` record. It is the stock base input, not a previously
+patched candidate from `PrivateResearch/firmware-packets/`. Do not substitute
+the `.74`, `.75`, or `.76` candidate ZIPs as the source base for a new release.
+Verify the input before building:
+
+```sh
+test -f "$STOCK_FWPKT/FwPkt/firmwareInfo"
+git -C "$LIBGPHOTO2" branch --show-current  # must print main
+git -C "$LIBGPHOTO2" status --porcelain
+sha256sum "$STOCK_FWPKT/FwPkt/firmwareInfo"
+```
+
+From the patcher checkout:
+
+```sh
+./scripts/build-release-candidate.sh \
+  o-main-your-unique-candidate \
+  "$STOCK_FWPKT" \
+  "$LIBGPHOTO2" \
+  auto \
+  auto \
+  --change-summary docs/release-summaries/your-reviewed-candidate.json
+```
+
+The two `auto` values derive a valid unused display version and matching
+build ID. `LibGphoto2-v86-main` is a historical folder name, not the source
+version: the recorded commit is authoritative. The adjacent
+`LibGphoto2/libgphoto2` worktree is currently a feature branch and is rejected
+as a release input. The wrapper avoids that ambiguity by cloning remote `main`.
+
+The script performs, in order:
+
+1. source cleanliness, branch, and stale-build checks;
+2. libgphoto2 deterministic regression tests;
+3. the full `patch-polaris.sh` build using the mounted local libgphoto2 source;
+4. package/display-version regression checks;
+5. install-manifest generation;
+6. the source-aware pre-release gate;
+7. shipped-artifact differential checking;
+8. version-to-commit binding and private artifact publication.
+
+The authoritative output is `out/<candidate-id>/`. Retain its ZIP MD5/SHA-256,
+`install-manifest.json`, `build-source-provenance.txt`, `gate-transcript.txt`,
+exact source SHAs, stock FwPkt hash, and every recorded skip.
+
+The build updates `docs/RELEASE-VERSION-STATE.md`. Review that diff, commit it
+with the release documentation, and push it before treating provenance as
+complete. A failed build or an output directory is not a release claim.
+
+Do not substitute `patch-polaris.sh` for this command when producing a release
+candidate. That lower-level command remains available for diagnostics and
+development experiments, but it does not perform the complete source, test,
+version, differential, or publication workflow.
+
+## Install only after build acceptance
+
+If the rig may be asleep, establish the target and wake state first:
+
+```sh
+./scripts/polaris-preflight.sh --wake --wait 120 --scan 20
+```
+
+This is the only supported wake procedure. It verifies a held Bluetooth link
+when possible, routes host tools correctly from a sandbox, and treats an empty
+BLE scan as inconclusive. If the AP is already visible and identity/SSH checks
+pass, Bluetooth wake is not required. If Bluetooth is unavailable, record that
+as a host limitation rather than inferring a firmware or rig fault.
+
+```sh
+./scripts/release/release-fwpkt.sh out/<candidate-id>
+```
+
+This is the only supported installer. It stages the extracted `FwPkt/` tree to
+`/app/sd/FwPkt/`, verifies device-side `firmwareInfo` hashes, proves a real
+reboot through uptime reset, and verifies post-boot build identity and file
+hashes.
+
+Do not stage only `FwPkt.zip`; the watcher consumes the extracted tree, not the
+ZIP. Do not copy files directly into `/app` for a release or qualification
+claim. Keep the original stock FwPkt for rollback.
+
+## Hardware qualification and handoff
+
+After installation the candidate is only `installed-verified` until the
+model-specific physical matrix passes. Record model, firmware, USB identity,
+candidate identity, commands, files, lifecycle, recovery, and limitations in a
+dated evidence directory and `docs/CURRENT-STATE.md`.
+
+An installed package, green offline gate, successful reboot, or version string
+is not camera qualification. If no camera is attached, state
+`installed-verified; hardware qualification pending`.
+
+## Failure rules
+
+- Missing local libgphoto2 source: stop; never silently build vanilla source.
+- Dirty or detached release source: stop; do not use an escape hatch.
+- Any failed gate: stop and preserve the transcript.
+- Any skip: record it as a prerequisite gap, not a pass.
+- Any source, package, install, or runtime mismatch: quarantine the candidate.
+
+## Related authoritative documents
+
+- `docs/FWPKT-PROVENANCE-CONTRACT.md`
+- `docs/FIRMWARE-SOURCE-VERIFICATION-AND-OFFSET-LEDGER.md`
+- `docs/FIRMWARE-INSTALL-PROCESS.md`
+- `docs/LIBGPHOTO2-UPGRADE-PROCESS.md`
+- `docs/RELEASE-VERSION-STATE.md`

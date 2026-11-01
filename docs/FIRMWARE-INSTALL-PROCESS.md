@@ -20,6 +20,21 @@ install command for the candidate it just produced.
 ./scripts/release/release-fwpkt.sh out/<candidate-id>
 ```
 
+Run the current host-aware wake/preflight before this command when the rig may
+be asleep:
+
+```sh
+./scripts/polaris-preflight.sh --wake --wait 120 --scan 20
+```
+
+This is the supported Bluetooth process. It may route host tools through
+`flatpak-spawn --host`, verifies a held Bluetooth link rather than trusting a
+zero exit from `bluetoothctl connect`, and treats an empty BLE scan as
+inconclusive. If the AP is already visible and the identity/SSH checks pass,
+deployment can proceed without Bluetooth wake. If Bluetooth is unavailable,
+record that as a host wake limitation, not as evidence that the firmware is
+dead or that the rig is asleep.
+
 Options: `--skip-trigger` (stage + verify, no reboot), `--allow-busy` (only after
 confirming no exposure is in flight), `--max-wait SECS`, `--host IP`.
 
@@ -119,9 +134,16 @@ forgotten or improvised:
 
 1. Prints the exact command for the candidate it just built:
    `== 6. install this candidate (the only supported path) ==`
-2. Appends `install_command=...` and `install_status=not-installed` to
-   `build-source-provenance.txt`. A release is not finished until that status
-   changes to `installed-verified` after phase 6 passes.
+2. Writes `install-status.txt` next to the candidate with `install_command` and
+   `install_status=not-installed`. After phase 6 passes, the supported
+   `release-fwpkt.sh` installer changes that status to `installed-verified` and
+   writes `install-receipt.txt` with the target, device version, ZIP digest, and
+   reboot evidence. A staged-only or fire-and-forget run never gets that status.
+
+   It is a separate file on purpose. `build-source-provenance.txt` is written
+   inside the patcher container and arrives owned by `nfsnobody`, so appending to
+   it from the host fails with `EACCES`; under `set -e` that aborted the build
+   *after* publishing, which is what happened on `.72`.
 
 ## Checklist for every install
 
@@ -132,9 +154,9 @@ forgotten or improvised:
 3. Camera idle, or `--allow-busy` only after confirming no exposure is in flight.
 4. Run the installer. Do not interrupt the 5–10 min dark period.
 5. Confirm phase 6 passed and uptime reset was reported.
-6. Update `install_status=installed-verified` in the provenance file, add the dated
-   install record to `docs/CURRENT-STATE.md`, and save evidence under
-   `docs/evidence/<candidate>-install-<date>/`.
+6. Confirm the installer wrote `install_status=installed-verified` and
+   `install-receipt.txt`; add the dated install record to `docs/CURRENT-STATE.md`,
+   and save evidence under `docs/evidence/<candidate>-install-<date>/`.
 
 ## Related
 

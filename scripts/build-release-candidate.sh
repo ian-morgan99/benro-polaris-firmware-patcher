@@ -4,14 +4,53 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> [display-fwver|auto]" >&2
+  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> [display-fwver|auto] --change-summary FILE" >&2
+  echo "change summary is required: it records the purpose and declared fixes; the script adds exact source commits and artifact hashes" >&2
   exit 2
 }
-[ $# -ge 4 ] && [ $# -le 5 ] || usage
-ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="${5:-auto}"
+[ $# -ge 4 ] || usage
+ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="auto"
+shift 4
+if [ $# -gt 0 ] && [[ "$1" != --* ]]; then
+  DISPLAY_FWVER="$1"
+  shift
+fi
+CHANGE_SUMMARY=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --change-summary)
+      [ $# -ge 2 ] || usage
+      CHANGE_SUMMARY="$2"; shift 2;;
+    *) echo "ERROR: unknown option: $1" >&2; usage;;
+  esac
+done
+[ -n "$CHANGE_SUMMARY" ] || {
+  echo "ERROR: --change-summary FILE is required; every candidate must state exactly what changed." >&2
+  usage
+}
+[ -f "$CHANGE_SUMMARY" ] || { echo "ERROR: change summary not found: $CHANGE_SUMMARY" >&2; exit 2; }
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
 VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
+
+# Release builds are intentionally narrower than diagnostic builds. This keeps
+# a junior agent from accidentally producing a candidate from a feature branch
+# or a different fork while still allowing ordinary local development to use
+# patch-polaris.sh directly.
+PATCHER_BRANCH="$(git -C "$ROOT" branch --show-current)"
+[ "$PATCHER_BRANCH" = main ] || {
+  echo "ERROR: release builder must run from patcher branch main (got ${PATCHER_BRANCH:-detached})" >&2
+  exit 3
+}
+normalise_remote() {
+  printf '%s\n' "$1" | sed -E 's#\.git$##; s#^git@github\.com:#https://github.com/#; s#^ssh://git@github\.com/#https://github.com/#'
+}
+PATCHER_REMOTE="$(git -C "$ROOT" remote get-url origin 2>/dev/null || true)"
+[ "$(normalise_remote "$PATCHER_REMOTE")" = "https://github.com/ian-morgan99/benro-polaris-firmware-patcher" ] || {
+  echo "ERROR: patcher origin is not ian-morgan99/benro-polaris-firmware-patcher" >&2
+  echo "       origin=${PATCHER_REMOTE:-missing}" >&2
+  exit 3
+}
 
 # Benro Connect displays this value, so two builds must never report the same
 # one. It used to be typed by hand and the baseline advanced by hand as well,
@@ -35,10 +74,40 @@ fi
 
 case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2;; esac
 [ -e "$BASE" ] || { echo "ERROR: stock FwPkt not found: $BASE" >&2; exit 2; }
-[ -d "$SRC/.git" ] || { echo "ERROR: libgphoto2 input must have a real .git directory" >&2; exit 2; }
+[ -e "$SRC/.git" ] || { echo "ERROR: libgphoto2 input must have a real git worktree" >&2; exit 2; }
+[ -f "$BASE/firmwareInfo" ] || [ -f "$BASE/FwPkt/firmwareInfo" ] || {
+  if [ "${BASE##*.}" = zip ] && unzip -l "$BASE" 2>/dev/null | grep -qE '(^|/)FwPkt/firmwareInfo$'; then :; else
+    echo "ERROR: stock input must contain FwPkt/firmwareInfo" >&2
+    exit 2
+  fi
+}
 [ "$(git -C "$SRC" status --porcelain)" = "" ] || { echo "ERROR: libgphoto2 checkout is dirty" >&2; exit 2; }
+# A gitignored build/ directory is invisible to the dirty check above, but
+# container/build_ptp2.sh copies the input with `cp -a`, build directories
+# included, so the container reuses objects compiled BEFORE the patcher applied
+# its own edits -- most importantly the _Camera padding. The build then dies at
+# the fail-closed ABI check with "gp_camera_new does not allocate 4140 B" even
+# though the padding message said it applied. Refuse up front instead of
+# spending a full build to find out. See docs/LIBGPHOTO2-UPGRADE-PROCESS.md.
+for stale in build _build build-asan; do
+  if [ -d "$SRC/$stale" ]; then
+    echo "ERROR: libgphoto2 input contains a stale '$stale/' directory." >&2
+    echo "       It is gitignored, so the dirty check above cannot see it, but" >&2
+    echo "       'cp -a' copies it into the container and the stale objects are" >&2
+    echo "       reused, which fails the _Camera pad check." >&2
+    echo "       Use a clean checkout (a local clone is instant):" >&2
+    echo "         git clone --branch main <repo> /tmp/lgp-src" >&2
+    exit 2
+  fi
+done
 BRANCH="$(git -C "$SRC" branch --show-current)"
 [ "$BRANCH" = main ] || { echo "ERROR: libgphoto2 must be on main (got ${BRANCH:-detached})" >&2; exit 2; }
+SRC_REMOTE="$(git -C "$SRC" remote get-url origin 2>/dev/null || true)"
+[ "$(normalise_remote "$SRC_REMOTE")" = "https://github.com/ian-morgan99/libgphoto2" ] || {
+  echo "ERROR: libgphoto2 origin is not ian-morgan99/libgphoto2" >&2
+  echo "       origin=${SRC_REMOTE:-missing}" >&2
+  exit 3
+}
 # A version is bound to the exact commits it was built from, so the patcher tree
 # must be clean too: uncommitted work would make the binding a claim about a
 # commit that does not describe the build. Checked here rather than at claim
@@ -50,10 +119,9 @@ BRANCH="$(git -C "$SRC" branch --show-current)"
   exit 3
 }
 SRC_SHA="$(git -C "$SRC" rev-parse HEAD)"
-# The patcher tree is not required to be clean (this script edits release state
-# as it goes), so record the tree state as well as the commit. A version is
-# bound to the exact commits it was built from, and a dirty tree means the
-# binding is a commit plus uncommitted work rather than a commit alone.
+# The patcher tree must also be clean. The script records the exact patcher
+# commit below, and the release-state update happens only after all build and
+# gate work has passed. A dirty tree would make the commit binding incomplete.
 PATCHER_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 echo "Building $ID from libgphoto2 main $SRC_SHA, patcher $PATCHER_SHA, stock base $BASE"
 
@@ -77,6 +145,11 @@ meson test -C "$TEST_BUILD" --no-suite no-ci --print-errorlogs
 
 PATCH_ARGS=(--fwpkt "$(realpath "$BASE")" \
   --libgphoto2-source "$(realpath "$SRC")" --out "$OUT" --build-id "$BUILD_ID")
+# The release path deliberately includes the optional legacy Pentax transport.
+# It is inert for K-1 II/K-3 III PTP bodies, while making the same candidate
+# usable by the K-5 II/K-5 IIs USB-SCSI/MSC camlib. Direct diagnostic invocations
+# of patch-polaris.sh remain opt-in so the historical default stays unchanged.
+PATCH_ARGS+=(--enable-usb-scsi)
 # Do not apply the retired polestar_app Bulb patch. It zeroed bulb_ms and
 # forced the plain-capture branch, bypassing the non-zero Bulb request path.
 if [ -n "$DISPLAY_FWVER" ]; then
@@ -134,7 +207,7 @@ if not (target / "firmwareInfo").is_file():
 PY
 PACKAGE_IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
 echo "Running parameterised package/display-version regression"
-bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
+DISPLAY_FWVER_TEST="$DISPLAY_FWVER" bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
   "$PACKAGE_IMAGE" "$PACKAGE_INPUT" "$SRC"
 
 # The gate requires install-manifest.json and refuses the candidate without it, so
@@ -145,7 +218,52 @@ bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
 echo "Generating install manifest"
 python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT"
 
-"$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
+echo "Generating immutable release change manifest"
+python3 "$ROOT/scripts/create-release-change-manifest.py" \
+  --summary "$CHANGE_SUMMARY" \
+  --candidate-id "$ID" \
+  --display-fwver "$DISPLAY_FWVER" \
+  --build-id "$BUILD_ID" \
+  --libgphoto2 "$SRC" \
+  --patcher "$ROOT" \
+  --stock "$BASE" \
+  --candidate-dir "$OUT"
+CHANGE_MANIFEST_SHA256="$(sha256sum "$OUT/release-change-manifest.json" | awk '{print $1}')"
+{
+  echo "candidate_id=$ID"
+  echo "release_change_manifest=release-change-manifest.json"
+  echo "release_change_manifest_sha256=$CHANGE_MANIFEST_SHA256"
+} >> "$OUT/build-source-provenance.txt"
+
+echo "Checking candidate identity"
+python3 "$ROOT/scripts/verify-candidate-identity.py" "$OUT" --require-deployable
+
+# Capture the gate transcript into the candidate's own evidence directory. The
+# gate is the release's proof, and AGENTS.md requires its skips to be recorded
+# in the release evidence -- so the transcript is written where the evidence
+# lives rather than left to scroll past in the build log. A SKIP is a
+# prerequisite gap, not a pass, and must be visible to whoever reads the
+# evidence later.
+GATE_EVIDENCE="$OUT/gate-transcript.txt"
+mkdir -p "$OUT"
+# Pass the libgphoto2 source so the gate can run its source contracts against the
+# exact tree that produced this candidate. Without it the gate only checks
+# provenance and never runs test-pentax-capture-contract.py, which is the check
+# that would have caught .75's fail-closed shutter write hanging every capture.
+"$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt" --libgphoto2-src "$SRC" 2>&1 | tee "$GATE_EVIDENCE"
+GATE_RC="${PIPESTATUS[0]}"
+if [ "$GATE_RC" -ne 0 ]; then
+  echo "ERROR: pre-release gate failed (rc=$GATE_RC); transcript in $GATE_EVIDENCE" >&2
+  exit "$GATE_RC"
+fi
+# Surface the skips explicitly: they are recorded in the transcript, but a
+# reader scanning the build log should not have to hunt for them.
+GATE_SKIPS="$(grep -c '^SKIP:' "$GATE_EVIDENCE" || true)"
+if [ "${GATE_SKIPS:-0}" -gt 0 ]; then
+  echo "NOTE: pre-release gate recorded ${GATE_SKIPS} SKIP(s) -- prerequisite gaps, not passes."
+  echo "      They are listed in $GATE_EVIDENCE and must be recorded in the release evidence."
+  grep '^SKIP:' "$GATE_EVIDENCE" | sed 's/^/      /'
+fi
 
 # Compare the shipped bytes against the previous candidate BEFORE claiming a version.
 # A display version is a claim about behaviour, and two claims that describe identical
@@ -194,7 +312,13 @@ echo "  ./scripts/release/release-fwpkt.sh $OUT"
 echo "  # add --skip-trigger to stage+verify without rebooting,"
 echo "  # --allow-busy only after confirming no exposure is in flight"
 echo "  # docs/FIRMWARE-INSTALL-PROCESS.md explains why zip-only staging is ignored"
+# Install status lives in its own host-owned file. It must NOT be appended to
+# build-source-provenance.txt: that file is written inside the patcher container
+# and arrives owned by nfsnobody, so a host-side append fails with EACCES and
+# `set -e` aborts the whole build *after* it has already published (observed on
+# .72, where the candidate was built and pushed but the script exited 1).
 {
+  echo "build_id=$BUILD_ID"
   echo "install_command=./scripts/release/release-fwpkt.sh $OUT"
   echo "install_status=not-installed"
-} >> "$OUT/build-source-provenance.txt"
+} > "$OUT/install-status.txt"

@@ -20,6 +20,8 @@
 #     uImage, firmwareInfo, gimbal/) is produced,
 #   - the stage-2 on-disk bundle (install/restore scripts +
 #     libpolaris_stage2.so + ptp2.so) is shipped, and
+#   - the optional legacy usbscsi iolib is built and shipped for the K-5 II
+#     profile,
 #   - the stage-2 loader compiles with the same cross-toolchain
 #     the image uses.
 #
@@ -75,6 +77,7 @@ if ! docker run --rm --name polaris-pentax-e2e \
   -e FIX_R5M2_TYPO=1 \
   -e SELFTEST=0 \
   -e SWAP_USB1=1 \
+  -e POLARIS_ENABLE_USB_SCSI=1 \
   -e ALLOW_DIRTY_SOURCE=0 \
   -e PENTAX=1 \
   -v "$SOURCE:/libgphoto2-source-input:ro" \
@@ -120,7 +123,7 @@ BUILDID_TEST="o-v9j-testbuild"
 # Synthetic package regression: use the next value after the committed release
 # baseline so this test exercises the five-component path without blessing a
 # stale version for a future release.
-DISPLAY_FWVER_TEST="6.0.0.54.53"
+DISPLAY_FWVER_TEST="${DISPLAY_FWVER_TEST:-6.0.0.54.53}"
 mkdir -p "$T/out-fwver"
 if docker run --rm --name polaris-pentax-fwver \
   -e MODE=full \
@@ -185,6 +188,8 @@ grep -q 'local-source Pentax candidate marker: present' "$T/build.log" || {
   echo "Pentax marker gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
 grep -q 'local-source target models: K-1 II and K-3 III present' "$T/build.log" || {
   echo "K-1 II/K-3 III image model gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
+grep -q 'local-source legacy target models: K-5 II and K-5 IIs present' "$T/build.log" || {
+  echo "K-5 II/K-5 IIs legacy camlib gate failed" >&2; tail -40 "$T/build.log" >&2; exit 1; }
 
 # 5) The on-disk stage-2 bundle is shipped.
 [ -f "$T/stage2-ondisk/ondisk/install_stage2.sh" ] || { echo "missing install_stage2.sh" >&2; exit 1; }
@@ -220,7 +225,8 @@ for mapping in \
   'lib/stage2/libgphoto2/2.5.34/ptp2.so:libgphoto2/2.5.34/ptp2.so' \
   'lib/stage2/libgphoto2/2.5.34/pentax.so:libgphoto2/2.5.34/pentax.so' \
   'lib/stage2/libgphoto2/2.5.34/camlibs.manifest:libgphoto2/2.5.34/camlibs.manifest' \
-  'lib/stage2/libgphoto2_port/0.12.2/usb1.so:libgphoto2_port/0.12.2/usb1.so'
+  'lib/stage2/libgphoto2_port/0.12.2/usb1.so:libgphoto2_port/0.12.2/usb1.so' \
+  'lib/stage2/libgphoto2_port/0.12.2/usbscsi.so:libgphoto2_port/0.12.2/usbscsi.so'
 do
   embedded=${mapping%%:*}
   bundled=${mapping#*:}
@@ -266,6 +272,10 @@ done
 rm -f "$PTP2_MARKER_FILE"
 [ -f "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" ] || {
   echo "selected pentax camlib was built but not packaged" >&2; exit 1; }
+(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -Fx -- 'Pentax:K5II' >/dev/null) || {
+  echo "packaged legacy Pentax camlib lacks K-5 II" >&2; exit 1; }
+(strings "$T/stage2-ondisk/libgphoto2/2.5.34/pentax.so" | grep -Fx -- 'Pentax:K5IIs' >/dev/null) || {
+  echo "packaged legacy Pentax camlib lacks K-5 IIs" >&2; exit 1; }
 (cd "$T/stage2-ondisk/libgphoto2/2.5.34" && sha256sum -c camlibs.manifest) || {
   echo "packaged selected-camlib manifest failed" >&2; exit 1; }
 # And the trampolined on-disk core binary is shipped.

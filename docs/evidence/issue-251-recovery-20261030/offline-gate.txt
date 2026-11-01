@@ -1,0 +1,19 @@
+=== Polaris pre-release gate (2026-10-30T18:26:21Z) ===
+PASS: container deterministic harness (25 passed)
+PASS: python regression suite (397 passed)
+PASS: python test-list drift guard (26 suites, all listed)
+PASS: agent host check: scripts/check-agent-sandbox.py (VERDICT=SANDBOX_OK sandbox=enabled prerequisites=present)
+PASS: agent host check: scripts/check-agent-host-config.py (VERDICT=CONFIG_OK pins=present settings=/home/ian/.config/Code - Insiders/User/settings.json,.vscode/settings.json)
+PASS: code-780 version patch (exact copy, memset length preserved)
+INFO: no --build given; package gates skipped (offline gate only)
+PASS: provenance registry hash check (5 artifact(s) verified against the registry)
+PASS: rig tooling self-test (wait-for-rig.py argv well-formed)
+PASS: rig tooling self-test (capture-shutter-list.py argv well-formed)
+SKIP: libgphoto2 capture contract (no --libgphoto2-src supplied) (prerequisite unavailable)
+=== Pre-release gate summary: 9 passed, 0 failed, 1 skipped ===
+Skipped: libgphoto2 capture contract (no --libgphoto2-src supplied)
+GATE: GREEN — OFFLINE-QUALIFIED only (no package/device gates ran).
+This is NOT device-qualified or release-qualified: the mandatory device install
+hash checks (scripts/o-v17a-autonomous-install.sh verify phase against the
+immutable install-manifest.json) and the physical Benro Connect / Manual / Bulb
+regression remain separate mandatory gates before a release is declared.

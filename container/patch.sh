@@ -15,6 +15,7 @@
 #     LIBGPHOTO2_VERSION      libgphoto2 release tag to build    (default 2.5.34)
 #     LIBGPHOTO2_PORT_VERSION libgphoto2_port release tag         (default 0.12.2)
 #     PENTAX_MAX_CAPTURE_SIZE Pentax capture file-size cap in bytes (default 268435456 = 256 MiB)
+#     POLARIS_ENABLE_USB_SCSI 1 = package the legacy usbscsi iolib for K-5 II/K-5 IIs (default 0)
 #     FIX_R5M2_TYPO           1 = correct the upstream "EOS 5Rm2" model-name typo
 #     SELFTEST                1 = qemu-emulate the driver load (needs qemu-arm-static)
 #     SSH_PUBKEY              optional: authorized_keys line(s) to authorise for
@@ -38,6 +39,7 @@ die(){ printf '\033[1;31m[abort]\033[0m %s\n' "$*" >&2; exit 1; }
 LIBGPHOTO2_VERSION="${LIBGPHOTO2_VERSION:-2.5.34}"
 LIBGPHOTO2_PORT_VERSION="${LIBGPHOTO2_PORT_VERSION:-0.12.2}"
 POLARIS_CAMLIBS="${POLARIS_CAMLIBS:-ptp2,pentax}"
+POLARIS_ENABLE_USB_SCSI="${POLARIS_ENABLE_USB_SCSI:-0}"
 # Pentax capture file-size budget in bytes (issue #2). libgphoto2's hard-coded
 # default is 2 GiB which is unsafe on the Polaris' constrained RAM; a runaway
 # DNG/RAW request from a K-1 II / K-3 III would exhaust heap and abort pgphoto
@@ -57,6 +59,10 @@ case "$MODE" in full|ptp2only) : ;; *) echo "invalid MODE=$MODE (full|ptp2only)"
 # Also swap the usb1 port/iolib (USB transport) alongside the ptp2 camlib.
 # 1 = swap usb1.so too (default); 0 = ptp2-only camlib swap (legacy).
 SWAP_USB1="${SWAP_USB1:-1}"
+case "$POLARIS_ENABLE_USB_SCSI" in
+  0|1) : ;;
+  *) die "POLARIS_ENABLE_USB_SCSI must be 0 or 1" ;;
+esac
 # Full mode ALWAYS needs usb1 (the fresh 2.5.34 port dlopens usb1 from IOLIBS).
 [ "$MODE" = "full" ] && SWAP_USB1=1
 # The app-visible version is copied into fixed-size C strings in polestar_app
@@ -96,6 +102,7 @@ TESTED_PGPHOTO_MD5="a0"  # informational only; verified structurally below
 STOCK_APPFS=/in/camera/appfs.ubifs
 log "libgphoto2 target : $LIBGPHOTO2_VERSION"
 log "selected camlibs  : $POLARIS_CAMLIBS"
+log "legacy usbscsi    : $POLARIS_ENABLE_USB_SCSI"
 log "Pentax capture cap: $PENTAX_MAX_CAPTURE_SIZE bytes  (override with PENTAX_MAX_CAPTURE_SIZE=…; issue #2)"
 log "stock appfs.ubifs : $(stat -c %s "$STOCK_APPFS") bytes  md5=$(md5sum "$STOCK_APPFS"|cut -d' ' -f1)"
 
@@ -227,6 +234,18 @@ if [ -e /libgphoto2-source-input ]; then
     fi
   done
   log "local-source target models: K-1 II and K-3 III present"
+  if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+    NEW_LEGACY_PENTAX="$NEW_CAMLIB_DIR/pentax.so"
+    [ -f "$NEW_LEGACY_PENTAX" ] ||
+      die "legacy USB-SCSI requested but selected legacy Pentax camlib is missing"
+    LEGACY_MARKER_FILE="$W/legacy-pentax-markers.txt"
+    strings "$NEW_LEGACY_PENTAX" > "$LEGACY_MARKER_FILE" || true
+    for model in 'Pentax:K5II' 'Pentax:K5IIs'; do
+      grep -Fx -- "$model" "$LEGACY_MARKER_FILE" >/dev/null ||
+        die "legacy Pentax camlib lacks required K-5 model: $model"
+    done
+    log "local-source legacy target models: K-5 II and K-5 IIs present"
+  fi
 elif [ "$MODE" = "full" ]; then
   [ "${ALLOW_VANILLA_SOURCE:-0}" = "1" ] ||
     die "full mode lacks required libgphoto2 source input"
@@ -310,7 +329,32 @@ if [ "$SWAP_USB1" = "1" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5c. FULL mode: verify the freshly-built core + port (fail-safe, same rigour).
+# 5c. Optional legacy USB-SCSI transport for Pentax K-5 II/K-5 IIs.
+#      This is deliberately separate from the modern usb1/libusb path.  The
+#      legacy camlib advertises GP_PORT_USB_SCSI and needs SG_IO-backed
+#      usbscsi.so; packaging pentax.so alone is not sufficient.
+# ---------------------------------------------------------------------------
+NEW_USB_SCSI="$W/out/usbscsi.so"
+if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+  [ -f "$NEW_USB_SCSI" ] || die "legacy USB-SCSI requested but usbscsi.so was not built"
+  log "verifying rebuilt usbscsi.so…"
+  SFLAGS="$($XT-readelf -h "$NEW_USB_SCSI" | awk -F: '/Flags/{print $2}')"
+  grep -q 'soft-float' <<<"$SFLAGS" || die "usbscsi ABI mismatch: expected soft-float EABI, got:$SFLAGS"
+  SMAXGLIBC="$($XT-readelf --dyn-syms "$NEW_USB_SCSI" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1)"
+  case "$SMAXGLIBC" in GLIBC_2.4|GLIBC_2.5|GLIBC_2.6|GLIBC_2.7|GLIBC_2.8|GLIBC_2.9|GLIBC_2.1[0-9]|GLIBC_2.2[0-4]) : ;;
+    *) die "usbscsi glibc ceiling $SMAXGLIBC exceeds device glibc 2.24";; esac
+  for e in gp_port_library_type gp_port_library_list gp_port_library_operations; do
+    $XT-nm -D --defined-only "$NEW_USB_SCSI" | awk '{print $3}' | sed 's/@.*//' | grep -qx "$e" \
+      || die "rebuilt usbscsi.so is missing iolib entry point '$e'"
+  done
+  $XT-nm -D --undefined-only "$NEW_USB_SCSI" | awk '{print $2}' | sed 's/@.*//' | grep -E '^(gp_|gpi_)' | sort -u >"$W/usbscsi_need.txt"
+  MISSING_SCSI="$(comm -23 "$W/usbscsi_need.txt" "$W/prov.txt" || true)"
+  [ -z "$MISSING_SCSI" ] || die "usbscsi.so needs core/port symbols missing from the target core:\n$MISSING_SCSI"
+  log "  usbscsi ABI and core/port symbol checks passed ✓"
+fi
+
+# ---------------------------------------------------------------------------
+# 5d. FULL mode: verify the freshly-built core + port (fail-safe, same rigour).
 # ---------------------------------------------------------------------------
 NEW_CORE="$W/out/libgphoto2.so.6"; NEW_PORT="$W/out/libgphoto2_port.so.12"
 if [ "$MODE" = "full" ]; then
@@ -384,7 +428,7 @@ if [ "$MODE" = "ptp2only" ]; then
   log "  pgphoto reliability patches: 17 bytes (gates + resetUsb + list-files + focus idle wait) ✓"
   python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.patched" --in-place \
     || die "pgphoto timed-Bulb dispatch patch failed"
-  log "  positive-duration Pentax K-3 III requests route to the timed Bulb lifecycle"
+  log "  K-3 III live B-mode gate + cancel-to-stop + timed Bulb route installed"
   python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.patched" --in-place \
     || die "pgphoto dark-frame poll budget patch failed"
   log "  post-release file wait raised from ~6s to 100s so a noise-reduction dark frame is found"
@@ -396,6 +440,12 @@ if [ "$MODE" = "ptp2only" ]; then
     U_UID="$(stat -c %u "$STOCK_USB1")"; U_GID="$(stat -c %g "$STOCK_USB1")"; U_MODE="$(stat -c %a "$STOCK_USB1")"
     inst -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1"         "$STOCK_USB1"
     log "swapped usb1 iolib: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
+  fi
+  if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+    STOCK_IOLIB_DIR="$(dirname "$STOCK_USB1")"
+    U_UID="$(stat -c %u "$STOCK_USB1")"; U_GID="$(stat -c %g "$STOCK_USB1")"; U_MODE="$(stat -c %a "$STOCK_USB1")"
+    inst -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB_SCSI" "$STOCK_IOLIB_DIR/usbscsi.so"
+    log "installed legacy usbscsi iolib: $STOCK_IOLIB_DIR/usbscsi.so"
   fi
 else
   # -------------------------------------------------------------------------
@@ -413,7 +463,7 @@ else
   log "  base: 17-byte reliability patch (resetUsb + list-files + 3 gates + focus idle wait) md5=$(md5sum "$W/pgphoto.base"|cut -d' ' -f1)"
   python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$W/pgphoto.base" --in-place \
     || die "pgphoto timed-Bulb dispatch patch failed"
-  log "  pgphoto Bulb route: positive-duration K-3 III requests use the timed Bulb lifecycle"
+  log "  pgphoto Bulb route: live B-mode gate + cancel-to-stop + timed Bulb lifecycle"
   python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.base" --in-place \
     || die "pgphoto dark-frame poll budget patch failed"
   log "  pgphoto file wait: post-release poll raised from ~6s to 100s for noise-reduction dark frames"
@@ -506,6 +556,10 @@ else
       "$STAGE2/libgphoto2/$LIBGPHOTO2_VERSION/$camlib_file"
   done < "$NEW_CAMLIB_MANIFEST"
   inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB1"                   "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
+  if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+    inst -m 755 -o "$P_UID" -g "$P_GID" "$NEW_USB_SCSI" \
+      "$STAGE2/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usbscsi.so"
+  fi
   inst -m 755 -o "$P_UID" -g "$P_GID" /opt/patcher/ondisk/camera_usb_supervisor.sh "$STAGE2/camera_usb_supervisor.sh"
   # Generate the wrapper from its template (CAMLIBS_VERSION/IOLIBS_VERSION +
   # PENTAX_MAX_CAPTURE_SIZE) so it matches the staged dir layout above. Issue #1:
@@ -519,7 +573,7 @@ else
       /opt/patcher/ondisk/pgphoto.wrapper.in > "$W/pgphoto.wrapper"
   chmod 755 "$W/pgphoto.wrapper"
   inst -m "$P_MODE" -o "$P_UID" -g "$P_GID" "$W/pgphoto.wrapper" "$PG"
-  log "  assembled /app/lib/stage2 (loader + core + port + ptp2 + usb1 + trampolined binary)"
+  log "  assembled /app/lib/stage2 (loader + core + port + ptp2 + usb1 + optional usbscsi when enabled + trampolined binary)"
   log "  installed self-driving wrapper -> /app/bin/pgphoto (execs /app/lib/stage2/pgphoto.stage2ondisk)"
 
   # Replace the stock /app/restart_gphoto with our single-owner restart helper
@@ -556,6 +610,12 @@ else
     U_UID="$(stat -c %u "$STOCK_USB1")"; U_GID="$(stat -c %g "$STOCK_USB1")"; U_MODE="$(stat -c %a "$STOCK_USB1")"
     inst -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB1" "$STOCK_USB1"
     log "  placed fresh usb1 at stock iolib path: /app/lib/libgphoto2_port/$(basename "$(dirname "$STOCK_USB1")")/usb1.so"
+  fi
+  if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+    STOCK_IOLIB_DIR="$(dirname "$STOCK_USB1")"
+    U_UID="$(stat -c %u "$STOCK_USB1")"; U_GID="$(stat -c %g "$STOCK_USB1")"; U_MODE="$(stat -c %a "$STOCK_USB1")"
+    inst -m "$U_MODE" -o "$U_UID" -g "$U_GID" "$NEW_USB_SCSI" "$STOCK_IOLIB_DIR/usbscsi.so"
+    log "  placed legacy usbscsi at stock iolib path: $STOCK_IOLIB_DIR/usbscsi.so"
   fi
 
   # Replace the stock core AND port with the freshly-built matched pair.  The
@@ -763,8 +823,8 @@ if [ ! -f "$STAGE2_BIN" ]; then
   die "post-repack assertion failed: lib/stage2/pgphoto.stage2ondisk missing from appfs.ubifs"
 fi
 python3 /opt/patcher/polaris_bulb_dispatch_patch.py "$STAGE2_BIN" --check \
-  || die "post-repack assertion failed: duration-aware Pentax Bulb dispatch missing"
-log "  verified timed Bulb dispatch in repacked pgphoto"
+  || die "post-repack assertion failed: K-3 III live-mode Bulb dispatch/cancel guard missing"
+log "  verified K-3 III live-mode Bulb dispatch and cancel-to-stop in repacked pgphoto"
 python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$STAGE2_BIN" --check \
   || die "post-repack assertion failed: dark-frame post-release file poll budget missing"
 log "  verified 100s post-release file poll in repacked pgphoto"
@@ -893,6 +953,9 @@ if [ "$MODE" = "full" ]; then
   done < "$NEW_CAMLIB_MANIFEST"
   cp "$NEW_CAMLIB_MANIFEST" "$BUN/libgphoto2/$LIBGPHOTO2_VERSION/camlibs.manifest"
   cp "$NEW_USB1" "$BUN/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usb1.so"
+  if [ "$POLARIS_ENABLE_USB_SCSI" = "1" ]; then
+    cp "$NEW_USB_SCSI" "$BUN/libgphoto2_port/$LIBGPHOTO2_PORT_VERSION/usbscsi.so"
+  fi
   chmod +x "$BUN/ondisk/"*.sh "$BUN/ondisk/pgphoto.wrapper" 2>/dev/null || true
 
   log "  wrote reversible on-device bundle -> /out/stage2-ondisk (install_stage2.sh / restore_stock.sh)"

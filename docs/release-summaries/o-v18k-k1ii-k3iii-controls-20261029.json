@@ -1,0 +1,42 @@
+{
+  "baseline": {
+    "candidate_id": "6.0.0.54.88-unpublished-mainline",
+    "libgphoto2_commit": "bd35b36e5062a2676116616006f47618fb025ddc",
+    "patcher_commit": "84999979f536ca90f6c7e77c5ef79f7bc70c8040"
+  },
+  "purpose": "Publish a controlled .89 candidate carrying the K-1 II white-balance and Pentax AF contract fixes while retaining the reviewed K-3 III capture safeguards.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "Expose the Pentax-gated public whitebalance widget with the complete 18-entry IMAGE Transmitter 2 mapping, including bodies that omit 0x5005 from DeviceInfo.",
+      "issues": ["#88"]
+    },
+    {
+      "component": "libgphoto2",
+      "summary": "Pass the source-derived IMAGE Transmitter 2 release-mode argument to the Pentax AF-only 0x9011 action without changing manual-focus or still-capture semantics.",
+      "issues": ["#134", "#135"]
+    },
+    {
+      "component": "patcher",
+      "summary": "Retain the K-3 III live-mode timed-B dispatch gate and cancellation-to-stop cleanup fix already present on patcher main.",
+      "issues": ["#251"]
+    },
+    {
+      "component": "tests",
+      "summary": "Run the libgphoto2 Pentax widget, model, format, focus, capture-contract, and publication regression coverage through the release gate.",
+      "issues": []
+    }
+  ],
+  "known_limits": [
+    "K-1 II physical WB write/readback, AF action, MF movement, and Bulb qualification remain pending after deployment.",
+    "K-3 III physical timed-B duration and cancel qualification remain pending after deployment.",
+    "No speculative StarAF control or unsupported TIFF control is added.",
+    "The rejected periodic 100 ms pre-capture format polling loop is not included."
+  ],
+  "validation_focus": [
+    "Confirm installed .89 provenance matches libgphoto2 63a894b0821a510fc40244c5cc4ef84a5220a91c and patcher 665ef9bf8da63cf41280e1418208853320c578c4.",
+    "On K-1 II, verify the public whitebalance widget is populated and test one controlled write/readback with exact restoration.",
+    "On K-1 II, verify AF-with-live-view behaviour and focus action failure handling without a still capture.",
+    "On K-3 III, verify ordinary M capture remains unchanged and then run the controlled timed-B path."
+  ]
+}

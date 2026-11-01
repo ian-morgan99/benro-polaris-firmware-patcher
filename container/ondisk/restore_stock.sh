@@ -40,13 +40,13 @@ fi
 
 # Restore selected camlibs/iolibs placed at stock paths. A camlib absent before
 # Stage-2 has an explicit marker and is removed on rollback.
-for marker in /app/lib/libgphoto2/*/*.so.prestage2.absent; do
+for marker in /app/lib/libgphoto2/*/*.so.prestage2.absent /app/lib/libgphoto2_port/*/*.so.prestage2.absent; do
     [ -e "$marker" ] || continue
     f=${marker%.prestage2.absent}
     rm -f "$f" "$marker"
     echo "[restore] removed non-stock camlib $f"
 done
-for f in /app/lib/libgphoto2/*/*.so /app/lib/libgphoto2_port/*/usb1.so; do
+for f in /app/lib/libgphoto2/*/*.so /app/lib/libgphoto2_port/*/usb1.so /app/lib/libgphoto2_port/*/usbscsi.so; do
     [ -e "$f.prestage2.bak" ] && { cp "$f.prestage2.bak" "$f"; echo "[restore] restored stock $f"; }
 done
 

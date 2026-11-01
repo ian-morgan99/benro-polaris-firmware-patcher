@@ -58,6 +58,59 @@ This document exists because a libgphoto2 build can work correctly when invoked 
 
 A future upgrade is therefore **not** complete when the new `ptp2.so` builds, nor when direct `gphoto2` works. It is complete only when the complete packaged runtime is proven and the previously supported camera matrix has not regressed.
 
+## Build-environment prerequisite: TMPDIR must be Docker-visible
+
+`build-release-candidate.sh` extracts the stock FwPkt into `mktemp -d` and mounts
+that directory into the patcher container at `/in`. On this host `/tmp` is **not**
+visible to the Docker daemon, so the mount arrives empty and the run dies with:
+
+```
+[abort] /in/firmwareInfo not found — mount your stock FwPkt at /in
+```
+
+The message blames the input zip, but the zip was extracted correctly; only the
+mount is empty. Run the build with `TMPDIR` inside the workspace instead:
+
+```sh
+mkdir -p .buildtmp
+env TMPDIR="$PWD/.buildtmp" ./scripts/build-release-candidate.sh ...
+```
+
+Verified by mounting a probe directory both ways: a path under `/tmp` shows an
+empty `/in`, the same layout under the workspace shows `firmwareInfo`. This cost a
+full build attempt on `.72` (the regression pack had already passed 16/0 before the
+abort).
+
+## Build-environment prerequisite: the libgphoto2 input must have no build outputs
+
+The wrapper accepts any clean checkout on `main`, and its dirty check is
+`git status --porcelain`. **`build/`, `_build/` and `build-asan/` are gitignored**,
+so a tree full of stale object files passes that check and looks pristine.
+
+`container/build_ptp2.sh` copies the input with `cp -a /libgphoto2-source-input/.`,
+build directories included, so the container reuses objects compiled *before* the
+patcher applied its own edits — most importantly the `_Camera` padding. The build
+then dies at the fail-closed ABI check:
+
+```
+[build] FULLSTACK: struct _Camera padded with _reserved_tail[4120] (-> sizeof 4140)
+[build] FULLSTACK ERROR: gp_camera_new does not allocate 4140 B — _Camera pad failed
+```
+
+The padding message says it applied, and the allocation check still fails, because
+the object was never recompiled. The check is correct to fail closed: a wrong
+`_Camera` size puts Benro's tail reads out of bounds.
+
+Fix is an instant local clone rather than pointing at the development tree:
+
+```sh
+git clone --branch main /path/to/dev/libgphoto2 /tmp/lgp-src   # local: no network
+./scripts/build-release-candidate.sh ... /tmp/lgp-src auto
+```
+
+`.72` avoided this only by accident, because it was built from a fresh clone. This
+cost a full build attempt on `.73`, again after the regression pack had passed 16/0.
+
 ## 1. Scope
 
 ## Standard build command
@@ -72,8 +125,15 @@ PrivateResearch with a provenance row prompt:
   o-vNN-description-YYYYMMDD \
   firmware/FwPkt.zip \
   /path/to/clean/libgphoto2-main \
-  6.0.0.XX-build-description
+  6.0.0.XX-build-description \
+  --change-summary docs/templates/release-change-summary.json
 ```
+
+The change summary is mandatory. It names the previous candidate's full source
+SHAs, purpose, declared fixes, issue references, validation focus, and known
+limits. The builder calculates every commit since both baselines and writes
+`release-change-manifest.json` plus `RELEASE-IDENTITY.md`; publication refuses
+to proceed if either exact identity record is missing or inconsistent.
 
 Do not build from a detached commit, side branch, dirty checkout, or an
 already-patched appfs. If a historical comparison is required, make it a
@@ -489,7 +549,7 @@ The patcher should grow deterministic tests that fail when these invariants brea
 9. **shim containment** — model-specific shims return false/no-op for representative other vendors;
 10. **manifest completeness** — all load-bearing camera-stack files have hashes and source provenance;
 11. **no direct-SSH release path** — release tooling/docs may not deploy replacement camera binaries directly to `/app`;
-12. **previous-candidate differential** — unexpected changes outside the declared camera-stack file set fail the build/review gate.
+12. **previous-candidate differential** — unexpected changes outside the declared camera-stack file set fail the build/review gate. The only allowed file-set exception is the explicitly optional K-5 II/K-5 IIs `usbscsi.so`; adding or removing it is reported as a warning and must be described in the release record.
 
 Physical tests remain mandatory; automation protects the integration contract but cannot replace real camera qualification.
 

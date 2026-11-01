@@ -140,7 +140,7 @@ flowchart LR
   patch --> bundle --> pack --> gates --> device --> tests
 ```
 
-The image is a **matched compatibility unit**, not a collection of independently swappable `.so` files. A successful host-side `gphoto2` test does not establish the packaged `pgphoto` path. Keep stock firmware for recovery; follow [FWPKT provenance](docs/FWPKT-PROVENANCE-CONTRACT.md), [upgrade process](docs/LIBGPHOTO2-UPGRADE-PROCESS.md) and [current release state](docs/RELEASE-VERSION-STATE.md). A displayed version number alone is insufficient: correlate build ID, exact source commits, firmware ZIP hash, installed manifest and **actual mapped libraries**.
+The image is a **matched compatibility unit**, not a collection of independently swappable `.so` files. A successful host-side `gphoto2` test does not establish the packaged `pgphoto` path. Keep stock firmware for recovery; follow the [reproducible build runbook](docs/REPRODUCIBLE-BUILD-RUNBOOK.md), [FWPKT provenance](docs/FWPKT-PROVENANCE-CONTRACT.md), [upgrade process](docs/LIBGPHOTO2-UPGRADE-PROCESS.md) and [current release state](docs/RELEASE-VERSION-STATE.md). A displayed version number alone is insufficient: correlate build ID, exact source commits, firmware ZIP hash, installed manifest and **actual mapped libraries**.
 
 ### 5. Responsibility / debugging cheat sheet
 
@@ -460,6 +460,21 @@ Its slot table is an explicitly non-runtime fixture; production always
 generates the real table from the validated `pgphoto` input.
 
 ## Installing on the Polaris
+
+Before deployment, run the current host-aware preflight. It resolves
+`bluetoothctl`, `nmcli`, `ssh`, and `ip` through the host route when VS Code is
+sandboxed, verifies that a Bluetooth wake link is actually held, and never
+interprets an empty BLE scan as proof that the rig is asleep:
+
+```sh
+./scripts/polaris-preflight.sh --wake --wait 120 --scan 20
+```
+
+Proceed only when the preflight identifies the intended Polaris AP/SSH target.
+If the host cannot reach Bluetooth, the preflight must say that BLE wake is
+unavailable; do not replace this with a bare `bluetoothctl connect` and do not
+call the result a firmware fault. An already-awake rig may still be deployed
+over Wi-Fi when the AP and identity checks pass.
 
 Use **the same SD-card firmware-update procedure you already use for official
 Benro updates**, but with the `FwPkt.zip` this tool produced. The device
