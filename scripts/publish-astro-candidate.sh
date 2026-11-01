@@ -103,7 +103,7 @@ Do not install from this directory until the standard camera owner accepts the
 baseline, issue #251 is closed or explicitly waived, and a supervised hardware
 window is scheduled. Use the documented ZIP/Bluetooth-wake process only.
 EOF
-git -C "$PR_CHECKOUT" add "$DEST"
+git -C "$PR_CHECKOUT" add --sparse "$DEST"
 git -C "$PR_CHECKOUT" commit -m "astro candidate: add $DISPLAY_FWVER--$ID"
 git -C "$PR_CHECKOUT" push origin main
 echo "published=$DEST"
