@@ -105,7 +105,7 @@ window is scheduled. Use the documented ZIP/Bluetooth-wake process only.
 EOF
 git -C "$PR_CHECKOUT" add --sparse "$DEST"
 git -C "$PR_CHECKOUT" commit -m "astro candidate: add $DISPLAY_FWVER--$ID"
-git -C "$PR_CHECKOUT" push origin main
+git -C "$PR_CHECKOUT" push origin HEAD:main
 echo "published=$DEST"
 echo "FwPkt SHA-256=$ACTUAL_SHA"
 echo "FwPkt MD5=$ACTUAL_MD5"
