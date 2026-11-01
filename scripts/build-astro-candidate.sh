@@ -90,6 +90,11 @@ ASTRO_ARGS=(--out "$OUT/astro-bundle" --image "$IMAGE" --focal-min "$FMIN" \
 [ "$NO_INDEXES" = 1 ] && ASTRO_ARGS+=(--no-indexes)
 bash "$ROOT/build-astro.sh" "${ASTRO_ARGS[@]}"
 [ -d "$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro" ] || die "Astro tree missing"
+(
+  cd "$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
+  find . -type f -print0 | sort -z |
+    while IFS= read -r -d '' file; do sha256sum "$file"; done
+) > "$OUT/astro-bundle/ASTRO-MANIFEST.sha256"
 [ -f "$OUT/astro-bundle/ASTRO-MANIFEST.sha256" ] || die "Astro manifest missing"
 tar -C "$OUT/astro-bundle" -czf "$OUT/astro-bundle.tar.gz" .
 
