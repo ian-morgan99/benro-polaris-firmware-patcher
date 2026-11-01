@@ -53,7 +53,7 @@ if [ -z "$PR_CHECKOUT" ]; then
   PR_CHECKOUT="$(mktemp -d "${TMPDIR:-/tmp}/privateresearch-astro.XXXXXX")"
   git clone --depth 1 "$PR_REPO" "$PR_CHECKOUT"
 else
-  [ -d "$PR_CHECKOUT/.git" ] || die "explicit publication checkout must already exist"
+  [ -e "$PR_CHECKOUT/.git" ] || die "explicit publication checkout must already exist"
   [ -z "$(git -C "$PR_CHECKOUT" status --porcelain --untracked-files=all)" ] || \
     die "explicit publication checkout is dirty; no reset or overwrite will be attempted"
   git -C "$PR_CHECKOUT" fetch origin
