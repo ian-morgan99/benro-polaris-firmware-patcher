@@ -56,10 +56,11 @@ enabled.
 
 ## Evidence so far
 
-- Astro focused suites before candidate tooling: 49 passed.
-- Shared gate against the Astro-built FwPkt after the gate-list and install
-  manifest fixes: 427 Python tests passed; 14 checks passed; 0 failed; 3
-  prerequisite skips.
+- Final candidate Astro suite: 75 passed, 6 skipped.
+- Final shared gate: 430 Python tests and 15 checks passed; 0 failed, 2 prerequisite skips.
+- FwPkt SHA-256: 7c11f9a033b2372f1215aca89e3f6ac46544047f26802fe94a68b77217be01d2.
+- Astro bundle SHA-256: 40fe08e7c87e24d5e30fb42660afc917d4ad0df1d227617ac8bfc62d6b0b9a13.
+- Published at firmware-packets/6.0.0.54.91--astro-v1-camera-baseline-20261101 in PrivateResearch, commit b298b601a.
 - The skips were stock firmwareInfo cross-check, previous-candidate
   differential, and provenance registry comparison because the public
   checkout has no stock ZIP/previous manifest. They are recorded, not treated
@@ -73,8 +74,8 @@ enabled.
 ## Remaining gates
 
 - The standard camera owner must resolve/accept #251 and provide the final
-  physically qualified baseline before this Astro packet is deployable.
-- Run the new candidate builder from a clean clone, publish under a unique
+- Candidate build and publication are complete; hashes are recorded in
+  astro-candidate-manifest.json and the PrivateResearch README.
   astro PrivateResearch path, and record the exact manifest hashes.
 - Coordinate one supervised hardware window. Use only the documented
   Bluetooth-wake/ZIP-tree install path; never use SCP or manual SSH code
