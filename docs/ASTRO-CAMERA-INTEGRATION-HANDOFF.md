@@ -74,9 +74,9 @@ enabled.
 ## Remaining gates
 
 - The standard camera owner must resolve/accept #251 and provide the final
+  physically qualified baseline before this Astro packet is deployable.
 - Candidate build and publication are complete; hashes are recorded in
   astro-candidate-manifest.json and the PrivateResearch README.
-  astro PrivateResearch path, and record the exact manifest hashes.
 - Coordinate one supervised hardware window. Use only the documented
   Bluetooth-wake/ZIP-tree install path; never use SCP or manual SSH code
   replacement.
