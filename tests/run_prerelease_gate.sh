@@ -264,6 +264,8 @@ PY_TESTS=(
     tests/test_release_change_manifest.py
     tests/test_watch_app_crash.py
     tests/test_bt_wake_radio_liveness.py
+    tests/test_astro_build_wrapper.py
+    tests/test_plate_solving_present.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
