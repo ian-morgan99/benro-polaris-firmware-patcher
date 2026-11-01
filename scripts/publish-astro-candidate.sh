@@ -57,7 +57,14 @@ else
   [ -z "$(git -C "$PR_CHECKOUT" status --porcelain --untracked-files=all)" ] || \
     die "explicit publication checkout is dirty; no reset or overwrite will be attempted"
   git -C "$PR_CHECKOUT" fetch origin
-  git -C "$PR_CHECKOUT" checkout main >/dev/null 2>&1 || die "publication checkout has no main"
+  BRANCH="$(git -C "$PR_CHECKOUT" branch --show-current)"
+  if [ "$BRANCH" = "main" ]; then
+    git -C "$PR_CHECKOUT" checkout main >/dev/null 2>&1 || die "cannot select main"
+  elif [ -z "$BRANCH" ] && [ "$(git -C "$PR_CHECKOUT" rev-parse HEAD)" = "$(git -C "$PR_CHECKOUT" rev-parse origin/main)" ]; then
+    echo "using clean detached origin/main publication worktree"
+  else
+    die "explicit publication checkout must be main or clean detached origin/main"
+  fi
   [ -z "$(git -C "$PR_CHECKOUT" status --porcelain --untracked-files=all)" ] || die "publication checkout became dirty"
 fi
 REMOTE="$(git -C "$PR_CHECKOUT" remote get-url origin)"
