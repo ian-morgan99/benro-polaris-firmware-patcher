@@ -199,6 +199,17 @@ attached camera (start a camera-timed Bulb, cancel mid-hold, observe whether a n
 exposure is issued), and confirm what pgphoto's context reports at that edge. Then
 implement the branch above with a source-repo test alongside it.
 
+Ownership assessment (2026-11-01): the state that distinguishes the two cases lives
+in libgphoto2, not in pgphoto. The deferral is recorded as `params->pentax.bulb_action_timed_fallback`
+and consumed by the stop edge reached from `config.c:9378`, which calls
+`ptp2_pentax_bulb_action(camera, val != 0, context)`. pgphoto only writes that
+property; it has no view of the flag, so a patcher-side fix would have to infer the
+state from outside — exactly the guessing the ownership rule exists to prevent. The
+change therefore belongs in libgphoto2 and needs the direct reproducer first.
+`tests/test-pentax-capture-contract.py` is the natural home for the accompanying
+assertion, but it is a source-contract test and does not substitute for observing
+the behaviour on an attached camera.
+
 ## Remaining #251 work, in order
 
 1. Type/null/mode and exact abilities-label checks are now implemented and
