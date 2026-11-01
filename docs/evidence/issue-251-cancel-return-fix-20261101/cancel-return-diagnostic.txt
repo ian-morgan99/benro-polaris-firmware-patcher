@@ -1,0 +1,13 @@
+# Issue #251 cancellation-return fix evidence (2026-11-01)
+
+Baseline HEAD: 8c015c0a73c8affea8fa723badcceb4070ef81b4
+Diagnostic input SHA-256: 8973d9486e0207446cc111234ed39e878676ce1f3edca2967a97db86c8d9eaac
+
+## Exact-binary cancellation-return diagnostic (tools/audit_polaris_bulb_cancel.py)
+PASS: v90 exact marker verified; reconstructed ELF layout accepts current dispatcher patch and idempotent recheck
+LIMIT: in-memory diagnostic only; not a stock firmware build or hardware qualification
+CANCEL input=-52, stub stop result=0, subsequent saved result=-52
+CANCEL input=-52, stub stop result=-1, subsequent saved result=-1
+FULL RETURN: cancel=-52 stop=0 return=-52 fake-events=[2, 4]
+FULL RETURN: cancel=-52 stop=-1 return=-1 fake-events=[]
+exit=0

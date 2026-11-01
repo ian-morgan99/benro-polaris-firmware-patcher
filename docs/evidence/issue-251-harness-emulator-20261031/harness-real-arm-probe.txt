@@ -1,0 +1,11 @@
+# Harness emulator probe against REAL #251 ARM code (2026-10-31)
+# Input: capture_image_with_Bulb region extracted read-only from pgphoto.stage2ondisk
+#   symbol 0x101aac size 2176; ELF flags 0x5000200 Version5 EABI soft-float = ARM mode, NOT Thumb
+#   region sha256 23398c6efc7c737c1b2b91664a98b45a2b7bc01f97e704c3ccb4bf3fc4a618c3
+# Harness e69d5e413dfd06dea41975d561b991e5ff548dc5, Unicorn 2.1.4
+
+result: unsupported_instruction
+instructions_executed: 0
+error: Invalid instruction (UC_ERR_INSN_INVALID)
+unsupported_at: 0x1002
+PROBE_EXIT=0
