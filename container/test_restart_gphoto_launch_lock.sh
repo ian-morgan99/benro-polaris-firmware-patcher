@@ -37,7 +37,9 @@ BIN="$OPENPOLARIS_PGPHOTO_BINARY"
 mkdir -p "$PR/$$"
 printf '%s' "$BIN" > "$PR/$$/cmdline"
 # Simulate MJPG-Streamer binding :1F90 (8080) during init.
-printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A\n' > "$PR/net/tcp"
+mkdir -p "$PR/$$/fd"
+ln -s 'socket:[12345]' "$PR/$$/fd/3"
+printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A 00000000:0000 00:00000000 00000000 1000 0 12345 1 0000000000000000 100 0 0 10 0\n' > "$PR/net/tcp"
 trap 'rm -f "$PR/net/tcp"; rm -rf "$PR/$$"; exit 0' TERM
 while :; do sleep 0.3 & wait $!; done
 EOF
