@@ -265,11 +265,36 @@ offset (2176-byte helper region):
 "no copy on disk owns the helper" was an artifact of the address/offset bug and is
 withdrawn.
 
-### No pristine stock binary exists on disk
-A full-file hash search for `333a3f66…` found **0** files, and the firmware-extracted
-`v90-appfs-extract/.../pgphoto.stage2ondisk` (`8973d948…`) already contains 322
-patch markers. So there is **no pristine BASE on this machine**; a rebuild must
-re-extract from the original firmware packet rather than reuse any local copy.
+### Pristine stock base — it DOES exist (this claim was also wrong, now corrected)
+An intermediate claim in this session — "no pristine stock binary exists on disk" —
+was **wrong**, caused by scoping the search to the filename `pgphoto.stage2ondisk`.
+The pristine copy is named `pgphoto.stock`, so it was never in the candidate set.
+
+**Usable pristine BASE:**
+`openpolaris-research/BenroPolarisPatcher/docs/evidence/stock-baseline-2026-09-07/bin/pgphoto.stock`
+
+- size 7,801,576 bytes (identical to every patched copy)
+- MD5 `a766aaf9320978e271d1d8cf0f1677a5` — **matches `BIN_MD5_PGPHOTO` in the
+  baseline `state.txt` exactly**
+- SHA-256 `0308393632dd41d974bd1064e61942655131fe5392959a334cf24623d1bd4a62`
+- helper region at file offset `0xf1aac` hashes to `333a3f66…`, i.e. it is the
+  reference the 112 patched builds are diffed against
+- **0** real patch markers (`stage2-ondisk`, `libpolaris_stage2`, `pgphoto.wrapper`,
+  `camera_usb_supervisor`)
+- baseline `state.txt`: `FwVer:4.0.0.32;date:2025.05.09`, stock libgphoto2 2.5.27.1
+
+Note on an earlier false alarm: grepping this file for `polaris|stage2-ondisk|libpolaris`
+returned 322 hits, which I read as "already patched". That was a bad pattern — the
+word *polaris* occurs naturally throughout the stock firmware. Restricting to the
+strings our patch actually injects gives 0. The same mistake invalidated the earlier
+"firmware-extracted copy is already patched" statement about `8973d948…`; that file
+is a **build output**, and its patched status must be judged by injected strings, not
+by the word `polaris`.
+
+**Consequence:** rebuilds do not need to re-extract from `FwPkt.zip`. The stock packet
+remains the authoritative durable input (`4.0.0.32--stock/FwPkt.zip`, zip SHA-256
+`f980fe52…`, appfs MD5 `47f2ae68…2397b`), but `pgphoto.stock` is a verified,
+immediately usable base for the canonical release process.
 
 ### Criterion 6 (missing timed-B shutter list) — implemented, tested, shipped
 This criterion was already addressed under issue **#241**, not #251:
