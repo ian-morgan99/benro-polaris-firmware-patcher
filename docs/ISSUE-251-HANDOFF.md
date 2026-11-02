@@ -242,3 +242,50 @@ SHA-256 `8973d9486e0207446cc111234ed39e878676ce1f3edca2967a97db86c8d9eaac`.
 It is already patched and must not be passed off as pristine stock or modified
 in place. The preserved diagnostic reconstructs only its verified patch effects
 in memory. Obtain release inputs through the stock-packet runbook.
+
+## 2026-10-30: corrected binary ownership scan, and criterion 6 verified offline
+
+### Binary ownership — the earlier "no copy owns the helper" claim was WRONG
+The first scan hashed **file offset** `0x101aac`, but that value is a **virtual
+address**. `.text` is `sh_addr=0x15710`, `sh_offset=0x5710`, so the correct file
+offset is `0x101aac - 0x15710 + 0x5710 = 0xf1aac`. The first scan therefore hashed
+unrelated bytes and reported 0 matches for both hashes.
+
+Re-scanned all 280 `pgphoto.stage2ondisk` files under `/home/ian` at the correct
+offset (2176-byte helper region):
+
+- **15 match the pinned helper** `23398c6e…` — every one is a build we produced,
+  including `out/o-v18m-k1ii-pgphoto-readiness-20261029/...` (the candidate) and
+  the extracted packet copy. **The candidate does own the helper.**
+- **112 match the stock helper** `333a3f66…` — these are *older patched builds*
+  whose helper region was never modified, not pristine binaries.
+- 69 files are a third variant.
+
+**Correction to record:** the candidate owns the helper; the earlier statement that
+"no copy on disk owns the helper" was an artifact of the address/offset bug and is
+withdrawn.
+
+### No pristine stock binary exists on disk
+A full-file hash search for `333a3f66…` found **0** files, and the firmware-extracted
+`v90-appfs-extract/.../pgphoto.stage2ondisk` (`8973d948…`) already contains 322
+patch markers. So there is **no pristine BASE on this machine**; a rebuild must
+re-extract from the original firmware packet rather than reuse any local copy.
+
+### Criterion 6 (missing timed-B shutter list) — implemented, tested, shipped
+This criterion was already addressed under issue **#241**, not #251:
+
+- `ptp2/pentax: always populate the Bulb/seconds entries in the shutter list`
+  (`8db3785f7`, 2026-10-27) is an ancestor of the shipped branch.
+- `_get_Pentax_DirectShutter` synthesises the body's own 1 s–30 s entries when the
+  camera returns `enum-count=0` in B mode, and points the current value at a valid
+  entry so the widget is coherent. Gated by
+  `pentax_shutter_list_may_synthesise_bulb()` — **K-3 III only**; K-1 II, K-3 II,
+  KP and K-70 are excluded.
+- Verified in the shipped artifact: `stage2-ondisk/libgphoto2/2.5.34/ptp2.so`
+  contains the fix's log string.
+- `tests/test-pentax-utils` rebuilt from current source and **passes** (exit 0),
+  covering the 1..30 s table, value formatting, and the model gate.
+
+**Still open:** on-camera confirmation that Benro Connect no longer crashes in
+timed-B / on a mode-dial change. The code path is verified offline; the crash-free
+behaviour is not yet observed.
