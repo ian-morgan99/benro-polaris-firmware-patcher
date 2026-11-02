@@ -17,7 +17,7 @@
       "issues": ["#253"]
     },
     {
-      "component": "package",
+      "component": "packaging",
       "summary": "Include the optional legacy Pentax USB-SCSI iolib and camlib packaging path for compatible MSC bodies; this does not change the PTP path used by K-1 II and K-3 III.",
       "issues": ["#229"]
     }
