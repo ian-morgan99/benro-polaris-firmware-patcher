@@ -133,9 +133,21 @@ echo "192.168.0.1 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFAKEKEY"
 exit 0
 """
 
+FAKE_BLUETOOTHCTL = r"""#!/usr/bin/env bash
+# Offline installer tests must never invoke the host Bluetooth adapter.
+exit 1
+"""
+
+FAKE_FLATPAK_SPAWN = r"""#!/usr/bin/env bash
+# Prevent the test's Bluetooth probe from reaching the host portal.
+exit 1
+"""
+
 
 def _write_fakes(bin_dir: Path) -> None:
-    for name, body in (("ssh", FAKE_SSH), ("scp", FAKE_SCP), ("nc", FAKE_NC), ("ssh-keyscan", FAKE_KEYSCAN)):
+    for name, body in (("ssh", FAKE_SSH), ("scp", FAKE_SCP), ("nc", FAKE_NC),
+                       ("ssh-keyscan", FAKE_KEYSCAN), ("bluetoothctl", FAKE_BLUETOOTHCTL),
+                       ("flatpak-spawn", FAKE_FLATPAK_SPAWN)):
         p = bin_dir / name
         p.write_text(body)
         p.chmod(0o755)
@@ -193,6 +205,7 @@ def run_install(tmp_path: Path, env_extra: dict[str, str], args: tuple[str, ...]
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin",
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "HOME": str(tmp_path / "home"),
         "FAKE_DEVICE_ROOT": str(dev),
         "FAKE_STATE_FILE": str(state),
@@ -244,6 +257,7 @@ def test_hash_mismatch_is_installed_unverified(tmp_path):
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "FAKE_DEVICE_ROOT": str(dev), "FAKE_STATE_FILE": str(state),
         "GIMBAL_HOST": "127.0.0.1", "GIMBAL_PORT": str(gate.port),
         "GIMBAL_SSH": f"root@127.0.0.1:{gate.port}",
@@ -281,6 +295,7 @@ def test_missing_binary_fails_verification(tmp_path):
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "FAKE_DEVICE_ROOT": str(dev), "FAKE_STATE_FILE": str(state),
         "GIMBAL_HOST": "127.0.0.1", "GIMBAL_PORT": str(gate.port),
         "GIMBAL_SSH": f"root@127.0.0.1:{gate.port}",
@@ -313,6 +328,7 @@ def test_spoofed_version_is_not_installed(tmp_path):
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "FAKE_DEVICE_ROOT": str(dev), "FAKE_STATE_FILE": str(state),
         "GIMBAL_HOST": "127.0.0.1", "GIMBAL_PORT": str(gate.port),
         "GIMBAL_SSH": f"root@127.0.0.1:{gate.port}",
@@ -353,6 +369,7 @@ def test_wrong_host_family_refused(tmp_path):
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "FAKE_DEVICE_ROOT": str(dev), "FAKE_STATE_FILE": str(state),
         "GIMBAL_HOST": "127.0.0.1", "GIMBAL_PORT": str(gate.port),
         "GIMBAL_SSH": f"root@127.0.0.1:{gate.port}",
@@ -392,6 +409,7 @@ def test_no_blind_reflash_when_already_updated(tmp_path):
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "FAKE_DEVICE_ROOT": str(dev), "FAKE_STATE_FILE": str(state),
         "GIMBAL_HOST": "127.0.0.1", "GIMBAL_PORT": str(gate.port),
         "GIMBAL_SSH": f"root@127.0.0.1:{gate.port}",
@@ -426,6 +444,7 @@ def test_manifest_digest_mismatch_refuses(tmp_path):
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "FAKE_DEVICE_ROOT": str(dev), "FAKE_STATE_FILE": str(state),
         "GIMBAL_HOST": "127.0.0.1", "GIMBAL_PORT": str(gate.port),
         "GIMBAL_SSH": f"root@127.0.0.1:{gate.port}",
@@ -457,6 +476,7 @@ def test_poll_survives_interrupted_wake(tmp_path):
     gate = TcpGate(state)
     env = {
         "PATH": f"{bin_dir}:/usr/bin:/bin", "HOME": str(tmp_path / "home"),
+        "POLARIS_BT_DEV": str(tmp_path / "no-hci"),
         "FAKE_DEVICE_ROOT": str(dev), "FAKE_STATE_FILE": str(state),
         "GIMBAL_HOST": "127.0.0.1", "GIMBAL_PORT": str(gate.port),
         "GIMBAL_SSH": f"root@127.0.0.1:{gate.port}",
