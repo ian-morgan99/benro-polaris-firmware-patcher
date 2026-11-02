@@ -289,3 +289,32 @@ This criterion was already addressed under issue **#241**, not #251:
 **Still open:** on-camera confirmation that Benro Connect no longer crashes in
 timed-B / on a mode-dial change. The code path is verified offline; the crash-free
 behaviour is not yet observed.
+
+### Criterion 6, part 2 (duration rather than pre-delay) — implemented, tested, shipped
+Also already addressed, under issue **#243**:
+
+- `ptp2/pentax: stop using the pre-shutter Bulb timer as the duration`
+  (`27540e122`) is an ancestor of the shipped branch.
+- The camera-timed fallback now derives the duration from the **measured hold**
+  (`pentax_bulb_hold_to_seconds(start_ms, now)`). The body's pre-shutter report is
+  logged alongside for comparison only and explicitly "must never drive the
+  duration", because at the start edge it still reflects the *previous* shot.
+- Verified in the shipped artifact: `stage2-ondisk/libgphoto2/2.5.34/ptp2.so`
+  contains the fallback log string; `libgphoto2.so.6` correctly does not.
+- `tests/test-pentax-utils` covers the rounding table (1000→3000 ms = 2 s,
+  3500 = 3 s, 12000 = 11 s, sub-second and negative clamps to 1 s) and passes.
+
+### Unit suite status on this tree
+`meson test` in `build-static-audit`: **19 ok, 1 skipped, 1 fail**.
+- `test-pentax-utils` OK (3.50 s), `test-pentax-reconcile` OK (1.20 s).
+- `test-pentax-aperture-alias` SKIP (exit 77) — pre-existing skip.
+- `test-gp-port` FAIL is in upstream's **`no-ci`** suite (`libgphoto2_port/tests/
+  meson.build`, `suite: 'no-ci'`) and enumerates real host ports; it is an
+  environment artifact, not a regression from this work. No Pentax test fails.
+
+### Criterion 6 — remaining gate
+Of the three sub-criteria, two are now closed offline (#241 timed-B list, #243
+duration). **Manual wheel behavior and transitions/recovery has no offline
+substitute** — it requires observing the physical dial and mode transitions on the
+body. That remains camera-blocked, as do the physical closure/publication checks in
+criterion 5.
