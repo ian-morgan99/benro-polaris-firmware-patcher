@@ -1,0 +1,37 @@
+{
+  "baseline": {
+    "candidate_id": "o-v18m-k1ii-pgphoto-readiness-20261029",
+    "libgphoto2_commit": "63a894b0821a510fc40244c5cc4ef84a5220a91c",
+    "patcher_commit": "f344e41261a886f8f6107b9467095bc90b3835a1"
+  },
+  "purpose": "Create the standard non-Astro 6.0.0.54.92 candidate from main, carrying the accepted Pentax cancellation and pgphoto readiness fixes and packaging the optional legacy Pentax USB-SCSI transport.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "Abort a deferred Pentax camera-timed Bulb fallback safely when the operation is cancelled before exposure begins, clearing deferred state before any shutter write.",
+      "issues": ["#251"]
+    },
+    {
+      "component": "patcher",
+      "summary": "Make pgphoto readiness fail closed unless the expected process owns the 8080 listener, while retaining the bounded slow-start window for K-1 II startup.",
+      "issues": ["#253"]
+    },
+    {
+      "component": "package",
+      "summary": "Include the optional legacy Pentax USB-SCSI iolib and camlib packaging path for compatible MSC bodies; this does not change the PTP path used by K-1 II and K-3 III.",
+      "issues": ["#229"]
+    }
+  ],
+  "validation_focus": [
+    "Run the shared libgphoto2 host regression and Pentax capture-contract checks against the exact main commit.",
+    "Run the patcher deterministic suite and the full pre-release gate against the exact FwPkt artifact.",
+    "Verify the published package contains usbscsi.so and the legacy Pentax registrations while preserving K-1 II and K-3 III PTP package contents.",
+    "Before any installation, perform supervised K-1 II and K-3 III physical camera qualification and separate legacy USB-SCSI hardware qualification if available."
+  ],
+  "known_limits": [
+    "This is a standard non-Astro candidate; it contains no Astro platesolve features.",
+    "The build and offline gates do not prove installation, runtime behavior, or physical camera qualification.",
+    "USB-SCSI is packaged for compatibility but has not been physically qualified on a legacy Pentax MSC body in this release.",
+    "Issue #251 cancellation behavior still requires supervised Polaris qualification on the real camera path."
+  ]
+}
