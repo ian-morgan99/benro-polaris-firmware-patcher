@@ -1,6 +1,6 @@
 # Astro / standard-camera integration handoff
 
-Review date: 2026-11-01
+Review date: 2026-11-03
 
 This branch owns the separate Astro candidate. Its camera implementation is
 the standard camera implementation at the accepted baseline; Astro adds only
@@ -12,16 +12,16 @@ the native-C solver, catalogue/index bundle, orchestration and research UI.
 |---|---|---|
 | Astro owner | /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher, feature/astro-native-platesolve | dirty local checkout intentionally preserved at 8626bfd; it is behind the pushed clean integration and still contains another agent's edits |
 | integrated Astro source | feature/astro-native-platesolve | pushed merge fb29e933, then gate fix e725db2, candidate tooling f11cef9 |
-| standard camera baseline | /home/ian/polaris-build-73 main | 8c015c0a73c8affea8fa723badcceb4070ef81b4; issue #251 remains release-blocking and not physically qualified |
-| libgphoto2 input | /home/ian/Documents/VSCodeProjects/LibGphoto2-v86-main main | clean, pinned at 051d224dbd33fda67ff65ce73a6d6bbd9c9a3aff |
+| standard camera baseline | /home/ian/polaris-build-73 main | 397320411a1355f06d21233435e144d24efc4207; source fixes are merged, physical qualification remains pending |
+| libgphoto2 input | clean main checkout | pinned at 43dccb81b92b6b25f44957a4684f534393562028 |
 
 The adjacent LibGphoto2/libgphoto2 checkout is a different feature branch
 and is not an accepted input. No deployment or device mutation has occurred.
 
 ## What was transferred
 
-The clean staging worktree merged standard main into Astro with
-fb29e93324e831dd78e76f4be2f198ed39f4c8d2. Shared camera/release paths were
+The clean v94 staging worktree merges current standard main into Astro with
+merge commit 82415ab0 (the exact pushed SHA is recorded in the v94 release identity). Shared camera/release paths were
 taken from standard main, including the Stage-2 loader and release/gate
 scripts. The resulting diff against main contains no camera-adjacent files:
 Astro differences are confined to the Astro sources/tools/tests/docs and the
@@ -36,18 +36,20 @@ a competing #251 implementation.
 
 ## Candidate contract
 
-scripts/build-astro-candidate.sh is the controlled build-only entry point. It:
+scripts/build-astro-candidate.sh is the controlled build-only entry point. It now requires a human change summary and:
 
 1. requires a clean feature/astro-native-platesolve checkout containing
-   standard camera baseline 8c015c0a...;
-2. requires clean libgphoto2 main at 051d224d...;
+   standard camera baseline 39732041...;
+2. requires clean libgphoto2 main at 43dccb81...;
 3. invokes the same patch-polaris.sh FwPkt path as standard firmware;
 4. builds the additive astro-bundle/ with native C binaries, Gaia tiles,
    selected Astrometry.net FITS indexes and corresponding source;
 5. generates the immutable install manifest;
 6. runs the shared camera gate against that FwPkt and the Astro suites;
 7. writes astro-candidate-manifest.json with source, dependency, packet and
-   catalogue hashes.
+   catalogue hashes;
+8. writes and verifies release-change-manifest.json and RELEASE-IDENTITY.md,
+   including the release SHA in the final provenance.
 
 The script never stages, reboots, flashes or uploads. Publication is a
 separate, explicit action. The Astro bundle is not linked into Stage 2; it is
@@ -73,8 +75,9 @@ enabled.
 
 ## Remaining gates
 
-- The standard camera owner must resolve/accept #251 and provide the final
-  physically qualified baseline before this Astro packet is deployable.
+- The standard camera fixes are now merged from main. The v94 source/package
+  gates do not replace supervised physical qualification of #251, #253, or the
+  Astro camera lifecycle.
 - Candidate build and publication are complete; hashes are recorded in
   astro-candidate-manifest.json and the PrivateResearch README.
 - Coordinate one supervised hardware window. Use only the documented

@@ -20,11 +20,14 @@ def test_candidate_builder_is_separate_and_build_only():
 
 def test_candidate_builder_binds_shared_inputs():
     text = SCRIPT.read_text()
-    assert "8c015c0a73c8affea8fa723badcceb4070ef81b4" in text
-    assert "051d224dbd33fda67ff65ce73a6d6bbd9c9a3aff" in text
+    assert "397320411a1355f06d21233435e144d24efc4207" in text
+    assert "43dccb81b92b6b25f44957a4684f534393562028" in text
     assert 'feature/astro-native-platesolve' in text
     assert 'git -C "$LIBSRC" status --porcelain' in text
     assert 'merge-base --is-ancestor "$CAMERA_BASELINE" HEAD' in text
+    assert "create-release-change-manifest.py" in text
+    assert "verify-candidate-identity.py" in text
+    assert "release_change_manifest_sha256" in text
 
 
 def test_candidate_manifest_records_packet_and_dependencies():

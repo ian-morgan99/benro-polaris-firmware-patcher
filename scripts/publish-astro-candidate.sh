@@ -4,7 +4,7 @@
 set -euo pipefail
 
 BUILD="" PR_REPO="https://github.com/ian-morgan99/PrivateResearch.git"
-PR_CHECKOUT="" NOTE="Astro candidate; build-only; physical qualification pending."
+PR_CHECKOUT="" NOTE="Astro candidate; build-only; physical qualification pending." STATUS="gated"
 usage() {
   cat >&2 <<'EOF'
 usage: scripts/publish-astro-candidate.sh --build out/astro-id
@@ -19,15 +19,21 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --build) BUILD="$2"; shift 2;; --repo) PR_REPO="$2"; shift 2;;
     --checkout) PR_CHECKOUT="$2"; shift 2;; --note) NOTE="$2"; shift 2;;
+    --status) STATUS="$2"; shift 2;;
     -h|--help) usage;; *) die "unknown option: $1";;
   esac
 done
 [ -n "$BUILD" ] || usage
 [ -d "$BUILD" ] || die "candidate directory not found: $BUILD"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MANIFEST="$BUILD/astro-candidate-manifest.json"
 [ -f "$MANIFEST" ] || die "candidate manifest missing"
 [ -f "$BUILD/FwPkt.zip" ] || die "FwPkt.zip missing"
 [ -f "$BUILD/astro-bundle.tar.gz" ] || die "astro-bundle.tar.gz missing"
+[ -f "$BUILD/release-change-manifest.json" ] || die "release-change-manifest.json missing"
+[ -f "$BUILD/RELEASE-IDENTITY.md" ] || die "RELEASE-IDENTITY.md missing"
+case "$STATUS" in gated|published|installed-verified) ;; *) die "unsupported publication status: $STATUS";; esac
+python3 "$REPO_ROOT/scripts/verify-candidate-identity.py" "$BUILD" --require-deployable
 
 readarray -t META < <(python3 - "$MANIFEST" <<'PY'
 import json, sys
@@ -72,13 +78,20 @@ case "$REMOTE" in
   https://github.com/ian-morgan99/PrivateResearch*|git@github.com:ian-morgan99/PrivateResearch*) ;;
   *) die "publication checkout origin is not PrivateResearch: $REMOTE";;
 esac
-[ ! -e "$PR_CHECKOUT/$DEST" ] || die "refusing to overwrite existing publication: $DEST"
-mkdir -p "$PR_CHECKOUT/$DEST"
-cp "$BUILD/FwPkt.zip" "$PR_CHECKOUT/$DEST/"
-cp "$BUILD/astro-bundle.tar.gz" "$PR_CHECKOUT/$DEST/"
+EXISTING=0
+if [ -e "$PR_CHECKOUT/$DEST" ]; then
+  EXISTING=1
+  [ -f "$PR_CHECKOUT/$DEST/FwPkt.zip" ] || die "existing publication has no FwPkt.zip: $DEST"
+  cmp -s "$BUILD/FwPkt.zip" "$PR_CHECKOUT/$DEST/FwPkt.zip" || die "refusing to replace published ZIP bytes for existing candidate: $DEST"
+else
+  mkdir -p "$PR_CHECKOUT/$DEST"
+  cp "$BUILD/FwPkt.zip" "$PR_CHECKOUT/$DEST/"
+  cp "$BUILD/astro-bundle.tar.gz" "$PR_CHECKOUT/$DEST/"
+fi
 cp "$MANIFEST" "$PR_CHECKOUT/$DEST/"
-for file in install-manifest.json build-source-provenance.txt shared-camera-gate.txt \
-  astro-test-transcript.txt install-status.txt; do
+for file in install-manifest.json build-source-provenance.txt release-change-manifest.json \
+  RELEASE-IDENTITY.md shared-camera-gate.txt astro-test-transcript.txt install-status.txt \
+  install.log install-receipt.txt; do
   [ -f "$BUILD/$file" ] && cp "$BUILD/$file" "$PR_CHECKOUT/$DEST/"
 done
 cat > "$PR_CHECKOUT/$DEST/README.md" <<EOF
@@ -96,7 +109,7 @@ catalogue and indexes are in astro-bundle.tar.gz.
 | FwPkt MD5 | $ACTUAL_MD5 |
 | patcher commit | $PATCHER_SHA |
 | libgphoto2 commit | $LIBG_SHA |
-| status | candidate, not installed |
+| status | $STATUS |
 | note | $NOTE |
 
 Do not install from this directory until the standard camera owner accepts the
@@ -104,7 +117,11 @@ baseline, issue #251 is closed or explicitly waived, and a supervised hardware
 window is scheduled. Use the documented ZIP/Bluetooth-wake process only.
 EOF
 git -C "$PR_CHECKOUT" add --sparse "$DEST"
-git -C "$PR_CHECKOUT" commit -m "astro candidate: add $DISPLAY_FWVER--$ID"
+if [ "$EXISTING" = 1 ]; then
+  git -C "$PR_CHECKOUT" commit -m "astro candidate: update $DISPLAY_FWVER--$ID status"
+else
+  git -C "$PR_CHECKOUT" commit -m "astro candidate: add $DISPLAY_FWVER--$ID"
+fi
 git -C "$PR_CHECKOUT" push origin HEAD:main
 echo "published=$DEST"
 echo "FwPkt SHA-256=$ACTUAL_SHA"

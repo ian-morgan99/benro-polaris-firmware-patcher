@@ -18,9 +18,10 @@ Use the clean pinned libgphoto2 main checkout and the stock FwPkt input:
       --libgphoto2-source /path/to/LibGphoto2-v86-main \
       --display-fwver 6.0.0.54.N \
       --build-id astro-v1-camera-baseline-YYYYMMDD \
-      --camera-baseline 8c015c0a73c8affea8fa723badcceb4070ef81b4 \
-      --libgphoto2-commit 051d224dbd33fda67ff65ce73a6d6bbd9c9a3aff \
+      --camera-baseline 397320411a1355f06d21233435e144d24efc4207 \
+      --libgphoto2-commit 43dccb81b92b6b25f44957a4684f534393562028 \
       --catalog-package /path/to/gaia-dr3-g10 \
+      --change-summary docs/release-change-summary-v94-astro.json \
       --focal-min 50 --focal-max 50 --sensor-mm 23.5
 
 The focal and sensor values are deliberate. In production they should be
@@ -48,8 +49,8 @@ After reviewing all evidence:
       --build out/astro-v1-camera-baseline-YYYYMMDD
 
 The publisher uses a fresh or clean detached PrivateResearch worktree, refuses
-dirty checkouts and existing destinations, recomputes packet hashes, and
-pushes only:
+dirty checkouts and refuses to replace ZIP bytes for an existing destination,
+recomputes packet hashes, verifies the candidate identity, and pushes only:
 
     firmware-packets/<display-version>--<candidate-id>/
 

@@ -5,7 +5,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ID="" STOCK="" LIBSRC="" OUT="" DISPLAY_FWVER="" BUILD_ID=""
-CAMERA_BASELINE="8c015c0a73c8affea8fa723badcceb4070ef81b4"
+CHANGE_SUMMARY=""
+CAMERA_BASELINE="397320411a1355f06d21233435e144d24efc4207"
 LIB_BASELINE="43dccb81b92b6b25f44957a4684f534393562028"
 CATALOG_PACKAGE="" FMIN="14" FMAX="400" SENSOR="36"
 ASTRO_SRC_CACHE="${ASTRO_SRC_CACHE:-$ROOT/out/.astro-src-cache}"
@@ -15,7 +16,7 @@ usage() {
   cat >&2 <<'EOF'
 usage: scripts/build-astro-candidate.sh --id ID --stock-fwpkt PATH \
   --libgphoto2-source PATH --display-fwver X.Y.Z.N.M --build-id ID \
-  --catalog-package DIR [options]
+  --catalog-package DIR --change-summary FILE [options]
 
 Build-only Astro candidate. Output contains FwPkt/ and additive
 astro-bundle/. This never stages, reboots, flashes, or uploads.
@@ -32,6 +33,7 @@ while [ $# -gt 0 ]; do
     --id) ID="$2"; shift 2;; --stock-fwpkt) STOCK="$2"; shift 2;;
     --libgphoto2-source) LIBSRC="$2"; shift 2;;
     --display-fwver) DISPLAY_FWVER="$2"; shift 2;; --build-id) BUILD_ID="$2"; shift 2;;
+    --change-summary) CHANGE_SUMMARY="$2"; shift 2;;
     --camera-baseline) CAMERA_BASELINE="$2"; shift 2;;
     --libgphoto2-commit) LIB_BASELINE="$2"; shift 2;;
     --catalog-package) CATALOG_PACKAGE="$2"; shift 2;;
@@ -43,7 +45,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -n "$ID" ] && [ -n "$STOCK" ] && [ -n "$LIBSRC" ] &&
-[ -n "$DISPLAY_FWVER" ] && [ -n "$BUILD_ID" ] && [ -n "$CATALOG_PACKAGE" ] || usage
+[ -n "$DISPLAY_FWVER" ] && [ -n "$BUILD_ID" ] && [ -n "$CATALOG_PACKAGE" ] &&
+[ -n "$CHANGE_SUMMARY" ] || usage
+[ -f "$CHANGE_SUMMARY" ] || die "change summary does not exist: $CHANGE_SUMMARY"
 case "$ID" in (*[!a-zA-Z0-9._-]*) die "invalid candidate id: $ID";; esac
 case "$DISPLAY_FWVER" in (*[!0-9.]*|.*|*..*|*.) die "invalid display version";; esac
 case "$DISPLAY_FWVER" in (*.*.*.*.*) ;; (*) die "need five-component display version";; esac
@@ -118,16 +122,12 @@ set -e
 cat "$OUT/shared-camera-gate.txt"
 [ "$GATE_RC" -eq 0 ] || die "shared gate RED; candidate is not publishable"
 
-echo "[6/7] recording source and feature binding"
+echo "[6/9] recording source and feature binding"
 {
   echo "candidate_variant=astro"
   echo "candidate_id=$ID"
-  echo "display_fwver=$DISPLAY_FWVER"
-  echo "build_id=$BUILD_ID"
-  echo "patcher_commit=$(git -C "$ROOT" rev-parse HEAD)"
   echo "shared_camera_baseline=$CAMERA_BASELINE"
   echo "astro_commit=$(git -C "$ROOT" rev-parse HEAD)"
-  echo "libgphoto2_commit=$LIB_BASELINE"
   echo "stock_input=$STOCK"
   echo "catalogue_package=$CATALOG_PACKAGE"
   echo "focal_min_mm=$FMIN"
@@ -143,6 +143,23 @@ python3 "$ROOT/scripts/create-astro-candidate-manifest.py" --candidate-dir "$OUT
   --stock "$STOCK" --display-fwver "$DISPLAY_FWVER" --build-id "$BUILD_ID" \
   --catalogue-package "$CATALOG_PACKAGE" --focal-min "$FMIN" \
   --focal-max "$FMAX" --sensor-mm "$SENSOR"
+
+echo "[7/9] generating immutable release identity"
+python3 "$ROOT/scripts/create-release-change-manifest.py" \
+  --summary "$CHANGE_SUMMARY" --candidate-id "$ID" \
+  --display-fwver "$DISPLAY_FWVER" --build-id "$BUILD_ID" \
+  --libgphoto2 "$LIBSRC" --patcher "$ROOT" --stock "$STOCK" \
+  --candidate-dir "$OUT"
+CHANGE_MANIFEST_SHA256="$(sha256sum "$OUT/release-change-manifest.json" | awk '{print $1}')"
+{
+  echo "release_change_manifest=release-change-manifest.json"
+  echo "release_change_manifest_sha256=$CHANGE_MANIFEST_SHA256"
+} >> "$OUT/build-source-provenance.txt"
+
+echo "[8/9] checking candidate identity"
+python3 "$ROOT/scripts/verify-candidate-identity.py" "$OUT" --require-deployable
+
+echo "[9/9] recording initial install status"
 cat > "$OUT/install-status.txt" <<EOF
 candidate_variant=astro
 candidate_id=$ID
@@ -150,7 +167,7 @@ install_status=not-installed
 deployment=not-performed
 EOF
 
-echo "[7/7] candidate complete (build-only)"
+echo "candidate complete (build-only)"
 echo "candidate=$OUT"
 echo "manifest=$OUT/astro-candidate-manifest.json"
 echo "FwPkt=$OUT/FwPkt.zip"

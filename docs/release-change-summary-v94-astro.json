@@ -1,0 +1,42 @@
+{
+  "baseline": {
+    "candidate_id": "astro-k3iii-held-bulb-20261102",
+    "libgphoto2_commit": "43dccb81b92b6b25f44957a4684f534393562028",
+    "patcher_commit": "ea22664981bb81527b385e1a3f542d69efc3e3cf"
+  },
+  "purpose": "Create the Astro 6.0.0.54.94 candidate with the current standard camera fixes merged into the separate native-C Astro firmware line.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "Merge the accepted standard mainline camera and release fixes, including the Pentax cancellation-return path and K-1 II readiness ownership fix, into the Astro branch without maintaining a second camera implementation.",
+      "issues": ["#251", "#253"]
+    },
+    {
+      "component": "libgphoto2",
+      "summary": "Use promoted libgphoto2 main 43dccb81b92b6b25f44957a4684f534393562028, including the deferred-Bulb cancellation fix and current Pentax camera changes.",
+      "issues": ["#251"]
+    },
+    {
+      "component": "packaging",
+      "summary": "Make the Astro candidate produce the canonical release-change-manifest.json and RELEASE-IDENTITY.md, reject duplicate provenance keys, and remain separately identifiable from the standard candidate.",
+      "issues": []
+    },
+    {
+      "component": "tests",
+      "summary": "Run the shared camera pre-release gate and Astro native-C solver, catalogue, frame-watcher, and build-wrapper tests against the exact candidate artifact.",
+      "issues": []
+    }
+  ],
+  "validation_focus": [
+    "Verify the exact merged Astro commit contains the current standard mainline camera fixes and has no unintended camera-adjacent divergence from standard main.",
+    "Run the libgphoto2 deterministic regression pack and shared Polaris pre-release gate against the exact FwPkt.",
+    "Run the complete Astro native-C, dual-solver, catalogue, EXIF, frame-watch, and safety test suites.",
+    "Before any physical camera claim, verify installed provenance and run supervised K-3 III and K-1 II camera lifecycle tests separately."
+  ],
+  "known_limits": [
+    "This candidate is not physical camera qualification; the shared gate and Astro tests do not prove real Polaris capture, plate-solve accuracy, EXIF writeback, drift correction, or motor safety.",
+    "The Astro bundle remains additive SD-card content and is not linked into Stage 2; it requires the documented separate SD installation step.",
+    "Live motor-rate control remains disabled and research-only.",
+    "The v93 artifact is not reused; v94 has a new identity, ZIP, manifest, and publication path."
+  ]
+}
