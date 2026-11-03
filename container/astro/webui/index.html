@@ -873,6 +873,39 @@
       </p>
       <button id="gal-refresh" class="ghost sm" type="button">Refresh</button>
     </div>
+    <div class="card" id="gal-test-card">
+      <h3>Historic image solver test</h3>
+      <p class="tiny dim">
+        Upload a historic JPEG or select one already on the Polaris SD, then run a
+        non-motor solve. This test never slews, changes tracking, or writes EXIF.
+        Focal length and sensor width are optional; EXIF/profile data is used when
+        available.
+      </p>
+      <div class="fieldrow" style="flex-wrap:wrap;gap:8px">
+        <input id="gal-test-file" type="file" accept=".jpg,.jpeg,image/jpeg">
+        <button id="gal-test-upload" class="ghost sm" type="button">Upload JPEG</button>
+      </div>
+      <div class="fieldrow" style="flex-wrap:wrap;gap:8px;margin-top:8px">
+        <label class="tiny dim">SD image <select id="gal-test-image"><option value="">No JPEG selected</option></select></label>
+        <label class="tiny dim">Solver <select id="gal-test-solver"><option value="reference">Astrometry.net</option><option value="native">Native indexed (research)</option></select></label>
+        <label class="tiny dim">Focal mm <input id="gal-test-focal" type="number" min="1" max="100000" step="0.1" placeholder="Auto / EXIF"></label>
+        <label class="tiny dim">Sensor width mm <input id="gal-test-sensor" type="number" min="1" max="100" step="0.1" placeholder="Auto / profile"></label>
+      </div>
+      <details style="margin-top:8px"><summary class="tiny dim">Optional RA/Dec hint</summary>
+        <div class="fieldrow" style="flex-wrap:wrap;gap:8px;margin-top:8px">
+          <input id="gal-test-ra" type="number" min="0" max="359.999" step="0.0001" placeholder="RA degrees">
+          <input id="gal-test-dec" type="number" min="-90" max="90" step="0.0001" placeholder="Dec degrees">
+          <input id="gal-test-radius" type="number" min="0.1" max="180" step="0.1" value="60" placeholder="Search radius°">
+        </div>
+      </details>
+      <div class="markrow" style="margin-top:10px">
+        <button id="gal-test-solve" class="startbtn" type="button">Solve selected image</button>
+        <button id="gal-test-cancel" class="ghost" type="button">Cancel</button>
+        <span id="gal-test-status" class="tiny dim">Idle</span>
+      </div>
+      <pre id="gal-test-result" class="tiny mono" style="white-space:pre-wrap;max-height:220px;overflow:auto;margin:10px 0 0" hidden></pre>
+      <pre id="gal-test-log" class="tiny mono dim" style="white-space:pre-wrap;max-height:140px;overflow:auto;margin:8px 0 0" hidden></pre>
+    </div>
     <div id="gal-filter" class="segbar"></div>
     <div id="gal-empty" class="card dim" hidden>No captured frames on the SD yet.</div>
     <div id="gal-grid" class="galgrid"></div>

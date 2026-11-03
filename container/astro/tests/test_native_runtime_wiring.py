@@ -36,6 +36,7 @@ def test_boot_exports_solver_configuration_to_daemons():
     assert 'INDEPENDENT_CATALOG="${INDEPENDENT_CATALOG:-/app/sd/polaris-astro/catalogue.polcat}"' in text
     assert 'INDEPENDENT_CATALOG_MANIFEST="${INDEPENDENT_CATALOG_MANIFEST:-/app/sd/polaris-astro/catalogue-tiles.manifest.json}"' in text
     assert 'INDEPENDENT_TRIANGLE_INDEX="${INDEPENDENT_TRIANGLE_INDEX:-/app/sd/polaris-astro/catalogue-tiles.ptri}"' in text
+    assert 'INDEPENDENT_SOLVER_TIMEOUT' in text and 'INDEPENDENT_SEARCH_TIMEOUT' in text
 
 
 def test_catalogue_is_optional_for_reference_bundle_but_installable():
@@ -77,6 +78,31 @@ def test_exif_focal_parser_fails_closed_on_wrapped_offsets():
     assert "size <= len - off" in extractor
     assert "exif_focal35_mm" in extractor
     assert "exif camera-model" in extractor
+
+
+def test_independent_search_is_bounded_and_blind_fallback_is_opt_in():
+    align = (ONDISK / "polaris-align.sh").read_text()
+    search = (ROOT / "astro" / "polaris-solve-independent-search.c").read_text()
+    assert 'INDEPENDENT_SOLVER_TIMEOUT=${INDEPENDENT_SOLVER_TIMEOUT:-10}' in align
+    assert 'INDEPENDENT_SEARCH_TIMEOUT=${INDEPENDENT_SEARCH_TIMEOUT:-45}' in align
+    assert 'INDEPENDENT_BLIND_FALLBACK=${INDEPENDENT_BLIND_FALLBACK:-0}' in align
+    assert '--solver-timeout "$INDEPENDENT_SOLVER_TIMEOUT"' in align
+    assert '--search-timeout "$INDEPENDENT_SEARCH_TIMEOUT"' in align
+    assert 'INDEPENDENT_BLIND_FALLBACK" = "1"' in align
+    assert 'search_deadline' in search and 'kill(child, SIGKILL)' in search
+    assert '--solver-timeout SEC' in search
+
+
+def test_historic_test_path_is_non_motor_and_separate_from_live_job():
+    httpd = (ROOT / "astro" / "polaris-httpd.c").read_text()
+    html = (ROOT / "astro" / "webui" / "index.html").read_text()
+    js = (ROOT / "astro" / "webui" / "app.js").read_text()
+    assert 'TEST_STATUS' in httpd and 'TEST_RESULT' in httpd and 'TEST_PID' in httpd
+    assert '/api/test/upload' in httpd and 'TEST_MAX_UPLOAD' in httpd
+    assert 'EXIF_WRITEBACK=0' in httpd and 'MOUNT_HINT=0' in httpd
+    assert 'kill(-pid, SIGTERM)' in httpd
+    assert 'gal-test-file' in html and 'gal-test-image' in html
+    assert '/api/test/solve' in js and '/api/test/upload' in js and '/api/test/state' in js
 
 
 def test_align_rejects_missing_image_before_solver_access():

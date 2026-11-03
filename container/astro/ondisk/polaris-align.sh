@@ -47,6 +47,11 @@ INDEPENDENT_MAX_CATALOG=${INDEPENDENT_MAX_CATALOG:-120}
 INDEPENDENT_ANCHOR_STARS=${INDEPENDENT_ANCHOR_STARS:-10}
 INDEPENDENT_SCALE_TOL=${INDEPENDENT_SCALE_TOL:-0.15}
 INDEPENDENT_ATTEMPTS=${INDEPENDENT_ATTEMPTS:-40}
+# Each independent child and the whole indexed search are bounded. A failed
+# mount hint must never fall into an unbounded all-sky scan during capture.
+INDEPENDENT_SOLVER_TIMEOUT=${INDEPENDENT_SOLVER_TIMEOUT:-10}
+INDEPENDENT_SEARCH_TIMEOUT=${INDEPENDENT_SEARCH_TIMEOUT:-45}
+INDEPENDENT_BLIND_FALLBACK=${INDEPENDENT_BLIND_FALLBACK:-0}
 DOWNSAMPLE=${DOWNSAMPLE:-4}
 MAXSTARS=${MAXSTARS:-200}
 # never let one frame block the loop; a mismatched hint can grind for minutes
@@ -55,6 +60,9 @@ SOLVE_TIMEOUT=${SOLVE_TIMEOUT:-45}
 IMG="$1"
 FOCAL="${2:-}"
 RA="${3:-}"; DEC="${4:-}"; RADIUS="${5:-}"
+# The WebUI uses the explicit word auto for an optional focal input. Treat it
+# as absent so EXIF/profile/cache inference remains the normal path.
+[ "$FOCAL" = "auto" ] && FOCAL=""
 USE_HINT=1
 
 [ -n "$IMG" ] || { echo "usage: $0 <image.jpg> [focal_mm] [ra dec radius]" >&2; exit 2; }
@@ -280,6 +288,8 @@ solve_with() {
                 --solver "$ASTRO/polaris-solve-independent" --stars "$STARS" --width "$W" --height "$H" \
                 --max-catalog "$INDEPENDENT_MAX_CATALOG" --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
                 --attempts "$INDEPENDENT_ATTEMPTS" --min-matches "${MIN_MATCHES:-12}" \
+                --solver-timeout "$INDEPENDENT_SOLVER_TIMEOUT" \
+                --search-timeout "$INDEPENDENT_SEARCH_TIMEOUT" \
                 --scale-tol "$SOLVE_SCALE_TOL" $_scale
         else
             set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" \
@@ -352,9 +362,13 @@ fi
         *'"solved":true'*) emit_solution "$OUT"; exit 0;;
     esac
     if [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ]; then
-        echo "[polaris-align] indexed hint search failed -- retrying bounded blind search" >&2
-        USE_HINT=0
-        OUT=$(solve_with "$(solver_scale_args "$SEARCH_FOCAL")")
+        if [ "$INDEPENDENT_BLIND_FALLBACK" = "1" ]; then
+            echo "[polaris-align] indexed hint search failed -- retrying bounded blind search (explicitly enabled)" >&2
+            USE_HINT=0
+            OUT=$(solve_with "$(solver_scale_args "$SEARCH_FOCAL")")
+        else
+            echo "[polaris-align] indexed hint search failed -- blind fallback disabled" >&2
+        fi
     fi
     case "$OUT" in *'"solved":true'*) emit_solution "$OUT";; *) echo "$OUT";; esac
     exit 0

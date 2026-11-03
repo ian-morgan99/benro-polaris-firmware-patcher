@@ -46,6 +46,11 @@ INDEPENDENT_MAX_CATALOG=120
 INDEPENDENT_ANCHOR_STARS=10
 INDEPENDENT_SCALE_TOL=0.15
 INDEPENDENT_ATTEMPTS=40
+# Native indexed search safety limits. Blind fallback is deliberately disabled
+# unless a controlled research run opts in explicitly.
+INDEPENDENT_SOLVER_TIMEOUT=10
+INDEPENDENT_SEARCH_TIMEOUT=45
+INDEPENDENT_BLIND_FALLBACK=0
 # Camera geometry is camera-agnostic. SENSOR_MM is the most reliable option;
 # otherwise the solver checks the JPEG's EXIF 35 mm-equivalent focal length and
 # then an exact model in SENSOR_PROFILE_FILE. A bounded generic fallback keeps

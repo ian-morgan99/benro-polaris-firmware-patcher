@@ -17,7 +17,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <sys/wait.h>
+#include <signal.h>
+#include <time.h>
 #include <unistd.h>
 
 typedef struct {
@@ -259,20 +262,27 @@ static double json_double(const char *json, const char *key, double fallback) {
     return end == p + strlen(needle) ? fallback : value;
 }
 
-/* Run one native child without going through a shell.  That keeps paths and
- * the catalogue directory data-only, and makes the search safe for filenames
- * that happen to contain shell metacharacters. */
+static double monotonic_seconds(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1.0e9;
+}
+
+/* Run one native child without going through a shell.  Every attempt has a
+ * deadline: a bad catalogue tile or an unexpectedly expensive match must not
+ * hold the whole search (or a capture worker) forever. */
 static int run_solver(const char *solver, const tile_t *tile, const char *stars,
                       double width, double height, double focal, double sensor,
                       double ra, double dec, double radius, int max_stars,
                       int max_catalogue, int anchor_stars, int minimum_matches, double scale_tol,
-                      double residual_px, char *result, size_t result_size) {
-    int pipefd[2], status;
+                      double residual_px, double timeout_sec, char *result, size_t result_size) {
+    int pipefd[2], status = 0, timed_out = 0;
     pid_t child;
     char width_s[32], height_s[32], focal_s[32], sensor_s[32], ra_s[32], dec_s[32];
     char radius_s[32], stars_s[16], catalogue_s[16], anchor_s[16], matches_s[16];
     char scale_tol_s[32], residual_s[32];
     ssize_t used = 0, n;
+    double deadline = monotonic_seconds() + timeout_sec;
     if (pipe(pipefd) < 0) return -1;
     snprintf(width_s, sizeof(width_s), "%.9g", width);
     snprintf(height_s, sizeof(height_s), "%.9g", height);
@@ -306,15 +316,32 @@ static int run_solver(const char *solver, const tile_t *tile, const char *stars,
         _exit(127);
     }
     close(pipefd[1]);
-    while ((n = read(pipefd[0], result + used,
-                     result_size > (size_t)used + 1 ? result_size - (size_t)used - 1 : 0)) > 0) {
-        used += n;
-        if ((size_t)used + 1 >= result_size) break;
+    for (;;) {
+        fd_set rf;
+        struct timeval tv;
+        double left = deadline - monotonic_seconds();
+        if (left <= 0) { timed_out = 1; break; }
+        FD_ZERO(&rf); FD_SET(pipefd[0], &rf);
+        tv.tv_sec = (long)left;
+        tv.tv_usec = (long)((left - (double)tv.tv_sec) * 1000000.0);
+        if (select(pipefd[0] + 1, &rf, NULL, NULL, &tv) < 0) {
+            if (errno == EINTR) continue;
+            break;
+        }
+        if (!FD_ISSET(pipefd[0], &rf)) { timed_out = 1; break; }
+        n = read(pipefd[0], result + used,
+                 result_size > (size_t)used + 1 ? result_size - (size_t)used - 1 : 0);
+        if (n > 0) {
+            used += n;
+            if ((size_t)used + 1 >= result_size) break;
+        } else if (n == 0) break;
+        else if (errno != EINTR) break;
     }
+    if (timed_out) kill(child, SIGKILL);
     close(pipefd[0]);
     result[used < (ssize_t)result_size ? used : (ssize_t)result_size - 1] = '\0';
-    waitpid(child, &status, 0);
-    return WIFEXITED(status) ? WEXITSTATUS(status) : 128;
+    while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
+    return timed_out ? 124 : (WIFEXITED(status) ? WEXITSTATUS(status) : 128);
 }
 
 static int add_start(point_t *starts, int count, int capacity, double ra, double dec) {
@@ -333,7 +360,8 @@ static void usage(const char *program) {
                     "[--triangle-index FILE] [--solver FILE] [--ra R --dec D] [--radius D] "
                     "[--step-deg D] [--rings N] [--attempts N] "
                     "[--max-stars N] [--max-catalog N] [--anchor-stars N] [--min-matches N] "
-                    "[--scale-tol F] [--residual-px F]\n", program);
+                    "[--scale-tol F] [--residual-px F] [--solver-timeout SEC] "
+                    "[--search-timeout SEC]\n", program);
 }
 
 int main(int argc, char **argv) {
@@ -343,7 +371,8 @@ int main(int argc, char **argv) {
     double width = 0, height = 0, focal = 0, sensor = 36;
     double hint_ra = 0, hint_dec = 0, radius = 15, step = 5;
     double ra_bin = 10, dec_bin = 10;
-    double scale_tol = 0.15, residual_px = 5;
+    double scale_tol = 0.15, residual_px = 5, solver_timeout = 10;
+    double search_timeout = 0;
     int have_ra = 0, have_dec = 0, rings = 5, attempts = 40;
     int max_stars = 30, max_catalogue = 120, anchor_stars = 10, minimum_matches = 12;
     int early_matches = 20;
@@ -359,6 +388,7 @@ int main(int argc, char **argv) {
     char best_result[16384];
     int best_matches = 0;
     double best_rms = 1e30;
+    double search_deadline = 0;
     const char *mode;
 
     for (i = 1; i < argc; i++) {
@@ -383,6 +413,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--min-matches") && i + 1 < argc) minimum_matches = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--scale-tol") && i + 1 < argc) scale_tol = atof(argv[++i]);
         else if (!strcmp(argv[i], "--residual-px") && i + 1 < argc) residual_px = atof(argv[++i]);
+        else if (!strcmp(argv[i], "--solver-timeout") && i + 1 < argc) solver_timeout = atof(argv[++i]);
+        else if (!strcmp(argv[i], "--search-timeout") && i + 1 < argc) search_timeout = atof(argv[++i]);
         else if (!strcmp(argv[i], "--early-matches") && i + 1 < argc) early_matches = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--early-rms") && i + 1 < argc) early_rms = atof(argv[++i]);
         else if (!strcmp(argv[i], "--ra-bin-deg") && i + 1 < argc) ra_bin = atof(argv[++i]);
@@ -390,7 +422,8 @@ int main(int argc, char **argv) {
         else { usage(argv[0]); return 2; }
     }
     if (!catalog_dir || !stars || width <= 0 || height <= 0 || focal <= 0 ||
-        have_ra != have_dec || radius <= 0 || ra_bin <= 0 || dec_bin <= 0) {
+        have_ra != have_dec || radius <= 0 || ra_bin <= 0 || dec_bin <= 0 ||
+        solver_timeout <= 0 || (search_timeout < 0)) {
         printf("{\"solved\":false,\"failure_reason\":\"incomplete_arguments\"}\n");
         return 2;
     }
@@ -398,6 +431,7 @@ int main(int argc, char **argv) {
         printf("{\"solved\":false,\"failure_reason\":\"invalid_manifest\"}\n");
         return 3;
     }
+    if (search_timeout > 0) search_deadline = monotonic_seconds() + search_timeout;
     tile_count = load_tiles(catalog_dir, ra_bin, dec_bin, &tiles);
     if (tile_count <= 0) {
         printf("{\"solved\":false,\"failure_reason\":\"no_catalogue_tiles\"}\n");
@@ -490,10 +524,11 @@ int main(int argc, char **argv) {
         for (t = 0; t < start_count && tried < attempts; t++) {
             int tile_id = candidate_order[t];
             result[0] = '\0';
+            if (search_deadline > 0 && monotonic_seconds() >= search_deadline) break;
             run_solver(solver, &tiles[tile_id], stars, width, height, focal, sensor,
                        starts[t].ra, starts[t].dec, radius, max_stars,
                        max_catalogue, anchor_stars, minimum_matches, scale_tol, residual_px,
-                       result, sizeof(result));
+                       solver_timeout, result, sizeof(result));
             tried++;
             if (json_bool(result, "solved")) {
                 int matches = json_int(result, "matched_count", 0);
@@ -525,10 +560,11 @@ int main(int argc, char **argv) {
             for (t = 0; t < nearby && tried < attempts; t++) {
                 int tile_id = candidates[t].tile_id;
                 result[0] = '\0';
+                if (search_deadline > 0 && monotonic_seconds() >= search_deadline) break;
                 run_solver(solver, &tiles[tile_id], stars, width, height, focal, sensor,
                            starts[s].ra, starts[s].dec, radius, max_stars,
                            max_catalogue, anchor_stars, minimum_matches, scale_tol, residual_px,
-                           result, sizeof(result));
+                           solver_timeout, result, sizeof(result));
                 tried++;
                 if (json_bool(result, "solved")) {
                     int matches = json_int(result, "matched_count", 0);
@@ -560,8 +596,10 @@ int main(int argc, char **argv) {
         triangle_index_close(&triangle_index);
         free(observations); free(candidates); free(candidate_order); free(starts); free(tiles); return 0;
     }
-    printf("{\"solved\":false,\"failure_reason\":\"search_exhausted\","
-           "\"attempts\":%d,\"search_mode\":\"%s\"}\n", tried, mode);
+    printf("{\"solved\":false,\"failure_reason\":\"%s\","
+           "\"attempts\":%d,\"search_mode\":\"%s\"}\n",
+           search_deadline > 0 && monotonic_seconds() >= search_deadline ? "timeout" : "search_exhausted",
+           tried, mode);
     triangle_index_close(&triangle_index);
     free(observations); free(candidates); free(candidate_order); free(starts); free(tiles); return 7;
 }

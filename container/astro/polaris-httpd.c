@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -86,6 +87,16 @@ static pid_t find_proc(const char *needle) {
 }
 #define JOB_START      "/tmp/polaris-job.start"    /* unix time it began */
 
+/* Historic-image tests are deliberately separate from the live capture job.
+ * They never call the mount or EXIF writer and never reuse JOB_* state. */
+#define TEST_STATUS     "/tmp/polaris-test-job.status"
+#define TEST_RESULT     "/tmp/polaris-test-job.result"
+#define TEST_LOG        "/tmp/polaris-test-job.log"
+#define TEST_PID        "/tmp/polaris-test-job.pid"
+#define TEST_START      "/tmp/polaris-test-job.start"
+#define TEST_FRAME      "/tmp/polaris-test-job.frame"
+#define TEST_MAX_UPLOAD (32L * 1024L * 1024L)
+
 #define AF_STATUS      "/tmp/polaris-af.status"     /* idle|running|done|failed */
 #define AF_PID         "/tmp/polaris-af.pid"        /* pid of the autofocus job */
 #define AF_JSON        "/tmp/polaris-af.json"       /* sweep progress + V-curve */
@@ -129,7 +140,7 @@ static double stage2_now_ms(void) {
 
 static void set_status(const char *s) {
     int fd = open(JOB_STATUS, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-    if (fd >= 0) { write(fd, s, strlen(s)); close(fd); }
+    if (fd >= 0) { if (write(fd, s, strlen(s)) < 0) {} close(fd); }
 }
 
 static void read_file(const char *path, char *buf, size_t cap) {
@@ -621,6 +632,111 @@ static int param_body(const char *b, const char *name, char *out, size_t cap) {
     return param_ci(b, name, out, cap, 1);
 }
 
+/* ---------------------------------------------------------------- test jobs */
+static int media_resolve(const char *rel, char *abs, size_t abscap);
+
+
+static void test_set_status(const char *status) {
+    int fd = open(TEST_STATUS, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd >= 0) { if (write(fd, status, strlen(status)) < 0) {} close(fd); }
+}
+
+static int test_running(pid_t *pid_out) {
+    char status[32] = "", pb[32] = "";
+    pid_t pid = 0;
+    read_file(TEST_STATUS, status, sizeof status);
+    read_file(TEST_PID, pb, sizeof pb);
+    pid = (pid_t)atol(pb);
+    if (!strncmp(status, "running", 7) && pid > 1 && kill(pid, 0) == 0) {
+        if (pid_out) *pid_out = pid;
+        return 1;
+    }
+    if (!strncmp(status, "running", 7)) test_set_status("failed");
+    unlink(TEST_PID);
+    return 0;
+}
+
+static int start_test_solve(const char *rel, const char *solver, const char *focal,
+                            const char *sensor, const char *ra_s, const char *dec_s,
+                            const char *radius_s) {
+    char abs[PATH_MAX], focal_arg[48] = "auto", sensor_env[80] = "";
+    char hint[192] = "", cmd[2048], formatted[64];
+    double focal_d, sensor_d, ra, dec, radius = 60;
+    pid_t pid;
+    int have_ra = ra_s && ra_s[0], have_dec = dec_s && dec_s[0];
+    if (test_running(NULL)) return 0;
+    if (!media_resolve(rel, abs, sizeof abs)) return -2;
+    if (!solver || (strcmp(solver, "reference") && strcmp(solver, "native"))) return -2;
+    if (focal && focal[0] && strcmp(focal, "auto")) {
+        if (!parse_double_strict(focal, &focal_d) || focal_d < 1 || focal_d > 100000) return -2;
+        snprintf(focal_arg, sizeof focal_arg, "%.9g", focal_d);
+    }
+    if (sensor && sensor[0] && strcmp(sensor, "auto")) {
+        if (!parse_double_strict(sensor, &sensor_d) || sensor_d < 1 || sensor_d > 100) return -2;
+        snprintf(sensor_env, sizeof sensor_env, "SENSOR_MM=%.9g ", sensor_d);
+    }
+    if (have_ra != have_dec) return -2;
+    if (have_ra) {
+        if (!parse_double_strict(ra_s, &ra) || !parse_double_strict(dec_s, &dec) ||
+            ra < 0 || ra >= 360 || dec < -90 || dec > 90) return -2;
+        if (radius_s && radius_s[0] &&
+            (!parse_double_strict(radius_s, &radius) || radius <= 0 || radius > 180)) return -2;
+        snprintf(hint, sizeof hint, " %.9g %.9g %.9g", ra, dec, radius);
+    }
+    snprintf(formatted, sizeof formatted, "%s", solver[0] == 'n' ? "polaris-solve-independent-search" : "polaris-solve");
+    { FILE *f = fopen(TEST_FRAME, "w"); if (!f) return -1; fprintf(f, "%s", rel); fclose(f); }
+    unlink(TEST_RESULT); unlink(TEST_LOG);
+    { FILE *f = fopen(TEST_START, "w"); if (f) { fprintf(f, "%ld\n", (long)time(NULL)); fclose(f); } }
+    test_set_status("running");
+    pid = fork();
+    if (pid < 0) { test_set_status("failed"); return -1; }
+    if (pid > 0) { int st; waitpid(pid, &st, 0); return 1; }
+    if (fork() > 0) _exit(0);
+    setsid();
+    { FILE *f = fopen(TEST_PID, "w"); if (f) { fprintf(f, "%ld\n", (long)getpid()); fclose(f); } }
+    { int i, logfd;
+      for (i = 3; i < 64; i++) close(i);
+      logfd = open(TEST_LOG, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      if (logfd >= 0) { dup2(logfd, 1); dup2(logfd, 2); if (logfd > 2) close(logfd); }
+      snprintf(cmd, sizeof cmd,
+          "LAT=%.6f LON=%.6f MOUNT_HINT=0 EXIF_WRITEBACK=0 EMBED_SOLVE_EXIF=0 "
+          "SOLVER_BIN=%s %sSOLVE_TIMEOUT=45 RANGE_TIMEOUT=90 "
+          "INDEPENDENT_SEARCH_TIMEOUT=45 INDEPENDENT_SOLVER_TIMEOUT=10 "
+          "INDEPENDENT_BLIND_FALLBACK=0 sh %s/polaris-align.sh '%s' %s%s > %s 2>> %s",
+          g_lat, g_lon, formatted, sensor_env, g_astro, abs, focal_arg, hint,
+          TEST_RESULT, TEST_LOG);
+      { int rc = system(cmd); test_set_status(rc == 0 ? "done" : "failed"); }
+      unlink(TEST_PID); _exit(0);
+    }
+}
+
+static void handle_test_state(int fd) {
+    char status[32] = "idle", frame[700] = "", result[16384] = "", log[4096] = "";
+    char es[64], ef[1400], er[32768], el[8192], out[45000];
+    long started = 0;
+    read_file(TEST_STATUS, status, sizeof status);
+    read_file(TEST_FRAME, frame, sizeof frame);
+    read_file(TEST_START, es, sizeof es); started = atol(es);
+    read_file(TEST_RESULT, result, sizeof result);
+    read_tail(TEST_LOG, log, sizeof log);
+    json_escape(status, es, sizeof es); json_escape(frame, ef, sizeof ef);
+    json_escape(result, er, sizeof er); json_escape(log, el, sizeof el);
+    snprintf(out, sizeof out,
+        "{\"ok\":true,\"status\":\"%s\",\"path\":\"%s\","
+        "\"started\":%ld,\"result\":\"%s\",\"log\":\"%s\"}",
+        es, ef, started, er, el);
+    respond_json(fd, out);
+}
+
+static void handle_test_cancel(int fd) {
+    char pb[32] = ""; pid_t pid;
+    if (!test_running(&pid)) { respond_json(fd, "{\"ok\":false,\"reason\":\"nothing running\"}"); return; }
+    read_file(TEST_PID, pb, sizeof pb); pid = (pid_t)atol(pb);
+    if (pid > 1) { kill(-pid, SIGTERM); kill(pid, SIGTERM); }
+    test_set_status("cancelled"); unlink(TEST_PID);
+    respond_json(fd, "{\"ok\":true,\"cancelled\":true}");
+}
+
 /* ----------------------------------------------------------------- Alpaca */
 /*
  * ASCOM Alpaca telescope device. Enough for Stellarium / NINA / SkySafari to
@@ -791,8 +907,10 @@ static void serve_snapshot(int fd) {
  * Captured JPEGs land on the Polaris SD next to us (see
  * docs/PLATE-SOLVE-CAPTURE-FLOW.md for the ownership and qualification
  * boundary):
- *   /app/sd/{normal,starskyStack,HDR,panorama,focusStack,sun} and
- *   /app/sd/Lapse/class_* . We list them, serve a small cached colour thumbnail
+ *   /app/sd/{normal,starskyStack,HDR,panorama,focusStack,sun,test-input} and
+ *   /app/sd/Lapse/class_* . The test-input directory is for historic JPEGs
+ *   uploaded through the WebUI or copied to the SD for a non-motor test.
+ * We list them, serve a small cached colour thumbnail
  * per photo (polaris-extract --thumb), and stream the full frame on demand. The
  * head exposes no thumbnail endpoint, so the phone app pulls whole ~9 MB frames
  * one at a time; running beside the files we do much better.
@@ -804,8 +922,8 @@ static void serve_snapshot(int fd) {
  * the media root. Nothing else on the SD (wifi keys, logs, configs) is reachable.
  * =========================================================================== */
 
-static const char *MEDIA_CATS[] = { "normal","starskyStack","HDR","panorama","focusStack","sun","Lapse" };
-#define MEDIA_NCATS 7
+static const char *MEDIA_CATS[] = { "normal","starskyStack","HDR","panorama","focusStack","sun","Lapse","test-input" };
+#define MEDIA_NCATS 8
 #define MEDIA_THUMB_DIR "/tmp/polaris-thumb"
 
 static int ends_jpg(const char *s) {
@@ -835,6 +953,108 @@ static int media_resolve(const char *rel, char *abs, size_t abscap) {
     L = strlen(rroot);
     if (strncmp(real, rroot, L) || (real[L] != '/' && real[L] != 0)) return 0;
     return 1;
+}
+
+/* Historic JPEG upload. This endpoint consumes only the declared request body,
+ * writes it under test-input, validates SOI/EOI, and publishes it atomically.
+ * It is intentionally not a generic file upload: basename-only JPEG names and a
+ * 32 MiB ceiling keep the SD and the media resolver's trust boundary narrow. */
+static int test_upload_name_ok(const char *name) {
+    size_t i;
+    if (!name || !name[0] || strlen(name) > 120 || strstr(name, "..") ||
+        strchr(name, '/') || strchr(name, '\\')) return 0;
+    if (!ends_jpg(name)) return 0;
+    for (i = 0; name[i]; i++) {
+        unsigned char c = (unsigned char)name[i];
+        if (!isalnum(c) && c != '.' && c != '_' && c != '-') return 0;
+    }
+    return 1;
+}
+
+static int test_write_all(int fd, const unsigned char *buf, size_t len) {
+    while (len) {
+        ssize_t n = write(fd, buf, len);
+        if (n <= 0) return 0;
+        buf += n; len -= (size_t)n;
+    }
+    return 1;
+}
+
+static int test_upload_bytes(int outfd, const unsigned char *buf, size_t len,
+                             unsigned char first[2], int *first_n,
+                             unsigned char tail[2], int *tail_n, long *total) {
+    size_t i;
+    if (!test_write_all(outfd, buf, len)) return 0;
+    for (i = 0; i < len; i++) {
+        if (*first_n < 2) first[(*first_n)++] = buf[i];
+        if (*tail_n < 2) tail[(*tail_n)++] = buf[i];
+        else { tail[0] = tail[1]; tail[1] = buf[i]; }
+    }
+    *total += (long)len;
+    return 1;
+}
+
+static void handle_test_upload(int fd, const char *qs, const unsigned char *initial,
+                               size_t initial_len, long content_length) {
+    char name[128] = "historic.jpg", dir[PATH_MAX], tmp[PATH_MAX], rel[700], esc[800];
+    char base[160];
+    int outfd = -1, ok = 1, attempt;
+    unsigned char buf[65536], first[2] = {0}, tail[2] = {0};
+    int first_n = 0, tail_n = 0;
+    long remaining, total = 0;
+    struct timeval tv = {30, 0};
+    if (content_length <= 0 || content_length > TEST_MAX_UPLOAD) {
+        respond(fd, 413, "text/plain", "JPEG body must be 1..33554432 bytes\n", sizeof("JPEG body must be 1..33554432 bytes\n") - 1);
+        return;
+    }
+    if (param(qs, "name", name, sizeof name) && !test_upload_name_ok(name)) {
+        respond_400(fd, "name must be a JPEG basename"); return;
+    }
+    if (!test_upload_name_ok(name)) { respond_400(fd, "name must be a JPEG basename"); return; }
+    snprintf(dir, sizeof dir, "%s/test-input", g_media_root);
+    if (mkdir(dir, 0755) != 0 && errno != EEXIST) {
+        respond(fd, 507, "text/plain", "cannot create test-input\n", 25); return;
+    }
+    snprintf(base, sizeof base, "upload-%ld-%ld-%s", (long)time(NULL), (long)getpid(), name);
+    snprintf(rel, sizeof rel, "test-input/%s", base);
+    for (attempt = 0; attempt < 10; attempt++) {
+        snprintf(tmp, sizeof tmp, "%s/.upload-%ld-%ld-%d.tmp", dir,
+                 (long)time(NULL), (long)getpid(), attempt);
+        outfd = open(tmp, O_WRONLY | O_CREAT | O_EXCL, 0644);
+        if (outfd >= 0) break;
+    }
+    if (outfd < 0) { respond(fd, 507, "text/plain", "cannot create upload\n", sizeof("cannot create upload\n") - 1); return; }
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+    remaining = content_length;
+    if (initial_len > (size_t)remaining) initial_len = (size_t)remaining;
+    if (initial_len && !test_upload_bytes(outfd, initial, initial_len, first, &first_n,
+                                          tail, &tail_n, &total)) ok = 0;
+    remaining -= (long)initial_len;
+    while (ok && remaining > 0) {
+        size_t want = remaining > (long)sizeof buf ? sizeof buf : (size_t)remaining;
+        ssize_t n = read(fd, buf, want);
+        if (n <= 0 || !test_upload_bytes(outfd, buf, (size_t)n, first, &first_n,
+                                         tail, &tail_n, &total)) { ok = 0; break; }
+        remaining -= n;
+    }
+    if (ok && (fsync(outfd) != 0 || first_n != 2 || tail_n != 2 ||
+               first[0] != 0xff || first[1] != 0xd8 || tail[0] != 0xff || tail[1] != 0xd9)) ok = 0;
+    close(outfd);
+    if (!ok || remaining != 0) {
+        unlink(tmp);
+        respond(fd, 400, "text/plain", "upload was not a complete JPEG\n", 31);
+        return;
+    }
+    {
+        char final_path[PATH_MAX];
+        snprintf(final_path, sizeof final_path, "%s/%s", dir, base);
+        if (rename(tmp, final_path) != 0) {
+            unlink(tmp); respond(fd, 507, "text/plain", "cannot publish upload\n", sizeof("cannot publish upload\n") - 1); return;
+        }
+    }
+    json_escape(rel, esc, sizeof esc);
+    { char out[960]; snprintf(out, sizeof out,
+        "{\"ok\":true,\"path\":\"%s\",\"size\":%ld}", esc, total); respond_json(fd, out); }
 }
 
 /* Stream a file to the client in bounded chunks — the full frames are ~9 MB and
@@ -2797,6 +3017,8 @@ static int serve_asset(int fd, const char *path) {
 
 static void handle(int fd) {
     char req[8192], *body = NULL;
+    size_t body_have = 0;
+    long content_length = 0;
     ssize_t n;
     char method[16] = {0}, target[1024] = {0}, path[1024], *qs;
 
@@ -2827,7 +3049,8 @@ static void handle(int fd) {
             body = hdr_end + 4;
             if (cl) clen = atol(cl + 15);
             {
-                size_t body_have = have - (size_t)(body - req);
+                body_have = have - (size_t)(body - req);
+                content_length = clen;
                 while ((long)body_have < clen && have < sizeof req - 1) {
                     n = read(fd, req + have, sizeof req - 1 - have);
                     if (n <= 0) break;
@@ -2845,6 +3068,14 @@ static void handle(int fd) {
     snprintf(path, sizeof path, "%s", target);
     qs = strchr(path, '?');
     if (qs) { *qs = 0; qs++; } else qs = (char *)"";
+
+    /* Upload is the one binary-body endpoint. It must run before any form-body
+     * parsing and may consume a body larger than the small request buffer. */
+    if (!strcmp(path, "/api/test/upload")) {
+        if (strcmp(method, "POST")) { respond(fd, 405, "text/plain", "POST only\n", 10); return; }
+        handle_test_upload(fd, qs, (const unsigned char *)body, body_have, content_length);
+        return;
+    }
 
     /* Home-screen icon. Served inline so the page stays self-contained -- there
      * is no filesystem to drop a .png into and no CDN to reach. iOS uses
@@ -2986,6 +3217,34 @@ static void handle(int fd) {
         if (!param(qs, "path", rel, sizeof rel)) { respond_400(fd, "path required"); return; }
         if (!media_resolve(rel, abs, sizeof abs)) { respond(fd, 403, "text/plain", "forbidden", 9); return; }
         serve_file_streamed(fd, abs, "image/jpeg");
+        return;
+    }
+
+    /* Historic-image solver tests. These routes never call the live capture
+     * job, mount link, goto/align, or EXIF writer. They are safe test scenarios
+     * for images already listed in the gallery or uploaded to test-input. */
+    if (!strcmp(path, "/api/test/state")) { handle_test_state(fd); return; }
+    if (!strcmp(path, "/api/test/cancel")) {
+        if (strcmp(method, "POST")) { respond(fd, 405, "text/plain", "POST only\n", 10); return; }
+        handle_test_cancel(fd); return;
+    }
+    if (!strcmp(path, "/api/test/solve")) {
+        char rel[600] = "", solver[24] = "reference", focal[64] = "auto", sensor[64] = "";
+        char ra[64] = "", dec[64] = "", radius[64] = "";
+        int rc;
+        if (strcmp(method, "POST") && strcmp(method, "PUT")) {
+            respond(fd, 405, "text/plain", "POST only\n", 10); return;
+        }
+#define TEST_PARAM(dst, key) do { if (!param(qs, key, dst, sizeof dst) && body) param(body, key, dst, sizeof dst); } while (0)
+        TEST_PARAM(rel, "path"); TEST_PARAM(solver, "solver"); TEST_PARAM(focal, "focal");
+        TEST_PARAM(sensor, "sensor"); TEST_PARAM(ra, "ra"); TEST_PARAM(dec, "dec"); TEST_PARAM(radius, "radius");
+#undef TEST_PARAM
+        if (!rel[0]) { respond_400(fd, "path required"); return; }
+        rc = start_test_solve(rel, solver, focal, sensor, ra, dec, radius);
+        if (rc == 0) { respond(fd, 409, "text/plain", "test solve already running\n", 27); return; }
+        if (rc == -2) { respond_400(fd, "invalid test path, solver, or numeric input"); return; }
+        if (rc < 0) { respond(fd, 500, "text/plain", "cannot start test solve\n", 24); return; }
+        respond_json(fd, "{\"started\":true,\"motor_control\":false,\"exif_writeback\":false}");
         return;
     }
 

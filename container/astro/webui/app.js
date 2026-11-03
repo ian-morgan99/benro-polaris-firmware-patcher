@@ -2303,13 +2303,13 @@ function wireTabs() {
    frame from /api/media/full. */
 var galItems = [], galCat = 'all';
 var GAL_LABELS = { normal: 'Photos', starskyStack: 'Astro', HDR: 'HDR',
-  panorama: 'Pano', focusStack: 'Focus', sun: 'Sun', Lapse: 'Timelapse' };
+  panorama: 'Pano', focusStack: 'Focus', sun: 'Sun', Lapse: 'Timelapse', 'test-input': 'Test input' };
 function galLabel(c) { return GAL_LABELS[c] || c; }
 
 function galleryLoad() {
   fetch('/api/media/list', { cache: 'no-store' })
     .then(function (r) { return r.json(); })
-    .then(function (d) { galItems = (d && d.items) || []; galRenderFilter(); galRenderGrid(); })
+    .then(function (d) { galItems = (d && d.items) || []; galRenderFilter(); galRenderGrid(); galRenderTestImages(); })
     .catch(function () {});
 }
 
@@ -2343,6 +2343,88 @@ function galRenderGrid() {
   });
 }
 
+function galRenderTestImages() {
+  var select = $('#gal-test-image');
+  if (!select) return;
+  var old = select.value;
+  select.innerHTML = '';
+  var empty = document.createElement('option');
+  empty.value = ''; empty.textContent = 'No JPEG selected'; select.appendChild(empty);
+  galItems.forEach(function (it) {
+    var opt = document.createElement('option');
+    opt.value = it.path;
+    opt.textContent = galLabel(it.cat) + ' · ' + it.path;
+    select.appendChild(opt);
+  });
+  if (old && galItems.some(function (it) { return it.path === old; })) select.value = old;
+}
+
+var galTestPollTimer = 0;
+function galTestMessage(text, bad) {
+  var el = $('#gal-test-status');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = bad ? 'var(--err)' : '';
+}
+function galTestRenderState(d) {
+  if (!d) return;
+  var running = d.status === 'running';
+  galTestMessage(running ? 'Running — no motor or EXIF changes' : (d.status || 'Idle'), d.status === 'failed');
+  var result = $('#gal-test-result'), log = $('#gal-test-log');
+  var raw = d.result || '';
+  if (raw) {
+    try { result.textContent = JSON.stringify(JSON.parse(raw), null, 2); }
+    catch (e) { result.textContent = raw; }
+    result.hidden = false;
+  } else result.hidden = true;
+  log.textContent = d.log || '';
+  log.hidden = !d.log;
+  if (running) {
+    clearTimeout(galTestPollTimer);
+    galTestPollTimer = setTimeout(galTestPoll, 1000);
+  }
+}
+function galTestPoll() {
+  fetch('/api/test/state', { cache: 'no-store' }).then(function (r) { return r.json(); })
+    .then(galTestRenderState).catch(function () { galTestMessage('Test status unavailable', true); });
+}
+function galTestUpload() {
+  var input = $('#gal-test-file'), file = input && input.files && input.files[0];
+  if (!file) { galTestMessage('Choose a JPEG first.', true); return; }
+  if (!/\.(jpe?g)$/i.test(file.name)) { galTestMessage('Only JPEG files are accepted.', true); return; }
+  galTestMessage('Uploading ' + file.name + '…');
+  fetch('/api/test/upload?name=' + encodeURIComponent(file.name), {
+    method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: file, cache: 'no-store'
+  }).then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+    .then(function (d) {
+      if (!d.ok) { galTestMessage(d.error || 'Upload failed.', true); return; }
+      galTestMessage('Uploaded — select it below.');
+      galleryLoad();
+      setTimeout(function () { $('#gal-test-image').value = d.path; }, 100);
+    }).catch(function () { galTestMessage('Upload failed.', true); });
+}
+function galTestStart() {
+  var path = $('#gal-test-image').value;
+  if (!path) { galTestMessage('Select or upload a JPEG first.', true); return; }
+  var p = {
+    path: path, solver: $('#gal-test-solver').value,
+    focal: $('#gal-test-focal').value || 'auto', sensor: $('#gal-test-sensor').value || ''
+  };
+  var ra = $('#gal-test-ra').value, dec = $('#gal-test-dec').value;
+  if (ra || dec) { p.ra = ra; p.dec = dec; p.radius = $('#gal-test-radius').value || '60'; }
+  galTestMessage('Starting non-motor test…');
+  post('/api/test/solve', p).then(function (d) {
+    if (!d || d.started !== true) { galTestMessage((d && d.error) || 'Could not start test.', true); return; }
+    galTestPoll();
+  }).catch(function () { galTestMessage('Could not start test.', true); });
+}
+function galTestCancel() {
+  post('/api/test/cancel', {}).then(function (d) {
+    if (d && d.cancelled) galTestMessage('Cancelled.'); else galTestMessage('No test running.');
+    galTestPoll();
+  });
+}
+
 function galOpen(pathEnc) {
   $('#gal-lb-img').src = '/api/media/full?path=' + pathEnc;
   $('#gal-lb-cap').textContent = decodeURIComponent(pathEnc);
@@ -2352,8 +2434,12 @@ function galClose() { $('#gal-lightbox').hidden = true; $('#gal-lb-img').removeA
 
 function wireGallery() {
   $('#gal-refresh').onclick = galleryLoad;
+  $('#gal-test-upload').onclick = galTestUpload;
+  $('#gal-test-solve').onclick = galTestStart;
+  $('#gal-test-cancel').onclick = galTestCancel;
   $('#gal-lb-close').onclick = galClose;
   $('#gal-lightbox').onclick = function (e) { if (e.target === this) galClose(); };
+  galTestPoll();
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && !$('#gal-lightbox').hidden) galClose();
   });
