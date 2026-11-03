@@ -49,6 +49,19 @@ struct.pack_into(
         condition=0x0,
     ),
 )
+# Issue #251: the outcome-preservation redirects verify the stock instructions
+# they replace and their immediate neighbours. Seed them so this fixture is a
+# faithful layout rather than a zero-filled body.
+struct.pack_into("<I", data, offsets["bulb"] + patch.BULB_STOP_STORE_OFFSET,
+                 0xE50B3010)          # str r3, [fp, #-16]
+struct.pack_into("<I", data, offsets["bulb"] + patch.BULB_STOP_RELOAD_OFFSET,
+                 0xE51B3058)          # ldr r3, [fp, #-88]
+struct.pack_into("<I", data, offsets["bulb"] + patch.BULB_STOP_RELOAD_OFFSET + 4,
+                 0xE3530000)          # cmp r3, #0
+struct.pack_into("<I", data, offsets["bulb"] + patch.BULB_PUBLISH_STORE_OFFSET,
+                 0xE50B0010)          # str r0, [fp, #-16]
+struct.pack_into("<I", data, offsets["bulb"] + patch.BULB_PUBLISH_RESUME_OFFSET,
+                 0xE24B3064)          # sub r3, fp, #100
 indirect_bulb_pointer_offset = 0x400
 struct.pack_into("<I", data, indirect_bulb_pointer_offset, base + offsets["bulb_function"])
 
@@ -108,6 +121,51 @@ check(struct.unpack_from("<I", patched,
       "Bulb cancellation reaches the existing normal stop path")
 check(struct.unpack_from("<I", patched, offsets["bulb"] + patch.BULB_CANCEL_OFFSET)[0] >> 28 == 0,
       "cancel branch retains its original EQ condition")
+# Issue #251: cancellation is recorded in the helper's return slot, and two stock
+# stores overwrite it afterwards. Both must be redirected to a conditional record
+# so a successful cleanup or publication cannot report a cancelled capture as a
+# completed one. The two records use opposite rules on purpose: a failed shutter
+# closure outranks the cancellation, while a failed image retrieval after a
+# cancellation must not replace it.
+stop_redirect = struct.unpack_from("<I", patched,
+                                   offsets["bulb"] + patch.BULB_STOP_STORE_OFFSET)[0]
+check(stop_redirect >> 28 == 0xE and
+      branch_target(addresses["bulb"] + patch.BULB_STOP_STORE_OFFSET, stop_redirect) ==
+      cave + patch.BULB_KEEP_CANCEL_OFFSET,
+      "the stop-path store redirects to its conditional record")
+check(word(patch.BULB_KEEP_CANCEL_OFFSET) == 0xE3530000 and
+      (word(patch.BULB_KEEP_CANCEL_OFFSET + 4) >> 28) == 0x0 and
+      branch_target(cave + patch.BULB_KEEP_CANCEL_OFFSET + 4,
+                    word(patch.BULB_KEEP_CANCEL_OFFSET + 4)) ==
+      addresses["bulb"] + patch.BULB_STOP_RELOAD_OFFSET,
+      "a successful stop leaves the saved outcome untouched and needs no scratch")
+check(word(patch.BULB_KEEP_CANCEL_OFFSET + 8) == 0xE50B3010 and
+      branch_target(cave + patch.BULB_KEEP_CANCEL_OFFSET + 12,
+                    word(patch.BULB_KEEP_CANCEL_OFFSET + 12)) ==
+      addresses["bulb"] + patch.BULB_STOP_RELOAD_OFFSET,
+      "a failed stop is still recorded, so an open shutter outranks the cancel")
+publish_redirect = struct.unpack_from("<I", patched,
+                                      offsets["bulb"] + patch.BULB_PUBLISH_STORE_OFFSET)[0]
+check(publish_redirect >> 28 == 0xE and
+      branch_target(addresses["bulb"] + patch.BULB_PUBLISH_STORE_OFFSET,
+                    publish_redirect) == cave + patch.BULB_KEEP_PUBLISH_OFFSET,
+      "the publication store redirects to its conditional record")
+check(word(patch.BULB_KEEP_PUBLISH_OFFSET) == 0xE51B1010 and
+      word(patch.BULB_KEEP_PUBLISH_OFFSET + 4) == 0xE3510000 and
+      (word(patch.BULB_KEEP_PUBLISH_OFFSET + 8) >> 28) == 0x1 and
+      branch_target(cave + patch.BULB_KEEP_PUBLISH_OFFSET + 8,
+                    word(patch.BULB_KEEP_PUBLISH_OFFSET + 8)) ==
+      addresses["bulb"] + patch.BULB_PUBLISH_RESUME_OFFSET,
+      "any saved outcome survives publication, so a cancel outranks a failed retrieval")
+check(word(patch.BULB_KEEP_PUBLISH_OFFSET + 12) == 0xE50B0010 and
+      branch_target(cave + patch.BULB_KEEP_PUBLISH_OFFSET + 16,
+                    word(patch.BULB_KEEP_PUBLISH_OFFSET + 16)) ==
+      addresses["bulb"] + patch.BULB_PUBLISH_RESUME_OFFSET,
+      "a normal capture still records a genuine publication failure")
+check(patch.TRAMPOLINE_SIZE == 0x300 and
+      patch.BULB_KEEP_CANCEL_OFFSET + 16 <= patch.LITERAL_POOL and
+      patch.BULB_KEEP_PUBLISH_OFFSET >= patch.MODE_KEY_TEXT + 19,
+      "the outcome records reuse unused cave words without growing the trampoline")
 check(tramp[patch.CONDITIONS_KEY_TEXT:patch.CONDITIONS_KEY_TEXT + 17] ==
       b"pentaxconditions\0" and
       tramp[patch.MODE_KEY_TEXT:patch.MODE_KEY_TEXT + 19] ==

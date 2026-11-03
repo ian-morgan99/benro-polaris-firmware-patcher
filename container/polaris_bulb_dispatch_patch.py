@@ -39,6 +39,44 @@ BULB_CANCEL_OFFSET = 0x330
 BULB_CANCEL_OLD_TARGET_OFFSET = 0x748
 BULB_CANCEL_STOP_PATH_OFFSET = 0x3a4
 
+# The stop path invokes the existing stop callback and then unconditionally
+# copies its result over the helper's saved return value:
+#
+#   +0x430  bl   cb_arg_run        ; run the stop callback
+#   +0x434  ldr  r3, [fp,#-88]     ; r3 = stop result
+#   +0x438  str  r3, [fp,#-16]     ; <-- overwrites the saved error
+#   +0x43c  ldr  r3, [fp,#-88]     ; reload for the publish decision
+#   +0x440  cmp  r3, #0
+#
+# [fp,#-16] is what the common tail at +0x76c returns. When
+# wait_and_handle_event reported GP_ERROR_CANCEL (-52) that slot held -52, and a
+# successful stop (0) replaced it with 0, so the caller saw a completed capture
+# that was actually cancelled. The fix redirects only the store at +0x438 to a
+# conditional keep in the code cave; +0x43c onward is untouched, so the publish
+# decision and held-shutter closure still behave exactly as stock.
+BULB_STOP_STORE_OFFSET = 0x438
+BULB_STOP_RELOAD_OFFSET = 0x43C
+# First unused word after the last dispatch instruction (+0x224) and before the
+# literal pool at +0x240. Five words fit here, so TRAMPOLINE_SIZE is unchanged.
+BULB_KEEP_CANCEL_OFFSET = 0x228
+
+# Publication overwrites the same slot a second time:
+#
+#   +0x6d8  bl   getImageToBuffer   ; hand the captured image to the caller
+#   +0x6dc  str  r0, [fp,#-16]      <-- replaces the saved outcome with 0
+#   +0x6e0  sub  r3, fp, #100       ; timing log continues; r0/r1 redefined here
+#
+# Keeping only +0x438 therefore still returned 0 for a cancelled capture whose
+# stop succeeded, because the code falls through to publication. Redirect this
+# store to a second conditional keep in the unused words after the match strings
+# (+0x2B8..+0x2D8; the blob's content ends at +0x2B7). getImageToBuffer still
+# runs, so an already-open exposure's output is still reconciled; only the
+# reported outcome is preserved. r0 and r1 are both dead at +0x6e0 - their first
+# later use is a definition - so r1 is safe scratch here as it is at +0x438.
+BULB_PUBLISH_STORE_OFFSET = 0x6DC
+BULB_PUBLISH_RESUME_OFFSET = 0x6E0
+BULB_KEEP_PUBLISH_OFFSET = 0x2B8
+
 # Code-cave sub-layout (the trampoline is hand-assembled ARM; see
 # build_trampoline). The literal pool and match strings sit after the code. The
 # Stack-backed getCameraName/conditions destination buffer is NOT here: the code cave lives in
@@ -304,6 +342,65 @@ def build_trampoline(cave, burst, bulb, get_manufacturer, get_name, strcasestr,
         0x21C: 0xE351001F,
         0x220: br(0x220, cave + 0x158, condition=0x8),
         0x224: br(0x224, cave + 0x1E0),
+        # Preserve a cancellation through publication as well as cleanup.
+        #
+        # Stock stores getImageToBuffer's result over the saved outcome at
+        # capture_image_with_Bulb+0x6dc, so keeping only the stop-path store still
+        # returned 0 for a cancelled capture whose stop succeeded.
+        #
+        # This stub uses the opposite rule to the one above, because the two
+        # callbacks have different authority over the reported outcome:
+        #   - the stop callback reports whether the shutter actually closed, so a
+        #     failure there is a safety signal and outranks the cancellation;
+        #   - getImageToBuffer is downstream housekeeping. If the user cancelled,
+        #     a failure to retrieve an image that was never meant to complete is
+        #     noise, and must not replace GP_ERROR_CANCEL.
+        # So here: keep any saved non-zero outcome, otherwise record the
+        # publication result exactly as stock did. A normal capture still reports
+        # a genuine publication failure.
+        #
+        # r1 is scratch. It is dead at +0x6e0: the first later mention is the
+        # definition ``ldr r1,[pc,#364]`` at +0x71c, and the failure branches into
+        # +0x750 never read it. getImageToBuffer still runs, so an already-open
+        # exposure's output is still reconciled; only the reported outcome is
+        # preserved. This does not special-case bulb=0.
+        BULB_KEEP_PUBLISH_OFFSET: 0xE51B1010,                    # ldr r1,[fp,#-16]
+        BULB_KEEP_PUBLISH_OFFSET + 4: 0xE3510000,                # cmp r1,#0
+        BULB_KEEP_PUBLISH_OFFSET + 8: br(BULB_KEEP_PUBLISH_OFFSET + 8,
+                                         bulb + BULB_PUBLISH_RESUME_OFFSET,
+                                         condition=0x1),         # bne keep saved
+        BULB_KEEP_PUBLISH_OFFSET + 12: 0xE50B0010,               # str r0,[fp,#-16]
+        BULB_KEEP_PUBLISH_OFFSET + 16: br(BULB_KEEP_PUBLISH_OFFSET + 16,
+                                          bulb + BULB_PUBLISH_RESUME_OFFSET),
+        # Preserve a cancellation through the helper's own cleanup.
+        #
+        # Stock stop path (capture_image_with_Bulb+0x430..+0x440):
+        #     bl   cb_arg_run            ; run the stop callback
+        #     ldr  r3, [fp,#-88]         ; r3 = stop result
+        #     str  r3, [fp,#-16]         ; <-- overwrites the saved error
+        #     ldr  r3, [fp,#-88]         ; reload for the publish decision
+        #     cmp  r3, #0
+        # [fp,#-16] is the helper's return value: it holds GP_ERROR_CANCEL (-52)
+        # when wait_and_handle_event reported cancellation, and the common tail
+        # at +0x76c returns it. A successful stop (0) therefore replaced -52 with
+        # 0, so the caller saw a completed capture that was in fact cancelled.
+        #
+        # Replace only the store with a conditional record: write the stop result
+        # when it is itself a failure, otherwise leave the saved outcome alone. A
+        # success never erases an earlier outcome, and a failed shutter closure
+        # still outranks the cancellation - the caller must learn that the
+        # exposure may still be open rather than merely that the user cancelled.
+        # Both arms resume at +0x43c with r3 still holding the stop result, so the
+        # stock publish/skip decision is untouched and an already-open exposure is
+        # still closed. This preserves an outcome rather than skipping a callback,
+        # and it does not special-case bulb=0. No scratch register is needed.
+        BULB_KEEP_CANCEL_OFFSET: 0xE3530000,                     # cmp r3,#0
+        BULB_KEEP_CANCEL_OFFSET + 4: br(BULB_KEEP_CANCEL_OFFSET + 4,
+                                        bulb + BULB_STOP_RELOAD_OFFSET,
+                                        condition=0x0),          # beq keep saved
+        BULB_KEEP_CANCEL_OFFSET + 8: 0xE50B3010,                 # str r3,[fp,#-16]
+        BULB_KEEP_CANCEL_OFFSET + 12: br(BULB_KEEP_CANCEL_OFFSET + 12,
+                                         bulb + BULB_STOP_RELOAD_OFFSET),
         pentax_lit: cave + PENTAX_TEXT,
         model_lit: cave + MODEL_TEXT,
         conditions_key_lit: cave + CONDITIONS_KEY_TEXT,
@@ -370,6 +467,96 @@ def patch_bulb_cancel(data, offsets, addresses):
     return bytes(patched), True
 
 
+def bulb_keep_cancel_word(bulb, cave):
+    """Unconditional branch from the stock store to the keep-cancellation stub."""
+    return encode_branch(bulb + BULB_STOP_STORE_OFFSET, cave + BULB_KEEP_CANCEL_OFFSET)
+
+
+def bulb_keep_publish_word(bulb, cave):
+    """Unconditional branch from the publication store to its keep stub."""
+    return encode_branch(bulb + BULB_PUBLISH_STORE_OFFSET, cave + BULB_KEEP_PUBLISH_OFFSET)
+
+
+def patch_bulb_cancel_result(data, offsets, addresses, cave):
+    """Stop successful cleanup and publication from overwriting a saved outcome.
+
+    Two stock instructions write the helper's return slot ``[fp,#-16]`` after
+    ``wait_and_handle_event`` has recorded a cancellation there:
+
+    * ``str r3,[fp,#-16]`` at +0x438, after the stop callback;
+    * ``str r0,[fp,#-16]`` at +0x6dc, after ``getImageToBuffer``.
+
+    Each is redirected to a conditional record in the code cave, but the two use
+    opposite rules because the callbacks have different authority over the
+    reported outcome:
+
+    * stop path - record the result only when it is itself a failure. Whether the
+      shutter actually closed is a safety signal, so a failed closure outranks the
+      cancellation and the caller learns the exposure may still be open.
+    * publication - keep any saved non-zero outcome, otherwise record the result.
+      Retrieving an image from a capture the user cancelled is downstream
+      housekeeping; its failure must not replace GP_ERROR_CANCEL. A normal capture
+      still reports a genuine publication failure.
+
+    Both stubs resume at the instruction immediately after the original store with
+    r0/r3 untouched. The stop callback still runs, so an already-open exposure is
+    still closed; ``getImageToBuffer`` still runs, so its output is still
+    reconciled. This preserves outcomes rather than skipping callbacks, and it does
+    not special-case ``bulb=0``.
+
+    Args:
+        data: binary bytes
+        offsets: symbol file offsets from inspect_binary
+        addresses: symbol virtual addresses from inspect_binary
+        cave: virtual address of this checkout's trampoline
+
+    Returns:
+        (bytes, changed)
+
+    Raises:
+        ValueError: If either site is not the verified stock sequence. A redirect
+            is never applied to an unrecognised layout, and a partially applied
+            one is never treated as complete.
+    """
+    patched = bytearray(data)
+    changed = False
+    sites = (
+        # (store offset, expected store word, stub offset, resume offset, label,
+        #  extra checks: tuple of (offset, word, description))
+        (BULB_STOP_STORE_OFFSET, 0xE50B3010, BULB_KEEP_CANCEL_OFFSET,
+         BULB_STOP_RELOAD_OFFSET, "stop-path",
+         ((BULB_STOP_RELOAD_OFFSET, 0xE51B3058, "reload of the stop result"),
+          (BULB_STOP_RELOAD_OFFSET + 4, 0xE3530000,
+           "publish decision on the stop result"))),
+        (BULB_PUBLISH_STORE_OFFSET, 0xE50B0010, BULB_KEEP_PUBLISH_OFFSET,
+         BULB_PUBLISH_RESUME_OFFSET, "publication",
+         ((BULB_PUBLISH_RESUME_OFFSET, 0xE24B3064,
+           "timing block after publication"),)),
+    )
+    for store_off_rel, expected_store, stub_off, resume_off, label, checks in sites:
+        store_off = offsets["bulb"] + store_off_rel
+        redirect = encode_branch(addresses["bulb"] + store_off_rel, cave + stub_off)
+        current = struct.unpack_from("<I", data, store_off)[0]
+        already = current == redirect
+        if not already and current != expected_store:
+            raise ValueError(
+                "capture_image_with_Bulb %s store is not the verified stock "
+                "instruction (found %08x, expected %08x)"
+                % (label, current, expected_store))
+        for check_off, expected_word, description in checks:
+            found = struct.unpack_from("<I", data, offsets["bulb"] + check_off)[0]
+            if found != expected_word:
+                raise ValueError(
+                    "capture_image_with_Bulb %s %s is not the verified stock "
+                    "instruction (found %08x, expected %08x)"
+                    % (label, description, found, expected_word))
+        if already:
+            continue
+        struct.pack_into("<I", patched, store_off, redirect)
+        changed = True
+    return bytes(patched), changed
+
+
 def patch_data(data, offsets, addresses, segment):
     burst_off = offsets["burst"]
     existing_branch = struct.unpack_from("<I", data, burst_off)[0]
@@ -389,12 +576,19 @@ def patch_data(data, offsets, addresses, segment):
             addresses["widget_get_type"], addresses["widget_get_value"], addresses["widget_free"],
             addresses["strstr"],
         )
+        marker_keep = bulb_keep_cancel_word(addresses["bulb"], marker_cave)
+        marker_keep_publish = bulb_keep_publish_word(addresses["bulb"], marker_cave)
         if (existing_branch == marker_branch and
                 bytes(data[marker_off:marker_off + TRAMPOLINE_SIZE]) == marker and
                 struct.unpack_from("<I", data,
                     offsets["bulb"] + BULB_CANCEL_OFFSET)[0] ==
                     bulb_cancel_patch_word(addresses["bulb"],
-                        addresses["bulb"] + BULB_CANCEL_STOP_PATH_OFFSET)):
+                        addresses["bulb"] + BULB_CANCEL_STOP_PATH_OFFSET) and
+                struct.unpack_from("<I", data,
+                    offsets["bulb"] + BULB_STOP_STORE_OFFSET)[0] == marker_keep and
+                struct.unpack_from("<I", data,
+                    offsets["bulb"] + BULB_PUBLISH_STORE_OFFSET)[0] ==
+                    marker_keep_publish):
             return bytes(data), False
 
     if existing_branch != BURST_PROLOGUE[0] or original_burst != BURST_PROLOGUE:
@@ -434,6 +628,7 @@ def patch_data(data, offsets, addresses, segment):
     struct.pack_into("<I", patched, burst_off, expected_branch)
     patched[cave_off:cave_off + len(trampoline)] = trampoline
     patched, _ = patch_bulb_cancel(patched, offsets, addresses)
+    patched, _ = patch_bulb_cancel_result(patched, offsets, addresses, cave)
     patched = bytearray(patched)
     phdr = segment["phdr_offset"]
     struct.pack_into("<I", patched, phdr + 16, current_filesz + TRAMPOLINE_SIZE)

@@ -28,11 +28,18 @@ printf '%s' "$BIN" > "$PR/$$/cmdline"
 count=$(cat "$COUNT" 2>/dev/null || printf '0')
 printf '%s\n' $((count + 1)) > "$COUNT"
 (
-    # This deliberately exceeds the old production 20-second bound.  The
+    # Publish a foreign listener first. The regression must not accept it as
+    # readiness for this process; only the later listener whose inode is owned
+    # by this PID is valid.
+    sleep 1
+    printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A 00000000:0000 00:00000000 00000000   100        0 99999 1 0000000000000000 100 0 0 10 0\n' > "$PR/net/tcp"
+    # This deliberately exceeds the old production 20-second bound. The
     # regression must be red on the parent revision, not merely prove that a
     # three-second delay fits inside both the old and new implementations.
     sleep 21
-    printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A\n' > "$PR/net/tcp"
+    mkdir -p "$PR/$$/fd"
+    ln -s 'socket:[12345]' "$PR/$$/fd/3"
+    printf '  sl  local_address rem_address   st\n   0: 00000000:1F90 00000000:0000 0A 00000000:0000 00:00000000 00000000   100        0 12345 1 0000000000000000 100 0 0 10 0\n' > "$PR/net/tcp"
 ) &
 trap 'rm -f "$PR/net/tcp"; rm -rf "$PR/$$"; exit 0' TERM INT
 while :; do sleep 0.2; done
@@ -93,7 +100,7 @@ cleanup_launched() {
 # succeed, and it must launch pgphoto only once while doing so.
 OUT_SLOW=$TMP/slow.out
 run_restart "$TMP/wrapper-slow" "$OUT_SLOW"
-grep -q 'OK: port 8080 listening' "$OUT_SLOW"
+grep -q 'OK: pgphoto PID .* owns the port-8080 listener' "$OUT_SLOW"
 test "$(cat "$LAUNCHES")" = 1
 cleanup_launched
 

@@ -1,0 +1,8 @@
+# Reproduced 2026-10-31 on patcher main 8c015c0a73c8affea8fa723badcceb4070ef81b4
+# Harness revision e69d5e413dfd06dea41975d561b991e5ff548dc5
+# Unicorn 2.1.4, capstone 5.0.7, sandbox Python 3.13.15
+
+........................................................................ [ 84%]
+.............                                                            [100%]
+85 passed in 0.71s
+EXIT=0

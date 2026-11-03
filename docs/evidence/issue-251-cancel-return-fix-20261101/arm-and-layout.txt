@@ -1,0 +1,7 @@
+## ARM outcome + dispatcher suites
+........................................................................ [ 70%]
+..............................                                           [100%]
+102 passed in 0.36s
+## Patch layout suite
+PASS: prerelease package gate checks the installed pgphoto binary
+[test_polaris_bulb_dispatch_patch] ALL PASS

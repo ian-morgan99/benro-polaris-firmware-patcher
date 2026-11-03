@@ -20,7 +20,8 @@
 # Also sets a restart-in-progress marker so the polestar watchdog
 # (checkGphotoTask) can detect an in-flight restart and not race it (#34).
 #
-# BusyBox-safe: uses only /proc, kill, sleep, grep, tr, mv. No pgrep/pkill.
+# BusyBox-safe: uses only /proc, kill, sleep, grep, tr, mv, readlink and awk.
+# No pgrep/pkill.
 
 RUN_DIR=${OPENPOLARIS_RUN_DIR:-/var/run}
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
@@ -51,6 +52,27 @@ port_in_use() {
             "$netfile" 2>/dev/null && return 0
     done
     return 1
+}
+port_owned_by_pid() {
+    # A different listener must not satisfy readiness. The old helper only
+    # checked whether any process had bound 8080, which could report success
+    # for a stale or foreign listener during a restart race. /proc/net/tcp and
+    # /proc/net/tcp6 expose the socket inode; match that inode against the
+    # expected pgphoto process's file descriptors.
+    OWNER_PID=$1
+    [ -d "$PROC_ROOT/$OWNER_PID/fd" ] || return 1
+    for netfile in "$PROC_ROOT/net/tcp" "$PROC_ROOT/net/tcp6"; do
+        [ -r "$netfile" ] || continue
+        for inode in $(awk -v port=":$PORT_HEX" \
+            '$2 ~ (port "$") && $4 == "0A" { print $10 }' \
+            "$netfile" 2>/dev/null); do
+            for fd in "$PROC_ROOT/$OWNER_PID/fd"/*; do
+                [ -e "$fd" ] || [ -L "$fd" ] || continue
+                link=$(readlink "$fd" 2>/dev/null || true)
+                [ "$link" = "socket:[$inode]" ] && return 0
+            done
+        done
+    done
     return 1
 }
 
@@ -194,8 +216,12 @@ echo "[restart_gphoto] pgphoto running (PID $NEWPID)"
 # the listener appears, or fail closed when the bounded startup window expires.
 i=0
 while [ $i -lt "$START_WAIT_MAX" ]; do
-    if port_in_use; then
-        echo "[restart_gphoto] OK: port 8080 listening — restart successful"
+    if [ ! -d "$PROC_ROOT/$NEWPID" ] || ! pid_is_pgphoto "$NEWPID"; then
+        echo "[restart_gphoto] FAIL: expected pgphoto process exited or changed during readiness" >&2
+        exit 1
+    fi
+    if port_owned_by_pid "$NEWPID"; then
+        echo "[restart_gphoto] OK: pgphoto PID $NEWPID owns the port-8080 listener — restart successful"
         exit 0
     fi
     sleep 1

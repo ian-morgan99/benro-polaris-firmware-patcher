@@ -10,6 +10,7 @@ All camera/event/file callbacks are simulated; this is not hardware evidence.
 """
 import argparse
 import hashlib
+import io
 from pathlib import Path
 import struct
 import subprocess
@@ -73,11 +74,19 @@ from elftools.elf.elffile import ELFFile
 from unicorn import Uc, UC_ARCH_ARM, UC_MODE_ARM, UC_HOOK_CODE
 from unicorn.arm_const import UC_ARM_REG_FP, UC_ARM_REG_SP, UC_ARM_REG_PC, UC_ARM_REG_LR
 
+# Segment sizes must come from the PATCHED image, not the file on disk. The
+# dispatcher grows the executable LOAD by TRAMPOLINE_SIZE and updates its phdr;
+# reading p_filesz from the original ELF writes only the pre-patch extent, so
+# the tail of the code cave is never loaded and executes as zero-filled memory.
+# That silently skipped the stop-path store instead of exercising it, which made
+# a broken fix look correct. Symbols still come from the on-disk ELF because the
+# patch does not move or add any.
 with open(binary, "rb") as stream:
     elf = ELFFile(stream)
-    loads = [dict(s.header) for s in elf.iter_segments() if s["p_type"] == "PT_LOAD"]
     syms = {s.name: s["st_value"] for table in elf.iter_sections()
             if table["sh_type"] == "SHT_SYMTAB" for s in table.iter_symbols()}
+loads = [dict(s.header) for s in ELFFile(io.BytesIO(bytes(patched))).iter_segments()
+         if s["p_type"] == "PT_LOAD"]
 
 def target_of_branch(offset):
     source = addresses["bulb"] + offset
