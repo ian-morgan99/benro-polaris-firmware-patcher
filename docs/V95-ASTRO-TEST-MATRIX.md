@@ -1,12 +1,19 @@
 # v95 Astro candidate — test matrix and release notes
 
-Status: **NOT BUILDABLE YET.** The libgphoto2 pin is still `43dccb81b` (driver
-`origin/main`). The corrected driver is `ian-morgan99/libgphoto2` PR #144, which is
-**OPEN** with all three review threads unresolved. Do not build v95 until the pin
-below is a real merged SHA.
+Status: **PINNED, NOT YET BUILT.** libgphoto2 PR #144 is merged into
+`feature/polaris-capture-events` as squash commit
+`855f718e515d288adbc7e0ffe8b22b729570e7d8`, verified by content (both
+`pentax_model_answers_undeclared_generic_props` for #233 and
+`pentax_shutter_write_permitted` for #235 present, reachable from the branch). The pin
+is set in all four build-input sites. **v95 has not been built** — no container runtime
+in this sandbox; the operator runs `build-astro-candidate.sh` on a docker host. It is
+not flashed, installed, or qualified.
 
-Candidate identity to be assigned when the pin lands: `astro-v95-<slug>-YYYYMMDD`,
-display `6.0.0.54.95`.
+Candidate identity: `astro-v95-k1ii-shutter-gate-20261104`, display `6.0.0.54.95`. The
+`.95` `version_commit_binding` line and the `FWPKT-PROVENANCE-CONTRACT` v95 row are added
+in a separate post-build "release: record" commit (mirroring v94's `3d924c6`), because both
+reference a patcher commit that only exists once this branch is merged and built. The binding
+line is written by `verify_display_fwver_monotonic.py --record`, not hand-edited.
 
 ## 1. What v95 carries over v94
 
