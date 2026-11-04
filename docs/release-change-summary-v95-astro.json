@@ -1,0 +1,41 @@
+{
+  "baseline": {
+    "candidate_id": "UNRESOLVED-PENDING-PR144-MERGE",
+    "libgphoto2_commit": "UNRESOLVED-PENDING-PR144-MERGE",
+    "libgphoto2_ref": "ian-morgan99/libgphoto2 feature/polaris-capture-events (NOT main)",
+    "patcher_commit": "UNRESOLVED-PENDING-V95-BUILD"
+  },
+  "_status": "PLACEHOLDER. Not buildable. libgphoto2 PR #144 is OPEN with unresolved review threads; the pin must be a merged SHA on feature/polaris-capture-events, never an unmerged branch head and never a git-am orphan. The values above are deliberately not valid SHAs so that no provenance row can be produced from this file silently.",
+  "purpose": "Create the Astro 6.0.0.54.95 candidate carrying the corrected libgphoto2 (K-1 II shutter gate and uncached vendor-property verification) on top of the v94 standard camera baseline.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "Move from driver main 43dccb81b to a merged commit on feature/polaris-capture-events. That branch, not main, carries pentax_model_answers_undeclared_generic_props (the #233 capability row) plus PR #144: non-bulb shutter writes now require CAN_CHANGE_TV and are refused before the wire, and verification reads the vendor property over uncached GetDevicePropValue instead of conditions offsets 272/276. Wording note: this pin is NOT a libgphoto2 main commit.",
+      "issues": ["#235", "#233", "#27"]
+    },
+    {
+      "component": "libgphoto2-verification-mechanism",
+      "summary": "Verification mechanism change, must be re-tested on hardware. Drive mode moved from its conditions field onto the uncached GetDevicePropValue read; shutter moved from conditions offsets 272/276 onto it. White balance already used an uncached property read and keeps its existing wrapper and return codes - it did not change mechanism in this PR. Drive-mode WRITE verification is proven only by unit and source-contract tests; no body write was exercised, only the read path. EV stays on the conditions verifier.",
+      "issues": ["#27", "#233"]
+    },
+    {
+      "component": "patcher",
+      "summary": "Carry the v94 Astro integration unchanged apart from the driver pin and the evidence/docs corrections recorded on this branch: the liveview-crash-camera-offbus pack for #176, and the dated correction to the o-v17c 272/276 offset claim.",
+      "issues": ["#176"]
+    }
+  ],
+  "validation_focus": [
+    "Re-verify EV write and read-back on a K-1 II against the pinned SHA. Issue #233's earlier PASS was recorded against driver 43df01ea9, not this build, and v94 exposed no EV widget at all.",
+    "Re-verify white balance write and read-back on a K-1 II against the pinned SHA, confirming the refactored shared verifier returns the same codes as before.",
+    "Exercise a drive-mode WRITE with read-back on a body. Only the read path was proven in PR #144.",
+    "Confirm the Bulb false pass is gone: SET 00:30 in B must return -1, not GP_OK.",
+    "Confirm non-bulb shutter writes in Bulb return -6 quickly rather than -1 after ten verification cycles.",
+    "Do not treat v94's missing EV/WB widget as a regression; driver main lacks the #233 capability row by design."
+  ],
+  "known_limits": [
+    "Not buildable until PR #144 is merged and the six pin locations are updated together. See docs/V95-ASTRO-TEST-MATRIX.md section 4.",
+    "scripts/build-astro-candidate.sh:67 requires the libgphoto2 checkout to be on branch main; the fix is not on main, so that gate must be relaxed or the fix merged to main before a build can succeed. Operator decision, not yet made.",
+    "This candidate is not physical camera qualification. Rows 10-12 of docs/V95-ASTRO-TEST-MATRIX.md require instrumented transcripts, not operator observation.",
+    "The Astro boot hook is installed as /app/network_telnetd.sh and flashing replaces /app, deleting it. Until #265 lands, an Astro candidate can be installed-verified and still have no Astro behaviour."
+  ]
+}
