@@ -115,16 +115,31 @@ leave it, it is true of v94), `docs/ASTRO-CAMERA-INTEGRATION-HANDOFF.md` ("clean
 checkout"), and `docs/ASTRO-CANDIDATE-RELEASE.md` ("the clean pinned libgphoto2 main
 checkout").
 
-**Additional blocker not in the handover:** `scripts/build-astro-candidate.sh:67` is
+**Blocker resolved on this branch.** `scripts/build-astro-candidate.sh` previously read
 
 ```sh
 [ "$(git -C "$LIBSRC" branch --show-current)" = "main" ] || die "libgphoto2 must be on main"
 ```
 
-The fix is not on driver `main`, so a checkout of
-`feature/polaris-capture-events` at the merged SHA **fails this gate**. Task B therefore
-requires either (a) relaxing line 67 to accept the named feature branch, or (b) merging
-the fix into driver `main`. That is an operator decision; it has not been changed here.
+Because the fix lands on `feature/polaris-capture-events`, that gate rejected a valid v95
+input even after PR #144 merged. It has been replaced with a reachability check: the pinned
+`LIB_BASELINE` must be an ancestor of `origin/main` or `origin/feature/polaris-capture-events`.
+Behaviour verified against real SHAs:
+
+| Input | Result |
+|---|---|
+| `43dccb81b` (v94 pin, driver main) | accepted — no regression on the v94 path |
+| `43df01ea9` (#233 base, feature branch) | accepted |
+| detached checkout at a reachable SHA | accepted |
+| `75b03f0a3` (PR #144 head, unmerged) | **rejected** |
+| `68fd8bcbb` (`git am` orphan) | **rejected** |
+
+This is strictly stronger than the branch check it replaced: it rejects exactly the two
+unfetchable cases this document warns about, while accepting every legitimate pin.
+
+Note `scripts/build-release-candidate.sh:104` still requires driver `main`. That is the
+**standard** (non-Astro) release line, which pins main and does not need the feature branch,
+so it is unchanged. Only the Astro candidate path was relaxed.
 
 ## 5. Release-summary note to carry into v95
 

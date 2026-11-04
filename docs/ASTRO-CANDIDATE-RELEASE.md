@@ -36,9 +36,11 @@ tests, then writes:
 - shared-camera-gate.txt and astro-test-transcript.txt;
 - astro-candidate-manifest.json with all source, dependency and packet hashes.
 
-The builder refuses dirty source, the wrong branch, a non-main libgphoto2
-checkout, a wrong libgphoto2 commit, stale libgphoto2 build directories and
-outputs outside the selected out directory. It does not install, reboot,
+The builder refuses dirty source, a libgphoto2 baseline that is not reachable from
+`origin/main` or `origin/feature/polaris-capture-events`, a wrong libgphoto2 commit,
+stale libgphoto2 build directories and outputs outside the selected out directory. A
+detached checkout at the pinned SHA is accepted; an orphan or unmerged commit is not.
+It does not install, reboot,
 flash, stage or upload anything.
 
 ## Publication

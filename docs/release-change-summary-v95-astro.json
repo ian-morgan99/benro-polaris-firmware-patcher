@@ -34,7 +34,8 @@
   ],
   "known_limits": [
     "Not buildable until PR #144 is merged and the six pin locations are updated together. See docs/V95-ASTRO-TEST-MATRIX.md section 4.",
-    "scripts/build-astro-candidate.sh:67 requires the libgphoto2 checkout to be on branch main; the fix is not on main, so that gate must be relaxed or the fix merged to main before a build can succeed. Operator decision, not yet made.",
+    "The Astro candidate build gate was changed on this branch: scripts/build-astro-candidate.sh previously required the libgphoto2 checkout to be on branch main, which rejected a valid feature-branch pin. It now requires LIB_BASELINE to be reachable from origin/main or origin/feature/polaris-capture-events, so orphan and unmerged commits are still refused. The pin value itself is unchanged at 43dccb81b until PR #144 merges.",
+    "scripts/build-release-candidate.sh:104 (the standard, non-Astro release line) still requires driver main. That is correct for the standard line and was deliberately left alone.",
     "This candidate is not physical camera qualification. Rows 10-12 of docs/V95-ASTRO-TEST-MATRIX.md require instrumented transcripts, not operator observation.",
     "The Astro boot hook is installed as /app/network_telnetd.sh and flashing replaces /app, deleting it. Until #265 lands, an Astro candidate can be installed-verified and still have no Astro behaviour."
   ]

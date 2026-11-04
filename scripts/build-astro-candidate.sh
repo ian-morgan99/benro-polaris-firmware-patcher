@@ -64,7 +64,20 @@ git -C "$ROOT" cat-file -e "$CAMERA_BASELINE^{commit}" || die "camera baseline i
 git -C "$ROOT" merge-base --is-ancestor "$CAMERA_BASELINE" HEAD || die "camera baseline is not in Astro HEAD"
 
 [ -d "$LIBSRC" ] || die "libgphoto2 source must be a checkout"
-[ "$(git -C "$LIBSRC" branch --show-current)" = "main" ] || die "libgphoto2 must be on main"
+# The pinned commit must be reachable from a real branch on origin, so provenance always
+# points at something a third party can fetch. A detached checkout at that SHA is fine; an
+# orphan is not. Driver main carries the v94 pin (43dccb81b). feature/polaris-capture-events
+# carries #233 (pentax_model_answers_undeclared_generic_props) and, once PR #144 is merged,
+# the #235 shutter gate -- so a v95 pin lives there, not on main.
+LIB_REACHABLE=0
+for LIB_REF in origin/main origin/feature/polaris-capture-events; do
+  git -C "$LIBSRC" rev-parse -q --verify "$LIB_REF^{commit}" >/dev/null || continue
+  if git -C "$LIBSRC" merge-base --is-ancestor "$LIB_BASELINE" "$LIB_REF" 2>/dev/null; then
+    LIB_REACHABLE=1
+    break
+  fi
+done
+[ "$LIB_REACHABLE" = 1 ] || die "libgphoto2 baseline $LIB_BASELINE is not reachable from origin/main or origin/feature/polaris-capture-events -- orphan or unmerged commit?"
 [ "$(git -C "$LIBSRC" rev-parse HEAD)" = "$LIB_BASELINE" ] || die "wrong libgphoto2 commit"
 [ -z "$(git -C "$LIBSRC" status --porcelain --untracked-files=all)" ] || die "libgphoto2 source is dirty"
 for stale in build _build build-asan; do [ ! -d "$LIBSRC/$stale" ] || die "libgphoto2 has stale $stale/"; done
