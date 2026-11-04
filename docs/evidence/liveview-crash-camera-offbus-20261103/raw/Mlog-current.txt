@@ -1,0 +1,6 @@
+[m[m[12:20:47:611 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca36190000225a ;
+[m[12:20:47:611 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca36190000225a ;]
+[m[m[12:20:49:606 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:10.53;capacity:19;ChargeState:1;
+[m[12:20:49:606 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:19;charge:1;]
+[m[m[12:21:17:697 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca36190000225a ;
+[m[12:21:17:697 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca36190000225a ;]

@@ -1,5 +1,11 @@
 # Current repository state
 
+For the binding rules that distinguish a built artifact from a staged,
+installed, or camera-qualified one, see
+[`docs/RELEASE-IDENTITY-PROCESS.md`](RELEASE-IDENTITY-PROCESS.md). This file
+records device state and dated evidence; it must not be used to infer an
+artifact's source commits from its display version.
+
 ## Active compatibility warning — `polestar_app` address maps are build-specific
 
 Do not apply historical `polestar_app` reverse-engineering addresses or

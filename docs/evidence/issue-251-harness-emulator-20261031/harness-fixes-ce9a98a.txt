@@ -1,0 +1,27 @@
+# Harness fixes ce9a98a (#21, #22) verified 2026-10-31
+# Commit: ce9a98a497347fc7da89efceae5262aa4ff6c6df
+
+## suites
+
+============================== 72 passed in 0.22s ==============================
+
+============================= 174 passed in 3.69s ==============================
+
+## mutation testing (each fix must be caught)
+see issue comments #21/#22 for per-mutation output
+
+## lifecycle suite unchanged
+  case_9_manual_non_b_control: SKIP - no ARM-mode Stage-2 fixture available; tiny_fixture is a 2-instruction engine smoke test only
+⚠ All ARM lifecycle cases skipped (no real Stage-2 fixture available)
+SUITE_EXIT=0
+
+## redistribution compliance
+.gitignore:10:tests/fixtures/arm/stage2_region.bin	tests/fixtures/arm/stage2_region.bin
+my diff adds no firmware content:
+
+ docs/ARM_EMULATION.md                            |  61 +++-
+ src/polaris_harness/arm_emulator/emulator.py     | 196 +++++++++---
+ tests/fixtures/arm/stage2_region.bin.placeholder |  14 +-
+ tests/test_arm_emulator.py                       | 382 +++++++++++++++++++++++
+ 4 files changed, 610 insertions(+), 43 deletions(-)
+  confirmed: no firmware hash/coordinates added by me

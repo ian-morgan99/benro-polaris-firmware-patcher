@@ -339,6 +339,13 @@
 			"type": "shell",
 			"command": "K=$(uname -r)\necho '=== 1. btusb undefined symbols: is btqca_setup linked in? ==='\ntimeout 15 flatpak-spawn --host sh -c \"F=\\$(find /lib/modules/$K -name 'btusb.ko*' | head -1); if command -v modprobe --help >/dev/null; then true; fi; zcat \\$F 2>/dev/null | strings | grep -E '^bt(qca|rtl|bcm|intel|mtk)_setup\\$' | sort -u\" 2>&1 | sed 's/^/  /'\necho; echo '=== 2. nm-style symbol dump (authoritative) ==='\ntimeout 15 flatpak-spawn --host sh -c \"F=\\$(find /lib/modules/$K -name 'btusb.ko*' | head -1); if command -v objdump >/dev/null; then objdump -T \\$F 2>/dev/null | grep -oE 'bt[a-z]+_setup' | sort -u; elif command -v readelf >/dev/null; then readelf -sW \\$F 2>/dev/null | grep -oE 'bt[a-z]+_setup' | sort -u; else echo 'no binutils'; fi\" 2>&1 | sed 's/^/  /'\necho; echo '=== 3. btqca loaded on demand? ==='\ntimeout 10 flatpak-spawn --host sh -c 'grep -c btqca /proc/modules' 2>&1 | sed 's/^/  btqca in /proc/modules: /'\necho; echo '=== 4. firmware name the QCA path would need ==='\ntimeout 15 flatpak-spawn --host sh -c \"F=\\$(find /lib/modules/$K -name 'btqca.ko*' | head -1); zcat \\$F 2>/dev/null | strings | grep -iE 'htf|nvm_|QCA_|EDL|Patch|Download' | head -25\" 2>&1 | sed 's/^/  /'",
 			"problemMatcher": []
+		},
+		{
+			"label": "Tail Polaris mlog/clog (continuous)",
+			"type": "shell",
+			"command": "bash scripts/tail-polaris-logs.sh",
+			"isBackground": true,
+			"group": "test"
 		}
 	]
 }

@@ -210,6 +210,7 @@ PY_TESTS=(
     tests/test_canary_two_shot.py
     tests/test_pentax_bulb_variations.py
     tests/test_astro_multishot.py
+    tests/test_candidate_identity.py
     tests/test_astro_build_wrapper.py
     tests/test_bt_wake_radio_liveness.py
     tests/test_display_fwver_monotonic.py

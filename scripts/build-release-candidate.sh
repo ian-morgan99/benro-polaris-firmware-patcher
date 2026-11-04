@@ -1,17 +1,62 @@
 #!/usr/bin/env bash
-# Build, gate, fingerprint, and privately publish one reproducible candidate.
-# This is the only supported source-to-candidate entry point for normal work.
+# Build, gate, publish, deploy, fingerprint, and update one reproducible
+# candidate. This is the only supported source-to-test-candidate entry point
+# for normal work. Every offline-gated candidate is published before the
+# deployment attempt so independent testers can fetch the exact bytes.
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> [display-fwver|auto]" >&2
+  echo "usage: $0 <id> <stock-FwPkt.zip|dir> <clean-libgphoto2-checkout> <build-id> [display-fwver|auto] --change-summary FILE [deployment options]" >&2
+  echo "change summary is required: it records the purpose and declared fixes; the script adds exact source commits and artifact hashes" >&2
+  echo "deployment options: --host IP --ssh-user USER --max-wait SECS --wake-wait SECS --allow-busy" >&2
+  echo "offline-gated candidates are published before deployment; deployment updates the published record" >&2
   exit 2
 }
-[ $# -ge 4 ] && [ $# -le 5 ] || usage
-ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="${5:-auto}"
+[ $# -ge 4 ] || usage
+ID="$1"; BASE="$2"; SRC="$3"; BUILD_ID="$4"; DISPLAY_FWVER="auto"
+shift 4
+if [ $# -gt 0 ] && [[ "$1" != --* ]]; then
+  DISPLAY_FWVER="$1"
+  shift
+fi
+CHANGE_SUMMARY=""
+DEPLOY_ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --change-summary)
+      [ $# -ge 2 ] || usage
+      CHANGE_SUMMARY="$2"; shift 2;;
+    --host|--ssh-user|--max-wait|--wake-wait)
+      [ $# -ge 2 ] || usage
+      DEPLOY_ARGS+=("$1" "$2"); shift 2;;
+    --allow-busy)
+      DEPLOY_ARGS+=("$1"); shift;;
+    --skip-trigger|--skip-verify)
+      echo "ERROR: normal release candidates must complete deployment and runtime verification; '$1' is not permitted here." >&2
+      exit 2;;
+    *) echo "ERROR: unknown deployment option: $1" >&2; usage;;
+  esac
+done
+[ -n "$CHANGE_SUMMARY" ] || {
+  echo "ERROR: --change-summary FILE is required; every candidate must state exactly what changed." >&2
+  usage
+}
+[ -f "$CHANGE_SUMMARY" ] || { echo "ERROR: change summary not found: $CHANGE_SUMMARY" >&2; exit 2; }
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
 VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
+
+# Never reuse an output directory. Reusing it can leave a valid-looking ZIP,
+# manifest, or provenance file from an earlier attempt beside newly-built
+# payloads, which makes the displayed version and the actual bytes diverge.
+if [ -e "$OUT" ]; then
+  echo "ERROR: output directory already exists: $OUT" >&2
+  echo "       Choose a new candidate id; do not merge or overwrite candidate outputs." >&2
+  exit 3
+fi
+mkdir -p "$OUT"
+BUILD_LOG="$OUT/build-release-candidate.log"
+exec > >(tee -a "$BUILD_LOG") 2>&1
 
 # Benro Connect displays this value, so two builds must never report the same
 # one. It used to be typed by hand and the baseline advanced by hand as well,
@@ -50,10 +95,8 @@ BRANCH="$(git -C "$SRC" branch --show-current)"
   exit 3
 }
 SRC_SHA="$(git -C "$SRC" rev-parse HEAD)"
-# The patcher tree is not required to be clean (this script edits release state
-# as it goes), so record the tree state as well as the commit. A version is
-# bound to the exact commits it was built from, and a dirty tree means the
-# binding is a commit plus uncommitted work rather than a commit alone.
+PATCHER_BRANCH="$(git -C "$ROOT" branch --show-current)"
+[ "$PATCHER_BRANCH" = main ] || { echo "ERROR: patcher checkout must be on main (got ${PATCHER_BRANCH:-detached})" >&2; exit 2; }
 PATCHER_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 echo "Building $ID from libgphoto2 main $SRC_SHA, patcher $PATCHER_SHA, stock base $BASE"
 
@@ -145,6 +188,31 @@ bash "$ROOT/container/test_polaris_pentax_build_package.sh" \
 echo "Generating install manifest"
 python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT"
 
+echo "Generating immutable release change manifest"
+python3 "$ROOT/scripts/create-release-change-manifest.py" \
+  --summary "$CHANGE_SUMMARY" \
+  --candidate-id "$ID" \
+  --display-fwver "$DISPLAY_FWVER" \
+  --build-id "$BUILD_ID" \
+  --libgphoto2 "$SRC" \
+  --patcher "$ROOT" \
+  --stock "$BASE" \
+  --candidate-dir "$OUT"
+CHANGE_MANIFEST_SHA256="$(sha256sum "$OUT/release-change-manifest.json" | awk '{print $1}')"
+{
+  echo "candidate_id=$ID"
+  echo "release_change_manifest=release-change-manifest.json"
+  echo "release_change_manifest_sha256=$CHANGE_MANIFEST_SHA256"
+} >> "$OUT/build-source-provenance.txt"
+
+echo "Checking candidate identity"
+python3 "$ROOT/scripts/verify-candidate-identity.py" "$OUT" --require-deployable
+
+{
+  echo "build_log=build-release-candidate.log"
+  echo "install_log=install.log"
+} >> "$OUT/build-source-provenance.txt"
+
 "$ROOT/tests/run_prerelease_gate.sh" --build "$OUT/FwPkt"
 
 # Compare the shipped bytes against the previous candidate BEFORE claiming a version.
@@ -162,9 +230,11 @@ if [ "${SKIP_DIFFERENTIAL:-0}" != "1" ]; then
     }
 fi
 
-# The candidate is real only once it has passed the gate. Claim the version at
-# that point so a build that fails its tests does not consume a number, while
-# two candidates that both reach this line can never share one.
+# The candidate is publishable once it has passed the offline gate. Publication
+# must happen before any hardware deployment attempt so testers on another rig
+# can fetch the exact bytes even when this rig is unavailable. Deployment and
+# runtime verification then advance the published record; they do not decide
+# whether the artifact is published at all.
 # Claiming a version also binds it to these exact commits, in both directions:
 # the version may never describe a different build, and these commits may never
 # be issued under a different version. The tree was proven clean above, and the
@@ -175,26 +245,45 @@ python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" \
   --libgphoto2-commit "$SRC_SHA" --patcher-commit "$PATCHER_SHA"
 git -C "$ROOT" add -- "$VERSION_STATE"
 
-bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
-  --build "$OUT" --id "$ID" --status candidate \
-  --note "Main-branch reproducible candidate; gate passed; physical test pending."
-echo "Candidate ready: $OUT/FwPkt.zip"
-md5sum "$OUT/FwPkt.zip"; sha256sum "$OUT/FwPkt.zip"
-
-# A candidate is not finished until it has been installed and confirmed on the
-# device, and the only supported way to do that is this installer: it stages the
-# extracted FwPkt/ tree (the on-boot watcher consumes the tree, not the zip —
-# issue #58), verifies every firmwareInfo MD5 on-device, reboots, proves the boot
-# was real by an uptime reset, and fail-closes on build_id plus every mandatory
-# file digest. Printing the exact command here keeps install from becoming tribal
-# knowledge; see docs/FIRMWARE-INSTALL-PROCESS.md.
 echo
-echo "== 6. install this candidate (the only supported path) =="
-echo "  ./scripts/release/release-fwpkt.sh $OUT"
-echo "  # add --skip-trigger to stage+verify without rebooting,"
-echo "  # --allow-busy only after confirming no exposure is in flight"
-echo "  # docs/FIRMWARE-INSTALL-PROCESS.md explains why zip-only staging is ignored"
+echo "== 6. publish the gated candidate =="
 {
   echo "install_command=./scripts/release/release-fwpkt.sh $OUT"
-  echo "install_status=not-installed"
+  echo "install_status=pending-deployment"
 } >> "$OUT/build-source-provenance.txt"
+
+bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
+  --build "$OUT" --id "$ID" --status gated \
+  --note "Main-branch reproducible candidate; offline gate passed and artifact published for independent testing; deployment pending."
+echo "Published gated candidate: $OUT/FwPkt.zip"
+md5sum "$OUT/FwPkt.zip"; sha256sum "$OUT/FwPkt.zip"
+
+# Deployment is still attempted automatically when hardware is available. The
+# installer stages the extracted FwPkt/ tree, verifies every firmwareInfo MD5
+# on-device, reboots, proves the boot was real by an uptime reset, and checks
+# the exact build/source identity. It writes install_status=installed-verified
+# and an install receipt into OUT. A failure does not retract publication.
+echo
+echo "== 7. deploy and runtime-verify the published candidate =="
+if ! "$ROOT/scripts/release/release-fwpkt.sh" "$OUT" "${DEPLOY_ARGS[@]}"; then
+  echo "ERROR: deployment/runtime verification failed." >&2
+  echo "       The gated artifact remains published for independent testers." >&2
+  echo "       Exact local output retained for diagnosis: $OUT" >&2
+  bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
+    --build "$OUT" --id "$ID" --status gated \
+    --note "Offline gate passed and artifact published; local deployment attempt failed; see the uploaded build and install logs."
+  exit 1
+fi
+
+grep -qx 'install_status=installed-verified' "$OUT/build-source-provenance.txt" || {
+  echo "ERROR: installer returned without installed-verified provenance." >&2
+  echo "       Refusing to publish an identity-incomplete candidate." >&2
+  exit 1
+}
+
+echo "== 8. update the published record with deployment evidence =="
+bash "$ROOT/.github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh" \
+  --build "$OUT" --id "$ID" --status installed-verified \
+  --note "Main-branch reproducible candidate; deployed and runtime-verified by the canonical installer; physical camera qualification recorded separately."
+echo "User-test candidate published: $OUT/FwPkt.zip"
+md5sum "$OUT/FwPkt.zip"; sha256sum "$OUT/FwPkt.zip"

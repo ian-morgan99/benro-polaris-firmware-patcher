@@ -124,6 +124,20 @@ new driver before hardware testing.
   `set_single_config`, so **shim #3 is the one that actually fires** in practice;
   #2 is there for completeness (any caller that pushes the whole config tree).
 
+### Generic config safety
+
+The loader also validates every successful `gp_camera_get_single_config` result,
+independent of camera model. A RADIO or MENU widget with zero choices is not a
+usable control: it is returned as `GP_ERROR_CAMERA_BUSY` and the incomplete
+widget is freed. Valid one-choice controls (including a bulb entry), TEXT,
+RANGE, and TOGGLE widgets pass through unchanged.
+
+This prevents a transient reconnect or initialisation state from becoming a
+false-success wire message such as `RD:0;V:;R:;`. Benro's parser assumes a
+choice list exists and can otherwise index an empty array. The caller can retry
+the standard transient error; no model-specific list or fallback value is
+invented.
+
 ### Why tethered (Internal-RAM) capture
 
 With a card selected as the capture target, the R5 II's post-capture

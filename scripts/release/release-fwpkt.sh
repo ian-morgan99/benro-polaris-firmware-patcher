@@ -18,6 +18,8 @@
 #   --skip-trigger     stage + verify only, do not reboot
 #   --skip-verify      skip the post-reboot verification (fire-and-forget)
 #   --max-wait SECS    max seconds to wait for device to return (default 900)
+#   --wake-wait SECS   if SSH is down, use the documented Bluetooth/Wi-Fi wake
+#                      path for this many seconds (default 180)
 #   --allow-busy       proceed even if a camera is present/busy (code 286 state:1)
 #
 # What it does:
@@ -41,6 +43,7 @@ SSH_USER="root"
 SKIP_TRIGGER=0
 SKIP_VERIFY=0
 MAX_WAIT=900
+WAKE_WAIT=180
 ALLOW_BUSY=0
 GIMBAL_PORT=9090
 
@@ -51,6 +54,7 @@ while [ $# -gt 0 ]; do
     --skip-trigger) SKIP_TRIGGER=1; shift;;
     --skip-verify) SKIP_VERIFY=1; shift;;
     --max-wait) MAX_WAIT="$2"; shift 2;;
+    --wake-wait) WAKE_WAIT="$2"; shift 2;;
     --allow-busy) ALLOW_BUSY=1; shift;;
     -h|--help) sed -n '2,32p' "$0"; exit 0;;
     *) BUILD_DIR="$1"; shift;;
@@ -61,10 +65,29 @@ done
 BUILD_DIR="$(cd "$BUILD_DIR" && pwd)"
 SSH="${SSH_USER}@${HOST}"
 FWPKT_DIR="$BUILD_DIR/FwPkt"
+PROVENANCE="$BUILD_DIR/build-source-provenance.txt"
+INSTALL_LOG="$BUILD_DIR/install.log"
+exec > >(tee -a "$INSTALL_LOG") 2>&1
 
 [ -d "$FWPKT_DIR" ] || { echo "ERROR: $FWPKT_DIR not found" >&2; exit 2; }
 [ -f "$FWPKT_DIR/firmwareInfo" ] || { echo "ERROR: firmwareInfo missing" >&2; exit 2; }
 [ -f "$FWPKT_DIR/FwVer" ] || { echo "ERROR: candidate FwVer missing" >&2; exit 2; }
+
+# Validate the complete source/artifact/version identity before any SSH,
+# staging, reboot, or device mutation. This is what prevents an offline smoke
+# directory such as .84 from being mistaken for a deployable release.
+python3 "$(dirname "$0")/../verify-candidate-identity.py" \
+  "$BUILD_DIR" --require-deployable
+
+set_install_status() {
+  local status="$1"
+  [ -f "$PROVENANCE" ] || return 0
+  if grep -q '^install_status=' "$PROVENANCE"; then
+    sed -i "s/^install_status=.*/install_status=$status/" "$PROVENANCE"
+  else
+    printf 'install_status=%s\n' "$status" >> "$PROVENANCE"
+  fi
+}
 
 # Read the expected build_id from provenance (if present)
 EXPECTED_BUILD_ID=""
@@ -103,7 +126,17 @@ echo
 # --- 1. Pre-flight -----------------------------------------------------------
 echo "--- [1/6] Pre-flight ---"
 if ! timeout 5 ssh -o BatchMode=yes -o ConnectTimeout=5 "$SSH" 'true' 2>/dev/null; then
-  echo "ERROR: SSH to $SSH failed." >&2; exit 3
+  WAKE_SCRIPT="$(dirname "$0")/../polaris-preflight.sh"
+  if [ "$WAKE_WAIT" -gt 0 ] && [ -x "$WAKE_SCRIPT" ]; then
+    echo "SSH to $SSH is unavailable; attempting the documented Bluetooth/Wi-Fi wake path (up to ${WAKE_WAIT}s)."
+    if ! POLARIS_HOST="$HOST" POLARIS_SSH_USER="$SSH_USER" \
+      "$WAKE_SCRIPT" --wake --wait "$WAKE_WAIT" --no-radio-check; then
+      echo "ERROR: Polaris wake/preflight failed; refusing to stage firmware." >&2
+      exit 3
+    fi
+  else
+    echo "ERROR: SSH to $SSH failed." >&2; exit 3
+  fi
 fi
 echo "SSH: OK"
 
@@ -245,6 +278,11 @@ else
 fi
 VERIFY_EOF
 
+# From this point the exact tree has been staged and its firmwareInfo digests
+# have been checked on-device. If a later reboot/verification step fails, the
+# provenance must say staged rather than leaving a misleading pending state.
+set_install_status staged
+
 # --- 4. Trigger --------------------------------------------------------------
 if [ "$SKIP_TRIGGER" = "1" ]; then
   echo "--- [4/6] SKIPPED (--skip-trigger) ---"
@@ -340,6 +378,24 @@ else
     echo "Recent upgrade log lines:"
     echo "$UPGRADE_LOG" | sed 's/^/  /'
   fi
+fi
+
+if [ "$SKIP_TRIGGER" = "0" ] && [ "$SKIP_VERIFY" = "0" ]; then
+  DEVICE_FWVER="$(ssh -o BatchMode=yes "$SSH" 'cat /app/FwVer 2>/dev/null' | tr -d '\r\n')"
+  set_install_status installed-verified
+  {
+    echo "candidate_id=$(basename "$BUILD_DIR")"
+    echo "install_status=installed-verified"
+    echo "installed_at=$(date -u +%FT%TZ)"
+    echo "target=$SSH"
+    echo "device_fwver=$DEVICE_FWVER"
+    echo "zip_sha256=$ACTUAL_ZIP_SHA256"
+    echo "uptime_before=${UPTIME_BEFORE:-unknown}"
+    echo "uptime_after=${UPTIME_AFTER:-unknown}"
+    echo "installer=$0"
+  } > "$BUILD_DIR/install-receipt.txt"
+else
+  echo "=== release-fwpkt.sh staged only; no installed-verified receipt written ==="
 fi
 
 echo

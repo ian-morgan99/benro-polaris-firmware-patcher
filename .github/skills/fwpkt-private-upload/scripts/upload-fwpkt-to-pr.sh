@@ -23,7 +23,7 @@
 #   bash .github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh \
 #        --build out/k1ii-k3iii-v8-modelgate-20260910 \
 #        --id o-v8 \
-#        [--display-fwver 6.0.0.54.68] [--status candidate] \
+#        [--display-fwver 6.0.0.54.68] [--status gated] \
 #        [--note "model-gate fix 0953dde"] [--dry-run]
 #
 # Env:
@@ -36,7 +36,8 @@
 # The script:
 #   1. recomputes zip MD5 + SHA-256 from the actual file (never copied forward),
 #   2. runs BOTH offline gates (structural + firmwareInfo manifest),
-#   3. stages FwPkt.zip + README.md (+ build-source-provenance.txt if present)
+#   3. stages FwPkt.zip + README.md (+ provenance, logs and install receipt
+#      when present)
 #      into firmware-packets/<display-version>--<id>/ in a clean checkout of the
 #      private repo,
 #   4. commits + pushes, then prints a paste-ready registry row for
@@ -45,7 +46,7 @@ set -euo pipefail
 
 PR_REPO="${PR_REPO:-https://github.com/ian-morgan99/PrivateResearch.git}"
 PR_CHECKOUT="${PR_CHECKOUT:-$HOME/Documents/VSCodeProjects/PrivateResearch}"
-BUILD="" ID="" STATUS="candidate" NOTE="" DRY=0 DISPLAY_FWVER_ARG=""
+BUILD="" ID="" STATUS="gated" NOTE="" DRY=0 DISPLAY_FWVER_ARG=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -66,6 +67,36 @@ done
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 ZIP="$BUILD/FwPkt.zip"
 [ -f "$ZIP" ] || { echo "FATAL: $ZIP not found (build dir must contain FwPkt.zip)" >&2; exit 1; }
+[ -f "$BUILD/release-change-manifest.json" ] || {
+  echo "FATAL: release-change-manifest.json missing; do not publish a candidate without the exact change/commit record." >&2
+  exit 1
+}
+[ -f "$BUILD/RELEASE-IDENTITY.md" ] || {
+  echo "FATAL: RELEASE-IDENTITY.md missing; do not publish an identity-incomplete candidate." >&2
+  exit 1
+}
+python3 "$REPO_ROOT/scripts/verify-candidate-identity.py" "$BUILD" --require-deployable
+
+if [ "$DRY" = 0 ]; then
+  case "$STATUS" in
+    installed-verified|physically-qualified)
+      grep -qx 'install_status=installed-verified' "$BUILD/build-source-provenance.txt" 2>/dev/null || {
+        echo "FATAL: build provenance does not prove installed-verified." >&2
+        echo "       Do not label an artifact installed without runtime evidence." >&2
+        exit 1
+      }
+      [ -f "$BUILD/install-receipt.txt" ] || {
+        echo "FATAL: install-receipt.txt missing; deployment evidence is incomplete." >&2
+        exit 1
+      }
+      ;;
+    built|gated|published|candidate|staged) ;;
+    *)
+      echo "FATAL: unknown publication status '$STATUS'." >&2
+      exit 1
+      ;;
+  esac
+fi
 
 echo "== 1. fingerprints (recomputed from the actual file) =="
 ZIP_MD5="$(md5sum "$ZIP" | awk '{print $1}')"
@@ -133,7 +164,16 @@ if [ -f "$BUILD/build-source-provenance.txt" ]; then
   LIBG_SHA="$(grep -m1 '^git_commit=' "$BUILD/build-source-provenance.txt" | cut -d= -f2 || true)"
   [ -n "$LIBG_SHA" ] || LIBG_SHA="?"
 fi
-PATCHER_REF="$(cd "$REPO_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo '?')/$(cd "$REPO_ROOT" && git branch --show-current 2>/dev/null || echo detached)"
+# The package's provenance is authoritative. Do not label a backfilled artifact
+# with the uploader checkout's current HEAD: that checkout may have moved on
+# since the ZIP was built.
+PATCHER_SHA="?"
+if [ -f "$BUILD/build-source-provenance.txt" ]; then
+  PATCHER_SHA="$(grep -m1 '^patcher_commit=' "$BUILD/build-source-provenance.txt" | cut -d= -f2 || true)"
+  [ -n "$PATCHER_SHA" ] || PATCHER_SHA="?"
+fi
+PATCHER_BRANCH="$(cd "$REPO_ROOT" && git branch --show-current 2>/dev/null || echo detached)"
+PATCHER_REF="$PATCHER_SHA/$PATCHER_BRANCH"
 
 # The five-component version the Benro Connect app displays. This is what the
 # published folder is prefixed with, so it must come from the build itself and
@@ -175,6 +215,12 @@ fi
 mkdir -p "$STAGE_DIR"
 cp "$ZIP" "$STAGE_DIR/FwPkt.zip"
 [ -f "$BUILD/build-source-provenance.txt" ] && cp "$BUILD/build-source-provenance.txt" "$STAGE_DIR/"
+[ -f "$BUILD/release-change-manifest.json" ] && cp "$BUILD/release-change-manifest.json" "$STAGE_DIR/"
+[ -f "$BUILD/RELEASE-IDENTITY.md" ] && cp "$BUILD/RELEASE-IDENTITY.md" "$STAGE_DIR/"
+[ -f "$BUILD/install-manifest.json" ] && cp "$BUILD/install-manifest.json" "$STAGE_DIR/"
+[ -f "$BUILD/install-receipt.txt" ] && cp "$BUILD/install-receipt.txt" "$STAGE_DIR/"
+[ -f "$BUILD/build-release-candidate.log" ] && cp "$BUILD/build-release-candidate.log" "$STAGE_DIR/"
+[ -f "$BUILD/install.log" ] && cp "$BUILD/install.log" "$STAGE_DIR/"
 
 cat > "$STAGE_DIR/README.md" <<EOF
 # FwPkt $DISPLAY_FWVER — $ID
@@ -189,8 +235,13 @@ cat > "$STAGE_DIR/README.md" <<EOF
 | appfs MD5 | \`$APPFS_MD5\` |
 | libgphoto2 commit | \`$LIBG_SHA\` |
 | patcher ref | \`$PATCHER_REF\` |
+| release change manifest | \`release-change-manifest.json\` (exact declared changes and generated commit inventories) |
+| release identity | \`RELEASE-IDENTITY.md\` |
 | status | $STATUS |
 | built | $(date -u +%Y-%m-%dT%H:%M:%SZ) from \`${BUILD#*/}\` |
+| build log | \`build-release-candidate.log\` (when present) |
+| install log | \`install.log\` (when present) |
+| install manifest | \`install-manifest.json\` (when present) |
 ${NOTE:+| note | $NOTE |}
 
 Verify before staging on a device (per the provenance contract handoff rule):

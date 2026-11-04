@@ -5,14 +5,21 @@
 **Rule:** a candidate is installed by staging the extracted `FwPkt/` tree to
 `/app/sd/FwPkt/` and rebooting. Nothing else. No direct copies into `/app`.
 
+Before using this document, read
+[`RELEASE-IDENTITY-PROCESS.md`](RELEASE-IDENTITY-PROCESS.md). It defines the
+required identity tuple and the words `BUILT`, `GATED`, `PUBLISHED`, `STAGED`,
+`INSTALLED-VERIFIED`, and `PHYSICALLY-QUALIFIED`. This document describes the
+install mechanism; it does not promote a candidate's lifecycle state by itself.
+
 ## Why this document exists
 
 After ~72 releases, install was still tribal knowledge rather than a scripted,
 deterministic step. Three scripts existed, only one of them correct, nothing in
 the release pipeline referenced it, and there was no document saying which to use.
 That produced real failures, all recorded below. This file plus the wiring in
-`scripts/build-release-candidate.sh` is the fix: every build now prints the exact
-install command for the candidate it just produced.
+`scripts/build-release-candidate.sh` is the fix: every normal build now invokes
+the exact installer for the candidate it just produced. The one-command form
+below remains available for installing an already-published candidate.
 
 ## The one command
 
@@ -20,8 +27,25 @@ install command for the candidate it just produced.
 ./scripts/release/release-fwpkt.sh out/<candidate-id>
 ```
 
+The argument must be the complete canonical build directory, not a bare ZIP,
+an arbitrary extracted tree, or an ephemeral smoke directory. It must contain
+`FwPkt/`, `FwPkt.zip`, `build-source-provenance.txt`, and
+`install-manifest.json`. The installer refuses a missing or stale manifest
+before it touches the device. It also runs
+`scripts/verify-candidate-identity.py --require-deployable`, which checks the
+full source SHA pair, build id, display version, extracted `FwVer`, ZIP copy,
+and manifest before opening an SSH connection.
+
 Options: `--skip-trigger` (stage + verify, no reboot), `--allow-busy` (only after
-confirming no exposure is in flight), `--max-wait SECS`, `--host IP`.
+confirming no exposure is in flight), `--max-wait SECS`, `--wake-wait SECS`,
+`--host IP`.
+
+If the initial SSH check fails, the installer automatically invokes
+`scripts/polaris-preflight.sh --wake`. That uses the local Bluetooth control
+path when available, waits for the Polaris access point, and only continues to
+stage firmware after SSH is reachable. If the Polaris is powered off or its
+Bluetooth target is not advertising, the installer stops before staging and
+records the failed wake attempt in `install.log`.
 
 It performs six phases and fails closed at each:
 
@@ -114,27 +138,45 @@ candidate (see `AGENTS.md`). Record it in the candidate's `SUMMARY.md` when done
 
 ## Release process wiring
 
-`scripts/build-release-candidate.sh` now does two things so install cannot be
-forgotten or improvised:
+`scripts/build-release-candidate.sh` now makes deployment part of the release
+record while preserving publication of every gated candidate:
 
-1. Prints the exact command for the candidate it just built:
-   `== 6. install this candidate (the only supported path) ==`
-2. Appends `install_command=...` and `install_status=not-installed` to
-   `build-source-provenance.txt`. A release is not finished until that status
-   changes to `installed-verified` after phase 6 passes.
+1. It publishes the exact gated ZIP to PrivateResearch after the offline gates,
+   before attempting deployment, so independent testers can fetch it even if
+   this rig is unavailable.
+2. It runs `scripts/release/release-fwpkt.sh` automatically after publication
+   and refuses `--skip-trigger`/`--skip-verify` in the release wrapper.
+3. The installer changes `build-source-provenance.txt` to
+   `install_status=installed-verified` and writes `install-receipt.txt` only
+   after phase 6 passes.
+4. A second publication updates the same durable record with the receipt and
+   final logs; it never changes the ZIP bytes.
+
+If the device cannot be reached or the deployment fails, the exact local output
+and the published artifact are retained for diagnosis and independent testing;
+the status must remain `gated`/`published`, never `installed-verified`.
 
 ## Checklist for every install
 
-1. Candidate has a registry row in `docs/FWPKT-PROVENANCE-CONTRACT.md` (zip MD5 +
-   SHA-256, appfs MD5, both commit links). No row → do not stage.
-2. `install-manifest.json` present and zip digest matches (the installer checks
+1. Read and complete the lifecycle record in
+   `docs/RELEASE-IDENTITY-PROCESS.md`.
+2. For a candidate being installed outside the canonical builder, it has a
+   registry row in `docs/FWPKT-PROVENANCE-CONTRACT.md` (zip MD5 + SHA-256,
+   appfs MD5, both commit links). No row → do not stage. The canonical builder
+   performs the identity check before staging. The canonical builder creates
+   the row before deployment and updates it after successful runtime
+   verification.
+3. `install-manifest.json` present and zip digest matches (the installer checks
    this; it must never be bypassed).
-3. Camera idle, or `--allow-busy` only after confirming no exposure is in flight.
-4. Run the installer. Do not interrupt the 5–10 min dark period.
-5. Confirm phase 6 passed and uptime reset was reported.
-6. Update `install_status=installed-verified` in the provenance file, add the dated
-   install record to `docs/CURRENT-STATE.md`, and save evidence under
+4. Camera idle, or `--allow-busy` only after confirming no exposure is in flight.
+5. Run the installer. Do not interrupt the 5–10 min dark period.
+6. Confirm phase 6 passed and uptime reset was reported.
+7. Confirm the generated `install_status=installed-verified` and
+   `install-receipt.txt`, then add the dated install record to
+   `docs/CURRENT-STATE.md` and save evidence under
    `docs/evidence/<candidate>-install-<date>/`.
+8. Keep camera qualification separate: a successful firmware install is not
+   evidence that any camera control works.
 
 ## Related
 

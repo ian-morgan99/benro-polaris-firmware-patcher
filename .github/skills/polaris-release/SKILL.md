@@ -15,15 +15,21 @@ From the patcher repository root:
 
 ```sh
 ./scripts/build-release-candidate.sh \
-  <candidate-id> <stock-FwPkt.zip-or-dir> <clean-libgphoto2-main> [build-id]
+  <candidate-id> <stock-FwPkt.zip-or-dir> <clean-libgphoto2-main> [build-id] \
+  --change-summary docs/templates/release-change-summary.json
 ```
 
 The script refuses a missing/dirty/detached/non-`main` libgphoto2 checkout, and
-also refuses a **dirty patcher checkout** before doing any expensive work. It
+also refuses a missing/dirty/detached/non-`main` patcher checkout before doing
+any expensive work. It
 first runs the libgphoto2 Meson deterministic regression pack, then builds
 from the supplied stock FwPkt, runs the patcher/package deterministic
-pre-release gate, recomputes hashes, and uploads the exact ZIP to
-PrivateResearch. A failure at either layer stops the release.
+pre-release gate, publishes the exact ZIP to PrivateResearch, then attempts
+deployment through `scripts/release/release-fwpkt.sh` and proves the running
+identity when hardware is available. A deployment failure does not retract the
+published gated artifact. Use `--host`, `--ssh-user`,
+`--max-wait`, or the explicit `--allow-busy` safety override when required;
+the release wrapper rejects `--skip-trigger` and `--skip-verify`.
 
 **One version, one set of commits.** The app-visible version is derived, never
 typed, and when the candidate passes the gate it is claimed *and bound* to the
@@ -53,10 +59,21 @@ Record and hand over all of:
 * PrivateResearch commit and path;
 * gate result and any skipped prerequisites.
 
-The candidate is **not installed** merely because the script succeeds. Device
-installation must use `fwpkt-update-flow`, followed by runtime provenance and
-the camera canary. Keep direct libgphoto2, packaged Polaris, and OpenPolaris
-results separate.
+The candidate is published after the offline gate even when this rig cannot
+deploy it. The published status must distinguish `gated` from
+`installed-verified`; physical camera qualification remains a separate gate.
+Keep direct libgphoto2, packaged Polaris, and OpenPolaris results separate.
+
+`--change-summary` is mandatory. Start from
+`docs/templates/release-change-summary.json` and state the previous candidate,
+the purpose, each declared fix, issue references, validation focus, and known
+limits. The builder then generates `release-change-manifest.json` and
+`RELEASE-IDENTITY.md` containing the exact source SHAs, every commit since the
+declared baselines, stock-package hash, ZIP hashes, and appfs hash. The
+identity verifier and private uploader refuse a candidate missing either file.
+Those two files are published beside the ZIP and are the authoritative answer
+to “what exactly went into this version”; never reconstruct that answer from a
+version number, branch name, or memory.
 
 ## Review rule
 

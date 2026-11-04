@@ -1,18 +1,20 @@
 ---
 name: fwpkt-private-upload
-description: Publish every newly built FwPkt.zip to the PRIVATE ian-morgan99/PrivateResearch repo (firmware-packets/<display-version>--<registry-id>/) so other agents can fetch it online, while keeping the public repos free of firmware bytes. USE FOR: right after any patch-polaris.sh build produces out/<name>/FwPkt.zip; when another agent or machine needs a zip that only exists on this box; backfilling an existing out/ or builds/ zip that was never uploaded. DO NOT USE FOR: staging the zip onto the SD card (fwpkt-update-flow skill), building the zip itself (container/ + patch-polaris.sh), or committing zip bytes to any PUBLIC repo.
+description: Publish every gated FwPkt.zip to the PRIVATE ian-morgan99/PrivateResearch repo (firmware-packets/<display-version>--<registry-id>/) so other agents can fetch the exact test artifact online, while keeping the public repos free of firmware bytes. USE FOR: the publication step of build-release-candidate.sh; updating the same record after deployment; or backfilling an existing build. DO NOT USE FOR: staging the zip onto the SD card (fwpkt-update-flow skill), building the zip itself (container/ + patch-polaris.sh), or committing zip bytes to any PUBLIC repo.
 ---
 
 # FwPkt private upload — HARD RULE
 
-> **HARD RULE.** Every `FwPkt.zip` this project produces is uploaded to the
+> **HARD RULE.** Every gated `FwPkt.zip` is uploaded to the
 > **private** `ian-morgan99/PrivateResearch` repo under
-> `firmware-packets/<display-version>--<registry-id>/` **in the same session it is built**, before
-> the build is handed off, installed, or discussed. The public repos
+> `firmware-packets/<display-version>--<registry-id>/` before the build is
+> handed to testers. The public repos
 > (`BenroPolarisPatcher`, `OpenPolaris`, the libgphoto2 fork) keep only the
 > registry *row* (hashes + commit links); the zip *bytes* live in
 > PrivateResearch. This is the `zip_location` column the provenance contract
-> reserved — it now exists, and it is this repo.
+> reserved — it now exists, and it is this repo. The publication status must
+> say `gated`, `staged`, or `installed-verified`; it must never imply a device
+> state that has not been proved.
 
 ## Why this rule exists
 
@@ -26,16 +28,28 @@ description: Publish every newly built FwPkt.zip to the PRIVATE ian-morgan99/Pri
   firmware bytes to the world — but it *is* online and cloneable by any agent
   with access, which is the point.
 
-## The flow (run this after every successful build)
+## The flow (normally invoked by the canonical release builder)
 
 ```bash
 cd /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher
 bash .github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh \
   --build out/<name>-<date> \
   --id <registry-id> \
-  --status candidate \
-  --note "<one line: what this build changes>"
+  --status gated \
+  --note "offline gate passed; deployment pending; <one line: what this build changes>"
 ```
+
+Run it after the offline gate has passed. The normal
+`build-release-candidate.sh` command invokes this step automatically before
+attempting deployment, then invokes it again with `installed-verified` when
+phase 6 succeeds. Do not overwrite the ZIP when updating the record.
+
+The uploader is fail-closed on release identity: the build directory must
+contain both `release-change-manifest.json` and `RELEASE-IDENTITY.md`, and the
+candidate identity verifier must pass. These files are copied beside the ZIP
+so the published record states the exact purpose, declared fixes, source SHAs,
+commit inventories, and artifact hashes rather than relying on the app version
+or a hand-written upload note.
 
 The script does, in order (all fail-closed):
 
@@ -47,7 +61,7 @@ The script does, in order (all fail-closed):
    `firmwareInfo` entry against the shipped bytes — the same check the on-board
    updater runs. A mismatch here means the device would silently reject it.
 4. Stages `FwPkt.zip` + a self-describing `README.md` (all four handoff values)
-   + `build-source-provenance.txt` into
+   + provenance, build/install logs, and `install-receipt.txt` into
    `$PR_CHECKOUT/firmware-packets/<display-version>--<id>/` and commits + pushes to
    `ian-morgan99/PrivateResearch`.
 5. Prints a **paste-ready registry row** for
@@ -77,7 +91,11 @@ ian-morgan99/PrivateResearch/
     └── <display-version>--<registry-id>/   # e.g. 6.0.0.54.68--o-v17c-colortemp-formless
         ├── FwPkt.zip            # the flashable package (FwPkt/ prefix intact)
         ├── README.md            # all four handoff values + verify commands
-        └── build-source-provenance.txt   # if the build produced one
+        ├── build-source-provenance.txt   # source and install status
+        ├── install-manifest.json         # candidate ZIP and installed-file hashes
+        ├── install-receipt.txt           # target and runtime identity (after install)
+        ├── build-release-candidate.log  # full release transcript
+        └── install.log                   # installer transcript (when attempted)
 ```
 
 - **Folder naming.** The prefix is the five-component `display_fwver` — the
@@ -127,9 +145,9 @@ registry row is *unprovenanced* — do not stage it.
    The row lives in the public patcher repo; that is what makes the private
    bytes discoverable and verifiable.
 
-## Backfilling existing builds
+## Backfilling existing installed builds
 
 For zips already sitting in `out/` or `builds/` that were never uploaded, run
-the same script with their registry id (look it up in
-`docs/FWPKT-PROVENANCE-CONTRACT.md`) and update the row's location column to
-point at PrivateResearch. Use `--dry-run` first to see what would be staged.
+the same script with the best-proven status (`gated` if only offline gates
+exist, `installed-verified` only with a matching receipt). Use `--dry-run` first
+to see what would be staged.

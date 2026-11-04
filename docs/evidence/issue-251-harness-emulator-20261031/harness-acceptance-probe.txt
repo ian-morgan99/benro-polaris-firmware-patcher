@@ -1,0 +1,35 @@
+Instruction limit exceeded: 501
+=== A. ARM mode executes real ARM instructions ===
+[A] result=pass instr=3 mode=arm R0=7 err=None
+    PASS: ARM encodings executed, R0=7 R1=9, mode recorded in contract
+=== B. Unknown mode rejected at construction (fail closed) ===
+    PASS: rejected -> ValueError: Invalid instruction mode: 'mips'. Expected 'arm' or 'thumb'.
+=== C. ARM bytes decoded as thumb must fail closed ===
+[C] result=timeout instr=501 mode=thumb R0=0 err=Instruction limit exceeded: 501 instructions
+    PASS: mis-decoded mode does not silently pass
+=== D. AAPCS marshalling: R0/R1 reach the stub, return lands in R0 ===
+[D] result=pass instr=4 mode=arm R0=90 err=None
+    stub calls recorded: [('aapcs_call', [17, 34, 0, 0])]
+    args R0=0x11 R1=0x22 reached stub: True
+    return value in R0 after call: 90 (stub returned 0x5A)
+=== E. register_stub_entry for unregistered stub fails closed ===
+    PASS: KeyError: 'Cannot register entry for unregistered stub: ghost'
+=== F. real pgphoto capture_image_with_Bulb region, ARM mode ===
+[F] result=unsupported_instruction instr=0 mode=thumb R0=None err=Invalid memory read (UC_ERR_READ_UNMAPPED)
+    unsupported_at=0x1038
+=== 1. failure path: does the contract report the REAL requested mode? ===
+  requested mode='arm'  -> contract reports mode='thumb'
+  result=unsupported_instruction error=Invalid memory fetch (UC_ERR_FETCH_UNMAPPED)
+  instructions_executed reported=0
+  emulator internal counter after same run = 2
+  => if reported=0 but internal>0, failure records under-report work done
+
+=== 2. real pgphoto capture_image_with_Bulb region in ARM mode ===
+  contract: result=unsupported_instruction mode='thumb' instr_reported=0
+  internal counter after run = 15
+  error=Invalid memory read (UC_ERR_READ_UNMAPPED)
+  unsupported_at=0x1038
+result: pass instr: 6
+final R2 = 0x0 (0x33 => returned to call site+4 CORRECT)
+final R3 = 0x0 (0x44 => fell through into stub body+4 WRONG)
+stub calls: []

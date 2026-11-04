@@ -63,10 +63,13 @@ set -uo pipefail
 # o-v17a-autonomous-install.sh set BT_MAC themselves (from their own env var).
 : "${BT_MAC:=${POLARIS_BT:-48:E7:DA:D4:B5:72}}"
 
-# Seam for tests: the local-route check is `[ -e /dev/hci0 ]`, which cannot be
-# satisfied inside a container. POLARIS_BT_DEV lets a test point it at any
+# Seam for tests: POLARIS_BT_DEV lets a test point the local-route check at any
 # existing path so the local route can be exercised with stub binaries on PATH.
-# Leave unset in production.
+# Leave it unset in production. On a normal host BlueZ may expose a controller
+# through D-Bus even when /dev/hci0 is not visible to this process, so production
+# also accepts a successful `bluetoothctl list` controller query.
+POLARIS_BT_DEV_EXPLICIT=0
+if [ -n "${POLARIS_BT_DEV+x}" ]; then POLARIS_BT_DEV_EXPLICIT=1; fi
 : "${POLARIS_BT_DEV:=/dev/hci0}"
 BT_CMD=()                 # resolved invocation prefix, e.g. bluetoothctl | flatpak-spawn --host bluetoothctl
 BT_ROUTE="none"           # local | portal | none
@@ -118,8 +121,13 @@ bt_timeout() {
 # It deliberately does NOT claim the radio works; only bt_radio_liveness does.
 bt_resolve() {
   BT_CMD=(); BT_ROUTE="none"
-  if command -v bluetoothctl >/dev/null 2>&1 && [ -e "$POLARIS_BT_DEV" ]; then
-    BT_CMD=(bluetoothctl); BT_ROUTE="local"; return 0
+  if command -v bluetoothctl >/dev/null 2>&1; then
+    if [ -e "$POLARIS_BT_DEV" ] || {
+      [ "$POLARIS_BT_DEV_EXPLICIT" = "0" ] &&
+      timeout 5 bluetoothctl list 2>/dev/null | grep -qi 'Controller';
+    }; then
+      BT_CMD=(bluetoothctl); BT_ROUTE="local"; return 0
+    fi
   fi
   if command -v flatpak-spawn >/dev/null 2>&1; then
     # Probe, don't assume: the portal must actually answer.

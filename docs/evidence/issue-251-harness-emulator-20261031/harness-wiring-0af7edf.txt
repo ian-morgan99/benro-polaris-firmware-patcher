@@ -1,0 +1,28 @@
+# Harness #19 wiring 0af7edf verified 2026-10-31
+# Commits: ce9a98a (#21,#22), 0af7edf (#19) on top of 6b8b0e3
+
+## suites
+
+============================== 91 passed in 0.26s ==============================
+
+============================= 193 passed in 3.74s ==============================
+
+## CLI contract
+suite, stage2 absent -> exit 0 (expect 0, all SKIP)
+sidecar-driven single fixture -> exit 0
+  mode arm result pass instr 5 calls ['stop', 'close']
+--mode thumb override -> exit 3 (non-zero expected)
+
+## mutation testing summary (each revert must be caught)
+sidecar mode resolution reverted      -> 5 failures
+entry-address resolution reverted     -> 1 failure (dedicated non-default-address fixture)
+stub-entry registration dropped       -> 2 failures
+suite default fixture reverted        -> 3 failures
+CLI mode/entries hardcoded            -> 1 failure
+
+## redistribution compliance
+tests/fixtures/arm/stage2_region.bin
+stage2_region.bin remains gitignored
+12 tests/fixtures/arm/lifecycle_probe_fixture.bin
+probe words: ['0xe3a00001', '0xeb000005', '0xeb000005']
+probe fixture is hand-assembled ARM, not extracted firmware

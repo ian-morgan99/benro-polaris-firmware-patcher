@@ -2,6 +2,11 @@
 
 Status: **normative** for every future libgphoto2 change consumed by this firmware patcher.
 
+Before building, read [`RELEASE-IDENTITY-PROCESS.md`](RELEASE-IDENTITY-PROCESS.md).
+This document governs the source and regression gates; the identity process
+governs the exact artifact, version reservation, publication, installation, and
+qualification state. A successful source build is not an installed release.
+
 ## Camera-family scope: do not ship a Pentax-only production build
 
 Production firmware builds must not treat `ptp2,pentax` as the complete camera
@@ -64,16 +69,34 @@ A future upgrade is therefore **not** complete when the new `ptp2.so` builds, no
 
 Use the patcher wrapper below for every new candidate. It requires a clean
 libgphoto2 checkout on `main`, builds from the supplied stock FwPkt, runs the
-fail-closed package gate, fingerprints the actual ZIP, and uploads it to
-PrivateResearch with a provenance row prompt:
+fail-closed package gate, publishes the exact gated ZIP to PrivateResearch, and
+then attempts deployment and runtime verification on the Polaris. This means
+the artifact remains available to independent testers even when this rig is
+unavailable:
 
 ```sh
 ./scripts/build-release-candidate.sh \
   o-vNN-description-YYYYMMDD \
   firmware/FwPkt.zip \
   /path/to/clean/libgphoto2-main \
-  6.0.0.XX-build-description
+  6.0.0.XX-build-description \
+  --change-summary docs/templates/release-change-summary.json
 ```
+
+The change summary is mandatory. It must name the previous candidate's full
+libgphoto2 and patcher SHAs, the purpose, every declared fix, issue references,
+validation focus, and known limits. The builder automatically writes and
+verifies `release-change-manifest.json` and `RELEASE-IDENTITY.md`, including
+every commit since both baselines and the exact stock, ZIP, and appfs hashes.
+The private publication step refuses a candidate that does not carry those
+records. The version number is therefore only a label; the generated identity
+files are the source of truth for what was built and published.
+
+The resulting directory is publishable after the offline gate. Its publication
+record must say whether deployment is pending, failed, or
+`installed-verified`. The exact output path and ZIP SHA-256 are handed to
+testers from PrivateResearch; an install receipt is added when deployment
+succeeds.
 
 Do not build from a detached commit, side branch, dirty checkout, or an
 already-patched appfs. If a historical comparison is required, make it a
@@ -141,12 +164,16 @@ than the recorded baseline while retaining the same first four components:
 
 ```sh
 scripts/build-release-candidate.sh <id> <stock-FwPkt.zip|dir> \
-  /path/to/clean/libgphoto2/main <build-id> 6.0.0.54.53
+  /path/to/clean/libgphoto2/main <build-id> 6.0.0.54.53 \
+  --change-summary docs/templates/release-change-summary.json
 ```
 
-The state file is updated only when that candidate is promoted and its
-provenance row is committed. This makes version reuse or an accidental return
-to `8.0.0.76` a build failure, rather than a device-side discovery.
+The state file reserves the version before deployment so a failed flash cannot
+be silently retried under the same app-visible number. A deployment failure
+leaves the exact local output for diagnosis and the number remains consumed;
+the next candidate must use the next number. This makes version reuse or an
+accidental return to `8.0.0.76` a build failure, rather than a device-side
+discovery.
 
 If a dirty source tree is deliberately used for investigation, it is diagnostic only unless its dirty hash is captured and the exact content is subsequently committed and rebuilt cleanly.
 

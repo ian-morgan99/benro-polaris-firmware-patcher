@@ -1201,12 +1201,80 @@ static int stage2_shim_gp_camera_set_single_config(void *camera, const char *nam
 typedef int (*stage2_gp_widget_new_fn)(int type, const char *label, void **widget);
 typedef int (*stage2_gp_widget_set_name_fn)(void *widget, const char *name);
 typedef void (*stage2_gp_widget_free_fn)(void *widget);
+typedef int (*stage2_gp_widget_get_type_fn)(void *widget, int *type);
+typedef int (*stage2_gp_widget_count_choices_fn)(void *widget);
 static stage2_gp_widget_new_fn      g_real_gp_widget_new     = NULL;
 static stage2_gp_widget_set_name_fn g_real_gp_widget_set_name = NULL;
 static stage2_gp_widget_free_fn     g_real_gp_widget_free    = NULL;
+static stage2_gp_widget_get_type_fn g_real_gp_widget_get_type = NULL;
+static stage2_gp_widget_count_choices_fn g_real_gp_widget_count_choices = NULL;
 
 /* GP_WIDGET_TEXT == 2 (libgphoto2 2.5.34 enum: WINDOW=0, SECTION=1, TEXT=2). */
 #define STAGE2_GP_WIDGET_TEXT 2
+/* These values are part of the pinned libgphoto2 public enum.  A RADIO or MENU
+ * widget with no choices is not a usable control for the Benro wire protocol:
+ * the proprietary parser assumes at least one choice and indexes the list. */
+#define STAGE2_GP_WIDGET_RADIO 5
+#define STAGE2_GP_WIDGET_MENU  6
+/* GP_ERROR_CAMERA_BUSY from gphoto2-result.h.  Keep this loader independent of
+ * the target headers while returning the standard transient error. */
+#define STAGE2_GP_ERROR_CAMERA_BUSY (-110)
+
+/* A successful get_single_config call is not enough to publish a control.  The
+ * stock/adapter path has been observed returning GP_OK with a RADIO widget whose
+ * choice list is empty during camera reconnect/initialisation.  Benro's
+ * polestar_app then serialises that as `RD:0;V:;R:;` and its parser indexes an
+ * empty array, which can take down BenroConnect.  Keep this check generic: it
+ * applies to every model and every RADIO/MENU control, while leaving TEXT,
+ * RANGE, TOGGLE and valid single-choice widgets untouched. */
+static int
+stage2_reject_empty_choice_widget(void **widget_out, const char *name)
+{
+    int type;
+    int choices;
+    void *widget;
+
+    if (!widget_out || !*widget_out) {
+        fprintf(stderr, "[stage2] config-safety: GP_OK without widget for %s; "
+                        "returning CAMERA_BUSY\n", name ? name : "<unnamed>");
+        if (widget_out)
+            *widget_out = NULL;
+        return STAGE2_GP_ERROR_CAMERA_BUSY;
+    }
+
+    if (!g_real_gp_widget_get_type || !g_real_gp_widget_count_choices ||
+        !g_real_gp_widget_free) {
+        fprintf(stderr, "[stage2] config-safety: widget inspection helpers "
+                        "unresolved for %s; refusing unvalidated GP_OK\n",
+                name ? name : "<unnamed>");
+        if (g_real_gp_widget_free)
+            g_real_gp_widget_free(*widget_out);
+        *widget_out = NULL;
+        return STAGE2_GP_ERROR_CAMERA_BUSY;
+    }
+
+    widget = *widget_out;
+    if (g_real_gp_widget_get_type(widget, &type) != 0) {
+        fprintf(stderr, "[stage2] config-safety: cannot read widget type for "
+                        "%s; returning CAMERA_BUSY\n", name ? name : "<unnamed>");
+        g_real_gp_widget_free(widget);
+        *widget_out = NULL;
+        return STAGE2_GP_ERROR_CAMERA_BUSY;
+    }
+
+    if (type != STAGE2_GP_WIDGET_RADIO && type != STAGE2_GP_WIDGET_MENU)
+        return 0;
+
+    choices = g_real_gp_widget_count_choices(widget);
+    if (choices > 0)
+        return 0;
+
+    fprintf(stderr, "[stage2] config-safety: %s widget has %d choices; "
+                    "returning CAMERA_BUSY\n", name ? name : "<unnamed>", choices);
+    g_real_gp_widget_free(widget);
+    *widget_out = NULL;
+    return STAGE2_GP_ERROR_CAMERA_BUSY;
+}
 
 static int stage2_shim_gp_camera_get_single_config(void *camera, const char *name,
                                                    void **widget_out, void *context)
@@ -1224,8 +1292,21 @@ static int stage2_shim_gp_camera_get_single_config(void *camera, const char *nam
     }
 
     int ret = g_real_gp_camera_get_single_config(camera, name, widget_out, context);
-    if (ret == 0)
-        return 0;   /* success -- pure pass-through */
+    if (ret == 0) {
+        /* A choice widget is only successful if it contains choices.  This is
+         * deliberately model-independent; the camera/app may transiently be
+         * reconnecting, and the caller can retry CAMERA_BUSY safely. */
+        if (!g_real_gp_widget_get_type && g_stage2_core)
+            g_real_gp_widget_get_type = (stage2_gp_widget_get_type_fn)
+                dlsym(g_stage2_core, "gp_widget_get_type");
+        if (!g_real_gp_widget_count_choices && g_stage2_core)
+            g_real_gp_widget_count_choices = (stage2_gp_widget_count_choices_fn)
+                dlsym(g_stage2_core, "gp_widget_count_choices");
+        if (!g_real_gp_widget_free && g_stage2_core)
+            g_real_gp_widget_free = (stage2_gp_widget_free_fn)
+                dlsym(g_stage2_core, "gp_widget_free");
+        return stage2_reject_empty_choice_widget(widget_out, name);
+    }
 
     /* Gate: default OFF (fail-closed, #187 review).  STAGE2_SHUTTER_FALLBACK=1
      * enables the synthetic-widget fallback. */
@@ -1410,8 +1491,46 @@ static void stage2_crash_handler(int sig, siginfo_t *si, void *uc)
     /* Is PC a null jump, the abort stub, or one of the slot targets? */
     s_write("[stage2]   pc classify: ");
     if (pc == 0) {
-        s_write("NULL jump (an unfilled slot == 0 was called -- exactly the "
-                "pre-fix race)\n");
+        /* A null PC has two completely different causes and they must not be
+         * conflated.  (a) The pre-fix race: a boundary call was made while its
+         * slot still held 0, before the constructor published anything.  (b) A
+         * null function-pointer call INSIDE an already-resolved target -- an
+         * upstream core fault.  Decide from the slot words themselves rather
+         * than assuming (a).  Note that since Session 18 the fail-closed
+         * baseline seeds EVERY slot with &stage2_abort_stub before dlopen, so a
+         * call to an unfilled slot lands on the stub (pc == stub), not on 0; a
+         * literal 0 slot word is therefore only observable in the window before
+         * that seeding pass publishes.  If every slot word is non-zero then no
+         * unfilled slot could have been called and pc == 0 belongs to the
+         * callee, not to us.  Reading the slots here is signal-safe (plain
+         * volatile loads) and is the same evidence the resolved/filled
+         * checkpoints summarise. */
+        uintptr_t zero_slot = 0;
+        const char *zero_name = NULL;
+        size_t zero_count = 0;
+        for (size_t i = 0; i < STAGE2_SLOTS_LEN; i++) {
+            if (*(volatile uintptr_t *)STAGE2_SLOTS[i].slot == 0) {
+                if (!zero_name) {
+                    zero_slot = STAGE2_SLOTS[i].slot;
+                    zero_name = STAGE2_SLOTS[i].name;
+                }
+                zero_count++;
+            }
+        }
+        if (zero_name) {
+            s_write("NULL jump -- slot 0x");
+            s_write_hex(zero_slot);
+            s_write(" (");
+            s_write(zero_name);
+            s_write(") is still unfilled; ");
+            s_write_dec((int)zero_count);
+            s_write(" slot(s) at 0 -> the pre-fix unfilled-slot race\n");
+        } else {
+            s_write("NULL jump with ALL slots non-zero -- NOT the pre-fix "
+                    "unfilled-slot race; the null call is inside a resolved "
+                    "target (upstream/core fault). Resolve pc/lr against the "
+                    "maps below.\n");
+        }
     } else if (pc == (uintptr_t)stage2_abort_stub) {
         s_write("== stage2_abort_stub (fail-closed landing pad)\n");
     } else {

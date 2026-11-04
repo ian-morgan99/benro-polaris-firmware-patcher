@@ -12,6 +12,16 @@
 > correct (v3), but the *provenance chain* was broken because nothing recorded
 > the outer hash + commit links at handoff time. This contract closes that gap.
 
+## Read the lifecycle record as well
+
+This file is the authority for artifact fingerprints and source-to-artifact
+identity. It is not, by itself, proof that an artifact was installed or tested.
+The binding lifecycle, wording, and handoff rules are in
+[`RELEASE-IDENTITY-PROCESS.md`](RELEASE-IDENTITY-PROCESS.md). Every candidate
+must have both a provenance row here and a lifecycle record there. In
+particular, a row marked `BUILT` or `GATED` must never be described elsewhere as
+deployed or camera-qualified.
+
 ## Core principles
 
 1. **Version control is primary; hashes are the fingerprint.** Every FwPkt
@@ -33,6 +43,10 @@
    points there; other agents clone the private repo and verify all four
    handoff values before staging. Until a row has been uploaded, its location is
    a local path or `smb:`/`sd:` reference.
+   This private-upload rule applies to a candidate intended for publication or
+   installation. A diagnostic or offline-smoke artifact may remain local, but
+   its row must say `BUILT`/`SMOKE`, its exact local path and hash must be
+   recorded, and it must never be staged as a release.
 3. **Record before the artifact leaves your control.** The moment an agent (or
    human) produces or receives an FwPkt zip, it writes/updates its registry row
    *in the same session*, before the file is copied to another machine, repo, or
@@ -48,6 +62,7 @@ marked otherwise.
 | id | path / location | zip MD5 | zip SHA-256 (16) | appfs MD5 | libgphoto2 commit | patcher commit/branch | status | notes |
 |----|-----------------|---------|------------------|-----------|-------------------|-----------------------|--------|-------|
 | stock | `firmware/FwPkt.zip` (working copy, gitignored here) — durable archive: `firmware-packets/4.0.0.32--stock/FwPkt.zip` (`ian-morgan99/PrivateResearch`, private; commit `1f81dbc0e`) | `90bdad51…d2980102` | `f980fe5245a1f85b` | `47f2ae68…397b` (TESTED_APPFS_MD5) | n/a (stock 4.0.0.32) | n/a | **stock reference** | Unmodified Benro May-2025. The baseline every build is diffed against. One-shot user-supplied input: `firmware/FwPkt.zip` is gitignored in this repo (`FwPkt*.zip`), so the only durable copy is the PrivateResearch archive above (byte-identical, verified by `cmp` on 2026-10-31; that folder also carries `README.md`, `SOURCE.upstream.md` and `firmwareInfo.stock.txt`). Proprietary Benro work — private only, never publish to a public repo. |
+| o-e8daf39ae-9fdedd4-smoke | `firmware-packets/6.0.0.54.84--o-e8daf39ae-9fdedd4-smoke/FwPkt.zip` (`ian-morgan99/PrivateResearch`, private; latest record commit `809d58eac`, original publication commit `1e824fcb4`) | `84d38af66793186de852041c726db622` | `3a7f4e550e7f66fb` | `bb1ff0765987703e7a7fc0d08eba3de5` | [`e8daf39ae`](https://github.com/ian-morgan99/libgphoto2/commit/e8daf39aebaa6dc748e9f22d07c3368ed5aa7515) | `9fdedd499e34d280ebbc93dbbb501dc94f7d274b` (`feature/astro-native-platesolve`, exact build source) | **BUILT; PUBLISHED 2026-10-28; DEPLOYMENT BLOCKED** | Display `6.0.0.54.84`; structural and firmwareInfo manifest gates passed and the exact ZIP plus generated install manifest are archived. The full canonical prerelease gate was not run. The supported installer automatically attempted the local Bluetooth/Wi-Fi wake path after SSH failed, but the Polaris target did not advertise or hold a link, so it stopped before staging. Full record: `docs/evidence/o-e8daf39ae-smoke-20261028/RELEASE-IDENTITY.md`; the durable artifact record includes `install.log`. |
 | b-0823 | `builds/2026-08-23/FwPkt.zip` | `25403283…1aca1837e` | `cc28906305162572` | `1775c7bc…bb13f367` | `da8c33482` (canonical Pentax) | pentax-only build | pentax-only | First Pentax libgphoto2 stack. No HDMI. |
 | b-0827r2 | `builds/2026-08-27-combined-720p60/FwPkt.zip` | `e4a6a37d…ca8f45d4` (rebuild2) | `ddc1aab69c97f9d2` | `91629acf…21913124f` | `da8c33482` | layered on b-0823 + HDMI 720p60 live-only | combined (rebuild2) | rebuild2 fixed the stale firmwareInfo appfs MD5. Round-trip verified, not device-validated. |
 | b-0829 | `builds/2026-08-29-libgphoto2-only/FwPkt.zip` | `25403283…1aca1837e` (=b-0823) | `cc28906305162572` | `1775c7bc…bb13f367` | `da8c33482` | repackaged from b-0823 (branch `agents/libgphoto2-only-fork`) | libgphoto2-only repackage | Byte-identical payload to b-0823; named deliverable only. |

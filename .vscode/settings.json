@@ -33,5 +33,6 @@
     "lmstudio.supervision.liveCompaction": true,
     "lmstudio.supervision.mode": "active",
     "lmstudio.toolCalling.maxOutputTokens": 20000,
-    "lmstudio.conversationBranchAdvisor.enabled": false
+    "lmstudio.conversationBranchAdvisor.enabled": false,
+    "lmstudio.baseUrl": "http://localhost:8080"
 }

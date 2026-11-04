@@ -86,6 +86,58 @@ Use Layer C for:
 - Polaris-only process/resource soak;
 - real reset/recovery behaviour.
 
+## Battery and thermal telemetry
+
+Record battery and thermal state for every long-duration, live-view, capture-
+soak, or overheating investigation. These values must be attributed to the
+correct device; the Polaris gimbal and the Pentax body do not share one
+battery reading.
+
+Use this record in the dated evidence directory:
+
+```text
+CAMERA_BATTERY_PCT_START=
+CAMERA_BATTERY_PCT_END=
+CAMERA_BATTERY_SAMPLE_SOURCE=existing-PTP-owner:/main/status/batterylevel|unavailable
+CAMERA_BATTERY_TEMPERATURE=unavailable-unless-independently-proven
+GIMBAL_BATTERY_PCT_START=
+GIMBAL_BATTERY_PCT_END=
+GIMBAL_CHARGE_STATE_START=
+GIMBAL_CHARGE_STATE_END=
+GIMBAL_TEMPERATURE_RAW_START=
+GIMBAL_TEMPERATURE_RAW_END=
+TEST_DURATION_SECONDS=
+TELEMETRY_SAMPLE_INTERVAL_SECONDS=300
+TELEMETRY_SAMPLE_LOG=<relative-path-in-evidence-directory>
+AMBIENT_TEMPERATURE_C=known-value|unknown
+THERMAL_SYMPTOM=none|warning|hot-to-touch|shutdown|other
+```
+
+The camera battery percentage is a camera-side PTP value exposed as
+`/main/status/batterylevel` (standard PTP battery property `0x5001` in the
+direct driver evidence). On Polaris, read it through the already-running PTP
+owner/session. Do **not** start a second `gphoto2` client merely to sample the
+camera battery: a second client can contend with pgphoto's session ownership
+and turn a measurement into a new fault.
+
+`scripts/battery-check.py` is **not** a camera-battery tool. Its value is
+gimbal-side wire code 778 (capacity and charge state). Gimbal temperature is
+wire code 525 and must be recorded as `GIMBAL_TEMPERATURE_RAW_*` unless the
+encoding has been independently decoded. Neither value is evidence of Pentax
+camera-battery temperature.
+
+There is currently no proven camera-battery-temperature field in the Polaris
+path. Record it as unavailable rather than relabelling gimbal code 525. If a
+future direct PC/PTP test proves a camera temperature property, record the
+property/opcode and source path before adding it to Polaris telemetry.
+
+For an overheating investigation, also record the candidate id/display
+version, installed source identity, live-view state, capture count, and the
+time of each battery/thermal sample. Sample during the run at least every five
+minutes, plus at start and end; use a shorter interval if the symptom develops
+faster. A physical thermometer or IR reading may be added, but must be labelled
+as an external measurement and not as a camera telemetry value.
+
 ## Required agent/operative protocol
 
 The agent must use an explicit handshake before changing host.

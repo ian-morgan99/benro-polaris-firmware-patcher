@@ -1,0 +1,32 @@
+<frozen runpy>:130: RuntimeWarning: 'polaris_harness.cli' found in sys.modules after import of package 'polaris_harness', but prior to execution of 'polaris_harness.cli'; this may result in unpredictable behaviour
+Running ARM lifecycle suite (issue #15)...
+  case_1_normal_bulb_completion: FAIL
+    - Expected exactly 1 stop call, got 0
+    - Expected exactly 1 close call, got 0
+  case_2_message_stop_vs_context_cancel: FAIL
+    - Neither message_stop nor context_cancel was observed
+  case_3_cancel_result_survives_stop: FAIL
+    - Stop callback was not invoked
+    - Cancel was not invoked - result may have been lost
+  case_4_stop_failure_preserves_primary_error: FAIL
+    - Stop was not invoked
+  case_5_deferred_timed_capture_cancelled: FAIL
+    - Timer was not cancelled before expiry
+  case_6_normal_timer_expiry: FAIL
+    - Timer expiry was not observed
+    - Capture was not issued after normal timer expiry
+  case_7_callback_ordering_register_preservation: FAIL
+    - No callback invocations observed
+    - Expected callback 'pre_capture' not observed
+    - Expected callback 'capture_start' not observed
+    - Expected callback 'capture_complete' not observed
+    - Expected callback 'post_capture' not observed
+  case_8_output_publication_cleanup: FAIL
+    - Output was not published
+    - Completion was not signaled
+    - Cleanup was not performed
+  case_9_manual_non_b_control: FAIL
+    - Manual dispatch was not observed
+    - Non-B capture path was not taken
+    - Control case shared helper was not invoked
+✗ Some ARM lifecycle cases failed

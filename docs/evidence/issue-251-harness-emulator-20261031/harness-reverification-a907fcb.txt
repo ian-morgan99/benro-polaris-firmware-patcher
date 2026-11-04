@@ -1,0 +1,48 @@
+# Re-verification of claimed fixes on a907fcb (2026-10-31)
+# Commit under test: aefc084332198a205eb0a0058981c89e029705a4
+# 'Address issues #16-#20' - TESTS ONLY, no src/ changes:
+tests/fixtures/arm/aapcs_fixture.bin
+tests/fixtures/arm/aapcs_fixture.json
+tests/fixtures/arm/arm_mode_fixture.bin
+tests/fixtures/arm/arm_mode_fixture.json
+tests/test_arm_emulator.py
+tests/test_astro_webui_smoke.py
+
+## suites
+.............                                                            [100%]
+
+============================== 58 passed in 0.15s ==============================
+tests/test_smoke.py ..................                                   [100%]
+
+============================= 160 passed in 3.58s ==============================
+
+## lifecycle suite (#251 capability)
+9
+SUITE_EXIT=0
+
+## #18 TBD fields still present in placeholder:
+25:| Patcher commit | TBD |
+26:| Harness revision | TBD |
+27:| Emulator version | TBD (Unicorn version) |
+28:| Fixture/stub profile | TBD |
+29:| Command | TBD |
+
+## #21 still reproduces:
+  instructions_executed reported=0
+  emulator internal counter after same run = 2
+  => if reported=0 but internal>0, failure records under-report work done
+
+=== 2. real pgphoto capture_image_with_Bulb region in ARM mode ===
+  contract: result=unsupported_instruction mode='thumb' instr_reported=0
+  internal counter after run = 15
+  error=Invalid memory read (UC_ERR_READ_UNMAPPED)
+  unsupported_at=0x1038
+
+## #22 still reproduces (PLT target falls through):
+    result=pass instr=5
+    stub calls: [('aapcs_call', ['0x11', '0x22', '0x0', '0x0'])]
+    R0=0x5a R2=0x33 (0x33=returned to caller) R3=0x0 (0x44=fell through)
+--- register BL target 0x1010 (PLT-style stub body)
+    result=pass instr=7
+    stub calls: [('aapcs_call', ['0x11', '0x22', '0x0', '0x0'])]
+    R0=0x5a R2=0x0 (0x33=returned to caller) R3=0x44 (0x44=fell through)
