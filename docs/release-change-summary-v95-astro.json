@@ -14,8 +14,8 @@
       "issues": ["#235", "#233", "#27"]
     },
     {
-      "component": "libgphoto2-verification-mechanism",
-      "summary": "Verification mechanism change, must be re-tested on hardware. Drive mode moved from its conditions field onto the uncached GetDevicePropValue read; shutter moved from conditions offsets 272/276 onto it. White balance already used an uncached property read and keeps its existing wrapper and return codes - it did not change mechanism in this PR. Drive-mode WRITE verification is proven only by unit and source-contract tests; no body write was exercised, only the read path. EV stays on the conditions verifier.",
+      "component": "libgphoto2",
+      "summary": "Verification mechanism change (same libgphoto2 component as above), must be re-tested on hardware. Drive mode moved from its conditions field onto the uncached GetDevicePropValue read; shutter moved from conditions offsets 272/276 onto it. White balance already used an uncached property read and keeps its existing wrapper and return codes - it did not change mechanism in this PR. Drive-mode WRITE verification is proven only by unit and source-contract tests; no body write was exercised, only the read path. EV stays on the conditions verifier.",
       "issues": ["#27", "#233"]
     },
     {
