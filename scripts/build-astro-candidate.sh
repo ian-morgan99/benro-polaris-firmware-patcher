@@ -7,7 +7,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ID="" STOCK="" LIBSRC="" OUT="" DISPLAY_FWVER="" BUILD_ID=""
 CHANGE_SUMMARY=""
 CAMERA_BASELINE="397320411a1355f06d21233435e144d24efc4207"
-LIB_BASELINE="43dccb81b92b6b25f44957a4684f534393562028"
+# v95 pin: merged PR #144 on feature/polaris-capture-events (NOT driver main).
+# Carries #233 capability row + #235 K-1 II shutter gate. Verified by content:
+# pentax_model_answers_undeclared_generic_props and pentax_shutter_write_permitted both present.
+LIB_BASELINE="855f718e515d288adbc7e0ffe8b22b729570e7d8"
 CATALOG_PACKAGE="" FMIN="14" FMAX="400" SENSOR="36"
 ASTRO_SRC_CACHE="${ASTRO_SRC_CACHE:-$ROOT/out/.astro-src-cache}"
 FORCE=0 NO_INDEXES=0 IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
@@ -64,7 +67,20 @@ git -C "$ROOT" cat-file -e "$CAMERA_BASELINE^{commit}" || die "camera baseline i
 git -C "$ROOT" merge-base --is-ancestor "$CAMERA_BASELINE" HEAD || die "camera baseline is not in Astro HEAD"
 
 [ -d "$LIBSRC" ] || die "libgphoto2 source must be a checkout"
-[ "$(git -C "$LIBSRC" branch --show-current)" = "main" ] || die "libgphoto2 must be on main"
+# The pinned commit must be reachable from a real branch on origin, so provenance always
+# points at something a third party can fetch. A detached checkout at that SHA is fine; an
+# orphan is not. Driver main carries the v94 pin (43dccb81b). feature/polaris-capture-events
+# carries #233 (pentax_model_answers_undeclared_generic_props) and, once PR #144 is merged,
+# the #235 shutter gate -- so a v95 pin lives there, not on main.
+LIB_REACHABLE=0
+for LIB_REF in origin/main origin/feature/polaris-capture-events; do
+  git -C "$LIBSRC" rev-parse -q --verify "$LIB_REF^{commit}" >/dev/null || continue
+  if git -C "$LIBSRC" merge-base --is-ancestor "$LIB_BASELINE" "$LIB_REF" 2>/dev/null; then
+    LIB_REACHABLE=1
+    break
+  fi
+done
+[ "$LIB_REACHABLE" = 1 ] || die "libgphoto2 baseline $LIB_BASELINE is not reachable from origin/main or origin/feature/polaris-capture-events -- orphan or unmerged commit?"
 [ "$(git -C "$LIBSRC" rev-parse HEAD)" = "$LIB_BASELINE" ] || die "wrong libgphoto2 commit"
 [ -z "$(git -C "$LIBSRC" status --porcelain --untracked-files=all)" ] || die "libgphoto2 source is dirty"
 for stale in build _build build-asan; do [ ! -d "$LIBSRC/$stale" ] || die "libgphoto2 has stale $stale/"; done

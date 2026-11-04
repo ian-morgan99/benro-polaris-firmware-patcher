@@ -21,7 +21,7 @@ def test_candidate_builder_is_separate_and_build_only():
 def test_candidate_builder_binds_shared_inputs():
     text = SCRIPT.read_text()
     assert "397320411a1355f06d21233435e144d24efc4207" in text
-    assert "43dccb81b92b6b25f44957a4684f534393562028" in text
+    assert "855f718e515d288adbc7e0ffe8b22b729570e7d8" in text
     assert 'feature/astro-native-platesolve' in text
     assert 'git -C "$LIBSRC" status --porcelain' in text
     assert 'merge-base --is-ancestor "$CAMERA_BASELINE" HEAD' in text

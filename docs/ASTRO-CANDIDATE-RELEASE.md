@@ -7,7 +7,7 @@ native-C SD-card bundle. It is not a second camera implementation.
 ## Reproducible build
 
 Use a clean clone of the pushed Astro branch, not the dirty owner worktree.
-Use the clean pinned libgphoto2 main checkout and the stock FwPkt input:
+Use a clean checkout of libgphoto2 `feature/polaris-capture-events` (NOT driver main) and the stock FwPkt input:
 
     git clone --branch feature/astro-native-platesolve \
       https://github.com/ian-morgan99/benro-polaris-firmware-patcher.git astro-build
@@ -15,13 +15,13 @@ Use the clean pinned libgphoto2 main checkout and the stock FwPkt input:
     scripts/build-astro-candidate.sh \
       --id astro-v1-camera-baseline-YYYYMMDD \
       --stock-fwpkt /path/to/stock/FwPkt \
-      --libgphoto2-source /path/to/LibGphoto2-v86-main \
+      --libgphoto2-source /path/to/LibGphoto2-polaris-capture-events \
       --display-fwver 6.0.0.54.N \
       --build-id astro-v1-camera-baseline-YYYYMMDD \
       --camera-baseline 397320411a1355f06d21233435e144d24efc4207 \
-      --libgphoto2-commit 43dccb81b92b6b25f44957a4684f534393562028 \
+      --libgphoto2-commit 855f718e515d288adbc7e0ffe8b22b729570e7d8 \
       --catalog-package /path/to/gaia-dr3-g10 \
-      --change-summary docs/release-change-summary-v94-astro.json \
+      --change-summary docs/release-change-summary-v95-astro.json \
       --focal-min 50 --focal-max 50 --sensor-mm 23.5
 
 The focal and sensor values are deliberate. In production they should be
@@ -36,9 +36,11 @@ tests, then writes:
 - shared-camera-gate.txt and astro-test-transcript.txt;
 - astro-candidate-manifest.json with all source, dependency and packet hashes.
 
-The builder refuses dirty source, the wrong branch, a non-main libgphoto2
-checkout, a wrong libgphoto2 commit, stale libgphoto2 build directories and
-outputs outside the selected out directory. It does not install, reboot,
+The builder refuses dirty source, a libgphoto2 baseline that is not reachable from
+`origin/main` or `origin/feature/polaris-capture-events`, a wrong libgphoto2 commit,
+stale libgphoto2 build directories and outputs outside the selected out directory. A
+detached checkout at the pinned SHA is accepted; an orphan or unmerged commit is not.
+It does not install, reboot,
 flash, stage or upload anything.
 
 ## Publication

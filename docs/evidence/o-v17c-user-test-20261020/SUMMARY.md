@@ -179,6 +179,9 @@ the same files. Converting those lines is required for the change to be verifiab
    the set shutter speed in every mode and is already parsed. See *The non-bulb shutter-speed offset
    is already known* at the end of this file. What remains is a field-name correction, not a
    discovery.
+   **Corrected 2026-11-04:** "in every mode" is wrong — in Bulb that pair carries the bulb timer, not
+   live Tv. The offset exists and is parsed; it is not a reliable shutter reading in Bulb. See the
+   correction note at the top of that section.
 
 ## The 40 s timing run: setup notes
 
@@ -426,12 +429,45 @@ in-B case, which is still untested.
 
 ## The non-bulb shutter-speed offset is already known — the "needs hardware" item is closed offline
 
+> ### Correction — 2026-11-04, live K-1 II bench (`polaris-evidence/k1ii-controls-20261104/`)
+>
+> **This section is half right and the reasoning below is retained deliberately.** What it got right:
+> offsets 272/276 are genuinely the pair IT2 parses as the Tv display, and they are genuinely *not* a
+> bulb-only field — they are populated in timed modes too. What it got wrong is the conclusion drawn
+> from that: **that because IT2 parses them as Tv, they therefore always *equal* the live shutter
+> speed.** They do not.
+>
+> Offsets 272/276 are **one word that IT2 uses for two different things** — the Tv display *and* the
+> bulb timer — and which one it *represents* depends on the shooting mode. The mode discriminator is
+> the `BULB_TIMER` flag / `exposure_mode` field, confirmed live on a K-1 II:
+>
+> | dial | `exposure-mode-raw` | `Tv-changeable` | `bulb-timer` | offsets 272/276 hold |
+> |---|---|---|---|---|
+> | **Bulb** | `9` | `no` | `yes` | **the bulb timer** — `30/1`, while the widget shows `5/10` |
+> | **Manual** | `8` | `yes` | `no` | **live Tv** — `5/10`, and tracks a write to `1/50` |
+>
+> In Bulb the field carries the bulb timer (`30/1`) while the actual shutter setting is `5/10` and
+> `Tv-changeable=no`. Reading it as live Tv there returns a number that has nothing to do with the
+> shutter speed. Evidence: `k1ii-baseline-B-20261104-100229.txt` (B, `exposure-mode-raw=9`) and
+> `k1ii-shutter-M-delayed.txt` (M, `bulb-timer=no`, `5/10` → `1/50` after a write).
+>
+> **Consequence, and the reason this matters:** this is exactly why driver verification must not use
+> 272/276 blindly. A shutter-set verification that compares the requested value against these
+> offsets will pass in Manual and silently compare against an unrelated quantity in Bulb. The
+> `#235` fix therefore verifies against the shutter property instead of these offsets.
+>
+> Everything below is left as written, including the two over-claims now struck through, because this
+> file records how the conclusions were reached.
+
 The open item said the conditions-blob offset carrying the set shutter speed had to be *found on a
 body*, so that a non-bulb long exposure could be budgeted. It does not need a body, and the offset
 is not missing. **It is 272/276 — the same pair already parsed as `bulb_timer_seconds` /
 `bulb_timer_denominator`.**
 
-IT2 reads those two words as the live shutter speed in every mode, not as a bulb-only field:
+~~IT2 reads those two words as the live shutter speed in every mode, not as a bulb-only field:~~
+**Corrected 2026-11-04:** IT2 *parses* those two words as the Tv display in every mode — that part is
+verified below and stands. It does **not** follow that they always equal live shutter speed; in Bulb
+the same word carries the bulb timer. See the correction note above.
 
 ```csharp
 num  = BitConverter.ToUInt32(data, 272);
@@ -477,11 +513,20 @@ which is the cheap direction by the reasoning in `23008c229`.
 
 ### The real defect is the name
 
-`bulb_timer_seconds` is a misleading name for a field that is the current Tv numerator in all modes,
+~~`bulb_timer_seconds` is a misleading name for a field that is the current Tv numerator in all modes,~~
+**Corrected 2026-11-04:** it is a misleading name for a field that is *either* the current Tv numerator
+(timed modes — Manual, `exposure_mode=8`, confirmed live) *or* the bulb timer (Bulb,
+`exposure_mode=9`, confirmed live), depending on mode. The name is only half the defect; the other
+half is that nothing in the code records the mode-dependence.
+
 and that name is what produced this misanalysis — mine included, twice. The useful follow-up is
 therefore small and offline: rename or document the field as the shutter/Tv fraction with the bulb
 timer as its bulb-mode reading, and add a regression case that sets only the Tv fields with no bulb
 mode and asserts the budget scales. No hardware required.
+
+**Added 2026-11-04:** and a second regression case asserting the *opposite* — in Bulb mode the field
+must not be treated as live Tv, so any verification that reads it blindly fails the test instead of
+passing falsely.
 
 ## Follow-on hypothesis: the #122 "skip the idle wait" fast path may be dead on a real camera
 
