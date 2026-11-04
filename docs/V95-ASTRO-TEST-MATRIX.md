@@ -83,6 +83,33 @@ observation alone is not a PASS.
 | **12** | **EV write + read-back on the pinned SHA** | **K-1 II** | **EV stays on `_pentax_verify_rational_in_conditions`, but #233's EV PASS was recorded on `43df01ea9`. v94 never exposed an EV widget at all, so EV has never been exercised on a v9x Astro build. Re-verify; do not carry the earlier PASS.** | **#233** |
 | 13 | `exposure_mode` code table display | K-1 II | Conditions output now prints `exposure-mode=Bulb`; confirm the additive parse did not break `pentax-bulb-qualification-probe.c` | libgphoto2 #143 |
 
+#### 3b-results. On-device run against the pinned SHA (2026-11-04)
+
+Run on a bench K-1 II (`usb:001,013`, fw 1.02, serial 7371227) driven by an x86
+build of PR #144 head `75b03f0a3`, whose `camlibs/ptp2/config.c` and
+`camlibs/ptp2/library.c` are **byte-identical** to the pinned release SHA
+`855f718e5`. This verifies the *driver binary*, not the v95 firmware packet.
+Evidence: `PrivateResearch` commit `0f9284221`
+(`polaris-evidence/k1ii-controls-20261104/v95-ondevice-*`).
+
+| Row | Result | Evidence |
+|---|---|---|
+| 11 WB write | **PASS** | `whitebalance=Daylight` → `0`, read back `direct=Daylight` at t=3s via the uncached verifier. Restored. |
+| 12 EV write | **PASS** | `exposurecompensation=+0.3` → `0`, conditions `exposure-comp=3/10` at t=3s. Restored. Closes the "do not carry the earlier PASS" instruction — now re-verified on the pinned SHA. |
+| 9 shutter in Manual | **PARTIAL** | `pentaxdirectshutter=1/50` → `GP_OK` (gate correctly *permits* a non-bulb value with `CAN_CHANGE_TV`), but read-back stays `5/10` — the body does not apply it. Distinct from the #235 false-pass (that was a refusal reported as success). Logged, not assumed away; needs a separate look at DirectShutter accept-but-ignore in Manual. |
+| 7 shutter refused in Bulb | **NOT RUN** | Needs the physical dial on **B**; camera is in Manual and the dial is not changeable over PTP. Gate refusal path (`CAN_CHANGE_TV` absent) still unverified on hardware. |
+| 8 no-op shutter false-pass | **NOT RUN** | Same dial dependency as row 7. |
+| 10 drive-mode write | **NOT RUN** | No drive-mode harness exists in the evidence directory; only aperture/EV/WB/shutter tests are present. Still unit + source-contract only. |
+
+Also verified while there: **aperture** `pentaxdirectaperture=f/4` → `0`,
+`write_took_effect=YES`. Harness bug found: `wb_write_test.c` defaults its target
+to `"1/50"` (a shutter string written into the `whitebalance` widget), so a
+no-argument run returns `-2 Bad parameters` and looks like a WB failure; with a
+valid value WB passes. Harness gotchas: the model string must be
+`"Pentax K-1 Mark II (PTP mode)"` (the generic `"USB PTP Class Camera"` from
+`--auto-detect` is not registered by this build), and rapid successive PTP inits
+race the prior teardown → `init fail`; space runs by ~3s.
+
 ### 3c. Astro half (never executed on v94)
 
 | # | Area | Result on v94 | v95 requirement |
@@ -158,9 +185,15 @@ so it is unchanged. Only the Astro candidate path was relaxed.
 > source-contract tests — no body write was exercised. EV and white balance must be
 > re-verified on a K-1 II against the pinned SHA before v95 is called qualified; #233's
 > earlier PASS was recorded against `43df01ea9`, not this build.
+>
+> **Update 2026-11-04:** EV (row 12) and white balance (row 11) are now re-verified on a
+> bench K-1 II against the pinned SHA — see §3b-results and `PrivateResearch` commit
+> `0f9284221`. Drive-mode write (row 10) still has no harness and remains unit +
+> source-contract only. The Bulb rows (7, 8) still need the physical dial on B.
 
 ## 6. Do not
 
 - Do not build v95 while `LIB_BASELINE` is `43dccb81b` and claim it carries the fix.
 - Do not edit the v94 provenance row or `release-change-summary-v94-astro.json`.
 - Do not mark rows 10–12 PASS from operator observation; each needs a transcript.
+  Rows 11 and 12 now have one (`0f9284221`); row 10 does not.
