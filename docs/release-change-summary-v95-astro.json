@@ -1,11 +1,11 @@
 {
   "baseline": {
-    "candidate_id": "UNRESOLVED-PENDING-PR144-MERGE",
-    "libgphoto2_commit": "UNRESOLVED-PENDING-PR144-MERGE",
+    "candidate_id": "astro-v95-k1ii-shutter-gate-20261104",
+    "libgphoto2_commit": "855f718e515d288adbc7e0ffe8b22b729570e7d8",
     "libgphoto2_ref": "ian-morgan99/libgphoto2 feature/polaris-capture-events (NOT main)",
-    "patcher_commit": "UNRESOLVED-PENDING-V95-BUILD"
+    "patcher_commit": "3e17e7e7be58950f7b5722be90f20b918f4680c0"
   },
-  "_status": "PLACEHOLDER. Not buildable. libgphoto2 PR #144 is OPEN with unresolved review threads; the pin must be a merged SHA on feature/polaris-capture-events, never an unmerged branch head and never a git-am orphan. The values above are deliberately not valid SHAs so that no provenance row can be produced from this file silently.",
+  "_status": "Pin resolved: libgphoto2 PR #144 merged into feature/polaris-capture-events as squash commit 855f718e515d288adbc7e0ffe8b22b729570e7d8, verified by content (pentax_model_answers_undeclared_generic_props for #233 and pentax_shutter_write_permitted for #235 both present, reachable from origin/feature/polaris-capture-events). baseline.patcher_commit is the Astro release-line base this branch diverged from; the build overwrites it with the actual HEAD at build time via create-release-change-manifest.py. NOT YET BUILT: no container runtime in this sandbox; the operator runs the build on a docker host.",
   "purpose": "Create the Astro 6.0.0.54.95 candidate carrying the corrected libgphoto2 (K-1 II shutter gate and uncached vendor-property verification) on top of the v94 standard camera baseline.",
   "changes": [
     {

@@ -7,7 +7,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ID="" STOCK="" LIBSRC="" OUT="" DISPLAY_FWVER="" BUILD_ID=""
 CHANGE_SUMMARY=""
 CAMERA_BASELINE="397320411a1355f06d21233435e144d24efc4207"
-LIB_BASELINE="43dccb81b92b6b25f44957a4684f534393562028"
+# v95 pin: merged PR #144 on feature/polaris-capture-events (NOT driver main).
+# Carries #233 capability row + #235 K-1 II shutter gate. Verified by content:
+# pentax_model_answers_undeclared_generic_props and pentax_shutter_write_permitted both present.
+LIB_BASELINE="855f718e515d288adbc7e0ffe8b22b729570e7d8"
 CATALOG_PACKAGE="" FMIN="14" FMAX="400" SENSOR="36"
 ASTRO_SRC_CACHE="${ASTRO_SRC_CACHE:-$ROOT/out/.astro-src-cache}"
 FORCE=0 NO_INDEXES=0 IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"

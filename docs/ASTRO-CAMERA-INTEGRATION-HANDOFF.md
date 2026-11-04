@@ -13,7 +13,7 @@ the native-C solver, catalogue/index bundle, orchestration and research UI.
 | Astro owner | /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher, feature/astro-native-platesolve | dirty local checkout intentionally preserved at 8626bfd; it is behind the pushed clean integration and still contains another agent's edits |
 | integrated Astro source | feature/astro-native-platesolve | pushed merge fb29e933, then gate fix e725db2, candidate tooling f11cef9 |
 | standard camera baseline | /home/ian/polaris-build-73 main | 397320411a1355f06d21233435e144d24efc4207; source fixes are merged, physical qualification remains pending |
-| libgphoto2 input | clean main checkout | pinned at 43dccb81b92b6b25f44957a4684f534393562028 |
+| libgphoto2 input | clean checkout of `feature/polaris-capture-events` (NOT driver main) | pinned at 855f718e515d288adbc7e0ffe8b22b729570e7d8 |
 
 The adjacent LibGphoto2/libgphoto2 checkout is a different feature branch
 and is not an accepted input. No deployment or device mutation has occurred.
