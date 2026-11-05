@@ -138,6 +138,23 @@ The last row matters: building and flashing firmware needs a machine with Docker
 which this PC does not have. Camera tests work here; firmware installation does
 not.
 
+### Where the release gates live, and one gap
+
+| Gate | Lives in | What it catches |
+|---|---|---|
+| `pytest` (533 tests) | patcher repo | Script/packaging regressions |
+| `meson test` (24 tests) | driver repo | C unit logic |
+| `pin-divergence-check.sh` | patcher repo | A new pin missing work the old pin had |
+| `shipped-marker-check.sh` | **PrivateResearch only** | A built binary that does not contain what its pin claims |
+
+The last one is a gap worth knowing about. It exists because the v95 candidate
+passed every gate in the patcher repo while its shipped `ptp2.so` was missing the
+#251 cancellation fix — the provenance hash proves an artifact matches *itself*,
+never that it contains the code its pin is supposed to carry. The check that
+would have caught it lives in a different repository from the build it guards, so
+nothing runs it automatically. If you want it enforced, it needs to be moved into
+the patcher repo's release flow.
+
 ## Cameras currently attached to this PC
 
 | Camera | USB ID | Port | Used for |
