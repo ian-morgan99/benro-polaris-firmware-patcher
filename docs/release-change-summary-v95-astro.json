@@ -7,7 +7,9 @@
     "patcher_ref": "v94 patcher commit (installed-verified 2026-11-03). It is an ancestor of this branch, so the patcher inventory reports what v95 adds on top of v94.",
     "previous_candidate_pins": {
       "v94_libgphoto2": "43dccb81b92b6b25f44957a4684f534393562028",
-      "v95_libgphoto2_target": "855f718e515d288adbc7e0ffe8b22b729570e7d8",
+      "v95_libgphoto2_target_superseded_2026-11-05": "855f718e515d288adbc7e0ffe8b22b729570e7d8",
+      "v95_libgphoto2_target": "3fb26e536ac169e4970d69516a9d45daf62563f5",
+      "v95_libgphoto2_ref": "ian-morgan99/libgphoto2 main. Moved off feature/polaris-capture-events on 2026-11-05 at the operator's instruction to build from main. 3fb26e536 is that branch fast-forwarded into main, so it is a strict superset of 855f718e5 (verified: scripts/pin-divergence-check.sh -> RESULT: PASS) and additionally carries the deferred-Bulb cancellation fix from PR #139. The candidate built on 2026-11-04 used 855f718e5; that historical row in docs/FWPKT-PROVENANCE-CONTRACT.md is unchanged.",
       "v94_patcher": "ec22f3da6206a246910ba7528c3acf5a4936ed3b"
     }
   },

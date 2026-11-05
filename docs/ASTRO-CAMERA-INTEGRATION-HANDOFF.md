@@ -15,6 +15,13 @@ the native-C solver, catalogue/index bundle, orchestration and research UI.
 | standard camera baseline | /home/ian/polaris-build-73 main | 397320411a1355f06d21233435e144d24efc4207; source fixes are merged, physical qualification remains pending |
 | libgphoto2 input | clean checkout of `feature/polaris-capture-events` (NOT driver main) | pinned at 855f718e515d288adbc7e0ffe8b22b729570e7d8 |
 
+> **Update 2026-11-05.** The row above records the input used for the v94/v95
+> handoff and is kept as history. It is no longer the current instruction.
+> `feature/polaris-capture-events` was fast-forwarded into driver **main** as
+> `3fb26e536`, and `LIB_BASELINE` in `scripts/build-astro-candidate.sh` now points
+> at that commit. Build from driver `main` @ `3fb26e536`. See
+> `docs/WHO-DOES-WHAT.md`.
+
 The adjacent LibGphoto2/libgphoto2 checkout is a different feature branch
 and is not an accepted input. No deployment or device mutation has occurred.
 

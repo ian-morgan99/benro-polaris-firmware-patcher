@@ -19,7 +19,7 @@ Use a clean checkout of libgphoto2 `feature/polaris-capture-events` (NOT driver 
       --display-fwver 6.0.0.54.N \
       --build-id astro-v1-camera-baseline-YYYYMMDD \
       --camera-baseline 397320411a1355f06d21233435e144d24efc4207 \
-      --libgphoto2-commit 855f718e515d288adbc7e0ffe8b22b729570e7d8 \
+      --libgphoto2-commit 3fb26e536ac169e4970d69516a9d45daf62563f5 \
       --catalog-package /path/to/gaia-dr3-g10 \
       --change-summary docs/release-change-summary-v95-astro.json \
       --focal-min 50 --focal-max 50 --sensor-mm 23.5

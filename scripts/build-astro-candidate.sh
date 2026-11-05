@@ -7,10 +7,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ID="" STOCK="" LIBSRC="" OUT="" DISPLAY_FWVER="" BUILD_ID=""
 CHANGE_SUMMARY=""
 CAMERA_BASELINE="397320411a1355f06d21233435e144d24efc4207"
-# v95 pin: merged PR #144 on feature/polaris-capture-events (NOT driver main).
-# Carries #233 capability row + #235 K-1 II shutter gate. Verified by content:
-# pentax_model_answers_undeclared_generic_props and pentax_shutter_write_permitted both present.
-LIB_BASELINE="855f718e515d288adbc7e0ffe8b22b729570e7d8"
+# Driver pin: libgphoto2 main. Moved off feature/polaris-capture-events on
+# 2026-11-05, when that branch was fast-forwarded into main as 3fb26e536.
+# Carries #233 capability row + #235 K-1 II shutter gate (both from PR #144,
+# previously verified by content: pentax_model_answers_undeclared_generic_props
+# and pentax_shutter_write_permitted), plus the deferred-Bulb cancellation fix
+# from PR #139 and 17 commits that were on the feature branch but never on main.
+# Verified a clean superset of the previous pin by scripts/pin-divergence-check.sh.
+LIB_BASELINE="3fb26e536ac169e4970d69516a9d45daf62563f5"
 # The pin the previous shipped Astro candidate used. A new pin must be a superset of it, not merely
 # reachable from a branch: 855f718e is reachable from feature/polaris-capture-events yet is missing
 # nine shipped-code commits that driver main gained after the branches diverged at 83240b36a on
