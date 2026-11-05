@@ -51,15 +51,31 @@ Two separate pieces of work exist:
    asking to cancel returns "Operation cancelled" and no shutter opens, no file
    is made. Nothing left to do in the driver repo.
 
-2. **Patcher side — patcher #251, still OPEN.** The program inside the Polaris
-   firmware that drives the camera (`pgphoto`) never *asks* to cancel. It waits
-   for the exposure to finish, so the driver's correct behaviour is never
-   triggered. Fixing this means changing a compiled binary in the firmware, which
-   is patcher work.
+2. **Patcher side — patcher #251, still OPEN.** The remaining work is on the
+   Polaris side, so it is tracked here.
 
-**Rule this establishes:** if the driver repo issue turns out to need a firmware
-binary change, close it and do the work under the patcher issue. The driver issue
-is not the place firmware changes get tracked.
+   An earlier version of this document claimed `pgphoto` never asks to cancel.
+   **That was wrong and is retracted.** Disassembly of the shipped binary
+   (PrivateResearch `e73e39c73`) shows pgphoto *does* install a cancel callback:
+   `ctx_cancel_func` at `0xf6fd8`, installed from `gp_params_init`. The mistaken
+   reading came from using `nm -D --undefined-only`, which cannot see symbols
+   defined inside the binary itself.
+
+   What is actually suspected: pgphoto's callback **clears its flag as it reads
+   it**, so a cancel can be consumed only once. The driver has nine places that
+   ask "should I cancel?", and three of them run during an ordinary capture. If
+   one of those asks first, the single flag is used up, the guard that protects
+   the deferred Bulb path sees "no cancel", and the photo is taken anyway —
+   exactly the reported symptom.
+
+**Rule this establishes:** if the driver repo issue turns out to need firmware
+work, close it and do the work under the patcher issue. The driver issue is not
+the place firmware changes get tracked.
+
+**Second rule, learned the hard way:** do not state what a binary does from an
+inference or from one tool's output. `nm -D --undefined-only` cannot see symbols
+defined in the binary; disassembly can. Two separate claims in this project were
+wrong for that reason and had to be retracted.
 
 ## Where code goes: branches
 
