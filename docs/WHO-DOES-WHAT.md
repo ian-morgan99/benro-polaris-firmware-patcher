@@ -142,7 +142,7 @@ not.
 
 | Gate | Lives in | What it catches |
 |---|---|---|
-| `pytest` (533 tests) | patcher repo | Script/packaging regressions |
+| `pytest` (542 tests) | patcher repo | Script/packaging regressions |
 | `meson test` (24 tests) | driver repo | C unit logic |
 | `pin-divergence-check.sh` | patcher repo | A new pin missing work the old pin had |
 | `shipped-marker-check.sh` | patcher repo (`scripts/`) | A built binary that does not contain what its pin claims |
