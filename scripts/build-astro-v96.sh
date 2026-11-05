@@ -31,6 +31,34 @@ STOCK_SHA256="f980fe5245a1f85b58d0c2db523402d1af72ddfff782acba99a4eadfdca54d2f"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
+# Always leave a readable record. A Terminal=true launcher closes the window the
+# moment this script exits, so an early failure -- most often "the Docker daemon
+# is not answering" -- looked like the icon doing nothing at all.
+LOG_DIR="${POLARIS_BUILD_LOG_DIR:-$HOME/.local/state/polaris-builds}"
+mkdir -p "$LOG_DIR" 2>/dev/null || LOG_DIR="/tmp/polaris-builds"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+LOG="${POLARIS_BUILD_LOG:-$LOG_DIR/astro-v96-$(date +%Y%m%d-%H%M%S).log}"
+
+# Re-exec once under a tee pipeline rather than using process substitution.
+# "exec > >(tee ...)" lets the script exit while tee is still buffering, which
+# truncates exactly the trailing lines that explain a failure. POLARIS_BUILD_LOGGED
+# stops the re-exec from looping.
+if [ -z "${POLARIS_BUILD_LOGGED:-}" ] && { [ ! -e "${LOG%/*}" ] || [ -w "${LOG%/*}" ]; }; then
+    echo "== log: $LOG =="
+    POLARIS_BUILD_LOGGED=1 POLARIS_BUILD_LOG="$LOG" "$0" "$@" 2>&1 | tee -a "$LOG"
+    rc=${PIPESTATUS[0]}
+    if [ "$rc" -ne 0 ]; then
+        echo "FAILED (exit $rc). Full log: $LOG"
+        # The desktop launcher sets this so the window stays open long enough to
+        # read the error. Never wait on a plain terminal or in CI.
+        if [ "${POLARIS_BUILD_HOLD:-0}" = "1" ]; then
+            printf '\nPress Enter to close this window... '
+            read -r _ || true
+        fi
+    fi
+    exit "$rc"
+fi
+
 [ -f "$STOCK" ]    || die "stock FwPkt missing: $STOCK"
 [ -d "$CATALOG" ]  || die "catalogue package missing: $CATALOG"
 [ -d "$LIBSRC" ]   || die "libgphoto2 source missing: $LIBSRC"
@@ -39,10 +67,26 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 ACTUAL="$(sha256sum "$STOCK" | cut -d' ' -f1)"
 [ "$ACTUAL" = "$STOCK_SHA256" ] || die "stock digest changed: expected $STOCK_SHA256 got $ACTUAL"
 
-command -v docker >/dev/null 2>&1 || command -v /run/host/usr/bin/docker >/dev/null 2>&1 \
-  || die "docker not on PATH. This build needs the host Docker daemon, which is not reachable from a sandboxed shell -- run it from a normal terminal or use the desktop launcher."
-docker info >/dev/null 2>&1 \
-  || die "the Docker daemon is not answering. Start it (or use the desktop launcher from a real session) and re-run."
+DOCKER_BIN="$(command -v docker 2>/dev/null || true)"
+[ -n "$DOCKER_BIN" ] || DOCKER_BIN="$(command -v /run/host/usr/bin/docker 2>/dev/null || true)"
+if [ -z "$DOCKER_BIN" ]; then
+    echo "ERROR: no docker binary found. PATH=$PATH"
+    exit 1
+fi
+# Put the located binary on PATH as well. scripts/build-astro-candidate.sh and
+# the container build it drives call plain "docker", so resolving it only for
+# this script's own checks would still fail later, further into the run.
+DOCKER_DIR="$(dirname "$DOCKER_BIN")"
+case ":$PATH:" in (*":$DOCKER_DIR:"*) ;; (*) PATH="$DOCKER_DIR:$PATH"; export PATH;; esac
+echo "== docker binary: $DOCKER_BIN =="
+
+if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
+    echo "ERROR: the Docker daemon is not answering."
+    echo "       $("$DOCKER_BIN" info 2>&1 | head -2 | tr '\n' ' ')"
+    echo "       Start it, or run this from a normal desktop terminal session."
+    exit 1
+fi
+echo "== docker daemon: $("$DOCKER_BIN" info --format '{{.ServerVersion}}' 2>/dev/null || echo unknown) =="
 
 # The pin gate that would have caught v95. Run here so it cannot be skipped by
 # forgetting a flag; build-astro-candidate.sh runs it too, but only when the pin
