@@ -1,27 +1,42 @@
 {
   "baseline": {
-    "candidate_id": "astro-v95-k1ii-shutter-gate-20261104",
-    "libgphoto2_commit": "855f718e515d288adbc7e0ffe8b22b729570e7d8",
-    "libgphoto2_ref": "ian-morgan99/libgphoto2 feature/polaris-capture-events (NOT main)",
-    "patcher_commit": "3e17e7e7be58950f7b5722be90f20b918f4680c0"
+    "candidate_id": "astro-v94-k3iii-held-bulb-20261103",
+    "libgphoto2_commit": "83240b36a8f128f67eb7e0f68dc10045547b0b47",
+    "libgphoto2_ref": "merge-base of the v94 pin 43dccb81b and the v95 pin 855f718e5. The v94 pin is NOT an ancestor of the v95 squash commit, so it cannot be used directly: create-release-change-manifest.py refuses a baseline that is not an ancestor of the built head. The merge-base is an ancestor of both, so the baseline..head inventory is non-empty and reports the 28 driver commits this upgrade carries.",
+    "patcher_commit": "ec22f3da6206a246910ba7528c3acf5a4936ed3b",
+    "patcher_ref": "v94 patcher commit (installed-verified 2026-11-03). It is an ancestor of this branch, so the patcher inventory reports what v95 adds on top of v94.",
+    "previous_candidate_pins": {
+      "v94_libgphoto2": "43dccb81b92b6b25f44957a4684f534393562028",
+      "v95_libgphoto2_target": "855f718e515d288adbc7e0ffe8b22b729570e7d8",
+      "v94_patcher": "ec22f3da6206a246910ba7528c3acf5a4936ed3b"
+    }
   },
-  "_status": "Pin resolved: libgphoto2 PR #144 merged into feature/polaris-capture-events as squash commit 855f718e515d288adbc7e0ffe8b22b729570e7d8, verified by content (pentax_model_answers_undeclared_generic_props for #233 and pentax_shutter_write_permitted for #235 both present, reachable from origin/feature/polaris-capture-events). baseline.patcher_commit is the Astro release-line base this branch diverged from; the build overwrites it with the actual HEAD at build time via create-release-change-manifest.py. NOT YET BUILT: no container runtime in this sandbox; the operator runs the build on a docker host.",
+  "_status": "Pin resolved: libgphoto2 PR #144 merged into feature/polaris-capture-events as squash commit 855f718e515d288adbc7e0ffe8b22b729570e7d8, verified by content (pentax_model_answers_undeclared_generic_props for #233 and pentax_shutter_write_permitted for #235 both present, reachable from origin/feature/polaris-capture-events). baseline holds the PREVIOUS comparison candidate (v94) expressed as an ancestor of the built head; create-release-change-manifest.py validates it and records the built head separately as source.head_commit. NOT YET BUILT: no container runtime in this sandbox; the operator runs the build on a docker host.",
   "purpose": "Create the Astro 6.0.0.54.95 candidate carrying the corrected libgphoto2 (K-1 II shutter gate and uncached vendor-property verification) on top of the v94 standard camera baseline.",
   "changes": [
     {
       "component": "libgphoto2",
       "summary": "Move from driver main 43dccb81b to a merged commit on feature/polaris-capture-events. That branch, not main, carries pentax_model_answers_undeclared_generic_props (the #233 capability row) plus PR #144: non-bulb shutter writes now require CAN_CHANGE_TV and are refused before the wire, and verification reads the vendor property over uncached GetDevicePropValue instead of conditions offsets 272/276. Wording note: this pin is NOT a libgphoto2 main commit.",
-      "issues": ["#235", "#233", "#27"]
+      "issues": [
+        "#235",
+        "#233",
+        "#27"
+      ]
     },
     {
       "component": "libgphoto2",
       "summary": "Verification mechanism change (same libgphoto2 component as above), must be re-tested on hardware. Drive mode moved from its conditions field onto the uncached GetDevicePropValue read; shutter moved from conditions offsets 272/276 onto it. White balance already used an uncached property read and keeps its existing wrapper and return codes - it did not change mechanism in this PR. Drive-mode WRITE verification is proven only by unit and source-contract tests; no body write was exercised, only the read path. EV stays on the conditions verifier.",
-      "issues": ["#27", "#233"]
+      "issues": [
+        "#27",
+        "#233"
+      ]
     },
     {
       "component": "patcher",
       "summary": "Carry the v94 Astro integration unchanged apart from the driver pin and the evidence/docs corrections recorded on this branch: the liveview-crash-camera-offbus pack for #176, and the dated correction to the o-v17c 272/276 offset claim.",
-      "issues": ["#176"]
+      "issues": [
+        "#176"
+      ]
     }
   ],
   "validation_focus": [
@@ -33,10 +48,11 @@
     "Do not treat v94's missing EV/WB widget as a regression; driver main lacks the #233 capability row by design."
   ],
   "known_limits": [
-    "Not buildable until PR #144 is merged and the six pin locations are updated together. See docs/V95-ASTRO-TEST-MATRIX.md section 4.",
-    "The Astro candidate build gate was changed on this branch: scripts/build-astro-candidate.sh previously required the libgphoto2 checkout to be on branch main, which rejected a valid feature-branch pin. It now requires LIB_BASELINE to be reachable from origin/main or origin/feature/polaris-capture-events, so orphan and unmerged commits are still refused. The pin value itself is unchanged at 43dccb81b until PR #144 merges.",
+    "PR #144 is MERGED. The driver pin is 855f718e515d288adbc7e0ffe8b22b729570e7d8, a squash commit on ian-morgan99/libgphoto2 feature/polaris-capture-events, NOT driver main. See docs/V95-ASTRO-TEST-MATRIX.md section 4.",
+    "scripts/build-astro-candidate.sh now requires LIB_BASELINE to be reachable from origin/main or origin/feature/polaris-capture-events, so orphan and unmerged commits are still refused. The pin is 855f718e5 (merged PR #144); the previous v94 pin was 43dccb81b on driver main.",
     "scripts/build-release-candidate.sh:104 (the standard, non-Astro release line) still requires driver main. That is correct for the standard line and was deliberately left alone.",
     "This candidate is not physical camera qualification. Rows 10-12 of docs/V95-ASTRO-TEST-MATRIX.md require instrumented transcripts, not operator observation.",
-    "The Astro boot hook is installed as /app/network_telnetd.sh and flashing replaces /app, deleting it. Until #265 lands, an Astro candidate can be installed-verified and still have no Astro behaviour."
+    "The Astro boot hook is installed as /app/network_telnetd.sh and flashing replaces /app, deleting it. Until #265 lands, an Astro candidate can be installed-verified and still have no Astro behaviour.",
+    "baseline.libgphoto2_commit is deliberately the merge-base, not the v94 pin, because the v94 pin is not an ancestor of the v95 squash commit. The exact previous and target pins are recorded in baseline.previous_candidate_pins and source.head_commit."
   ]
 }
