@@ -11,6 +11,12 @@ CAMERA_BASELINE="397320411a1355f06d21233435e144d24efc4207"
 # Carries #233 capability row + #235 K-1 II shutter gate. Verified by content:
 # pentax_model_answers_undeclared_generic_props and pentax_shutter_write_permitted both present.
 LIB_BASELINE="855f718e515d288adbc7e0ffe8b22b729570e7d8"
+# The pin the previous shipped Astro candidate used. A new pin must be a superset of it, not merely
+# reachable from a branch: 855f718e is reachable from feature/polaris-capture-events yet is missing
+# nine shipped-code commits that driver main gained after the branches diverged at 83240b36a on
+# 2026-10-28 (stale-session safety barriers, deferred Bulb cancellation, IT2 white-balance alias,
+# RAW container format, AF release mode, K-1 live-view contract). Pinning it would regress v94.
+PREVIOUS_LIB_BASELINE="43dccb81b92b6b25f44957a4684f534393562028"
 CATALOG_PACKAGE="" FMIN="14" FMAX="400" SENSOR="36"
 ASTRO_SRC_CACHE="${ASTRO_SRC_CACHE:-$ROOT/out/.astro-src-cache}"
 FORCE=0 NO_INDEXES=0 IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
@@ -81,6 +87,16 @@ for LIB_REF in origin/main origin/feature/polaris-capture-events; do
   fi
 done
 [ "$LIB_REACHABLE" = 1 ] || die "libgphoto2 baseline $LIB_BASELINE is not reachable from origin/main or origin/feature/polaris-capture-events -- orphan or unmerged commit?"
+# Reachability proves nothing about *completeness*. When the pin changes, require that it still
+# carries everything the previous pin carried. Fail closed: if the previous pin cannot be inspected
+# in this checkout, that is itself a reason not to build.
+if [ "$LIB_BASELINE" != "$PREVIOUS_LIB_BASELINE" ]; then
+  if ! git -C "$LIBSRC" cat-file -e "${PREVIOUS_LIB_BASELINE}^{commit}" 2>/dev/null; then
+    die "cannot verify superset: previous pin $PREVIOUS_LIB_BASELINE is not present in $LIBSRC (fetch it)"
+  fi
+  bash "$ROOT/scripts/pin-divergence-check.sh" "$LIBSRC" "$LIB_BASELINE" "$PREVIOUS_LIB_BASELINE" \
+    || die "libgphoto2 pin is not a superset of the previous pin; refusing to build a regressed candidate"
+fi
 [ "$(git -C "$LIBSRC" rev-parse HEAD)" = "$LIB_BASELINE" ] || die "wrong libgphoto2 commit"
 [ -z "$(git -C "$LIBSRC" status --porcelain --untracked-files=all)" ] || die "libgphoto2 source is dirty"
 for stale in build _build build-asan; do [ ! -d "$LIBSRC/$stale" ] || die "libgphoto2 has stale $stale/"; done
