@@ -61,12 +61,24 @@ Two separate pieces of work exist:
    reading came from using `nm -D --undefined-only`, which cannot see symbols
    defined inside the binary itself.
 
-   What is actually suspected: pgphoto's callback **clears its flag as it reads
-   it**, so a cancel can be consumed only once. The driver has nine places that
-   ask "should I cancel?", and three of them run during an ordinary capture. If
-   one of those asks first, the single flag is used up, the guard that protects
-   the deferred Bulb path sees "no cancel", and the photo is taken anyway —
-   exactly the reported symptom.
+   A second theory — that pgphoto's callback **clears its flag as it reads it**,
+   so an earlier poll could consume the single cancel before the driver's guard
+   sees it — was tested and **ruled out**. On a real K-3 III, eight conditions
+   reads between the Bulb start and stop edges invoked the cancel callback zero
+   times, and the guard still returned "Operation cancelled". Reproduced at 0, 3,
+   8 and 20 intervening polls.
+
+   **The actual root cause, settled by disassembly** (PrivateResearch `7568b8d83`,
+   `polaris-evidence/k1ii-controls-20261104/handoff/K3III-251-GLOB-CANCEL-WRITER.md`):
+   **nothing ever writes pgphoto's cancel flag.** It is read in three places and
+   written in none, so it stays zero for the whole process. The callback therefore
+   always answers "do not cancel", and the driver's correct guard is unreachable
+   on the device.
+
+   Consequence: rebuilding from driver main is **necessary but not sufficient**.
+   It ships the guard; it does not make anything raise a cancel. Something in
+   pgphoto must set the flag when the user cancels — `action_camera_wait_event`
+   already polls it with a 1000 ms budget and is the natural place.
 
 **Rule this establishes:** if the driver repo issue turns out to need firmware
 work, close it and do the work under the patcher issue. The driver issue is not
@@ -76,6 +88,13 @@ the place firmware changes get tracked.
 inference or from one tool's output. `nm -D --undefined-only` cannot see symbols
 defined in the binary; disassembly can. Two separate claims in this project were
 wrong for that reason and had to be retracted.
+
+**Third rule:** a test that supplies its own precondition proves the mechanism,
+not the chain. The K-3 III probe sets the cancel flag itself, so "cancel reached
+the guard and was honoured" says nothing about whether anything on the device ever
+sets it. Both statements were true at once — the guard works, and it is unreachable
+on the device — and passing the test hid that. Ask what a test *cannot* see before
+calling it proof.
 
 ## Where code goes: branches
 
