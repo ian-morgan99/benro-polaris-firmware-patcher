@@ -96,10 +96,10 @@ Evidence: `PrivateResearch` commit `0f9284221`
 |---|---|---|
 | 11 WB write | **PASS** | `whitebalance=Daylight` → `0`, read back `direct=Daylight` at t=3s via the uncached verifier. Restored. |
 | 12 EV write | **PASS** | `exposurecompensation=+0.3` → `0`, conditions `exposure-comp=3/10` at t=3s. Restored. Closes the "do not carry the earlier PASS" instruction — now re-verified on the pinned SHA. |
-| 9 shutter in Manual | **PARTIAL** | `pentaxdirectshutter=1/50` → `GP_OK` (gate correctly *permits* a non-bulb value with `CAN_CHANGE_TV`), but read-back stays `5/10` — the body does not apply it. Distinct from the #235 false-pass (that was a refusal reported as success). Logged, not assumed away; needs a separate look at DirectShutter accept-but-ignore in Manual. |
+| 9 shutter in Manual | **PASS** | `pentaxdirectshutter=1/50` → `GP_OK` (gate correctly *permits* a non-bulb value with `CAN_CHANGE_TV`). Delayed read (`shutter_delayed_read.c`) shows `direct=1/50 prop=1/50` at t=1s and t=3s, conditions `bulb-seconds=1/50`. The earlier "read-back stays 5/10" was a harness timing artifact — `shutter_write_test.c` reads before the body settles (~1s). Conditions + widget converge as the row requires. |
 | 7 shutter refused in Bulb | **NOT RUN** | Needs the physical dial on **B**; camera is in Manual and the dial is not changeable over PTP. Gate refusal path (`CAN_CHANGE_TV` absent) still unverified on hardware. |
 | 8 no-op shutter false-pass | **NOT RUN** | Same dial dependency as row 7. |
-| 10 drive-mode write | **NOT RUN** | No drive-mode harness exists in the evidence directory; only aperture/EV/WB/shutter tests are present. Still unit + source-contract only. |
+| 10 drive-mode write | **EXERCISED — fail-closed correct** | No harness existed; one was written (`pentaxdrivemode`, verified via conditions `drive-mode-raw`). Target `continuous-lo` is advertised (index 6). Log-handler run: `SetDevicePropValue(0xd013)` sent with **no PTP error**, but `GetDevicePropValue` returns `actual=0` on all 20 attempts and the conditions fallback never fires. So the camera **accepts-but-ignores** drive-mode writes on this body, and PR #144's uncached verifier correctly refuses to false-pass (`-1`). Reproduced for continuous-lo/hi, self-timer-2s, remote, mirror-up. This is correct fail-closed behaviour, not a driver defect; the accept-but-ignore is a body/firmware observation to track. |
 
 Also verified while there: **aperture** `pentaxdirectaperture=f/4` → `0`,
 `write_took_effect=YES`. Harness bug found: `wb_write_test.c` defaults its target
@@ -188,8 +188,12 @@ so it is unchanged. Only the Astro candidate path was relaxed.
 >
 > **Update 2026-11-04:** EV (row 12) and white balance (row 11) are now re-verified on a
 > bench K-1 II against the pinned SHA — see §3b-results and `PrivateResearch` commit
-> `0f9284221`. Drive-mode write (row 10) still has no harness and remains unit +
-> source-contract only. The Bulb rows (7, 8) still need the physical dial on B.
+> `0f9284221`. Drive-mode write (row 10) has now been exercised on a body: the camera
+> accepts-but-ignores `SetDevicePropValue(0xd013)` and PR #144's uncached verifier
+> correctly fails closed (`-1`) rather than false-passing — correct behaviour, with the
+> accept-but-ignore logged as a body/firmware observation. Shutter in Manual (row 9) is
+> PASS once read back after the ~1s settle. The Bulb rows (7, 8) still need the physical
+> dial on B.
 
 ## 6. Do not
 
