@@ -143,3 +143,21 @@ Two specific measurements would settle the shutter question:
 - whether astro mode was active when it failed. Our own UI documents that opcode
   264 is ignored while astro mode owns the shutter, which would make a dropped
   external capture expected behaviour rather than a fault.
+
+## Reproduction harness
+
+`repro-watch.sh` is staged on the device at `/tmp/k1ii-repro-watch.sh` (syntax
+checked under the device's own `sh`, probes verified to emit data). Run it before
+reproducing, then read `/tmp/k1ii-repro.log`.
+
+It samples every 2 s for 30 minutes: camera enumeration plus link speed (so a hub
+vs direct attachment is visible at the moment of failure), pgphoto's pid and every
+thread's state and wait channel (a stall shows as `D` state or a USB wait queue,
+which is what was missing from all earlier after-the-fact checks), and any new
+bytes appended to `/app/Clog.txt` -- which now matters, because the driver gate
+reports *which* reason it refused for.
+
+That last point is the one measurement that settles the shutter question: a
+capability refusal returns `GP_ERROR_NOT_SUPPORTED` before anything reaches the
+wire, while busy/idle/transport comes from `_pentax_readiness_preflight`. The log
+line names which of the two fired.
