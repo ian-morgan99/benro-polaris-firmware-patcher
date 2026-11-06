@@ -174,6 +174,27 @@ echo "== driver pin $LIB_PIN (contains the #251 guard) =="
 echo "== patcher commit $(git -C "$ROOT" rev-parse HEAD) =="
 echo "== output $OUT =="
 
+# build-astro-candidate.sh refuses to touch an existing --out unless --force is
+# given, and --force does "rm -rf" on it. Passing --force unconditionally would
+# let a mistyped re-run destroy a candidate that actually built. So decide from
+# the contents: a directory holding a real FwPkt.zip is treated as a finished
+# artifact and left alone; anything else is residue from a failed attempt and is
+# cleared.
+if [ -e "$OUT" ]; then
+    if [ -s "$OUT/FwPkt.zip" ]; then
+        echo "ERROR: $OUT already contains a built FwPkt.zip."
+        echo "       Refusing to delete it. If you really want to rebuild over it:"
+        echo "         rm -rf '$OUT'"
+        echo "       To keep it, change CANDIDATE_ID in this script and re-run."
+        exit 1
+    fi
+    echo "== clearing incomplete output from a previous failed run =="
+    find "$OUT" -mindepth 1 -maxdepth 1 -print -exec rm -rf -- {} + 2>/dev/null | sed 's/^/     /'
+    FORCE_FLAG=(--force)
+else
+    FORCE_FLAG=()
+fi
+
 # Not exec: the exit code alone is not enough to say whether a candidate exists.
 # A build can fail after writing partial output, and "it closed quickly" then
 # leaves no way to tell success from failure. Verify the artifacts themselves.
@@ -185,7 +206,7 @@ bash "$ROOT/scripts/build-astro-candidate.sh" \
   --build-id "$CANDIDATE_ID" \
   --catalog-package "$CATALOG" \
   --change-summary "$SUMMARY" \
-  --out "$OUT"
+  --out "$OUT" ${FORCE_FLAG[@]+"${FORCE_FLAG[@]}"}
 rc=$?
 
 echo "============================================================"
