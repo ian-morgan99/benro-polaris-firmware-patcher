@@ -80,8 +80,13 @@ The two redirects jump to a code cave that disassembles as:
 0x2df9bc:  ldr r1, [fp, #-0x10] ; cmp r1, #0 ; bne #0x10218c ; str r0, [fp, #-0x10] ; b #0x10218c
 ```
 
-That is the cancellation check: test the flag, branch around the store if set.
+Both are a guard-and-store pattern: load or compare a value, branch around the
+store when the test says so, then rejoin the original site (`0x101ee8`, `0x10218c`).
 This is the first direct disassembly confirmation of what the cancel writer emits.
+
+Which variable each test reads is **not** established here. The names come from
+symbol tables and the redirect targets, not from traced data flow, so this section
+records the shape of the guard, not its identity.
 
 ### A fixture gap that produced a false failure
 
@@ -116,9 +121,30 @@ Nine for nine identical: **no regression** against the reference build. The two
 non-PARTIAL outcomes (case 4 PASS, case 7 FAIL) are unchanged from v90 and are
 properties of the fixture, which declares no callback edges.
 
-### Direct evidence the patched path executed
+### Direct evidence that control reaches the patched cave
 
-Single-fixture runs, same profile, differing only in binary:
+The instruction-count delta below is corroboration, not proof — two extra
+instructions could in principle sit on an unreached path. So reachability was
+tested directly, per AGENTS.md ("a claim … is not evidence until tested directly").
+
+**Probe.** Overwrite the first word of the cave at `0x2df92c` (`000053e3`,
+`cmp r3, #0`) with an illegal encoding, in a temporary copy of the retained
+binary, with the fixture's recorded hashes recomputed to match so the provenance
+check still passes.
+
+| Fixture | result | instructions |
+|---|---|---|
+| cave seeded normally | pass | 14305 |
+| cave entry poisoned | `UC_ERR_INSN_INVALID` | **221** |
+| cave left zero-filled | `UC_ERR_INSN_INVALID` | 24213 |
+
+Poisoning the cave entry stops the run after 221 instructions, where the seeded
+run completes. Control therefore **does** reach `0x2df92c`. The zero-filled case
+gets further because ARM zeros decode as harmless no-ops, so execution walks
+through the empty cave and faults later — which is why the original failure looked
+like a decoding problem rather than a missing fixture.
+
+Behaviour comparison, same profile, differing only in binary:
 
 | | result | mode | instructions | stub calls |
 |---|---|---|---|---|
@@ -126,11 +152,16 @@ Single-fixture runs, same profile, differing only in binary:
 | v96 | pass | arm | **14305** | 525 |
 
 Identical stub-call signature (`wait_and_handle_event`×501, `gp_log`×6,
-`HI_LOG_Print`×6, `sqrt`×3, `setCameraStatus`×2, `textdomain`×2) and **+2
-instructions on v96**. The inserted check is on the executed path, and nothing else
-about observable behaviour changed. Contract saved beside the artifact:
-`out/astro-v96-cancel-writer-20261105/arm-emulation-stage2-v96.json`
+`HI_LOG_Print`×6, `sqrt`×3, `setCameraStatus`×2, `textdomain`×2), so the patch
+changes no observable call behaviour on this path. Contract saved beside the
+artifact: `out/astro-v96-cancel-writer-20261105/arm-emulation-stage2-v96.json`
 (`binary_sha256 d50c5b19…`, `patcher_commit a72e7bf`).
+
+What this does **not** show: that the guard ever takes its cancel branch. The
+default fixture drives the non-cancelled path — 501 `wait_and_handle_event` calls
+and no stop/cancel stub — so the redirect is reached and evaluated, but its
+cancellation outcome is untested. Exercising it needs a fixture that sets the
+guarded value, which does not exist yet.
 
 This is emulation, not hardware. Per AGENTS.md, "no emulator result qualifies any
 candidate" — it shows the code runs and behaves as expected under stubs, not that a

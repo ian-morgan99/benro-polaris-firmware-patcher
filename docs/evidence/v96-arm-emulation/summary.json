@@ -58,5 +58,27 @@
     "stub_call_count": 525
   },
   "delta": "v96 executes 2 more instructions than v90 with an identical stub-call signature",
-  "boundary": "Emulation under stubs. Not physical evidence. Per harness AGENTS.md, no emulator result qualifies any candidate."
+  "boundary": "Emulation under stubs. Not physical evidence. Per harness AGENTS.md, no emulator result qualifies any candidate.",
+  "reachability_probe": {
+    "method": "Overwrite the first word of the code cave at 0x2df92c (000053e3, 'cmp r3,#0') with an illegal ARM encoding in a temporary copy of the retained binary; recompute the fixture's recorded hashes so its provenance check still passes.",
+    "results": [
+      {
+        "fixture": "cave seeded normally",
+        "result": "pass",
+        "instructions_executed": 14305
+      },
+      {
+        "fixture": "cave entry poisoned",
+        "result": "unsupported_instruction (UC_ERR_INSN_INVALID)",
+        "instructions_executed": 221
+      },
+      {
+        "fixture": "cave left zero-filled",
+        "result": "unsupported_instruction (UC_ERR_INSN_INVALID)",
+        "instructions_executed": 24213
+      }
+    ],
+    "conclusion": "Poisoning the cave entry halts the run at 221 instructions where the seeded run completes, so control flow does reach 0x2df92c. Zero-filled bytes decode as harmless ARM no-ops, which is why the unseeded case ran further and faulted later.",
+    "not_shown": "The default fixture drives the non-cancelled path (501 wait_and_handle_event calls, no stop/cancel stub), so the guard is reached and evaluated but its cancellation branch is not exercised. A fixture that sets the guarded value does not exist yet."
+  }
 }
