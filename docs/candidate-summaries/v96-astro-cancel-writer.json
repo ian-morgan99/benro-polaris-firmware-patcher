@@ -23,7 +23,7 @@
     },
     {
       "component": "patcher",
-      "summary": "The pre-release gate had drifted again: tests/test_shipped_marker_check.py was committed but never registered, and none of the three pgphoto machine-code patch tests were registered at all. All four are now run by the gate. Offline gate is 10 passed / 1 failed / 3 skipped, up from 6 passed / 2 failed.",
+      "summary": "The pre-release gate had drifted again: tests/test_shipped_marker_check.py was committed but never registered, and none of the three pgphoto machine-code patch tests were registered at all. All four are now run by the gate. Measured offline on 2026-11-06 after registering them and supplying the hash-pinned v90 diagnostic fixture: 11 passed / 1 failed / 2 skipped, up from 6 passed / 2 failed. The one remaining failure is scripts/check-agent-sandbox.py reporting BROKEN because bwrap and slirp4netns are absent on this host; it is left failing rather than silenced.",
       "issues": []
     }
   ],
