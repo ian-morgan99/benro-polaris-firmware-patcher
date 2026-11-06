@@ -61,32 +61,80 @@ and checked:
 - `.text`, `.got`, `.data`, `.bss` addresses and sizes are **identical** between
   v90 and v96, so the fixture's existing data-region seeding stays valid.
 
-### What the patch actually changed
+### What the patch actually changed — my first answer was wrong
 
-`captureBulbImage` is **byte-identical** between v90 and v96 (0 differing bytes),
-so its stub coordinates carry over unchanged. `capture_image_with_Bulb` differs in
-**9 of 2176 bytes**, at three sites:
+I first attributed the v90→v96 diff to `capture_image_with_Bulb`, because that is
+the function the lifecycle fixture carves and it differs in 9 of 2176 bytes. That
+attribution was **incorrect**, and finding out why matters more than the mistake.
 
-| vaddr | v90 | v96 |
-|---|---|---|
-| `0x101ddf` | literal-pool word `…3448ea` | `…34480a` |
-| `0x101ee4` | `str r3, [fp, #-0x10]` | `b #0x2df92c` |
-| `0x102188` | `str r0, [fp, #-0x10]` | `b #0x2df9bc` |
+`container/polaris_cancel_writer_patch.py` names its targets explicitly:
 
-The two redirects jump to a code cave that disassembles as:
+> `0x2033c  nop   <-- replaced by a branch into the cave`
+> The same shape exists in stopCaptureContinuContinuous at 0x203d4.
+
+Those addresses are not inside `capture_image_with_Bulb` (`0x101aac`, 2176 bytes).
+The symbol table places them in:
+
+| function | vaddr | size | contains |
+|---|---|---|---|
+| `stopCaptureImage` | `0x202e4` | 108 | `0x2033c` |
+| `stopCaptureContinuContinuous` | `0x20350` | 156 | `0x203d4` |
+
+Diffing those two regions directly gives **4 differing bytes each** — one
+instruction apiece, exactly the documented `nop` → branch swap:
+
+```
+0x2033c   v90: nop              v96: b #0x2dfa1c
+0x203d4   v90: nop              v96: b #0x2dfa30
+```
+
+Both caves are the cancel writer, and they write the global:
+
+```
+0x2dfa1c:  movw ip, #0x5e08 ; movt ip, #0x37 ; mov r2, #1 ; strb r2, [ip] ; b #0x20340
+0x2dfa30:  movw ip, #0x5e08 ; movt ip, #0x37 ; mov r2, #1 ; strb r2, [ip] ; b #0x203d8
+```
+
+`movw/movt` builds `0x375e08`, which is `GLOB_CANCEL_ADDRESS` in the patch source,
+and `strb` stores 1 into it. Five instructions per trampoline.
+
+So what was the `capture_image_with_Bulb` diff? It guards a **stack local**
+(`[fp,#-0x10]`, written at `0x101dd0` and read at `0x101dd4`), not `glob_cancel`:
 
 ```
 0x2df92c:  cmp r3, #0 ; beq #0x101ee8 ; str r3, [fp, #-0x10] ; b #0x101ee8
 0x2df9bc:  ldr r1, [fp, #-0x10] ; cmp r1, #0 ; bne #0x10218c ; str r0, [fp, #-0x10] ; b #0x10218c
 ```
 
-Both are a guard-and-store pattern: load or compare a value, branch around the
-store when the test says so, then rejoin the original site (`0x101ee8`, `0x10218c`).
-This is the first direct disassembly confirmation of what the cancel writer emits.
+That is a different patch on the same build line. I cannot attribute it to a
+specific patcher change from this binary alone, and I am not going to guess which
+one. It is recorded as an unattributed difference, not folded into the cancel
+writer's story.
 
-Which variable each test reads is **not** established here. The names come from
-symbol tables and the redirect targets, not from traced data flow, so this section
-records the shape of the guard, not its identity.
+### Direct proof that the cancel writer executes
+
+Disassembly shows intent; it does not show execution. AGENTS.md requires behaviour
+claims be tested directly, so `tools/probe_v96_cancel_writer.py` runs both patched
+functions in Unicorn with their four external calls stubbed, and reads
+`glob_cancel` before and after. v90 is run as a control at the same addresses.
+
+| function | build | instructions | `glob_cancel` after |
+|---|---|---|---|
+| `stopCaptureImage` | v96 | 35 | **`01`** |
+| `stopCaptureImage` | v90 | 30 | `00` |
+| `stopCaptureContinuContinuous` | v96 | 49 | **`01`** |
+| `stopCaptureContinuContinuous` | v90 | 44 | `00` |
+
+Both patched functions set the global to 1; both v90 controls leave it at 0. The
+instruction delta is **+5** in each case, matching the five-instruction trampoline
+derived from the patch source — the count and the memory write agree independently.
+Stub sequences are identical between builds, so the patch adds the write without
+changing any observable call behaviour.
+
+This is the strongest evidence in this document: a real ARM engine executing the
+real shipped bytes and observing the exact state change the fix exists to cause.
+It is still emulation. It does not show that anything downstream *acts* on
+`glob_cancel`, and per AGENTS.md no emulator result qualifies a candidate.
 
 ### A fixture gap that produced a false failure
 
@@ -162,6 +210,10 @@ default fixture drives the non-cancelled path — 501 `wait_and_handle_event` ca
 and no stop/cancel stub — so the redirect is reached and evaluated, but its
 cancellation outcome is untested. Exercising it needs a fixture that sets the
 guarded value, which does not exist yet.
+
+Note also that this fixture exercises `capture_image_with_Bulb`, which is **not**
+where the cancel writer lives. The cancel writer was proven separately — see
+"Direct proof that the cancel writer executes" above.
 
 This is emulation, not hardware. Per AGENTS.md, "no emulator result qualifies any
 candidate" — it shows the code runs and behaves as expected under stubs, not that a

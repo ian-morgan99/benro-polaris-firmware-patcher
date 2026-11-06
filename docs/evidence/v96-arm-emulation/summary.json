@@ -30,23 +30,6 @@
     "carve_file_offset": "0xf1aac",
     "carve_rule": "file offset = vaddr - 0x10000"
   },
-  "patch_sites": [
-    {
-      "vaddr": "0x101ddf",
-      "v90": "literal-pool word 0x3448ea",
-      "v96": "literal-pool word 0x34480a"
-    },
-    {
-      "vaddr": "0x101ee4",
-      "v90": "str r3,[fp,#-0x10]",
-      "v96": "b #0x2df92c (cave)"
-    },
-    {
-      "vaddr": "0x102188",
-      "v90": "str r0,[fp,#-0x10]",
-      "v96": "b #0x2df9bc (cave)"
-    }
-  ],
   "region_diff_vs_v90": {
     "captureBulbImage": "byte-identical (0 differing bytes)",
     "capture_image_with_Bulb": "9 of 2176 bytes differ"
@@ -80,5 +63,67 @@
     ],
     "conclusion": "Poisoning the cave entry halts the run at 221 instructions where the seeded run completes, so control flow does reach 0x2df92c. Zero-filled bytes decode as harmless ARM no-ops, which is why the unseeded case ran further and faulted later.",
     "not_shown": "The default fixture drives the non-cancelled path (501 wait_and_handle_event calls, no stop/cancel stub), so the guard is reached and evaluated but its cancellation branch is not exercised. A fixture that sets the guarded value does not exist yet."
+  },
+  "cancel_writer_direct_probe": {
+    "tool": "tools/probe_v96_cancel_writer.py",
+    "method": "Run each patched function in Unicorn with its four external calls stubbed, reading glob_cancel before and after. v90 run as control at the same addresses.",
+    "patch_sites": [
+      {
+        "function": "stopCaptureImage",
+        "vaddr": "0x202e4",
+        "size_bytes": 108,
+        "site": "0x2033c",
+        "v90": "nop",
+        "v96": "b #0x2dfa1c",
+        "bytes_differing": 4
+      },
+      {
+        "function": "stopCaptureContinuContinuous",
+        "vaddr": "0x20350",
+        "size_bytes": 156,
+        "site": "0x203d4",
+        "v90": "nop",
+        "v96": "b #0x2dfa30",
+        "bytes_differing": 4
+      }
+    ],
+    "cave_body": "movw ip,#0x5e08 ; movt ip,#0x37 ; mov r2,#1 ; strb r2,[ip] ; b <return>",
+    "glob_cancel_address": "0x375e08",
+    "results": [
+      {
+        "function": "stopCaptureImage",
+        "build": "v96",
+        "instructions": 35,
+        "glob_cancel_after": "01"
+      },
+      {
+        "function": "stopCaptureImage",
+        "build": "v90",
+        "instructions": 30,
+        "glob_cancel_after": "00"
+      },
+      {
+        "function": "stopCaptureContinuContinuous",
+        "build": "v96",
+        "instructions": 49,
+        "glob_cancel_after": "01"
+      },
+      {
+        "function": "stopCaptureContinuContinuous",
+        "build": "v90",
+        "instructions": 44,
+        "glob_cancel_after": "00"
+      }
+    ],
+    "conclusion": "Both patched functions set glob_cancel to 1; both v90 controls leave it at 0. Instruction delta is +5 in each case, matching the five-instruction trampoline. Stub sequences are identical between builds.",
+    "not_shown": "That anything downstream acts on glob_cancel, and that a real camera cancels. Emulation only."
+  },
+  "unattributed_difference": {
+    "function": "capture_image_with_Bulb",
+    "vaddr": "0x101aac",
+    "size_bytes": 2176,
+    "bytes_differing": 9,
+    "nature": "Guards a stack local [fp,#-0x10], not glob_cancel. A different patch on the same build line.",
+    "attribution": "Not attributed. Cannot be determined from this binary alone and not guessed."
   }
 }
