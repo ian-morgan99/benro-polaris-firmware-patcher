@@ -64,9 +64,33 @@ Two further defects surfaced during testing of that fix:
 
 Neither explains the slow reads or shutter failure; they are in our UI path only.
 
+## Shutter failure: one lead, unconfirmed
+
+`polaris-httpd.c:2728` already documents that **opcode 264 is ignored while astro
+mode owns the shutter**, and `solve-now.sh` records the same; our own UI tells the
+user to take the shot in the Benro app instead. If astro mode was active during
+the report, an external capture request is *expected* to be dropped, which fits
+"fails on the app, but does take eventually".
+
+The competing explanation is a PTP timeout-and-retry: the shipped driver carries
+`msgtimeout=100000` / `timeout=100000` and the strings `Clearing halt on IN EP and
+retrying once` / `... OUT EP ...`, so a stalled endpoint can produce a long delay
+followed by eventual success. Both fit "eventually fires".
+
+Nothing here distinguishes them, so this is a lead rather than a diagnosis.
+
+`camera-profiles.json` was also checked for per-model gating: it carries only
+`sensor_width_mm` and `sensor_class` per body (K-1 II 35.9 mm full-frame, K-3 III
+23.3 mm APS-C). There is no shutter or capture capability flag differentiating the
+two, so nothing in our own configuration gates the shutter by model.
+
 ## Next step
 
 Reconnect the camera (reseat USB; power-cycle the body if it will not
 re-enumerate), reproduce each symptom once while watching, and capture bus
 state plus pgphoto's PID at the moment of failure. Every measurement here was
 taken after the fact, which is exactly why none of them is conclusive.
+
+For the shutter specifically, record whether astro mode was active when it
+failed -- that single detail separates the two leads above and has not yet been
+established.
