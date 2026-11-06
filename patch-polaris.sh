@@ -137,6 +137,13 @@ if [ -n "$LGSRC" ]; then
 fi
 
 # --- resolve input into a folder that contains firmwareInfo -----------------
+# STAGE is where a .zip gets unpacked, and it is bind-mounted into the container
+# as /in. mktemp honours TMPDIR, which matters more than it looks: inside a
+# Flatpak sandbox /tmp is private to the sandbox while the Docker daemon runs on
+# the host, so mounting a /tmp path yields an EMPTY /in. The patcher then reports
+# "[abort] /in/firmwareInfo not found -- mount your stock FwPkt at /in", which
+# points at the zip and not at TMPDIR. That cost two build attempts on 2026-11-06.
+# The preflight below catches it; run scripts/build-doctor.sh to check first.
 STAGE="$(mktemp -d)"; trap 'rm -rf "$STAGE"' EXIT
 IN=""
 if [ -d "$FWPKT" ] && [ -f "$FWPKT/firmwareInfo" ]; then
@@ -174,6 +181,31 @@ if [ -n "$SSHKEY" ]; then
   else
     SSH_PUBKEY="$SSHKEY"
   fi
+fi
+
+# --- bind-mount preflight ---------------------------------------------------
+# Prove the container can actually read the packet BEFORE the long build, using
+# the same image and the same mount the real run will use. Without this, an empty
+# mount surfaces ~4 minutes later as "[abort] /in/firmwareInfo not found -- mount
+# your stock FwPkt at /in", which blames the input file when the fault is that the
+# host path is invisible to the daemon (sandbox-private TMPDIR, or a path outside
+# what the sandbox/daemon share).
+if ! docker run --rm -v "$IN":/in:ro --entrypoint test "$IMG" -e /in/firmwareInfo \
+     >/dev/null 2>&1; then
+  echo "error: the patcher container cannot see firmwareInfo at /in, although it exists on the host." >&2
+  echo "       host path mounted read-only: $IN" >&2
+  if [ -d "$STAGE" ] && [ "$IN" = "$STAGE" -o "$IN" = "$STAGE/FwPkt" ]; then
+    echo "       That path came from 'mktemp -d' (TMPDIR=${TMPDIR:-/tmp})." >&2
+    echo "       The Docker daemon runs on the host and cannot see a sandbox-private" >&2
+    echo "       /tmp, so the mount comes up empty. Point TMPDIR at a shared location:" >&2
+    echo "         mkdir -p \$HOME/.cache/polaris-build-tmp" >&2
+    echo "         export TMPDIR=\$HOME/.cache/polaris-build-tmp" >&2
+  else
+    echo "       Check that this path is visible to the Docker daemon, not confined" >&2
+    echo "       to a sandbox. From a host shell it must exist and be readable." >&2
+  fi
+  echo "       Diagnose everything at once with: scripts/build-doctor.sh" >&2
+  exit 1
 fi
 
 echo "[*] running patcher (mode: $MODE)…"

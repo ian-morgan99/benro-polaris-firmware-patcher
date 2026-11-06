@@ -65,7 +65,28 @@ if [ -d /libgphoto2-source-input ]; then
   SOURCE_KIND=git-directory
   git config --global --add safe.directory /libgphoto2-source-input
   git -C /libgphoto2-source-input rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-    echo "[build] ERROR: local source directory must be a Git checkout"; exit 1;
+    # Say WHY. The bare "must be a Git checkout" was misleading on 2026-11-06: the
+    # mounted tree really was a git tree, but a linked WORKTREE. A worktree's .git
+    # is a one-line text file pointing at $MAIN/.git/worktrees/<name>, and only
+    # $LIBSRC is mounted here -- so the pointer resolves to a path that does not
+    # exist inside this container and git refuses the tree. The fix is a real clone,
+    # which carries its own objects and needs nothing outside the mount.
+    if [ -f /libgphoto2-source-input/.git ]; then
+      echo "[build] ERROR: mounted source is a git WORKTREE, not a self-contained checkout."
+      echo "[build]        .git is a file pointing outside this container:"
+      # head the FILE, not a pipe. Under `set -o pipefail` a `sed | head -1` makes
+      # sed die of SIGPIPE, which aborts this very error report before the fix
+      # instructions are printed -- the same trap documented in
+      # container/test_stage2_loader_compile.sh for strings|grep -q.
+      head -1 /libgphoto2-source-input/.git 2>/dev/null | sed 's/^/[build]          /'
+      echo "[build]        Only the source directory is mounted, so that pointer cannot"
+      echo "[build]        be resolved here. Use a self-contained clone instead:"
+      echo "[build]          git clone --no-checkout --local <libgphoto2> <dir>"
+      echo "[build]          git -C <dir> checkout --detach <pinned-commit>"
+    else
+      echo "[build] ERROR: local source directory must be a Git checkout"
+    fi
+    exit 1
   }
   SOURCE_COMMIT="$(git -C /libgphoto2-source-input rev-parse HEAD)" || {
     echo "[build] ERROR: cannot resolve local source commit"; exit 1;

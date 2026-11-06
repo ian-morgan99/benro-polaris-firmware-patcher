@@ -75,12 +75,30 @@ def sha256_file(path: str) -> str:
     return h.hexdigest()
 
 
-def resolve_ubireader(explicit: str | None) -> str | None:
+# Returns (usable_binary_or_None, notes). The notes explain every candidate that
+# was considered and rejected, because "no functional ubireader" on its own is a
+# misleading diagnosis: on 2026-11-06 a wrapper WAS present at
+# ~/.local/bin/ubireader_extract_files but died at import time (its module had
+# been installed for a different interpreter). The probe below correctly rejects
+# it -- --help must EXIT 0, not merely run -- but the old error said nothing about
+# where it had looked or why the thing it found was unusable, so the operator had
+# no way to tell "not installed" from "installed and broken".
+def resolve_ubireader(explicit: str | None) -> tuple[str | None, list[str]]:
     if explicit:
-        return explicit if os.path.exists(explicit) else None
-    for cand in (shutil.which("ubireader_extract_files"), "/work/bin/ubireader_extract_files"):
-        if not cand:
+        if not os.path.exists(explicit):
+            return None, [f"--ubireader path does not exist: {explicit}"]
+        return explicit, []
+
+    notes: list[str] = []
+    candidates = [
+        shutil.which("ubireader_extract_files"),
+        "/work/bin/ubireader_extract_files",
+    ]
+    seen = set()
+    for cand in candidates:
+        if not cand or cand in seen:
             continue
+        seen.add(cand)
         # A wrapper on PATH can be broken (module installed for another
         # interpreter); probe it the same way the pre-release gate does -- which
         # means requiring --help to EXIT 0, not merely to run. The probe used to
@@ -88,33 +106,63 @@ def resolve_ubireader(explicit: str | None) -> str | None:
         # still returned and extraction then failed with "no functional
         # ubireader" even though a working one sat at /work/bin.
         try:
-            if subprocess.run(
-                [cand, "--help"], capture_output=True, timeout=30
-            ).returncode == 0:
-                return cand
-        except Exception:
+            proc = subprocess.run(
+                [cand, "--help"], capture_output=True, timeout=30, text=True,
+            )
+        except Exception as exc:
+            notes.append(f"{cand}: could not be executed ({exc})")
             continue
-    return None
+        if proc.returncode == 0:
+            return cand, notes
+        detail = (proc.stderr or proc.stdout or "").strip().splitlines()
+        tail = " | ".join(detail[-2:]) if detail else "no output"
+        notes.append(
+            f"{cand}: present but NOT functional (--help exited "
+            f"{proc.returncode}: {tail[:200]})"
+        )
+    if not seen:
+        notes.append(
+            "nothing found on PATH or at /work/bin/ubireader_extract_files"
+        )
+    return None, notes
 
 
-def extract_appfs(appfs_path: str, ubireader: str | None) -> str | None:
-    """Extract appfs.ubifs; return the extracted root dir or None."""
+def extract_appfs(appfs_path: str, ubireader: str | None) -> tuple[str | None, str]:
+    """Extract appfs.ubifs; return (extracted root dir or None, explanation).
+
+    The explanation is non-empty only on failure and carries the tool's own error
+    text. A silent None here previously became "no functional ubireader" even when
+    ubireader ran and failed for an entirely different reason -- most commonly an
+    output directory the Docker daemon could not see, which is a TMPDIR problem,
+    not a ubireader problem.
+    """
     if not ubireader:
-        return None
+        return None, "no functional ubireader_extract_files was found"
     tmp = tempfile.mkdtemp(prefix="fwpkt-manifest-")
     try:
-        subprocess.run(
+        proc = subprocess.run(
             [ubireader, "-o", tmp, appfs_path],
-            check=True, capture_output=True, timeout=600,
+            check=True, capture_output=True, timeout=600, text=True,
         )
         # ubireader nests under <tmp>/<inode>/ubifs/
         for root, _dirs, _files in os.walk(tmp):
             if os.path.basename(root) == "ubifs" and os.path.isdir(os.path.join(root, "lib")):
-                return root
-        return None
-    except Exception:
+                return root, ""
+        detail = (proc.stderr or proc.stdout or "").strip().splitlines()
+        tail = " | ".join(detail[-2:]) if detail else "no output"
         shutil.rmtree(tmp, ignore_errors=True)
-        return None
+        return None, (
+            f"{ubireader} ran but produced no ubifs/ directory containing lib/ "
+            f"under {tmp} (TMPDIR={os.environ.get('TMPDIR', 'unset')}). {tail[:200]}"
+        )
+    except subprocess.CalledProcessError as exc:
+        shutil.rmtree(tmp, ignore_errors=True)
+        detail = (exc.stderr or exc.stdout or "").strip().splitlines()
+        tail = " | ".join(detail[-3:]) if detail else "no output"
+        return None, f"{ubireader} exited {exc.returncode}: {tail[:300]}"
+    except Exception as exc:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return None, f"could not run {ubireader}: {exc}"
 
 
 def main() -> int:
@@ -134,10 +182,26 @@ def main() -> int:
         print(f"ERROR: {zip_path} not found", file=sys.stderr)
         return 1
 
-    ubireader = resolve_ubireader(args.ubireader)
-    appfs_root = extract_appfs(appfs, ubireader) if os.path.isfile(appfs) else None
+    ubireader, ubi_notes = resolve_ubireader(args.ubireader)
+    if os.path.isfile(appfs):
+        appfs_root, extract_note = extract_appfs(appfs, ubireader)
+    else:
+        appfs_root, extract_note = None, f"{appfs} does not exist in the candidate"
     if appfs_root is None:
-        print("ERROR: could not extract appfs.ubifs (no functional ubireader)", file=sys.stderr)
+        print("ERROR: could not extract appfs.ubifs", file=sys.stderr)
+        for note in ([extract_note] if extract_note else []) + ubi_notes:
+            if note:
+                print(f"       {note}", file=sys.stderr)
+        print(
+            "       A working ubireader ships inside the patcher image; use the\n"
+            "       committed bridge, which runs it there against host paths:\n"
+            "         export UBIREADER_EXTRACT_FILES=<repo>/tools/ubireader-docker\n"
+            "       If the failure mentions the output directory, TMPDIR points at a\n"
+            "       path the Docker daemon cannot see (a sandbox-private /tmp). Set\n"
+            "       TMPDIR under $HOME and retry. Run scripts/build-doctor.sh to check\n"
+            "       every build prerequisite at once.",
+            file=sys.stderr,
+        )
         return 2
 
     # Machine-checkable stage2 predicate: does this candidate ship a lib/stage2 tree?

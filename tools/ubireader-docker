@@ -1,0 +1,132 @@
+#!/bin/sh
+# ubireader-docker -- run ubireader_extract_files inside the patcher image,
+# against host paths, so generate-fwpkt-manifest.py can unpack appfs.ubifs on a
+# host whose own ubireader install is broken.
+#
+# WHY THIS EXISTS
+# scripts/generate-fwpkt-manifest.py needs ubireader to unpack appfs.ubifs before
+# it can decide which files are mandatory in the install manifest. On 2026-11-06
+# step [3/7] aborted with:
+#
+#     ERROR: could not extract appfs.ubifs (no functional ubireader)
+#
+# The cause was not a missing install. /home/ian/.local/bin/ubireader_extract_files
+# existed and was executable, but its Python module had been installed for a
+# different interpreter, so the wrapper died at import time. resolve_ubireader()
+# correctly rejects it -- it requires `--help` to exit 0 precisely so that a
+# broken wrapper is not accepted -- and then reports only that nothing functional
+# was found. A working ubireader is already present in the polaris-patcher image
+# at /usr/local/bin/ubireader_extract_files, which is what the camera build uses.
+#
+# WHAT THIS DOES
+# Presents itself as ubireader_extract_files and forwards the real work to the
+# image. Both the input and the output directory are bind-mounted at IDENTICAL
+# paths, so `-o OUTDIR` behaves exactly as it would natively and the caller's
+# os.walk() over OUTDIR finds the extracted tree on the host.
+#
+# CONSTRAINTS THE CALLER MUST RESPECT
+#   * Both paths must be visible to the Docker daemon. Inside a Flatpak sandbox
+#     /tmp is private to the sandbox while the daemon runs on the host, so a
+#     mount of a /tmp path comes up empty. generate-fwpkt-manifest.py calls
+#     tempfile.mkdtemp(), which honours TMPDIR -- set TMPDIR under $HOME first.
+#   * The image must exist. [1/7] of the candidate build builds it, so run this
+#     after that step or build it directly:
+#       docker build -t polaris-patcher -f docker/Dockerfile .
+#
+# Usage (matches ubireader_extract_files):
+#   ubireader-docker [-s|-q|...] -o OUTDIR INPUT.ubifs
+#   ubireader-docker --help            # must exit 0; the manifest script probes this
+
+set -eu
+
+IMAGE="${POLARIS_IMAGE:-polaris-patcher:latest}"
+
+# The manifest script's probe is `[cand, "--help"]` and requires exit 0. Answer it
+# without touching the daemon so the probe stays fast and works offline.
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    cat <<'USAGE'
+usage: ubireader-docker [-h] [-o OUTDIR] [-s] [-q] [-p] [-v] IMAGE_INPUT
+
+Run the patcher image's ubireader_extract_files against host paths.
+Accepted flags are those of ubireader_extract_files; anything unrecognised is
+passed through unchanged.
+USAGE
+    exit 0
+fi
+
+# Resolve docker. A Flatpak sandbox has no socket, so plain `docker` may be absent
+# or unable to reach the daemon; flatpak-spawn --host is the supported route out.
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    docker_run() { docker "$@"; }
+elif command -v flatpak-spawn >/dev/null 2>&1 \
+        && flatpak-spawn --host docker info >/dev/null 2>&1; then
+    docker_run() { flatpak-spawn --host docker "$@"; }
+else
+    echo "ubireader-docker: cannot reach a Docker daemon." >&2
+    echo "  (inside Flatpak, use 'flatpak-spawn --host docker' or install a shim" >&2
+    echo "   at ~/.local/bin/docker that execs it)" >&2
+    exit 3
+fi
+
+if ! docker_run image inspect "$IMAGE" >/dev/null 2>&1; then
+    echo "ubireader-docker: image $IMAGE not present." >&2
+    echo "  Build it first:  docker build -t ${IMAGE%%:*} -f docker/Dockerfile ." >&2
+    exit 3
+fi
+
+OUT=""
+IN=""
+EXTRA=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -o) [ $# -ge 2 ] || { echo "ubireader-docker: -o needs an argument" >&2; exit 2; }
+            OUT="$2"; shift 2;;
+        -*) EXTRA="${EXTRA:+$EXTRA }$1"; shift;;
+        *)  IN="$1"; shift;;
+    esac
+done
+
+[ -n "$IN" ]  || { echo "ubireader-docker: no input image given" >&2; exit 2; }
+[ -n "$OUT" ] || { echo "ubireader-docker: -o OUTDIR is required" >&2; exit 2; }
+[ -f "$IN" ]  || { echo "ubireader-docker: input not found: $IN" >&2; exit 2; }
+
+# Resolve to absolute paths BEFORE the host-visibility check. A caller may pass a
+# relative path (build-astro-candidate.sh passes "$OUT" which is already absolute,
+# but a human will not), and checking a relative string against /home/* would
+# reject a perfectly good path.
+IN="$(CDPATH= cd -- "$(dirname -- "$IN")" && pwd)/$(basename "$IN")"
+
+# Bind mounts only work on paths the daemon can see. Refuse loudly rather than
+# producing an empty extraction that the caller reports as "no ubifs root".
+case "$IN" in
+    /home/*|/mnt/*|/media/*) ;;
+    *) echo "ubireader-docker: input is not on a host-visible path: $IN" >&2
+       echo "  Inside a Flatpak, /tmp is private to the sandbox. Set" >&2
+       echo "    export TMPDIR=\$HOME/.cache/polaris-build-tmp" >&2
+       echo "  so generate-fwpkt-manifest.py's mkdtemp() lands where Docker can mount it." >&2
+       exit 2;;
+esac
+
+mkdir -p "$OUT"
+IN_DIR="$(CDPATH= cd -- "$(dirname -- "$IN")" && pwd)"
+IN_BASE="$(basename "$IN")"
+OUT_ABS="$(CDPATH= cd -- "$OUT" && pwd)"
+
+# The output directory must also be mountable by the daemon, for the same reason.
+case "$OUT_ABS" in
+    /home/*|/mnt/*|/media/*) ;;
+    *) echo "ubireader-docker: output dir is not on a host-visible path: $OUT_ABS" >&2
+       echo "  Set TMPDIR under \$HOME (see above)." >&2
+       exit 2;;
+esac
+
+# Mount the input's parent read-only and the output read-write, both at their own
+# absolute paths, so the container sees exactly the host layout.
+# shellcheck disable=SC2086  # EXTRA is intentionally word-split into flags.
+# Run as the calling user so extracted files are owned by the caller, not root.
+docker_run run --rm \
+    --user "$(id -u):$(id -g)" \
+    --entrypoint ubireader_extract_files \
+    -v "$IN_DIR":"$IN_DIR":ro \
+    -v "$OUT_ABS":"$OUT_ABS" \
+    "$IMAGE" $EXTRA -o "$OUT_ABS" "$IN_DIR/$IN_BASE"
