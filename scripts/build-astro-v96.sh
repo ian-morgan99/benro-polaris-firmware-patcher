@@ -58,8 +58,13 @@ LOG="${POLARIS_BUILD_LOG:-$LOG_DIR/astro-v96-$(date +%Y%m%d-%H%M%S).log}"
 # stops the re-exec from looping.
 if [ -z "${POLARIS_BUILD_LOGGED:-}" ] && { [ ! -e "${LOG%/*}" ] || [ -w "${LOG%/*}" ]; }; then
     echo "== log: $LOG =="
-    POLARIS_BUILD_LOGGED=1 POLARIS_BUILD_LOG="$LOG" "$0" "$@" 2>&1 | tee -a "$LOG"
-    rc=${PIPESTATUS[0]}
+    # The braces plus "|| rc=$?" are load-bearing. Under set -euo pipefail a bare
+    # "cmd | tee ..." aborts the script as soon as cmd fails, so everything below
+    # -- including the hold prompt that keeps the desktop window open -- is
+    # unreachable on exactly the runs that need it. Reproduced in isolation: with
+    # an inner exit 3 the post-pipeline code never ran.
+    rc=0
+    { POLARIS_BUILD_LOGGED=1 POLARIS_BUILD_LOG="$LOG" "$0" "$@" 2>&1 | tee -a "$LOG"; } || rc=$?
     if [ "$rc" -ne 0 ]; then
         echo "FAILED (exit $rc). Full log: $LOG"
         # The desktop launcher sets this so the window stays open long enough to
@@ -176,17 +181,24 @@ echo "== output $OUT =="
 
 # build-astro-candidate.sh refuses to touch an existing --out unless --force is
 # given, and --force does "rm -rf" on it. Passing --force unconditionally would
-# let a mistyped re-run destroy a candidate that actually built. So decide from
-# the contents: a directory holding a real FwPkt.zip is treated as a finished
-# artifact and left alone; anything else is residue from a failed attempt and is
-# cleared.
+# let a mistyped re-run destroy a candidate that actually built.
+#
+# Key the decision on astro-candidate-manifest.json, NOT FwPkt.zip. A run can
+# write FwPkt.zip at step [2/7] and then fail at the [5/7] shared-camera gate --
+# which is exactly what happened on 2026-11-06, where the gate went RED on a
+# missing prerequisite. FwPkt.zip alone therefore does not mean "finished"; the
+# manifest is written last and only on success.
 if [ -e "$OUT" ]; then
-    if [ -s "$OUT/FwPkt.zip" ]; then
-        echo "ERROR: $OUT already contains a built FwPkt.zip."
+    if [ -s "$OUT/astro-candidate-manifest.json" ]; then
+        echo "ERROR: $OUT already holds a completed candidate."
         echo "       Refusing to delete it. If you really want to rebuild over it:"
         echo "         rm -rf '$OUT'"
         echo "       To keep it, change CANDIDATE_ID in this script and re-run."
         exit 1
+    fi
+    if [ -s "$OUT/FwPkt.zip" ]; then
+        echo "== previous run wrote FwPkt.zip but never completed (no manifest)."
+        echo "   That packet failed a later gate and is NOT publishable; clearing it."
     fi
     echo "== clearing incomplete output from a previous failed run =="
     find "$OUT" -mindepth 1 -maxdepth 1 -print -exec rm -rf -- {} + 2>/dev/null | sed 's/^/     /'
