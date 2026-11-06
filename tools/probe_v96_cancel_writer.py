@@ -55,8 +55,20 @@ TARGETS = {
 
 
 def run(path, label):
-    """Run one function and report glob_cancel before/after."""
-    raw = open(path, "rb").read()
+    """Run one function and report glob_cancel before/after.
+
+    Returns the byte stored at glob_cancel, or None if the run could not be
+    performed. Callers treat None as a failure, never as a pass.
+    """
+    try:
+        raw = open(path, "rb").read()
+    except OSError as exc:
+        # These binaries are proprietary and never committed, so a fresh clone
+        # legitimately lacks them. Say so plainly instead of dumping a traceback,
+        # and still fail closed: the caller counts this as not-proven.
+        print(f"  {label}: CANNOT RUN - firmware binary unavailable ({exc})")
+        return None
+
     uc = Uc(UC_ARCH_ARM, UC_MODE_ARM)
 
     text_len = (TEXT_SZ + 0xFFF) & ~0xFFF
