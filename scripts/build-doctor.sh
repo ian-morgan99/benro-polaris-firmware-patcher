@@ -396,5 +396,21 @@ else
     printf 'Fix every FAIL line above. Each one prints the exact command.\n'
     printf 'Do not start a build to "see what happens": these failures surface\n'
     printf 'deep inside a long run and report themselves as unrelated problems.\n'
+    # Say what is already handled, or this output misleads in its own way. Run
+    # standalone it reports faults that build-astro.sh provisions around by
+    # design: a private TMPDIR under out/, the ubireader bridge, and a fresh
+    # self-contained clone instead of a shared worktree. Reading that as "repair
+    # all of these by hand" wastes time, and fixing the shared tree would be the
+    # wrong fix anyway -- the build cannot use a worktree at all.
+    echo
+    echo 'Some of the above may already be handled. scripts/build-astro.sh sets'
+    echo 'a host-visible TMPDIR under out/, uses tools/ubireader-docker when the'
+    echo 'native ubireader is broken, and clones its own self-contained libgphoto2'
+    echo 'tree rather than using a shared checkout or worktree. If you are about to'
+    echo 'run that wrapper, only these need fixing by hand:'
+    echo '  - Docker itself (daemon down, or the socket is not visible here)'
+    echo '  - a dirty or uncommitted PATCHER tree'
+    echo '  - missing bwrap / slirp4netns on PATH'
+    echo 'Everything else the wrapper can arrange for itself.'
     exit 1
 fi
