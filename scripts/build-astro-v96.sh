@@ -21,7 +21,13 @@ CANDIDATE_ID="astro-v96-cancel-writer-20261105"
 DISPLAY_FWVER="6.0.0.54.96"
 STOCK="/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/firmware/FwPkt.zip"
 CATALOG="/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/out/gaia-dr3-g10"
-LIBSRC="/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2"
+# The build compiles whatever is checked out in this directory, so it must be a
+# tree sitting exactly on the pin. The developer's own driver checkout is routinely
+# dirty and on another branch -- pointing the build at it either fails with "wrong
+# libgphoto2 commit" or silently compiles something else. Use a dedicated detached
+# worktree at the pin, created below if absent.
+LIB_REPO="/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2"
+LIBSRC="${POLARIS_V96_LIBSRC:-/home/ian/Documents/VSCodeProjects/LibGphoto2-astro-v96}"
 SUMMARY="$ROOT/docs/candidate-summaries/v96-astro-cancel-writer.json"
 OUT="$ROOT/out/$CANDIDATE_ID"
 
@@ -61,8 +67,31 @@ fi
 
 [ -f "$STOCK" ]    || die "stock FwPkt missing: $STOCK"
 [ -d "$CATALOG" ]  || die "catalogue package missing: $CATALOG"
-[ -d "$LIBSRC" ]   || die "libgphoto2 source missing: $LIBSRC"
 [ -f "$SUMMARY" ]  || die "change summary missing: $SUMMARY"
+
+LIB_PIN="$(sed -n 's/^LIB_BASELINE="\([0-9a-f]\{40\}\)".*/\1/p' "$ROOT/scripts/build-astro-candidate.sh" | head -1)"
+[ -n "$LIB_PIN" ] || die "could not read LIB_BASELINE from scripts/build-astro-candidate.sh"
+
+# Provision the pinned worktree on demand. --detach keeps it off any branch, so it
+# cannot be moved by someone working in the main checkout.
+if [ ! -d "$LIBSRC/.git" ] && [ ! -f "$LIBSRC/.git" ]; then
+    [ -d "$LIB_REPO/.git" ] || die "driver repo missing: $LIB_REPO"
+    echo "== creating pinned worktree $LIBSRC at ${LIB_PIN:0:9} =="
+    git -C "$LIB_REPO" worktree add --detach "$LIBSRC" "$LIB_PIN" \
+      || die "could not create worktree $LIBSRC (does $LIB_PIN exist? run: git -C $LIB_REPO fetch)"
+elif [ ! -e "$LIBSRC" ]; then
+    die "libgphoto2 source missing and cannot be created: $LIBSRC"
+fi
+
+[ "$(git -C "$LIBSRC" rev-parse HEAD)" = "$LIB_PIN" ] \
+  || die "worktree $LIBSRC is at $(git -C "$LIBSRC" rev-parse HEAD), not the pin $LIB_PIN"
+if [ -n "$(git -C "$LIBSRC" status --porcelain)" ]; then
+    echo "ERROR: pinned worktree $LIBSRC is dirty. The build compiles what is on disk,"
+    echo "       so a dirty tree produces a candidate that does not match its recorded pin."
+    echo "       Clean it (git -C $LIBSRC status) or point POLARIS_V96_LIBSRC elsewhere."
+    exit 1
+fi
+echo "== libgphoto2 source: $LIBSRC at ${LIB_PIN:0:9} (clean) =="
 
 ACTUAL="$(sha256sum "$STOCK" | cut -d' ' -f1)"
 [ "$ACTUAL" = "$STOCK_SHA256" ] || die "stock digest changed: expected $STOCK_SHA256 got $ACTUAL"
@@ -90,10 +119,8 @@ echo "== docker daemon: $("$DOCKER_BIN" info --format '{{.ServerVersion}}' 2>/de
 
 # The pin gate that would have caught v95. Run here so it cannot be skipped by
 # forgetting a flag; build-astro-candidate.sh runs it too, but only when the pin
-# differs from its default.
-LIB_PIN="$(git -C "$ROOT" rev-parse --show-toplevel >/dev/null 2>&1 && \
-           sed -n 's/^LIB_BASELINE="\([0-9a-f]\{40\}\)".*/\1/p' "$ROOT/scripts/build-astro-candidate.sh" | head -1)"
-[ -n "$LIB_PIN" ] || die "could not read LIB_BASELINE from scripts/build-astro-candidate.sh"
+# differs from its default. LIB_PIN was read once above, when the worktree was
+# provisioned.
 bash "$ROOT/scripts/pin-divergence-check.sh" "$LIBSRC" "$LIB_PIN" \
      43dccb81b92b6b25f44957a4684f534393562028 \
   || die "driver pin $LIB_PIN is not a clean superset of the v94 pin -- refusing to build"
