@@ -198,6 +198,12 @@ fi
 # Not exec: the exit code alone is not enough to say whether a candidate exists.
 # A build can fail after writing partial output, and "it closed quickly" then
 # leaves no way to tell success from failure. Verify the artifacts themselves.
+#
+# The "|| rc=$?" is load-bearing. Under set -e a bare "cmd; rc=$?" aborts the
+# script the moment cmd fails, so every line below -- including the whole failure
+# report -- is unreachable exactly when it is needed. Verified: no log from any
+# previous run contained a verdict line.
+rc=0
 bash "$ROOT/scripts/build-astro-candidate.sh" \
   --id "$CANDIDATE_ID" \
   --stock-fwpkt "$STOCK" \
@@ -206,8 +212,7 @@ bash "$ROOT/scripts/build-astro-candidate.sh" \
   --build-id "$CANDIDATE_ID" \
   --catalog-package "$CATALOG" \
   --change-summary "$SUMMARY" \
-  --out "$OUT" ${FORCE_FLAG[@]+"${FORCE_FLAG[@]}"}
-rc=$?
+  --out "$OUT" ${FORCE_FLAG[@]+"${FORCE_FLAG[@]}"} || rc=$?
 
 echo "============================================================"
 if [ "$rc" -eq 0 ] && [ -s "$OUT/FwPkt.zip" ] && [ -s "$OUT/astro-candidate-manifest.json" ]; then
@@ -221,10 +226,16 @@ if [ "$rc" -eq 0 ] && [ -s "$OUT/FwPkt.zip" ] && [ -s "$OUT/astro-candidate-mani
     echo "Physical qualification on a real camera is still required."
 else
     echo "BUILD FAILED (exit $rc)"
-    [ -s "$OUT/FwPkt.zip" ] && echo "  WARNING: a partial FwPkt.zip exists -- do not use it" || echo "  no FwPkt.zip produced"
+    if [ -s "$OUT/FwPkt.zip" ]; then
+        echo "  WARNING: a partial FwPkt.zip exists -- do not use it"
+    else
+        echo "  no FwPkt.zip produced"
+    fi
     echo "  log        ${LOG:-none}"
-    echo "  last lines of the log:"
-    [ -n "${LOG:-}" ] && [ -f "$LOG" ] && tail -25 "$LOG" | sed 's/^/    /'
+    if [ -n "${LOG:-}" ] && [ -f "$LOG" ]; then
+        echo "  last lines of the log:"
+        tail -25 "$LOG" | sed 's/^/    /'
+    fi
 fi
 echo "============================================================"
 exit "$rc"
