@@ -259,6 +259,7 @@ PY_TESTS=(
     tests/test_astro_multishot.py
     tests/test_display_fwver_monotonic.py
     tests/test_build_and_install_entrypoint.py
+    tests/test_build_tooling.py
     tests/test_polaris_bulb_dispatch_arm.py
     tests/test_polaris_bulb_cancel_result_arm.py
     tests/test_agent_sandbox_check.py

@@ -54,6 +54,17 @@ custom retry loops) when a documented, proven process exists.
 - `polaris-release` — the shared fail-closed source-to-candidate build and
   provenance process. Use `scripts/build-release-candidate.sh` for releases.
 
+Before any candidate build, run `scripts/build-doctor.sh`. It takes seconds and
+proves each build prerequisite actually *works* rather than merely existing —
+Docker reachable *and* able to bind-mount our files, ubireader that runs, a
+self-contained libgphoto2 clone at a reachable pin. Building astro-v97 took six
+failed attempts because six prerequisites passed existence checks and failed
+anyway, each reporting itself as an unrelated problem. Use
+`scripts/build-astro.sh --version N --summary FILE` for Astro candidates; it runs
+the doctor, provisions what it can inside the repo, and refuses to build rather
+than producing something misleading. The full message-to-cause table is in
+`docs/REPRODUCIBLE-BUILD-RUNBOOK.md`.
+
 If a documented process fails, diagnose *why* (link drop? device state?) and
 retry the documented process or fall back to its documented fallbacks. Only
 deviate when the skill explicitly allows it, and record the deviation in the
