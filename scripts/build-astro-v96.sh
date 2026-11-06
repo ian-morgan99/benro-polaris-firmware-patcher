@@ -156,7 +156,18 @@ if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
     if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
         echo "ERROR: the Docker daemon is still not answering."
         echo "       $("$DOCKER_BIN" info 2>&1 | head -2 | tr '\n' ' ')"
-        echo "       Start it yourself and re-run:  sudo systemctl start docker"
+        # If this shell is inside a Flatpak, the socket simply is not bind-mounted
+        # in and no amount of sudo or systemctl inside the sandbox will help. The
+        # override has to be applied from the host and the app restarted.
+        if [ -n "${FLATPAK_ID:-}" ]; then
+            echo "       This shell is inside Flatpak app $FLATPAK_ID, which does not"
+            echo "       expose /var/run/docker.sock. From a host terminal:"
+            echo "         flatpak override --user --filesystem=/var/run/docker.sock $FLATPAK_ID"
+            echo "       then fully quit and relaunch the app. Verify with:"
+            echo "         ls -l /var/run/docker.sock"
+        else
+            echo "       Start it yourself and re-run:  sudo systemctl start docker"
+        fi
         exit 1
     fi
 fi
