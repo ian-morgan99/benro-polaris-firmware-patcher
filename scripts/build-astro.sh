@@ -159,6 +159,34 @@ fi
 python3 -c "import json,sys;json.load(open(sys.argv[1]))" "$SUMMARY" \
     || die "change summary is not valid JSON: $SUMMARY"
 
+# Two guards that exist because I made this mistake myself on 2026-11-06 while
+# verifying the wrapper: I passed a v97 summary to a --version 98 build, and it
+# was accepted. The resulting candidate carried a valid manifest with valid
+# digests and a change summary describing a DIFFERENT release. That is worse than
+# a failed build, because it looks finished.
+
+# An unfilled template must never be built with. The template is written by this
+# script and is deliberately not a valid release summary.
+if grep -q 'REPLACE' "$SUMMARY"; then
+    die "$SUMMARY still contains REPLACE placeholders. Fill every one in first;
+       the change summary ships inside the release and states what changed and
+       what is NOT fixed."
+fi
+
+# A summary named for another version is almost always the wrong file. Refuse
+# rather than silently misdescribe the release; --allow-summary-version-mismatch
+# is there for the legitimate case of reusing a reviewed summary deliberately.
+SUMMARY_VER="$(basename "$SUMMARY" | grep -oE 'v[0-9]+' | head -1 | tr -d 'v')"
+if [ -n "$SUMMARY_VER" ] && [ "$SUMMARY_VER" != "$VERSION" ] \
+        && [ "${ALLOW_SUMMARY_VERSION_MISMATCH:-0}" != 1 ]; then
+    die "change summary $(basename "$SUMMARY") is named for v$SUMMARY_VER but this
+       build is v$VERSION. The summary is embedded in the candidate manifest, so
+       this would ship a release describing a different release.
+       Write docs/release-change-summary-v${VERSION}-astro.json (running without
+       --summary writes a template), or pass
+       ALLOW_SUMMARY_VERSION_MISMATCH=1 if reusing it is deliberate."
+fi
+
 # --- 2. never destroy a completed candidate ---------------------------------
 # Checked here, before anything else can fail. build-astro-candidate.sh does
 # `rm -rf` on --out when given --force, so this is the one guard that protects

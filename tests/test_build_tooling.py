@@ -286,7 +286,13 @@ def test_extract_appfs_returns_the_tools_own_error(tmp_path: Path):
 # throwaway git repo so the real tree is never touched.
 @pytest.fixture()
 def wrapper_sandbox(tmp_path: Path):
-    """A minimal repo containing only build-astro.sh, with its host paths overridden."""
+    """A minimal repo containing only build-astro.sh, with its host paths overridden.
+
+    Includes a fake docker and a working fake ubireader on PATH. Without them the
+    wrapper's environment stage fails first and the guard under test is never
+    reached -- which makes these tests depend on whether the developer's daemon
+    happens to be running, exactly what this repo's test convention forbids.
+    """
     root = tmp_path / "repo"
     (root / "scripts").mkdir(parents=True)
     (root / "docs").mkdir()
@@ -312,11 +318,26 @@ def wrapper_sandbox(tmp_path: Path):
         "baseline": {}, "purpose": "test", "changes": [],
         "known_limits": [], "validation_focus": [],
     }))
+
+    fakebin = tmp_path / "fakebin"
+    fakebin.mkdir()
+    (fakebin / "docker").write_text("#!/bin/sh\nexit 0\n")
+    (fakebin / "ubireader_extract_files").write_text(
+        '#!/bin/sh\n[ "$1" = "--help" ] && echo usage && exit 0\nexit 0\n'
+    )
+    for tool in ("bwrap", "slirp4netns"):
+        (fakebin / tool).write_text("#!/bin/sh\nexit 0\n")
+    for f in fakebin.iterdir():
+        f.chmod(0o755)
     return root, stock, tmp_path / "catalog", summary
 
 
 def _wrapper(root: Path, *args, extra_env=None):
     env = clean_env(HOME=str(root.parent / "fakehome"))
+    # The fixture's fake bin sits beside the repo. Going first means the wrapper's
+    # docker/ubireader probes never touch the host, which is what makes these tests
+    # independent of whether a daemon happens to be running.
+    env["PATH"] = f"{root.parent / 'fakebin'}:{env.get('PATH', '')}"
     if extra_env:
         env.update(extra_env)
     return run(["bash", str(root / "scripts" / "build-astro.sh"), *args], env=env, cwd=root)
@@ -378,6 +399,59 @@ def test_wrapper_rejects_invalid_summary_json(wrapper_sandbox):
                  "--summary", str(summary))
     assert p.returncode != 0
     assert "not valid JSON" in p.stderr
+
+
+def test_wrapper_refuses_an_unfilled_template(wrapper_sandbox):
+    """The template this script writes is deliberately not a valid release summary.
+
+    Building with it still in place would ship a candidate whose embedded change
+    summary says REPLACE everywhere, which is worse than no summary because it
+    looks like a reviewed record.
+    """
+    root, stock, catalog, _summary = wrapper_sandbox
+    tmpl = root / "docs" / "release-change-summary-v99-astro.json"
+    tmpl.write_text(json.dumps({
+        "baseline": {"candidate_id": "REPLACE-me"},
+        "purpose": "REPLACE", "changes": [], "known_limits": [], "validation_focus": [],
+    }))
+    p = _wrapper(root, "--version", "99", "--stock", str(stock), "--catalog", str(catalog),
+                 "--summary", str(tmpl))
+    assert p.returncode != 0
+    assert "REPLACE placeholders" in p.stderr, p.stderr
+
+
+def test_wrapper_refuses_summary_named_for_another_version(wrapper_sandbox):
+    """This exact mistake was made on 2026-11-06 while verifying the wrapper.
+
+    A v97 summary was passed to a --version 98 build. It was accepted, and the
+    resulting candidate had a valid manifest with valid digests and a change
+    summary describing a different release -- indistinguishable from a real one.
+    """
+    root, stock, catalog, _summary = wrapper_sandbox
+    wrong = root / "docs" / "release-change-summary-v97-astro.json"
+    wrong.write_text(json.dumps({
+        "baseline": {"candidate_id": "astro-v96-x"},
+        "purpose": "v97 work", "changes": [], "known_limits": [], "validation_focus": [],
+    }))
+    p = _wrapper(root, "--version", "98", "--stock", str(stock), "--catalog", str(catalog),
+                 "--summary", str(wrong))
+    assert p.returncode != 0
+    assert "named for v97" in p.stderr, p.stderr
+    assert "ALLOW_SUMMARY_VERSION_MISMATCH" in p.stderr, "must document the escape hatch"
+
+
+def test_wrapper_summary_version_mismatch_escape_hatch_is_explicit(wrapper_sandbox):
+    """Deliberate reuse must be possible, but only by naming it out loud."""
+    root, stock, catalog, _summary = wrapper_sandbox
+    wrong = root / "docs" / "release-change-summary-v97-astro.json"
+    wrong.write_text(json.dumps({
+        "baseline": {"candidate_id": "astro-v96-x"},
+        "purpose": "v97 work", "changes": [], "known_limits": [], "validation_focus": [],
+    }))
+    p = _wrapper(root, "--version", "98", "--stock", str(stock), "--catalog", str(catalog),
+                 "--summary", str(wrong), "--skip-doctor",
+                 extra_env={"ALLOW_SUMMARY_VERSION_MISMATCH": "1"})
+    assert "named for v97" not in p.stderr, p.stderr
 
 
 def test_wrapper_refuses_dirty_patcher_tree(wrapper_sandbox):

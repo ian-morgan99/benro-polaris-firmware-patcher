@@ -173,6 +173,17 @@ stops. It never invents a change summary: that file is the release's honest
 statement of what changed and what is not fixed, so it must be written by a
 person.
 
+Two guards protect that file, both added after the mistake actually happened while
+verifying this wrapper:
+
+- a summary still containing `REPLACE` is refused. Building with it would embed a
+  change summary of placeholders inside a candidate with otherwise valid digests,
+  which looks reviewed and is not.
+- a summary whose filename names a different version than `--version` is refused.
+  A v97 summary was passed to a `--version 98` build and accepted; the candidate
+  shipped a valid manifest describing a different release. Reuse deliberately with
+  `ALLOW_SUMMARY_VERSION_MISMATCH=1`.
+
 Useful flags: `--pin` to override the driver commit (defaults to the canonical
 libgphoto2 `origin/main`), `--slug` for the name in the candidate id, `--dry-run`
 to provision and print the builder invocation without building, and
