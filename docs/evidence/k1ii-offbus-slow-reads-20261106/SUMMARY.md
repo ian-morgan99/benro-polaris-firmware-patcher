@@ -64,25 +64,70 @@ Two further defects surfaced during testing of that fix:
 
 Neither explains the slow reads or shutter failure; they are in our UI path only.
 
-## Shutter failure: one lead, unconfirmed
+## Shutter failure: gate already shipped, so it is NOT the explanation
 
-`polaris-httpd.c:2728` already documents that **opcode 264 is ignored while astro
-mode owns the shutter**, and `solve-now.sh` records the same; our own UI tells the
-user to take the shot in the Benro app instead. If astro mode was active during
-the report, an external capture request is *expected* to be dropped, which fits
-"fails on the app, but does take eventually".
+Commit `855f718e5` ("pentax: gate K-1 II shutter writes on Tv and verify the
+shutter property", PR #144) describes a near-identical symptom, measured live on
+a K-1 II:
 
-The competing explanation is a PTP timeout-and-retry: the shipped driver carries
-`msgtimeout=100000` / `timeout=100000` and the strings `Clearing halt on IN EP and
-retrying once` / `... OUT EP ...`, so a stalled endpoint can produce a long delay
-followed by eventual success. Both fit "eventually fires".
+> *In Bulb the body clears CAN_CHANGE_TV and sets BULB_TIMER, so the gate
+> admitted the mode, the body refused the write, and the driver burned ten
+> verification cycles (~720 ms) before returning an error.*
 
-Nothing here distinguishes them, so this is a lead rather than a diagnosis.
+That fix is **already on the device**. Its pin `3fb26e536` is what v97 shipped,
+and the distinctive string is present in the running driver:
+
+```
+strings /app/lib/stage2/libgphoto2/2.5.34/ptp2.so | grep -c "Tv-changeable"  -> 3
+```
+
+The operator confirmed the slow reads and shutter failure were observed **on v97**
+itself. So the gate did not resolve them, and the ~720 ms verification loop is not
+the cause -- it no longer runs. This was checked before building a new candidate:
+`build-astro-candidate.sh` defaults to `LIB_BASELINE=3fb26e536`, identical to what
+v97 shipped, so a rebuild would have produced the same driver and changed nothing.
+
+What remains plausible is the readiness path rather than the capability gate: the
+gate now returns `GP_ERROR_NOT_SUPPORTED (-6)` before touching the wire for a
+capability refusal, while busy/idle/transport still comes from
+`_pentax_readiness_preflight`. A refusal will therefore say which of the two
+reasons it refused -- that is the measurement to take next, and it needs the
+camera attached.
+
+The competing explanation is unchanged: a PTP timeout-and-retry. The shipped
+driver carries `msgtimeout=100000` / `timeout=100000` plus "Clearing halt on IN EP
+and retrying once", which can produce a long stall followed by eventual success.
 
 `camera-profiles.json` was also checked for per-model gating: it carries only
 `sensor_width_mm` and `sensor_class` per body (K-1 II 35.9 mm full-frame, K-3 III
 23.3 mm APS-C). There is no shutter or capture capability flag differentiating the
 two, so nothing in our own configuration gates the shutter by model.
+
+## Live-view fix deployed to the device
+
+`polaris-httpd` from `1a37b82` was installed to both `/app/astro/polaris-httpd`
+and `/app/sd/polaris-astro/polaris-httpd` (sha256 `96893201cf1e...`, verified on
+the device before install; streamed over ssh stdin because the device runs no
+scp/sftp server). The SD copy matters: the boot script only re-copies from it when
+`/app/astro` lacks the binary. Previous binary kept at
+`polaris-httpd.pre-1a37b82.bak`. Service restarted with its original cmdline;
+`:8090`, LX200 `:10001`, INDI `:7624` and Alpaca `udp:32227` all came back up.
+
+Note that flashing delivers none of this -- `polaris-httpd` appears 0 times in the
+FwPkt and ships only via the additive Astro bundle, so a rebuild-and-flash would
+not have carried the live-view fix at all.
+
+Differential proof that the new fetch path executes, taken with no camera
+attached (so both binaries correctly report "no live-view frame"):
+
+| binary | `/api/snapshot` | time |
+|---|---|---|
+| old (`1df598d4`) | 502 | **0.013 s** -- instant: no wget/curl exists to fail |
+| new (`96893201`) | 502 | **6.39 s** -- connects, reads the stream, waits to `SO_RCVTIMEO` |
+
+The 6.4 s is the fetch actually running against `:8080`. Whether a real frame
+decodes correctly is still unverified: the camera has been off the USB bus since
+mid-session.
 
 ## Next step
 
@@ -91,6 +136,10 @@ re-enumerate), reproduce each symptom once while watching, and capture bus
 state plus pgphoto's PID at the moment of failure. Every measurement here was
 taken after the fact, which is exactly why none of them is conclusive.
 
-For the shutter specifically, record whether astro mode was active when it
-failed -- that single detail separates the two leads above and has not yet been
-established.
+Two specific measurements would settle the shutter question:
+
+- the driver's refusal reason -- capability (`GP_ERROR_NOT_SUPPORTED`) versus
+  readiness (`_pentax_readiness_preflight`) -- since the gate now reports which;
+- whether astro mode was active when it failed. Our own UI documents that opcode
+  264 is ignored while astro mode owns the shutter, which would make a dropped
+  external capture expected behaviour rather than a fault.
