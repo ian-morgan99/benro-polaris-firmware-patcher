@@ -24,10 +24,17 @@ CATALOG="/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/out/gaia-dr3-g10
 # The build compiles whatever is checked out in this directory, so it must be a
 # tree sitting exactly on the pin. The developer's own driver checkout is routinely
 # dirty and on another branch -- pointing the build at it either fails with "wrong
-# libgphoto2 commit" or silently compiles something else. Use a dedicated detached
-# worktree at the pin, created below if absent.
+# libgphoto2 commit" or silently compiles something else.
+#
+# This must be a real clone, NOT a git worktree. container/build_ptp2.sh runs
+#   git -C /libgphoto2-source-input rev-parse --is-inside-work-tree
+# and only $LIBSRC is mounted into the container. A worktree's .git is a one-line
+# file pointing at $LIB_REPO/.git/worktrees/<name>, which lives outside that
+# mount, so inside the container the repository is unresolvable and the build dies
+# with "local source directory must be a Git checkout". A clone carries its own
+# .git directory inside the mounted path and works.
 LIB_REPO="/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2"
-LIBSRC="${POLARIS_V96_LIBSRC:-/home/ian/Documents/VSCodeProjects/LibGphoto2-astro-v96}"
+LIBSRC="${POLARIS_V96_LIBSRC:-$ROOT/out/.libgphoto2-v96}"
 SUMMARY="$ROOT/docs/candidate-summaries/v96-astro-cancel-writer.json"
 OUT="$ROOT/out/$CANDIDATE_ID"
 
@@ -72,26 +79,46 @@ fi
 LIB_PIN="$(sed -n 's/^LIB_BASELINE="\([0-9a-f]\{40\}\)".*/\1/p' "$ROOT/scripts/build-astro-candidate.sh" | head -1)"
 [ -n "$LIB_PIN" ] || die "could not read LIB_BASELINE from scripts/build-astro-candidate.sh"
 
-# Provision the pinned worktree on demand. --detach keeps it off any branch, so it
-# cannot be moved by someone working in the main checkout.
-if [ ! -d "$LIBSRC/.git" ] && [ ! -f "$LIBSRC/.git" ]; then
+# Provision the pinned source on demand. A local clone shares objects with
+# $LIB_REPO, so it is cheap; --no-checkout then a detached checkout of the exact
+# pin keeps HEAD precisely where the recorded provenance says it should be.
+if [ ! -d "$LIBSRC/.git" ]; then
     [ -d "$LIB_REPO/.git" ] || die "driver repo missing: $LIB_REPO"
-    echo "== creating pinned worktree $LIBSRC at ${LIB_PIN:0:9} =="
-    git -C "$LIB_REPO" worktree add --detach "$LIBSRC" "$LIB_PIN" \
-      || die "could not create worktree $LIBSRC (does $LIB_PIN exist? run: git -C $LIB_REPO fetch)"
+    if [ -e "$LIBSRC" ] && [ ! -d "$LIBSRC/.git" ]; then
+        die "$LIBSRC exists but is not a git clone (a worktree will not work here -- see comment above)"
+    fi
+    echo "== cloning pinned driver source into $LIBSRC at ${LIB_PIN:0:9} =="
+    git clone --no-checkout --local "$LIB_REPO" "$LIBSRC" \
+      || die "could not clone $LIB_REPO into $LIBSRC"
+    git -C "$LIBSRC" checkout --detach "$LIB_PIN" >/dev/null 2>&1 \
+      || die "pin $LIB_PIN is not present in $LIB_REPO (run: git -C $LIB_REPO fetch)"
 elif [ ! -e "$LIBSRC" ]; then
     die "libgphoto2 source missing and cannot be created: $LIBSRC"
 fi
 
+# A worktree left over from an earlier run looks like a checkout to every check
+# below but still fails inside the container. Catch it here, where the reason is
+# obvious, rather than 40 minutes into the build.
+if [ -f "$LIBSRC/.git" ]; then
+    echo "ERROR: $LIBSRC is a git worktree (.git is a file, not a directory)."
+    echo "       The container only mounts this directory, so its repository lives"
+    echo "       outside the mount and build_ptp2.sh cannot resolve it."
+    echo "       Remove it and re-run to get a self-contained clone:"
+    echo "         rm -rf $LIBSRC"
+    exit 1
+fi
+
 [ "$(git -C "$LIBSRC" rev-parse HEAD)" = "$LIB_PIN" ] \
-  || die "worktree $LIBSRC is at $(git -C "$LIBSRC" rev-parse HEAD), not the pin $LIB_PIN"
-if [ -n "$(git -C "$LIBSRC" status --porcelain)" ]; then
-    echo "ERROR: pinned worktree $LIBSRC is dirty. The build compiles what is on disk,"
+  || die "source $LIBSRC is at $(git -C "$LIBSRC" rev-parse HEAD), not the pin $LIB_PIN"
+git -C "$LIBSRC" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+  || die "source $LIBSRC is not a usable git checkout"
+if [ -n "$(git -C "$LIBSRC" status --porcelain --untracked-files=all)" ]; then
+    echo "ERROR: pinned source $LIBSRC is dirty. The build compiles what is on disk,"
     echo "       so a dirty tree produces a candidate that does not match its recorded pin."
     echo "       Clean it (git -C $LIBSRC status) or point POLARIS_V96_LIBSRC elsewhere."
     exit 1
 fi
-echo "== libgphoto2 source: $LIBSRC at ${LIB_PIN:0:9} (clean) =="
+echo "== libgphoto2 source: $LIBSRC at ${LIB_PIN:0:9} (clean, self-contained clone) =="
 
 ACTUAL="$(sha256sum "$STOCK" | cut -d' ' -f1)"
 [ "$ACTUAL" = "$STOCK_SHA256" ] || die "stock digest changed: expected $STOCK_SHA256 got $ACTUAL"
@@ -110,10 +137,23 @@ case ":$PATH:" in (*":$DOCKER_DIR:"*) ;; (*) PATH="$DOCKER_DIR:$PATH"; export PA
 echo "== docker binary: $DOCKER_BIN =="
 
 if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
-    echo "ERROR: the Docker daemon is not answering."
-    echo "       $("$DOCKER_BIN" info 2>&1 | head -2 | tr '\n' ' ')"
-    echo "       Start it, or run this from a normal desktop terminal session."
-    exit 1
+    echo "== docker daemon not answering; trying to start it =="
+    # The desktop launcher runs in a real terminal, so sudo can prompt there.
+    # Only attempt this under systemd; a container or non-systemd host has no
+    # systemctl and would just print a confusing second error.
+    if command -v systemctl >/dev/null 2>&1; then
+        sudo systemctl start docker || echo "   (sudo systemctl start docker failed)"
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+            "$DOCKER_BIN" info >/dev/null 2>&1 && break
+            sleep 1
+        done
+    fi
+    if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
+        echo "ERROR: the Docker daemon is still not answering."
+        echo "       $("$DOCKER_BIN" info 2>&1 | head -2 | tr '\n' ' ')"
+        echo "       Start it yourself and re-run:  sudo systemctl start docker"
+        exit 1
+    fi
 fi
 echo "== docker daemon: $("$DOCKER_BIN" info --format '{{.ServerVersion}}' 2>/dev/null || echo unknown) =="
 
@@ -134,7 +174,10 @@ echo "== driver pin $LIB_PIN (contains the #251 guard) =="
 echo "== patcher commit $(git -C "$ROOT" rev-parse HEAD) =="
 echo "== output $OUT =="
 
-exec bash "$ROOT/scripts/build-astro-candidate.sh" \
+# Not exec: the exit code alone is not enough to say whether a candidate exists.
+# A build can fail after writing partial output, and "it closed quickly" then
+# leaves no way to tell success from failure. Verify the artifacts themselves.
+bash "$ROOT/scripts/build-astro-candidate.sh" \
   --id "$CANDIDATE_ID" \
   --stock-fwpkt "$STOCK" \
   --libgphoto2-source "$LIBSRC" \
@@ -143,3 +186,24 @@ exec bash "$ROOT/scripts/build-astro-candidate.sh" \
   --catalog-package "$CATALOG" \
   --change-summary "$SUMMARY" \
   --out "$OUT"
+rc=$?
+
+echo "============================================================"
+if [ "$rc" -eq 0 ] && [ -s "$OUT/FwPkt.zip" ] && [ -s "$OUT/astro-candidate-manifest.json" ]; then
+    echo "BUILD SUCCEEDED: $CANDIDATE_ID ($DISPLAY_FWVER)"
+    echo "  FwPkt.zip  $(sha256sum "$OUT/FwPkt.zip" | cut -c1-64)"
+    echo "  size       $(stat -c %s "$OUT/FwPkt.zip") bytes"
+    echo "  manifest   $OUT/astro-candidate-manifest.json"
+    echo "  log        ${LOG:-none}"
+    echo
+    echo "NOT INSTALLED. Nothing was staged, flashed or uploaded."
+    echo "Physical qualification on a real camera is still required."
+else
+    echo "BUILD FAILED (exit $rc)"
+    [ -s "$OUT/FwPkt.zip" ] && echo "  WARNING: a partial FwPkt.zip exists -- do not use it" || echo "  no FwPkt.zip produced"
+    echo "  log        ${LOG:-none}"
+    echo "  last lines of the log:"
+    [ -n "${LOG:-}" ] && [ -f "$LOG" ] && tail -25 "$LOG" | sed 's/^/    /'
+fi
+echo "============================================================"
+exit "$rc"
