@@ -43,14 +43,15 @@ IMAGE="${POLARIS_IMAGE:-polaris-patcher:latest}"
 
 # The manifest script's probe is `[cand, "--help"]` and requires exit 0. Answer it
 # without touching the daemon so the probe stays fast and works offline.
+# printf, not a cat heredoc: the probe can run under a minimal PATH, where an
+# external `cat` may not be resolvable and the probe would fail with 127.
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    cat <<'USAGE'
-usage: ubireader-docker [-h] [-o OUTDIR] [-s] [-q] [-p] [-v] IMAGE_INPUT
-
-Run the patcher image's ubireader_extract_files against host paths.
-Accepted flags are those of ubireader_extract_files; anything unrecognised is
-passed through unchanged.
-USAGE
+    printf '%s\n' \
+        'usage: ubireader-docker [-h] [-o OUTDIR] [-s] [-q] [-p] [-v] IMAGE_INPUT' \
+        '' \
+        'Run the ubireader from inside the patcher image, against host paths.' \
+        'Accepted flags are those of ubireader_extract_files; anything unrecognised is' \
+        'passed through unchanged.'
     exit 0
 fi
 

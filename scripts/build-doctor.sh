@@ -64,9 +64,12 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 
-LIBGP_DEFAULT="/home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2"
-STOCK_DEFAULT="/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/firmware/FwPkt.zip"
-CATALOG_DEFAULT="/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/out/gaia-dr3-g10"
+# Defaults are host-specific but must not be hardcoded to one user: a check that
+# only ever looks at /home/ian cannot diagnose anyone else's machine, which defeats
+# the point of a doctor. Derive from HOME and allow overrides.
+LIBGP_DEFAULT="${POLARIS_LIBGPHOTO2:-$HOME/Documents/VSCodeProjects/LibGphoto2/libgphoto2}"
+STOCK_DEFAULT="${POLARIS_STOCK_FWPKT:-$HOME/Documents/VSCodeProjects/BenroPolarisPatcher/firmware/FwPkt.zip}"
+CATALOG_DEFAULT="${POLARIS_CATALOG:-$HOME/Documents/VSCodeProjects/BenroPolarisPatcher/out/gaia-dr3-g10}"
 IMAGE="${POLARIS_IMAGE:-polaris-patcher:latest}"
 
 LIBGP="$LIBGP_DEFAULT"
@@ -193,8 +196,9 @@ sect "2. ubireader: must actually run, not merely exist"
 UBI="${UBIREADER_EXTRACT_FILES:-}"
 if [ -z "$UBI" ]; then
     for c in "$(command -v ubireader_extract_files 2>/dev/null || true)" \
-             /home/ian/.local/bin/ubireader_extract_files \
-             /usr/local/bin/ubireader_extract_files; do
+             "$HOME/.local/bin/ubireader_extract_files" \
+             /usr/local/bin/ubireader_extract_files \
+             /work/bin/ubireader_extract_files; do
         [ -n "$c" ] && [ -x "$c" ] && UBI="$c" && break
     done
 fi
@@ -321,7 +325,7 @@ for tool in bwrap slirp4netns; do
         ok "$tool on PATH: $(command -v "$tool")"
     else
         found=""
-        for c in /usr/bin/"$tool" /home/ian/.local/bin/"$tool" /usr/local/bin/"$tool"; do
+        for c in /usr/bin/"$tool" "$HOME/.local/bin/$tool" /usr/local/bin/"$tool"; do
             [ -x "$c" ] && found="$c" && break
         done
         if [ -n "$found" ]; then

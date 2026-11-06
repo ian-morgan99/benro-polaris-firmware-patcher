@@ -205,6 +205,30 @@ except ValueError as error:
 # analysis tree.  Honour an explicit override, otherwise look for that sibling
 # checkout.  Absent firmware skips rather than fails, so a bare clone still
 # passes.
+#
+# Discovery used to walk all of $HOME and take sorted(candidates)[0]. That made
+# the result depend on whatever happened to be on disk: a 17-byte pytest fixture
+# sorts before any real path and dies with "ELFError: Magic number does not
+# match", and an extracted candidate tree contains an ALREADY-PATCHED pgphoto, so
+# the "recognised as unpatched" check fails on it. Build tooling legitimately
+# writes both kinds of file under $HOME, so narrow the search, skip scratch
+# directories, require the ELF magic, and prefer the hash-pinned fixture.
+import re
+
+SCRATCH = re.compile(
+    r"(^|/)(\.cache|\.config|node_modules|pytest-of-[^/]+|"
+    r"tmp\.[A-Za-z0-9]+|fwpkt-manifest-[^/]+|appfs-(payload|fwver)-audit|"
+    r"ubitest|out|dist|build)(/|$)"
+)
+
+def _is_elf(path: str) -> bool:
+    try:
+        with open(path, "rb") as handle:
+            return handle.read(4) == b"\x7fELF"
+    except OSError:
+        return False
+
+
 candidates = []
 override = os.environ.get("POLARIS_PGPHOTO")
 if override and os.path.isfile(override):
@@ -212,21 +236,36 @@ if override and os.path.isfile(override):
 else:
     searched = [ROOT, os.path.dirname(ROOT)]
     # The analysis tree normally sits beside this checkout under
-    # ~/Documents/VSCodeProjects.
-    for base in (os.path.expanduser("~"), os.path.expanduser("~/Documents/VSCodeProjects")):
+    # ~/Documents/VSCodeProjects. Only those two named trees are searched; $HOME
+    # itself is never walked, because it holds scratch that is not firmware.
+    for base in (os.path.expanduser("~/Documents/VSCodeProjects"),):
         for name in ("PrivateResearch", "polaris-research"):
             candidate_root = os.path.join(base, name)
             if os.path.isdir(candidate_root):
                 searched.append(candidate_root)
     for root in searched:
-        for directory, _dirs, files in os.walk(root):
+        for directory, dirs, files in os.walk(root):
+            # Prune scratch so a stray extraction cannot be mistaken for firmware.
+            dirs[:] = [d for d in dirs if not SCRATCH.search(os.path.join(directory, d))]
+            if SCRATCH.search(directory):
+                continue
             if "pgphoto.stage2ondisk" in files:
                 candidates.append(os.path.join(directory, "pgphoto.stage2ondisk"))
+
+candidates = [c for c in candidates if _is_elf(c)]
 if not candidates:
     print("SKIP: no pgphoto.stage2ondisk found (set POLARIS_PGPHOTO to enable); "
           "real-binary checks skipped")
 else:
-    path = sorted(candidates)[0]
+    # Prefer the hash-pinned v90 diagnostic input: it is known to be the pristine,
+    # unpatched binary this check is about. Everything else on disk may already
+    # carry the cancel-writer cave.
+    pinned = os.path.join(
+        ROOT, "out",
+        "o-v18m-k1ii-pgphoto-readiness-20261029",
+        "stage2-ondisk", "ondisk", "pgphoto.stage2ondisk",
+    )
+    path = pinned if os.path.isfile(pinned) and _is_elf(pinned) else sorted(candidates)[0]
     data, real_layout = patch.inspect_binary(path)
     patched_real, changed_real, detail_real = patch.patch_data(data, real_layout)
     check(changed_real, "real pgphoto at %s is recognised as unpatched" % path)

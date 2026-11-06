@@ -159,7 +159,22 @@ fi
 python3 -c "import json,sys;json.load(open(sys.argv[1]))" "$SUMMARY" \
     || die "change summary is not valid JSON: $SUMMARY"
 
-# --- 2. environment the build needs ------------------------------------------
+# --- 2. never destroy a completed candidate ---------------------------------
+# Checked here, before anything else can fail. build-astro-candidate.sh does
+# `rm -rf` on --out when given --force, so this is the one guard that protects
+# real work. If it ran after source validation, a re-run with both a bad pin and
+# an existing candidate would report the pin and never warn that the next step
+# deletes a finished build.
+FORCE=()
+if [ -e "$OUT" ]; then
+    if [ -s "$OUT/astro-candidate-manifest.json" ]; then
+        die "$OUT already holds a COMPLETED candidate. Refusing to delete it.
+       To rebuild, use a different --slug or --version, or remove it yourself:
+         rm -rf '$OUT'"
+    fi
+fi
+
+# --- 3. environment the build needs ------------------------------------------
 # Everything below is written under out/, so nothing here modifies $HOME or the
 # system. The shims are only on the child's PATH.
 ENVBIN="$ROOT/out/.build-env/bin"
@@ -207,7 +222,7 @@ case ":$PATH:" in (*":$ENVBIN:"*) ;; (*) PATH="$ENVBIN:$PATH";; esac
     (*":$HOME/.local/bin:"*) ;; (*) PATH="$PATH:$HOME/.local/bin";; esac
 export PATH
 
-# --- 3. libgphoto2 source: self-contained clone at the pin -------------------
+# --- 4. libgphoto2 source: self-contained clone at the pin -------------------
 # Must be a real clone, never a worktree: only $LIBSRC is mounted into the
 # container, and a worktree's .gitfile points outside it, so git inside the
 # container cannot resolve it ("must be a Git checkout").
@@ -278,25 +293,21 @@ if [ "$ACTUAL_PIN" != "$PREVIOUS_PIN" ]; then
     fi
 fi
 
-# --- 4. patcher tree must be committed ---------------------------------------
+# --- 5. patcher tree must be committed ---------------------------------------
 [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=all)" ] && \
     die "patcher tree is dirty; commit first. Provenance records the exact commit,
        so a dirty tree makes that record a lie about what was compiled."
 
-# --- 5. never destroy a completed candidate ----------------------------------
-FORCE=()
+# --- 7. clear incomplete output from a previous failed run -------------------
+# Safe now: the completed-candidate check above already refused that case, so
+# anything present here is a partial from a run that never wrote its manifest.
 if [ -e "$OUT" ]; then
-    if [ -s "$OUT/astro-candidate-manifest.json" ]; then
-        die "$OUT already holds a COMPLETED candidate. Refusing to delete it.
-       To rebuild, use a different --slug or --version, or remove it yourself:
-         rm -rf '$OUT'"
-    fi
     note "clearing incomplete output from a previous failed run at ${OUT#$ROOT/}"
     find "$OUT" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + 2>/dev/null
     FORCE=(--force)
 fi
 
-# --- 6. doctor ---------------------------------------------------------------
+# --- 8. doctor ---------------------------------------------------------------
 if [ "$SKIP_DOCTOR" != 1 ]; then
     echo "=== preflight: scripts/build-doctor.sh ==="
     if ! bash "$ROOT/scripts/build-doctor.sh" --libgphoto2 "$LIBSRC" --stock "$STOCK" --catalog "$CATALOG"; then
@@ -306,7 +317,7 @@ if [ "$SKIP_DOCTOR" != 1 ]; then
     echo
 fi
 
-# --- 7. build ----------------------------------------------------------------
+# --- 9. build ----------------------------------------------------------------
 echo "============================================================"
 echo "candidate      $CANDIDATE_ID"
 echo "display fwver  $FWVER"
