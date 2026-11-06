@@ -1,0 +1,62 @@
+{
+  "fixture": "stage2_region (v96-pinned, authored in /tmp, not committed to the harness repo)",
+  "command": "capture_image_with_Bulb",
+  "result": "pass",
+  "mode": "arm",
+  "instructions_executed": 14305,
+  "stub_call_count": 525,
+  "stub_calls_by_function": {
+    "wait_and_handle_event": 501,
+    "gp_log": 6,
+    "HI_LOG_Print": 6,
+    "sqrt": 3,
+    "setCameraStatus": 2,
+    "textdomain": 2,
+    "cb_arg_run": 2,
+    "waitCameraIdle": 1,
+    "numOfCaptureImage": 1,
+    "isatty": 1
+  },
+  "binary_sha256": "d50c5b1962c766a256ac4625ead3e6901ea4639a2b1278b99416067a9698f786",
+  "patcher_commit": "a72e7bf",
+  "emulator_version": "unknown",
+  "harness_revision": "0.1.0",
+  "candidate_id": "astro-v96-cancel-writer-20261105",
+  "display_fwver": "6.0.0.54.96",
+  "region_coordinates": {
+    "symbol": "capture_image_with_Bulb",
+    "vaddr": "0x101aac",
+    "size_bytes": 2176,
+    "carve_file_offset": "0xf1aac",
+    "carve_rule": "file offset = vaddr - 0x10000"
+  },
+  "patch_sites": [
+    {
+      "vaddr": "0x101ddf",
+      "v90": "literal-pool word 0x3448ea",
+      "v96": "literal-pool word 0x34480a"
+    },
+    {
+      "vaddr": "0x101ee4",
+      "v90": "str r3,[fp,#-0x10]",
+      "v96": "b #0x2df92c (cave)"
+    },
+    {
+      "vaddr": "0x102188",
+      "v90": "str r0,[fp,#-0x10]",
+      "v96": "b #0x2df9bc (cave)"
+    }
+  ],
+  "region_diff_vs_v90": {
+    "captureBulbImage": "byte-identical (0 differing bytes)",
+    "capture_image_with_Bulb": "9 of 2176 bytes differ"
+  },
+  "v90_reference_run": {
+    "result": "pass",
+    "mode": "arm",
+    "instructions_executed": 14303,
+    "stub_call_count": 525
+  },
+  "delta": "v96 executes 2 more instructions than v90 with an identical stub-call signature",
+  "boundary": "Emulation under stubs. Not physical evidence. Per harness AGENTS.md, no emulator result qualifies any candidate."
+}
