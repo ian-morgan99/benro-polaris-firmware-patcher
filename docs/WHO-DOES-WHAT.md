@@ -80,6 +80,12 @@ Two separate pieces of work exist:
    pgphoto must set the flag when the user cancels — `action_camera_wait_event`
    already polls it with a 1000 ms budget and is the natural place.
 
+   A later Ghidra study of `gpManager.c` (PrivateResearch `88616d6c`,
+   `pgphoto-re/ANALYSIS.md` §6.5 and the same handoff note §3.1) **confirms this
+   root cause unchanged**: `glob_cancel` still has no writer. It is not a fix for
+   #251 — it is decompilation evidence (117 dumped functions plus two analysis
+   scripts) and changes no code.
+
 **Rule this establishes:** if the driver repo issue turns out to need firmware
 work, close it and do the work under the patcher issue. The driver issue is not
 the place firmware changes get tracked.
@@ -95,6 +101,52 @@ the guard and was honoured" says nothing about whether anything on the device ev
 sets it. Both statements were true at once — the guard works, and it is unreachable
 on the device — and passing the test hid that. Ask what a test *cannot* see before
 calling it proof.
+
+**Fourth rule:** never hand-compute PLT offsets. The earlier revision of
+PrivateResearch `88616d6c` asserted "zero `BL` to either PLT stub (`0x14b00`,
+`0x15550`)" after scanning 596,247 words of `.text`. Both addresses were wrong —
+the real stubs are `signal@plt = 0x14b04` and `sigaction@plt = 0x152c0`, on a
+**12-byte** stride, not the assumed 16 — so the scan had tested addresses that are
+not stubs at all and its "zero" proved nothing. `signal()` **is** called, from six
+sites in `cameraInit` and the two SIGUSR handlers. Let the disassembler resolve
+names (`arm-linux-gnueabi-objdump -d`) rather than deriving addresses yourself.
+This matters to us directly: `container/polaris_cancel_writer_patch.py` enumerates
+`glob_cancel` access routes by address arithmetic, so it is exposed to the same
+failure and should be re-checked with name resolution before its conclusions are
+relied on again.
+
+### An untested alternative path: SIGUSR2 / `end_next`
+
+Found by the Ghidra study (`88616d6c`), and **not previously known to this repo**.
+`cameraInit` registers SIGUSR2 → `sig_handler_end_next`, which sets `end_next`
+(`0x375e20`). `capture_generic` — the function holding the Bulb wait loop — polls
+it:
+
+```c
+LAB_000faf04:
+  if ((glob_interval == 0) ||
+      (glob_frames != 0 && frames == glob_frames) ||
+      end_next != 0) goto LAB_000fb33c;   /* end the capture sequence */
+```
+
+**This is not a Bulb cancellation.** The test sits *after* the wait loop, not
+inside it, so SIGUSR2 ends the sequence once the current exposure completes and
+cannot cut one short:
+
+```c
+while (0 < waittime) {
+  iVar2 = wait_and_handle_event(waittime, &evtype, download);
+  if (iVar2 != 0) return iVar2;
+  waittime = timediff_now(&expose_end_time);
+}
+```
+
+Status: **untested, and not adopted.** It is the closest thing to a working cancel
+that exists in the shipped binary today, so it should be exercised on real hardware
+before any new code is written for it — but it does not satisfy #251, which needs
+cancellation of an exposure already in progress. Our v96 `glob_cancel` writer
+remains the approach that targets the driver guard proven on a real K-3 III on
+2026-11-05.
 
 ## Where code goes: branches
 
