@@ -174,6 +174,79 @@ bash "$ROOT/scripts/pin-divergence-check.sh" "$LIBSRC" "$LIB_PIN" \
 git -C "$LIBSRC" merge-base --is-ancestor 4fba11d81d948dd32520177e72ba266d3e444595 "$LIB_PIN" \
   || die "driver pin $LIB_PIN does not contain 4fba11d81 (deferred Bulb cancellation) -- this is the v95 mistake"
 
+# --- gate prerequisites -------------------------------------------------------
+# The [5/7] shared-camera gate makes the Bulb cancellation-return diagnostic a
+# hard FAIL when --build is given. It needs two things that are not in the repo,
+# and both were missing here, which is what turned the 2026-11-06 runs RED.
+
+# 1. The immutable v90 diagnostic input, pinned by SHA-256. It lives under out/
+#    and is deliberately not committed. Copy it from whichever older tree still
+#    has it, and refuse to proceed on a substituted binary -- the check is only
+#    meaningful against that exact build.
+V90_REL="out/o-v18m-k1ii-pgphoto-readiness-20261029/stage2-ondisk/ondisk/pgphoto.stage2ondisk"
+V90_WANT="8973d9486e0207446cc111234ed39e878676ce1f3edca2967a97db86c8d9eaac"
+if [ ! -f "$ROOT/$V90_REL" ]; then
+    for cand in /home/ian/polaris-build-73 /home/ian/v95-build \
+                /home/ian/Documents/VSCodeProjects/PrivateResearch/.astro-v94.TrArG1; do
+        src="$cand/$V90_REL"
+        [ -f "$src" ] || continue
+        if [ "$(sha256sum "$src" | awk '{print $1}')" = "$V90_WANT" ]; then
+            mkdir -p "$(dirname "$ROOT/$V90_REL")"
+            cp -a "$src" "$ROOT/$V90_REL"
+            echo "== provisioned v90 diagnostic fixture from $cand =="
+            break
+        fi
+    done
+fi
+if [ -f "$ROOT/$V90_REL" ]; then
+    [ "$(sha256sum "$ROOT/$V90_REL" | awk '{print $1}')" = "$V90_WANT" ] \
+      || die "v90 diagnostic fixture hash mismatch -- refusing to gate against a substituted binary"
+else
+    echo "ERROR: the [5/7] gate will FAIL: the pinned v90 diagnostic input is absent."
+    echo "       Expected at $ROOT/$V90_REL with sha256 ${V90_WANT:0:12}..."
+    echo "       Copy it from a previous candidate tree that has it."
+    exit 1
+fi
+
+# 2. unicorn + pyelftools, importable by the python3 the gate will actually use.
+#    The gate calls plain "python3", so this must satisfy the interpreter on PATH
+#    in the desktop session -- not the one in a sandboxed shell, which has its own
+#    site-packages and hides the problem. Search for a tree that matches the host
+#    interpreter's minor version, then prove it imports before exporting.
+GATE_PY="$(command -v python3 2>/dev/null || true)"
+[ -n "$GATE_PY" ] || GATE_PY=/run/host/usr/bin/python3
+PYVER="$("$GATE_PY" -c 'import sys;print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo none)"
+if ! "$GATE_PY" -c "import unicorn, elftools" >/dev/null 2>&1; then
+    # The two packages live in different trees on this host: unicorn in a venv's
+    # site-packages, pyelftools under ~/.local. A single-tree search finds
+    # neither pair, so collect every candidate tree for this interpreter's minor
+    # version and test the combination.
+    extra=""
+    for sp in "$HOME"/.local/lib/python"$PYVER"/site-packages \
+              "$HOME"/v95-gate-venv/lib/python"$PYVER"/site-packages \
+              /home/ian/*/lib/python"$PYVER"/site-packages; do
+        [ -d "$sp" ] || continue
+        [ -d "$sp/unicorn" ] || [ -d "$sp/elftools" ] || continue
+        # The explicit paths also match the glob, so skip repeats.
+        case ":$extra:" in (*":$sp:"*) continue;; esac
+        extra="${extra:+$extra:}$sp"
+    done
+    if [ -n "$extra" ] && env -u PYTHONPATH PYTHONPATH="$extra" \
+            "$GATE_PY" -c "import unicorn, elftools" >/dev/null 2>&1; then
+        export PYTHONPATH="${extra}${PYTHONPATH:+:$PYTHONPATH}"
+        echo "== gate python: $GATE_PY ($PYVER) with unicorn+pyelftools from $extra =="
+    else
+        echo "ERROR: the [5/7] gate will FAIL: $GATE_PY (python $PYVER) cannot import"
+        echo "       unicorn and pyelftools, and no site-packages tree provides them."
+        echo "       Install them for that interpreter, e.g.:"
+        echo "         $GATE_PY -m pip install --user unicorn pyelftools"
+        exit 1
+    fi
+else
+    echo "== gate python: $GATE_PY ($PYVER) already has unicorn+pyelftools =="
+fi
+# -----------------------------------------------------------------------------
+
 echo "== building $CANDIDATE_ID ($DISPLAY_FWVER) from $ROOT =="
 echo "== driver pin $LIB_PIN (contains the #251 guard) =="
 echo "== patcher commit $(git -C "$ROOT" rev-parse HEAD) =="
