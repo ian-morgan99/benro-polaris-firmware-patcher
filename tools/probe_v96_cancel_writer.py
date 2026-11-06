@@ -12,8 +12,10 @@ Addresses used here were read from the symbol table, not guessed:
     stopCaptureImage              @ 0x202e4, size 108  (contains 0x2033c)
     stopCaptureContinuContinuous  @ 0x20350, size 156  (contains 0x203d4)
 
-Each function is straight-line with four external calls and then reaches the
-patched site, so it is drivable without modelling any camera state.
+Each function is straight-line and reaches the patched site without branching on
+any camera state, so it is drivable with only its external calls stubbed: four
+distinct addresses, called four times by stopCaptureImage and seven times by
+stopCaptureContinuContinuous.
 
 v90 is run as a control: at the same sites it holds `nop`, so glob_cancel must
 stay 0. If v90 also set it, the probe would be measuring something else.

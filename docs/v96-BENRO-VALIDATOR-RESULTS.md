@@ -115,8 +115,10 @@ writer's story.
 
 Disassembly shows intent; it does not show execution. AGENTS.md requires behaviour
 claims be tested directly, so `tools/probe_v96_cancel_writer.py` runs both patched
-functions in Unicorn with their four external calls stubbed, and reads
-`glob_cancel` before and after. v90 is run as a control at the same addresses.
+functions in Unicorn with their external calls stubbed — four distinct addresses,
+which `stopCaptureImage` calls four times and `stopCaptureContinuContinuous` seven
+— and reads `glob_cancel` before and after. v90 is run as a control at the same
+addresses.
 
 | function | build | instructions | `glob_cancel` after |
 |---|---|---|---|
@@ -200,8 +202,10 @@ Behaviour comparison, same profile, differing only in binary:
 | v96 | pass | arm | **14305** | 525 |
 
 Identical stub-call signature (`wait_and_handle_event`×501, `gp_log`×6,
-`HI_LOG_Print`×6, `sqrt`×3, `setCameraStatus`×2, `textdomain`×2), so the patch
-changes no observable call behaviour on this path. Contract saved beside the
+`HI_LOG_Print`×6, `sqrt`×3, `setCameraStatus`×2, `textdomain`×2), so nothing
+observable about the calls on this path changed. The +2 instruction delta belongs
+to the **unattributed** stack-local guard in this function, not to the cancel
+writer — see "What the patch actually changed" above. Contract saved beside the
 artifact: `out/astro-v96-cancel-writer-20261105/arm-emulation-stage2-v96.json`
 (`binary_sha256 d50c5b19…`, `patcher_commit a72e7bf`).
 
@@ -219,7 +223,7 @@ This is emulation, not hardware. Per AGENTS.md, "no emulator result qualifies an
 candidate" — it shows the code runs and behaves as expected under stubs, not that a
 real camera cancels.
 
-## Two harness defects found (not fixed — different repo)
+## Three harness issues found (not fixed — different repo)
 
 1. **`validation.py:157` crashes on array indices.** `'.'.join(path)` raises
    `TypeError: sequence item 1: expected str instance, int found` whenever a schema
@@ -230,7 +234,7 @@ real camera cancels.
    sidecars declare `5000`.** The doc example does not match the shipped fixtures,
    which is what made the 5001-instruction timeout look like a v96 behaviour at
    first. Nothing here is wrong with the code; the documentation is stale.
-2. **Two pre-existing test failures**, unrelated to this session:
+3. **Two pre-existing test failures**, unrelated to this session:
    `test_smoke::test_cli_help` and `test_integration::test_harness_cli_integration`
    both fail with `FileNotFoundError: 'polaris-harness'` — the console script is not
    installed in `.venv`, which is empty. A stash dated 2026-09-29 predates this work;
@@ -250,13 +254,17 @@ Per AGENTS.md: **"A harness PASS is never proof of physical camera support."**
 
 What is now established: the v96 packet is internally consistent, its declared
 provenance matches the artifacts, its Stage-2 ELF files are ARM 32-bit and resolve
-to the paths `install_stage2.sh` targets, and an emulated SD-card upgrade from
-`.95` to `.96` completes and verifies after reboot.
+to the paths `install_stage2.sh` targets, an emulated SD-card upgrade from `.95` to
+`.96` completes and verifies after reboot, and — strongest of these — a real ARM
+engine executing the shipped bytes sets `glob_cancel` to 1 in both patched
+functions while the v90 controls leave it at 0.
 
-What is **not** established: that a real Polaris updater accepts it, that the
-device boots it, that the on-device loader selects these libraries, or anything at
-all about red-cancel behaviour on a K-3 III. Which handler the control reaches is
-still inferred from symbol names, never traced.
+What is **not** established: that a real Polaris updater accepts the packet, that
+the device boots it, that the on-device loader selects these libraries, or anything
+at all about red-cancel behaviour on a K-3 III. Setting `glob_cancel` is not the
+same as something downstream acting on it, and which handler the control reaches is
+still inferred from symbol names, never traced. The gap between "the flag is set"
+and "the camera stops" is exactly the gap only hardware can close.
 
 The Astro candidate also remains **not accepted** for install: its packet README
 requires the standard camera owner to accept the shared baseline and patcher issue
