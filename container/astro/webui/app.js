@@ -159,10 +159,42 @@ function paintStatus() {
     cel.className = 'chip' + (!isFinite(free) || free <= 0 ? ' warn' : '');
   } else cel.hidden = true;
 
-  /* Camera identity: 286. Shown as-is; the payload shape varies by body, so
-     the whole thing is displayed rather than a field being guessed at. */
+  /* Camera identity: 286, e.g.
+       manufacturer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;...
+     With no camera attached the head reports model:none and state:-5, so the chip
+     is hidden rather than showing "none". It used to be populated but left hidden
+     forever -- the element ships with the hidden attribute and nothing ever
+     cleared it, so the camera name was invisible even when a body was connected.
+     The raw string is also unreadable on a low-vision stage: it is 90+ characters
+     of semicolon-separated fields. Show "Make Model" in title case instead, which
+     is what a photographer expects to see over a live frame. */
   var cam = S.ops['286'];
-  $('#camname').textContent = cam ? (kv(cam.args).name || cam.args.replace(/;$/, '')) : '';
+  var chip = $('#camname');
+  if (chip) {
+    /* camkv, not c: `var` is function-scoped, and reusing c here would clobber
+       the card reading above. Harmless today because the card block has already
+       run, but it makes any later edit to this function silently wrong. */
+    var camkv = cam ? kv(cam.args) : {};
+    var model = (camkv.model || '').trim();
+    var maker = (camkv.manufacturer || '').trim();
+    if (!model || model === 'none' || camkv.state === '-5') {
+      chip.hidden = true;
+      chip.textContent = '';
+    } else {
+      /* "ricoh imaging company, ltd." is too long to sit over a frame; keep the
+         leading word unless the maker is already short ("nikon", "canon"). */
+      var maker_short = maker.split(/[, ]/)[0] || '';
+      var label = maker_short && model.toLowerCase().indexOf(maker_short.toLowerCase()) < 0
+        ? maker_short + ' ' + model : model;
+      /* Title-case, then put roman numerals back the way the manufacturer writes
+         them. Plain title-casing turns "K-1 mark ii" into "K-1 Mark Ii", which is
+         wrong enough to look like a bug on the main screen of the app. */
+      chip.textContent = label
+        .replace(/\b[a-z]/g, function (ch) { return ch.toUpperCase(); })
+        .replace(/\b([ivx]+)\b/gi, function (m) { return m.toUpperCase(); });
+      chip.hidden = false;
+    }
+  }
 }
 
 function paintMount() {
