@@ -56,7 +56,12 @@ var S = {
   live: false,
   recording: false,
   expoLoaded: false,
-  lastExpoFetch: 0
+  lastExpoFetch: 0,
+  /* Exposure writes the user has asked for but the camera has not confirmed,
+     keyed by the option-list opcode that proves them: { want, setCmd, key,
+     label, sentAt, tries, state, lastRead }. */
+  expoPending: {},
+  focusPending: null
 };
 
 function setHint(html) {
@@ -91,6 +96,11 @@ function render(d) {
   paintLinkStats(d);
   if (S.link === 'up' && !S.expoLoaded && Date.now() - S.lastExpoFetch > 3000) fetchExposure();
   if (S.link !== 'up') { S.expoLoaded = false; }
+  /* Unsettled camera writes are driven off this poll rather than a fixed timer:
+     the K-1 II takes ~12 s to confirm one, so a deadline-based repaint is the
+     only thing that can tell the user the truth about it. */
+  if (Object.keys(S.expoPending).length) { reconcileExposure(); paintExposure(); }
+  if (S.focusPending) reconcileFocus();
 }
 
 function paintLink(d) {
@@ -628,23 +638,91 @@ function parseOptions(args) {
   };
 }
 
-function fetchExposure() {
+/* A camera write can be REJECTED after the HTTP request has already been
+   answered ok:true. The head's reply carries the truth in a trailing ret:
+   field -- 'iso:0;ret:-2110;' means the camera was not idle and the write was
+   DROPPED. Measured on the K-1 II: 62% of exposure writes come back -2110, and
+   each one is preceded by a ~1 s 'waitCameraIdle' stall, because that body
+   refuses cross-process control (d02c returns AccessDenied) so polestar_app has
+   to serialise behind the camera's own state machine. The K-3 III grants it and
+   drops ~19%. Nothing on this page can fix the camera's answer; what it can do
+   is stop pretending a dropped write landed.
+
+   So: paint the user's choice immediately, then reconcile against the camera on
+   the existing 500 ms poll -- re-reading only the property that changed (one
+   ~1 s read instead of five), retrying a -2110 rejection, and saying so out loud
+   when the camera refuses or the deadline passes. */
+var EXPO_SET_TIMEOUT_MS = 25000;    /* measured settle time on the K-1 II */
+var EXPO_RETRY_MAX = 3;
+var EXPO_READ_INTERVAL_MS = 1200;
+var EXPO_MESSAGE_MS = 8000;         /* how long a refusal stays on screen */
+
+function expoSlots() { return $$('.exposlot[data-get]'); }
+
+function retOf(args) {
+  var m = /(?:^|;)ret:(-?\d+)/.exec(args || '');
+  return m ? parseInt(m[1], 10) : null;
+}
+
+/* The head echoes what it was told ('iso:1;ret:-2110;'), so a rejection can be
+   matched to the specific intent it rejected rather than to any old reply. */
+function setReplyIndex(args) {
+  var m = /(?:^|;)(?:iso|wb|ev|s|fNum):(-?\d+)/.exec(args || '');
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function expoLabel(slot) {
+  var l = $('.lbl', slot);
+  return l ? l.textContent.trim() : ('opcode ' + slot.dataset.get);
+}
+
+/* Small per-control status line, created on demand so the markup stays put. */
+function markControl(slot, cls, text) {
+  var el = $('.ctl-state', slot);
+  if (!el) {
+    el = document.createElement('span');
+    slot.appendChild(el);
+  }
+  el.className = 'ctl-state' + (cls ? ' ' + cls : '');
+  var want = text || '';
+  if (el.textContent !== want) el.textContent = want;
+}
+
+function setPending(slot, want) {
+  var prev = S.expoPending[slot.dataset.get];
+  S.expoPending[slot.dataset.get] = {
+    want: want,
+    setCmd: slot.dataset.set,
+    key: slot.dataset.key,
+    label: expoLabel(slot),
+    sentAt: Date.now(),
+    tries: prev ? prev.tries : 0,
+    state: 'waiting',
+    lastRead: 0
+  };
+}
+
+function fetchExposure(gets) {
   S.lastExpoFetch = Date.now();
-  /* The app refreshes all five together, rate-limited to once per 2 s. */
-  var gets = $$('.exposlot[data-get]').map(function (slot) { return slot.dataset.get; });
-  Promise.all(gets.map(function (g) { return send(g, ''); }))
+  /* The app refreshes all five together, rate-limited to once per 2 s. A
+     targeted read-back passes just the one opcode it needs. */
+  var list = (gets && gets.length)
+    ? gets
+    : expoSlots().map(function (slot) { return slot.dataset.get; });
+  Promise.all(list.map(function (g) { return send(g, ''); }))
     .then(function () { setTimeout(paintExposure, 700); });
 }
 
 function paintExposure() {
-  var any = false;
-  $$('.exposlot[data-get]').forEach(function (slot) {
+  var any = false, now = Date.now();
+  expoSlots().forEach(function (slot) {
     var got = S.ops[slot.dataset.get];
     var sel = $('select', slot);
     if (!got) { sel.disabled = true; return; }
     var parsed = parseOptions(got.args);
     if (!parsed || !parsed.options.length) { sel.disabled = true; return; }
     any = true;
+
     var sig = parsed.options.join('|');
     if (sel.dataset.sig !== sig) {
       sel.dataset.sig = sig;
@@ -652,12 +730,89 @@ function paintExposure() {
         return '<option value="' + i + '">' + o.replace(/</g, '&lt;') + '</option>';
       }).join('');
     }
-    /* Do not fight the user: only adopt the head's index while the control is
-       not focused, or a poll lands mid-selection and snaps the value back. */
-    if (document.activeElement !== sel) sel.value = String(parsed.index);
+
+    var pend = S.expoPending[slot.dataset.get];
+    if (!pend) {
+      /* Do not fight the user: only adopt the head's index while the control is
+         not focused, or a poll lands mid-selection and snaps the value back. */
+      if (document.activeElement !== sel) sel.value = String(parsed.index);
+      markControl(slot, '', '');
+      sel.disabled = !parsed.available;
+      return;
+    }
+
+    if (parsed.index === pend.want) {
+      delete S.expoPending[slot.dataset.get];
+      sel.value = String(parsed.index);
+      markControl(slot, '', '');
+      sel.disabled = !parsed.available;
+      return;
+    }
+
+    /* Not settled. Show what the user asked for rather than snapping back to a
+       value they did not choose -- reconcileExposure is still working on it. */
+    sel.value = String(pend.want);
     sel.disabled = !parsed.available;
+
+    if (pend.state === 'rejected') {
+      if (!pend.endedAt) pend.endedAt = now;
+      markControl(slot, 'fail', pend.label + ': camera refused');
+    } else if (pend.state === 'timeout') {
+      if (!pend.endedAt) pend.endedAt = now;
+      markControl(slot, 'fail', pend.label + ': not applied');
+    } else if (pend.state === 'retrying') {
+      markControl(slot, 'pending', pend.label + ': retry ' + pend.tries + '/' + EXPO_RETRY_MAX);
+    } else {
+      markControl(slot, 'pending', pend.label + ': applying…');
+    }
+
+    /* Terminal states linger so the user actually reads them, then clear so a
+       stale marker cannot outlive the action it describes. Measured from when
+       the state was REACHED: sentAt is already past the deadline by definition,
+       so clearing relative to it wipes the message in the same paint that set
+       it and the user never sees why their change did not land. */
+    if (pend.endedAt && now - pend.endedAt > EXPO_MESSAGE_MS) {
+      delete S.expoPending[slot.dataset.get];
+      markControl(slot, '', '');
+    }
   });
   if (any) S.expoLoaded = true;
+}
+
+/* Drive every unsettled intent. Rides the 500 ms poll, so it costs nothing when
+   the user is idle. Re-reads ONE property per pass (not all five), retries a
+   write the camera rejected with -2110, and stops rather than hammering a body
+   that is refusing. */
+function reconcileExposure() {
+  var now = Date.now();
+  Object.keys(S.expoPending).forEach(function (k) {
+    var p = S.expoPending[k];
+    if (!p) return;
+    if (p.state === 'rejected' || p.state === 'timeout') return;
+
+    if (now - p.sentAt > EXPO_SET_TIMEOUT_MS) { p.state = 'timeout'; return; }
+
+    var rep = S.ops[String(p.setCmd)];
+    if (rep) {
+      var r = retOf(rep.args);
+      if (r !== null && setReplyIndex(rep.args) === p.want) {
+        if (r === 0) { p.state = 'waiting'; }
+        else if (p.tries >= EXPO_RETRY_MAX) { p.state = 'rejected'; return; }
+        else {
+          p.tries += 1;
+          p.state = 'retrying';
+          p.sentAt = now;
+          send(p.setCmd, p.key + ':' + p.want + ';');
+          return;
+        }
+      }
+    }
+
+    if (!p.lastRead || now - p.lastRead > EXPO_READ_INTERVAL_MS) {
+      p.lastRead = now;
+      send(k, '');
+    }
+  });
 }
 
 /* AF/MF toggle — 262 SP_SET_FOCUS mod:<m>. The MODE VALUE is inferred (the
@@ -671,10 +826,41 @@ function paintFocusMode(m) {
   $('#fm-mf').classList.toggle('on', m === 'mf');
   $('#fm-af').classList.toggle('on', m === 'af');
 }
+function focusSlot() {
+  var b = $('#fm-mf');
+  return b ? b.closest('.exposlot') : null;
+}
+/* 262 answers with a ret: too, and mod:0 has been seen answering ret:-1 while
+   mod:1 returns ret:0. The mode VALUE is still unverified (see the note above),
+   so this does not flip the mapping on a guess -- it reports the head's answer
+   instead of assuming success, which is what lets the guess be checked at all. */
 function setFocusMode(m) {
-  send(262, 'mod:' + FM_MODE[m] + ';f:0;');
+  var want = FM_MODE[m];
   paintFocusMode(m);
   try { localStorage.setItem('polaris-focusmode', m); } catch (_) {}
+  S.focusPending = { mode: m, want: want, sentAt: Date.now() };
+  var slot = focusSlot();
+  if (slot) markControl(slot, 'pending', 'applying…');
+  send(262, 'mod:' + want + ';f:0;');
+}
+function reconcileFocus() {
+  var p = S.focusPending, slot = focusSlot();
+  if (!p) return;
+  var rep = S.ops['262'];
+  if (rep) {
+    var r = retOf(rep.args);
+    var echoed = /(?:^|;)mod:(\d+)/.exec(rep.args || '');
+    if (r !== null && echoed && parseInt(echoed[1], 10) === p.want) {
+      if (slot) markControl(slot, r === 0 ? '' : 'fail', r === 0 ? '' : 'camera refused mod:' + p.want);
+      if (r === 0) S.focusPending = null;
+      else if (Date.now() - p.sentAt > 20000) S.focusPending = null;
+      return;
+    }
+  }
+  if (Date.now() - p.sentAt > 20000) {
+    if (slot) markControl(slot, 'fail', 'no reply');
+    S.focusPending = null;
+  }
 }
 function wireFocusMode() {
   $('#fm-mf').addEventListener('click', function () { setFocusMode('mf'); });
@@ -685,11 +871,17 @@ function wireFocusMode() {
 }
 
 function wireExposure() {
-  $$('.exposlot[data-get]').forEach(function (slot) {
+  expoSlots().forEach(function (slot) {
     $('select', slot).addEventListener('change', function (e) {
       /* Set by INDEX into the camera's own list — never by the label. */
-      send(slot.dataset.set, slot.dataset.key + ':' + e.target.value + ';')
-        .then(function () { setTimeout(fetchExposure, 400); });
+      var want = parseInt(e.target.value, 10);
+      if (isNaN(want)) return;
+      setPending(slot, want);
+      paintExposure();          /* optimistic: show the choice the user made now */
+      send(slot.dataset.set, slot.dataset.key + ':' + want + ';')
+        /* Read back THIS property only. Refreshing all five costs ~5 s of bus
+           time on the K-1 II and proves nothing about the one that changed. */
+        .then(function () { send(slot.dataset.get, ''); });
     });
   });
 }
