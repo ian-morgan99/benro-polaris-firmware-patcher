@@ -1,0 +1,45 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v96-cancel-writer-20261105",
+    "libgphoto2_commit": "3fb26e536ac169e4970d69516a9d45daf62563f5",
+    "libgphoto2_ref": "ian-morgan99/libgphoto2 main. Unchanged from v96: the v96 pin is still the head of the driver line that carries both Pentax bodies, so this candidate re-pins the identical driver commit rather than advancing it. The K-3 III Bulb shutter-list synthesis (#241) and the fail-closed Bulb write (#239) are already inside this commit, as is the K-1 II capability row.",
+    "patcher_commit": "bf1aad4c1067338b859643b264e7d5cda2b213b9",
+    "patcher_ref": "v96 patcher commit (the tree astro-v96 was built from). It is an ancestor of this branch, so the patcher inventory reports what v97 adds on top of v96.",
+    "previous_candidate_pins": {
+      "v96_libgphoto2": "3fb26e536ac169e4970d69516a9d45daf62563f5",
+      "v96_patcher": "bf1aad4c1067338b859643b264e7d5cda2b213b9"
+    }
+  },
+  "purpose": "Rebuild the Astro plate-solving candidate on top of astro-v96 with one corrected live-view diagnostic, so the shipped stage2 loader reports what a pc==0 crash actually was instead of asserting the wrong cause. Carries forward unchanged: the additive SD-card plate solver, the embedded Astro WebUI served by polaris-httpd on :8090 with install/uninstall as the on/off switch, Pentax K-3 III support including the Bulb shutter wheel, and Pentax K-1 II support.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "stage2_loader.c: classify a pc==0 crash by scanning the slot words instead of assuming the pre-fix unfilled-slot race. Both observed live-view crashes had all slots resolved, so the old unconditional label was wrong and misdirected the investigation; the handler now names an unfilled slot when one is genuinely zero and otherwise states that the null jump is inside an already-resolved target. Signal-safe (plain volatile loads, no heap or stdio). No recovery or capture policy changes.",
+      "issues": ["liveview-crash-camera-offbus-20261103"]
+    },
+    {
+      "component": "docs",
+      "summary": "Record the v96 ARM-emulation result, the BenroHardwareValidator qualification run, and the probe that proves the v96 cancel writer writes pgphoto's cancel flag.",
+      "issues": ["251"]
+    },
+    {
+      "component": "tests",
+      "summary": "Add tools/probe_v96_cancel_writer.py and make it report a missing firmware cleanly rather than crashing. The five offline stage2 shim tests, including the live-view keep-alive and preview-error-classification suites, pass against the corrected loader.",
+      "issues": ["251"]
+    }
+  ],
+  "known_limits": [
+    "Deferred timed Bulb cancellation (#251) is NOT fixed. The operator has accepted shipping without Bulb cancel capability.",
+    "The root cause of the live-view SIGSEGV is still unproven. This build corrects only the diagnostic that mislabelled it; it does not change capture or recovery behaviour and does not claim to stop the crash.",
+    "Bulb shutter-wheel list synthesis is hardware-derived for the colour K-3 III (model 78420, USB product 0x0189) only. The K-3 III Monochrome remains outside that gate until it has its own hardware pass.",
+    "K-1 II evidence on Polaris is partial: read-only liveness, populated ISO/shutter/aperture lists, clean preview close and one ordinary capture. Bulb, persistent live view, focus and full setting round-trips are not qualified on-device.",
+    "Candidate build only. Nothing here is installed, staged, flashed, rebooted or uploaded, and no camera was attached during this build."
+  ],
+  "validation_focus": [
+    "Confirm the Astro WebUI autostarts after boot: /app/network_telnetd.sh must exist and polaris-httpd must listen on :8090. Re-flashing replaces /app and deletes the hook, so re-run install_astro.sh after any flash.",
+    "Exercise the switch both ways: install_astro.sh to turn Astro on, uninstall_astro.sh to turn it off and restore the previous boot hook.",
+    "K-3 III: confirm the shutter wheel is populated in B mode with no JPEG offered, and that a Bulb capture either produces the requested duration or fails closed rather than writing a file at an unrelated setting.",
+    "K-1 II: re-run read-only liveness, the exposure lists, preview open/close and one ordinary capture.",
+    "If live view crashes again, read the new pc classify line before assuming any cause."
+  ]
+}

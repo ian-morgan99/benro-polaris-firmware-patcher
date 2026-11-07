@@ -263,3 +263,36 @@ def test_end_to_end_session_hooks_are_mode_gated_and_separate():
     assert '"session_id":"%s"' in (ONDISK / "solve-now.sh").read_text()
     assert 'GOTO_PLATESOLVE' in httpd and 'polaris-goto-solve.sh' in httpd
     assert '/api/astro/solve' in httpd and 'last-frame-solution.json' in httpd
+
+
+def test_liveview_fetches_in_process_from_the_stream_endpoint():
+    """Locks in the two defects that made every live-view path silently dead.
+
+    The device ships no wget and no curl (only /bin/busybox, with no HTTP client
+    applet), and the head's :8080 server implements only ?action=stream --
+    ?action=snapshot answers "501: not implemented and no www-folder configured".
+    Both were wrong at once, so `wget ... || curl ...` produced a 47-byte error
+    body where a JPEG was expected, and /api/snapshot answered 502 forever.
+    Fixing one without the other changes nothing, hence both assertions.
+    """
+    httpd = (ROOT / "astro" / "polaris-httpd.c").read_text()
+    # Judge code, not prose: the rationale comment below names the very commands
+    # that must not return, so assert against the source with block comments
+    # removed. (Only /* */ is stripped -- a // pass would eat "http://" inside
+    # string literals.)
+    import re
+    code = re.sub(r'/\*.*?\*/', '', httpd, flags=re.S)
+    # no external HTTP client may come back
+    assert 'wget -q' not in code and 'curl -s' not in code
+    assert '?action=snapshot' not in code
+    # the fetch is done here, against the endpoint that actually exists
+    assert 'static long liveview_grab(' in code
+    assert 'GET /?action=stream HTTP/1.0' in code
+    # bounded: this is a single-threaded select() server, a stalled camera must
+    # not be able to wedge it
+    assert 'SO_RCVTIMEO' in code and 'SO_SNDTIMEO' in code
+    # frame end is found by walking JPEG markers, not by searching for FF D9:
+    # an EXIF APP1 can carry a complete embedded thumbnail with its own EOI, and
+    # stopping there yields a frame whose top decodes and whose rest is garbage.
+    assert 'static long jpeg_frame_end(' in code
+    assert '0xDA' in code and '0xD9' in code

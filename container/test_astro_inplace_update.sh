@@ -163,6 +163,24 @@ else
     bad "sync script is not committed executable -- it would land on the card without +x"
 fi
 
+
+echo "--- 13. sync refreshes the ACTIVE boot hook ---"
+# /app/bootapp runs /app/network_telnetd.sh, not $DEST/polaris-astro-boot.sh. A
+# device that already had a hook installed kept running the old existence-gated
+# code even after the card payload and /app/astro were updated -- seen on real
+# hardware after a reboot, where /app/astro held the new boot script while the
+# live hook still carried the pre-fix gate.
+grepq "sync refreshes the live hook" 'refreshed boot hook' "$SYNC"
+grepq "hook swap renames rather than overwriting" 'mv "$HOOK.new" "$HOOK"' "$SYNC"
+# Overwriting a running script in place is unsafe: a shell re-reads its script by
+# offset, so the swap must change the inode.
+if grep -q 'cp "$DEST/polaris-astro-boot.sh" "$HOOK"' "$SYNC"; then
+    bad "sync writes the live hook in place (can corrupt a running hook)"
+else
+    ok "sync swaps the hook by rename, never in place"
+fi
+grepq "boot hook is refreshed after scripts are copied" 'Refresh the ACTIVE boot hook' "$SYNC"
+
 echo
 if [ "$fail" -ne 0 ]; then
     echo "FAILED: $fail assertion(s)"

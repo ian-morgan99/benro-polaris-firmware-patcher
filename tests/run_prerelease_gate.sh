@@ -259,6 +259,7 @@ PY_TESTS=(
     tests/test_astro_multishot.py
     tests/test_display_fwver_monotonic.py
     tests/test_build_and_install_entrypoint.py
+    tests/test_build_tooling.py
     tests/test_polaris_bulb_dispatch_arm.py
     tests/test_polaris_bulb_cancel_result_arm.py
     tests/test_agent_sandbox_check.py
@@ -281,6 +282,7 @@ PY_TESTS=(
     tests/test_astro_build_wrapper.py
     tests/test_plate_solving_present.py
     tests/test_astro_candidate_wrapper.py
+    tests/test_shipped_marker_check.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
@@ -350,6 +352,23 @@ if sh container/test_polestar_fwver_patch.sh > /tmp/prerelease-fwver-patch.log 2
 else
     bad "code-780 version patch (log: /tmp/prerelease-fwver-patch.log)"
 fi
+
+# Same reasoning as above, for the three pgphoto machine-code patches. Each one
+# rewrites ARM instructions inside pgphoto, and a wrong encoding is invisible to
+# every Python test: an earlier draft of the cancel writer encoded "mov r2,#0" as
+# "and r2,r0,#0" and "strb r2,[ip]" as a post-indexed str, which would have shipped
+# a pgphoto that corrupted memory instead of cancelling. All three are offline
+# (patch_data works on bytes) and must run even with no built package supplied.
+for patch_test in container/test_polaris_bulb_dispatch_patch.sh \
+                  container/test_polaris_bulb_poll_budget_patch.sh \
+                  container/test_polaris_cancel_writer_patch.sh; do
+    name="$(basename "$patch_test" .sh)"
+    if bash "$patch_test" > "/tmp/prerelease-${name}.log" 2>&1; then
+        ok "pgphoto machine-code patch: $name"
+    else
+        bad "pgphoto machine-code patch: $name (log: /tmp/prerelease-${name}.log)"
+    fi
+done
 
 # ----------------------------------------------------------------------------
 # 3. FwPkt package gates — only when a built package is supplied.

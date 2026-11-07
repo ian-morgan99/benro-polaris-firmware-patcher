@@ -151,6 +151,111 @@ candidate. That lower-level command remains available for diagnostics and
 development experiments, but it does not perform the complete source, test,
 version, differential, or publication workflow.
 
+## Astro plate-solving candidates
+
+`scripts/release/build-and-install.sh` above builds the standard camera
+candidate. It does not build an Astro candidate: it has no `--catalog-package`,
+no focal range and no Astro bundle step. Astro candidates are built by
+`scripts/build-astro.sh`.
+
+```sh
+scripts/build-astro.sh --version 98 \
+  --summary docs/release-change-summary-v98-astro.json
+```
+
+One command, no arguments to remember. It derives the candidate id and display
+version from `--version`, provisions what it can inside the repository, runs the
+doctor, and verifies the artifacts afterwards. Nothing it does touches `$HOME`,
+installs software, or contacts a camera.
+
+If `--summary` is omitted it writes a template with obvious `REPLACE` markers and
+stops. It never invents a change summary: that file is the release's honest
+statement of what changed and what is not fixed, so it must be written by a
+person.
+
+Two guards protect that file, both added after the mistake actually happened while
+verifying this wrapper:
+
+- a summary still containing `REPLACE` is refused. Building with it would embed a
+  change summary of placeholders inside a candidate with otherwise valid digests,
+  which looks reviewed and is not.
+- a summary whose filename names a different version than `--version` is refused.
+  A v97 summary was passed to a `--version 98` build and accepted; the candidate
+  shipped a valid manifest describing a different release. Reuse deliberately with
+  `ALLOW_SUMMARY_VERSION_MISMATCH=1`.
+
+Useful flags: `--pin` to override the driver commit (defaults to the canonical
+libgphoto2 `origin/main`), `--slug` for the name in the candidate id, `--dry-run`
+to provision and print the builder invocation without building, and
+`--skip-doctor` if you have read a red doctor and disagree with it.
+
+### Run the doctor first
+
+```sh
+scripts/build-doctor.sh
+```
+
+It takes seconds and exits non-zero if anything is broken. Its rule is that a
+prerequisite must be **proven to work**, never merely seen to exist. Every one of
+the six failures below passed an existence check and then failed anyway.
+
+The most important check is the bind-mount probe: it writes a sentinel into a
+`mktemp -d` directory, mounts it into a container through the same image the
+build uses, and reads it back. A daemon that answers `docker info` perfectly can
+still mount nothing at all.
+
+### Failure modes: what the message says, and what it means
+
+Building astro-v97 on 2026-11-06 failed six times. None of the six was a defect
+in build logic; each was an environment prerequisite that looked satisfied and
+was not. Every row below is a message that sent me looking at the wrong thing.
+
+| Message you see | Real cause | Fix |
+| --- | --- | --- |
+| `docker not found. Install Docker Desktop / docker.` | Docker is installed. The shell is inside a Flatpak sandbox that does not expose `/var/run/docker.sock`, so `docker` is absent from PATH. | `flatpak override --user --filesystem=/var/run/docker.sock $FLATPAK_ID`, then fully quit and relaunch. `build-astro.sh` writes a `flatpak-spawn` shim automatically. |
+| `[abort] /in/firmwareInfo not found -- mount your stock FwPkt at /in` | The stock packet is fine. `patch-polaris.sh` unpacks it with `mktemp -d`, which honours `TMPDIR`. Inside a sandbox `/tmp` is private to the sandbox while the daemon runs on the host, so the bind mount comes up **empty**. | `export TMPDIR=$HOME/.cache/polaris-build-tmp`. `build-astro.sh` sets this itself. |
+| `[build] ERROR: local source directory must be a Git checkout` | The tree *is* git -- a linked **worktree**. Its `.git` is a one-line file pointing at `$MAIN/.git/worktrees/<name>`, and only `$LIBSRC` is mounted, so git inside the container cannot resolve the pointer. | Use a self-contained clone: `git clone --no-checkout --local <repo> <dir> && git -C <dir> checkout --detach <pin>`. |
+| `baseline <sha> is not reachable from origin/main -- orphan or unmerged commit?` | The commit *is* on origin/main. A local clone copied a **stale** `refs/remotes/origin/main`, so the ancestor test ran against the wrong tip. | `git -C <src> fetch <repo> 'refs/remotes/origin/*:refs/remotes/origin/*'` and retry. |
+| `could not extract appfs.ubifs (no functional ubireader)` | A wrapper existed and was executable but died at import -- its module was installed for a different interpreter. Existence proved nothing. | `export UBIREADER_EXTRACT_FILES=<repo>/tools/ubireader-docker`, which runs the patcher image's working ubireader against host paths. |
+| `VERDICT=BROKEN ... missing=bwrap,slirp4netns` | Both are installed, under `~/.local/bin`, which a non-login shell does not have on PATH. The message says "install them". | `export PATH=$HOME/.local/bin:$PATH`. `build-astro.sh` appends it for the child process. |
+
+Two rules follow from this table.
+
+1. **Never trust an existence check.** `command -v`, `-x` and `-f` all passed on
+   every one of these. Ask the thing to actually do its job.
+2. **A message that names file X is not evidence that X is at fault.** Five of the
+   six named the input file, the git tree or a missing package, and in every case
+   the fault was elsewhere -- the mount, the ref, the interpreter or PATH.
+
+The messages themselves now carry the diagnosis: `patch-polaris.sh` probes the
+mount before the long build, `build_ptp2.sh` distinguishes a worktree from a
+non-git tree and prints the `.gitfile` pointer, the manifest script names each
+rejected ubireader candidate with its error, and the reachability check separates
+a stale ref from a genuinely orphaned commit.
+
+### Why the pin gates matter
+
+`build-astro.sh` refuses to build unless the requested pin is a superset of the
+v94 pin `43dccb81b` and contains `4fba11d81` (deferred Bulb cancellation, #251).
+v95 was built from an ad-hoc tree with a hand-typed pin pointing at the tip of a
+feature branch that had never taken nine commits main gained afterwards, four of
+them shipped code. It went out without the guard it was meant to carry. The gate
+is in the wrapper so it cannot be skipped by forgetting a flag.
+
+### After a successful build
+
+The wrapper prints `BUILD SUCCEEDED` only when both `FwPkt.zip` and
+`astro-candidate-manifest.json` are non-empty. Exit code alone is not evidence:
+a run can write `FwPkt.zip` at step [2/7] and fail at the [5/7] shared-camera
+gate, which is what happened on 2026-11-06. A partial `FwPkt.zip` with no
+manifest is never publishable.
+
+It also refuses to delete a completed candidate -- keyed on the manifest, not the
+zip -- because the builder's `--force` does `rm -rf` on the output directory.
+
+Register the printed hashes in `docs/FWPKT-PROVENANCE-CONTRACT.md`, then qualify
+on hardware. The wrapper never installs anything.
+
 ## Install only after build acceptance
 
 If the rig may be asleep, establish the target and wake state first:
@@ -196,6 +301,12 @@ is not camera qualification. If no camera is attached, state
 - Any failed gate: stop and preserve the transcript.
 - Any skip: record it as a prerequisite gap, not a pass.
 - Any source, package, install, or runtime mismatch: quarantine the candidate.
+- A prerequisite that merely *exists* is not satisfied. Prove it works: run
+  `scripts/build-doctor.sh`, which exercises each one instead of looking for it.
+- Never act on the file named in a build error until the cause is confirmed. Five
+  of the six v97 failures named the wrong thing; see the failure-mode table above.
+- A `FwPkt.zip` with no `astro-candidate-manifest.json` is a partial from a run
+  that failed a later gate. It is never publishable and must not be installed.
 
 ## Related authoritative documents
 

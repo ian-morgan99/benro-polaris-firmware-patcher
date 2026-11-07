@@ -33,6 +33,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <limits.h>
@@ -846,14 +847,160 @@ static int last_solution(double *ra_deg, double *dec_deg) {
  * frame comes from live view -- solvable, for framing/EAA, not a raw light frame.
  * =========================================================================== */
 
+/* ---- in-process live-view frame fetch -------------------------------------
+ *
+ * Two independent defects made every live-view path silently dead, and both had
+ * to be fixed together or neither would help:
+ *
+ * 1. WRONG ENDPOINT. The head's camera server on :8080 implements only
+ *    `?action=stream` (multipart MJPEG). There is no `?action=snapshot`; that
+ *    path answers "501: not implemented and no www-folder configured". So even
+ *    a working fetcher wrote a ~47-byte error page where a JPEG was expected.
+ * 2. NO FETCHER. The device ships neither wget nor curl -- only /bin/busybox,
+ *    with no HTTP client applet. Both halves of `wget ... || curl ...` failed,
+ *    the output file was never created, and every caller reported
+ *    "no live-view frame": /api/snapshot returned 502, and the Alpaca and INDI
+ *    image paths had nothing to decode.
+ *
+ * So the HTTP is done here. Connect, GET the stream, and take the first
+ * COMPLETE JPEG -- SOI through EOI -- then close. Requiring the terminator is
+ * what stops the half-rendered frames a truncated read produces: top of the
+ * image fine, garbage below. Finding that terminator correctly matters as much:
+ * see jpeg_frame_end() for why a plain FF D9 search is not good enough.
+ *
+ * Bounded by SO_RCVTIMEO. This is a single-threaded select() server, so a
+ * stalled camera must not be able to wedge it; on timeout we return 0 and the
+ * caller serves its usual "no frame" response. */
+#define LV_MAX_FRAME (6 * 1024 * 1024)
+
+/* Find the end of the JPEG that starts at `start` (its SOI). Returns the offset
+ * just past EOI, 0 if more bytes are still needed, or -1 if the marker stream is
+ * corrupt. Walks segments rather than searching for FF D9.
+ *
+ * A naive FF D9 search is wrong here, and wrong in exactly the way this whole
+ * path exists to fix. A JPEG routinely carries an EXIF APP1 segment containing a
+ * complete embedded thumbnail -- its own SOI and its own EOI. Scanning for the
+ * first FF D9 after the real SOI stops at the THUMBNAIL's terminator, so we would
+ * write a few KB of thumbnail and hand the client a frame whose top decodes and
+ * whose rest is garbage. Walking markers skips those segments intact.
+ *
+ * Inside entropy-coded data (after SOS) FF D9 genuinely is unambiguous -- there
+ * FF is only ever followed by 0x00 or an RSTn marker -- so scanning is safe in
+ * that one region and we do it there. */
+static long jpeg_frame_end(const unsigned char *buf, size_t n, long start) {
+    size_t p = (size_t)start + 2;   /* just past the SOI */
+    while (p + 1 < n) {
+        unsigned char m;
+        if (buf[p] != 0xFF) return -1;                      /* desynced markers */
+        while (p + 1 < n && buf[p + 1] == 0xFF) p++;        /* consume fill bytes */
+        m = buf[p + 1];
+        if (m == 0xD9) return (long)(p + 2);                /* EOI: frame complete */
+        if (m == 0xDA) {                                    /* SOS: entropy data */
+            /* Only FF D9 ends it. Every other FF here is benign -- 0xFF00 byte
+             * stuffing, an RSTn restart marker, or one of the SOS header's own
+             * bytes (a component ID may legally be 0xFF) -- so it must not be
+             * treated as corruption. Rejecting on those would throw away valid
+             * frames; and FF D9 still cannot occur by accident, because a real
+             * encoder always stuffs a literal FF with 0x00. */
+            size_t i = p + 2;
+            while (i + 1 < n) {
+                if (buf[i] == 0xFF && buf[i + 1] == 0xD9) return (long)(i + 2);
+                i++;
+            }
+            return 0;                                       /* still arriving */
+        }
+        if (m == 0x01 || (m >= 0xD0 && m <= 0xD7)) { p += 2; continue; }  /* no length */
+        if (p + 3 >= n) return 0;                           /* length incomplete */
+        {
+            size_t len = ((size_t)buf[p + 2] << 8) | buf[p + 3];
+            if (len < 2) return -1;                         /* bogus segment length */
+            p += 2 + len;                                   /* skip it whole */
+        }
+    }
+    return 0;
+}
+
+static long liveview_grab(const char *path, int timeout_ms) {
+    int s; struct sockaddr_in sa; struct timeval tv;
+    char req[320]; unsigned char *buf; size_t cap = 256 * 1024, n = 0;
+    size_t scan_hdr = 0, i;
+    ssize_t got; long jpg_start = -1, jpg_end = -1, sz = 0; FILE *f;
+
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    if (s < 0) return 0;
+    tv.tv_sec = timeout_ms / 1000; tv.tv_usec = (timeout_ms % 1000) * 1000;
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+    setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv);
+
+    memset(&sa, 0, sizeof sa);
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(8080);
+    if (inet_pton(AF_INET, g_mount_host, &sa.sin_addr) != 1) {
+        struct hostent *he = gethostbyname(g_mount_host);
+        if (!he || he->h_addrtype != AF_INET || !he->h_addr_list[0]) { close(s); return 0; }
+        memcpy(&sa.sin_addr, he->h_addr_list[0], sizeof sa.sin_addr);
+    }
+    if (connect(s, (struct sockaddr *)&sa, sizeof sa) < 0) { close(s); return 0; }
+
+    snprintf(req, sizeof req,
+             "GET /?action=stream HTTP/1.0\r\nHost: %s:8080\r\n"
+             "User-Agent: polaris-httpd\r\nAccept: */*\r\nConnection: close\r\n\r\n",
+             g_mount_host);
+    send_all(s, req, strlen(req));
+
+    buf = malloc(cap);
+    if (!buf) { close(s); return 0; }
+    while (1) {
+        got = recv(s, buf + n, cap - n, 0);
+        if (got > 0) n += (size_t)got;
+
+        /* Parse what we hold BEFORE deciding the stream is over. A small MJPEG
+         * frame routinely arrives in one recv(); if we broke out on the next
+         * read's timeout first, we would discard a perfectly good complete frame
+         * and answer "no live-view frame" forever. */
+        if (jpg_start < 0) {
+            for (i = scan_hdr; i + 2 < n; i++)
+                if (buf[i] == 0xFF && buf[i+1] == 0xD8 && buf[i+2] == 0xFF) {
+                    jpg_start = (long)i; break;
+                }
+            if (jpg_start < 0) scan_hdr = (n > 2) ? n - 2 : 0;
+        } else {
+            long e = jpeg_frame_end(buf, n, jpg_start);
+            if (e > 0) { jpg_end = e; break; }
+            if (e < 0) { jpg_start = -1; break; }   /* corrupt: serve no frame */
+        }
+
+        if (got <= 0) break;   /* stream ended/closed and the frame is not complete */
+
+        if (n == cap) {
+            size_t nc = cap * 2;
+            unsigned char *nb;
+            if (nc > LV_MAX_FRAME) nc = LV_MAX_FRAME;
+            if (nc == cap) { jpg_start = -1; break; }   /* frame larger than cap */
+            nb = realloc(buf, nc);
+            if (!nb) break;
+            buf = nb; cap = nc;
+        }
+    }
+    close(s);
+
+    if (jpg_start >= 0 && jpg_end > jpg_start) {
+        sz = jpg_end - jpg_start;
+        f = fopen(path, "wb");
+        if (!f) sz = 0;
+        else {
+            if (fwrite(buf + jpg_start, 1, (size_t)sz, f) != (size_t)sz) sz = 0;
+            fclose(f);
+        }
+    }
+    free(buf);
+    return sz;
+}
+
 /* Grab a live-view JPEG and decode it to /tmp/alpaca-cam.pgm. Returns 1 on ok. */
 static int alpaca_cam_capture(double dur) {
     char cmd[700], magic[4]; FILE *f; int w = 0, h = 0, mx = 0;
-    snprintf(cmd, sizeof cmd,
-        "wget -q -T 8 -O /tmp/alpaca-cam.jpg 'http://%s:8080/?action=snapshot' 2>/dev/null || "
-        "curl -s -m 8 -o /tmp/alpaca-cam.jpg 'http://%s:8080/?action=snapshot' 2>/dev/null",
-        g_mount_host, g_mount_host);
-    if (system(cmd) == -1) {}
+    if (liveview_grab("/tmp/alpaca-cam.jpg", 8000) <= 0) return 0;
     snprintf(cmd, sizeof cmd,
         "%s/polaris-extract --jpeg /tmp/alpaca-cam.jpg --downsample 1 --gray-pgm > %s 2>/dev/null",
         g_astro, ALPACA_CAM_PGM);
@@ -877,16 +1024,13 @@ static int alpaca_cam_capture(double dur) {
  * This is deliberately ONE frame, not the stream: pumping the continuous MJPEG
  * through this single-threaded select() server would wedge it. The frame is
  * cached to whole-second granularity so an overlay polling at a couple of fps
- * spins up at most one wget per second and never starves the jog loop. */
+ * opens at most one upstream connection per second and never starves the jog
+ * loop. */
 static time_t g_snap_t = 0;
 static void serve_snapshot(int fd) {
-    char cmd[512]; FILE *f; long sz; char *buf; time_t now = time(NULL);
+    FILE *f; long sz; char *buf; time_t now = time(NULL);
     if (now != g_snap_t) {
-        snprintf(cmd, sizeof cmd,
-            "wget -q -T 6 -O %s 'http://%s:8080/?action=snapshot' 2>/dev/null || "
-            "curl -s -m 6 -o %s 'http://%s:8080/?action=snapshot' 2>/dev/null",
-            SNAP_JPG, g_mount_host, SNAP_JPG, g_mount_host);
-        if (system(cmd) == -1) {}
+        liveview_grab(SNAP_JPG, 6000);
         g_snap_t = now;
     }
     f = fopen(SNAP_JPG, "rb");
@@ -2276,7 +2420,7 @@ static void indi_pulse(int opcode, int sign, int ms) {
 /* ---- INDI CCD (a second device, so Ekos sees a camera too) ----------------
  *
  * The image is the head's live-view MJPEG frame, grabbed as a single JPEG from
- * :8080/?action=snapshot -- the SAME source the plate solver uses. That is a
+ * :8080/?action=stream -- the SAME source the plate solver uses. That is a
  * deliberate, honest choice: the head REFUSES an externally-triggered shutter in
  * astro mode (opcode 264 is ignored while tracking; solve-now.sh documents this),
  * so a mode-independent capture has to come from live view. It is a real,
@@ -2308,14 +2452,7 @@ static size_t base64_encode(const unsigned char *in, size_t n, char *out, size_t
 
 /* Grab one live-view JPEG to `path`. Returns its byte size, or 0. */
 static long indi_ccd_grab(const char *path) {
-    char cmd[640]; struct stat st;
-    snprintf(cmd, sizeof cmd,
-        "wget -q -T 8 -O '%s' 'http://%s:8080/?action=snapshot' 2>/dev/null || "
-        "curl -s -m 8 -o '%s' 'http://%s:8080/?action=snapshot' 2>/dev/null",
-        path, g_mount_host, path, g_mount_host);
-    if (system(cmd) == -1) {}
-    if (stat(path, &st) == 0 && st.st_size > 0) return (long)st.st_size;
-    return 0;
+    return liveview_grab(path, 8000);
 }
 
 /* Read a JPEG and push it as the CCD1 BLOB (base64). Handles a large frame by
@@ -3068,6 +3205,45 @@ static void handle(int fd) {
     snprintf(path, sizeof path, "%s", target);
     qs = strchr(path, '?');
     if (qs) { *qs = 0; qs++; } else qs = (char *)"";
+
+    /* ACTING ENDPOINTS ARE POST-ONLY.
+     *
+     * Nine routes below call their side effect without ever looking at the
+     * method, so a GET performs it too. That is not theoretical: a documentation
+     * pass that GETs every /api/ route to record its response shape would stop
+     * tracking mid-session (/api/astro/track defaults `on` to 0 when the parameter
+     * is absent), leave celestial mode, kill the running job, or start an
+     * UNBOUNDED capture stack (/api/astro/capture with no shots= means shots=-1).
+     * Browsers prefetch and resubmit URLs; link unfurlers and virus scanners GET
+     * anything they are given. A control-plane endpoint must not be idempotent-by-
+     * accident.
+     *
+     * Listed here rather than gated per-handler so a new route cannot be added
+     * without passing through this list. /api/media/thumb is deliberately absent:
+     * it shells out to polaris-extract to build a cached thumbnail, but that is a
+     * read of an existing file and the gallery loads it through <img src>, which is
+     * always GET. /api/astro/autofocus is absent too -- it already answers GET with
+     * status and only acts on POST. */
+    if (strcmp(method, "POST") && strcmp(method, "PUT")) {
+        static const char *post_only[] = {
+            "/api/stop",
+            "/api/cancel",
+            "/api/astro/enter",
+            "/api/astro/leave",
+            "/api/astro/align",
+            "/api/astro/track",
+            "/api/astro/goto",
+            "/api/astro/capture",
+            "/api/prog/grail/off",
+        };
+        size_t pi;
+        for (pi = 0; pi < sizeof post_only / sizeof post_only[0]; pi++) {
+            if (!strcmp(path, post_only[pi])) {
+                respond(fd, 405, "text/plain", "POST only\n", 10);
+                return;
+            }
+        }
+    }
 
     /* Upload is the one binary-body endpoint. It must run before any form-body
      * parsing and may consume a body larger than the small request buffer. */

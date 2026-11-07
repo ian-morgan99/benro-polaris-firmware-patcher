@@ -210,6 +210,25 @@ check(tuple(struct.unpack_from("<I", patched, offsets["bulb_function"] + i * 4)[
 repeat_segment = dict(segment, filesz=new_filesz, memsz=new_memsz)
 repeated, changed = patch.patch_data(patched, offsets, addresses, repeat_segment)
 check(not changed and repeated == patched, "reapplication is idempotent")
+
+# A second patcher may append its own code cave to the same executable LOAD tail.
+# polaris_cancel_writer_patch.py does exactly that.  Detection used to assume this
+# patch owned the final TRAMPOLINE_SIZE bytes and computed filesz - TRAMPOLINE_SIZE,
+# which then landed inside the other patch's code: --check reported a correctly
+# patched binary as broken, and a rebuild could re-patch over live code.  The cave
+# is located by content now, so neither order nor a neighbour matters.
+neighbour_size = 0x40
+shared = bytearray(patched)
+struct.pack_into("<I", shared, segment["phdr_offset"] + 16, new_filesz + neighbour_size)
+struct.pack_into("<I", shared, segment["phdr_offset"] + 20, new_memsz + neighbour_size)
+shared[segment["offset"] + new_filesz:segment["offset"] + new_filesz + neighbour_size] = \
+    b"\x00" * neighbour_size
+shared_segment = dict(segment, filesz=new_filesz + neighbour_size,
+                      memsz=new_memsz + neighbour_size)
+shared_out, shared_changed = patch.patch_data(bytes(shared), offsets, addresses,
+                                              shared_segment)
+check(not shared_changed and bytes(shared_out) == bytes(shared),
+      "the dispatch cave is still detected after a later patch extends the same tail")
 call_site_offset = 0x100
 setup_data = bytearray(0x200)
 for index, instruction in enumerate((0xE1A02003, 0xE51B1028, 0xE3A00000)):

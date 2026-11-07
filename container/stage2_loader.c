@@ -1491,8 +1491,40 @@ static void stage2_crash_handler(int sig, siginfo_t *si, void *uc)
     /* Is PC a null jump, the abort stub, or one of the slot targets? */
     s_write("[stage2]   pc classify: ");
     if (pc == 0) {
-        s_write("NULL jump (an unfilled slot == 0 was called -- exactly the "
-                "pre-fix race)\n");
+        /* Session 21 (liveview-crash-camera-offbus-20261103, section 5): the
+         * old handler called EVERY pc==0 fault "the pre-fix unfilled-slot
+         * race" unconditionally.  It was wrong.  The checkpoint says
+         * "slots filled", and on both observed crashes every slot word was
+         * non-zero -- so a pc==0 there is a null function-pointer call inside
+         * an already-resolved target (the 2.5.34 core / ptp2 / pentax camlib,
+         * or pgphoto itself), NOT our unfilled-slot race.  Mislabelling it that
+         * way sent every investigation down the wrong path.
+         *
+         * Scan the slot words with plain volatile loads (async-signal-safe: no
+         * malloc, no printf, no locking) and report which case we actually have.
+         * A genuine unfilled slot is still possible -- if any word is zero we
+         * name it, because that IS our bug and it is actionable. */
+        size_t zero_count = 0;
+        const char *first_zero = NULL;
+        for (size_t i = 0; i < STAGE2_SLOTS_LEN; i++) {
+            uintptr_t tgt = *(volatile uintptr_t *)STAGE2_SLOTS[i].slot;
+            if (tgt == 0) {
+                zero_count++;
+                if (!first_zero)
+                    first_zero = STAGE2_SLOTS[i].name;
+            }
+        }
+        if (zero_count) {
+            s_write("NULL jump with ");
+            s_write_dec((int)zero_count);
+            s_write(" slot(s) == 0 -- UNFILLED SLOT (first: ");
+            s_write(first_zero ? first_zero : "?");
+            s_write(") -- this IS the pre-fix race\n");
+        } else {
+            s_write("NULL jump with ALL slots non-zero -- NOT the pre-fix "
+                    "unfilled-slot race; a null pointer call inside an already-"
+                    "resolved target (core/ptp2/pentax or pgphoto)\n");
+        }
     } else if (pc == (uintptr_t)stage2_abort_stub) {
         s_write("== stage2_abort_stub (fail-closed landing pad)\n");
     } else {

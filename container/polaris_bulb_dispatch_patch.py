@@ -565,31 +565,42 @@ def patch_data(data, offsets, addresses, segment):
     original_burst = tuple(struct.unpack_from("<I", data, burst_off + offset)[0]
                            for offset in (0, 4, 8))
     if current_filesz >= TRAMPOLINE_SIZE and current_filesz == current_memsz:
-        marker_filesz = current_filesz - TRAMPOLINE_SIZE
-        marker_cave = segment["vaddr"] + marker_filesz
-        marker_off = segment["offset"] + marker_filesz
-        marker_branch = encode_branch(addresses["burst"], marker_cave)
-        marker = build_trampoline(
-            marker_cave, addresses["burst"], addresses["bulb"],
-            addresses["manufacturer"], addresses["name"], addresses["strcasestr"],
-            addresses["camera_global"], addresses["camera_get_single_config"],
-            addresses["widget_get_type"], addresses["widget_get_value"], addresses["widget_free"],
-            addresses["strstr"],
-        )
-        marker_keep = bulb_keep_cancel_word(addresses["bulb"], marker_cave)
-        marker_keep_publish = bulb_keep_publish_word(addresses["bulb"], marker_cave)
-        if (existing_branch == marker_branch and
-                bytes(data[marker_off:marker_off + TRAMPOLINE_SIZE]) == marker and
-                struct.unpack_from("<I", data,
-                    offsets["bulb"] + BULB_CANCEL_OFFSET)[0] ==
-                    bulb_cancel_patch_word(addresses["bulb"],
-                        addresses["bulb"] + BULB_CANCEL_STOP_PATH_OFFSET) and
-                struct.unpack_from("<I", data,
-                    offsets["bulb"] + BULB_STOP_STORE_OFFSET)[0] == marker_keep and
-                struct.unpack_from("<I", data,
-                    offsets["bulb"] + BULB_PUBLISH_STORE_OFFSET)[0] ==
-                    marker_keep_publish):
-            return bytes(data), False
+        # Locate an existing trampoline by content, not by subtracting
+        # TRAMPOLINE_SIZE from p_filesz.  The arithmetic form assumed this patch
+        # owned the very last TRAMPOLINE_SIZE bytes of the executable LOAD, but
+        # polaris_cancel_writer_patch.py appends its own cave to the same tail.
+        # Once that has run, filesz - TRAMPOLINE_SIZE lands inside the other
+        # patch's code, the comparison fails, and --check reports a correctly
+        # patched binary as broken (or worse, re-patches over it).  Scanning every
+        # word-aligned tail offset and rebuilding the blob for that candidate
+        # address makes detection independent of both order and neighbours.
+        for marker_filesz in range(current_filesz - TRAMPOLINE_SIZE,
+                                   TRAMPOLINE_SIZE - 1, -4):
+            marker_cave = segment["vaddr"] + marker_filesz
+            marker_off = segment["offset"] + marker_filesz
+            marker_branch = encode_branch(addresses["burst"], marker_cave)
+            if existing_branch != marker_branch:
+                continue
+            marker = build_trampoline(
+                marker_cave, addresses["burst"], addresses["bulb"],
+                addresses["manufacturer"], addresses["name"], addresses["strcasestr"],
+                addresses["camera_global"], addresses["camera_get_single_config"],
+                addresses["widget_get_type"], addresses["widget_get_value"], addresses["widget_free"],
+                addresses["strstr"],
+            )
+            marker_keep = bulb_keep_cancel_word(addresses["bulb"], marker_cave)
+            marker_keep_publish = bulb_keep_publish_word(addresses["bulb"], marker_cave)
+            if (bytes(data[marker_off:marker_off + TRAMPOLINE_SIZE]) == marker and
+                    struct.unpack_from("<I", data,
+                        offsets["bulb"] + BULB_CANCEL_OFFSET)[0] ==
+                        bulb_cancel_patch_word(addresses["bulb"],
+                            addresses["bulb"] + BULB_CANCEL_STOP_PATH_OFFSET) and
+                    struct.unpack_from("<I", data,
+                        offsets["bulb"] + BULB_STOP_STORE_OFFSET)[0] == marker_keep and
+                    struct.unpack_from("<I", data,
+                        offsets["bulb"] + BULB_PUBLISH_STORE_OFFSET)[0] ==
+                        marker_keep_publish):
+                return bytes(data), False
 
     if existing_branch != BURST_PROLOGUE[0] or original_burst != BURST_PROLOGUE:
         raise ValueError("capture_image_with_Burst prologue is not the verified stock sequence")

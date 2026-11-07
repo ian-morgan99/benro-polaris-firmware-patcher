@@ -1,0 +1,41 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v95-k1ii-shutter-gate-20261104",
+    "libgphoto2_commit": "855f718e515d288adbc7e0ffe8b22b729570e7d8",
+    "patcher_commit": "7d138b9a79efd6c7e156889c914396d5b49e31b9"
+  },
+  "purpose": "Rebuild the Astro candidate on driver main so it actually carries the deferred-Bulb cancellation fix, and make pgphoto raise a cancel so that fix is reachable on the device.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "Pin moved from 855f718e5 (tip of feature/polaris-capture-events) to driver main. The v95 pin was a regression, not an upgrade: it branched off main at 83240b36a on 2026-10-28 and never took 15 commits main gained afterwards, 9 of them touching shipped code. Most importantly it lacked 4fba11d81 'fix Pentax deferred Bulb cancellation', so v95 shipped without the #251 guard at all. The new pin is a verified clean superset of both the v95 pin and the v94 pin 43dccb81b.",
+      "issues": ["#251", "#233", "#235"]
+    },
+    {
+      "component": "patcher",
+      "summary": "New polaris_cancel_writer_patch.py writes pgphoto's glob_cancel flag. Static analysis of all three distinct shipped pgphoto.stage2ondisk builds found the flag read in three places and written in none, across four independently enumerated access routes, so the driver's cancellation guard could never fire on the device regardless of which driver was flashed. The flag is set by both stop-capture message handlers and cleared at capture start, because it is one-shot and a stale 1 would abort the next shot before its shutter opens.",
+      "issues": ["#251"]
+    },
+    {
+      "component": "patcher",
+      "summary": "polaris_bulb_dispatch_patch.py located its own code cave by subtracting TRAMPOLINE_SIZE from p_filesz, which assumes it owns the last bytes of the executable LOAD. The cancel writer appends to that same tail, so once both were applied the arithmetic landed 0x40 past the dispatch cave, inside the other patch's code, and --check reported a correctly patched binary as broken. Detection is by content now; applying both patches in either order yields byte-identical output.",
+      "issues": ["#251"]
+    },
+    {
+      "component": "patcher",
+      "summary": "The pre-release gate had drifted again: tests/test_shipped_marker_check.py was committed but never registered, and none of the three pgphoto machine-code patch tests were registered at all. All four are now run by the gate. Measured offline on 2026-11-06 after registering them and supplying the hash-pinned v90 diagnostic fixture: 11 passed / 1 failed / 2 skipped, up from 6 passed / 2 failed. The one remaining failure is scripts/check-agent-sandbox.py reporting BROKEN because bwrap and slirp4netns are absent on this host; it is left failing rather than silenced.",
+      "issues": []
+    }
+  ],
+  "known_limits": [
+    "Which message handler the Polaris red-cancel control actually reaches is inferred from the names stopCaptureImageForMessage and stopCaptureContinuContinuous. The binary's strings are obfuscated so this cannot be confirmed statically, and neither handler is reached by a direct bl -- they are installed in dispatch tables. Both are patched so either path works, but a device trace is still required to prove the red control lands on one of them.",
+    "The cancel writer was verified offline only: encoders checked against words harvested from pgphoto, emitted machine code disassembled and confirmed, ELF loadability confirmed by readelf, both patch orders byte-identical. It has not been executed on hardware.",
+    "v95's outstanding K-1 II EV/WB/drive-mode write re-verification (V95-ASTRO-TEST-MATRIX rows 10-12) was recorded against driver 43df01ea9 and is still open; this candidate changes the pin again."
+  ],
+  "validation_focus": [
+    "Press the red cancel control during a live Bulb exposure on a K-3 III and confirm GP_ERROR_CANCEL with no shutter opening and no file created.",
+    "Trace pgphoto to confirm the red control reaches one of the two patched stop-capture handlers, since that link is inferred rather than proven.",
+    "Cancel while nothing is capturing, then capture normally, and confirm the shot succeeds -- this exercises the clear-at-start path that prevents a stale flag poisoning the next exposure.",
+    "Re-verify EV/WB/drive-mode writes on a K-1 II against the new pin."
+  ]
+}

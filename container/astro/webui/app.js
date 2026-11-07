@@ -159,10 +159,42 @@ function paintStatus() {
     cel.className = 'chip' + (!isFinite(free) || free <= 0 ? ' warn' : '');
   } else cel.hidden = true;
 
-  /* Camera identity: 286. Shown as-is; the payload shape varies by body, so
-     the whole thing is displayed rather than a field being guessed at. */
+  /* Camera identity: 286, e.g.
+       manufacturer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;...
+     With no camera attached the head reports model:none and state:-5, so the chip
+     is hidden rather than showing "none". It used to be populated but left hidden
+     forever -- the element ships with the hidden attribute and nothing ever
+     cleared it, so the camera name was invisible even when a body was connected.
+     The raw string is also unreadable on a low-vision stage: it is 90+ characters
+     of semicolon-separated fields. Show "Make Model" in title case instead, which
+     is what a photographer expects to see over a live frame. */
   var cam = S.ops['286'];
-  $('#camname').textContent = cam ? (kv(cam.args).name || cam.args.replace(/;$/, '')) : '';
+  var chip = $('#camname');
+  if (chip) {
+    /* camkv, not c: `var` is function-scoped, and reusing c here would clobber
+       the card reading above. Harmless today because the card block has already
+       run, but it makes any later edit to this function silently wrong. */
+    var camkv = cam ? kv(cam.args) : {};
+    var model = (camkv.model || '').trim();
+    var maker = (camkv.manufacturer || '').trim();
+    if (!model || model === 'none' || camkv.state === '-5') {
+      chip.hidden = true;
+      chip.textContent = '';
+    } else {
+      /* "ricoh imaging company, ltd." is too long to sit over a frame; keep the
+         leading word unless the maker is already short ("nikon", "canon"). */
+      var maker_short = maker.split(/[, ]/)[0] || '';
+      var label = maker_short && model.toLowerCase().indexOf(maker_short.toLowerCase()) < 0
+        ? maker_short + ' ' + model : model;
+      /* Title-case, then put roman numerals back the way the manufacturer writes
+         them. Plain title-casing turns "K-1 mark ii" into "K-1 Mark Ii", which is
+         wrong enough to look like a bug on the main screen of the app. */
+      chip.textContent = label
+        .replace(/\b[a-z]/g, function (ch) { return ch.toUpperCase(); })
+        .replace(/\b([ivx]+)\b/gi, function (m) { return m.toUpperCase(); });
+      chip.hidden = false;
+    }
+  }
 }
 
 function paintMount() {
@@ -465,22 +497,50 @@ function streamURL() {
   return 'http://' + location.hostname + ':8080/?action=stream';
 }
 
+/* Set while awaiting a first frame, so turning live view off cancels the timer
+   instead of letting it overwrite "live view off" with a stall warning. */
+var liveWatch = 0;
+
 function setLive(on) {
   var img = $('#live'), msg = $('#livemsg'), btn = $('#previewtoggle');
   S.live = on;
   btn.classList.toggle('on', on);
+  if (liveWatch) { clearTimeout(liveWatch); liveWatch = 0; }
   if (on) {
     msg.textContent = 'starting live view…';
     /* Ask the head to turn its preview on, then attach the stream. */
     send(291, 'state:1;').then(function () {
-      img.onload = function () { img.classList.add('on'); msg.textContent = ''; };
+      img.onload = function () {
+        if (liveWatch) { clearTimeout(liveWatch); liveWatch = 0; }
+        img.classList.add('on'); msg.textContent = '';
+      };
       img.onerror = function () {
+        if (liveWatch) { clearTimeout(liveWatch); liveWatch = 0; }
         img.classList.remove('on');
         msg.innerHTML = 'Live view did not load from <span class="mono">' +
           streamURL().replace(/</g, '&lt;') + '</span>.<br>' +
           'The camera must be awake and in a mode that allows preview.';
       };
       img.src = streamURL() + '&t=' + Date.now();
+      /* The stall case. Measured on the K-1 II: the head's preview server accepts
+         the connection and sends the multipart headers but then emits no frame,
+         once it has accumulated CLOSE_WAIT sockets from clients that went away
+         without a clean close. onerror never fires, because as far as the browser
+         is concerned the stream is still open -- so "starting live view…" sat on
+         screen forever and looked like a slow camera rather than a wedged server. */
+      liveWatch = setTimeout(function () {
+        liveWatch = 0;
+        if (!S.live || img.naturalWidth) return;
+        img.classList.remove('on');
+        /* Wording is deliberate. Toggling preview off and on was tried against a
+           wedged server and did not help -- the CLOSE_WAIT count kept climbing
+           (7 -> 9), because the stuck sockets belong to the old connections. Only
+           restarting that process or rebooting clears it, so do not offer a toggle
+           as a fix. */
+        msg.innerHTML = 'The head opened the preview stream but sent no frame.<br>' +
+          'Its preview server has stopped serving frames. This is cleared by ' +
+          'rebooting the mount; everything else on this page still works.';
+      }, 12000);
     });
   } else {
     img.classList.remove('on');
@@ -491,7 +551,7 @@ function setLive(on) {
 }
 
 /* ── stage: accessibility size + fullscreen preview ──
-   The size button cycles Normal -> Large -> Huge, scaling the stage, the
+   The size button toggles Normal <-> Large (A / A+), scaling the stage, the
    joysticks and the text together — the whole point of a browser control for
    low-vision use. The choice persists. Fullscreen keeps the joysticks and
    shutter overlaid, so you can frame and jog on a big image at once. */

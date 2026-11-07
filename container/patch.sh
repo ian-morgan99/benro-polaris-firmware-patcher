@@ -432,6 +432,9 @@ if [ "$MODE" = "ptp2only" ]; then
   python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.patched" --in-place \
     || die "pgphoto dark-frame poll budget patch failed"
   log "  post-release file wait raised from ~6s to 100s so a noise-reduction dark frame is found"
+  python3 /opt/patcher/polaris_cancel_writer_patch.py "$W/pgphoto.patched" --in-place \
+    || die "pgphoto cancel writer patch failed"
+  log "  pgphoto now raises a cancel: glob_cancel set by both stop-capture handlers, cleared at capture start"
 
   O_UID="$(stat -c %u "$STOCK_PTP2")"; O_GID="$(stat -c %g "$STOCK_PTP2")"; O_MODE="$(stat -c %a "$STOCK_PTP2")"
   inst -m "$O_MODE" -o "$O_UID" -g "$O_GID" "$NEW_PTP2"           "$STOCK_PTP2"
@@ -467,6 +470,9 @@ else
   python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$W/pgphoto.base" --in-place \
     || die "pgphoto dark-frame poll budget patch failed"
   log "  pgphoto file wait: post-release poll raised from ~6s to 100s for noise-reduction dark frames"
+  python3 /opt/patcher/polaris_cancel_writer_patch.py "$W/pgphoto.base" --in-place \
+    || die "pgphoto cancel writer patch failed"
+  log "  pgphoto now raises a cancel: glob_cancel set by both stop-capture handlers, cleared at capture start"
 
   log "full-libgphoto2: on-disk trampolining $(python3 -c "import sys;sys.path.insert(0,'/opt/patcher');import stage2_patch as s;print(len(s.BOUNDARY))") boundary entries…"
   rm -rf "$W/s2"; mkdir -p "$W/s2"
@@ -828,6 +834,9 @@ log "  verified K-3 III live-mode Bulb dispatch and cancel-to-stop in repacked p
 python3 /opt/patcher/polaris_bulb_poll_budget_patch.py "$STAGE2_BIN" --check \
   || die "post-repack assertion failed: dark-frame post-release file poll budget missing"
 log "  verified 100s post-release file poll in repacked pgphoto"
+python3 /opt/patcher/polaris_cancel_writer_patch.py "$STAGE2_BIN" --check \
+  || die "post-repack assertion failed: pgphoto cancel writer missing, so the driver's Bulb cancel guard is unreachable"
+log "  verified pgphoto raises a cancel in repacked pgphoto"
 STAGE2_LOADER="$APP_VERIFY/lib/stage2/libpolaris_stage2.so"
 if [ ! -f "$STAGE2_LOADER" ]; then
   die "post-repack assertion failed: lib/stage2/libpolaris_stage2.so missing from appfs.ubifs"

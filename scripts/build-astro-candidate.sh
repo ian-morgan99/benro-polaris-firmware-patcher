@@ -90,7 +90,29 @@ for LIB_REF in origin/main origin/feature/polaris-capture-events; do
     break
   fi
 done
-[ "$LIB_REACHABLE" = 1 ] || die "libgphoto2 baseline $LIB_BASELINE is not reachable from origin/main or origin/feature/polaris-capture-events -- orphan or unmerged commit?"
+[ "$LIB_REACHABLE" = 1 ] || {
+  # "orphan or unmerged commit?" was misleading on 2026-11-06: the pin WAS on
+  # origin/main, but this clone had been created from a local repo whose
+  # refs/remotes/origin/main was stale, so the ancestor test ran against the wrong
+  # tip and a perfectly good commit looked orphaned. Distinguish the two cases here
+  # rather than making the operator guess and go chase the wrong thing.
+  echo "ERROR: libgphoto2 baseline $LIB_BASELINE is not reachable from origin/main"
+  echo "       or origin/feature/polaris-capture-events in $LIBSRC."
+  if git -C "$LIBSRC" cat-file -e "${LIB_BASELINE}^{commit}" 2>/dev/null; then
+    echo "       The commit IS present locally, so this is one of two things:"
+    echo "         (a) a stale remote-tracking ref -- very common when the clone was"
+    echo "             made from another local repo rather than fetched from GitHub."
+    echo "             Check what this clone thinks main is:" $(git -C "$LIBSRC" rev-parse --short origin/main 2>/dev/null || echo '(absent)')
+    echo "             Refresh it and retry:"
+    echo "               git -C $LIBSRC fetch origin 'refs/remotes/origin/*:refs/remotes/origin/*'"
+    echo "         (b) genuinely unmerged -- the commit exists only on a local branch."
+    echo "             Verify against the real remote before believing this."
+  else
+    echo "       The commit is not even present in $LIBSRC. Fetch it:"
+    echo "         git -C $LIBSRC fetch origin $LIB_BASELINE"
+  fi
+  exit 1
+}
 # Reachability proves nothing about *completeness*. When the pin changes, require that it still
 # carries everything the previous pin carried. Fail closed: if the previous pin cannot be inspected
 # in this checkout, that is itself a reason not to build.
