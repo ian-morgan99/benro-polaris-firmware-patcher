@@ -103,20 +103,75 @@ look like autosolve called an undefined function. It does not.
 WP4 rather than re-deriving: near the zenith, heading error amplification explodes, so
 a solve there is actively harmful to apply.
 
-## 6. Still outstanding for WP1
+## 6. Sign convention — consistent across both paths (WP4 dependency)
+
+The mount's `compass` field is 180° out from the azimuth used internally, and both
+implementations apply the same transform:
+
+- `polaris-mount.c:684` (`set-compass`): `fmod(az - 180.0 + 360.0, 360.0)`, with the
+  comment *"the mount's 'compass' is 180 deg out from the azimuth we reason in"*.
+- `polaris-autosolve.sh:477` (`compass_for_solve`): `c=a-180; while(c<0)c+=360;
+  while(c>=360)c-=360`.
+
+`align` (line 871) reaches the same result differently — it computes
+`p_az + daz` where `daz = wrap(s_az - p_az)` and then applies
+`fmod(fmod(x,360) - 180 + 360, 360)`, i.e. the −180 offset plus a positive wrap. So all
+three agree on the offset; `align` additionally wraps into [0,360) rather than leaving a
+signed value.
+
+**Not verified:** whether −180 is the *correct* offset for this firmware. The comment
+says it was captured from the phone app on real hardware, but that capture predates this
+session and no MCU/firmware identity is available (WP0/F2). WP4 must re-confirm against
+BenroConnect before trusting it — a wrong sign here produces a correction that doubles
+the pointing error instead of halving it, which is precisely the "confidently wrong
+alignment" the script's own header warns about.
+
+## 7. Gate asymmetry: the web API can apply corrections autosolve would refuse
+
+`compass_for_solve` has two refusals before it emits a heading:
+
+1. **Zenith cap** — refuses above `MAX_ALIGN_ALT`, because azimuth error amplification
+   is `1/cos(alt)` and the axis is ill-conditioned near the zenith.
+2. **Uncertainty-vs-correction ratio** (`MAX_UNCERT_FRAC`, default **0.25**) — refuses
+   when the azimuth uncertainty exceeds a quarter of the correction, i.e. when the
+   heading "would not be a clear improvement on leaving it alone".
+
+`polaris-mount.c::align` implements only the zenith cap (exit 6). It has **no
+uncertainty gate**. So `/api/astro/*` paths that call `align` (httpd lines 1879, 2136,
+4832) will send a heading correction that the autosolve loop would deliberately decline.
+
+This is the concrete instance of #271's "bounded correction" requirement: the bound
+exists in one implementation and not the other. WP4 should put the ratio check into
+`align` so both paths share it, rather than leaving the safer logic in shell only.
+
+Two smaller observations from the same reading, recorded but **not** treated as defects:
+
+- `compass_for_solve` solves against the **frame's own epoch** when available and logs
+  how far the sky moved since (`lag × 15.041″/s`). That is correct behaviour and worth
+  preserving — #271 asks for exposure-midpoint timestamps, and this already does the
+  time-corrected conversion.
+- `apply_correction` is called with 5 arguments at line 678 (frame epoch supplied) but
+  with only 4 at line 632 (the `STUB_FRAME` path), so `_fep` is empty there and
+  `compass_for_solve` falls back to `utc_now`. For a stub frame that means solving
+  against the current time rather than the frame's. It affects the test path only, not
+  live capture — but it is exactly the class of bug WP2's normalised contract (an
+  explicit `exposure_mid_unix_s`, never defaulted) is meant to prevent.
+
+## 8. Still outstanding for WP1
 
 - **JSON fixtures** for each function's inputs/outputs — not written.
 - **Complete failure-exit inventory** across the shell paths (only the C exits are
   mapped above).
 - **BenroConnect opcode-sequence verification** against target firmware — blocked by
   WP0/F2, no MCU version obtainable via `getOmsFwInfo.sh` / `getFwInfo.sh`.
-- **`handle_arm` (autosolve.sh:601) and the 530 handshake** traced only as far as
-  seeing it call `apply_correction`; the state-transition safety question #271 raises
-  is not yet answered.
-- **`compass_for_solve` (autosolve.sh:423)** sign convention not yet audited — WP4
-  depends on it.
+- **The 530 calibration handshake's state transitions.** `handle_arm` (601) reads the
+  armed yaw/pitch, converts to a solve hint, and calls `apply_correction`, which ends by
+  sending `530 step:2` and then `start_guiding`. Whether completing that handshake while
+  the app's own dialog is open is safe — #271's specific question — is **not answered**.
+- **`good_solve`'s acceptance thresholds** (`autosolve.sh:333`) not yet compared against
+  WP2's proposed `validate_solve` parameters.
 
-## 7. What this does not establish
+## 9. What this does not establish
 
 Source reading only. No command was sent, no reply observed, no hardware involved —
 the camera was absent throughout. Nothing here qualifies pointing accuracy or tracking
