@@ -551,7 +551,7 @@ function setLive(on) {
 }
 
 /* ── stage: accessibility size + fullscreen preview ──
-   The size button cycles Normal -> Large -> Huge, scaling the stage, the
+   The size button toggles Normal <-> Large (A / A+), scaling the stage, the
    joysticks and the text together — the whole point of a browser control for
    low-vision use. The choice persists. Fullscreen keeps the joysticks and
    shutter overlaid, so you can frame and jog on a big image at once. */
