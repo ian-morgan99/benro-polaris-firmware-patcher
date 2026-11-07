@@ -6,8 +6,13 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.95
+last_display_fwver=6.0.0.54.98
 ```
+
+Backfilled 2026-11-07. `.97` and `.98` were both issued but never recorded here, so
+`--next` offered `.96` while `.97` was already published *and* running on hardware --
+issue #169's exact failure mode. A candidate built from a feature branch was then
+labelled `.97`, colliding with the live build.
 
 ## Consumed-version registry (authoritative)
 
@@ -18,6 +23,8 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.67
+consumed_display_fwver=6.0.0.54.98
+consumed_display_fwver=6.0.0.54.97
 consumed_display_fwver=6.0.0.54.95
 consumed_display_fwver=6.0.0.54.94
 consumed_display_fwver=6.0.0.54.92
@@ -52,6 +59,8 @@ consumed_display_fwver=6.0.0.54.57
 consumed_display_fwver=6.0.0.54.56
 consumed_display_fwver=6.0.0.54.54
 consumed_display_fwver=6.0.0.54.55
+version_commit_binding=6.0.0.54.98|libgphoto2=7e6dec95f383ba5902ed2a7ee6c11cd48a359188|patcher=24449f5a3a5f09b392014a1d0f8ddf575a2693d0
+version_commit_binding=6.0.0.54.97|libgphoto2=3fb26e536ac169e4970d69516a9d45daf62563f5|patcher=5dbd19d81da9b29fa246bc94fb83708d63d496e9
 version_commit_binding=6.0.0.54.68|libgphoto2=8e06d39aea9ff22be9a59a5962263bdf41fc76e7|patcher=36d72ae9ffaa0d234c80fbf935102dd58809a67c
 version_commit_binding=6.0.0.54.69|libgphoto2=731d7fbd5b5c590490f2783dd549762fc5dc3b9d|patcher=437e0d3fac284ef8b1502d58bd4336e0bbff5ec8
 version_commit_binding=6.0.0.54.70|libgphoto2=731d7fbd5b5c590490f2783dd549762fc5dc3b9d|patcher=f2c2e18a7631cead8686b56d2944a7f633e85221
