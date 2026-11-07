@@ -265,6 +265,14 @@ ASTRO_MANIFEST="$SD_ASTRO/polaris-astro.manifest"
 grep -q 'polaris-httpd$' "$ASTRO_MANIFEST" \
   || die "$ASTRO_MANIFEST does not cover polaris-httpd (the web UI lives inside it)"
 
+# The on-disk scripts are copied straight out of the repo, so a script committed
+# without the exec bit lands on the card without it. The boot hook now invokes
+# this via sh so it still runs, but keep the bundle itself correct: an operator
+# running it by hand would hit "Permission denied" and conclude the update failed.
+chmod +x "$SD_ASTRO/polaris-astro-sync.sh" 2>/dev/null || true
+[ -x "$SD_ASTRO/polaris-astro-sync.sh" ] \
+  || die "$SD_ASTRO/polaris-astro-sync.sh is not executable in the bundle"
+
 # SD-rooted archives, built INSIDE COPY-TO-SD-CARD-ROOT so the archive entries
 # are 'polaris-astro/...' and 'astrometry/...' with no wrapper directory. A zip
 # containing '<id>/polaris-astro/' unzips one level too deep and the boot hook

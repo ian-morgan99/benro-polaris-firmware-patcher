@@ -175,8 +175,13 @@ SITE=/app/sd/polaris-astro/site.conf
     # what differs against polaris-astro.manifest, verifies after copying, and
     # refuses to stamp a partial install. It waits for the card itself (the loop
     # below bounded the old one), so a slow SD mount still works.
-    if [ -x /app/sd/polaris-astro/polaris-astro-sync.sh ]; then
-        /app/sd/polaris-astro/polaris-astro-sync.sh sync \
+    # Invoke through sh rather than relying on the exec bit. Files copied off a
+    # card are 755 (vfat mounts with fmask=0022), but a bundle installed over SSH
+    # keeps whatever mode git recorded, and a non-executable script would make
+    # this test false and fall back to copy-if-missing -- which is the silent
+    # no-op path. Running it via sh removes that whole failure class.
+    if [ -f /app/sd/polaris-astro/polaris-astro-sync.sh ]; then
+        sh /app/sd/polaris-astro/polaris-astro-sync.sh sync \
             /app/sd/polaris-astro "$ASTRO" 2>&1 | sed 's/^/  /'
     else
         # Card predates the sync script. Keep the historical behaviour so an old
