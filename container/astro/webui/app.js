@@ -497,22 +497,50 @@ function streamURL() {
   return 'http://' + location.hostname + ':8080/?action=stream';
 }
 
+/* Set while awaiting a first frame, so turning live view off cancels the timer
+   instead of letting it overwrite "live view off" with a stall warning. */
+var liveWatch = 0;
+
 function setLive(on) {
   var img = $('#live'), msg = $('#livemsg'), btn = $('#previewtoggle');
   S.live = on;
   btn.classList.toggle('on', on);
+  if (liveWatch) { clearTimeout(liveWatch); liveWatch = 0; }
   if (on) {
     msg.textContent = 'starting live view…';
     /* Ask the head to turn its preview on, then attach the stream. */
     send(291, 'state:1;').then(function () {
-      img.onload = function () { img.classList.add('on'); msg.textContent = ''; };
+      img.onload = function () {
+        if (liveWatch) { clearTimeout(liveWatch); liveWatch = 0; }
+        img.classList.add('on'); msg.textContent = '';
+      };
       img.onerror = function () {
+        if (liveWatch) { clearTimeout(liveWatch); liveWatch = 0; }
         img.classList.remove('on');
         msg.innerHTML = 'Live view did not load from <span class="mono">' +
           streamURL().replace(/</g, '&lt;') + '</span>.<br>' +
           'The camera must be awake and in a mode that allows preview.';
       };
       img.src = streamURL() + '&t=' + Date.now();
+      /* The stall case. Measured on the K-1 II: the head's preview server accepts
+         the connection and sends the multipart headers but then emits no frame,
+         once it has accumulated CLOSE_WAIT sockets from clients that went away
+         without a clean close. onerror never fires, because as far as the browser
+         is concerned the stream is still open -- so "starting live view…" sat on
+         screen forever and looked like a slow camera rather than a wedged server. */
+      liveWatch = setTimeout(function () {
+        liveWatch = 0;
+        if (!S.live || img.naturalWidth) return;
+        img.classList.remove('on');
+        /* Wording is deliberate. Toggling preview off and on was tried against a
+           wedged server and did not help -- the CLOSE_WAIT count kept climbing
+           (7 -> 9), because the stuck sockets belong to the old connections. Only
+           restarting that process or rebooting clears it, so do not offer a toggle
+           as a fix. */
+        msg.innerHTML = 'The head opened the preview stream but sent no frame.<br>' +
+          'Its preview server has stopped serving frames. This is cleared by ' +
+          'rebooting the mount; everything else on this page still works.';
+      }, 12000);
     });
   } else {
     img.classList.remove('on');
