@@ -31,6 +31,13 @@ set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 FMIN=14; FMAX=400; SENSOR=36; OUT="$HERE/out/astro-bundle"; IMG="polaris-patcher"; WANT_IDX=1; CATALOG=""; CATALOG_PACKAGE=""
+# The station-mode wifi kit (wpa_supplicant, wpa_cli, wpa_passphrase, iw) is
+# built by default. It is not optional in practice: the device ships none of
+# these, /app/sd/polaris-wifi/ is where polaris-astro-boot.sh looks for them at
+# boot, and no release had ever contained them -- see issue #272. --no-wifi skips
+# it for a solver-only rebuild; the resulting bundle then cannot join a network
+# and install_astro.sh will say so.
+WANT_WIFI=1
 # Persistent download cache. build_solver.sh defaults SRCCACHE to /work/src inside
 # the container, which is thrown away by --rm -- so today every rebuild re-downloads
 # astrometry.net and libjpeg, and (worse) the exact source that was compiled is
@@ -45,6 +52,7 @@ while [ $# -gt 0 ]; do
     --sensor-mm) SENSOR="$2"; shift 2;;
     --out) OUT="$2"; shift 2;;
     --no-indexes) WANT_IDX=0; shift;;
+    --no-wifi) WANT_WIFI=0; shift;;
     --image) IMG="$2"; shift 2;;
     --catalog) CATALOG="$2"; shift 2;;
     --catalog-package) CATALOG_PACKAGE="$2"; shift 2;;
@@ -78,6 +86,42 @@ docker run --rm \
   -v "$OUT":/out \
   --entrypoint /bin/bash "$IMG" -c \
   'bash /opt/patcher/astro/build_solver.sh arm /work/out/astro && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-astro && python3 /opt/patcher/astro/embed_webui.py /opt/patcher/astro/webui /tmp/webui.h && for t in polaris-logwatch polaris-match; do arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror /opt/patcher/astro/$t.c -o /work/out/astro/$t -lm || exit 1; done && arm-linux-gnueabi-gcc -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror -I/tmp -I/opt/patcher/astro /opt/patcher/astro/polaris-httpd.c /opt/patcher/astro/polaris-link.c /opt/patcher/astro/polaris-jog.c /opt/patcher/astro/polaris-prog.c /opt/patcher/astro/polaris-astro.c -o /work/out/astro/polaris-httpd -lm && cp /work/out/astro/polaris-solve /work/out/astro/polaris-solve-independent /work/out/astro/polaris-solve-independent-search /work/out/astro/polaris-exif-solve /work/out/astro/polaris-extract /work/out/astro/polaris-mount /work/out/astro/polaris-skysim /work/out/astro/polaris-skysim-independent /work/out/astro/polaris-httpd /work/out/astro/polaris-logwatch /work/out/astro/polaris-match /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/camera-sensors.tsv /opt/patcher/astro/camera-sensors.tsv.example /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/*.sh /out/COPY-TO-SD-CARD-ROOT/polaris-astro/ && cp /opt/patcher/astro/ondisk/site.conf.example /out/COPY-TO-SD-CARD-ROOT/polaris-astro/'
+
+# ---- station-mode wifi kit ------------------------------------------------
+# The Polaris ships no station tooling at all (no wpa_supplicant, no iw; only
+# udhcpc), so joining a home network is impossible without these four binaries.
+# polaris-astro-boot.sh gates auto-join on /app/sd/polaris-wifi/, and until now
+# no bundle had ever put anything there -- the feature was unshippable by
+# construction (issue #272).
+#
+# Built in a separate container run rather than appended to the solver command:
+# build_wifi.sh needs network access to fetch libnl/iw/wpa_supplicant, and
+# keeping it isolated means a solver-only rebuild (--no-wifi) never pays for it
+# and a wifi fetch failure cannot corrupt an otherwise good bundle.
+if [ "$WANT_WIFI" = "1" ]; then
+  echo "[*] cross-building the station-mode wifi kit (libnl + iw + wpa_supplicant)…"
+  docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$HERE/container":/opt/patcher:ro \
+    -v "$SRCCACHE_DIR":/work/src \
+    -v "$OUT":/out \
+    --entrypoint /bin/bash "$IMG" -c \
+    'bash /opt/patcher/astro/build_wifi.sh arm /work/out/wifi && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-wifi && cp /work/out/wifi/wpa_supplicant /work/out/wifi/wpa_cli /work/out/wifi/wpa_passphrase /work/out/wifi/iw /out/COPY-TO-SD-CARD-ROOT/polaris-wifi/ && for s in polaris-autojoin.sh polaris-apsta.sh setup-wifi.sh wifi-keepalive.sh wifi-watch.sh; do cp "/opt/patcher/astro/ondisk/$s" /out/COPY-TO-SD-CARD-ROOT/polaris-wifi/; done'
+
+  SD_WIFI="$OUT/COPY-TO-SD-CARD-ROOT/polaris-wifi"
+  # Fail closed, same reasoning as the astro manifest below: a wifi directory
+  # that is missing its binaries installs nothing and reports success.
+  for b in wpa_supplicant wpa_cli wpa_passphrase iw; do
+    [ -x "$SD_WIFI/$b" ] || { echo "error: wifi kit is missing $b -- refusing to ship a bundle that cannot join a network" >&2; exit 1; }
+  done
+  # The scripts must be executable: boot invokes polaris-autojoin.sh via [ -x ],
+  # so a script without the exec bit silently disables auto-join forever.
+  chmod 755 "$SD_WIFI"/*.sh 2>/dev/null || true
+  for s in polaris-autojoin.sh setup-wifi.sh; do
+    [ -x "$SD_WIFI/$s" ] || { echo "error: wifi script $s is not executable -- boot's [ -x ] test would skip it" >&2; exit 1; }
+  done
+  echo "[*] wifi kit bundled: $(ls "$SD_WIFI" | tr '\n' ' ')"
+fi
 
 if [ "$WANT_IDX" = "1" ]; then
   echo "[*] selecting + downloading index files for ${FMIN}-${FMAX}mm…"
@@ -134,12 +178,33 @@ SD_ASTRO="$OUT/COPY-TO-SD-CARD-ROOT/polaris-astro"
 # who ignores the exit code would drag them onto an SD card with no source, which is
 # precisely the violation this step exists to prevent. So on failure we delete the
 # GPL binaries from the card tree: an incomplete bundle cannot be shipped by accident.
+# The wifi kit has its own copyleft case. libnl is LGPL-2.1 and build_wifi.sh
+# links it STATICALLY (libnl-3.a) into wpa_supplicant, wpa_cli, wpa_passphrase
+# and iw, so §4 of the LGPL applies to all four: the exact library source must
+# accompany them. iw is ISC and wpa_supplicant is BSD-style -- its COPYING says
+# the GPL v2 option was dropped for distribution after 2012-02-11 -- so those two
+# need their notices shipped, not their source. Verified from the tarballs in
+# $SRCCACHE_DIR rather than assumed.
+WPAS_VERSION="${WPAS_VERSION:-2.10}"
+IW_VERSION="${IW_VERSION:-5.19}"
+LIBNL_VERSION="${LIBNL_VERSION:-3.7.0}"
+LIBNL_TARBALL="$SRCCACHE_DIR/libnl.tar.gz"
+WPAS_TARBALL="$SRCCACHE_DIR/wpas.tar.gz"
+IW_TARBALL="$SRCCACHE_DIR/iw.tar.gz"
+SD_WIFI="$OUT/COPY-TO-SD-CARD-ROOT/polaris-wifi"
+
 no_source(){
   echo "error: $1" >&2
   rm -f "$SD_ASTRO/polaris-solve" "$SD_ASTRO/polaris-skysim" \
         "$SD_ASTRO/SOURCE-OFFER.txt" "$SD_ASTRO/COPYING-GPL-2.txt" 2>/dev/null || true
-  echo "       Removed polaris-solve and polaris-skysim from the bundle: shipping" >&2
-  echo "       GPL binaries without corresponding source is a §3 violation." >&2
+  # Same reasoning for the wifi kit: statically linked libnl with no source is an
+  # LGPL §4 violation, so the binaries come out of the bundle too.
+  if [ -d "$SD_WIFI" ]; then
+    rm -f "$SD_WIFI/wpa_supplicant" "$SD_WIFI/wpa_cli" \
+          "$SD_WIFI/wpa_passphrase" "$SD_WIFI/iw" 2>/dev/null || true
+  fi
+  echo "       Removed the GPL/LGPL binaries from the bundle: shipping copyleft" >&2
+  echo "       binaries without corresponding source is a §3/§4 violation." >&2
   echo "       Re-run without --src-cache, or point it at a cache used for a real build." >&2
   exit 1
 }
@@ -149,11 +214,39 @@ no_source(){
 [ -f "$HERE/container/astro/licenses/GPL-2.txt" ] \
   || no_source "container/astro/licenses/GPL-2.txt is missing from the repo."
 
+# Only checked when the kit was actually built: --no-wifi produces a bundle with
+# no libnl-derived binaries, so there is nothing to offer source for.
+if [ "$WANT_WIFI" = "1" ]; then
+  [ -f "$LIBNL_TARBALL" ] || no_source "$LIBNL_TARBALL not found; all four wifi binaries statically link libnl (LGPL-2.1)."
+  [ -f "$WPAS_TARBALL" ] || no_source "$WPAS_TARBALL not found; cannot ship the wpa_supplicant licence notice."
+  [ -f "$IW_TARBALL" ]   || no_source "$IW_TARBALL not found; cannot ship the iw licence notice."
+fi
+
 rm -rf "$LIC"; mkdir -p "$LIC"
 
 cp "$AN_TARBALL"   "$LIC/astrometry.net-$AN_VERSION.tar.gz"
 cp "$JPEG_TARBALL" "$LIC/jpeg-$JPEG_VERSION.tar.gz"
 cp "$HERE/container/astro/licenses/GPL-2.txt" "$LIC/COPYING-GPL-2.txt"
+
+# Wifi kit: libnl source (LGPL §4, because it is linked statically) plus the
+# upstream notices for iw and wpa_supplicant. Extracted from the same tarballs
+# that were compiled, so the offer matches the binaries byte for byte.
+if [ "$WANT_WIFI" = "1" ]; then
+  cp "$LIBNL_TARBALL" "$LIC/libnl-$LIBNL_VERSION.tar.gz"
+  cp "$WPAS_TARBALL"  "$LIC/wpa_supplicant-$WPAS_VERSION.tar.gz"
+  cp "$IW_TARBALL"    "$LIC/iw-$IW_VERSION.tar.gz"
+  tar xzf "$LIBNL_TARBALL" -C "$LIC" --strip-components=1 "libnl-$LIBNL_VERSION/COPYING" \
+    && mv "$LIC/COPYING" "$LIC/COPYING-LGPL-2.1.txt"
+  tar xzf "$WPAS_TARBALL"  -C "$LIC" --strip-components=1 "wpa_supplicant-$WPAS_VERSION/COPYING" \
+    && mv "$LIC/COPYING" "$LIC/NOTICE-wpa_supplicant.txt"
+  tar xzf "$IW_TARBALL"    -C "$LIC" --strip-components=1 "iw-$IW_VERSION/COPYING" \
+    && mv "$LIC/COPYING" "$LIC/NOTICE-iw.txt"
+  # The wifi recipe is part of the corresponding source: build_wifi.sh decides
+  # that libnl is static and selects wpa_supplicant's internal crypto, both of
+  # which change what the binaries contain.
+  tar czf "$LIC/polaris-wifi-build-recipe.tar.gz" -C "$HERE" \
+    container/astro/build_wifi.sh docker/Dockerfile
+fi
 
 # Our side of the build: the recipe, the BSD-3 GSL shim that replaces GPLv3+
 # gsl-an, and the seeded config header. These are what make these binaries differ

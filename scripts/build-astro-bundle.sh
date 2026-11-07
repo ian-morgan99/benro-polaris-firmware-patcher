@@ -15,6 +15,7 @@ IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher-pentax}"
 CATALOG_PACKAGE=""
 SRC_CACHE="${ASTRO_SRC_CACHE:-$ROOT/out/.astro-src-cache}"
 WANT_INDEXES=1
+WANT_WIFI=1
 FORCE=0
 ALLOW_MAIN=0
 ALLOW_DIRTY=0
@@ -35,6 +36,8 @@ options:
   --image NAME               Docker image (default: polaris-patcher-pentax)
   --catalog-package DIR      native Gaia tile package to include
   --no-indexes               do not fetch astrometry.net FITS indexes
+  --no-wifi                  omit the station-mode wifi kit (bundle then cannot
+                             join a network; only for solver-only rebuilds)
   --src-cache DIR            persistent upstream-source cache
   --force                    remove the selected existing output directory first
   --allow-main               permit a development build from main
@@ -43,15 +46,16 @@ options:
   --zip                      also emit SD-rooted zips for end users
   -h, --help                 show this help
 
---zip writes two archives rooted so that unzipping them AT THE SD CARD ROOT
+--zip writes three archives rooted so that unzipping them AT THE SD CARD ROOT
 drops each directory where the device expects it:
 
   polaris-astro.zip      -> polaris-astro/   (binaries, scripts, manifest)
   astrometry-indexes.zip -> astrometry/      (only if indexes were built)
+  polaris-wifi.zip       -> polaris-wifi/    (only if the wifi kit was built)
 
-The astro zip is what a user replaces on every release; the index zip is a
-one-time copy and never changes between releases, so it is kept separate rather
-than re-downloaded each time. Both archives are rooted at the directory itself,
+The astro zip is what a user replaces on every release; the index and wifi zips
+are one-time copies and never change between releases, so they are kept separate
+rather than re-downloaded each time. Both archives are rooted at the directory itself,
 never wrapped in a build-id folder -- a wrapper would land the payload one level
 too deep and the boot hook would silently install nothing.
 
@@ -90,6 +94,10 @@ while [ $# -gt 0 ]; do
       ;;
     --no-indexes)
       WANT_INDEXES=0
+      shift
+      ;;
+    --no-wifi)
+      WANT_WIFI=0
       shift
       ;;
     --src-cache)
@@ -204,6 +212,7 @@ fi
 HEAD="$(git -C "$ROOT" rev-parse HEAD)"
 BUILD_ARGS=(--image "$IMAGE" --out "$OUT" --src-cache "$SRC_CACHE")
 [ "$WANT_INDEXES" = "1" ] || BUILD_ARGS+=(--no-indexes)
+[ "$WANT_WIFI" = "1" ] || BUILD_ARGS+=(--no-wifi)
 [ -n "$CATALOG_PACKAGE" ] && BUILD_ARGS+=(--catalog-package "$CATALOG_PACKAGE")
 
 echo "[*] building Astro bundle"
@@ -216,11 +225,24 @@ bash "$ROOT/build-astro.sh" "${BUILD_ARGS[@]}"
 
 SD_ROOT="$OUT/COPY-TO-SD-CARD-ROOT"
 SD_ASTRO="$SD_ROOT/polaris-astro"
+SD_WIFI="$SD_ROOT/polaris-wifi"
 [ -d "$SD_ASTRO" ] || die "build completed without COPY-TO-SD-CARD-ROOT/polaris-astro"
 [ -x "$SD_ASTRO/polaris-solve" ] || die "bundle is missing native polaris-solve"
 [ -x "$SD_ASTRO/polaris-solve-independent-search" ] || die "bundle is missing independent search solver"
 [ -f "$SD_ASTRO/polaris-frame-watch.sh" ] || die "bundle is missing frame watcher"
 [ -f "$OUT/licenses/README-GPL.txt" ] || die "bundle is missing corresponding-source notice"
+
+# The wifi kit is the same silent-failure class as the astro manifest below: the
+# boot hook checks for /app/sd/polaris-wifi/polaris-autojoin.sh and simply does
+# nothing when it is absent, so a bundle that omits it reports a successful
+# install while leaving auto-join permanently dead. Catch it at build time.
+if [ "$WANT_WIFI" = "1" ]; then
+  for b in wpa_supplicant wpa_cli wpa_passphrase iw; do
+    [ -x "$SD_WIFI/$b" ] || die "bundle is missing wifi binary $b -- auto-join cannot work"
+  done
+  [ -x "$SD_WIFI/polaris-autojoin.sh" ] \
+    || die "bundle is missing polaris-wifi/polaris-autojoin.sh -- boot's [ -x ] gate would skip auto-join"
+fi
 
 MANIFEST="$OUT/ASTRO-MANIFEST.sha256"
 (
@@ -289,9 +311,31 @@ if [ "$WANT_ZIP" = "1" ]; then
       rm -f astrometry-indexes.zip
       zip -qrX astrometry-indexes.zip astrometry
     fi
+    if [ -d polaris-wifi ]; then
+      rm -f polaris-wifi.zip
+      zip -qrX polaris-wifi.zip polaris-wifi
+    fi
   )
   ZIPS="$SD_ROOT/polaris-astro.zip"
   [ -f "$SD_ROOT/astrometry-indexes.zip" ] && ZIPS="$ZIPS $SD_ROOT/astrometry-indexes.zip"
+  [ -f "$SD_ROOT/polaris-wifi.zip" ] && ZIPS="$ZIPS $SD_ROOT/polaris-wifi.zip"
+
+  # The wifi kit's whole purpose is to be executed on the device, and boot gates
+  # auto-join on [ -x ]. zip stores unix mode bits, but verify rather than trust:
+  # a kit that unzips non-executable installs four dead files and reports success.
+  # Note `unzip -Z1` suppresses the long-listing header and returns nothing with
+  # -l, which would make this check pass vacuously -- use plain `unzip -Z`.
+  if [ -f "$SD_ROOT/polaris-wifi.zip" ]; then
+    for b in wpa_supplicant wpa_cli wpa_passphrase iw polaris-autojoin.sh setup-wifi.sh; do
+      perm=$(unzip -Z "$SD_ROOT/polaris-wifi.zip" 2>/dev/null \
+             | awk -v n="polaris-wifi/$b" '$NF==n {print $1}')
+      [ -n "$perm" ] || die "polaris-wifi.zip does not contain $b at all"
+      case "$perm" in
+        *x*) ;;
+        *) die "polaris-wifi.zip stores $b as '$perm' (not executable) -- boot's [ -x ] gate would skip it" ;;
+      esac
+    done
+  fi
   # Prove the rooting claim instead of trusting the zip invocation: an entry that
   # does not begin with the directory name would land in the wrong place.
   for z in $ZIPS; do
