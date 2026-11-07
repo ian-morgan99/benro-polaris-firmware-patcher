@@ -28,7 +28,14 @@ shutter semantics, session lifecycle or preview belong against v97's camera payl
 
 ## Audit result
 
-`audit-camera-on.txt` — **47 PASS, 2 FAIL, 3 SKIP**, exit 1.
+Two runs, same build, camera attached:
+
+| Run | Harness | Result |
+|---|---|---|
+| `audit-camera-on.txt` | before the badge fix | 47 PASS, **2 FAIL**, 3 SKIP |
+| `audit-camera-on-fixed.txt` | after the badge fix | 47 PASS, **1 FAIL**, 4 SKIP |
+
+The difference is entirely the harness bug below — no product code changed between runs.
 
 Now confirmed with a camera attached (previously 7 camera-dependent checks were skipped):
 
@@ -36,42 +43,86 @@ Now confirmed with a camera attached (previously 7 camera-dependent checks were 
 - APERTURE (275) f/1.6 → f/1.4, ISO (265) 6400 → 100, WB (266) — **confirmed by read-back**
 - Focus AF/MF round-trip, live view streaming at 720x480, camera-name chip shown while live
 
-## The two failures
+## The two failures — and a correction to this file's first version
 
-### SHUTTER (268) — silent drop, no refusal reported
+**My first draft of this README was wrong about SHUTTER (268), and the reason matters.**
+It claimed "asked index 0, camera reports 14, badge ''" proved a *silent drop* with no
+explanation shown. That reading came from the harness bug described below: it sampled the
+badge only after `pending` cleared, by which point the badge had already been wiped. The
+badge was in fact present and correct.
 
-`asked index 0, camera reports 14, badge ''`.
+Re-running with the fixed harness (`audit-camera-on-fixed.txt`) gives **47 PASS, 1 FAIL,
+4 SKIP**, and the two controls turn out to be *different* failure classes:
 
-The real list is `["00-30","00-25",…,"13/10","00-01",…]`, so index 0 is a **timed
-30-second exposure** and index 14 is `13/10`. The body kept its previous value, the
-write was dropped, and **no badge appeared at all** — unlike EV, which reports
-`camera refused`. A user sees the control silently revert with no explanation.
+### SHUTTER (268) — correct behaviour, not a defect
 
-This is not #251's bulb case: index 0 here is timed 30 s, not bulb. (My first draft of
-the probe assumed index 0 was bulb; the captured list disproves that.)
+Now reported as SKIP: `camera refused the write (body mode locks it); webui retried 3x
+and reported it correctly`. The body declined because of its dial mode; the app retried
+three times and said so. Nothing to fix here. This matches the manual's guidance that
+"camera refused" is usually the camera, not the page.
 
-### EV (267) — audit says "never settled", probe shows a refusal
+### EV (267) — a real defect, and a different one than I first described
 
-`probe-268-267.py` wrote index 0 and watched `S.expoPending` plus the badge:
+The badge timeline is now visible:
 
 ```
-t+01 pending=1 badge='EV: applying…'
-t+02 pending=1 badge='EV: retry 2/3'
-t+03 pending=1 badge='EV: camera refused'   <- correct behaviour
-...
-t+12 pending=0 badge=''                     <- badge cleared, value unchanged (idx 15)
+t+01..t+24  'EV: applying…'      (24 consecutive samples)
+t+25..t+30  'EV: not applied'    (6 consecutive samples)
+pending never cleared within the 30 s window
 ```
 
-So the web UI **did** retry three times and report `camera refused` — correct. The audit
-reported "never settled" instead because its loop only samples once `pending == 0`, by
-which point the badge has already been cleared, so the refusal text is gone and it falls
-through to a timeout verdict.
+Three things follow, none of which the earlier verdict captured:
 
-**Harness bug, not a product bug.** The audit must capture the badge while pending is
-still non-zero. Until fixed it will keep mis-reporting camera refusals as timeouts —
-which matters, because #146/#147 triage depends on distinguishing "camera said no" from
-"we never got a reply".
+1. **`S.expoPending` never clears.** The control stays pending past its own retry budget,
+   so the slot is stuck rather than settled. That is a genuine bug and matches #147's
+   invariant "preview failure is bounded and cancellable" — here nothing bounds it.
+2. **The final text is `not applied`, not `refused`.** So this is a distinct error class
+   from 268's refusal, and the harness previously conflated them by only ever looking for
+   the word "refused".
+3. **`applying…` for ~24 s with no reply** suggests the request was sent and nothing came
+   back, rather than the body actively saying no.
 
+### The same EV write behaved differently in two runs — do not pick one story
+
+`probe-268-267.py` wrote index 0 to 267 from index 15 and saw:
+
+```
+t+01 'EV: applying…'  t+02 'EV: retry 2/3'  t+03..t+11 'EV: camera refused'
+t+12 pending=0 badge=''
+```
+
+The fixed audit, writing the same index on the same build minutes later, saw:
+
+```
+t+01..t+24 'EV: applying…'   t+25..t+30 'EV: not applied'   pending never cleared
+```
+
+Same control, same target value, two different outcomes: a bounded refusal that settled,
+versus an unbounded stall ending in `not applied`. **Which one occurs is state-dependent
+and I have not established what drives it** — candidate causes are body dial mode, whether
+live view was active, or how long the session had been running. Recording the discrepancy
+rather than resolving it, because #147's core requirement is exactly this: permanent and
+transient errors must be classified, and a control that sometimes refuses cleanly and
+sometimes hangs forever cannot be classified by the caller.
+
+That non-determinism is the reportable defect for #146/#147, not the single verdict any
+one run happens to print.
+
+## Harness bug found and fixed (was corrupting these verdicts)
+
+`tests/audit_astro_controls.py` previously sampled the badge only once `pending == 0`.
+The web UI clears the badge when it gives up, so by then the refusal text is gone and any
+refusal fell through to a timeout verdict. Fixed by recording every badge seen while
+polling, and by splitting the verdicts into three classes — refused / not applied / no
+reply at all — instead of one.
+
+This is why the harness is now version-controlled in `tests/`. It previously existed only
+in `~/astro-shots`, so a bug like this could not be reviewed or bisected, and its output
+was being treated as product evidence.
+
+**Consequence for anything triaged off the earlier run:** verdicts produced by the old
+harness that say "never settled" are unreliable — they may have been refusals. Re-run
+before acting on them.
 ## Not done, deliberately
 
 Shutter (268) was **not** re-pressed by the probe. #251 states an untimed-B exposure
@@ -82,7 +133,12 @@ unsafe. Any bulb-path test needs supervised hardware and a lens cap.
 
 | File | Contents |
 |---|---|
-| `audit-camera-on.txt` | Full audit output |
+| `audit-camera-on.txt` | Audit output, pre-fix harness (verdicts for 268/267 unreliable) |
+| `audit-camera-on-fixed.txt` | Audit output after the badge fix — use this one |
 | `probe-268-267.py` | Read-only 268 probe + safe 267 write with badge timeline |
 | `shots-camera.py` | Screenshot script |
 | `01..05-*.png` | Manual screenshots taken with the camera attached |
+
+The harness itself now lives at `tests/audit_astro_controls.py`. It previously existed
+only in `~/astro-shots`, which is why its bug went unnoticed while its output was being
+cited as product evidence.

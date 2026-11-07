@@ -8,9 +8,11 @@ timed 30-second exposure, not bulb as this script originally assumed. Either way
 index 0 fires a real shutter release, so it is still not pressed here; only EV
 (267), which has no shutter-release semantics, is written.
 
-The assumption being wrong matters: the audit's "asked 0, camera reports 14"
-means a request for a 30 s exposure was silently dropped and the body kept its
-previous value ("13/10"), with no refusal badge shown at all.
+The assumption being wrong matters: index 0 is a timed 30 s exposure, so "asked 0,
+camera reports 14" means the body kept its previous value ("13/10"). An earlier
+version of this file called that a silent drop with no badge shown -- that was wrong,
+and was caused by the audit sampling the badge only after it had been cleared. The
+fixed harness shows 268 does report "camera refused".
 
 It answers three questions the audit left open:
   1. What are the real option strings for 268 and 267, and is index 0 bulb?
