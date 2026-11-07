@@ -85,6 +85,8 @@ def main():
     ap.add_argument("--patcher-commit", help="exact patcher commit the ZIP was built from")
     ap.add_argument("--libgphoto2-commit", help="exact libgphoto2 commit the ZIP was built from")
     ap.add_argument("--packet-dir", help="directory holding the ZIPs about to be published")
+    ap.add_argument("--allow-partial", action="store_true",
+                    help="explicitly permit a release that ships fewer than both ZIPs")
     ap.add_argument("--state", default="docs/RELEASE-VERSION-STATE.md")
     ap.add_argument("--repo", default=".")
     ap.add_argument("--device-sw", help="what the device currently reports, e.g. 6.0.0.54.97")
@@ -147,15 +149,27 @@ def main():
                          "a ZIP built from a feature branch." % full[:12])
 
     # ---- R4: both archives present -------------------------------------------
+    # Reporting OK for a check that never ran is worse than no check: it turns an
+    # omitted argument into a green light. --allow-partial must be explicit.
+    r4 = "OK"
     if args.packet_dir:
         if not os.path.isdir(args.packet_dir):
             fails.append("R4 packet directory not found: %s" % args.packet_dir)
+            r4 = "FAIL"
         else:
             present = set(os.listdir(args.packet_dir))
-            for need in ("FwPkt.zip", "polaris-astro.zip"):
-                if need not in present:
-                    fails.append("R4 %s missing from the packet -- a release ships both "
-                                 "archives together" % need)
+            missing = [n for n in ("FwPkt.zip", "polaris-astro.zip") if n not in present]
+            for need in missing:
+                fails.append("R4 %s missing from the packet -- a release ships both "
+                             "archives together" % need)
+            r4 = "FAIL" if missing else "OK"
+    elif args.allow_partial:
+        r4 = "SKIPPED (--allow-partial)"
+    else:
+        r4 = "NOT CHECKED"
+        fails.append("R4 no --packet-dir given, so the archives were never checked. "
+                     "Pass --packet-dir DIR, or --allow-partial if this release "
+                     "deliberately ships fewer than both ZIPs.")
 
     # ---- R2: commits involved, printable -------------------------------------
     commits = []
@@ -178,9 +192,7 @@ def main():
           % ("OK" if not any(f.startswith("R1") for f in fails) else "FAIL", highest, last))
     print("R3 code merged to main           : %s"
           % ("OK" if not any(f.startswith("R3") for f in fails) else "FAIL"))
-    print("R4 both archives present         : %s"
-          % ("OK" if not any(f.startswith("R4") for f in fails) else
-             ("skipped" if not args.packet_dir else "FAIL")))
+    print("R4 both archives present         : %s" % r4)
     print()
     print("Commits involved (for RELEASE-IDENTITY.md / README):")
     for c in commits:
