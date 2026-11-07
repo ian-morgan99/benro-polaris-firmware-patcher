@@ -138,12 +138,30 @@ fi
 echo "--- 11. the boot hook calls the sync script instead of gating on existence ---"
 grepq "boot hook invokes polaris-astro-sync.sh" 'polaris-astro-sync.sh' "$BOOT"
 grepq "existence gate kept only as legacy fallback" 'Card predates the sync script' "$BOOT"
+# The hook must not depend on the exec bit: a bundle installed over SSH keeps
+# whatever mode git recorded, and a 644 script would silently take the
+# copy-if-missing path -- the exact no-op this file exists to prevent.
+grepq "boot hook runs the sync script via sh" 'sh /app/sd/polaris-astro/polaris-astro-sync.sh' "$BOOT"
+if grep -q '\[ -x /app/sd/polaris-astro/polaris-astro-sync.sh \]' "$BOOT"; then
+    bad "boot hook still requires the exec bit"
+else
+    ok "boot hook does not require the exec bit"
+fi
 
 echo "--- 12. the bundle builder emits the manifest and fails closed without it ---"
 grepq "builder generates polaris-astro.manifest" 'polaris-astro.manifest' "$BUILDER"
 grepq "builder refuses a bundle that cannot self-update" 'cannot update in place' "$BUILDER"
 grepq "builder offers SD-rooted archives" 'also emit SD-rooted zips' "$BUILDER"
 grepq "builder proves archives are SD-rooted" 'would not unzip to SD root' "$BUILDER"
+grepq "builder enforces the sync script's exec bit" 'not executable in the bundle' "$BUILDER"
+# Committed mode matters: build-astro.sh copies ondisk/*.sh verbatim, so a 100644
+# script reaches the card without +x.
+if git -C "$here/.." ls-files -s container/astro/ondisk/polaris-astro-sync.sh 2>/dev/null \
+     | awk '{print $1}' | grep -q '^100755$'; then
+    ok "sync script is committed executable (100755)"
+else
+    bad "sync script is not committed executable -- it would land on the card without +x"
+fi
 
 echo
 if [ "$fail" -ne 0 ]; then
