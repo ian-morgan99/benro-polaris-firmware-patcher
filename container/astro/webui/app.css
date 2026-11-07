@@ -407,6 +407,13 @@ main { flex: 1 1 auto; overflow-y: auto; padding: 14px; padding-bottom: 22px; }
   padding: 0 10px; font: inherit; cursor: pointer;
 }
 .exposlot select:disabled { opacity: .4; }
+/* Per-control write status. A camera write can be dropped after the HTTP
+   request has already been answered ok:true, so "applying…" and "camera
+   refused" are facts about the camera's reply, not guesses about timing. */
+.exposlot .ctl-state { font-size: 11px; color: var(--dim); min-height: 0; }
+.exposlot .ctl-state:empty { display: none; }
+.exposlot .ctl-state.pending { color: var(--acc); }
+.exposlot .ctl-state.fail { color: #e0896b; }
 .afmf { display: flex; gap: 4px; min-height: 38px; }
 .afmf-btn { flex: 1 1 0; background: var(--card2); color: var(--dim);
   border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 13px;
