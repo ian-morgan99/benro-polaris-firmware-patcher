@@ -155,27 +155,56 @@ SITE=/app/sd/polaris-astro/site.conf
         exit 0
     fi
 
-    i=0
-    while [ $i -lt 30 ] && [ ! -x "$ASTRO/polaris-httpd" ]; do
-        if [ -x /app/sd/polaris-astro/polaris-httpd ]; then
-            mkdir -p "$ASTRO"
-            # Every binary the daemons need. polaris-logwatch is autosolve's
-            # trigger detector and polaris-match is the guider's drift
-            # measurement -- omit either and the feature silently does nothing.
-            for _b in polaris-httpd polaris-solve polaris-solve-independent polaris-solve-independent-search polaris-exif-solve polaris-skysim-independent polaris-extract \
-                      polaris-logwatch polaris-match polaris-skysim \
-                      polaris-mount; do
-                [ -f "/app/sd/polaris-astro/$_b" ] \
-                    && cp "/app/sd/polaris-astro/$_b" "$ASTRO"/ 2>/dev/null
-            done
-            cp /app/sd/polaris-astro/*.sh "$ASTRO"/ 2>/dev/null
-            chmod +x "$ASTRO"/* 2>/dev/null
-        fi
-        i=$((i + 1)); sleep 2
-    done
+    # Install or UPDATE the astro stack. This used to be gated on the install
+    # directory being EMPTY:
+    #
+    #     while [ $i -lt 30 ] && [ ! -x "$ASTRO/polaris-httpd" ]; do
+    #         cp /app/sd/polaris-astro/$_b "$ASTRO"/
+    #
+    # Once /app/astro/polaris-httpd existed the SD copy was never read again --
+    # no version compare, no checksum. A user who unzipped a new release over the
+    # old one on the card got NO CHANGE AND NO ERROR, because the device was
+    # already satisfied by whatever it had installed on first boot. That is the
+    # same failure class as issue #58 ("staged FwPkt.zip, rebooted, came back on
+    # .66") and it is invisible: every step reports success. It also bit us in
+    # development -- /app/astro and /app/sd/polaris-astro sat at identical hashes
+    # for weeks, so a rebuilt polaris-httpd never reached the running server.
+    #
+    # So compare bytes instead of asking whether a file exists: sync copies only
+    # what differs against polaris-astro.manifest, verifies after copying, and
+    # refuses to stamp a partial install. It waits for the card itself (the loop
+    # below bounded the old one), so a slow SD mount still works.
+    if [ -x /app/sd/polaris-astro/polaris-astro-sync.sh ]; then
+        /app/sd/polaris-astro/polaris-astro-sync.sh sync \
+            /app/sd/polaris-astro "$ASTRO" 2>&1 | sed 's/^/  /'
+    else
+        # Card predates the sync script. Keep the historical behaviour so an old
+        # card still boots, but say plainly that it cannot be updated in place --
+        # otherwise this is exactly where a new release silently does nothing.
+        echo "no polaris-astro-sync.sh on the card: installing only what is missing."
+        echo "This card CANNOT receive updates; re-extract the current release zip."
+        i=0
+        while [ $i -lt 30 ] && [ ! -x "$ASTRO/polaris-httpd" ]; do
+            if [ -x /app/sd/polaris-astro/polaris-httpd ]; then
+                mkdir -p "$ASTRO"
+                # Every binary the daemons need. polaris-logwatch is autosolve's
+                # trigger detector and polaris-match is the guider's drift
+                # measurement -- omit either and the feature silently does nothing.
+                for _b in polaris-httpd polaris-solve polaris-solve-independent polaris-solve-independent-search polaris-exif-solve polaris-skysim-independent polaris-extract \
+                          polaris-logwatch polaris-match polaris-skysim \
+                          polaris-mount; do
+                    [ -f "/app/sd/polaris-astro/$_b" ] \
+                        && cp "/app/sd/polaris-astro/$_b" "$ASTRO"/ 2>/dev/null
+                done
+                cp /app/sd/polaris-astro/*.sh "$ASTRO"/ 2>/dev/null
+                chmod +x "$ASTRO"/* 2>/dev/null
+            fi
+            i=$((i + 1)); sleep 2
+        done
+    fi
 
     if [ ! -x "$ASTRO/polaris-httpd" ]; then
-        echo "no $ASTRO/polaris-httpd after ${i} tries -- giving up"
+        echo "no $ASTRO/polaris-httpd -- nothing installed; giving up"
         exit 0
     fi
     # The observing position is OPTIONAL now. Without it the server still starts,

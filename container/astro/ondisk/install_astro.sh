@@ -42,6 +42,35 @@ for b in polaris-solve polaris-solve-independent polaris-solve-independent-searc
     [ -f "$SRC/$b" ] || { echo "[astro] MISSING $SRC/$b" >&2; exit 1; }
     cp "$SRC/$b" "$DEST/$b"; chmod +x "$DEST/$b"
 done
+
+# ---- verify what actually landed ------------------------------------------
+# Existence checks alone are not enough: they pass against a stale binary. This
+# installer was previously "cp and hope", so re-running it over an existing
+# /app/astro could report success while leaving the OLD server in place -- the
+# same silent no-op that made new releases do nothing on already-installed
+# devices (see polaris-astro-sync.sh). If the bundle declares a manifest, compare
+# bytes and fail loudly on any mismatch.
+if [ -f "$SRC/polaris-astro.manifest" ] && command -v sha256sum >/dev/null 2>&1; then
+    drift=0
+    while IFS= read -r line; do
+        exp=${line%% *}
+        name=${line#* }
+        [ -n "$name" ] || continue
+        cur=$(sha256sum "$DEST/$name" 2>/dev/null | cut -d' ' -f1)
+        if [ "$cur" != "$exp" ]; then
+            echo "[astro] VERIFY FAILED: $name (installed hash does not match the bundle)" >&2
+            drift=$((drift + 1))
+        fi
+    done < "$SRC/polaris-astro.manifest"
+    if [ "$drift" -ne 0 ]; then
+        echo "[astro] install NOT verified: $drift file(s) differ -- refusing to claim success" >&2
+        exit 1
+    fi
+    echo "[astro] verified every manifest entry against $DEST"
+else
+    echo "[astro] NOTE: no polaris-astro.manifest in $SRC; installed files are unverified."
+    echo "[astro]       Re-extract the current release zip to get update-safe installs."
+fi
 # A native solve is not usable without its separately versioned POLCAT01 data.
 # Keep this optional so the Astrometry.net-only bundle remains installable, but
 # copy the catalogue and manifest when the bundle contains them.
