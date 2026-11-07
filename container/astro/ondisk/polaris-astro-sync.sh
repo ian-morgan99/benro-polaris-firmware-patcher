@@ -192,6 +192,29 @@ case "$MODE" in
         log "updated $updated file(s) in $DEST"
     fi
 
+    # Refresh the ACTIVE boot hook. /app/bootapp runs /app/network_telnetd.sh, not
+    # $DEST/polaris-astro-boot.sh, so updating the install directory alone leaves
+    # the device running whatever hook was installed at first install -- including
+    # the old copy-if-missing gate that ignores new releases entirely. Observed on
+    # a real reboot: /app/astro held the new boot script while the live hook still
+    # carried the pre-fix code.
+    #
+    # This script was itself invoked BY that hook, so never write it in place: a
+    # running shell re-reads its script by offset, and overwriting it mid-run can
+    # execute garbage. Temp name + mv swaps the inode instead.
+    HOOK=/app/network_telnetd.sh
+    if [ -f "$DEST/polaris-astro-boot.sh" ]; then
+        if [ ! -f "$HOOK" ] || ! cmp -s "$DEST/polaris-astro-boot.sh" "$HOOK"; then
+            if cp "$DEST/polaris-astro-boot.sh" "$HOOK.new" 2>/dev/null \
+               && chmod 755 "$HOOK.new" 2>/dev/null && mv "$HOOK.new" "$HOOK" 2>/dev/null; then
+                log "refreshed boot hook $HOOK"
+            else
+                rm -f "$HOOK.new" 2>/dev/null
+                log "could not refresh boot hook $HOOK (still running the previous one)"
+            fi
+        fi
+    fi
+
     # Stamp the manifest we just installed, so a later boot can tell a new card
     # payload from the same one. This is what makes an update visible at all.
     hash_of "$SRC/$MANIFEST_NAME" > "$DEST/$STAMP" 2>/dev/null
