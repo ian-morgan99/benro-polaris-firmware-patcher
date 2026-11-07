@@ -1,0 +1,76 @@
+=== CAMERA ===
+  PASS   connected                  Ricoh Pentax K-1 Mark II
+
+=== EXPOSURE (write, read back, restore) ===
+  FAIL   SHUTTER (268)              asked 0, camera reports 14, badge ''
+  PASS   APERTURE (275)             f/1.6 -> f/1.4 confirmed by read-back
+  PASS   ISO (265)                  6400 -> 100 confirmed by read-back
+  FAIL   EV (267)                   never settled
+  PASS   WB (266)                   Auto -> Auto confirmed by read-back
+
+=== FOCUS MODE (MF/AF chips) ===
+  PASS   switch to AF               AF active, MF cleared
+  PASS   switch back to MF          restored
+
+=== LIVE VIEW ===
+  PASS   frame streaming            720x480
+  PASS   camera name chip           shown while live view is on
+  SKIP   refreshes per frame        src stable (cached/blob)
+  PASS   turns off cleanly          {"live": false, "msg": "live view off"}
+
+=== CONTROL TAB ===
+  PASS   shutter (hold)             hold to shoot
+  PASS   record                     ● rec
+  PASS   gear                       
+  PASS   auto level                 auto level
+  PASS   framing grid               #
+  PASS   peak/histogram             ◎
+  PASS   control size               A
+  PASS   fullscreen                 ⤢
+  PASS   manual focus jog           4 buttons ['◄◄', '◄', '►', '►►']
+  PASS   jog pads                   3 pads
+
+=== MOUNT / GIMBAL (read-only) ===
+  PASS   /api/state                 aligned=False tracking=False mount_read=False
+  PASS   control link               status=up drops=0 parse_errors=0 rx=7240
+
+=== ASTRO TAB ===
+  PASS   celestial mode             wired; not pressed (moves hardware)
+  PASS   auto level                 wired; not pressed (moves hardware)
+  SKIP   compass align              disabled until prerequisites met
+  PASS   manual align               wired; not pressed (moves hardware)
+  PASS   track                      wired; not pressed (moves hardware)
+  PASS   solve                      wired; not pressed (moves hardware)
+  SKIP   goto target                disabled until prerequisites met
+  PASS   auto-focus run             wired; not pressed (moves hardware)
+  PASS   tilt compensation          wired; not pressed (moves hardware)
+  PASS   tracking rate              wired; not pressed (moves hardware)
+  PASS   dither                     wired; not pressed (moves hardware)
+  PASS   half-speed                 wired; not pressed (moves hardware)
+
+=== PROGRAMS TAB ===
+  PASS   lapse                      2 buttons, 4 fields
+  PASS   pathlapse                  4 buttons, 2 fields
+  PASS   sun                        4 buttons, 3 fields
+  PASS   grail                      4 buttons, 15 fields
+  PASS   pano                       1 buttons, 8 fields
+  PASS   hdr                        1 buttons, 2 fields
+  PASS   focus                      8 buttons, 2 fields
+  PASS   plc                        4 buttons, 4 fields
+
+=== SETTINGS TAB ===
+  PASS   site latitude              
+  PASS   site longitude             
+  PASS   device refresh             Refresh
+  PASS   camera direction           on
+  PASS   travel limits              on
+  PASS   keep Wi-Fi awake           on
+  PASS   device info populated      Firmware | 6.0.0.54.97 | Hardware | 1.1.1.2 | Astro Kit / axis | 1.0.2.14 | sv | 1 | D
+
+=== GALLERY TAB ===
+  PASS   thumbnails load            36/327 loaded
+
+==== 47 PASS, 2 FAIL, 3 SKIP ====
+  BROKEN [exposure] SHUTTER (268) -- asked 0, camera reports 14, badge ''
+  BROKEN [exposure] EV (267) -- never settled
+EXIT=1
