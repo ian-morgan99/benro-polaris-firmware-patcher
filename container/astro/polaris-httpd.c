@@ -3206,6 +3206,45 @@ static void handle(int fd) {
     qs = strchr(path, '?');
     if (qs) { *qs = 0; qs++; } else qs = (char *)"";
 
+    /* ACTING ENDPOINTS ARE POST-ONLY.
+     *
+     * Nine routes below call their side effect without ever looking at the
+     * method, so a GET performs it too. That is not theoretical: a documentation
+     * pass that GETs every /api/ route to record its response shape would stop
+     * tracking mid-session (/api/astro/track defaults `on` to 0 when the parameter
+     * is absent), leave celestial mode, kill the running job, or start an
+     * UNBOUNDED capture stack (/api/astro/capture with no shots= means shots=-1).
+     * Browsers prefetch and resubmit URLs; link unfurlers and virus scanners GET
+     * anything they are given. A control-plane endpoint must not be idempotent-by-
+     * accident.
+     *
+     * Listed here rather than gated per-handler so a new route cannot be added
+     * without passing through this list. /api/media/thumb is deliberately absent:
+     * it shells out to polaris-extract to build a cached thumbnail, but that is a
+     * read of an existing file and the gallery loads it through <img src>, which is
+     * always GET. /api/astro/autofocus is absent too -- it already answers GET with
+     * status and only acts on POST. */
+    if (strcmp(method, "POST") && strcmp(method, "PUT")) {
+        static const char *post_only[] = {
+            "/api/stop",
+            "/api/cancel",
+            "/api/astro/enter",
+            "/api/astro/leave",
+            "/api/astro/align",
+            "/api/astro/track",
+            "/api/astro/goto",
+            "/api/astro/capture",
+            "/api/prog/grail/off",
+        };
+        size_t pi;
+        for (pi = 0; pi < sizeof post_only / sizeof post_only[0]; pi++) {
+            if (!strcmp(path, post_only[pi])) {
+                respond(fd, 405, "text/plain", "POST only\n", 10);
+                return;
+            }
+        }
+    }
+
     /* Upload is the one binary-body endpoint. It must run before any form-body
      * parsing and may consume a body larger than the small request buffer. */
     if (!strcmp(path, "/api/test/upload")) {
