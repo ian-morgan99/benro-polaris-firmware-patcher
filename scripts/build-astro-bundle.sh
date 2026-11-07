@@ -19,6 +19,7 @@ FORCE=0
 ALLOW_MAIN=0
 ALLOW_DIRTY=0
 RUN_TESTS=1
+WANT_ZIP=0
 
 ORIGINAL_ARGS=("$@")
 
@@ -39,7 +40,20 @@ options:
   --allow-main               permit a development build from main
   --allow-dirty              permit uncommitted source (recorded in provenance)
   --no-tests                 skip the focused Astro test and syntax gates
+  --zip                      also emit SD-rooted zips for end users
   -h, --help                 show this help
+
+--zip writes two archives rooted so that unzipping them AT THE SD CARD ROOT
+drops each directory where the device expects it:
+
+  polaris-astro.zip      -> polaris-astro/   (binaries, scripts, manifest)
+  astrometry-indexes.zip -> astrometry/      (only if indexes were built)
+
+The astro zip is what a user replaces on every release; the index zip is a
+one-time copy and never changes between releases, so it is kept separate rather
+than re-downloaded each time. Both archives are rooted at the directory itself,
+never wrapped in a build-id folder -- a wrapper would land the payload one level
+too deep and the boot hook would silently install nothing.
 
 The normal controlled path requires the clean feature/astro-native-platesolve
 branch and writes only to out/<id> plus the ignored source cache.
@@ -97,6 +111,10 @@ while [ $# -gt 0 ]; do
       ;;
     --no-tests)
       RUN_TESTS=0
+      shift
+      ;;
+    --zip)
+      WANT_ZIP=1
       shift
       ;;
     -h|--help)
@@ -213,6 +231,68 @@ MANIFEST="$OUT/ASTRO-MANIFEST.sha256"
     done
 ) > "$MANIFEST"
 
+# The on-device manifest. ASTRO-MANIFEST.sha256 is a build-time artefact for
+# humans; polaris-astro.manifest is machine-read by polaris-astro-sync.sh at boot
+# and must therefore be relative to the astro directory itself, because that is
+# the directory the sync script hashes against.
+#
+# Without it the device can only ask "does this file exist?", which is the
+# question that let a new release install nothing at all (see the header of
+# polaris-astro-sync.sh). Listing the files here rather than in the script means
+# a bundle can add a file without editing boot code.
+ASTRO_MANIFEST="$SD_ASTRO/polaris-astro.manifest"
+(
+  cd "$SD_ASTRO"
+  {
+    for b in polaris-httpd polaris-solve polaris-solve-independent \
+             polaris-solve-independent-search polaris-exif-solve \
+             polaris-skysim-independent polaris-extract polaris-logwatch \
+             polaris-match polaris-skysim polaris-mount; do
+      [ -f "$b" ] && printf '%s\n' "$b"
+    done
+    for s in *.sh; do [ -f "$s" ] && printf '%s\n' "$s"; done
+  } | sort -u |
+    while IFS= read -r f; do sha256sum "$f"; done
+) > "$ASTRO_MANIFEST"
+
+# Fail closed. A bundle whose manifest is empty or absent cannot be updated in
+# place, and shipping one would recreate the exact silent no-op this exists to
+# prevent -- the device falls back to copy-if-missing and reports success while
+# changing nothing.
+[ -s "$ASTRO_MANIFEST" ] || die "generated $ASTRO_MANIFEST is empty"
+[ -f "$SD_ASTRO/polaris-astro-sync.sh" ] \
+  || die "bundle has no polaris-astro-sync.sh; the device cannot update in place"
+grep -q 'polaris-httpd$' "$ASTRO_MANIFEST" \
+  || die "$ASTRO_MANIFEST does not cover polaris-httpd (the web UI lives inside it)"
+
+# SD-rooted archives, built INSIDE COPY-TO-SD-CARD-ROOT so the archive entries
+# are 'polaris-astro/...' and 'astrometry/...' with no wrapper directory. A zip
+# containing '<id>/polaris-astro/' unzips one level too deep and the boot hook
+# then installs nothing while still reporting success -- the same silent failure
+# class as issue #58, caused by packaging rather than by code.
+ZIPS=""
+if [ "$WANT_ZIP" = "1" ]; then
+  command -v zip >/dev/null 2>&1 || die "--zip requested but 'zip' is not installed"
+  (
+    cd "$SD_ROOT"
+    rm -f polaris-astro.zip
+    zip -qrX polaris-astro.zip polaris-astro
+    if [ -d astrometry ]; then
+      rm -f astrometry-indexes.zip
+      zip -qrX astrometry-indexes.zip astrometry
+    fi
+  )
+  ZIPS="$SD_ROOT/polaris-astro.zip"
+  [ -f "$SD_ROOT/astrometry-indexes.zip" ] && ZIPS="$ZIPS $SD_ROOT/astrometry-indexes.zip"
+  # Prove the rooting claim instead of trusting the zip invocation: an entry that
+  # does not begin with the directory name would land in the wrong place.
+  for z in $ZIPS; do
+    base=$(basename "$z" .zip)
+    bad=$(unzip -Z1 "$z" | grep -vc "^$base/" || true)
+    [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $base/ -- would not unzip to SD root"
+  done
+fi
+
 PROVENANCE="$OUT/build-source-provenance.txt"
 {
   echo "kind=astro-bundle"
@@ -231,7 +311,13 @@ PROVENANCE="$OUT/build-source-provenance.txt"
   printf '%q ' "$0" "${ORIGINAL_ARGS[@]}"
   printf '\n'
   echo "sd_tree_manifest=$(basename "$MANIFEST")"
+  echo "astro_manifest=polaris-astro/$(basename "$ASTRO_MANIFEST")"
   echo "tests=$([ "$RUN_TESTS" = "1" ] && echo passed || echo skipped)"
+  for z in $ZIPS; do
+    echo "zip=$z"
+    echo "zip_md5=$(md5sum "$z" | cut -d' ' -f1)"
+    echo "zip_sha256=$(sha256sum "$z" | cut -d' ' -f1)"
+  done
 } > "$PROVENANCE"
 
 AFTER_STATUS="$(git -C "$ROOT" status --porcelain=v1 --untracked-files=all)"
@@ -243,4 +329,14 @@ echo "Copy the CONTENTS of $SD_ROOT to the Polaris microSD root."
 echo "Build mode: build-only; deployment was not performed."
 echo "No FwPkt was built, changed, or flashed."
 echo "Manifest: $MANIFEST"
+echo "On-device manifest: $ASTRO_MANIFEST"
+if [ -n "$ZIPS" ]; then
+  echo
+echo "SD-rooted archives (unzip each AT THE CARD ROOT, not into a subfolder):"
+  for z in $ZIPS; do
+    printf '  %-26s %s\n' "$(basename "$z")" "$(du -h "$z" | cut -f1)"
+  done
+  echo "polaris-astro.zip replaces the existing one on every release."
+  echo "astrometry-indexes.zip is a one-time copy; it does not change between releases."
+fi
 echo "Provenance: $PROVENANCE"

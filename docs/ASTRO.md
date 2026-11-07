@@ -96,7 +96,95 @@ Then run `install_astro.sh` on the device once (over SSH), or — with no SSH at
 all — patch the firmware with `--astro-autostart` (below) so it self-installs.
 A `site.conf` is optional now: the location can be set from the web app.
 
+## End-user release: two zips, unzipped at the SD root
+
+End users have no PC-side tooling and no SSH. They do what the Benro process
+already tells them to do: copy a file onto the microSD card and unzip it there.
+The device has `/usr/bin/unzip`, the card is mounted `vfat` with `fmask=0022` so
+extracted files land `755`, and binaries execute straight off the card — so this
+works without any helper on the user's computer.
+
+`--zip` emits archives rooted for exactly that:
+
+```sh
+./scripts/build-astro-bundle.sh --id astro-native-platesolve-test --zip
+```
+
+```
+out/<id>/COPY-TO-SD-CARD-ROOT/polaris-astro.zip        -> polaris-astro/
+out/<id>/COPY-TO-SD-CARD-ROOT/astrometry-indexes.zip  -> astrometry/
+```
+
+Both are rooted at the directory itself, never wrapped in a `<id>/` folder. The
+builder proves this rather than trusting the `zip` call: any entry not beginning
+with the directory name fails the build, because a wrapper would unpack one level
+too deep and the boot hook would then install nothing while still reporting
+success — issue #58 caused by packaging instead of code.
+
+What the user does:
+
+1. Copy `polaris-astro.zip` to the SD root and unzip it there. Repeat on every
+   release; it replaces the existing `polaris-astro/`.
+2. **First time only:** copy `astrometry-indexes.zip` and unzip it. The indexes
+   are ~44 MB and never change between releases, so they are deliberately kept
+   out of the per-release archive rather than re-downloaded each time.
+3. Reboot. No SSH, no install script.
+
+### Why updates used to silently do nothing
+
+The boot hook installed the stack only when `/app/astro/polaris-httpd` did not
+already exist:
+
+```sh
+while [ $i -lt 30 ] && [ ! -x "$ASTRO/polaris-httpd" ]; do
+    cp /app/sd/polaris-astro/$_b "$ASTRO"/
+```
+
+Once that file existed the SD copy was never read again — no version compare, no
+checksum. A user who unzipped a new release over the old one got **no change and
+no error**, because the device was already satisfied by whatever it had installed
+on first boot. This is the same failure class as issue #58 ("staged `FwPkt.zip`,
+rebooted, came back on `.66`") and it is invisible: every step is green. It also
+bit us in development — `/app/astro` and `/app/sd/polaris-astro` sat at identical
+hashes for weeks, so a rebuilt `polaris-httpd` never reached the running server.
+
+So compare bytes instead of asking whether a file exists. The bundle ships
+`polaris-astro.manifest` (sha256 of every load-bearing file, relative to the astro
+directory) and `polaris-astro-sync.sh` re-copies only what differs, verifies after
+copying, and refuses to stamp a partial install so the next boot retries.
+
+```sh
+# on the device, read-only
+/app/sd/polaris-astro/polaris-astro-sync.sh verify /app/sd/polaris-astro /app/astro
+# 0 in sync, 1 drifted (names the files), 2 no manifest so it cannot tell
+```
+
+`install_astro.sh` gained the same verification: it no longer reports success
+after a plain `cp`, because existence checks pass against a stale binary.
+
+A card carrying an **older** bundle has no manifest. It still boots — the hook
+falls back to the historical copy-if-missing — but it prints that the bundle
+cannot be updated in place, because that is exactly the state in which a new
+release changes nothing. Re-extracting a current zip fixes it permanently.
+
+`container/test_astro_inplace_update.sh` covers all of this (34 assertions) and is
+picked up automatically by `tests/run_deterministic.sh`. It was also exercised on
+real ARM binaries on the device, in a scratch directory, confirming that replacing
+`polaris-httpd` on the card actually replaces the installed one.
+
 ### Zero-SSH install — bake the astro stack into the firmware
+
+> **NOT IMPLEMENTED.** `--astro-autostart` appears in this document and in
+> `docs/analysis/astro-mode-overview.md`, and nowhere in code: `git grep -l
+> "astro-autostart"` returns only those two files, and `patch-polaris.sh` accepts
+> `--fwpkt --camlibs --out --build-id --display-fwver --ssh-key --image` and no
+> astro option. Do not follow the commands below expecting them to work; use the
+> two-zip flow above, which is what actually ships today. The design is kept here
+> because it is still the right shape — see "Why the tree, not the zip" in
+> `docs/FIRMWARE-INSTALL-PROCESS.md` for why loose files inside `FwPkt/` install
+> nowhere: the packet is consumed as six partition images listed in
+> `firmwareInfo`, so astro would have to be repacked into `appfs.ubifs` at build
+> time (binaries are 2.1 MB against a 64 MB appfs, so it fits comfortably).
 
 The simplest setup: bake the whole astro stack into the patched firmware, so the
 SD card carries only the (large, static) index files. Two things reach the card —
