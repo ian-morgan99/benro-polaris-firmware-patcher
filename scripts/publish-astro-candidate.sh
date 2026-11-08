@@ -88,6 +88,34 @@ else
   cp "$BUILD/FwPkt.zip" "$PR_CHECKOUT/$DEST/"
   cp "$BUILD/astro-bundle.tar.gz" "$PR_CHECKOUT/$DEST/"
 fi
+
+# The two SD-rooted archives are what a user actually copies onto the card, so they
+# belong at the top of the publication beside FwPkt.zip rather than only inside
+# astro-bundle.tar.gz. Before this, reaching polaris-wifi.zip meant untarring the
+# bundle first, and the archive that had been verified to unzip at the card root was
+# not the artifact anyone was handed.
+#
+# Guarded by the same refuse-to-replace rule as FwPkt.zip: once bytes are public they
+# must not change silently under the same candidate name.
+SD_ROOT="$BUILD/astro-bundle/COPY-TO-SD-CARD-ROOT"
+for sdzip in polaris-astro.zip polaris-wifi.zip; do
+  [ -f "$SD_ROOT/$sdzip" ] || continue
+  if [ "$EXISTING" = 1 ] && [ -f "$PR_CHECKOUT/$DEST/$sdzip" ]; then
+    cmp -s "$SD_ROOT/$sdzip" "$PR_CHECKOUT/$DEST/$sdzip" \
+      || die "refusing to replace published $sdzip bytes for existing candidate: $DEST"
+  else
+    cp "$SD_ROOT/$sdzip" "$PR_CHECKOUT/$DEST/"
+  fi
+done
+ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""
+[ -f "$PR_CHECKOUT/$DEST/polaris-astro.zip" ] && \
+  ASTRO_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-astro.zip" | awk '{print $1}')
+[ -f "$PR_CHECKOUT/$DEST/polaris-wifi.zip" ] && \
+  WIFI_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-wifi.zip" | awk '{print $1}')
+SD_ROWS=""
+[ -n "$ASTRO_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-astro.zip SHA-256 | \`$ASTRO_ZIP_SHA\` |"$'\n'
+[ -n "$WIFI_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-wifi.zip SHA-256 | \`$WIFI_ZIP_SHA\` |"$'\n'
+
 cp "$MANIFEST" "$PR_CHECKOUT/$DEST/"
 for file in install-manifest.json build-source-provenance.txt release-change-manifest.json \
   RELEASE-IDENTITY.md shared-camera-gate.txt astro-test-transcript.txt install-status.txt \
@@ -101,12 +129,20 @@ This is a separately published Astro candidate. The FwPkt uses the shared
 camera baseline recorded in astro-candidate-manifest.json; the Astro solver,
 catalogue and indexes are in astro-bundle.tar.gz.
 
+To install, unzip polaris-astro.zip and polaris-wifi.zip at the SD card root, not
+into a subfolder. Both archives are rooted at their own directory with no wrapper,
+so they expand to polaris-astro/ and polaris-wifi/ directly on the card. astro-bundle.tar.gz
+contains the same trees plus licences and manifests, for inspection rather than
+for copying onto the card.
+
 | field | value |
 |---|---|
 | candidate | $ID |
 | display firmware version | $DISPLAY_FWVER |
 | FwPkt SHA-256 | $ACTUAL_SHA |
 | FwPkt MD5 | $ACTUAL_MD5 |
+$SD_ROWS| patcher commit | $PATCHER_SHA |
+| libgphoto2 commit | $LIBG_SHA |
 | patcher commit | $PATCHER_SHA |
 | libgphoto2 commit | $LIBG_SHA |
 | status | $STATUS |
