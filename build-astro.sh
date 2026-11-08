@@ -67,6 +67,30 @@ done
 case "$OUT" in /*) ;; *) OUT="$HERE/$OUT";; esac
 case "$SRCCACHE_DIR" in /*) ;; *) SRCCACHE_DIR="$HERE/$SRCCACHE_DIR";; esac
 SD_ASTRO="$OUT/COPY-TO-SD-CARD-ROOT/polaris-astro"
+SD_WIFI="$OUT/COPY-TO-SD-CARD-ROOT/polaris-wifi"
+
+# Any non-zero exit must leave NO copyleft binaries in the card tree.
+#
+# The corresponding-source step runs AFTER the container has already copied
+# polaris-solve / polaris-skysim into COPY-TO-SD-CARD-ROOT, so every failure path
+# between the build and that step -- a wifi binary that did not land, a missing
+# catalogue package, a cold source cache, the final zip-rooting check -- would
+# otherwise leave GPL v2 / LGPL section 4 binaries sitting in a bundle that looks
+# finished. Copying that directory onto an SD card while ignoring the exit code
+# ships them with no source.
+#
+# One EXIT trap rather than a cleanup at each call site, deliberately: the wifi
+# checks used to `exit 1` here, long before no_source() was defined further down,
+# so that path shipped the binaries anyway. tests/test_plate_solving_present.py::
+# test_incomplete_bundle_drops_gpl_binaries caught it. A trap cannot be bypassed by
+# a new early exit added later.
+drop_copyleft_binaries(){
+  rm -f "$SD_ASTRO/polaris-solve" "$SD_ASTRO/polaris-skysim" \
+        "$SD_ASTRO/SOURCE-OFFER.txt" "$SD_ASTRO/COPYING-GPL-2.txt" 2>/dev/null || true
+  rm -f "$SD_WIFI/wpa_supplicant" "$SD_WIFI/wpa_cli" \
+        "$SD_WIFI/wpa_passphrase" "$SD_WIFI/iw" 2>/dev/null || true
+}
+trap 'astro_rc=$?; if [ "$astro_rc" != 0 ]; then drop_copyleft_binaries; fi' EXIT
 
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
@@ -195,14 +219,10 @@ SD_WIFI="$OUT/COPY-TO-SD-CARD-ROOT/polaris-wifi"
 
 no_source(){
   echo "error: $1" >&2
-  rm -f "$SD_ASTRO/polaris-solve" "$SD_ASTRO/polaris-skysim" \
-        "$SD_ASTRO/SOURCE-OFFER.txt" "$SD_ASTRO/COPYING-GPL-2.txt" 2>/dev/null || true
-  # Same reasoning for the wifi kit: statically linked libnl with no source is an
-  # LGPL §4 violation, so the binaries come out of the bundle too.
-  if [ -d "$SD_WIFI" ]; then
-    rm -f "$SD_WIFI/wpa_supplicant" "$SD_WIFI/wpa_cli" \
-          "$SD_WIFI/wpa_passphrase" "$SD_WIFI/iw" 2>/dev/null || true
-  fi
+  # Removal itself is handled by the EXIT trap above, which covers every non-zero
+  # exit path. Called here too so the message below stays truthful even if the
+  # trap is ever changed -- rm -f makes it idempotent.
+  drop_copyleft_binaries
   echo "       Removed the GPL/LGPL binaries from the bundle: shipping copyleft" >&2
   echo "       binaries without corresponding source is a §3/§4 violation." >&2
   echo "       Re-run without --src-cache, or point it at a cache used for a real build." >&2
