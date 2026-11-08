@@ -14,6 +14,106 @@ That produced real failures, all recorded below. This file plus the wiring in
 `scripts/build-release-candidate.sh` is the fix: every build now prints the exact
 install command for the candidate it just produced.
 
+## Two routes: systematic and manual
+
+There are two ways anything reaches a Polaris, and conflating them has caused real
+failures. They differ in who can perform them, what they cover, and what proof they
+produce. Pick by audience, not by convenience.
+
+| | **Systematic** (agent / developer) | **Manual** (end user) |
+|---|---|---|
+| Who | Us, with a PC, SSH and this repo | Anyone, with the microSD card only |
+| Needs | Host tooling, SSH to the device, `git` checkout | Nothing but the card and the camera |
+| Firmware (`FwPkt`) | `scripts/release/release-fwpkt.sh` | Copy/extract `FwPkt/` to SD root, reboot |
+| Astro + Wi-Fi kits | `scp`/rsync into `/app/sd/…`, or re-flash | Copy the zip to SD root, unzip there |
+| Proof produced | MD5s on-device, uptime reset, `build_id`, both source commits, mandatory file SHA-256s | Version screen only — **no proof of a flash** |
+| Failure mode | Fails closed at six phases | Silent: installs nothing and looks fine (#58) |
+
+**The systematic route is the only supported one for firmware.** Everything below
+this section describes it. The manual route is documented because users must have one
+and because we keep writing instructions that assume SSH they do not have — but it
+carries no verification, so a manual install is never evidence of an installed build.
+
+### Why "copy the zip and reboot" is not enough for FwPkt
+
+The on-boot watcher runs `SP_UpgradeCheckFw` against the **extracted tree** at
+`/app/sd/FwPkt/`. A bare `FwPkt.zip` sitting there is ignored. This is issue #58 and
+it has bitten repeatedly:
+
+> `.67` first attempt staged `FwPkt.zip` and rebooted; the device came back on
+> `.66` with the zip untouched and `--verify-only` returned `not-installed`.
+
+Note what makes this dangerous rather than merely broken: nothing reports it. The
+device boots normally, the version screen shows the old build, and if you are not
+looking for the version you conclude the install worked.
+
+### What a manual route user actually does
+
+`FwPkt.zip` is rooted at `FwPkt/`, so extracting it at the SD root produces exactly
+the tree the watcher wants — `/app/sd/FwPkt/camera/{config,uImage,rootfs.ubifs,
+appfs.ubifs}`. The reboot alone is the trigger; no marker file or command is needed.
+
+1. Copy `FwPkt.zip` to the SD root and **extract it there**, so the card ends up with
+   a `FwPkt/` folder, not a zip. On Windows/macOS double-click works; the device also
+   has `/usr/bin/unzip` (busybox) if they can reach it.
+2. Copy `polaris-astro.zip` and `polaris-wifi.zip` to the SD root and extract each.
+   Both are rooted at their own directory, so they expand to `polaris-astro/` and
+   `polaris-wifi/`. Repeat every release. If the release also carries
+   `astrometry-indexes.zip`, extract that once — it is ~44 MB and never changes.
+3. Reboot. The watcher flashes from `/app/sd/FwPkt/`, then the boot hook installs the
+   astro stack. Wi-Fi auto-join stays off until the user creates
+   `/app/sd/polaris-wifi/autojoin`.
+
+The card mounts `vfat` with `fmask=0022`, so extracted files land `755` and binaries
+execute straight off the card — no helper on the user's computer is required.
+
+Check the release directory before writing instructions for a specific candidate:
+`astro-v99-wifi-20261108` ships its catalogue as `polaris-astro/catalogue-tiles.ptri`
+*inside* `polaris-astro.zip` and publishes no `astrometry-indexes.zip`, whereas earlier
+candidates published the indexes separately. Telling a user to fetch a file that is not
+in their release is its own kind of silent failure.
+
+### What the manual route cannot do, and what we must say instead
+
+- **It cannot verify.** The device has `sha256sum`, `md5sum`, `cmp` and `unzip`, so a
+  determined user could check digests against the release README — but that is not a
+  supported step and nobody should be told their install "worked" without it.
+- **It cannot prove the flash happened.** A link flap or a failed watcher looks
+  identical to a successful boot from the outside. See the traps section below.
+- **It cannot roll back.** There is no automatic fallback; recovery means re-flashing
+  a known-good packet by the same route.
+
+So when writing user-facing instructions, state the expected version string and tell
+them to read it back on the app's info screen. That is the only check available to
+them, and pretending otherwise has already produced false "installed" reports.
+
+### What the published README now says, and why it changed
+
+`scripts/publish-astro-candidate.sh` generates the candidate README. Before this
+change it told readers to "unzip polaris-astro.zip and polaris-wifi.zip at the SD card
+root" and said nothing about `FwPkt`, while its closing line pointed at the systematic
+route. That left a user with instructions that install the astro stack and silently do
+nothing about the firmware — the exact shape of #58, produced by documentation rather
+than code.
+
+The template now states both routes explicitly: Route A (SD card only) covers extracting
+`FwPkt/`, the two kit archives, rebooting, and **reading the version back in the app**;
+Route B gives the `release-fwpkt.sh` command. The version string is interpolated from
+`$DISPLAY_FWVER`, so the check a user can actually perform is stated in the artifact they
+hold.
+
+Two caveats on Route A that we should not paper over:
+
+- It is **not** independently tested end-to-end. The mechanism is verified — `FwPkt.zip`
+  is rooted at `FwPkt/`, so extraction at the SD root yields the tree the watcher reads,
+  and `/usr/bin/unzip` plus `fmask=0022` were confirmed on-device — but nobody has run
+  the whole user sequence on a fresh card and confirmed the flash. Until that happens,
+  Route A is documented as *what a user with no other option must do*, not as a supported
+  install.
+- It produces **no proof**. If a candidate needs verified installation, it requires
+  Route B in a supervised window. The README's "do not install until…" gate still applies
+  to both routes and has not been relaxed.
+
 ## The one command
 
 ```sh
