@@ -260,6 +260,25 @@ done
 
 tar -C "$OUT/astro-bundle" -czf "$OUT/astro-bundle.tar.gz" .
 
+# Verify the finished archives, from inside this producer, on every run.
+#
+# The checks above are per-archive and hand-written here. This runs the whole
+# archive-level contract -- CRC, traversal and symlink members, non-empty copyleft
+# text, executable modes, and that every sibling a shipped script references exists
+# in some shipped kit -- against the bytes that were just produced.
+#
+# It has to be called from here. A gate that only runs when someone remembers to
+# run it is not a gate: that is precisely how .99 shipped with the licence check
+# present in the tree and never executed (issue #286), and how the astro kit shipped
+# seven scripts at 0644 while the wifi chmod ran (issue #292).
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$ROOT/scripts/verify-published-astro-candidate.py" "$OUT" \
+    --json "$OUT/astro-bundle/artifact-conformance.json" \
+    || die "produced archives failed the artifact conformance gate -- see above"
+else
+  die "python3 is required to verify the produced archives"
+fi
+
 echo "[3/7] generating immutable FwPkt install manifest"
 python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT" \
   --ubireader "${UBIREADER_EXTRACT_FILES:-/home/ian/.local/bin/ubireader_extract_files}"

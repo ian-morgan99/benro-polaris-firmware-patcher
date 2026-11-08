@@ -11,6 +11,7 @@ and silently does nothing in CI, which is the same failure mode being fixed.
 """
 
 import os
+import shutil
 import stat
 import subprocess
 import sys
@@ -250,3 +251,90 @@ def test_build_astro_chmods_astro_kit():
     assert 'chmod 755 "$SD_ASTRO"/*.sh' in src
     # And it must be paired with an assertion, not just a best-effort chmod.
     assert "not executable -- boot's [ -x ] test would skip it" in src
+
+
+def test_both_producers_invoke_the_gate():
+    """A gate nobody calls is not a gate.
+
+    This turns #292's own bug class back on the fix.  The licence check in
+    scripts/build-astro-bundle.sh was an ancestor of the patcher commit recorded
+    in .99's provenance and never ran, because the release was built by
+    scripts/build-astro-candidate.sh, which does not call the wrapper.  Shipping a
+    verifier that only works when someone remembers to run it reproduces that
+    failure with extra steps.
+
+    Checked on both producers, so dropping the call from either one fails here.
+    """
+    for name in (os.path.join("scripts", "build-astro-candidate.sh"),
+                 os.path.join("scripts", "build-astro-bundle.sh")):
+        src = open(os.path.join(ROOT, name), encoding="utf-8").read()
+        assert "verify-published-astro-candidate.py" in src, (
+            f"{name} produces kit archives but never runs the artifact gate"
+        )
+        # It must be able to abort the build.  A bare call whose status is
+        # discarded prints FAIL and then ships the bytes anyway.
+        tail = src[src.index("verify-published-astro-candidate.py"):][:400]
+        assert "die" in tail, f"{name} runs the gate but ignores its exit status"
+
+
+def test_gate_runs_after_the_archives_exist():
+    """Calling the verifier before the archives exist would pass vacuously.
+
+    The verifier reports NOT_APPLICABLE for an absent archive rather than failing,
+    so a call placed too early prints a green verdict over nothing at all -- which
+    is the same shape of bug as a [ -f ] guard that silently skips.
+    """
+    src = open(os.path.join(ROOT, "scripts", "build-astro-candidate.sh"),
+               encoding="utf-8").read()
+    call = src.index('python3 "$ROOT/scripts/verify-published-astro-candidate.py"')
+    assert src.index("zip -qrX polaris-wifi.zip") < call, (
+        "gate runs before polaris-wifi.zip is created"
+    )
+    assert src.index('tar -C "$OUT/astro-bundle"') < call, (
+        "gate runs before astro-bundle.tar.gz is created"
+    )
+
+
+def test_the_wired_block_actually_aborts(tmp_path):
+    """The wiring must stop a build, not just print a warning.
+
+    Text assertions can be satisfied by a call whose exit status is thrown away,
+    which prints FAIL and ships the bytes anyway.  So extract the block from the
+    real script -- not a hand-written copy -- run it against a candidate tree
+    whose wifi archive is missing its licence, and require a non-zero status.
+    """
+    src = open(os.path.join(ROOT, "scripts", "build-astro-candidate.sh"),
+               encoding="utf-8").read()
+    start = src.index("if command -v python3 >/dev/null 2>&1; then\n"
+                      '  python3 "$ROOT/scripts/verify-published-astro-candidate.py"')
+    end = src.index("\nfi\n", start) + len("\nfi\n")
+    block = src[start:end]
+    assert "die" in block, "extracted block cannot abort"
+
+    root = tmp_path / "root"
+    (root / "scripts").mkdir(parents=True)
+    shutil.copy(VERIFIER, root / "scripts" / "verify-published-astro-candidate.py")
+
+    out = tmp_path / "out"
+    sd = out / "COPY-TO-SD-CARD-ROOT" / "polaris-wifi"
+    sd.mkdir(parents=True)
+    (sd / "wpa_supplicant").write_text("#!/bin/sh\n")
+    (sd / "wpa_supplicant").chmod(0o755)
+    with zipfile.ZipFile(out / "COPY-TO-SD-CARD-ROOT" / "polaris-wifi.zip", "w") as zf:
+        zf.writestr("polaris-wifi/wpa_supplicant", "#!/bin/sh\n")
+    (out / "astro-bundle.tar.gz").write_bytes(b"\x1f\x8b stub")
+
+    harness = tmp_path / "harness.sh"
+    harness.write_text(
+        "#!/bin/sh\n"
+        f'ROOT="{root}"\nOUT="{out}"\n'
+        'die() { echo "ABORTED: $*" >&2; exit 1; }\n'
+        + block + "\nexit 0\n"
+    )
+    harness.chmod(0o755)
+
+    proc = subprocess.run(["/bin/sh", str(harness)], capture_output=True, text=True)
+    assert proc.returncode != 0, (
+        "the gate ran against a licence-less archive and the build continued anyway"
+    )
+    assert "ABORTED" in proc.stderr

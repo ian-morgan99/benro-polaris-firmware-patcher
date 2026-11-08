@@ -25,6 +25,19 @@
   executable `polaris-goto-solve.sh`. The wifi kit already had a `chmod 755`; the
   astro kit never did. Fixed in `build-astro.sh`, which both producers call,
   with an assertion on the entry-point scripts rather than a best-effort chmod.
+- **The gate is now invoked by both producers.** Writing a verifier and leaving it
+  to be run by hand reproduces the original failure with extra steps, so
+  `scripts/build-astro-candidate.sh` and `scripts/build-astro-bundle.sh` each call
+  it after their archives exist and `die` if it returns non-zero. Each also writes
+  `artifact-conformance.json` beside its output, which is #292 section D's artifact.
+  Enforcement was proved behaviourally: the wired block is extracted from the real
+  script at test time and run against a candidate tree whose wifi archive has no
+  licence, and it must exit non-zero. A text assertion alone could be satisfied by
+  a call whose status is discarded — which prints FAIL and ships the bytes anyway.
+- Two preconditions block running `build-astro-candidate.sh` end to end from a
+  feature branch: it requires `feature/astro-native-platesolve` and a completely
+  clean tree. That is correct for releases and is why the wiring is proved by
+  extracting and executing the real block rather than by a full candidate run.
 - Verified against real archives: RED (exit 1, 8 failures) on the published
   `out/astro-v99-wifi-20261108` — naming all five missing wifi files, both
   `udhcpc.script` drift references and the seven non-executable scripts.
