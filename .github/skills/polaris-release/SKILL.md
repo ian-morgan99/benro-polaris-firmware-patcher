@@ -11,11 +11,32 @@ runtime binaries into `/app`, or publish a ZIP without provenance.
 
 ## Required command
 
-From the patcher repository root:
+Resolve the two inputs first. Do not guess their paths and do not conclude either
+is absent from a glob you chose yourself:
+
+```sh
+eval "$(./scripts/resolve-release-inputs.sh --shell)"
+# or, when more than one clean libgphoto2 tree exists, pick one deliberately:
+POLARIS_LIBGPHOTO2=/path/to/the/tree/you/want ./scripts/resolve-release-inputs.sh
+```
+
+It prints `POLARIS_STOCK_FWPKT` and `POLARIS_LIBGPHOTO2`, or explains exactly why
+it could not. Several sessions asserted "the stock firmware is not present" and
+"there is no clean libgphoto2 checkout" and treated the release as blocked; both
+claims were false every time, because the lookup searched the wrong tree by the
+wrong name. The inputs have always been on disk. Ask the script, not memory.
+
+It refuses to choose between two usable libgphoto2 trees rather than picking one,
+because a version is bound to one exact commit set and silently building from the
+stale tree would produce a version describing commits that were never compiled.
+The trees here live in *different repositories*, so their `behind origin/main`
+counts are not comparable to each other — read the printed sha and date and choose.
+
+Then build:
 
 ```sh
 ./scripts/build-release-candidate.sh \
-  <candidate-id> <stock-FwPkt.zip-or-dir> <clean-libgphoto2-main> [build-id] \
+  <candidate-id> "$POLARIS_STOCK_FWPKT" "$POLARIS_LIBGPHOTO2" [build-id] \
   --change-summary docs/templates/release-change-summary.json
 ```
 
