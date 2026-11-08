@@ -172,7 +172,13 @@ def main():
                         sel.dispatchEvent(new Event('change',{bubbles:true}));""", g, want)
             settled = None
             seen_badges = []
-            for _ in range(30):
+            # Must exceed the webui's own bound or a correctly-bounded control is
+            # reported as stuck. app.js clears a pending intent at
+            # EXPO_SET_TIMEOUT_MS (25000) + EXPO_MESSAGE_MS (8000) = ~33 s, so a
+            # 30 s window closes 3 s early and 'pending never cleared' is an
+            # artefact of the harness, not a defect. That exact mistake produced
+            # a wrong "unbounded" claim on issue #147 on 2026-11-07.
+            for _ in range(45):
                 time.sleep(1)
                 st = js(sess, """var got=S.ops[arguments[0]]; var idx=null;
                     if(got){var po=parseOptions(got.args); if(po)idx=po.index;}

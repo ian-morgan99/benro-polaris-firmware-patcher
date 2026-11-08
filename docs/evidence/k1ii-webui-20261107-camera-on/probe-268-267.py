@@ -18,8 +18,11 @@ It answers three questions the audit left open:
   1. What are the real option strings for 268 and 267, and is index 0 bulb?
   2. Does 268 report a different index because the body clamps the write, or
      because the webui mis-parses the reply?
-  3. Does 267's write ever produce a reply at all (the audit saw "never
-     settled", i.e. pending never cleared)?
+  3. Does 267's write ever produce a `ret:` reply at all? The audit saw it time
+     out to "not applied" rather than get refused, which means no reply arrived
+     within EXPO_SET_TIMEOUT_MS. (Note: pending DOES clear, at ~33 s -- see the
+     README. An earlier version of this file said "pending never cleared", which
+     was wrong: the audit polled for 30 s and stopped 3 s before the delete.)
 """
 import json
 import os

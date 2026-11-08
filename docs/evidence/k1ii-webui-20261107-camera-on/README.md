@@ -61,26 +61,39 @@ and reported it correctly`. The body declined because of its dial mode; the app 
 three times and said so. Nothing to fix here. This matches the manual's guidance that
 "camera refused" is usually the camera, not the page.
 
-### EV (267) — a real defect, and a different one than I first described
+### EV (267) — bounded correctly. My "unbounded" claim here was WRONG; retracted.
 
-The badge timeline is now visible:
+The badge timeline:
 
 ```
 t+01..t+24  'EV: applying…'      (24 consecutive samples)
 t+25..t+30  'EV: not applied'    (6 consecutive samples)
-pending never cleared within the 30 s window
+harness window ended at t+30
 ```
 
-Three things follow, none of which the earlier verdict captured:
+I published that as "`S.expoPending` never clears — nothing bounds it". It is bounded, and
+**my own captured data proves it**. From `container/astro/webui/app.js` on main:
 
-1. **`S.expoPending` never clears.** The control stays pending past its own retry budget,
-   so the slot is stuck rather than settled. That is a genuine bug and matches #147's
-   invariant "preview failure is bounded and cancellable" — here nothing bounds it.
-2. **The final text is `not applied`, not `refused`.** So this is a distinct error class
-   from 268's refusal, and the harness previously conflated them by only ever looking for
-   the word "refused".
-3. **`applying…` for ~24 s with no reply** suggests the request was sent and nothing came
-   back, rather than the body actively saying no.
+| Constant | Line | Effect |
+|---|---|---|
+| `EXPO_SET_TIMEOUT_MS = 25000` | 715 | `now - sentAt > 25000` → `state = 'timeout'` → paints `not applied` |
+| `EXPO_MESSAGE_MS = 8000` | 718 | `endedAt + 8000` → `delete S.expoPending[key]` |
+
+So pending is deleted at **~33 s**. My harness polled for **30 s** — it stopped 3 s before
+the delete and I read that as "never clears". The timeline matches the code exactly:
+`applying…` until t+25 (the 25 s timeout), `not applied` from t+25 onward, cleared at t+33.
+Nothing is stuck. #147's "bounded and cancellable" invariant **holds** on this path.
+
+What is real, and worth keeping:
+
+1. **The final text is `not applied`, not `refused`.** A distinct error class from 268's
+   refusal: the write got no reply at all within 25 s, rather than the body actively
+   saying no. The earlier harness conflated these by only matching the word "refused".
+2. **`applying…` for ~24 s with no `ret:` reply** means the request went out and nothing
+   came back. That is a genuine camera-side or transport-side silence, and it is the
+   distinction #146/#147 triage turns on — *camera said no* versus *we never got a reply*.
+3. **25 s of "applying…" is a long time to wait** before admitting nothing arrived. That
+   is a UX observation, not the invariant failure I originally claimed.
 
 ### The same EV write behaved differently in two runs — do not pick one story
 
@@ -97,16 +110,21 @@ The fixed audit, writing the same index on the same build minutes later, saw:
 t+01..t+24 'EV: applying…'   t+25..t+30 'EV: not applied'   pending never cleared
 ```
 
-Same control, same target value, two different outcomes: a bounded refusal that settled,
-versus an unbounded stall ending in `not applied`. **Which one occurs is state-dependent
-and I have not established what drives it** — candidate causes are body dial mode, whether
-live view was active, or how long the session had been running. Recording the discrepancy
-rather than resolving it, because #147's core requirement is exactly this: permanent and
-transient errors must be classified, and a control that sometimes refuses cleanly and
-sometimes hangs forever cannot be classified by the caller.
+Same control, same target value, two different outcomes — **both bounded**, settling at
+t+12 with `camera refused` and at ~t+33 with `not applied` respectively. I described the
+second as "an unbounded stall" and "hangs forever"; both phrasings were wrong for the same
+reason as above, and are retracted.
 
-That non-determinism is the reportable defect for #146/#147, not the single verdict any
-one run happens to print.
+What remains genuinely open is narrower and still worth reporting: **the same write
+dometimes gets a reply (`ret:` → refusal after retries) and sometimes gets no reply at all
+(timeout)**. That is a real difference in what the camera does, it is state-dependent, and I
+have not established what drives it — candidates are body dial mode, whether live view was
+active, or how long the session had been running. It matters for #146/#147 because the two
+cases surface as different text (`camera refused` vs `not applied`) and a caller cannot tell
+*why* nothing landed, only that it didn't.
+
+So the reportable finding is the **reply/no-reply ambiguity**, not an unbounded state. The
+state machine itself is correct.
 
 ## Harness bug found and fixed (was corrupting these verdicts)
 
