@@ -1,0 +1,56 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v97-liveview-diag-20261106",
+    "libgphoto2_commit": "3fb26e536ac169e4970d69516a9d45daf62563f5",
+    "libgphoto2_ref": "ian-morgan99/libgphoto2 main. UNCHANGED from v97: this candidate re-pins the identical driver commit rather than advancing it. Driver main has since gained one commit (7e6dec95f383ba5902ed2a7ee6c11cd48a359188, documentation only), but there is no reason to take it here -- every change in this release is patcher-side, so advancing the pin would add driver risk for nothing. Carries #233 capability row and #235 K-1 II shutter gate from PR #144, the deferred-Bulb cancellation fix from PR #139, and the K-3 III Bulb shutter-list synthesis (#241).",
+    "patcher_commit": "ae53cd959559565f2b0f5555acb4789e65930df8",
+    "patcher_ref": "feature/astro-native-platesolve, 53 commits ahead of bf1aad4c1067338b859643b264e7d5cda2b213b9 (the tree astro-v97 was built from).",
+    "previous_candidate_pins": {
+      "v97_libgphoto2": "3fb26e536ac169e4970d69516a9d45daf62563f5",
+      "v97_patcher": "bf1aad4c1067338b859643b264e7d5cda2b213b9"
+    }
+  },
+  "purpose": "Ship the station-mode Wi-Fi kit as its own SD-rooted archive alongside polaris-astro.zip, and carry forward the web UI changes that stop it claiming a camera write succeeded when the head actually rejected it. The libgphoto2 driver pin is identical to v97, so the camera payload should match v97 byte for byte and be verifiable against v97's install manifest.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "The astro bundle build now cross-builds libnl, iw and wpa_supplicant and ships them as polaris-wifi.zip, rooted at polaris-wifi/ so it unzips at the card root. The boot hook starts auto-join only when /app/sd/polaris-wifi/autojoin exists and polaris-autojoin.sh is executable, so the build fails closed if either the kit or that script is missing rather than installing silently nothing. setup-wifi.sh writes a PSK hash with mode 600, never puts the passphrase on a command line where ps would show it, and strips the plaintext copy wpa_passphrase emits as a comment.",
+      "issues": ["273"]
+    },
+    {
+      "component": "patcher",
+      "summary": "Copyleft notices now travel inside polaris-wifi.zip rather than only in the bundle's licenses/ directory, which sits outside COPY-TO-SD-CARD-ROOT and therefore never reaches a user who copies just that archive. libnl is LGPL-2.1 and is linked statically into all four wifi binaries, so section 4 requires the offer to accompany them. LICENCE-wifi.txt names the exact versions built and their upstream URLs, derived from the tarball filenames actually present so the text cannot drift from the artifacts beside it.",
+      "issues": []
+    },
+    {
+      "component": "patcher",
+      "summary": "The Astro web UI reconciles camera writes instead of assuming they landed. The head answers ok:true and then reports the truth in a trailing ret: field, so a write the camera dropped is now retried and reported as not applied rather than painted with the value the user chose. Also: acting endpoints no longer fire on GET, and the connected camera's name is shown over the live frame.",
+      "issues": ["233", "235"]
+    },
+    {
+      "component": "patcher",
+      "summary": "install_astro.sh refreshes an already-installed boot hook when the payload updates, so a re-release takes effect instead of the SD copy being ignored because /app/astro/polaris-httpd already existed.",
+      "issues": []
+    },
+    {
+      "component": "docs",
+      "summary": "scripts/resolve-release-inputs.sh resolves the stock FwPkt and a clean libgphoto2 main, and refuses to choose between two usable trees rather than picking one silently. The release skill now makes it the first step, because several sessions asserted the stock firmware was absent when it had been on disk the whole time.",
+      "issues": []
+    }
+  ],
+  "known_limits": [
+    "Exposure compensation (267) still fails on the K-1 II. Reproduced 2026-11-07 against the v97 camera stack verified by binary hash: no reply at all, pending never cleared, badge sequence EV: applying x24 then EV: not applied x6, while ISO, white balance and aperture round-trip in the same sequence on the same body. Tracked as #233; this candidate does not fix it.",
+    "The -2110 write-rejection rate is unmeasured on any current build. The only figure on record (62 percent of K-1 II exposure writes, from commit f593d91) exists solely in a commit message with no retained log, and the 2026-11-07 run could not see it because that harness reads back through /api/exposure rather than parsing ret:. Filed as #274.",
+    "Wi-Fi auto-join has never been qualified on a live network. The mount's own access point powers its radio down roughly 60 seconds after the last client disconnects, which blocked the join attempt during development; the kit is built, deployed to an SD card and unit-checked, but a successful association to a real router is not proven by this candidate.",
+    "The dashboard's join-at-power-up checkbox does nothing: it posts a parameter the server does not accept, so it silently reverts. Tracked as #273. Use setup-wifi.sh, polaris-apsta.sh up and touch autojoin instead.",
+    "Built without astrometry indexes. They are a one-time copy and do not change between releases, so they are deliberately kept out of the per-release archive.",
+    "Candidate build only. Nothing here is installed, staged, flashed, rebooted or uploaded, and no camera was attached during this build."
+  ],
+  "validation_focus": [
+    "Unzip polaris-astro.zip and polaris-wifi.zip at the SD card root, not into a subfolder, then reboot and confirm polaris-httpd listens on :8090.",
+    "Wi-Fi: run setup-wifi.sh, then polaris-apsta.sh up, confirm an address and reachability, then touch /app/sd/polaris-wifi/autojoin and reboot to confirm the join happens at power-up. Wake the mount first, because its access point radio sleeps after the last client leaves.",
+    "Confirm wpa.conf contains no plaintext passphrase: grep -c '#psk=' must be 0, and the file must be mode 600.",
+    "K-1 II: re-run the exposure write/read-back/restore sequence for shutter, aperture, ISO, white balance and EV. Expect shutter to report a refusal honestly rather than painting a stale value; EV is still expected to fail (#233).",
+    "Confirm the camera payload is unchanged from v97 by comparing ptp2.so, pentax.so and libgphoto2.so.6 against v97's install-manifest.json."
+  ]
+}
