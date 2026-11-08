@@ -14,13 +14,25 @@ CAMERA_BASELINE="397320411a1355f06d21233435e144d24efc4207"
 # and pentax_shutter_write_permitted), plus the deferred-Bulb cancellation fix
 # from PR #139 and 17 commits that were on the feature branch but never on main.
 # Verified a clean superset of the previous pin by scripts/pin-divergence-check.sh.
-LIB_BASELINE="3fb26e536ac169e4970d69516a9d45daf62563f5"
+# Advanced to 7e6dec95f on 2026-11-08 for the v99 candidate. Driver main had moved past
+# v97's pin while work accumulated unreleased on feature/astro-native-platesolve, so the
+# tree was building from a driver commit that no release had ever named. The delta is one
+# commit and it is documentation only ("docs: state which repo owns which work"), verified:
+#   git log --oneline 3fb26e536..7e6dec95f  -> exactly one line, no camlib or library source
+#   scripts/pin-divergence-check.sh         -> ancestry OK, patch-equiv 0 missing, PASS
+# So the shipped .so set is unchanged from v97 and can be checked byte-for-byte against
+# v97's install-manifest.json. Advancing here costs nothing and stops the pin drifting.
+LIB_BASELINE="7e6dec95f383ba5902ed2a7ee6c11cd48a359188"
 # The pin the previous shipped Astro candidate used. A new pin must be a superset of it, not merely
 # reachable from a branch: 855f718e is reachable from feature/polaris-capture-events yet is missing
 # nine shipped-code commits that driver main gained after the branches diverged at 83240b36a on
 # 2026-10-28 (stale-session safety barriers, deferred Bulb cancellation, IT2 white-balance alias,
 # RAW container format, AF release mode, K-1 live-view contract). Pinning it would regress v94.
-PREVIOUS_LIB_BASELINE="43dccb81b92b6b25f44957a4684f534393562028"
+# Set to v97's pin rather than v94's: v97 is the last candidate that was actually published and
+# run on hardware, so that is the release this one must be proved not to regress. The gate runs
+# only when LIB_BASELINE differs from this value, so leaving it at v94 would have skipped the
+# comparison against the release that matters.
+PREVIOUS_LIB_BASELINE="3fb26e536ac169e4970d69516a9d45daf62563f5"
 CATALOG_PACKAGE="" FMIN="14" FMAX="400" SENSOR="36"
 ASTRO_SRC_CACHE="${ASTRO_SRC_CACHE:-$ROOT/out/.astro-src-cache}"
 FORCE=0 NO_INDEXES=0 IMAGE="${POLARIS_PATCHER_IMAGE:-polaris-patcher}"
@@ -61,6 +73,14 @@ done
 [ -n "$DISPLAY_FWVER" ] && [ -n "$BUILD_ID" ] && [ -n "$CATALOG_PACKAGE" ] &&
 [ -n "$CHANGE_SUMMARY" ] || usage
 [ -f "$CHANGE_SUMMARY" ] || die "change summary does not exist: $CHANGE_SUMMARY"
+# Parse it NOW. The file is only read at step 6/7 by create-astro-candidate-manifest.py,
+# so a trailing comma or an unescaped quote is reported after a full multi-minute firmware
+# build has already been spent -- and the build output is left half-written. I hit exactly
+# that writing the v99 summary. Fail in milliseconds with the parser's line and column.
+python3 -c "import json,sys;json.load(open(sys.argv[1],encoding='utf-8'))" \
+  "$CHANGE_SUMMARY" 2>/dev/null || die "change summary is not valid JSON: $CHANGE_SUMMARY
+       $(python3 -c "import json,sys;json.load(open(sys.argv[1],encoding='utf-8'))" \
+          "$CHANGE_SUMMARY" 2>&1 | tail -1)"
 case "$ID" in (*[!a-zA-Z0-9._-]*) die "invalid candidate id: $ID";; esac
 case "$DISPLAY_FWVER" in (*[!0-9.]*|.*|*..*|*.) die "invalid display version";; esac
 case "$DISPLAY_FWVER" in (*.*.*.*.*) ;; (*) die "need five-component display version";; esac

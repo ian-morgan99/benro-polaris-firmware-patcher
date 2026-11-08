@@ -1,21 +1,24 @@
 {
   "baseline": {
     "candidate_id": "astro-v97-liveview-diag-20261106",
-    "libgphoto2_commit": "3fb26e536ac169e4970d69516a9d45daf62563f5",
-    "libgphoto2_ref": "ian-morgan99/libgphoto2 main. UNCHANGED from v97: this candidate re-pins the identical driver commit rather than advancing it. Driver main has since gained one commit (7e6dec95f383ba5902ed2a7ee6c11cd48a359188, documentation only), but there is no reason to take it here -- every change in this release is patcher-side, so advancing the pin would add driver risk for nothing. Carries #233 capability row and #235 K-1 II shutter gate from PR #144, the deferred-Bulb cancellation fix from PR #139, and the K-3 III Bulb shutter-list synthesis (#241).",
-    "patcher_commit": "ae53cd959559565f2b0f5555acb4789e65930df8",
-    "patcher_ref": "feature/astro-native-platesolve, 53 commits ahead of bf1aad4c1067338b859643b264e7d5cda2b213b9 (the tree astro-v97 was built from).",
+    "libgphoto2_commit": "7e6dec95f383ba5902ed2a7ee6c11cd48a359188",
+    "libgphoto2_ref": "ian-morgan99/libgphoto2 main. ADVANCED from v97's pin 3fb26e536ac169e4970d69516a9d45daf62563f5, because driver main had moved past that commit while work accumulated unreleased on feature/astro-native-platesolve -- the tree was building from a driver commit no release had ever named. The delta is exactly one commit and it is documentation only: `git log --oneline 3fb26e536..7e6dec95f` returns a single line (docs: state which repo owns which work) and touches no camlib or library source. scripts/pin-divergence-check.sh reports ancestry OK, patch-equiv 0 genuinely missing, PASS. So the shipped .so set is expected to match v97 byte for byte and should be verified against v97's install-manifest.json. Carries #233 capability row and #235 K-1 II shutter gate from PR #144, the deferred-Bulb cancellation fix from PR #139, and the K-3 III Bulb shutter-list synthesis (#241).",
+    "patcher_commit": "42eedb0dc932b82c34431dec704437d75a6fb27b",
+    "patcher_ref": "feature/astro-native-platesolve at the cut commit 42eedb0dc, 53 commits ahead of bf1aad4c1067338b859643b264e7d5cda2b213b9 (the tree astro-v97 was built from). The published manifest recomputes this from git at build time; the value here is the commit this summary was written against.",
     "previous_candidate_pins": {
       "v97_libgphoto2": "3fb26e536ac169e4970d69516a9d45daf62563f5",
       "v97_patcher": "bf1aad4c1067338b859643b264e7d5cda2b213b9"
-    }
+    },
+    "why_this_is_a_cut_and_not_another_increment": "Work after v97 accumulated on feature/astro-native-platesolve without being called a release, so 53 patcher commits and one driver commit sat unnamed and the driver pin drifted behind main unnoticed. This candidate names them: it is the formal cut for that accumulated work, with the pin advanced to current driver main and PREVIOUS_LIB_BASELINE set to v97's pin so the superset gate compares against the release that actually shipped and ran on hardware, rather than against v94."
   },
-  "purpose": "Ship the station-mode Wi-Fi kit as its own SD-rooted archive alongside polaris-astro.zip, and carry forward the web UI changes that stop it claiming a camera write succeeded when the head actually rejected it. The libgphoto2 driver pin is identical to v97, so the camera payload should match v97 byte for byte and be verifiable against v97's install manifest.",
+  "purpose": "Formally cut the work that accumulated after astro-v97 without being released: ship the station-mode Wi-Fi kit as its own SD-rooted archive alongside polaris-astro.zip, carry forward the web UI changes that stop it claiming a camera write succeeded when the head actually rejected it, and re-pin the driver to current libgphoto2 main so provenance names commits that exist on a branch a third party can fetch.",
   "changes": [
     {
       "component": "patcher",
       "summary": "The astro bundle build now cross-builds libnl, iw and wpa_supplicant and ships them as polaris-wifi.zip, rooted at polaris-wifi/ so it unzips at the card root. The boot hook starts auto-join only when /app/sd/polaris-wifi/autojoin exists and polaris-autojoin.sh is executable, so the build fails closed if either the kit or that script is missing rather than installing silently nothing. setup-wifi.sh writes a PSK hash with mode 600, never puts the passphrase on a command line where ps would show it, and strips the plaintext copy wpa_passphrase emits as a comment.",
-      "issues": ["273"]
+      "issues": [
+        "273"
+      ]
     },
     {
       "component": "patcher",
@@ -25,7 +28,10 @@
     {
       "component": "patcher",
       "summary": "The Astro web UI reconciles camera writes instead of assuming they landed. The head answers ok:true and then reports the truth in a trailing ret: field, so a write the camera dropped is now retried and reported as not applied rather than painted with the value the user chose. Also: acting endpoints no longer fire on GET, and the connected camera's name is shown over the live frame.",
-      "issues": ["233", "235"]
+      "issues": [
+        "233",
+        "235"
+      ]
     },
     {
       "component": "patcher",
