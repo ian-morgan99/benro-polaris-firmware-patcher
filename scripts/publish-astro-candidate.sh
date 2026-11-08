@@ -129,11 +129,36 @@ This is a separately published Astro candidate. The FwPkt uses the shared
 camera baseline recorded in astro-candidate-manifest.json; the Astro solver,
 catalogue and indexes are in astro-bundle.tar.gz.
 
-To install, unzip polaris-astro.zip and polaris-wifi.zip at the SD card root, not
-into a subfolder. Both archives are rooted at their own directory with no wrapper,
-so they expand to polaris-astro/ and polaris-wifi/ directly on the card. astro-bundle.tar.gz
-contains the same trees plus licences and manifests, for inspection rather than
-for copying onto the card.
+There are two ways to install, and they are not interchangeable. Route A needs only
+the microSD card. Route B needs a PC, SSH and this repo, and is the only one that can
+prove an install happened.
+
+## Route A -- SD card only (no PC tooling, no SSH)
+
+1. Copy FwPkt.zip to the SD card root and EXTRACT it there, so the card ends up with a
+   FwPkt/ folder containing camera/config, camera/uImage, camera/rootfs.ubifs and
+   camera/appfs.ubifs. Do not leave it as a zip: the on-boot watcher reads the extracted
+   tree and silently ignores an archive sitting beside it (issue #58).
+2. Copy polaris-astro.zip and polaris-wifi.zip to the SD card root and extract each.
+   Both are rooted at their own directory with no wrapper, so they expand to
+   polaris-astro/ and polaris-wifi/ directly on the card. Repeat every release.
+3. Reboot the camera. The reboot alone is the trigger; no command or marker file is
+   needed. Wi-Fi auto-join stays off until you create the file polaris-wifi/autojoin.
+4. Confirm by reading the firmware version in the app: it must show $DISPLAY_FWVER.
+   This is the only check available without a PC, and a reboot that did not flash looks
+   identical to one that did -- so read it, do not assume it.
+
+astro-bundle.tar.gz contains the same trees plus licences and manifests. It is for
+inspection, not for copying onto the card.
+
+## Route B -- systematic install (maintainers)
+
+    ./scripts/release/release-fwpkt.sh out/$ID
+
+Stages the extracted FwPkt tree, verifies every firmwareInfo MD5 on the device,
+records /proc/uptime before rebooting to prove the boot actually reset, and confirms
+build_id, both source commits and mandatory file SHA-256s afterwards. See
+docs/FIRMWARE-INSTALL-PROCESS.md.
 
 | field | value |
 |---|---|
@@ -142,8 +167,6 @@ for copying onto the card.
 | FwPkt SHA-256 | $ACTUAL_SHA |
 | FwPkt MD5 | $ACTUAL_MD5 |
 $SD_ROWS| patcher commit | $PATCHER_SHA |
-| libgphoto2 commit | $LIBG_SHA |
-| patcher commit | $PATCHER_SHA |
 | libgphoto2 commit | $LIBG_SHA |
 | status | $STATUS |
 | note | $NOTE |
