@@ -219,9 +219,16 @@ SD_WIFI="$OUT/COPY-TO-SD-CARD-ROOT/polaris-wifi"
 
 no_source(){
   echo "error: $1" >&2
-  # Removal itself is handled by the EXIT trap above, which covers every non-zero
-  # exit path. Called here too so the message below stays truthful even if the
-  # trap is ever changed -- rm -f makes it idempotent.
+  # Deleted here as well as by the EXIT trap, on purpose. The trap covers every
+  # other non-zero exit path; this function deletes them explicitly because
+  # tests/test_plate_solving_present.py::test_source_offer_step_is_fail_closed
+  # asserts statically that no_source() itself removes polaris-solve and
+  # polaris-skysim -- a licence guard should not be satisfiable only by an
+  # indirect mechanism. rm -f makes the two idempotent with respect to each other.
+  rm -f "$SD_ASTRO/polaris-solve" "$SD_ASTRO/polaris-skysim" \
+        "$SD_ASTRO/SOURCE-OFFER.txt" "$SD_ASTRO/COPYING-GPL-2.txt" 2>/dev/null || true
+  # Same reasoning for the wifi kit: statically linked libnl with no source is an
+  # LGPL §4 violation, so the binaries come out of the bundle too.
   drop_copyleft_binaries
   echo "       Removed the GPL/LGPL binaries from the bundle: shipping copyleft" >&2
   echo "       binaries without corresponding source is a §3/§4 violation." >&2
