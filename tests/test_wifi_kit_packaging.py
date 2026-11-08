@@ -92,6 +92,38 @@ def test_bind_hook_applies_dns_as_well_as_the_address():
     assert "rm -f" in deconfig and "$MARK" in deconfig
 
 
+def test_unchanged_lease_writes_nothing_to_flash():
+    """The renew guard must compare before writing, not after.
+
+    The first version wrote a temp file and only then ran cmp, so every renew hit
+    UBIFS anyway -- roughly hourly on a two-hour lease. That is the exact cost the
+    guard was added to avoid, and it was invisible unless you read the order of
+    operations. The comparison must therefore be against an in-memory string.
+    """
+    body = (ONDISK / "udhcpc.script").read_text()
+    fn = body.split("write_resolv() {", 1)[1].split("\n}", 1)[0]
+    write_at = fn.index("> \"$TMPRESOLV\"")
+    compare_at = fn.index('= "$(cat "$RESOLV"')
+    assert compare_at < write_at, (
+        "write_resolv() touches flash before comparing; an unchanged lease "
+        "would rewrite resolv.conf on every renew"
+    )
+    assert "cmp -s" not in fn, "cmp against a freshly written temp file proves nothing"
+
+
+def test_resolver_failure_is_not_reported_as_success():
+    """A failed replace must surface, not fall through with status 0."""
+    body = (ONDISK / "udhcpc.script").read_text()
+    fn = body.split("write_resolv() {", 1)[1].split("\n}", 1)[0]
+    assert 'if ! mv "$TMPRESOLV" "$RESOLV"' in fn
+    assert "return 1" in fn
+    # The caller must branch on it and say so in the log, rather than printing the
+    # offered servers as though they had been applied.
+    bound = body.split("bound|renew)", 1)[1].split(";;", 1)[0]
+    assert "if write_resolv; then" in bound
+    assert "FAILED to write" in bound
+
+
 def test_bind_hook_survives_busybox_sh():
     import subprocess
 
