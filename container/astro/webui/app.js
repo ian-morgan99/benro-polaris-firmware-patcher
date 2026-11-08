@@ -61,7 +61,10 @@ var S = {
      keyed by the option-list opcode that proves them: { want, setCmd, key,
      label, sentAt, tries, state, lastRead }. */
   expoPending: {},
-  focusPending: null
+  focusPending: null,
+  /* A shutter press the head has not yet confirmed: { sentAt, countBefore, state }.
+     The POST only queues the command; the answer arrives later on opcode 264. */
+  shotPending: null
 };
 
 function setHint(html) {
@@ -101,6 +104,7 @@ function render(d) {
      only thing that can tell the user the truth about it. */
   if (Object.keys(S.expoPending).length) { reconcileExposure(); paintExposure(); }
   if (S.focusPending) reconcileFocus();
+  if (S.shotPending) reconcileShot();
 }
 
 function paintLink(d) {
@@ -953,6 +957,78 @@ function wireExposure() {
    is easier one-handed in the dark, and it maps onto a keyboard too. */
 var HOLD_MS = 450;
 
+/* Capture lifecycle states for opcode 264, kept in step with the terminal set in
+   scripts/capture-outcomes.py so the UI and the offline analyser agree on what a
+   code means. state:1 is only "initiated"; a capture is finished when state:0
+   follows state:4. */
+var SHOT_PROGRESS = { 1: 'exposing…', 2: 'exposing…', 3: 'exposing…', 4: 'writing card…' };
+
+/* Generous, because a long exposure legitimately takes tens of seconds and silence
+   is not evidence of failure. */
+var SHOT_TIMEOUT_MS = 90000;
+
+function shotStateOf(args) {
+  var m = /(?:^|;)state:(-?\d+)/.exec(args || '');
+  return m ? parseInt(m[1], 10) : null;
+}
+
+/* Paint the shutter button. Terminal labels revert by themselves so the button is
+   ready for the next press without a refresh. */
+function paintShot(label, cls, revert) {
+  var btn = $('#shoot');
+  $('.label', btn).textContent = label;
+  btn.classList.remove('arming', 'fired');
+  if (cls) btn.classList.add(cls);
+  if (revert) setTimeout(function () {
+    btn.classList.remove('arming', 'fired');
+    $('.label', btn).textContent = 'hold to shoot';
+  }, 2600);
+}
+
+/* The POST to /api/link/send only means the command was QUEUED. The head answers
+   asynchronously and its answer lands in the opcode cache that /api/link serves.
+   Before this, fire() painted 'shot' as soon as the POST resolved, so a capture the
+   camera refused (#279: state:-110 with PHOTO_RECORD Fail) still looked like success
+   on screen -- the same false-success class as the exposure writes in #276.
+
+   The reply is matched by opcode 264's count increasing since the press, so an older
+   cached answer cannot brand a new shot. Limit: any unrelated 264 traffic in that
+   window would be read as this shot's reply, which is why a timeout reports "no
+   confirmation" rather than "failed". */
+function reconcileShot() {
+  var p = S.shotPending;
+  if (!p) return;
+  var rep = S.ops['264'];
+
+  if (rep && rep.count > p.countBefore) {
+    var st = shotStateOf(rep.args);
+    if (st === 0) {
+      paintShot('shot', 'fired', true);
+      setHint('');
+      S.shotPending = null;
+      return;
+    }
+    if (st !== null && st < 0) {
+      paintShot('failed: state ' + st, null, true);
+      setHint('<b>The camera refused the shot</b> (state ' + st + '). No file was '
+              + 'written. If this repeats, it is issue #279.');
+      S.shotPending = null;
+      return;
+    }
+    if (st !== null && SHOT_PROGRESS[st]) {
+      p.state = st;
+      paintShot(SHOT_PROGRESS[st], 'arming', false);
+    }
+  }
+
+  if (Date.now() - p.sentAt > SHOT_TIMEOUT_MS) {
+    paintShot('no confirmation', null, true);
+    setHint('<b>No capture confirmation from the head.</b> The frame may still have '
+            + 'been taken -- check the Gallery before assuming it failed.');
+    S.shotPending = null;
+  }
+}
+
 function wireShutter() {
   var btn = $('#shoot'), t0 = 0, raf = 0, timer = 0;
 
@@ -961,10 +1037,13 @@ function wireShutter() {
     btn.style.setProperty('--progress', (p * 100) + '%');
     if (p < 1) raf = requestAnimationFrame(progress);
   }
+  var captured = false;
+
   function begin(e) {
     if (btn.disabled) return;
     e.preventDefault();
-    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+    captured = false;
+    try { btn.setPointerCapture(e.pointerId); captured = true; } catch (_) {}
     t0 = Date.now();
     btn.classList.add('arming');
     raf = requestAnimationFrame(progress);
@@ -975,26 +1054,40 @@ function wireShutter() {
     btn.classList.remove('arming');
     btn.style.setProperty('--progress', '0%');
   }
+  /* pointerleave only means "the press left the button's box". With capture in
+     effect that is still the same finger and must keep firing — a thumb that drifts
+     a few pixels mid-hold is normal, and the joysticks already treat it that way.
+     Without capture there is no way to know the finger is still down, so leaving is
+     treated as a cancel. iOS support for setPointerCapture is partial, so this is
+     the difference between a hold that fires and one that silently never does. */
+  function leave() { if (!captured) cancel(); }
   function fire() {
     cancel();
-    btn.classList.add('fired');
     if (navigator.vibrate) navigator.vibrate(24);
     /* 264 SP_SET_PHOTO_RECORD_STATUS: state/bulb/c. Confirmed, because it
-       commits a frame to the card. */
+       commits a frame to the card. Snapshot the reply count first so reconcileShot
+       can tell this press's answer from whatever was cached before it. */
+    var before = S.ops['264'];
+    paintShot('firing…', 'arming', false);
     send(264, 'state:1;bulb:0;c:0;', true).then(function (r) {
-      $('.label', btn).textContent = r && r.ok === false
-        ? (r.error || 'shutter refused') : 'shot';
-      setTimeout(function () {
-        btn.classList.remove('fired');
-        $('.label', btn).textContent = 'hold to shoot';
-      }, 1200);
+      if (r && r.ok === false) {
+        paintShot(r.error || 'shutter refused', null, true);
+        return;
+      }
+      /* Queued, not done. The head's lifecycle reply decides what the user sees. */
+      S.shotPending = {
+        sentAt: Date.now(),
+        countBefore: (before && before.count) || 0,
+        state: null
+      };
     });
   }
 
   btn.addEventListener('pointerdown', begin);
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) {
+  ['pointerup', 'pointercancel'].forEach(function (ev) {
     btn.addEventListener(ev, cancel);
   });
+  btn.addEventListener('pointerleave', leave);
 
   $('#rec').addEventListener('click', function () {
     S.recording = !S.recording;

@@ -440,6 +440,13 @@ main { flex: 1 1 auto; overflow-y: auto; padding: 14px; padding-bottom: 22px; }
   border: 1px solid var(--line); border-radius: var(--r);
   font: inherit; cursor: pointer;
   touch-action: none;
+  /* Load-bearing, not cosmetic. Safari raises the long-press callout inside the
+     450 ms hold window, and that raises pointercancel, which aborts the press. So
+     on iPhone/iPad a deliberate hold-to-shoot can look completely dead: nothing is
+     refused, nothing is sent, the label just never changes. The joysticks already
+     carry this for the same reason. */
+  user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none;
   position: relative; overflow: hidden;
 }
 .shutter .ring {
