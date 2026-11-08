@@ -81,6 +81,9 @@ static void reset_fixture(void)
     fake_free_calls = 0;
     widget.type = STAGE2_GP_WIDGET_RADIO;
     widget.choices = 0;
+    /* Issue #269: each scenario starts from a clean per-control streak so the
+     * transient/terminal decision is exercised independently. */
+    stage2_reset_empty_choice_state();
 }
 
 int main(void)
@@ -173,6 +176,91 @@ int main(void)
            == STAGE2_GP_ERROR_CAMERA_BUSY);
     assert(out == NULL);
     assert(fake_free_calls == 0);
+
+    /* ------------------------------------------------------------------ *
+     * Issue #269: a control that is empty on EVERY read must stop being
+     * reported as transient CAMERA_BUSY.  On the K-3 III
+     * exposurecompensation publishes no allowed-values list at all (3/3
+     * runs, value reads back fine), so an always-busy answer makes the app
+     * poll it forever -- 184 CAMERA_BUSY results across the archived
+     * sessions.  The first reads stay transient; a sustained streak
+     * escalates to terminal NOT_SUPPORTED so polling stops.
+     * ------------------------------------------------------------------ */
+    reset_fixture();
+    for (int i = 1; i <= 2; i++) {
+        out = NULL;
+        assert(stage2_shim_gp_camera_get_single_config(
+                   &camera, "exposurecompensation", &out, NULL)
+               == STAGE2_GP_ERROR_CAMERA_BUSY);
+        assert(out == NULL);
+    }
+    /* Third consecutive empty read reaches the default budget of 3. */
+    out = NULL;
+    assert(stage2_shim_gp_camera_get_single_config(
+               &camera, "exposurecompensation", &out, NULL)
+           == STAGE2_GP_ERROR_NOT_SUPPORTED);
+    assert(out == NULL);
+    /* It stays terminal -- no return to busy-looping. */
+    out = NULL;
+    assert(stage2_shim_gp_camera_get_single_config(
+               &camera, "exposurecompensation", &out, NULL)
+           == STAGE2_GP_ERROR_NOT_SUPPORTED);
+
+    /* Per-control isolation: a different control's first empty read is still
+     * transient, so one dead control never disables another. */
+    reset_fixture();
+    out = NULL;
+    assert(stage2_shim_gp_camera_get_single_config(&camera, "iso", &out, NULL)
+           == STAGE2_GP_ERROR_CAMERA_BUSY);
+
+    /* Recovery: a populated read clears the streak, so a control that was
+     * transiently empty and then works is never marked terminal. */
+    reset_fixture();
+    for (int i = 0; i < 2; i++) {
+        out = NULL;
+        assert(stage2_shim_gp_camera_get_single_config(
+                   &camera, "shutterspeed", &out, NULL)
+               == STAGE2_GP_ERROR_CAMERA_BUSY);
+    }
+    widget.choices = 13;                     /* the list came back */
+    out = NULL;
+    assert(stage2_shim_gp_camera_get_single_config(&camera, "shutterspeed",
+                                                   &out, NULL) == 0);
+    assert(out == &widget);
+    widget.choices = 0;                      /* transiently empty again */
+    out = NULL;
+    assert(stage2_shim_gp_camera_get_single_config(&camera, "shutterspeed",
+                                                   &out, NULL)
+           == STAGE2_GP_ERROR_CAMERA_BUSY);
+
+    /* A fresh session re-arms every control (init clears the state). */
+    reset_fixture();
+    for (int i = 0; i < 3; i++) {
+        out = NULL;
+        stage2_shim_gp_camera_get_single_config(&camera, "whitebalance",
+                                                &out, NULL);
+    }
+    out = NULL;
+    assert(stage2_shim_gp_camera_get_single_config(&camera, "whitebalance",
+                                                   &out, NULL)
+           == STAGE2_GP_ERROR_NOT_SUPPORTED);
+    stage2_reset_empty_choice_state();       /* what init does */
+    out = NULL;
+    assert(stage2_shim_gp_camera_get_single_config(&camera, "whitebalance",
+                                                   &out, NULL)
+           == STAGE2_GP_ERROR_CAMERA_BUSY);
+
+    /* Escape hatch: STAGE2_EMPTY_CHOICE_TERMINAL=0 restores the legacy
+     * always-busy behaviour. */
+    reset_fixture();
+    setenv("STAGE2_EMPTY_CHOICE_TERMINAL", "0", 1);
+    for (int i = 0; i < 6; i++) {
+        out = NULL;
+        assert(stage2_shim_gp_camera_get_single_config(
+                   &camera, "exposurecompensation", &out, NULL)
+               == STAGE2_GP_ERROR_CAMERA_BUSY);
+    }
+    unsetenv("STAGE2_EMPTY_CHOICE_TERMINAL");
 
     printf("[test_stage2_empty_choice_guard] ALL PASS\n");
     return 0;

@@ -571,6 +571,10 @@ static int g_pentax_preview_disabled = 0;
 static int  g_pentax_preview_session_unhealthy = 0;
 static int  g_pentax_preview_last_terminal = 0;   /* the I/O / no-device code to surface */
 
+/* Issue #269: defined with the empty-choice guard further down; forward-declared
+ * so a successful init can clear per-control terminal disables. */
+static void stage2_reset_empty_choice_state(void);
+
 /* On-demand gate (design principle: capture preview panes only when specifically
  * needed, not as a side effect of periodic polling).  Live Clog analysis showed
  * ~4-5 frame fetches per app poll while PC-LV is active (~13k blocks / boot),
@@ -915,6 +919,11 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     g_pentax_preview_session_unhealthy = 0;
     g_pentax_preview_last_terminal = 0;
 
+    /* Issue #269: a fresh session re-arms every control's empty-choice state, so
+     * a previous generation's terminal NOT_SUPPORTED disable (e.g. a body that
+     * transiently published no EV list) does not leak into this one. */
+    stage2_reset_empty_choice_state();
+
     /* SHIM #4 -- Pentax keep-live-view (issues #36/#55).  After a successful
      * init on a Pentax model, push `pentaxpclvkeep` ON so camera_capture_preview()
      * keeps PC live view running across preview requests instead of tearing it
@@ -1219,6 +1228,104 @@ static stage2_gp_widget_count_choices_fn g_real_gp_widget_count_choices = NULL;
 /* GP_ERROR_CAMERA_BUSY from gphoto2-result.h.  Keep this loader independent of
  * the target headers while returning the standard transient error. */
 #define STAGE2_GP_ERROR_CAMERA_BUSY (-110)
+/* GP_ERROR_NOT_SUPPORTED from gphoto2-result.h.  Terminal: unlike CAMERA_BUSY it
+ * tells the caller the operation will not succeed on this body, so it must stop
+ * retrying (the same contract #127 established for a permanent preview failure). */
+#define STAGE2_GP_ERROR_NOT_SUPPORTED (-6)
+
+/* Issue #269: an empty choice list is usually transient -- a reconnect leaves the
+ * stock/adapter path returning GP_OK with a RADIO widget that has no choices yet,
+ * and CAMERA_BUSY lets the caller retry once the session recovers.  But on the
+ * K-3 III `exposurecompensation` publishes an empty allowed-values list
+ * deterministically (3/3 runs, value reads back fine), so treating it as transient
+ * makes the app poll a permanently-empty control forever: 92 CAMERA_BUSY results
+ * in one archived session (liveview-crash-camera-offbus-20261103).  Escalate a
+ * control that stays empty across STAGE2_EMPTY_CHOICE_MAX consecutive reads to a
+ * terminal NOT_SUPPORTED, so polling stops.  This is per-control: a transient blip
+ * on one control never disables another, and any populated read clears the
+ * counter.  The widget is still never published -- only the error code changes.
+ * STAGE2_EMPTY_CHOICE_TERMINAL=0 restores the legacy always-busy behaviour. */
+#define STAGE2_EMPTY_CHOICE_TRACK_MAX 16
+static struct {
+    const char *name;
+    int empty_streak;
+} g_empty_choice_state[STAGE2_EMPTY_CHOICE_TRACK_MAX];
+
+static int stage2_empty_choice_terminal_enabled(void)
+{
+    const char *e = getenv("STAGE2_EMPTY_CHOICE_TERMINAL");
+    return !(e && strcmp(e, "0") == 0);
+}
+
+static int stage2_empty_choice_max(void)
+{
+    const char *e = getenv("STAGE2_EMPTY_CHOICE_MAX");
+    if (e) {
+        int n = atoi(e);
+        if (n > 0)
+            return n;
+    }
+    return 3;
+}
+
+/* Return the per-control empty streak after recording one more empty read, and
+ * whether it has now reached the terminal threshold. */
+static int stage2_note_empty_choice(const char *name, int *reached_max)
+{
+    int i, max = stage2_empty_choice_max();
+    *reached_max = 0;
+    if (!name)
+        return 1;
+    for (i = 0; i < STAGE2_EMPTY_CHOICE_TRACK_MAX; i++) {
+        if (g_empty_choice_state[i].name &&
+            strcmp(g_empty_choice_state[i].name, name) == 0) {
+            g_empty_choice_state[i].empty_streak++;
+            *reached_max = g_empty_choice_state[i].empty_streak >= max;
+            return g_empty_choice_state[i].empty_streak;
+        }
+    }
+    for (i = 0; i < STAGE2_EMPTY_CHOICE_TRACK_MAX; i++) {
+        if (!g_empty_choice_state[i].name) {
+            g_empty_choice_state[i].name = name;
+            g_empty_choice_state[i].empty_streak = 1;
+            *reached_max = 1 >= max;
+            return 1;
+        }
+    }
+    /* Table full: fall back to counting the first slot so we still escalate
+     * eventually rather than busy-looping forever on an unknown control. */
+    g_empty_choice_state[0].empty_streak++;
+    *reached_max = g_empty_choice_state[0].empty_streak >= max;
+    return g_empty_choice_state[0].empty_streak;
+}
+
+/* A populated read for a control clears its empty streak, so a transient reconnect
+ * that later succeeds never escalates to NOT_SUPPORTED. */
+static void stage2_clear_empty_choice(const char *name)
+{
+    int i;
+    if (!name)
+        return;
+    for (i = 0; i < STAGE2_EMPTY_CHOICE_TRACK_MAX; i++) {
+        if (g_empty_choice_state[i].name &&
+            strcmp(g_empty_choice_state[i].name, name) == 0) {
+            g_empty_choice_state[i].name = NULL;
+            g_empty_choice_state[i].empty_streak = 0;
+            return;
+        }
+    }
+}
+
+/* A fresh session re-arms every control: a previous generation's terminal disable
+ * must not leak across init (mirrors the #127 preview capability reset). */
+static void stage2_reset_empty_choice_state(void)
+{
+    int i;
+    for (i = 0; i < STAGE2_EMPTY_CHOICE_TRACK_MAX; i++) {
+        g_empty_choice_state[i].name = NULL;
+        g_empty_choice_state[i].empty_streak = 0;
+    }
+}
 
 /* A successful get_single_config call is not enough to publish a control.  The
  * stock/adapter path has been observed returning GP_OK with a RADIO widget whose
@@ -1266,14 +1373,33 @@ stage2_reject_empty_choice_widget(void **widget_out, const char *name)
         return 0;
 
     choices = g_real_gp_widget_count_choices(widget);
-    if (choices > 0)
+    if (choices > 0) {
+        /* Populated: the control is healthy, so any earlier empty streak was a
+         * transient reconnect and must not escalate. */
+        stage2_clear_empty_choice(name);
         return 0;
+    }
 
-    fprintf(stderr, "[stage2] config-safety: %s widget has %d choices; "
-                    "returning CAMERA_BUSY\n", name ? name : "<unnamed>", choices);
-    g_real_gp_widget_free(widget);
-    *widget_out = NULL;
-    return STAGE2_GP_ERROR_CAMERA_BUSY;
+    /* Empty choice list. Never publish it either way -- only decide whether this
+     * reads as transient (retry) or terminal (stop polling). */
+    {
+        int reached_max, streak;
+        streak = stage2_note_empty_choice(name, &reached_max);
+        g_real_gp_widget_free(widget);
+        *widget_out = NULL;
+        if (reached_max && stage2_empty_choice_terminal_enabled()) {
+            fprintf(stderr, "[stage2] config-safety: %s widget empty for %d "
+                            "consecutive reads; returning NOT_SUPPORTED -- the "
+                            "body publishes no allowed-values list for this "
+                            "control, stop polling it (issue #269)\n",
+                    name ? name : "<unnamed>", streak);
+            return STAGE2_GP_ERROR_NOT_SUPPORTED;
+        }
+        fprintf(stderr, "[stage2] config-safety: %s widget has %d choices "
+                        "(read #%d); returning CAMERA_BUSY\n",
+                name ? name : "<unnamed>", choices, streak);
+        return STAGE2_GP_ERROR_CAMERA_BUSY;
+    }
 }
 
 static int stage2_shim_gp_camera_get_single_config(void *camera, const char *name,
