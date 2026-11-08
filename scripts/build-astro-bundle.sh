@@ -202,7 +202,8 @@ if [ "$RUN_TESTS" = "1" ]; then
   python3 -m pytest -q \
     "$ROOT/container/astro/tests" \
     "$ROOT/tools/tests" \
-    "$ROOT/tests/test_astro_build_wrapper.py"
+    "$ROOT/tests/test_astro_build_wrapper.py" \
+    "$ROOT/tests/test_wifi_kit_packaging.py"
   echo "[*] checking on-device shell syntax"
   for script in "$ROOT"/container/astro/ondisk/*.sh; do
     sh -n "$script"
@@ -242,6 +243,16 @@ if [ "$WANT_WIFI" = "1" ]; then
   done
   [ -x "$SD_WIFI/polaris-autojoin.sh" ] \
     || die "bundle is missing polaris-wifi/polaris-autojoin.sh -- boot's [ -x ] gate would skip auto-join"
+  # The DHCP bind hook belongs in this gate for the same reason autojoin does,
+  # and for a sharper one: autojoin.sh *calls* it unconditionally via
+  # `udhcpc -s "$WDIR/udhcpc.script"`. BusyBox udhcpc applies no lease without
+  # it, so a bundle missing this file passes every other wifi check, joins the
+  # network, gets an address from the router and then discards it -- while
+  # autojoin.log still says "lease obtained". Verified on hardware: installing
+  # the repo's own udhcpc.script took wlan1 from no address to a working
+  # default route with the AP untouched (issue #280).
+  [ -x "$SD_WIFI/udhcpc.script" ] \
+    || die "bundle is missing polaris-wifi/udhcpc.script -- udhcpc -s would find nothing and every lease would be granted then discarded"
 
   # Copyleft notices must travel INSIDE polaris-wifi.zip, not only in the
   # bundle's licenses/ directory. libnl is LGPL-2.1 and build_wifi.sh links it
@@ -311,8 +322,8 @@ binary above, and this written offer accompanies them:
   recipe archive; it is the script that produced these binaries.
 
 The shell scripts in this directory (polaris-autojoin.sh, polaris-apsta.sh,
-setup-wifi.sh, wifi-keepalive.sh, wifi-watch.sh) are ours and carry the same
-terms as the rest of the patcher bundle.
+setup-wifi.sh, wifi-keepalive.sh, wifi-watch.sh, udhcpc.script) are ours and
+carry the same terms as the rest of the patcher bundle.
 EOF
   for f in LICENCE-wifi.txt COPYING-LGPL-2.1.txt NOTICE-iw.txt NOTICE-wpa_supplicant.txt; do
     [ -f "$SD_WIFI/$f" ] || die "wifi kit is missing $f -- shipping copyleft binaries with no licence alongside them is an LGPL s4 violation"
@@ -401,7 +412,7 @@ if [ "$WANT_ZIP" = "1" ]; then
   # Note `unzip -Z1` suppresses the long-listing header and returns nothing with
   # -l, which would make this check pass vacuously -- use plain `unzip -Z`.
   if [ -f "$SD_ROOT/polaris-wifi.zip" ]; then
-    for b in wpa_supplicant wpa_cli wpa_passphrase iw polaris-autojoin.sh setup-wifi.sh; do
+    for b in wpa_supplicant wpa_cli wpa_passphrase iw polaris-autojoin.sh setup-wifi.sh udhcpc.script; do
       perm=$(unzip -Z "$SD_ROOT/polaris-wifi.zip" 2>/dev/null \
              | awk -v n="polaris-wifi/$b" '$NF==n {print $1}')
       [ -n "$perm" ] || die "polaris-wifi.zip does not contain $b at all"

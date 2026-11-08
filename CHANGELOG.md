@@ -1,5 +1,43 @@
 # Changelog
 
+## Unreleased — the station kit could join a network and use none of it (issues #280, #281)
+
+- `polaris-wifi.zip` never contained `udhcpc.script`. Both `polaris-autojoin.sh`
+  and `polaris-apsta.sh` call `udhcpc -s "$WDIR/udhcpc.script"`, and BusyBox
+  udhcpc configures nothing itself — it obtains a lease and hands it to whatever
+  `-s` names. With the file absent the lease is granted and silently discarded,
+  so auto-join associated, logged `lease of 192.168.68.63 obtained`, and left
+  `wlan1` with no address and no default route. This shipped broken from b367ed8
+  (the commit that first built the kit) to caab172, so every wifi zip ever
+  produced is missing it. It is now copied into the kit, named explicitly in
+  `chmod 755` (`*.sh` would have left it 644), and gated in three places: the
+  staging check, the release wrapper's fail-closed list, and the zip permission
+  loop that verifies the mode actually stored inside the archive.
+- The bind hook applied `$ip`, `$router` and `$subnet` from the lease environment
+  and ignored `$dns`, and this firmware has no `/etc/resolv.conf`, no
+  `/tmp/resolv.conf` and no `/usr/share/udhcpc/default.script`. A joined network
+  therefore reached raw IPs and resolved nothing. `bound|renew` now writes the
+  offered nameservers, guarded so a lease without a DNS option cannot blank a
+  working file, compared with `cmp` first because it runs on every renew against
+  UBIFS, and removed on `deconfig` only if it carries our marker — unreachable
+  nameservers make every lookup hang rather than fail fast.
+- Verified on hardware. Before: `wpa_state=COMPLETED`, no `inet addr` on wlan1,
+  no default route. After: `192.168.68.63/255.255.252.0`, `default via
+  192.168.68.1 dev wlan1`, `ping -I wlan1 1.1.1.1` 0% loss, and
+  `nslookup github.com` resolving through the DHCP-offered servers. hostapd and
+  the AP on wlan0 untouched throughout. The DNS path was exercised under BusyBox
+  sh on the device with log and resolver paths redirected to /tmp.
+- `tests/test_wifi_kit_packaging.py` asserts the copy list contains it, and for
+  the general class that every `$WDIR/<name>` a shipped wifi script references
+  which exists in `container/astro/ondisk/` is actually copied. Confirmed
+  non-vacuous: run against caab172's `build-astro.sh` the same extraction reports
+  it absent. 5 passed (new), 52 passed across `container/astro/tests`,
+  `tools/tests` and `tests/test_astro_build_wrapper.py`.
+- Cards already in the field are not fixed by this change — `install_astro.sh`
+  does not deploy the wifi kit, which is read in place from
+  `/app/sd/polaris-wifi/`. They need the file copied manually or a re-flash of
+  the zip. See #280 for the one-liner.
+
 ## Unreleased — restore direct still-capture dispatch (issue #122)
 
 - Removed the Stage-2 `gp_camera_capture` wrapper and its independent cooldown.

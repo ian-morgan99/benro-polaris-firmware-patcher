@@ -280,6 +280,7 @@ PY_TESTS=(
     tests/test_watch_app_crash.py
     tests/test_bt_wake_radio_liveness.py
     tests/test_astro_build_wrapper.py
+    tests/test_wifi_kit_packaging.py
     tests/test_plate_solving_present.py
     tests/test_astro_candidate_wrapper.py
     tests/test_shipped_marker_check.py

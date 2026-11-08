@@ -130,7 +130,7 @@ if [ "$WANT_WIFI" = "1" ]; then
     -v "$SRCCACHE_DIR":/work/src \
     -v "$OUT":/out \
     --entrypoint /bin/bash "$IMG" -c \
-    'bash /opt/patcher/astro/build_wifi.sh arm /work/out/wifi && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-wifi && cp /work/out/wifi/wpa_supplicant /work/out/wifi/wpa_cli /work/out/wifi/wpa_passphrase /work/out/wifi/iw /out/COPY-TO-SD-CARD-ROOT/polaris-wifi/ && for s in polaris-autojoin.sh polaris-apsta.sh setup-wifi.sh wifi-keepalive.sh wifi-watch.sh; do cp "/opt/patcher/astro/ondisk/$s" /out/COPY-TO-SD-CARD-ROOT/polaris-wifi/; done'
+    'bash /opt/patcher/astro/build_wifi.sh arm /work/out/wifi && mkdir -p /out/COPY-TO-SD-CARD-ROOT/polaris-wifi && cp /work/out/wifi/wpa_supplicant /work/out/wifi/wpa_cli /work/out/wifi/wpa_passphrase /work/out/wifi/iw /out/COPY-TO-SD-CARD-ROOT/polaris-wifi/ && for s in polaris-autojoin.sh polaris-apsta.sh setup-wifi.sh wifi-keepalive.sh wifi-watch.sh udhcpc.script; do cp "/opt/patcher/astro/ondisk/$s" /out/COPY-TO-SD-CARD-ROOT/polaris-wifi/; done'
 
   SD_WIFI="$OUT/COPY-TO-SD-CARD-ROOT/polaris-wifi"
   # Fail closed, same reasoning as the astro manifest below: a wifi directory
@@ -140,10 +140,24 @@ if [ "$WANT_WIFI" = "1" ]; then
   done
   # The scripts must be executable: boot invokes polaris-autojoin.sh via [ -x ],
   # so a script without the exec bit silently disables auto-join forever.
-  chmod 755 "$SD_WIFI"/*.sh 2>/dev/null || true
+  # udhcpc.script is named explicitly because it does not match *.sh -- the glob
+  # would leave it 644, and BusyBox udhcpc then logs nothing and applies nothing.
+  chmod 755 "$SD_WIFI"/*.sh "$SD_WIFI"/udhcpc.script 2>/dev/null || true
   for s in polaris-autojoin.sh setup-wifi.sh; do
     [ -x "$SD_WIFI/$s" ] || { echo "error: wifi script $s is not executable -- boot's [ -x ] test would skip it" >&2; exit 1; }
   done
+  # udhcpc.script is the DHCP bind hook, and it is not optional in the way the
+  # others are. polaris-autojoin.sh and polaris-apsta.sh both call
+  # `udhcpc -s "$WDIR/udhcpc.script"`, and BusyBox udhcpc configures nothing
+  # itself -- it obtains the lease and hands it to that script. With the file
+  # absent the lease is granted and silently thrown away: the log reads
+  # "lease of 192.168.68.63 obtained" while ifconfig shows no address and there
+  # is no default route, which looks exactly like a DHCP server problem and is
+  # not one. This shipped broken from b367ed8 to caab172 (issue #280).
+  [ -x "$SD_WIFI/udhcpc.script" ] \
+    || { echo "error: wifi kit is missing udhcpc.script -- auto-join would associate, obtain a lease and apply none of it" >&2; exit 1; }
+  sh -n "$SD_WIFI/udhcpc.script" \
+    || { echo "error: udhcpc.script fails sh -n -- it would abort on the device and drop every lease" >&2; exit 1; }
   echo "[*] wifi kit bundled: $(ls "$SD_WIFI" | tr '\n' ' ')"
 fi
 
