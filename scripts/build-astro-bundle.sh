@@ -242,6 +242,81 @@ if [ "$WANT_WIFI" = "1" ]; then
   done
   [ -x "$SD_WIFI/polaris-autojoin.sh" ] \
     || die "bundle is missing polaris-wifi/polaris-autojoin.sh -- boot's [ -x ] gate would skip auto-join"
+
+  # Copyleft notices must travel INSIDE polaris-wifi.zip, not only in the
+  # bundle's licenses/ directory. libnl is LGPL-2.1 and build_wifi.sh links it
+  # STATICALLY (libnl-3.a) into wpa_supplicant, wpa_cli, wpa_passphrase and iw,
+  # so section 4 of the LGPL requires the accompanying offer to reach the user
+  # together with those binaries. polaris-astro.zip already does this with
+  # COPYING-GPL-2.txt + SOURCE-OFFER.txt; a separate zip needs its own copy or
+  # the notice is orphaned from the code it describes -- a user who takes only
+  # the wifi zip gets four copyleft binaries and no licence at all.
+  cp "$OUT/licenses/COPYING-LGPL-2.1.txt"      "$SD_WIFI/" 2>/dev/null || true
+  cp "$OUT/licenses/NOTICE-iw.txt"             "$SD_WIFI/" 2>/dev/null || true
+  cp "$OUT/licenses/NOTICE-wpa_supplicant.txt" "$SD_WIFI/" 2>/dev/null || true
+
+  # Versions come from the tarball filenames that build-astro.sh actually wrote,
+  # not from variables in this script's scope. WPAS_VERSION/IW_VERSION/LIBNL_VERSION
+  # are defined in build-astro.sh and are NOT visible here, so interpolating them
+  # would emit "libnl-, iw-" -- an offer that names no version is not an offer.
+  # Deriving from the filenames also makes drift impossible: the text describes
+  # exactly the archive that is sitting beside it.
+  LIBNL_TGZ=$(basename "$OUT/licenses/"libnl-*.tar.gz 2>/dev/null | head -1)
+  IW_TGZ=$(basename    "$OUT/licenses/"iw-*.tar.gz 2>/dev/null | head -1)
+  WPAS_TGZ=$(basename  "$OUT/licenses/"wpa_supplicant-*.tar.gz 2>/dev/null | head -1)
+  for tgz in "$LIBNL_TGZ" "$IW_TGZ" "$WPAS_TGZ"; do
+    [ -n "$tgz" ] || die "wifi kit cannot state its corresponding source: no matching tarball in $OUT/licenses"
+  done
+  LIBNL_VERSION="${LIBNL_TGZ#libnl-}";   LIBNL_VERSION="${LIBNL_VERSION%.tar.gz}"
+  IW_VERSION="${IW_TGZ#iw-}";            IW_VERSION="${IW_VERSION%.tar.gz}"
+  WPAS_VERSION="${WPAS_TGZ#wpa_supplicant-}"; WPAS_VERSION="${WPAS_VERSION%.tar.gz}"
+  # The libnl release tag dots-to-underscores, exactly as build_wifi.sh builds it
+  # for the fetch URL (V=$(echo "$LIBNL_VERSION" | tr . _)). Stripping the dots
+  # instead yields libnl370, which is not a real tag.
+  LIBNL_TAG=$(printf '%s' "$LIBNL_VERSION" | tr . _)
+
+  cat > "$SD_WIFI/LICENCE-wifi.txt" <<EOF
+Licence and source offer for the polaris-wifi kit
+=================================================
+
+Binaries in this directory, and their licences:
+
+  wpa_supplicant  BSD-style  (w1.fi; its COPYING states the GPL v2 option was
+                              dropped for distribution after 2012-02-11)
+  wpa_cli         BSD-style  (same upstream, same terms)
+  wpa_passphrase  BSD-style  (same upstream, same terms)
+  iw              ISC        (see NOTICE-iw.txt)
+
+All four statically link libnl:
+
+  libnl           LGPL-2.1   (see COPYING-LGPL-2.1.txt)
+
+Because libnl is linked statically, section 4 of the LGPL applies to every
+binary above, and this written offer accompanies them:
+
+  The complete corresponding source for libnl-$LIBNL_VERSION, iw-$IW_VERSION and
+  wpa_supplicant-$WPAS_VERSION is published beside this release in licenses/ as
+  the exact upstream tarballs that were compiled ($LIBNL_TGZ, $IW_TGZ,
+  $WPAS_TGZ), together with our build recipe polaris-wifi-build-recipe.tar.gz
+  (which selects the static libnl link and wpa_supplicant's internal crypto,
+  both of which change what these binaries contain). The sha256 of each tarball
+  is recorded in licenses/README-GPL.txt.
+
+  Upstream, if you prefer it:
+    https://github.com/thom311/libnl/releases/download/libnl${LIBNL_TAG}/libnl-${LIBNL_VERSION}.tar.gz
+    https://www.kernel.org/pub/software/network/iw/iw-${IW_VERSION}.tar.gz
+    https://w1.fi/releases/wpa_supplicant-${WPAS_VERSION}.tar.gz
+
+  To rebuild and relink against a modified libnl, use build_wifi.sh from the
+  recipe archive; it is the script that produced these binaries.
+
+The shell scripts in this directory (polaris-autojoin.sh, polaris-apsta.sh,
+setup-wifi.sh, wifi-keepalive.sh, wifi-watch.sh) are ours and carry the same
+terms as the rest of the patcher bundle.
+EOF
+  for f in LICENCE-wifi.txt COPYING-LGPL-2.1.txt NOTICE-iw.txt NOTICE-wpa_supplicant.txt; do
+    [ -f "$SD_WIFI/$f" ] || die "wifi kit is missing $f -- shipping copyleft binaries with no licence alongside them is an LGPL s4 violation"
+  done
 fi
 
 MANIFEST="$OUT/ASTRO-MANIFEST.sha256"

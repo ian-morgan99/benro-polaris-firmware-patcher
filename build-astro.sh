@@ -263,9 +263,68 @@ AN_SHA=$(sha256sum "$LIC/astrometry.net-$AN_VERSION.tar.gz" | cut -d' ' -f1)
 JPEG_SHA=$(sha256sum "$LIC/jpeg-$JPEG_VERSION.tar.gz" | cut -d' ' -f1)
 RECIPE_SHA=$(sha256sum "$LIC/polaris-build-recipe.tar.gz" | cut -d' ' -f1)
 
+# The wifi kit is a second copyleft case, and this file used to assert astrometry
+# was "the only copyleft in what we compile" -- true before the kit existed, false
+# after it shipped. Build that section conditionally: under --no-wifi there are no
+# libnl-derived binaries in the bundle at all, and listing source archives that are
+# not present would be a false offer rather than a true one.
+if [ "$WANT_WIFI" = "1" ]; then
+  LIBNL_SHA=$(sha256sum "$LIC/libnl-$LIBNL_VERSION.tar.gz" | cut -d' ' -f1)
+  IW_SHA=$(sha256sum "$LIC/iw-$IW_VERSION.tar.gz" | cut -d' ' -f1)
+  WPAS_SHA=$(sha256sum "$LIC/wpa_supplicant-$WPAS_VERSION.tar.gz" | cut -d' ' -f1)
+  WIFIRECIPE_SHA=$(sha256sum "$LIC/polaris-wifi-build-recipe.tar.gz" | cut -d' ' -f1)
+  # Same tag form build_wifi.sh uses for the fetch URL: dots to underscores.
+  LIBNL_TAG=$(printf '%s' "$LIBNL_VERSION" | tr . _)
+  WIFI_CENSUS=$(cat <<WIFIEOF
+
+The wifi kit (polaris-wifi/) is a separate copyleft case
+-------------------------------------------------------
+  wpa_supplicant, wpa_cli, wpa_passphrase   BSD-style
+      w1.fi's own COPYING states the GPL v2 option was dropped for distribution
+      after 2012-02-11, so no GPL obligation attaches to these binaries. They are
+      still shipped with their source below, because it costs nothing and makes
+      the offer unambiguous.
+  iw                                        ISC
+      Its COPYING is the plain ISC permission notice, verified from the tarball.
+  libnl                                     LGPL-2.1
+      build_wifi.sh links it STATICALLY (libnl-3.a) into all four binaries above,
+      so section 4 of the LGPL applies to every one of them: the exact library
+      source must accompany them, and it does.
+
+Every licence above was read from the tarball in $(basename "$SRCCACHE_DIR"), not
+assumed from a package database or memory. The static libnl link is the reason
+this section exists at all -- a shared link would have needed no offer.
+WIFIEOF
+)
+  WIFI_LISTFILES="
+  libnl-$LIBNL_VERSION.tar.gz           LGPL-2.1, statically linked into all four wifi binaries
+  iw-$IW_VERSION.tar.gz                 ISC (notice required; source included too)
+  wpa_supplicant-$WPAS_VERSION.tar.gz   BSD-style (notice required; source included too)
+  COPYING-LGPL-2.1.txt                  the LGPL v2.1 text
+  NOTICE-iw.txt                         the ISC notice
+  NOTICE-wpa_supplicant.txt             the w1.fi notice
+  polaris-wifi-build-recipe.tar.gz      build_wifi.sh + Dockerfile: chooses the static
+                                        libnl link and wpa_supplicant's internal crypto,
+                                        both of which change what those binaries contain"
+  WIFI_SHAS="
+  $LIBNL_SHA  libnl-$LIBNL_VERSION.tar.gz
+  $IW_SHA  iw-$IW_VERSION.tar.gz
+  $WPAS_SHA  wpa_supplicant-$WPAS_VERSION.tar.gz
+  $WIFIRECIPE_SHA  polaris-wifi-build-recipe.tar.gz"
+  WIFI_URLS="
+  https://github.com/thom311/libnl/releases/download/libnl${LIBNL_TAG}/libnl-${LIBNL_VERSION}.tar.gz
+  https://www.kernel.org/pub/software/network/iw/iw-${IW_VERSION}.tar.gz
+  https://w1.fi/releases/wpa_supplicant-${WPAS_VERSION}.tar.gz"
+else
+  WIFI_CENSUS=""
+  WIFI_LISTFILES=""
+  WIFI_SHAS=""
+  WIFI_URLS=""
+fi
+
 cat > "$LIC/README-GPL.txt" <<EOF
-Corresponding source for the GPL-licensed programs in this bundle
-=================================================================
+Corresponding source for the copyleft-licensed programs in this bundle
+======================================================================
 
 Which binaries are GPL, and why
 -------------------------------
@@ -276,8 +335,9 @@ Both link libpolarisastro.a, which contains astrometry.net's qfits-an FITS
 reader. Every compiled file in qfits-an carries the ESO "GNU General Public
 License ... either version 2 of the License, or (at your option) any later
 version" notice, and qfits-an/NOTE-Astrometry.net releases the Astrometry.net
-modifications "under the GPL v2 or later". That is the only copyleft in what we
-compile.
+modifications "under the GPL v2 or later". That is the only copyleft in the
+ASTROMETRY SOLVER binaries -- see the wifi section further down for a second,
+unrelated copyleft case introduced by the station kit.
 
 Census over the 100 objects build_solver.sh compiles (99 files from util/,
 libkd/, qfits-an/ and four solver/ files, plus our BSD-3 gsl_shim.c):
@@ -302,19 +362,20 @@ md5.c, ctmf.c and simplexy.c, and a BSD-3 shim (container/astro/gslshim/)
 supplies the 7 GSL routines the solver needs. Verified after linking: zero
 GPLv3-only files among the objects, and no unresolved gsl_ symbols. So the
 copyleft floor here is GPL v2+, not v3+.
+$WIFI_CENSUS
 
 What is in this directory
 -------------------------
   astrometry.net-$AN_VERSION.tar.gz   the exact upstream source that was compiled
   jpeg-$JPEG_VERSION.tar.gz           IJG libjpeg, statically linked into polaris-extract
   polaris-build-recipe.tar.gz         our build recipe + the BSD-3 GSL shim + our C sources
-  COPYING-GPL-2.txt                   the GPL v2 text
+  COPYING-GPL-2.txt                   the GPL v2 text$WIFI_LISTFILES
 
 sha256
 ------
   $AN_SHA  astrometry.net-$AN_VERSION.tar.gz
   $JPEG_SHA  jpeg-$JPEG_VERSION.tar.gz
-  $RECIPE_SHA  polaris-build-recipe.tar.gz
+  $RECIPE_SHA  polaris-build-recipe.tar.gz$WIFI_SHAS
 
 We do not modify any astrometry.net source file. The differences between these
 binaries and a plain upstream build are all structural and are recorded by the
@@ -325,7 +386,7 @@ configure cannot run probe binaries when cross-compiling.
 Upstream source URL
 -------------------
   https://codeload.github.com/dstndstn/astrometry.net/tar.gz/refs/tags/$AN_VERSION
-  https://www.ijg.org/files/jpegsrc.v$JPEG_VERSION.tar.gz
+  https://www.ijg.org/files/jpegsrc.v$JPEG_VERSION.tar.gz$WIFI_URLS
 
 This bundle is distributed at no charge as part of the Benro Polaris firmware
 patcher. The patcher's repository holds the same tarballs under
@@ -339,6 +400,12 @@ polaris-httpd, polaris-link/jog/prog/astro, polaris-logwatch, polaris-match and
 all *.sh) is MIT or BSD-3 and talks to the GPL binaries as separate processes
 over files and sockets -- nothing GPL is linked into them. See
 docs/LICENSE-AUDIT.md in the patcher repository for the per-file audit.
+
+That sentence covers polaris-astro/ only. The wifi kit is NOT covered by it: its
+four binaries statically link LGPL-2.1 libnl, which is why they get their own
+source archives above and their own LICENCE-wifi.txt inside polaris-wifi/. A copy
+of this file is not shipped inside polaris-wifi.zip; the offer travels with those
+binaries in LICENCE-wifi.txt instead.
 EOF
 
 # The written offer has to travel WITH the binaries. README.txt sits at bundle
@@ -376,6 +443,7 @@ microSD card, so the card ends up with:
 
     <SD root>/astrometry/index-41xx.fits
     <SD root>/polaris-astro/polaris-solve, polaris-extract, polaris-mount, *.sh
+    <SD root>/polaris-wifi/wpa_supplicant, wpa_cli, wpa_passphrase, iw, *.sh
 
 When the bundle was built with --catalog-package, it also contains
 
@@ -408,6 +476,38 @@ Over ssh instead of sneakernet, the same layout works:
 
 THEN EDIT /app/sd/polaris-astro/site.conf -- LAT and LON are required and
 cannot be guessed. Reboot, and open http://<polaris ip>:8090/.
+
+Joining your own Wi-Fi network (optional)
+-----------------------------------------
+By default the Polaris only runs its own access point at 192.168.0.1. The kit in
+polaris-wifi/ lets it also join a home network as a station, which is what you
+want if the mount and your camera need to be on the same LAN.
+
+Two steps, over ssh, on the device:
+
+    /app/sd/polaris-wifi/setup-wifi.sh          # prompts for SSID + password
+    /app/sd/polaris-wifi/polaris-apsta.sh up    # join now
+
+setup-wifi.sh hashes the passphrase with wpa_passphrase, never puts it on a
+command line where `ps` would show it, strips the plaintext copy that
+wpa_passphrase writes into its own output, and saves /app/sd/polaris-wifi/wpa.conf
+mode 600. That file is a credential -- the hash alone is enough to join.
+
+To join automatically on every boot, create the flag file boot looks for:
+
+    touch /app/sd/polaris-wifi/autojoin
+
+The boot hook runs polaris-autojoin.sh only when that file exists AND
+polaris-autojoin.sh is executable, and it runs it AFTER the plate solver has
+started -- a failed join cannot take down plate solving or the app path. There is
+no dashboard control for this yet: the web UI's "join at power-up" checkbox posts
+a parameter the server does not accept, so it silently does nothing (issue #273).
+Use the two commands above.
+
+One thing to expect: the mount's own access point powers its radio down about 60
+seconds after the last client disconnects. If you cannot see or reach the network
+after a reboot, the mount is asleep -- wake it by powering the mount off and on,
+and connect promptly.
 
 Test it on a real frame
 -----------------------
