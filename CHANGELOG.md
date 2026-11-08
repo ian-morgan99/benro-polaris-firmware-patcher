@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
+
+- `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
+  network password in argv. `/proc` is mounted on the Polaris, so any process could
+  read it from `/proc/<pid>/cmdline` for as long as `wpa_passphrase` ran, and it also
+  appeared in `ps`. The script's own header asserted the password was "never passed as
+  a command-line argument (which would show in `ps`)" — the claim and the code were
+  read as one document instead of the claim being checked against the invocation below
+  it, which is how this survived review.
+- The passphrase now goes in on stdin. Verified against the device's own
+  `wpa_passphrase` build that both forms produce a byte-identical `psk=` line, so the
+  resulting `wpa.conf` is unchanged. The stdin form additionally prints a
+  `# reading passphrase from stdin` banner, which is stripped alongside the existing
+  `#psk=` plaintext comment — filtering only the comment would have written the
+  password into `wpa.conf`, a worse leak than the one being fixed.
+- Verified on a stub that reproduces the device's observed output: the child receives
+  `ARGV:[MyNet][]` (empty second argument), `wpa.conf` carries the expected hash with
+  zero occurrences of the plaintext, mode stays `600`, and no `.wpa.tmp` credential is
+  left behind. Not yet re-run on the device — it became unreachable mid-session
+  (ping fails, port 22 closed). The hash-equality claim *is* from the device, captured
+  before it went down.
+- `tests/test_setup_wifi_psk_not_in_argv.py` asserts what the child process actually
+  received rather than the script's text, and that both plaintext output forms are
+  filtered. Confirmed non-vacuous: against the pre-fix script 4 of its 7 assertions
+  fail; restored, all 7 pass. Registered in `tests/run_prerelease_gate.sh`.
+- Cards already in the field keep the old script until the kit is re-extracted from a
+  rebuilt zip; the password they typed is not recoverable from `wpa.conf`, but anyone
+  with local process access while it ran could have read it.
+
 ## Unreleased — copyleft wifi binaries shipped with no licence and no source offer (issue #286)
 
 - The published `polaris-wifi.zip` at
