@@ -244,11 +244,18 @@ fi
 # Prove the rooting claim rather than trusting the zip invocation: an entry that does
 # not begin with its directory name unzips one level too deep, and the boot hook then
 # installs nothing while still reporting success (issue #58).
-for z in "$SD_ROOT"/polaris-astro.zip "$SD_ROOT"/polaris-wifi.zip "$SD_ROOT"/astrometry-indexes.zip; do
+#
+# The expected root is stated per archive instead of derived from the filename, because
+# astrometry-indexes.zip is intentionally rooted at astrometry/ -- the README tells users
+# the card must end up with <SD root>/astrometry/index-41xx.fits. Deriving the root from
+# the basename made this die on a correctly built indexes archive (11 entries), which is
+# how this was caught: the assertion fired on real bytes rather than on my assumption.
+for spec in "polaris-astro.zip:polaris-astro" "polaris-wifi.zip:polaris-wifi" "astrometry-indexes.zip:astrometry"; do
+  zname="${spec%%:*}"; root="${spec##*:}"
+  z="$SD_ROOT/$zname"
   [ -f "$z" ] || continue
-  base=$(basename "$z" .zip)
-  bad=$(unzip -Z1 "$z" | grep -vc "^$base/" || true)
-  [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $base/ -- would not unzip to SD root"
+  bad=$(unzip -Z1 "$z" | grep -vc "^$root/" || true)
+  [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $root/ -- would not unzip to SD root"
 done
 
 tar -C "$OUT/astro-bundle" -czf "$OUT/astro-bundle.tar.gz" .

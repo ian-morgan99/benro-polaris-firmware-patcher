@@ -424,10 +424,19 @@ if [ "$WANT_ZIP" = "1" ]; then
   fi
   # Prove the rooting claim instead of trusting the zip invocation: an entry that
   # does not begin with the directory name would land in the wrong place.
-  for z in $ZIPS; do
-    base=$(basename "$z" .zip)
-    bad=$(unzip -Z1 "$z" | grep -vc "^$base/" || true)
-    [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $base/ -- would not unzip to SD root"
+  #
+  # The expected root is stated per archive rather than derived from the filename.
+  # astrometry-indexes.zip is intentionally rooted at astrometry/ -- the README tells
+  # users the card must end up with <SD root>/astrometry/index-41xx.fits -- so deriving
+  # it from the basename expects astrometry-indexes/ and dies on a correctly built
+  # archive. This path never hit it only because the runs that used it had no indexes;
+  # the same flaw in build-astro-candidate.sh fired on real bytes (11 entries).
+  for spec in "polaris-astro.zip:polaris-astro" "polaris-wifi.zip:polaris-wifi" "astrometry-indexes.zip:astrometry"; do
+    zname="${spec%%:*}"; root="${spec##*:}"
+    z="$SD_ROOT/$zname"
+    [ -f "$z" ] || continue
+    bad=$(unzip -Z1 "$z" | grep -vc "^$root/" || true)
+    [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $root/ -- would not unzip to SD root"
   done
 fi
 
