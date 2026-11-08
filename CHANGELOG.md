@@ -46,13 +46,25 @@
   `licenses/` tree with no docker and no rig. Confirmed non-vacuous — reverted
   both scripts to their pre-fix state and 8 of its 9 assertions fail; restored,
   all 9 pass. Registered in `tests/run_prerelease_gate.sh` (drift guard now at 35
-  suites).
-- Not yet verified on produced bytes. The gate is green offline (12 passed, 0
-  failed, 2 skipped; 592 python tests) and the generation block was exercised
-  directly, but a full candidate build has not completed, so the four files are
-  not yet confirmed inside a zip that this code actually produced. That is the
-  exact failure mode that let `.99` ship, and this issue is not closed until it
-  is done.
+  suites). The archive-level assertions were also mutation-tested individually:
+  notice absent from the tree, notice empty, offer naming no version, and a binary
+  stored non-executable each fail the build with its own message.
+- Verified on produced bytes, not from a diff. A real cross-compile ran through
+  `build-astro.sh` (the exact script the candidate path invokes) with the cached
+  source tarballs, and the candidate path's archive block was run over the tree it
+  produced. The resulting `polaris-wifi.zip` contains all four notices, read back
+  out of the archive: `LICENCE-wifi.txt` 1791 B, `COPYING-LGPL-2.1.txt` 26530 B,
+  `NOTICE-iw.txt` 849 B, `NOTICE-wpa_supplicant.txt` 965 B. All seven executables
+  are stored `-rwxr-xr-x`, every entry is rooted at `polaris-wifi/`, and the offer
+  names libnl-3.7.0, iw-5.19 and wpa_supplicant-2.10 with working upstream URLs.
+  The same tree also carries `udhcpc.script` at 4583 B, so #280's fix is present in
+  the same artifact.
+- Two vacuous-pass traps were found and closed while verifying this. Running the
+  archive block against a wrong `OUT` skipped every assertion and still exited 0 —
+  the guard now dies if the staging tree is absent, confirmed by pointing it at a
+  nonexistent path. And deleting a licence from an already-built zip proves nothing,
+  because the block rebuilds the archive from the staging directory; the mutations
+  that actually exercise the gate are made to the tree, and those do fail closed.
 - The published `.99` is left as published. Its bytes are recorded by SHA-256 in
   its README and `publish-astro-candidate.sh` refuses to replace published
   archives; swapping them silently would break the provenance discipline the

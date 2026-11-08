@@ -193,6 +193,12 @@ bash "$ROOT/build-astro.sh" "${ASTRO_ARGS[@]}"
 # user receives, and a file that exists on disk but is excluded from the archive is
 # exactly how .99 slipped through.
 SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
+# Fail loudly rather than skip. Every assertion below is guarded by [ -d ]/[ -f ]
+# tests, so a wrong SD_ROOT would silently skip all of them and exit 0 -- a vacuous
+# pass, which is exactly the bug class in issue #286. The polaris-astro check above
+# guarantees this directory exists on the real path, so reaching the die means the
+# tree really is missing.
+[ -d "$SD_ROOT" ] || die "SD staging tree missing: $SD_ROOT -- cannot verify the kit archives"
 if [ -d "$SD_ROOT/polaris-wifi" ]; then
   command -v zip >/dev/null 2>&1 || die "wifi kit present but 'zip' is not installed -- cannot produce the archive users are given"
   (
