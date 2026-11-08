@@ -202,7 +202,8 @@ if [ "$RUN_TESTS" = "1" ]; then
   python3 -m pytest -q \
     "$ROOT/container/astro/tests" \
     "$ROOT/tools/tests" \
-    "$ROOT/tests/test_astro_build_wrapper.py"
+    "$ROOT/tests/test_astro_build_wrapper.py" \
+    "$ROOT/tests/test_wifi_kit_packaging.py"
   echo "[*] checking on-device shell syntax"
   for script in "$ROOT"/container/astro/ondisk/*.sh; do
     sh -n "$script"
