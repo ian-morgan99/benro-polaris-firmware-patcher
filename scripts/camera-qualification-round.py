@@ -359,25 +359,20 @@ def case_wbs_04_1(recorder: Recorder, host: str, user_host: str) -> dict:
     return rec
 
 
-def case_wbs_04_2(recorder: Recorder, host: str, user_host: str) -> dict:
-    """WBS-04.2 preview OFF and camera idle (#275 #274)."""
-    rec = {"wbs": "WBS-04.2", "issues": ["#275", "#274"], "title":
-           "Preview stops after liveview off, camera becomes idle"}
-    reachable, detail = device_reachable(user_host)
-    if not reachable:
-        rec.update(status="BLOCKED", evidence=None, reason=f"device unreachable: {detail}")
-        return rec
-
+def _preview_off_once(recorder: Recorder, host: str, user_host: str) -> dict:
+    """Turn liveview off once and measure whether frames stop."""
     before = ssh_run(user_host,
                      f"grep -c 'Pentax preview stage get-frame' {SD_LOG_DIR}/Clog* "
                      "2>/dev/null | awk -F: '{s+=$NF} END {print s+0}'", timeout=45)[1]
     frames_before = int(re.sub(r"\D", "", before) or 0)
 
+    out = {"frames_before": frames_before, "ack_state": None,
+           "frames_after": None, "new_frames_after_off": None, "error": None}
     try:
         p = connect(host, PORT)
     except (OSError, socket.timeout) as exc:
-        rec.update(status="BLOCKED", evidence=None, reason=f"9090 unreachable: {exc}")
-        return rec
+        out["error"] = f"9090 unreachable: {exc}"
+        return out
 
     try:
         p.send(OPCODES["preview_query"])
@@ -388,27 +383,84 @@ def case_wbs_04_2(recorder: Recorder, host: str, user_host: str) -> dict:
             ack = p.wait_code(OPCODES["preview_set"], ACK_TIMEOUT_S)
             recorder.line(f"PREVIEW stop_ack={ack}")
         p.send(OPCODES["preview_query"])
-        confirmed = field(p.wait_code(OPCODES["preview_query"], ACK_TIMEOUT_S), "state")
+        out["ack_state"] = field(p.wait_code(OPCODES["preview_query"], ACK_TIMEOUT_S),
+                                 "state")
     except (TimeoutError, ConnectionError) as exc:
-        rec.update(status="FAIL", evidence=None, reason=f"preview off did not answer: {exc}")
+        out["error"] = f"preview off did not answer: {exc}"
         p.close()
-        return rec
+        return out
 
     time.sleep(5.0)
     after = ssh_run(user_host,
                     f"grep -c 'Pentax preview stage get-frame' {SD_LOG_DIR}/Clog* "
                     "2>/dev/null | awk -F: '{s+=$NF} END {print s+0}'", timeout=45)[1]
-    frames_after = int(re.sub(r"\D", "", after) or 0)
+    out["frames_after"] = int(re.sub(r"\D", "", after) or 0)
+    out["new_frames_after_off"] = out["frames_after"] - frames_before
     p.close()
+    return out
 
-    new_frames = frames_after - frames_before
-    rec.update(status="DEVICE_VERIFIED", evidence={
-        "ack_state": confirmed, "frames_before": frames_before,
-        "frames_after": frames_after, "new_frames_after_off": new_frames},
-        reason=f"state after off={confirmed}, {new_frames} new get-frame lines in 5 s")
-    if confirmed != "0" or new_frames > 0:
+
+def _pgphoto_env(user_host: str, name: str) -> str:
+    """Read one environment variable from the running pgphoto process."""
+    rc, out = ssh_run(user_host,
+                      "pid=$(pgrep -f 'pgphoto' | head -1); "
+                      "tr '\\0' '\\n' < /proc/$pid/environ 2>/dev/null "
+                      f"| grep '^{name}=' || echo unset", timeout=30)
+    return out.strip() or "unset"
+
+
+def case_wbs_04_2(recorder: Recorder, host: str, user_host: str) -> dict:
+    """WBS-04.2 preview OFF and camera idle (#275 #274).
+
+    #293 asks for a controlled comparison of STAGE2_PENTAX_KEEP_LV=0 against the default,
+    because stage2_pentax_enable_keep_live_view() turns pentaxpclvkeep ON after a successful
+    Pentax init and that may be what keeps live view running after the app asks it to stop.
+    The loader comment calls this an unproven hypothesis, so it is tested rather than assumed.
+
+    What the source does establish: stage2_loader.c sets pentaxpclvkeep ON at init (default
+    ON) and no code path anywhere in the file sets it back OFF -- grep for pentaxpclvkeep
+    finds only the get, the set-to-ON, and comments. So a liveview-off request cannot be
+    turning that toggle off. Whether the toggle is what keeps frames arriving is a device
+    question.
+
+    Changing the toggle needs pgphoto restarted with a different environment, which restarts
+    the camera session. This harness deliberately does not do that: it would tear down a live
+    session mid-round and invalidate every other case's evidence. It records the value the
+    running process actually has and prints the manual procedure instead.
+    """
+    rec = {"wbs": "WBS-04.2", "issues": ["#275", "#274"], "title":
+           "Preview stops after liveview off, camera becomes idle"}
+    reachable, detail = device_reachable(user_host)
+    if not reachable:
+        rec.update(status="BLOCKED", evidence=None, reason=f"device unreachable: {detail}")
+        return rec
+
+    keep_lv_env = _pgphoto_env(user_host, "STAGE2_PENTAX_KEEP_LV")
+    backoff_env = _pgphoto_env(user_host, "STAGE2_PENTAX_PREVIEW_BACKOFF")
+    default_run = _preview_off_once(recorder, host, user_host)
+
+    rec["evidence"] = {"keep_lv_env": keep_lv_env, "backoff_env": backoff_env,
+                       "default": default_run}
+
+    if default_run["error"]:
+        rec.update(status="FAIL", reason=default_run["error"])
+        return rec
+
+    streaming_after_off = (default_run["ack_state"] != "0"
+                           or (default_run["new_frames_after_off"] or 0) > 0)
+    rec.update(status="DEVICE_VERIFIED",
+               reason=f"state after off={default_run['ack_state']}, "
+                      f"{default_run['new_frames_after_off']} new get-frame lines in 5 s, "
+                      f"{keep_lv_env}")
+    if streaming_after_off:
         rec["status"] = "FAIL"
         rec["reason"] += " -- preview still streaming (#275 reproduced)"
+
+    rec["next_action"] = (
+        "A/B not run here: it needs pgphoto restarted with STAGE2_PENTAX_KEEP_LV=0, which "
+        "tears down the live session and would invalidate this round's other cases. Run it as "
+        "a separate round: restart_gphoto.sh with that variable exported, then re-run this "
+        "tool and compare new_frames_after_off between the two bundles.")
     return rec
 
 

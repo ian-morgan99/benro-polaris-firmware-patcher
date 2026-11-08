@@ -216,6 +216,25 @@ def test_opcodes_come_from_observed_traffic():
             f"{control}: opcode {opcode} never observed in archived app traffic")
 
 
+def test_keep_lv_ab_is_reported_not_faked():
+    """#293 asks for a STAGE2_PENTAX_KEEP_LV=0 A/B. The tool must not pretend to run it.
+
+    Performing that A/B means restarting pgphoto, which tears down the live camera session
+    and invalidates every other case's evidence in the same round. The honest behaviour is
+    to record what the running process actually has and hand back the manual procedure -- so
+    a flag that implied an automated restart was removed rather than left as a no-op.
+    """
+    import inspect
+
+    src = inspect.getsource(camqual.case_wbs_04_2)
+    assert "next_action" in src, "case must state the A/B it did not perform"
+    assert "--ab-keep-lv" not in src, (
+        "a flag implying an automated pgphoto restart must not exist unless it does it")
+    # The env read must target the real process environment, not a guess.
+    env_src = inspect.getsource(camqual._pgphoto_env)
+    assert "/proc/" in env_src and "environ" in env_src
+
+
 def test_syntax_and_compilation():
     import py_compile
     with tempfile.NamedTemporaryFile(suffix=".pyc", delete=False) as tmp:
