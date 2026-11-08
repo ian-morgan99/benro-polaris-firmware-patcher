@@ -13,6 +13,32 @@
 #  device gains internet access without ever displacing the AP path.
 # ===========================================================================
 LOG=/app/sd/polaris-wifi/apsta.log
+RESOLV=/etc/resolv.conf
+# Written into the file we create, so deconfig can tell "a resolv.conf we made"
+# from one the firmware or an operator made, and only remove its own.
+MARK="# added by polaris-wifi udhcpc.script"
+
+write_resolv() {
+    # $dns is a space-separated list BusyBox udhcpc exports in the same
+    # environment as $ip/$router/$subnet. Nothing else on this firmware consumes
+    # it: there is no /etc/resolv.conf and no /usr/share/udhcpc/default.script,
+    # so without this a joined network reaches raw IPs and resolves nothing --
+    # nslookup falls back to 127.0.0.1 and fails (issue #281).
+    [ -n "$dns" ] || return 0
+    TMP="$RESOLV.tmp.$$"
+    {
+        echo "$MARK"
+        for ns in $dns; do echo "nameserver $ns"; done
+    } > "$TMP" 2>/dev/null || { rm -f "$TMP"; return 1; }
+    # Compare before replacing. / is UBIFS, and this runs on every renew --
+    # roughly hourly on a two-hour lease -- so an unconditional rewrite would be
+    # ~24 flash writes a day to change nothing most of the time.
+    if cmp -s "$TMP" "$RESOLV" 2>/dev/null; then
+        rm -f "$TMP"
+    else
+        mv "$TMP" "$RESOLV" 2>/dev/null || rm -f "$TMP"
+    fi
+}
 
 case "$1" in
   bound|renew)
@@ -20,10 +46,18 @@ case "$1" in
     if [ -n "$router" ] && ! /sbin/route -n 2>/dev/null | grep -q '^0\.0\.0\.0'; then
         /sbin/route add default gw "$router" dev "$interface" 2>/dev/null
     fi
-    echo "$(date '+%m-%d %H:%M:%S') lease $ip/${subnet} applied to $interface (gw ${router:-none})" >> "$LOG"
+    write_resolv
+    echo "$(date '+%m-%d %H:%M:%S') lease $ip/${subnet} applied to $interface (gw ${router:-none}, dns ${dns:-none})" >> "$LOG"
     ;;
   deconfig)
     /sbin/ifconfig "$interface" 0.0.0.0 2>/dev/null
+    # The nameservers we wrote belong to this lease. Once the station is down
+    # they are unreachable, and leaving them in place makes every lookup hang on
+    # timeout rather than fail fast -- worse than having no resolver at all, which
+    # is what the device shipped with. Remove only our own file.
+    if grep -q "$MARK" "$RESOLV" 2>/dev/null; then
+        rm -f "$RESOLV" 2>/dev/null
+    fi
     ;;
   leasefail|nak)
     echo "$(date '+%m-%d %H:%M:%S') dhcp $1 on $interface" >> "$LOG"

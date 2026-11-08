@@ -75,6 +75,23 @@ def test_bind_hook_is_executable_and_gated_in_both_builders():
     assert "iw polaris-autojoin.sh setup-wifi.sh udhcpc.script" in wrap
 
 
+def test_bind_hook_applies_dns_as_well_as_the_address():
+    """Issue #281: the hook applied ip/router but never $dns.
+
+    BusyBox udhcpc exports $dns alongside $ip/$router/$subnet and nothing else
+    on this firmware consumes it -- there is no /etc/resolv.conf and no
+    /usr/share/udhcpc/default.script to fall back on, so a joined network could
+    reach raw IPs and resolve no names.
+    """
+    body = (ONDISK / "udhcpc.script").read_text()
+    assert 'for ns in $dns' in body
+    assert "nameserver $ns" in body
+    # deconfig must undo it: unreachable nameservers make lookups hang instead
+    # of failing fast, which is worse than the shipped state of no resolver.
+    deconfig = body.split("deconfig)", 1)[1].split(";;", 1)[0]
+    assert "rm -f" in deconfig and "$MARK" in deconfig
+
+
 def test_bind_hook_survives_busybox_sh():
     import subprocess
 
