@@ -178,6 +178,73 @@ bash "$ROOT/build-astro.sh" "${ASTRO_ARGS[@]}"
     while IFS= read -r -d '' file; do sha256sum "$file"; done
 ) > "$OUT/astro-bundle/ASTRO-MANIFEST.sha256"
 [ -f "$OUT/astro-bundle/ASTRO-MANIFEST.sha256" ] || die "Astro manifest missing"
+
+# Build the SD-rooted kit archives here, and verify them as archives.
+#
+# Until now this path produced no polaris-astro.zip or polaris-wifi.zip at all:
+# only scripts/build-astro-bundle.sh creates them, and nothing in production calls
+# that script. The zips published for 6.0.0.54.99 were therefore made outside any
+# tracked build path, so the wrapper's licence gate never ran on the bytes anyone
+# was handed -- polaris-wifi.zip shipped four statically-linked LGPL binaries with
+# no licence and no source offer (issue #286). publish-astro-candidate.sh skips a
+# missing zip silently ([ -f ] || continue), so absence passed unnoticed.
+#
+# Assert against the finished archive, not the staging directory: the zip is what a
+# user receives, and a file that exists on disk but is excluded from the archive is
+# exactly how .99 slipped through.
+SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
+if [ -d "$SD_ROOT/polaris-wifi" ]; then
+  command -v zip >/dev/null 2>&1 || die "wifi kit present but 'zip' is not installed -- cannot produce the archive users are given"
+  (
+    cd "$SD_ROOT"
+    rm -f polaris-astro.zip polaris-wifi.zip
+    zip -qrX polaris-astro.zip polaris-astro
+    zip -qrX polaris-wifi.zip polaris-wifi
+    [ -d astrometry ] && { rm -f astrometry-indexes.zip; zip -qrX astrometry-indexes.zip astrometry; }
+    true
+  )
+fi
+
+# The copyleft offer must be inside the archive, not merely on disk beside it.
+if [ -f "$SD_ROOT/polaris-wifi.zip" ]; then
+  for f in LICENCE-wifi.txt COPYING-LGPL-2.1.txt NOTICE-iw.txt NOTICE-wpa_supplicant.txt; do
+    unzip -Z1 "$SD_ROOT/polaris-wifi.zip" | grep -qx "polaris-wifi/$f" \
+      || die "polaris-wifi.zip does not contain $f -- shipping copyleft binaries with no licence alongside them is an LGPL s4 violation"
+  done
+  # Present is not enough: a zero-byte LICENCE-wifi.txt satisfies the listing above
+  # and still leaves the user with nothing to read. Read the bytes out of the archive.
+  for f in LICENCE-wifi.txt COPYING-LGPL-2.1.txt NOTICE-iw.txt NOTICE-wpa_supplicant.txt; do
+    sz=$(unzip -p "$SD_ROOT/polaris-wifi.zip" "polaris-wifi/$f" 2>/dev/null | wc -c)
+    [ "$sz" -gt 0 ] || die "polaris-wifi.zip stores $f as an empty file -- an empty licence is not a licence"
+  done
+  # The offer must name the versions it offers source for.
+  unzip -p "$SD_ROOT/polaris-wifi.zip" polaris-wifi/LICENCE-wifi.txt \
+    | grep -qE 'libnl-[0-9]+\.[0-9]' \
+    || die "LICENCE-wifi.txt inside the zip names no libnl version -- an offer that names no version is not an offer"
+  # Modes come from the archive, because boot gates auto-join on [ -x ]. Use plain
+  # `unzip -Z`: with -Z1 the long-listing header is suppressed and this would read
+  # empty, making the check pass vacuously.
+  for b in wpa_supplicant wpa_cli wpa_passphrase iw polaris-autojoin.sh setup-wifi.sh udhcpc.script; do
+    perm=$(unzip -Z "$SD_ROOT/polaris-wifi.zip" 2>/dev/null \
+           | awk -v n="polaris-wifi/$b" '$NF==n {print $1}')
+    [ -n "$perm" ] || die "polaris-wifi.zip does not contain $b at all"
+    case "$perm" in
+      *x*) ;;
+      *) die "polaris-wifi.zip stores $b as '$perm' (not executable) -- boot's [ -x ] gate would skip it" ;;
+    esac
+  done
+fi
+
+# Prove the rooting claim rather than trusting the zip invocation: an entry that does
+# not begin with its directory name unzips one level too deep, and the boot hook then
+# installs nothing while still reporting success (issue #58).
+for z in "$SD_ROOT"/polaris-astro.zip "$SD_ROOT"/polaris-wifi.zip "$SD_ROOT"/astrometry-indexes.zip; do
+  [ -f "$z" ] || continue
+  base=$(basename "$z" .zip)
+  bad=$(unzip -Z1 "$z" | grep -vc "^$base/" || true)
+  [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $base/ -- would not unzip to SD root"
+done
+
 tar -C "$OUT/astro-bundle" -czf "$OUT/astro-bundle.tar.gz" .
 
 echo "[3/7] generating immutable FwPkt install manifest"

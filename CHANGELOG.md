@@ -1,5 +1,65 @@
 # Changelog
 
+## Unreleased — copyleft wifi binaries shipped with no licence and no source offer (issue #286)
+
+- The published `polaris-wifi.zip` at
+  `PrivateResearch/firmware-packets/6.0.0.54.99--astro-v99-wifi-20261108/`
+  (SHA-256 `bd5f7db4…`) contains ten entries and none of them is a licence.
+  It ships `wpa_supplicant`, `wpa_cli`, `wpa_passphrase` and `iw`, all four
+  statically linked against libnl (LGPL-2.1) by `container/astro/build_wifi.sh`.
+  LGPL v2.1 §4 requires the licence copy and a corresponding-source offer to
+  accompany the object code, and the README's own instruction is "unzip
+  polaris-wifi.zip at the SD card root" — so a user receives copyleft binaries
+  and no licence at all.
+- A gate existed and should have refused. `scripts/build-astro-bundle.sh:317`
+  dies if any of the four files is missing from `$SD_WIFI`. It landed in 55759cd
+  and is an ancestor of caab172, the patcher commit recorded in that candidate's
+  provenance, so it was present at build time and never ran — because
+  `scripts/build-astro-candidate.sh` calls `build-astro.sh` directly and tars the
+  result itself. **A gate on one of two build paths is not a gate.**
+- Worse than the handover described: no production script calls
+  `build-astro-bundle.sh` at all, and neither `build-astro.sh` nor
+  `build-astro-candidate.sh` creates `polaris-astro.zip` or `polaris-wifi.zip`.
+  The archives that were published for `.99` were therefore produced outside any
+  tracked build path, and `publish-astro-candidate.sh` skips a missing zip
+  silently (`[ -f ] || continue`), so absence passed unnoticed. A wrapper-built
+  zip from 02:17 does contain all four notices; the published bytes stamped 11:37
+  contain none — two different builds, and only the unguarded one was handed out.
+- Licence generation now lives in `build-astro.sh`, beside the existing astro
+  licence step, so every producer of a wifi kit writes them. File names come from
+  the gate that already checks them (`LICENCE-wifi.txt`, `COPYING-LGPL-2.1.txt`,
+  `NOTICE-iw.txt`, `NOTICE-wpa_supplicant.txt`) rather than from the abandoned
+  fix in `4b54611`, which wrote `SOURCE-OFFER.txt` and would have satisfied LGPL
+  while failing that gate. Versions are derived from the tarball filenames written
+  into `licenses/`, not from variables — an offer that names no version is not an
+  offer, and deriving from the filenames makes drift impossible. Fails closed on a
+  missing or empty notice, which trips the existing EXIT trap and removes the four
+  libnl-linked binaries from the bundle.
+- `build-astro-candidate.sh` now builds the SD-rooted archives itself and asserts
+  against the finished archive rather than the staging directory: all four notices
+  present, non-empty when read back out with `unzip -p`, the offer naming a real
+  libnl version, every binary executable as stored in the zip, and every entry
+  rooted at its own directory so it unzips at the card root (#58). The wrapper's
+  check is retained as a second line of defence.
+- `tests/test_wifi_licence_on_every_build_path.py` tests the path, not the text:
+  it runs the real generation block out of `build-astro.sh` against a fabricated
+  `licenses/` tree with no docker and no rig. Confirmed non-vacuous — reverted
+  both scripts to their pre-fix state and 8 of its 9 assertions fail; restored,
+  all 9 pass. Registered in `tests/run_prerelease_gate.sh` (drift guard now at 35
+  suites).
+- Not yet verified on produced bytes. The gate is green offline (12 passed, 0
+  failed, 2 skipped; 592 python tests) and the generation block was exercised
+  directly, but a full candidate build has not completed, so the four files are
+  not yet confirmed inside a zip that this code actually produced. That is the
+  exact failure mode that let `.99` ship, and this issue is not closed until it
+  is done.
+- The published `.99` is left as published. Its bytes are recorded by SHA-256 in
+  its README and `publish-astro-candidate.sh` refuses to replace published
+  archives; swapping them silently would break the provenance discipline the
+  publication exists to provide. Needs a human decision: publish a new candidate
+  id with the fix and note an erratum against `.99`, or add
+  `ERRATUM-wifi-licence.txt` beside it.
+
 ## Unreleased — the station kit could join a network and use none of it (issues #280, #281)
 
 - `polaris-wifi.zip` never contained `udhcpc.script`. Both `polaris-autojoin.sh`
