@@ -27,11 +27,35 @@
   with an assertion on the entry-point scripts rather than a best-effort chmod.
 - Verified against real archives: RED (exit 1, 8 failures) on the published
   `out/astro-v99-wifi-20261108` — naming all five missing wifi files, both
-  `udhcpc.script` drift references and the seven non-executable scripts — and
-  GREEN on `out/licence-fix-check` apart from the exec-bit finding. The 13 new
-  tests build their own zips rather than reading `out/`, which is gitignored and
-  would make them pass vacuously in CI. Confirmed non-vacuous: reverting the
-  `build-astro.sh` chmod fails exactly one test.
+  `udhcpc.script` drift references and the seven non-executable scripts.
+- **Then verified by running the build for real, twice.** `build-astro.sh` was run
+  end to end on an unfixed tree and again with this fix applied, each result zipped
+  exactly as `build-astro-candidate.sh` does it:
+  - unfixed → staging tree held 18 executable and **7 non-executable** scripts, the
+    archive stored them at `0o100644`, and the verifier exited 1 naming all seven.
+  - fixed → **25 of 25** scripts executable, verifier reports
+    `ARTIFACTS_INTERNALLY_CONSISTENT_WITH_UNKNOWN` (20 checks, 0 fail).
+  The red-before is therefore what a real cross-compile produced, not something
+  inferred from a diff or from a simulation of the build's copy step.
+- That same fixed build's `polaris-wifi.zip` carries `LICENCE-wifi.txt`,
+  `COPYING-LGPL-2.1.txt`, `NOTICE-iw.txt`, `NOTICE-wpa_supplicant.txt` and
+  `udhcpc.script`, which confirms #280/#281/#286 on produced bytes as well.
+- **Building is not blocked in this sandbox, contrary to the handover.** Docker is
+  reachable through `flatpak-spawn --host /usr/bin/docker`; there is simply no
+  `docker` on PATH here, so the self-recursing-shim diagnosis does not apply to this
+  shell. A shim in a scratch directory on PATH is sufficient — and that is exactly
+  what `test_build_toolchain_prerequisites` prescribes in its own failure text, so
+  it is sanctioned by the repo rather than improvised. With it that test passes,
+  which means the prerelease gate can go fully green here for the first time.
+- One trap found doing this: `build-astro.sh` bind-mounts `--out`, and the Flatpak
+  sandbox has its own `/tmp`, so an output directory under `/tmp` is not the one the
+  container mounts. The cross-compile succeeds and then dies on
+  `mkdir /out/COPY-TO-SD-CARD-ROOT: Permission denied`, which reads like a broken
+  toolchain but is not. Put `--out` somewhere shared with the host, e.g. under
+  `$HOME`.
+- The 13 new tests build their own zips rather than reading `out/`, which is
+  gitignored and would make them pass vacuously in CI. Confirmed non-vacuous:
+  reverting the `build-astro.sh` chmod fails exactly one test.
 - Not verified on hardware, and a PASS here does not claim it. The verdict is
   `ARTIFACTS_INTERNALLY_CONSISTENT`; installed-file hashes, boot-hook persistence,
   HTTP binding and a real plate solve still need the device matrix (#265).
