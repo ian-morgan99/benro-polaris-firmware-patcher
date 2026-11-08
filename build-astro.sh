@@ -489,7 +489,7 @@ Two steps, over ssh, on the device:
     /app/sd/polaris-wifi/polaris-apsta.sh up    # join now
 
 setup-wifi.sh hashes the passphrase with wpa_passphrase, never puts it on a
-command line where `ps` would show it, strips the plaintext copy that
+command line where 'ps' would show it, strips the plaintext copy that
 wpa_passphrase writes into its own output, and saves /app/sd/polaris-wifi/wpa.conf
 mode 600. That file is a credential -- the hash alone is enough to join.
 
@@ -559,6 +559,20 @@ licenses/README-GPL.txt. polaris-astro/SOURCE-OFFER.txt repeats the offer so it
 survives being copied onto the card alone. See docs/LICENSE-AUDIT.md in the
 patcher repository for the per-file audit.
 EOF
+
+# The README heredoc is UNQUOTED because it interpolates $FMIN/$SENSOR etc, which
+# means backticks and $() inside its prose are executed at build time. That put a
+# live process listing into the shipped README.txt: the phrase "where `ps` would
+# show it" ran ps and pasted ~60 lines of PID/TTY output into the middle of a
+# sentence. A user-facing document containing a build machine's process list is
+# both wrong and an information leak, and it is silent -- the build still exits 0.
+# Guard the whole class rather than just that one word.
+if grep -qE 'PID +TTY|/proc/[0-9]+|total [0-9]+ used +free' "$OUT/README.txt"; then
+  echo "ERROR: $OUT/README.txt contains shell command output -- an unquoted heredoc" >&2
+  echo "       expanded a backtick or \$(...) in prose into a real command result." >&2
+  echo "       Quote the offending backticks (\`ps\`) or use single quotes in the text." >&2
+  exit 1
+fi
 
 # iCloud/Finder leave "<name> 2.<ext>" conflict copies behind when the output dir
 # lives in a synced folder (Documents, Desktop). They are exact duplicates, and
