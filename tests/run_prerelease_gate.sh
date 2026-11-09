@@ -570,6 +570,27 @@ if [ -n "$BUILD" ]; then
             bad "shipped .so dependencies or version pins (log: /tmp/prerelease-shipped-artifacts.log)"
             sed -n '1,20p' /tmp/prerelease-shipped-artifacts.log
         fi
+
+        # The two cameras this product is sold to work with must be present in the
+        # camlib bytes that ship, not merely in the source tree.
+        #
+        # container/patch.sh logs "local-source target models: K-1 II and K-3 III
+        # present" after grepping source, and test_polaris_pentax_build_package.sh
+        # asserts that log line. Neither opens a .so. A camlib built from correct
+        # source but with the model table filtered or truncated passes all of it and
+        # still ships a camera nobody can see -- which is the shape of #297, where
+        # the operator's symptom was real while every source-side check was green.
+        #
+        # Asserted against ptp2.so specifically: verified on a real build that
+        # pentax.so carries Pentax:K1II/K3/K3II and 14 others but NOT
+        # 'Pentax:K-1 Mark II (PTP mode)' or 'Pentax:K-3 Mark III (MTP mode)'.
+        if sh "$ROOT/container/check_camlib_target_models.sh" "$STAGE2_DIR" \
+                > /tmp/prerelease-camlib-target-models.log 2>&1; then
+            ok "shipped camlib serves K-1 II and K-3 III"
+        else
+            bad "shipped camlib target models (log: /tmp/prerelease-camlib-target-models.log)"
+            sed -n '1,20p' /tmp/prerelease-camlib-target-models.log
+        fi
     else
         skp "shipped .so dependency and version-pin gates (no stage2-ondisk tree beside $BUILD)"
     fi

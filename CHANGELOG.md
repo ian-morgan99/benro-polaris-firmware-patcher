@@ -871,3 +871,43 @@ Worth noting how this slipped through: #299 was merged test-only with no gate ru
 The drift guard exists precisely because `test_verify_installed_build.py` once sat unrun
 while the gate reported GREEN — it did its job here too, but only after the merge rather
 than before it.
+## Unreleased — shipped camlibs are now proven to serve the K-1 II and K-3 III (issue #297)
+
+`container/check_camlib_target_models.sh` opens the `ptp2.so` a device actually
+receives and requires both `Pentax:K-1 Mark II (PTP mode)` and
+`Pentax:K-3 Mark III (MTP mode)` to be present, that the file is an ARM shared
+object, and that `camlibs.manifest` hashes match the bytes beside them.
+
+Until now the only K-1 II / K-3 III evidence in the build was textual.
+`container/patch.sh` logs "local-source target models: K-1 II and K-3 III present"
+after grepping the **source tree**, and `test_polaris_pentax_build_package.sh`
+asserts that log line. Neither opens a `.so`. A camlib compiled from correct source
+but with the model table filtered, truncated, or built against a different
+libgphoto2 passes every one of those and still ships a camera nobody can see — which
+is the shape of #297: the operator's symptom was real while every source-side check
+was green.
+
+Asserted against `ptp2.so` specifically rather than "any camlib", because that was
+measured: `pentax.so` contains `Pentax:K1II`, `Pentax:K3`, `Pentax:K3II` and 14
+others, but **not** either target marker. Both are in `ptp2.so`. Checking the wrong
+camlib would fail a good build; checking "any" would let a build shipping only
+`pentax.so` pass while serving neither camera.
+
+The version directory is globbed rather than hardcoded to `2.5.34`, so a libgphoto2
+bump cannot silently skip the gate — a stale hardcoded path makes every `[ -f ]`
+guard false and the whole check passes vacuously.
+
+Non-vacuous, three ways: passes on a real v100 build; fails (exit 1) when the K-3 III
+marker is blanked out of a copy; fails (exit 1) when a manifest hash is perturbed.
+Two bugs in the first draft were caught by running it against real bytes rather than
+reasoning about it — `file` puts the architecture *after* "shared object", so an
+ordered glob rejected correct ARM binaries, and `printf | while` ran the marker loop
+in a subshell so recorded misses vanished.
+
+Registered in `run_prerelease_gate.sh`'s stage2 package section. Offline gate:
+**14 passed, 0 failed, 2 skipped**. With `--build`: **21 passed, 0 failed, 3
+skipped**, including the new check.
+
+This does not claim recognition works. It proves the shipped camlib *can name* both
+cameras; whether a session is ever opened against them is still unproven — on the
+device pgphoto currently has no camlib mapped at all.
