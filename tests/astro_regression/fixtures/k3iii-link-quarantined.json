@@ -1,0 +1,18 @@
+{
+  "camera": "k3iii",
+  "link": {
+    "status": "up",
+    "wanted": true,
+    "connects": 1,
+    "drops": 0,
+    "parse_errors": 0,
+    "camera_state": -110,
+    "manufacturer": "none",
+    "model": "none",
+    "storage": 0,
+    "usb_identity": "1-1.2|25fb:0189|1:4",
+    "quarantined": true
+  },
+  "classification": "camera_quarantined",
+  "source": "live Astro WebUI observation 2026-11-09; stale restart lock blocked pgphoto rebind"
+}

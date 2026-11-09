@@ -1,0 +1,56 @@
+{
+  "schema": "polaris-astro-image-corpus-1",
+  "images": [
+    {
+      "id": "k3iii-eve4724",
+      "path": "_EVE4724.JPG",
+      "sha256": "cda36b7901ed33fff549febab9bb072522b295dc4db586b8e145e1f8623425d0",
+      "camera": "k3iii",
+      "model": "PENTAX K-3 Mark III",
+      "width": 6192,
+      "height": 4128,
+      "focal_mm": 50.0,
+      "sensor_width_mm": 23.3,
+      "reference": {
+        "solved": true,
+        "elapsed_seconds": 1.306,
+        "ra_deg": 300.080719,
+        "dec_deg": 40.746412,
+        "roll_deg": 84.8285,
+        "pixscale_arcsec": 15.549374,
+        "field_width_deg": 26.7449,
+        "field_height_deg": 17.8299,
+        "parity": "normal",
+        "matched_count": 101,
+        "field_star_count": 200,
+        "index": "index-4115.fits"
+      },
+      "native": {
+        "solved": false,
+        "failure_reason": "timeout",
+        "attempts": 5,
+        "elapsed_seconds_approx": 52.0,
+        "search_mode": "hinted-corkscrew"
+      }
+    },
+    {
+      "id": "sparse-g7d9gnbg",
+      "path": "G7D9gnBg.jpeg",
+      "sha256": "6e16c5e8e280dfe29d1851b843097bcca28d8cb2c89bb1b34cb102b5511eafb6",
+      "camera": "unknown",
+      "width": 1920,
+      "height": 1280,
+      "focal_mm": 50.0,
+      "sensor_width_mm": 23.3,
+      "reference": {
+        "solved": false,
+        "elapsed_seconds": 2.435,
+        "field_star_count": 6,
+        "failure_reason": "no_match_observed"
+      },
+      "native": {
+        "status": "not_run"
+      }
+    }
+  ]
+}
