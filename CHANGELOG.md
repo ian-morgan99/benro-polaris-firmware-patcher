@@ -962,3 +962,29 @@ POST-only guard list (`/api/astro/capture`, `/api/stop`, …) is never touched.
 
 Not registered in the prerelease gate: it needs a reachable device, so it belongs with the
 device gates rather than the offline ones. Run it before and after any camera fix.
+
+## Fixed — the prerelease gate was executing two stray commands (#298 review)
+
+Review on PR #298 found bare command lines `s` and `ped` at lines 363/365 of
+`tests/run_prerelease_gate.sh`. They were mine: a comment pasted in already hard-wrapped
+at terminal width, so the wrapped remainder of "as" and "shipped" landed on its own line
+outside the comment and became executable code. Both lines are now part of the comment.
+
+Why nothing caught it. The gate runs `set -uo pipefail` — no `-e`. A missing command
+returns 127 and execution continues, so the defect survived `bash -n` (two syntactically
+valid commands), survived `--help`, and produced a green summary. Only reading the file or
+running with `set -x` would show it.
+
+Added `tests/test_shell_no_bare_fragments.sh`, registered in the gate, covering **every**
+tracked `.sh` rather than just this one — the hazard is any script absorbing a wrapped
+paste. It treats a bare short line as legitimate only if it is a shell keyword/builtin or a
+function defined in that same file (`purge` is called bare at line 65 of
+`polaris-autojoin.sh` and defined at line 36, so a naive keyword list would have flagged it).
+Tracked files only: `out/` holds copies of these scripts and would double every finding.
+
+Non-vacuous: flags `s` and `ped` when reintroduced (exit 1), passes on the current tree
+(117 tracked shell files, exit 0).
+
+Gate from the corrected head: **offline 15 passed, 0 failed, 2 skipped**; **with
+`--build`: 22 passed, 0 failed, 3 skipped**. Full output in
+`docs/evidence/issue-297-k3iii-stale-restart-lock/gate-{offline,package}.txt`.

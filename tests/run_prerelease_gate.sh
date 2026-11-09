@@ -364,10 +364,8 @@ fi
 
 # Same reasoning as above, for the three pgphoto machine-code patches. Each one
 # rewrites ARM instructions inside pgphoto, and a wrong encoding is invisible to
-# every Python test: an earlier draft of the cancel writer encoded "mov r2,#0" a
-s
-# "and r2,r0,#0" and "strb r2,[ip]" as a post-indexed str, which would have ship
-ped
+# every Python test: an earlier draft of the cancel writer encoded "mov r2,#0" as
+# "and r2,r0,#0" and "strb r2,[ip]" as a post-indexed str, which would have shipped
 # a pgphoto that corrupted memory instead of cancelling. All three are offline
 # (patch_data works on bytes) and must run even with no built package supplied.
 for patch_test in container/test_polaris_bulb_dispatch_patch.sh \
@@ -401,6 +399,25 @@ for lock_test in container/test_restart_gphoto_launch_lock.sh \
         bad "pgphoto restart helper lock handling: $name (log: /tmp/prerelease-${name}.log)"
     fi
 done
+
+# This gate itself shipped two bare command lines, `s` and `ped`, on 2026-11-09 -- the
+# tail fragments of "as" and "shipped" from a comment pasted in already hard-wrapped at
+# terminal width, so the wrapped remainder landed outside the comment as executable code.
+# It passed every check available: `bash -n` accepts it (two valid commands), `--help`
+# never reaches it, and the gate runs `set -uo pipefail` without `-e`, so the missing
+# commands returned 127 and execution continued to a green summary. Review on PR #298 is
+# what found it.
+#
+# The lesson generalises beyond this file: any script here can absorb a wrapped paste the
+# same way, and nothing in the toolchain would notice. So the check covers every tracked
+# .sh, not just this one.
+if sh "$ROOT/tests/test_shell_no_bare_fragments.sh" "$ROOT" \
+        > /tmp/prerelease-shell-fragments.log 2>&1; then
+    ok "no stray bare command lines in tracked shell scripts"
+else
+    bad "stray bare command lines in shell scripts (log: /tmp/prerelease-shell-fragments.log)"
+    sed -n '1,20p' /tmp/prerelease-shell-fragments.log
+fi
 
 # ----------------------------------------------------------------------------
 # 3. FwPkt package gates — only when a built package is supplied.
