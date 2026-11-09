@@ -783,3 +783,26 @@ Inspect via `git cat-file -p v0.3.0-pentax-hdmi-combined-720p60`.
   the regression is red on the parent revision.
 - Evidence and hardware qualification plan: `docs/issue-k1ii-pgphoto-readiness.md`.
 - This is a patcher/runtime fix; no libgphoto2 source change is included.
+
+## Fixed — main has been RED since PR #299 merged
+
+`tests/test_astro_regression.py` arrived with PR #299 but was never added to `PY_TESTS` in
+`tests/run_prerelease_gate.sh`, so the drift guard failed main's gate:
+
+```
+FAIL: python suites exist but are not run by this gate: tests/test_astro_regression.py
+=== Pre-release gate summary: 10 passed, 1 failed, 3 skipped ===
+GATE: RED — do not stage/install the FwPkt until the failed checks pass.
+```
+
+Registering it restores GREEN (38 suites, 615 passed — up from 612, so the three new tests
+actually run rather than sitting collected-but-unexecuted).
+
+The suite is offline-safe and belongs in the offline list: it invokes
+`tests/astro_regression/runner.py --offline`, asserts on checked-in fixtures, touches no
+device and no network, and completes in 0.05 s.
+
+Worth noting how this slipped through: #299 was merged test-only with no gate run attached.
+The drift guard exists precisely because `test_verify_installed_build.py` once sat unrun
+while the gate reported GREEN — it did its job here too, but only after the merge rather
+than before it.
