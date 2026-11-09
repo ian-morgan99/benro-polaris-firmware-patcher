@@ -81,3 +81,31 @@ $3 ~ /:1F90$/                          -> 0     (what the tool did)
 The consequence was worse than a wrong count: layer 3's verdict is deferred on layer 4, so
 under-reporting clients forced it to UNKNOWN when the truth was FAIL. Fixed, and both
 reports above were produced with the corrected filter.
+
+## Addendum: preview is already enabled, so lazy init is dead as an explanation
+
+Read-only query of `polaris-httpd` (running as `/app/astro/polaris-httpd --port 8090`, so the
+control API is on 8090 — port 80 is Benro's own `lighttpd`, which 404s on these paths):
+
+```
+GET http://192.168.0.1:8090/api/link
+link status: up | wanted: True | rx: 9853 | opcodes cached: 31
+
+opcode 292 (preview-state): state:1;            age_ms 15188  count 453
+opcode 286 (camera-info):   manufacturer:none;model:none;state:-110;storage:0;photoFormat:0;
+                                                          age_ms 15188  count 456
+```
+
+`preview-state = state:1` means the MJPEG stream on :8080 is **on**. So pgphoto was already told
+to run preview, it is serving the endpoint, and `gp_camera_init` still loads no camlib. Combined
+with the client-attached FAIL above, the "nothing asked yet" branch is closed from two directions:
+an explicit stream request produced no frame, and the standing preview flag is set.
+
+`camera-info` returning `state:-110` with `model:none` is the published symptom, refreshed every
+30 s (count 456). Note this is exactly the shape the TA's #299 suite treats as quarantined —
+`tests/astro_regression/fixtures/k3iii-link-quarantined.json` asserts `camera_state: -110` and
+`model: "none"` under classification `camera_quarantined`. So the live device is currently sitting
+in the state that suite's fixture describes, and that fixture is checked in as *not ready*.
+
+`polaris-httpd` never sends opcode 291 (`set-preview`) itself — `grep plink_send(291` returns
+nothing; it only polls 292. So preview was enabled by the Benro app, not by our httpd.
