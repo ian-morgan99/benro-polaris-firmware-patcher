@@ -1,0 +1,16 @@
+{
+  "camera": "k3iii",
+  "link": {
+    "status": "up",
+    "wanted": true,
+    "connects": 1,
+    "drops": 0,
+    "parse_errors": 0,
+    "camera_state": 1,
+    "manufacturer": "RICOH IMAGING COMPANY, LTD.",
+    "model": "PENTAX K-3 Mark III",
+    "storage": 1
+  },
+  "classification": "camera_ready",
+  "source": "fixture schema; populate from live evidence before release"
+}

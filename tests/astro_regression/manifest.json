@@ -1,0 +1,38 @@
+{
+  "schema": "polaris-astro-regression-1",
+  "purpose": "Independent read-only regression and corpus harness for Astro candidates",
+  "safety": {
+    "default_is_offline": true,
+    "allows_motor_commands": false,
+    "allows_camera_capture": false,
+    "allows_exif_writeback": false,
+    "historic_solver_is_non_motor": true
+  },
+  "camera_usb": {
+    "vendor_id": "25fb",
+    "models": {
+      "k1ii": {
+        "product_id": "0183",
+        "name": "PENTAX K-1 Mark II"
+      },
+      "k3iii": {
+        "product_id": "0189",
+        "name": "PENTAX K-3 Mark III"
+      }
+    }
+  },
+  "webui": {
+    "default_url": "http://192.168.0.1:8090",
+    "read_only_paths": ["/api/link", "/api/state", "/api/site"],
+    "historic_paths": ["/api/test/upload", "/api/test/solve", "/api/test/state"],
+    "forbidden_path_fragments": ["capture", "goto", "move", "motor", "track", "rate", "calibrat"]
+  },
+  "fixtures": {
+    "k1ii_usb": "fixtures/k1ii-usb-present.json",
+    "k3iii_usb": "fixtures/k3iii-usb-present.json",
+    "k1ii_link": "fixtures/k1ii-link-ready.json",
+    "k3iii_link": "fixtures/k3iii-link-ready.json",
+    "k3iii_quarantined": "fixtures/k3iii-link-quarantined.json",
+    "images": "fixtures/images.manifest.json"
+  }
+}
