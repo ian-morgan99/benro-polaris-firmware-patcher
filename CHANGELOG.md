@@ -1063,3 +1063,28 @@ An earlier probe that reported the Docker daemon unreachable was run from a `/tm
 `test_build_toolchain_prerequisites` fail spuriously on main today — two false negatives, one cause.
 
 Offline gate unchanged: 15 passed / 0 failed / 2 skipped.
+
+## Added — behavioural test for the #297 init trace
+
+`container/test_stage2_init_trace.sh` covers the `STAGE2_TRACE_INIT_ENTRY` logic, which previously
+had no coverage at all: the shim is `static` (the `.so` exports 12 symbols and `gp_camera_init` is
+not among them) so it cannot be called from outside, `stage2_crash_handler` reads ARM-only
+`mcontext_t` fields so the file will not compile on x86, and `qemu-arm` is not in PATH here.
+
+It extracts the real helper from `container/stage2_loader.c` with awk rather than hand-copying it,
+so it follows production instead of drifting from it. Verified non-vacuous: collapsing the per-site
+array back to a single shared flag makes it exit 1. Registered in the offline gate and picked up by
+`tests/run_deterministic.sh`'s auto-discovery — 16 passed / 0 failed / 2 skipped, and 30 / 0 / 3.
+
+Three mistakes I made here are worth recording, because each one looked like success:
+
+- **Missing exec bit.** `run_deterministic.sh` runs `./$t`, not `sh ./$t`, so a non-executable test
+  exits 126 and is counted as a real failure. It passed when run as `sh path/to/test.sh` and failed
+  under the harness — testing it the way it is actually invoked is what caught this.
+- **Wrong counter names.** I wrote `PASS=$((PASS + 1))`; the gate uses lowercase `pass`. Under
+  `set -u` that aborted the entire gate mid-run with "PASS: unbound variable" and exit 1 — while my
+  own test line had already printed PASS. A green-looking line followed by a dead gate.
+- **A replica test that cannot catch regressions.** My first version hand-copied the helper into a
+  C file. It would have kept passing unchanged if production changed, and it also ran all cases in
+  one process, so the process-global flags made later cases legitimately silent — three false
+  failures blamed on correct code. Fresh child processes per case, and extraction instead of copying.

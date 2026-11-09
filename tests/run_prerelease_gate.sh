@@ -400,6 +400,31 @@ for lock_test in container/test_restart_gphoto_launch_lock.sh \
     fi
 done
 
+# Behavioural coverage for the issue #297 one-shot init trace (STAGE2_TRACE_INIT_ENTRY).
+#
+# container/test_stage2_loader_compile.sh only proves the loader builds for ARM. The trace logic
+# itself had no coverage: the shim is static (the .so exports 12 symbols and gp_camera_init is not
+# among them) so it cannot be called from outside, stage2_crash_handler reads ARM-only mcontext_t
+# fields so the file will not compile on x86, and qemu-arm is not in PATH here. The test therefore
+# extracts the real helper from container/stage2_loader.c with awk and compiles that, so it follows
+# production instead of drifting from it -- verified non-vacuous by mutating the array back to a
+# single shared flag, which makes it exit 1.
+if sh "$ROOT/container/test_stage2_init_trace.sh" \
+        > /tmp/prerelease-stage2-init-trace.log 2>&1; then
+    echo "PASS: stage2 init-trace one-shot logic (#297)"
+    pass=$((pass + 1))
+else
+    rc=$?
+    if [ "$rc" -eq 77 ]; then
+        echo "SKIP: stage2 init-trace one-shot logic (no C compiler)"
+        skip=$((skip + 1))
+    else
+        echo "FAIL: stage2 init-trace one-shot logic (#297) -- see /tmp/prerelease-stage2-init-trace.log"
+        tail -20 /tmp/prerelease-stage2-init-trace.log || true
+        fail=$((fail + 1))
+    fi
+fi
+
 # This gate itself shipped two bare command lines, `s` and `ped`, on 2026-11-09 -- the
 # tail fragments of "as" and "shipped" from a comment pasted in already hard-wrapped at
 # terminal width, so the wrapped remainder landed outside the comment as executable code.
