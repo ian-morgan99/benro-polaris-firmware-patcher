@@ -911,3 +911,54 @@ skipped**, including the new check.
 This does not claim recognition works. It proves the shipped camlib *can name* both
 cameras; whether a session is ever opened against them is still unproven — on the
 device pgphoto currently has no camlib mapped at all.
+
+## Unreleased — a five-layer camera recognition report, read-only (#297)
+
+`scripts/diagnostic/camera-layer-report.sh` answers "is the camera recognised?" by
+measuring each layer separately and reporting PASS / FAIL / UNKNOWN per layer, so a
+symptom can be attributed instead of guessed at. It is strictly read-only: sysfs,
+`/proc`, and GETs against documented Alpaca queries. It never restarts, kills, unbinds
+or writes anything.
+
+Why it was needed. On the device that prompted this, `lsusb` showed the camera present,
+pgphoto was running, and polaris-httpd was serving — all three true, and the camera still
+invisible. The layers that actually differ were never being looked at: whether pgphoto has
+a camlib mapped, and what `CameraState` the app publishes.
+
+Current reading on the live device (`docs/evidence/issue-297-k3iii-stale-restart-lock/layer-report.txt`):
+
+```
+[PASS]    layer1-usb        25fb:0189 enumerated
+[PASS]    layer2-pgphoto    running as PID 10026
+[PASS]    layer2-restart-lock  no restart lock held
+[PASS]    layer2-quarantine no quarantine lines in /app/Clog.txt
+[UNKNOWN] layer3-camlib     no camlib mapped and no client on :8080
+[UNKNOWN] layer4-client     no client on :8080 right now
+[FAIL]    layer5-published  CameraState=Disconnected
+```
+
+Two of those are UNKNOWN on purpose, and that distinction is the point:
+
+- **layer 4** — `polaris-httpd` connects to pgphoto's :8080 *on demand* for the live-view
+  stream (`sa.sin_port = htons(8080)` then `GET /?action=stream`), not by polling. With no
+  app attached, zero connections is the expected idle state and says nothing about health.
+- **layer 3** — libgphoto2 loads a camlib when it builds its abilities list during
+  `gp_camera_init`. "Nothing mapped" means no session has opened since this process
+  started; whether that is a fault depends on whether anything asked. The verdict is
+  deferred until layer 4 is known: UNKNOWN with no client, FAIL if a client is connected
+  and still nothing loads.
+
+Both were initially written as FAIL. That was wrong — reporting an idle device as broken
+is how a measurement gap turns into a phantom bug.
+
+**layer 5 is the real finding.** `GET /api/v1/camera/0/camerastate` returns `Value:0`
+(ASCOM Disconnected) while `/connected` returns `true`. The app reports a camera device
+that has no session. That is measured, not inferred, and it is where recognition actually
+fails today.
+
+Routes were read from `container/astro/polaris-httpd.c`; the obvious guesses (`/status`,
+`/camera`) return "not found" on this server. Only read-only queries are used — the
+POST-only guard list (`/api/astro/capture`, `/api/stop`, …) is never touched.
+
+Not registered in the prerelease gate: it needs a reachable device, so it belongs with the
+device gates rather than the offline ones. Run it before and after any camera fix.
