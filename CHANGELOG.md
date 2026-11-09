@@ -1031,3 +1031,26 @@ Verdicts are now: client connected → FAIL; `preview-state=1` → FAIL; `previe
 `state:0` and a payload with no 292 at all, so an absent flag cannot produce a false FAIL. The
 port comes from httpd's cmdline rather than being assumed — it runs `--port 8090` here, and :80 is
 Benro's own lighttpd, which 404s these paths. Gate unchanged: 15 passed / 0 failed / 2 skipped.
+
+## Added — opt-in `gp_camera_init` entry trace (issue #297)
+
+`STAGE2_TRACE_INIT_ENTRY=1` makes the loader print up to three one-shot lines: that the shim was
+entered, that the real core symbol resolved, and what the real `gp_camera_init` returned. Unset
+costs nothing; it changes no control flow and no return value.
+
+This is the only way to answer the remaining #297 question. Our shipped libgphoto2 has logging
+compiled out — no `GP_DEBUG` string anywhere in the `.so`, and `nm -D` lists 195 exports with zero
+`gp_log*` symbols — so setting `GP_DEBUG` produces silence indistinguishable from "never called".
+The loader is ours and already wraps this call.
+
+Narrowing that motivated it: nothing libgphoto2 dlopens at runtime is mapped in pgphoto — neither
+a camlib (`pentax.so`/`ptp2.so`) nor an io backend (`usb1.so`/`usbscsi.so`). In `gp_camera_init`'s
+auto-detect path those two loads are adjacent (`gphoto2-camera.c:707` then `:709`), so their joint
+absence points at the abilities-list load rather than a later USB step.
+
+One flag per site, not one shared flag: a single flag would let the first trace suppress the rest,
+which is exactly the distinction being measured (never entered vs refused by the capture guard vs
+handed to libgphoto2). Verified with `gcc -std=gnu11 -Wall -Wextra`: zero diagnostics reference the
+new code. The ARM cross-toolchain is absent here so `container/test_stage2_loader_compile.sh`
+reports SKIP (77); host-gcc errors are confined to the pre-existing ARM-only `mcontext_t` fields in
+the crash handler. Offline gate unchanged: 15 passed / 0 failed / 2 skipped.
