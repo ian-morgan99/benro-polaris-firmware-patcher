@@ -1051,6 +1051,15 @@ absence points at the abilities-list load rather than a later USB step.
 One flag per site, not one shared flag: a single flag would let the first trace suppress the rest,
 which is exactly the distinction being measured (never entered vs refused by the capture guard vs
 handed to libgphoto2). Verified with `gcc -std=gnu11 -Wall -Wextra`: zero diagnostics reference the
-new code. The ARM cross-toolchain is absent here so `container/test_stage2_loader_compile.sh`
-reports SKIP (77); host-gcc errors are confined to the pre-existing ARM-only `mcontext_t` fields in
-the crash handler. Offline gate unchanged: 15 passed / 0 failed / 2 skipped.
+new code.
+
+The ARM build was then verified for real. `arm-linux-gnueabi-gcc` is not installed on this host, so
+the gate reports SKIP (77) — but the compiler is present in the cached `polaris-patcher-pentax:latest`
+image, and running `container/test_stage2_loader_compile.sh` inside it exits 0: `ELF 32-bit LSB shared
+object, ARM, EABI5`, clean under `-Wall -Wextra -Werror`, the `stage2_model_uses_r5_shims` provenance
+marker intact, and both new strings (`STAGE2_TRACE_INIT_ENTRY`, `gp_camera_init returned %d`) present.
+An earlier probe that reported the Docker daemon unreachable was run from a `/tmp` worktree; from
+`$HOME` it works. Same cwd-dependent `flatpak-spawn` behaviour that made
+`test_build_toolchain_prerequisites` fail spuriously on main today — two false negatives, one cause.
+
+Offline gate unchanged: 15 passed / 0 failed / 2 skipped.
