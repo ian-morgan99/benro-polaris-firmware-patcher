@@ -292,6 +292,13 @@ PY_TESTS=(
     # array does not name. The suite is offline-safe -- it runs astro_regression/runner.py
     # with --offline and asserts on checked-in fixtures, no device, no network, 0.05 s.
     tests/test_astro_regression.py
+    # Added for #265: the Astro bundle was complete and its solver worked on-device,
+    # but nothing invoked polaris-astro-boot.sh, so the web UI never started on a
+    # fresh install. These tests need no device -- SD_ROOT/APP_ROOT are overridable
+    # precisely so the launch decision and the ssh-chaining decision (the one that
+    # decides whether an operator keeps ssh) can be checked here instead of only on
+    # hardware.
+    tests/test_astro_boot_hook.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then

@@ -711,6 +711,62 @@ if [ -n "${SSH_PUBKEY:-}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# 7b. OPTIONAL (ASTRO_BOOT, issue #265): make the Astro stack start by itself.
+#
+#    The Astro bundle ships polaris-astro-boot.sh, which waits for the microSD,
+#    syncs the bundle into /app/astro and starts polaris-httpd. It is correct and
+#    complete — on .101 the solver ran on-device against two independent synthetic
+#    fields and both solved within ~0.02° of truth. Nothing ever invoked the boot
+#    script, so the web UI never came up on a fresh install:
+#
+#        ls -d /app/astro                                  -> DOES NOT EXIST
+#        [ -x /app/sd/polaris-astro/polaris-astro-boot.sh ] -> yes
+#        grep -rl "polaris-astro\|astro-boot" /etc /app/etc /init.d -> (nothing)
+#
+#    rcS runs only S00devs, S10mpp and S80network; there is no rc.local. The only
+#    hooks bootapp calls are network_telnetd.sh and start_agent.sh, and the bundle's
+#    install_astro.sh — which is what writes one of them — requires a manual run.
+#    That is the chicken-and-egg this section removes: the launcher goes into the
+#    appfs at flash time, so the card's own boot script runs at boot with no
+#    operator step.
+#
+#    Slot selection mirrors the SSH option above and is aware of it: if --ssh-key
+#    already claimed a slot in this same run, astro takes the other one. If both
+#    are occupied we abort rather than edit bootapp or silently overwrite ssh.
+# ---------------------------------------------------------------------------
+if [ -n "${ASTRO_BOOT:-}" ]; then
+  log "astro boot: installing the Astro boot hook so the card's stack starts itself…"
+  BOOTAPP="$APP/bootapp"
+  [ -f "$BOOTAPP" ] || die "ASTRO_BOOT set but /app/bootapp is missing from this appfs — refusing to guess a boot hook"
+  ASTRO_HOOK_SRC="/opt/patcher/astro/ondisk/polaris-astro-hook.sh"
+  [ -f "$ASTRO_HOOK_SRC" ] || die "ASTRO_BOOT set but $ASTRO_HOOK_SRC is missing from the patcher image"
+
+  ASTRO_HOOK=""
+  for cand in start_agent.sh network_telnetd.sh; do
+    grep -q "$cand" "$BOOTAPP" || continue          # bootapp must actually call it
+    [ "$cand" = "$SSH_HOOK" ] && continue           # already claimed by --ssh-key above
+    if [ -e "$APP/$cand" ]; then
+      warn "  /app/$cand already exists in this firmware — leaving it alone, trying the next hook"
+      continue
+    fi
+    ASTRO_HOOK="$cand"; break
+  done
+  [ -n "$ASTRO_HOOK" ] || die "ASTRO_BOOT: no free boot hook that /app/bootapp calls (looked for start_agent.sh, network_telnetd.sh; ssh took '${SSH_HOOK:-none}') — refusing to modify bootapp or clobber ssh"
+
+  # The loop above only ever selects a slot that is absent from the appfs, so
+  # nothing is displaced here and no .pre-astro.sh is created by this path. The
+  # launcher still chains /app/<name>.pre-astro.sh, because install_astro.sh run
+  # later by hand can create one -- see polaris-astro-hook.sh.
+
+  # same owner/mode as bootapp itself (which provably has +x — S10mpp runs it)
+  B_UID="$(stat -c %u "$BOOTAPP")"; B_GID="$(stat -c %g "$BOOTAPP")"; B_MODE="$(stat -c %a "$BOOTAPP")"
+  inst -m "$B_MODE" -o "$B_UID" -g "$B_GID" "$ASTRO_HOOK_SRC" "$APP/$ASTRO_HOOK"
+  log "  added /app/$ASTRO_HOOK (boot hook, $B_MODE $B_UID:$B_GID — same as bootapp)"
+  log "  at boot it runs /app/sd/polaris-astro/polaris-astro-boot.sh when the card is present"
+  log "  astro web UI: http://<polaris ip>:8090/ once the card is inserted"
+fi
+
+# ---------------------------------------------------------------------------
 # 8. Repack appfs (geometry read from the stock image) + regenerate firmwareInfo
 # ---------------------------------------------------------------------------
 # FwVer inside the appfs contributes to polestar_app's code-780 device version.
