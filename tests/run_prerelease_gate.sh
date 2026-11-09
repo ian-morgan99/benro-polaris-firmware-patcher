@@ -287,6 +287,11 @@ PY_TESTS=(
     tests/test_plate_solving_present.py
     tests/test_astro_candidate_wrapper.py
     tests/test_shipped_marker_check.py
+    # Added by PR #299 (ta/astro-regression-suite) but never registered here, which left
+    # main RED: the drift guard below fails whenever a tests/test_*.py exists that this
+    # array does not name. The suite is offline-safe -- it runs astro_regression/runner.py
+    # with --offline and asserts on checked-in fixtures, no device, no network, 0.05 s.
+    tests/test_astro_regression.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
