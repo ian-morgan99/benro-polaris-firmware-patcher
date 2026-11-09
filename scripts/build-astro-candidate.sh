@@ -160,6 +160,51 @@ case "$OUT" in "$ROOT_REAL/out/"*) ;; (*) die "output must be below out/";; esac
 if [ -e "$OUT" ]; then [ "$FORCE" = 1 ] || die "output exists; use --force"; rm -rf -- "$OUT"; fi
 mkdir -p "$OUT"
 
+# ---------------------------------------------------------------------------
+# Prerequisites, checked BEFORE the first build step (#306 follow-up).
+#
+# The doctor used to run only inside scripts/build-astro.sh, which this script
+calls
+# at step [2/7]. Step [1/7] is patch-polaris.sh -- the long camera build -- so on
+# 2026-11-09 a broken host was discovered *after* the expensive part had already
+# been attempted, and the failure surfaced as "no usable docker" from a script that
+# had nothing to do with the cause. Checking here moves that to seconds.
+#
+# Provision first so the doctor sees the environment the build will actually use,
+# otherwise it reports blockers this wrapper would have handled anyway: TMPDIR must
+# be host-visible (patch-polaris.sh extracts the stock packet with mktemp -d and
+# bind-mounts it, and /tmp is private to the sandbox), and a broken native ubireader
+# has a working bridge in-repo.
+ENVBIN="$ROOT/out/.build-env/bin"
+TMPROOT="$ROOT/out/.build-env/tmp"
+mkdir -p "$ENVBIN" "$TMPROOT" || die "could not create $ROOT/out/.build-env"
+export TMPDIR="$TMPROOT"
+case ":$PATH:" in (*":$ENVBIN:"*) ;; (*) PATH="$ENVBIN:$PATH";; esac
+export PATH
+if ! (command -v ubireader_extract_files >/dev/null 2>&1 \
+      && ubireader_extract_files --help >/dev/null 2>&1); then
+  [ -x "$ROOT/tools/ubireader-docker" ] || die "tools/ubireader-docker missing"
+  export UBIREADER_EXTRACT_FILES="$ROOT/tools/ubireader-docker"
+fi
+
+echo "=== preflight: scripts/build-doctor.sh ==="
+if [ "${SKIP_DOCTOR:-0}" = 1 ]; then
+  echo "WARNING: --skip-doctor: build prerequisites were NOT verified." >&2
+  DOCTOR_STATUS="skipped-by-flag"
+elif bash "$ROOT/scripts/build-doctor.sh" --libgphoto2 "$LIBSRC" --stock "$STOCK" \
+        --catalog "$CATALOG_PACKAGE" --image "$IMAGE" > "$OUT/doctor.log" 2>&1; then
+  DOCTOR_STATUS="green"
+  echo "build-doctor: GREEN (log: $OUT/doctor.log)"
+else
+  DOCTOR_STATUS="red"
+  echo "ERROR: build-doctor.sh reported RED -- refusing to start a build that will" >&2
+  echo "       fail later and report itself as an unrelated problem." >&2
+  echo "       Full output: $OUT/doctor.log" >&2
+  grep -E '^  (FAIL|WARN)' "$OUT/doctor.log" | sed 's/^/       /' >&2 || true
+  echo "       Fix each FAIL line, or set SKIP_DOCTOR=1 for a documented exception." >&2
+  exit 1
+fi
+
 echo "[1/7] building shared camera firmware packet"
 bash "$ROOT/patch-polaris.sh" --fwpkt "$STOCK" --libgphoto2-source "$LIBSRC" \
   --enable-usb-scsi --out "$OUT" --build-id "$BUILD_ID" \
