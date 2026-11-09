@@ -20,6 +20,16 @@
 # Also sets a restart-in-progress marker so the polestar watchdog
 # (checkGphotoTask) can detect an in-flight restart and not race it (#34).
 #
+# The restart lock is reclaimed when its owner is gone, for the same reason step 2
+# reclaims the pgphoto launch lock. /var/run on this firmware is UBIFS root flash,
+# NOT tmpfs (verified: `mount` lists only devtmpfs on /dev, and `df /var/run`
+# reports ubi0:ubifs), so a lock directory left by a crash or a power cut survives
+# a reboot. The K-3 III device carried one with an EMPTY pid file and an mtime of
+# 2025-05-09, long predating the current boot, so every restart answered "another
+# restart owns ...; refusing to race" and exited 1 -- across reboots, indefinitely.
+# That made the USB supervisor's bounded rebind fail permanently and left it
+# quarantining a healthy K-3 III for the whole boot (issue #297).
+#
 # BusyBox-safe: uses only /proc, kill, sleep, grep, tr, mv, readlink and awk.
 # No pgrep/pkill.
 
@@ -84,11 +94,55 @@ pid_is_pgphoto() {
     [ "$CMD" = "$STAGE2_BIN" ]
 }
 
+# --- helpers for lock ownership --------------------------------------------
+
+read_pidfile() {
+    # Print the pid in $1 only if it is a plausible numeric pid. Anything else --
+    # empty, truncated by a power cut mid-write, or garbage -- prints nothing.
+    p=$(cat "$1" 2>/dev/null)
+    case "$p" in ''|*[!0-9]*) return 1 ;; esac
+    printf '%s\n' "$p"
+}
+
+pid_is_restart_owner() {
+    # True only if $1 is alive AND is a restart helper. A bare /proc/$pid existence
+    # test is not enough: pid numbers are recycled, so a lock left over from an
+    # earlier boot can name a pid the kernel has since handed to something else
+    # entirely, and treating that as the owner would wedge the restart forever.
+    [ -d "$PROC_ROOT/$1" ] || return 1
+    CMD=$(tr '\0' '\n' < "$PROC_ROOT/$1/cmdline" 2>/dev/null | head -1)
+    case "$CMD" in
+        *restart_gphoto*) return 0 ;;
+    esac
+    return 1
+}
+
 # --- step 0: acquire restart lock (prevents watchdog race, issue #34) ------
 
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
-    echo "[restart_gphoto] another restart owns $LOCKDIR; refusing to race" >&2
-    exit 1
+    # The lock exists. It is only honoured if it has a live restart_gphoto owner.
+    OWNER=$(read_pidfile "$LOCKDIR/pid" 2>/dev/null || true)
+    if [ -n "$OWNER" ] && pid_is_restart_owner "$OWNER"; then
+        echo "[restart_gphoto] restart lock owned by live restart_gphoto (PID $OWNER); refusing to race" >&2
+        exit 1
+    fi
+    # No owner, an unreadable pid file, or a pid that is no longer this script.
+    # Give a genuinely starting owner one second to publish its pid before
+    # reclaiming, so this cannot steal the lock out from under a real restart.
+    sleep 1
+    OWNER=$(read_pidfile "$LOCKDIR/pid" 2>/dev/null || true)
+    if [ -n "$OWNER" ] && pid_is_restart_owner "$OWNER"; then
+        echo "[restart_gphoto] restart lock won by live restart_gphoto (PID $OWNER) during grace; refusing to race" >&2
+        exit 1
+    fi
+    rm -rf "$LOCKDIR"
+    if ! mkdir "$LOCKDIR" 2>/dev/null; then
+        echo "[restart_gphoto] lost the race for $LOCKDIR; refusing to run twice" >&2
+        exit 1
+    fi
+    # Say what was reclaimed: this exact condition once sat in /app/Clog.txt every
+    # few seconds for a whole boot and read as a healthy device.
+    echo "[restart_gphoto] reclaimed stale restart lock (owner ${OWNER:-none}, no live restart_gphoto)"
 fi
 echo "$$" > "$LOCKDIR/pid"
 trap 'rm -rf "$LOCKDIR"' EXIT

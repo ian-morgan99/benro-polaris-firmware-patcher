@@ -364,8 +364,10 @@ fi
 
 # Same reasoning as above, for the three pgphoto machine-code patches. Each one
 # rewrites ARM instructions inside pgphoto, and a wrong encoding is invisible to
-# every Python test: an earlier draft of the cancel writer encoded "mov r2,#0" as
-# "and r2,r0,#0" and "strb r2,[ip]" as a post-indexed str, which would have shipped
+# every Python test: an earlier draft of the cancel writer encoded "mov r2,#0" a
+s
+# "and r2,r0,#0" and "strb r2,[ip]" as a post-indexed str, which would have ship
+ped
 # a pgphoto that corrupted memory instead of cancelling. All three are offline
 # (patch_data works on bytes) and must run even with no built package supplied.
 for patch_test in container/test_polaris_bulb_dispatch_patch.sh \
@@ -376,6 +378,27 @@ for patch_test in container/test_polaris_bulb_dispatch_patch.sh \
         ok "pgphoto machine-code patch: $name"
     else
         bad "pgphoto machine-code patch: $name (log: /tmp/prerelease-${name}.log)"
+    fi
+done
+
+# The pgphoto restart helper's lock handling, offline and package-free.
+#
+# These were never registered anywhere: container/test_restart_gphoto_launch_lock.sh
+# has existed since issue #77 without being run by any gate, which is how the same
+# class of defect reached a device. A stale /var/run/openpolaris-pgphoto.restart.lock
+# made every restart answer "refusing to race" and exit 1; because /var/run here is
+# UBIFS root flash rather than tmpfs, that survived reboots indefinitely, the USB
+# supervisor's bounded rebind could never succeed, and a correctly enumerated K-3 III
+# (25fb:0189 present in sysfs) was held quarantined for the whole boot while the WebUI
+# published model:none. Nothing above would have caught it: the helper is shell, it is
+# not exercised by any Python suite, and the symptom looks like a camera problem.
+for lock_test in container/test_restart_gphoto_launch_lock.sh \
+                 container/test_restart_gphoto_restart_lock.sh; do
+    name="$(basename "$lock_test" .sh)"
+    if sh "$lock_test" > "/tmp/prerelease-${name}.log" 2>&1; then
+        ok "pgphoto restart helper lock handling: $name"
+    else
+        bad "pgphoto restart helper lock handling: $name (log: /tmp/prerelease-${name}.log)"
     fi
 done
 

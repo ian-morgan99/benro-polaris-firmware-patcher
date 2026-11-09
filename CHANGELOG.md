@@ -1,5 +1,70 @@
 # Changelog
 
+## Unreleased — a stale restart lock permanently blocked pgphoto restarts, so a healthy K-3 III was held quarantined (issue #297)
+
+**This is the functional regression.** A K-3 III attached to Polaris reports
+`manufacturer:none;model:none;state:-110`. It is not a model-table gap: the camera
+enumerates correctly on the device, `25fb:0189 PENTAX K-3 Mark III` is present in
+`/sys/bus/usb/devices/1-1.2`, and `pentax.so`/`ptp2.so` are installed. The failure is
+one layer downstream, inside our own helper.
+
+`/app/Clog.txt` on the device, repeating every few seconds for the whole boot:
+
+```
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 2055
+```
+
+Step 0 of `restart_gphoto.sh` treated *any* existing lock directory as a live owner and
+exited 1. `/var/run` on this firmware is **UBIFS root flash, not tmpfs** — verified:
+`mount` lists only `devtmpfs on /dev`, and `df /var/run` reports `ubi0:ubifs`. So a lock
+left by a crash or power cut survives a reboot. The device carried one with an **empty**
+pid file and an mtime of 2025-05-09, long predating the current boot; `mkdir` on it fails
+with `File exists`, so every restart refused, across reboots, indefinitely.
+
+The consequence compounds: the USB supervisor's bounded rebind calls that helper, cannot
+succeed, and therefore holds a correctly enumerated camera in quarantine for the entire
+boot. The WebUI publishes `model:none` while the mount, link and attitude opcodes all work
+normally — which is why it reads as a camera-recognition bug rather than a lock bug.
+
+Step 2 of the same file has always reclaimed a stale *launch* lock by checking the owner
+(issue #77). Step 0 never got the same treatment. Fixed by making step 0 consistent with
+step 2: honour the lock only if its pid is alive **and** is a `restart_gphoto`, wait one
+second so a genuinely starting owner can publish its pid, then reclaim and say so.
+
+Ownership is checked against the command line, not mere `/proc` existence — a lock from an
+earlier boot can name a pid the kernel has since handed to an unrelated process, and
+counting that as an owner would reproduce the same permanent deadlock by a different route.
+
+**Verified on the device first, then in code.** Diagnosis came from live read-only SSH:
+sysfs enumeration, `/proc/249/maps`, the driver directories, `mount`, `df /var/run`, and
+`/app/Clog.txt`. The installed `/app/restart_gphoto` md5 is
+`64156951d2a388162f52ae906964c410`, identical to `container/ondisk/restart_gphoto.sh`, so
+this is our code path and not stock firmware.
+
+New `container/test_restart_gphoto_restart_lock.sh` covers four cases: the exact device
+condition (lock dir, empty pid) is reclaimed; a live `restart_gphoto` owner is honoured and
+the lock is left alone; a pid recycled to an unrelated process is treated as stale; and a
+normal restart emits no reclaim line. Confirmed non-vacuous — against the pre-fix script it
+fails case A with the device's own message, `another restart owns ... refusing to race`.
+
+**Both restart-helper lock tests are now registered in the prerelease gate.**
+`container/test_restart_gphoto_launch_lock.sh` has existed since issue #77 and was run by
+nothing — no gate, no CI, no release script referenced it. That is the same "a gate nobody
+calls is not a gate" failure that let `.99` ship without its licence, applied to the code
+that recovers the camera.
+
+Gate: **14 passed, 0 failed, 2 skipped**, drift guard green at 37 suites.
+
+**Not yet done.** The fix is in the tree; it has not been applied to the device, and the
+stale lock is still there. Removing `/var/run/openpolaris-pgphoto.restart.lock` on the
+running unit should let the supervisor's next rebind succeed, but that restarts pgphoto on
+a live mount and is left as an explicit operator decision. K-3 III recognition remains
+UNKNOWN/BLOCKED per #297 until the five-layer test passes on an installed candidate; this
+fix removes a definite blocker, it does not by itself prove recognition. The K-1 II was
+confirmed present on the PC (`25fb:0183`) but its behaviour against this fix is untested.
+
 ## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
 
 - `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
