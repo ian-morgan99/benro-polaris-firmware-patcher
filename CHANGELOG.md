@@ -1088,3 +1088,25 @@ Three mistakes I made here are worth recording, because each one looked like suc
   C file. It would have kept passing unchanged if production changed, and it also ran all cases in
   one process, so the process-global flags made later cases legitimately silent — three false
   failures blamed on correct code. Fresh child processes per case, and extraction instead of copying.
+
+## Finding — the camlibs load and the K-3 III is detected, outside pgphoto (#297)
+
+`/app/bin/gphoto2 --list-cameras` on the device reports **2492 cameras** and
+`--auto-detect` returns `Pentax K-3 Mark III (MTP mode)  usb:001,004`, using the shipped
+artifacts (`LD_LIBRARY_PATH=/app/lib/stage2:/app/lib`, `CAMLIBS=…/2.5.34`,
+`IOLIBS=…/0.12.2`). No rebuild, no install.
+
+Three controls keep that from being a false positive: `CAMLIBS=/nonexistent/dir` yields **0**
+cameras (no compiled-in fallback), `LD_DEBUG=files` shows only the three camlibs under the path I
+set (`camlibs.so`, `pentax.so`, `ptp2.so`), and `LD_DEBUG=libs` shows the library actually
+initialised is `/app/lib/libgphoto2.so.6`, byte-identical to the stage2 copy.
+
+This refutes every artifact-level hypothesis I had held: camlib not packaged, unsatisfiable
+`DT_NEEDED`, version-node mismatch on `gp_log@LIBGPHOTO2_5_0`, `camlibs.manifest` interference,
+`CAMLIBDIR_PREFIX_ENV` filtering, directory permissions, wrong library loaded, and "the USB layer
+cannot claim the device". The defect is specific to pgphoto: it maps `libgphoto2.so.6` and
+`libltdl.so.7` but never a camlib or port driver, even with a client connected and answered -- so
+it is not reaching `gp_abilities_list_load_dir`, despite carrying the same working env as root.
+
+`--auto-detect` opens the device briefly, so it was run only after `fuser` confirmed nothing held
+`/dev/bus/usb/*/*`. See `docs/findings/297-camlib-loads-outside-pgphoto.md`.
