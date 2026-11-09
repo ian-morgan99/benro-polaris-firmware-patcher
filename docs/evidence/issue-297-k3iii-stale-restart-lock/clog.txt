@@ -1,0 +1,19 @@
+### CAPTURED AT: 2026-11-09T00:46:46Z
+### uptime: 4238.93 7469.37
+
+=== /app/Clog.txt (full) ===
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 3940
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 3945
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 3950
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 3955
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 3960
