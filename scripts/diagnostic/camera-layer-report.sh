@@ -187,12 +187,41 @@ else
   record "layer4-client" UNKNOWN "no client on :8080 right now -- httpd connects on demand for the stream, so idle is indistinguishable from a broken path; attach an app and re-run"
 fi
 
-# Layer 3 verdict, deferred until layer 4 tells us whether anything asked for a session.
+# ---------------------------------------------------------------------------
+# LAYER 4b: is preview already enabled? polaris-httpd's read-only /api/link dumps every
+# cached opcode payload, and 292 (preview-state) tells us whether pgphoto was told to run the
+# :8080 MJPEG stream. This matters because layer 3 otherwise defers on an *instantaneous*
+# connection count: polaris-httpd opens that connection on demand, so a snapshot taken between
+# requests shows zero and looks like lazy init even when preview has been on for hours.
+# Measured live: 292 -> "state:1;" (count 453) while no client was connected, i.e. the idle
+# reading was actively misleading. The port is read from httpd's cmdline rather than assumed --
+# it runs --port 8090 here, and :80 is Benro's own lighttpd, which 404s these paths.
+HP=$(dsh 'tr "\0" " " < /proc/$(ps 2>/dev/null | grep "[p]olaris-httpd" | head -1 | awk "{print \$1}")/cmdline 2>/dev/null' | sed -n 's/.*--port \([0-9]*\).*/\1/p')
+PREVIEW=""
+CAMINFO=""
+if [ -n "$HP" ] && command -v curl >/dev/null 2>&1; then
+  DEVHOST=${USER_HOST#*@}
+  LINKJSON=$(timeout 30 curl -sS --max-time 25 -A 'VSCode-LMStudio-Bridge' "http://${DEVHOST}:${HP}/api/link" 2>/dev/null)
+  if [ -n "$LINKJSON" ]; then
+    PREVIEW=$(printf '%s' "$LINKJSON" | tr ',' '\n' | sed -n 's/.*"292":{"args":"state:\([0-9-]*\).*/\1/p' | head -1)
+    CAMINFO=$(printf '%s' "$LINKJSON" | tr ',' '\n' | sed -n 's/.*"286":{"args":"\(.*\)".*/\1/p' | head -1)
+  fi
+fi
+[ -n "$HP" ] && echo "polaris-httpd port=$HP ${PREVIEW:+preview-state=$PREVIEW}"
+[ -n "$CAMINFO" ] && echo "camera-info: $CAMINFO"
+
+# Layer 3 verdict, deferred until we know whether anything asked for a session. Either an
+# established client or preview-state=1 counts as "asked"; only with neither is the absence of
+# a camlib genuinely ambiguous.
 if [ "${CAMLIB_MISSING:-0}" = "1" ]; then
   if [ -n "$EST" ] && [ "$EST" -gt 0 ]; then
     record "layer3-camlib" FAIL "a client is connected but no pentax.so/ptp2.so is mapped -- gp_camera_init did not load a camlib"
+  elif [ "$PREVIEW" = "1" ]; then
+    record "layer3-camlib" FAIL "preview-state=1 (pgphoto was told to run the :8080 stream) yet no pentax.so/ptp2.so is mapped -- gp_camera_init did not load a camlib"
+  elif [ -n "$PREVIEW" ]; then
+    record "layer3-camlib" UNKNOWN "no camlib mapped and preview-state=$PREVIEW (off) -- nothing has asked for a session, so this may be lazy init"
   else
-    record "layer3-camlib" UNKNOWN "no camlib mapped and no client on :8080 -- consistent with lazy init while idle; re-run with an app attached to tell this apart from a real fault"
+    record "layer3-camlib" UNKNOWN "no camlib mapped, no client on :8080, and preview-state unavailable -- cannot tell lazy init from a real fault; re-run with an app attached"
   fi
 fi
 

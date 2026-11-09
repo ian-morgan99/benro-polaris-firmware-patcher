@@ -1009,3 +1009,25 @@ layer 3 at UNKNOWN permanently, hiding the real state. With the fix and a stream
 [PASS] layer4-client -- 1 established connection(s) to :8080
 [FAIL] layer3-camlib -- a client is connected but no pentax.so/ptp2.so is mapped
 ```
+
+## Improved — camera diagnostic no longer needs a client attached at the instant of the snapshot
+
+Layer 3 previously deferred entirely on an instantaneous `/proc/net/tcp` count. `polaris-httpd`
+opens its :8080 connection on demand, so a snapshot taken between requests shows zero and reads as
+"lazy init while idle" even when preview has been enabled for hours. Added a second, durable
+signal: opcode 292 (`preview-state`) from `polaris-httpd`'s read-only `/api/link`.
+
+Measured live, with no client connected:
+
+```
+polaris-httpd port=8090 preview-state=1
+camera-info: manufacturer:none;model:none;state:-110;storage:0;photoFormat:0;
+[FAIL] layer3-camlib -- preview-state=1 (pgphoto was told to run the :8080 stream) yet no
+       pentax.so/ptp2.so is mapped -- gp_camera_init did not load a camlib
+```
+
+Verdicts are now: client connected → FAIL; `preview-state=1` → FAIL; `preview-state=0` → UNKNOWN
+(nothing has asked); signal unavailable → UNKNOWN. Parse tested offline against `state:1`,
+`state:0` and a payload with no 292 at all, so an absent flag cannot produce a false FAIL. The
+port comes from httpd's cmdline rather than being assumed — it runs `--port 8090` here, and :80 is
+Benro's own lighttpd, which 404s these paths. Gate unchanged: 15 passed / 0 failed / 2 skipped.
