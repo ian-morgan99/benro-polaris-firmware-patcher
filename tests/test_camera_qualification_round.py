@@ -90,6 +90,55 @@ def test_exposure_cap_is_inherited_not_reinvented():
     assert str(camqual.cp.MAX_TEST_EXPOSURE_SECONDS) in proc.stdout
 
 
+def test_device_output_dir_matches_canary_probe_default():
+    """#305: WBS-04.6 baselined /tmp, where the device writes nothing.
+
+    A check pointed at a directory the body never writes to reports "no new file"
+    for a capture that succeeded -- a false FAIL attributed to the camera. The two
+    tools must agree on the path the same way they agree on the exposure cap.
+    """
+    assert camqual.DEVICE_OUTPUT_DIR == "/app/sd/normal"
+    probe = os.path.join(ROOT, "scripts", "canary-probe.py")
+    src = open(probe, encoding="utf-8").read()
+    m = re.search(r'--output-dir",\s*default="([^"]+)"', src)
+    assert m, "canary-probe --output-dir default not found"
+    assert camqual.DEVICE_OUTPUT_DIR == m.group(1), (
+        f"round baselines {camqual.DEVICE_OUTPUT_DIR} but canary-probe defaults "
+        f"to {m.group(1)}")
+
+
+def test_wbs_04_6_constructs_its_file_checker(monkeypatch):
+    """#305: WBS-04.6 had never executed, yet the suite was green.
+
+    It passed ``expected_files=`` to a constructor that does not accept it and
+    called the ``enabled`` property as a method. Both raise TypeError, so the case
+    died before sending a shutter command -- and no test built the checker the way
+    the round does, so nothing noticed.
+
+    This stubs reachability true and the socket path false. Reaching the
+    "9090 unreachable" BLOCKED verdict proves the checker was constructed and its
+    ``enabled`` gate read without raising; before the fix this raised TypeError.
+    """
+    monkeypatch.setattr(camqual, "device_reachable", lambda host: (True, "stubbed"))
+
+    def refuse(*_a, **_k):
+        raise OSError("stub: no socket")
+
+    monkeypatch.setattr(camqual, "connect", refuse)
+
+    class NullRecorder:
+        def line(self, *_a, **_k):
+            pass
+
+        def case(self, *_a, **_k):
+            pass
+
+    rec = camqual.case_wbs_04_6(NullRecorder(), "203.0.113.198", "root@203.0.113.198")
+    assert rec["status"] == "BLOCKED", rec
+    assert "9090 unreachable" in rec["reason"], (
+        f"case never reached the socket step, so the checker gate was not exercised: {rec}")
+
+
 # ── honest degradation ──────────────────────────────────────────────────────────────
 
 def test_unreachable_device_yields_blocked_never_pass():
