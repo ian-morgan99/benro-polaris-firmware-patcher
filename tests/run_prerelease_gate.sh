@@ -299,6 +299,13 @@ PY_TESTS=(
     # decides whether an operator keeps ssh) can be checked here instead of only on
     # hardware.
     tests/test_astro_boot_hook.py
+    # Added for the v102 build blocker: `flatpak-spawn --host docker` resolves
+    # `docker` on the HOST's PATH, where a shim of that same shape re-enters itself
+    # and dies with rc=127 -- indistinguishable from "docker is not installed". It
+    # stopped the v102 build 82 minutes after v101 shipped, with nothing in the repo
+    # changed. These tests pin the absolute-path rule and check that the doctor no
+    # longer advises creating the very shim that causes it.
+    tests/test_host_docker_resolution.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then

@@ -81,7 +81,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --libgphoto2) LIBGP="$2"; shift 2;;
         --stock)      STOCK="$2"; shift 2;;
-        --catalog)    CATALOG="$2"; shift 2;;
+        --catalog)    CATALOG="$2"; CATALOG_SUPPLIED=1; shift 2;;
         --image)      IMAGE="$2"; shift 2;;
         --offline)    OFFLINE=1; shift;;
         -h|--help)    sed -n '1,60p' "${BASH_SOURCE[0]}"; exit 0;;
@@ -105,27 +105,50 @@ sect "1. Docker: reachable, and able to see our files"
 
 # A sandboxed shell (Flatpak) has no docker socket. flatpak-spawn --host is the
 # supported way out, and it is what makes a plain `docker` callable at all.
-DOCKER_BIN="$(command -v docker 2>/dev/null || true)"
+#
+# THE TRAP THIS REPLACED. The old check probed `flatpak-spawn --host docker`, which
+# asks the HOST to resolve `docker` on the HOST's PATH. ~/.local/bin and ~/bin are on
+# it by default, and both are exactly where this script's own hint told people to put
+# a shim. So the host ran that shim, it tried to exec flatpak-spawn -- absent on the
+# host -- and died with rc=127. The doctor then reported "docker is not usable" and
+# advised installing the very shim that was already there causing it. Broke the v102
+# build on 2026-11-09, 82 minutes after v101 shipped with no shim at all.
+# tools/host-docker.sh resolves an absolute host path instead, which cannot be one of
+# our shims and so cannot recurse.
+# shellcheck disable=SC1091
+. "$ROOT/tools/host-docker.sh"
 DOCKER_MODE=""
-if [ -n "$DOCKER_BIN" ] && docker info >/dev/null 2>&1; then
-    DOCKER_MODE="direct"
-elif command -v flatpak-spawn >/dev/null 2>&1 \
-        && flatpak-spawn --host docker info >/dev/null 2>&1; then
-    DOCKER_MODE="flatpak-spawn"
+DOCKER_PREFIX="$(polaris_docker_prefix 2>/dev/null || true)"
+if [ -n "$DOCKER_PREFIX" ]; then
+    case "$DOCKER_PREFIX" in
+        docker) DOCKER_MODE="direct";;
+        *) DOCKER_MODE="flatpak-spawn-absolute";;
+    esac
 fi
 
 if [ "$OFFLINE" = 1 ]; then
     warn "skipped (--offline): the build needs Docker, so a green run here is not a green run there"
 elif [ -z "$DOCKER_MODE" ]; then
     bad "docker is not usable from this shell"
+    # Name the real cause. A docker on PATH that fails `docker info` is almost
+    # always a broken shim, and telling someone to install a second one makes it worse.
+    if polaris_docker_shadowed; then
+        hint "a 'docker' IS on PATH but does not work: $(command -v docker)"
+        hint "  that is the problem -- do not add another shim on top of it."
+        host_resolved="$(polaris_host_docker_resolved)"
+        if [ -n "$host_resolved" ]; then
+            hint "the HOST resolves 'docker' to: $host_resolved"
+            hint "  if that file execs flatpak-spawn, it cannot run on the host and"
+            hint "  returns rc=127, which looks like 'docker is not installed'."
+            hint "  Fix it to name an absolute host path, e.g."
+            hint "    exec /usr/bin/flatpak-spawn --host /usr/bin/docker \"\$@\""
+        fi
+    fi
     if [ -n "${FLATPAK_ID:-}" ]; then
         hint "this shell is inside Flatpak app $FLATPAK_ID, which does not expose the socket."
-        hint "Either install a shim so plain \`docker\` reaches the host:"
-        hint "  mkdir -p ~/.local/bin && cat >~/.local/bin/docker <<'SH'"
-        hint "  #!/bin/sh"
-        hint "  exec flatpak-spawn --host docker \"\$@\""
-        hint "  SH"
-        hint "  chmod +x ~/.local/bin/docker"
+        hint "Preferred: put this repo's shim on PATH -- it resolves an absolute host"
+        hint "path and cannot recurse:"
+        hint "  export PATH=\"$ROOT/tools/host-bin:\$PATH\""
         hint "or expose the socket and restart the app:"
         hint "  flatpak override --user --filesystem=/var/run/docker.sock $FLATPAK_ID"
     else
@@ -133,7 +156,8 @@ elif [ -z "$DOCKER_MODE" ]; then
         hint "or install the Docker CLI."
     fi
 else
-    ok "docker answers ($DOCKER_MODE): $( (docker info --format '{{.ServerVersion}}' 2>/dev/null || flatpak-spawn --host docker info --format '{{.ServerVersion}}' 2>/dev/null) || echo unknown)"
+    # Unquoted: DOCKER_PREFIX is words (`docker`, or `flatpak-spawn --host X`).
+    ok "docker answers ($DOCKER_MODE): $( $DOCKER_PREFIX info --format '{{.ServerVersion}}' 2>/dev/null || echo unknown)"
 fi
 
 # THE PROOF THAT COST THE MOST TIME TO LEARN.
@@ -144,9 +168,20 @@ fi
 # cost two build attempts to diagnose. The only way to know is to actually mount
 # a temp dir and read a sentinel back through the daemon.
 if [ -n "$DOCKER_MODE" ]; then
-    run_docker() { if [ "$DOCKER_MODE" = direct ]; then docker "$@"; else flatpak-spawn --host docker "$@"; fi; }
+    run_docker() { $DOCKER_PREFIX "$@"; }
 
-    probe="$(mktemp -d 2>/dev/null)"
+    # Probe the directory the BUILD will actually use, not the ambient one.
+    # build-astro.sh exports TMPDIR=$ROOT/out/.build-env/tmp precisely because
+    # /tmp is private to the sandbox while the daemon is on the host. Probing
+    # bare /tmp therefore reported RED on a host where the wrapper had already
+    # solved this -- a false failure that trains people to ignore the doctor.
+    if [ -n "${TMPDIR:-}" ]; then
+        probe="$(mktemp -d 2>/dev/null)"
+    else
+        buildtmp="$ROOT/out/.build-env/tmp"
+        mkdir -p "$buildtmp" 2>/dev/null || true
+        probe="$(TMPDIR="$buildtmp" mktemp -d 2>/dev/null)"
+    fi
     if [ -z "$probe" ]; then
         bad "mktemp -d produced nothing; cannot test bind mounts"
     else
@@ -160,7 +195,7 @@ if [ -n "$DOCKER_MODE" ]; then
         run_docker image inspect "$probe_img" >/dev/null 2>&1 || probe_img="busybox:latest"
         got="$(run_docker run --rm --entrypoint cat -v "$probe":/probe:ro "$probe_img" /probe/marker 2>&1)"
         if [ "$got" = "sentinel" ]; then
-            ok "bind mount works for TMPDIR=${TMPDIR:-<default>} ($probe is host-visible)"
+            ok "bind mount works for TMPDIR=${TMPDIR:-$ROOT/out/.build-env/tmp} ($probe is host-visible)"
         elif ! run_docker image inspect "$probe_img" >/dev/null 2>&1; then
             warn "could not test bind mounts: no image available to probe with"
             hint "run the doctor once after '$IMAGE' exists so this check can run."
@@ -307,7 +342,13 @@ else
     bad "stock packet not found: $STOCK"
 fi
 
-if [ -d "$CATALOG/tiles" ] && [ -f "$CATALOG/tiles.json" ]; then
+# Only checked when a catalogue was actually requested. A standard (non-Astro)
+# release has no catalogue at all, and this check runs against a default path that
+# only exists on some hosts -- so an unconditional FAIL here blocks releases that do
+# not need the thing it is complaining about.
+if [ "${CATALOG_SUPPLIED:-0}" != 1 ]; then
+    ok "catalogue package: not requested, skipped"
+elif [ -d "$CATALOG/tiles" ] && [ -f "$CATALOG/tiles.json" ]; then
     ok "catalogue package complete: $CATALOG"
 else
     bad "catalogue package incomplete: $CATALOG (needs tiles/ and tiles.json)"

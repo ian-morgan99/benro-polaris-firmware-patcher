@@ -13,4 +13,39 @@
 # Caveat that bites: anything created in this sandbox's /tmp does NOT exist on
 # the host, so a launcher that extracts an input archive into /tmp and then
 # mounts it will mount nothing. Pass inputs that already live under $HOME.
-exec flatpak-spawn --host docker "$@"
+#
+# WHY THIS DOES NOT SIMPLY `exec flatpak-spawn --host docker "$@"`
+# `--host docker` asks the HOST to resolve `docker` on the HOST's PATH, and
+# ~/.local/bin and ~/bin are both on it by default. If either holds a shim of this
+# same shape, the host runs that file, which tries to exec flatpak-spawn -- a
+# binary that does not exist on the host -- and it dies with rc=127:
+#
+#     /home/ian/bin/docker: 5: exec: /usr/bin/flatpak-spawn: not found
+#
+# That reads exactly like "docker is not installed", so it sends you off installing
+# a shim when a shim is already present and *is* the cause. It broke the v102 build
+# on 2026-11-09, 82 minutes after v101 shipped cleanly without any shim at all.
+# Resolve an absolute host path instead: a system location can never be one of our
+# shims, so it cannot recurse.
+# Parameter expansion, not dirname: keep this working when PATH is minimal.
+# `cd` and `pwd` are shell builtins; /usr/bin/dirname is not.
+case "$0" in
+    */*) SELF_DIR=$(CDPATH= cd -- "${0%/*}" && pwd) ;;
+    *)   SELF_DIR=$(CDPATH= pwd) ;;
+esac
+if [ -f "$SELF_DIR/../host-docker.sh" ]; then
+    # Marks this process as a shim so the library does not probe `docker` on PATH,
+    # which would be this very file.
+    POLARIS_SHIM_ACTIVE=1
+    export POLARIS_SHIM_ACTIVE
+    # shellcheck disable=SC1091
+    . "$SELF_DIR/../host-docker.sh"
+    PREFIX="$(polaris_docker_prefix 2>/dev/null || true)"
+    if [ -n "$PREFIX" ]; then
+        # Unquoted on purpose: the prefix is words, e.g. `flatpak-spawn --host X`.
+        exec $PREFIX "$@"
+    fi
+fi
+echo "docker shim: cannot reach a Docker daemon from this shell." >&2
+echo "  outside Flatpak, use the real docker; inside it, run scripts/build-doctor.sh" >&2
+exit 127

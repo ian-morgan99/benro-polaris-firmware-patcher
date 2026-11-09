@@ -44,6 +44,23 @@ def run_hook(app_root, sd_root, wait=1, hook_path=None):
                           text=True, timeout=60, env=env)
 
 
+def wait_for(*paths, timeout=6.0):
+    """Wait until every path exists.
+
+    The launcher starts the card's boot script with `setsid ... &`, so it is still
+    running when the hook returns. Returning early lets TemporaryDirectory's rmtree
+    race the child creating its flag file, which fails cleanup with ENOTEMPTY -- a
+    flake that depends on machine load. Waiting for every effect the test cares about
+    makes it deterministic and also asserts more: the astro launch really happened.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if all(os.path.exists(p) for p in paths):
+            return True
+        time.sleep(0.1)
+    return False
+
+
 def make_card(tmp, with_boot_script=True):
     sd = os.path.join(tmp, "sd")
     card = os.path.join(sd, "polaris-astro")
@@ -108,12 +125,7 @@ def test_card_with_boot_script_actually_launches_it():
         sd = make_card(tmp)
         proc = run_hook(os.path.join(tmp, "app"), sd)
         assert proc.returncode == 0, proc.stderr
-        flag = os.path.join(tmp, "ran.flag")
-        for _ in range(30):
-            if os.path.exists(flag):
-                break
-            time.sleep(0.2)
-        assert os.path.exists(flag), (
+        assert wait_for(os.path.join(tmp, "ran.flag")), (
             "the card's polaris-astro-boot.sh never ran -- #265 is not fixed")
 
 
@@ -153,14 +165,11 @@ def test_displaced_hook_is_chained_first_so_ssh_survives():
         proc = run_hook(app, sd, hook_path=installed)
         assert proc.returncode == 0, proc.stderr
         assert "chaining preserved hook" in proc.stdout, proc.stdout
-        flag = os.path.join(tmp, "ssh.flag")
-        for _ in range(30):
-            if os.path.exists(flag):
-                break
-            time.sleep(0.2)
-        assert os.path.exists(flag), (
-            "the displaced ssh hook never ran -- this launcher would lock the "
-            "operator out of the device")
+        # Wait for both effects: ssh ran first, and astro was launched. Waiting for
+        # the astro flag too is what keeps cleanup from racing the child.
+        assert wait_for(os.path.join(tmp, "ssh.flag"), os.path.join(tmp, "ran.flag")), (
+            "the displaced ssh hook or the card boot script never ran -- this launcher "
+            "would lock the operator out of the device")
 
 
 def test_card_boot_script_is_the_only_place_network_telnetd_prior_is_run():

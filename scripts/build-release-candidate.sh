@@ -16,11 +16,14 @@ if [ $# -gt 0 ] && [[ "$1" != --* ]]; then
   shift
 fi
 CHANGE_SUMMARY=""
+SKIP_DOCTOR=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --change-summary)
       [ $# -ge 2 ] || usage
       CHANGE_SUMMARY="$2"; shift 2;;
+    --skip-doctor)
+      SKIP_DOCTOR=1; shift;;
     *) echo "ERROR: unknown option: $1" >&2; usage;;
   esac
 done
@@ -32,6 +35,59 @@ done
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/out/$ID"
 VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
+
+# ---------------------------------------------------------------------------
+# Prerequisites, checked BEFORE anything is built (issue #306 follow-up).
+#
+# AGENTS.md has always said "Before any candidate build, run scripts/build-doctor.sh",
+# but this script -- the one AGENTS.md names as "the only supported source-to-candidate
+# entry point" -- never ran it. So the check existed and was enforced by nothing: an
+# agent could follow the documented process exactly and still discover a broken host
+# 40 minutes into a build, reported as something unrelated.
+#
+# That is what happened on 2026-11-09 during v102. `docker info` returned rc=127 because
+# a shim on the HOST's PATH exec'd flatpak-spawn, which does not exist on the host. The
+# gate reported "no reachable docker daemon" and the run stopped before producing
+# anything. Nothing about the release was wrong; the environment had drifted 82 minutes
+# after v101 shipped, and no coded check stood between that drift and a wasted build.
+#
+# Fail closed. --skip-doctor exists for a documented exception and is recorded in the
+# provenance so a skipped check is visible in the release evidence rather than silent.
+# ---------------------------------------------------------------------------
+DOCTOR_LOG="$ROOT/out/$ID.doctor.log"
+mkdir -p "$ROOT/out"
+if [ "$SKIP_DOCTOR" = 1 ]; then
+  echo "WARNING: --skip-doctor: build prerequisites were NOT verified." >&2
+  DOCTOR_STATUS="skipped-by-flag"
+elif bash "$ROOT/scripts/build-doctor.sh" --libgphoto2 "$SRC" --stock "$BASE" \
+        > "$DOCTOR_LOG" 2>&1; then
+  DOCTOR_STATUS="green"
+  echo "build-doctor: GREEN (log: $DOCTOR_LOG)"
+else
+  DOCTOR_STATUS="red"
+  echo "ERROR: build-doctor.sh reported RED -- refusing to start a build that will" >&2
+  echo "       fail later and report itself as an unrelated problem." >&2
+  echo "       Full output: $DOCTOR_LOG" >&2
+  grep -E '^  (FAIL|WARN)' "$DOCTOR_LOG" | sed 's/^/       /' >&2 || true
+  echo "       Fix each FAIL line, or pass --skip-doctor for a documented exception." >&2
+  exit 1
+fi
+
+# ubireader: generate-fwpkt-manifest.py needs it to unpack appfs.ubifs. A wrapper
+# that exists and is executable but dies at import is the failure mode here (it was
+# installed for a different interpreter), which is why this runs --help rather than
+# trusting `command -v`. When native is broken, use the repo's bridge, which runs the
+# patcher image's working ubireader against host paths -- the same fallback
+# scripts/build-astro.sh already applies. Without it the mandated entrypoint fails on
+# a host that has a perfectly good ubireader inside the patcher image.
+if ! command -v ubireader_extract_files >/dev/null 2>&1 \
+     || ! ubireader_extract_files --help >/dev/null 2>&1; then
+  if [ -x "$ROOT/tools/ubireader-docker" ]; then
+    export UBIREADER_EXTRACT_FILES="$ROOT/tools/ubireader-docker"
+    echo "ubireader: native install absent or broken; using the repo bridge"
+    echo "           $UBIREADER_EXTRACT_FILES"
+  fi
+fi
 
 # Release builds are intentionally narrower than diagnostic builds. This keeps
 # a junior agent from accidentally producing a candidate from a feature branch
@@ -233,6 +289,11 @@ CHANGE_MANIFEST_SHA256="$(sha256sum "$OUT/release-change-manifest.json" | awk '{
   echo "candidate_id=$ID"
   echo "release_change_manifest=release-change-manifest.json"
   echo "release_change_manifest_sha256=$CHANGE_MANIFEST_SHA256"
+  # Recorded, not just enforced: a skipped prerequisite check must be visible in
+  # the release evidence, the same way deployment=not-performed is.
+  echo "build_doctor_status=$DOCTOR_STATUS"
+  [ "$DOCTOR_STATUS" = red ] && echo "build_doctor_log=$(basename "$DOCTOR_LOG")"
+  true
 } >> "$OUT/build-source-provenance.txt"
 
 echo "Checking candidate identity"
