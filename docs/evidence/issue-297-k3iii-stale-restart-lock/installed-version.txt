@@ -1,0 +1,63 @@
+### Installed version, read from the device 2026-11-09
+
+$ cat /app/FwVer
+FwVer:6.0.0.54.97;date:2026.11.06;
+
+$ cat /app/openpolaris-libgphoto2-provenance.txt
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=3fb26e536ac169e4970d69516a9d45daf62563f5
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=5dbd19d81da9b29fa246bc94fb83708d63d496e9
+patcher_dirty_diff_hash=
+selected_camlibs=ptp2,pentax
+legacy_usbscsi=1
+build_id=astro-v97-liveview-diag-20261106
+display_fwver=6.0.0.54.97
+
+## What this settles
+
+The device genuinely runs 6.0.0.54.97, built as astro-v97-liveview-diag-20261106.
+It is not a mislabelled .99. FwVer and the provenance file agree on both the display
+version and the build id, so the two independent sources are consistent.
+
+The libgphoto2 pin is 3fb26e536 -- the parent of 7e6dec95f, which is what .99 pinned.
+That is the same parent commit the polaris-v94 worktree is currently proposing to move
+the builder back to.
+
+## What it does NOT settle, and why the version question was a red herring
+
+The installed camlib already supports both cameras:
+
+$ for m in "Pentax:K-1 Mark II (PTP mode)" "Pentax:K-3 Mark III (MTP mode)"; do
+      strings -a /app/lib/stage2/libgphoto2/2.5.34/ptp2.so | grep -qF "$m" && \
+      echo "PRESENT: $m" || echo "ABSENT : $m"; done
+PRESENT: Pentax:K-1 Mark II (PTP mode)
+PRESENT: Pentax:K-3 Mark III (MTP mode)
+
+$ sha256sum /app/lib/stage2/libgphoto2/2.5.34/*.so   # matches camlibs.manifest exactly
+7c63622da76a977d9b4cb50f72d360d8ff457fc3b9345a67b761d92504b649f5  ptp2.so
+06c03311b4abfbc27b6fb4a25c3fb86446b5d525bfb5191a8be92316d5954ce4  pentax.so
+
+Both target markers are present in the bytes on the device, and the manifest hashes
+match those bytes. So "the installed build is missing K-3 III support" is false, and
+whether .97 or .99 is installed has no bearing on the recognition failure. The TA's
+assessment on #297 was correct: this is not a model-table gap.
+
+Note that 3fb26e536 contains 'K-3 Mark III' in camlibs/ptp2/library.c, so the pin
+difference between .97 and .99 does not remove K-3 III support either. (The path is
+camlibs/ptp2/library.c in this repo, not libgphoto2/camlibs/ptp2/library.c -- an
+earlier grep of mine used the wrong prefix and returned a misleading zero.)
+
+## Remaining cause
+
+Recognition fails downstream of the camlib. Two layers:
+
+1. FIXED today -- a stale /var/run/openpolaris-pgphoto.restart.lock made every restart
+   exit 1, so the USB supervisor held the camera quarantined for the whole boot.
+2. STILL OPEN -- after the restart pgphoto has no camlib mapped at all and holds no USB
+   fd, so gp_camera_init has never run. Nothing appears to have asked it to open a
+   session: the `camera_connected_to_app` lines that were present before are absent now.
