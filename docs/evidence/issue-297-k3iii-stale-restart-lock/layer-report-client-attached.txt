@@ -1,0 +1,49 @@
+camera layer report -- 2026-11-09T03:19:25Z
+device: root@192.168.0.1   webui: http://192.168.0.1:8090
+expected camera idVendor:idProduct = 25fb:0189
+
+-- layer 1: USB enumeration --------------------------------------------------
+/sys/bus/usb/devices/1-1.2 25fb:0189 PENTAX K-3 Mark III
+/sys/bus/usb/devices/1-1 1a40:0101 USB2.0 HUB
+/sys/bus/usb/devices/usb1 1d6b:0002 xHCI Host Controller
+/sys/bus/usb/devices/usb2 1d6b:0003 xHCI Host Controller
+[PASS] layer1-usb -- 25fb:0189 enumerated
+1-0:1.0 09/00/00 driver=hub
+1-1.2:1.0 06/01/01 driver=none
+1-1:1.0 09/00/00 driver=hub
+2-0:1.0 09/00/00 driver=none
+-- layer 2: pgphoto process --------------------------------------------------
+pid=10026
+state=S
+wchan=hrtimer_nanosleep
+threads=11
+--- restart lock ---
+ls: /var/run/openpolaris-pgphoto.restart.lock: No such file or directory
+lock_pid=[empty]
+--- supervisor ---
+1
+[PASS] layer2-pgphoto -- running as PID 10026
+[PASS] layer2-restart-lock -- no restart lock held
+[PASS] layer2-quarantine -- no quarantine lines in /app/Clog.txt
+-- layer 3: camera session (camlib + USB handle) -----------------------------
+--- mapped camlibs/port drivers ---
+--- usb fds ---
+0
+--- sockets ---
+7
+-- layer 4: client connection to pgphoto (:8080) -----------------------------
+pgphoto_inode=221310659621675569677429678221684603692949
+established_to_8080=1
+[PASS] layer4-client -- 1 established connection(s) to :8080
+[FAIL] layer3-camlib -- a client is connected but no pentax.so/ptp2.so is mapped -- gp_camera_init did not load a camlib
+-- layer 5: published camera identity ----------------------------------------
+== /api/v1/camera/0/description ==
+{"Value":"Benro Polaris live-view camera via polaris-httpd","ClientTransactionID":1,"ServerTransactionID":20,"ErrorNumber":0,"ErrorMessage":""}
+== /api/v1/camera/0/camerastate ==
+{"Value":0,"ClientTransactionID":1,"ServerTransactionID":21,"ErrorNumber":0,"ErrorMessage":""}
+CameraState=0 (ASCOM: 0=Disconnected 1=DisconnectedPrepare 2=Connecting 3=Connected)
+[FAIL] layer5-published -- CameraState=Disconnected -- no camera session is published to the app
+-- verdict -------------------------------------------------------------------
+PASS=5 FAIL=2 UNKNOWN=0
+RESULT: at least one layer FAILED -- see the [FAIL] lines above for which one.
+Do not record recognition as working. Do not close #297 from this report alone.

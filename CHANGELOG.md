@@ -988,3 +988,24 @@ Non-vacuous: flags `s` and `ped` when reintroduced (exit 1), passes on the curre
 Gate from the corrected head: **offline 15 passed, 0 failed, 2 skipped**; **with
 `--build`: 22 passed, 0 failed, 3 skipped**. Full output in
 `docs/evidence/issue-297-k3iii-stale-restart-lock/gate-{offline,package}.txt`.
+
+## Fixed — camera diagnostic under-reported clients, forcing layer 3 to UNKNOWN
+
+`scripts/diagnostic/camera-layer-report.sh` matched `:1F90` only in `/proc/net/tcp`'s remote
+column. pgphoto is the **server** on 8080, so established rows carry it in the *local* column.
+Measured against a live stream request with two connections open:
+
+```
+$3 ~ /:1F90$/                       -> 0    (what the tool did)
+($2 ~ /:1F90$/ || $3 ~ /:1F90$/)    -> 2    (correct)
+```
+
+The consequence was worse than a wrong count. Layer 3's verdict is deliberately deferred on
+layer 4 — "no camlib mapped" is UNKNOWN while idle because lazy init means nobody has asked
+yet, and only becomes FAIL once a client is connected. Under-reporting clients therefore kept
+layer 3 at UNKNOWN permanently, hiding the real state. With the fix and a stream held open:
+
+```
+[PASS] layer4-client -- 1 established connection(s) to :8080
+[FAIL] layer3-camlib -- a client is connected but no pentax.so/ptp2.so is mapped
+```

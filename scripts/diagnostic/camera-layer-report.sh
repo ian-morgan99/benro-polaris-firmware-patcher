@@ -163,7 +163,13 @@ fi
 # LAYER 4: is anything actually talking to pgphoto?
 # ---------------------------------------------------------------------------
 hr "layer 4: client connection to pgphoto (:8080)"
-L4=$(dsh 'P=$(ps 2>/dev/null | grep pgphoto.stage2ondisk | grep -v grep | awk "{print \$1}" | head -1); INODE=$(ls -l /proc/$P/fd 2>/dev/null | grep -oE "socket:\[[0-9]+\]" | tr -dc 0-9); echo "pgphoto_inode=${INODE:-none}"; awk -v ino="$INODE" "\$10==ino {print \"listening_on=\"\$2}" /proc/net/tcp; echo "established_to_8080=$(awk "\$4==\"01\" && \$3 ~ /:1F90\$/" /proc/net/tcp | wc -l)"')
+# pgphoto is the SERVER on :8080, so an established row carries 1F90 in the LOCAL column
+# ($2), not the remote one. The first version of this filter matched only $3 and therefore
+# always reported zero -- measured against a live stream request that had two connections
+# open: `$3 ~ /:1F90$/` gave 0, `($2 ~ /:1F90$/ || $3 ~ /:1F90$/)` gave 2. Under-reporting
+# here also forced layer 3 down its "no client" branch, so the tool was saying UNKNOWN where
+# the truth was FAIL.
+L4=$(dsh 'P=$(ps 2>/dev/null | grep pgphoto.stage2ondisk | grep -v grep | awk "{print \$1}" | head -1); INODE=$(ls -l /proc/$P/fd 2>/dev/null | grep -oE "socket:\[[0-9]+\]" | tr -dc 0-9); echo "pgphoto_inode=${INODE:-none}"; awk -v ino="$INODE" "\$10==ino {print \"listening_on=\"\$2}" /proc/net/tcp; echo "established_to_8080=$(awk "\$4==\"01\" && (\$2 ~ /:1F90\$/ || \$3 ~ /:1F90\$/)" /proc/net/tcp | wc -l)"')
 printf '%s\n' "$L4"
 EST=$(printf '%s\n' "$L4" | sed -n 's/^established_to_8080=\([0-9]*\)$/\1/p')
 if [ -z "$EST" ]; then
