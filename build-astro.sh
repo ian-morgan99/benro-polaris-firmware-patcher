@@ -578,6 +578,30 @@ EOF
 echo "[✓] wrote GPL corresponding source -> $LIC/"
 ls -la "$LIC" | sed 's/^/    /'
 
+# The astro kit needs the same exec-bit treatment the wifi kit gets above.
+# polaris-astro-boot.sh gates four features on `[ -x "$ASTRO/<script>" ]`, so a
+# script that lands 644 does not fail -- it is silently skipped, and nothing ever
+# says so.  Seven shipped scripts are 644 in the source tree (aa_rehearsal.sh,
+# autofocus.sh, inject_test.sh, polaris-frame-watch.sh, polaris-goto-solve.sh,
+# polaris-goto-watch.sh, polaris-pointing-model.sh), and `cp` preserves that, so
+# both published v99 archives carried them non-executable.  Two of those are the
+# targets of `[ -x ]` guards (polaris-frame-watch.sh for AUTO_SOLVE_FRAMES,
+# polaris-goto-watch.sh for GOTO_SOLVE_WATCH), and polaris-goto-watch.sh in turn
+# requires polaris-goto-solve.sh to be executable or it exits 2 -- so enabling
+# either opt-in produced nothing at all.
+#
+# This lives here rather than in the wrapper because BOTH producers call this
+# script and neither chmods the astro kit; a fix on one path is not a fix.
+if [ -d "$SD_ASTRO" ]; then
+  chmod 755 "$SD_ASTRO"/*.sh 2>/dev/null || true
+  # install_astro.sh is the documented entry point and is invoked as a path, so
+  # it must be executable; assert rather than warn, because this is exactly the
+  # class of defect that shipped silently in .99.
+  for s in install_astro.sh uninstall_astro.sh polaris-astro-boot.sh; do
+    [ -x "$SD_ASTRO/$s" ] || { echo "error: astro script $s is not executable -- boot's [ -x ] test would skip it" >&2; exit 1; }
+  done
+fi
+
 cat > "$OUT/README.txt" <<EOF
 Benro Polaris — on-device plate solver bundle
 =============================================

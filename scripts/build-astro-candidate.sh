@@ -345,6 +345,18 @@ done
 tar -C "$OUT/astro-bundle" --exclude='./COPY-TO-SD-CARD-ROOT/*.zip' \
     -czf "$OUT/astro-bundle.tar.gz" .
 
+# Reopen the finished archives and check what a user would actually unpack. This
+# runs here, after every archive exists, because the verifier reports NOT_APPLICABLE
+# for an absent member -- calling it earlier prints a green verdict over nothing.
+# It aborts rather than warning: #58, #280, #281 and #286 all shipped while a check
+# that ran against the staging directory passed.
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$ROOT/scripts/verify-published-astro-candidate.py" "$OUT" \
+    || die "artifact gate failed -- the archives a user unpacks are incomplete"
+else
+  die "python3 is required to run the artifact gate over the finished archives"
+fi
+
 echo "[3/7] generating immutable FwPkt install manifest"
 python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT" \
   --ubireader "${UBIREADER_EXTRACT_FILES:-/home/ian/.local/bin/ubireader_extract_files}"

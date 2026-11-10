@@ -406,6 +406,17 @@ if [ "$WANT_ZIP" = "1" ]; then
   [ -f "$SD_ROOT/astrometry-indexes.zip" ] && ZIPS="$ZIPS $SD_ROOT/astrometry-indexes.zip"
   [ -f "$SD_ROOT/polaris-wifi.zip" ] && ZIPS="$ZIPS $SD_ROOT/polaris-wifi.zip"
 
+  # Reopen the finished archives rather than the staging tree. This producer was
+  # the one whose licence check never ran for .99, because releases were built by
+  # scripts/build-astro-candidate.sh instead -- a gate on one producer is a gate on
+  # neither.
+  if command -v python3 >/dev/null 2>&1; then
+    python3 "$ROOT/scripts/verify-published-astro-candidate.py" "$OUT" \
+      || die "artifact gate failed -- the archives a user unpacks are incomplete"
+  else
+    die "python3 is required to run the artifact gate over the finished archives"
+  fi
+
   # The wifi kit's whole purpose is to be executed on the device, and boot gates
   # auto-join on [ -x ]. zip stores unix mode bits, but verify rather than trust:
   # a kit that unzips non-executable installs four dead files and reports success.

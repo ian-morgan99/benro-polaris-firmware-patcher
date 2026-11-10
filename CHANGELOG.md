@@ -1,5 +1,41 @@
 # Changelog
 
+## Unreleased — verify the archives a user receives, not the build directory (issue #292)
+
+- `scripts/verify-published-astro-candidate.py` reopens the finished
+  `polaris-wifi.zip` / `polaris-astro.zip` / `astro-bundle.tar.gz` with
+  `zipfile`/`tarfile` and checks CRC, single root, traversal and symlink
+  members, mandatory copyleft text, that a licence is non-empty, that the source
+  offer names real versions, executable modes, and — derived from the shipped
+  scripts themselves rather than a hardcoded list — that every sibling a script
+  references exists in some shipped kit. It accepts either producer layout
+  (`COPY-TO-SD-CARD-ROOT/` or `astro-bundle/COPY-TO-SD-CARD-ROOT/`) because a
+  gate that understands one build path is not a gate.
+- The existing `scripts/verify-shipped-artifacts.py` walks a staging directory
+  with `os.walk()` and never opens an archive, so it structurally cannot see the
+  class of bug that shipped #58, #280, #281 and #286. A test now asserts the new
+  verifier contains no directory walk, so it cannot quietly regress.
+- **Found by running it on produced bytes:** seven scripts in `polaris-astro.zip`
+  are mode `0644` — `aa_rehearsal.sh`, `autofocus.sh`, `inject_test.sh`,
+  `polaris-frame-watch.sh`, `polaris-goto-solve.sh`, `polaris-goto-watch.sh`,
+  `polaris-pointing-model.sh`. They are 644 in the source tree and `cp` preserves
+  that. This is silent rather than loud: `polaris-astro-boot.sh` gates features on
+  `[ -x "$ASTRO/<script>" ]`, so `AUTO_SOLVE_FRAMES` and `GOTO_SOLVE_WATCH` were
+  skipped with no message, and `polaris-goto-watch.sh` exits 2 without an
+  executable `polaris-goto-solve.sh`. The wifi kit already had a `chmod 755`; the
+  astro kit never did. Fixed in `build-astro.sh`, which both producers call,
+  with an assertion on the entry-point scripts rather than a best-effort chmod.
+- Verified against real archives: RED (exit 1, 8 failures) on the published
+  `out/astro-v99-wifi-20261108` — naming all five missing wifi files, both
+  `udhcpc.script` drift references and the seven non-executable scripts — and
+  GREEN on `out/licence-fix-check` apart from the exec-bit finding. The 13 new
+  tests build their own zips rather than reading `out/`, which is gitignored and
+  would make them pass vacuously in CI. Confirmed non-vacuous: reverting the
+  `build-astro.sh` chmod fails exactly one test.
+- Not verified on hardware, and a PASS here does not claim it. The verdict is
+  `ARTIFACTS_INTERNALLY_CONSISTENT`; installed-file hashes, boot-hook persistence,
+  HTTP binding and a real plate solve still need the device matrix (#265).
+
 ## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
 
 - `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
