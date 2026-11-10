@@ -426,6 +426,34 @@ else
     else
         bad "git diff --check reports whitespace errors"
     fi
+
+    # A force-added file is tracked, so it is not untracked, and it matches an ignore
+    # rule, so it is invisible to every working-tree check -- including the dirty test
+    # above. git add -f therefore defeats both .gitignore and 'tree must be clean' at
+    # once, permanently and silently.
+    #
+    # This happened for six weeks: 33 files totalling 33 MB under docs/evidence/ were
+    # tracked despite the rule at .gitignore line 118 ("do not re-add rotating logs or
+    # firmware-derived snapshots to the public repository"), 31 of them committed after
+    # that rule was written. The repo is PUBLIC.
+    #
+    # -c lists from the index, -i keeps only those matching an ignore rule. Without -c
+    # this reports nothing at all, because plain ls-files excludes tracked files.
+    STUCK=$(git -C "$ROOT" ls-files -i -c --exclude-standard 2>/dev/null)
+    if [ -n "$STUCK" ]; then
+        N=$(printf '%s\n' "$STUCK" | wc -l)
+        bad "$N tracked file(s) match .gitignore -- they were force-added and are"
+        bad "invisible to git status, so nothing else here will ever notice them"
+        printf '%s\n' "$STUCK" | head -8 | sed 's/^/           /'
+        [ "$N" -gt 8 ] && printf '           ... and %d more\n' "$((N - 8))"
+        hint "Raw hardware evidence belongs in PrivateResearch/polaris-evidence/, not"
+        hint "here. Copy it there first -- most of these have no other copy. Then:"
+        hint "  git rm --cached \$(git ls-files -i -c --exclude-standard)"
+        hint "which keeps the files on disk and stops tracking them. Never git add -f"
+        hint "a raw log; publish a .txt/.md summary with the lines you need quoted."
+    else
+        ok "no tracked file matches .gitignore (nothing force-added past the rules)"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
