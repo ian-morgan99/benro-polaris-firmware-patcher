@@ -499,17 +499,39 @@ if [ -f "$INSTALL_SH" ]; then
     # closed, nothing at boot, and no error anyone would notice. The hook must be
     # installed while there is still guaranteed space.
     HOOK_LN=$(grep -n 'boot hook installed ->' "$INSTALL_SH" | head -1 | cut -d: -f1)
-    CAT_LN=$(grep -n 'copy_optional "$SRC/catalogue.polcat"' "$INSTALL_SH" | head -1 | cut -d: -f1)
-    if [ -z "$HOOK_LN" ] || [ -z "$CAT_LN" ]; then
-        bad "install_astro.sh: cannot locate the boot-hook or catalogue-copy step"
-        hint "Section 9 asserts their order. Update this check if either is renamed."
-    elif [ "$HOOK_LN" -gt "$CAT_LN" ]; then
+    if [ -z "$HOOK_LN" ]; then
+        bad "install_astro.sh: cannot locate the boot-hook step ('boot hook installed ->')"
+        hint "Section 9 asserts it runs before any optional copy. Update this check"
+        hint "if the message is renamed."
+    else
+        ok "install_astro.sh installs the boot hook (line $HOOK_LN)"
+    fi
+
+    # The 18.7 MB POLCAT01 solve data used to be mirrored into $DEST here. /app is a
+    # 68 MB ubifs, so on a freshly flashed camera that copy hit ENOSPC, set -e killed
+    # the script between the binaries and the boot hook, and the device booted with
+    # polaris-httpd on disk and nothing starting it -- issue #312. Nothing reads the
+    # mirror: every solver resolves the catalogue under /app/sd/polaris-astro. So it
+    # must not come back, in either install mode.
+    if grep -qE 'copy_optional .*catalogue|cp .*"\$SRC/catalogue' "$INSTALL_SH"; then
+        bad "install_astro.sh copies the catalogue into \$DEST again -- that mirror is 89%"
+        bad "of the kit and ENOSPCs on a freshly flashed /app, skipping autostart (#312)"
+        hint "Leave the solve data on the SD card. container/astro/test-install-enospc.sh"
+        hint "asserts no mirror appears in \$DEST; run it after changing the installer."
+    else
+        ok "install_astro.sh does not mirror the catalogue into /app (solve data stays on SD, #312)"
+    fi
+
+    # Same failure class as above: any optional copy that can abort the script must
+    # come AFTER autostart is registered, never before it.
+    CONF_LN=$(grep -n 'cp "$SRC/site.conf.example"' "$INSTALL_SH" | head -1 | cut -d: -f1)
+    if [ -n "$HOOK_LN" ] && [ -n "$CONF_LN" ] && [ "$HOOK_LN" -gt "$CONF_LN" ]; then
         bad "install_astro.sh installs the boot hook (line $HOOK_LN) AFTER the optional"
-        bad "catalogue copies (line $CAT_LN) -- an ENOSPC on /app skips autostart"
+        bad "site.conf copy (line $CONF_LN) -- an ENOSPC on /app would skip autostart"
         hint "Move the boot-hook block up, directly after the manifest check. See"
         hint "container/astro/test-install-enospc.sh, which reproduces this exactly."
-    else
-        ok "install_astro.sh writes the boot hook before any optional copy (hook $HOOK_LN < catalogue $CAT_LN)"
+    elif [ -n "$CONF_LN" ]; then
+        ok "install_astro.sh writes the boot hook before any optional copy (hook $HOOK_LN < site.conf $CONF_LN)"
     fi
 
     # sha256sum separates hash and name with TWO spaces. ${line#* } leaves a leading
