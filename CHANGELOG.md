@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased — a permanently-empty choice list returned CAMERA_BUSY forever (issue #269)
+
+- On the K-3 III, `exposurecompensation` publishes **no** allowed-values list at
+  all: the current value reads back (`val="0"`) but the choice list is empty on
+  every read, deterministically. The Stage-2 config guard treated every empty list
+  as a transient reconnect artefact and returned `GP_ERROR_CAMERA_BUSY (-110)`,
+  which invites a retry — so the app polled a control that would never become
+  usable, forever. Across the archived sessions that is **184** `config-safety`
+  events, all of them `exposurecompensation`.
+- The guard now keeps the first reads transient but escalates a control that stays
+  empty across 3 consecutive reads to `GP_ERROR_NOT_SUPPORTED (-6)`, which is
+  terminal and stops the polling. This mirrors the contract #127 already established
+  for preview: *"NOT_SUPPORTED must disable the operation (no endless retry)"*. It
+  is per-control, so one dead control never disables another; any populated read
+  clears the streak, so a genuine transient reconnect still recovers silently; and
+  a fresh `init` re-arms every control. The widget is still never published — only
+  the error code changes. `STAGE2_EMPTY_CHOICE_TERMINAL=0` restores the old
+  always-busy behaviour and `STAGE2_EMPTY_CHOICE_MAX` tunes the budget.
+- Verified by building the new test against the *pre-fix* loader: it fails to
+  compile (the escalation state machine does not exist), and against the fixed
+  loader all assertions pass, including that the third consecutive empty read is
+  `-6`, that a different control's first empty read is still `-110`, and that a
+  populated read resets the streak.
+- Not verified on hardware: no K-3 III is attached to this host. The claim that the
+  body publishes no EV list is #269's own measurement (3/3 runs), not a new one.
+
 ## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
 
 - `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
