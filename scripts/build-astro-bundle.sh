@@ -440,6 +440,21 @@ if [ "$WANT_ZIP" = "1" ]; then
   done
 fi
 
+# Same archive-level gate as the candidate path, run from this producer too.
+# Both scripts produce a kit a user unpacks, and a check living in only one of
+# them is how .99 shipped with copyleft binaries and no licence (#286). Keeping
+# the two paths on one verifier also stops them drifting: the per-archive checks
+# above are hand-written here and cannot see cross-kit references at all.
+if command -v python3 >/dev/null 2>&1; then
+  [ -f "$ROOT/scripts/verify-published-astro-candidate.py" ] \
+    || die "scripts/verify-published-astro-candidate.py is missing -- refusing to ship unverified archives"
+  python3 "$ROOT/scripts/verify-published-astro-candidate.py" "$OUT" \
+    --json "$OUT/artifact-conformance.json" \
+    || die "produced archives failed the artifact conformance gate -- see above"
+else
+  die "python3 is required to verify the produced archives"
+fi
+
 PROVENANCE="$OUT/build-source-provenance.txt"
 {
   echo "kind=astro-bundle"

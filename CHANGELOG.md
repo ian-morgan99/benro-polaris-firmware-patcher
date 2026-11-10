@@ -64,6 +64,79 @@
   corruption would contaminate filesystem evidence anyway. The pidfile mismatch is
   #283's own device observation; what was verified here is the teardown logic.
 
+## Unreleased — verify the archives a user receives, not the build directory (issue #292)
+
+- `scripts/verify-published-astro-candidate.py` reopens the finished
+  `polaris-wifi.zip` / `polaris-astro.zip` / `astro-bundle.tar.gz` with
+  `zipfile`/`tarfile` and checks CRC, single root, traversal and symlink
+  members, mandatory copyleft text, that a licence is non-empty, that the source
+  offer names real versions, executable modes, and — derived from the shipped
+  scripts themselves rather than a hardcoded list — that every sibling a script
+  references exists in some shipped kit. It accepts either producer layout
+  (`COPY-TO-SD-CARD-ROOT/` or `astro-bundle/COPY-TO-SD-CARD-ROOT/`) because a
+  gate that understands one build path is not a gate.
+- The existing `scripts/verify-shipped-artifacts.py` walks a staging directory
+  with `os.walk()` and never opens an archive, so it structurally cannot see the
+  class of bug that shipped #58, #280, #281 and #286. A test now asserts the new
+  verifier contains no directory walk, so it cannot quietly regress.
+- **Found by running it on produced bytes:** seven scripts in `polaris-astro.zip`
+  are mode `0644` — `aa_rehearsal.sh`, `autofocus.sh`, `inject_test.sh`,
+  `polaris-frame-watch.sh`, `polaris-goto-solve.sh`, `polaris-goto-watch.sh`,
+  `polaris-pointing-model.sh`. They are 644 in the source tree and `cp` preserves
+  that. This is silent rather than loud: `polaris-astro-boot.sh` gates features on
+  `[ -x "$ASTRO/<script>" ]`, so `AUTO_SOLVE_FRAMES` and `GOTO_SOLVE_WATCH` were
+  skipped with no message, and `polaris-goto-watch.sh` exits 2 without an
+  executable `polaris-goto-solve.sh`. The wifi kit already had a `chmod 755`; the
+  astro kit never did. Fixed in `build-astro.sh`, which both producers call,
+  with an assertion on the entry-point scripts rather than a best-effort chmod.
+- **The gate is now invoked by both producers.** Writing a verifier and leaving it
+  to be run by hand reproduces the original failure with extra steps, so
+  `scripts/build-astro-candidate.sh` and `scripts/build-astro-bundle.sh` each call
+  it after their archives exist and `die` if it returns non-zero. Each also writes
+  `artifact-conformance.json` beside its output, which is #292 section D's artifact.
+  Enforcement was proved behaviourally: the wired block is extracted from the real
+  script at test time and run against a candidate tree whose wifi archive has no
+  licence, and it must exit non-zero. A text assertion alone could be satisfied by
+  a call whose status is discarded — which prints FAIL and ships the bytes anyway.
+- Two preconditions block running `build-astro-candidate.sh` end to end from a
+  feature branch: it requires `feature/astro-native-platesolve` and a completely
+  clean tree. That is correct for releases and is why the wiring is proved by
+  extracting and executing the real block rather than by a full candidate run.
+- Verified against real archives: RED (exit 1, 8 failures) on the published
+  `out/astro-v99-wifi-20261108` — naming all five missing wifi files, both
+  `udhcpc.script` drift references and the seven non-executable scripts.
+- **Then verified by running the build for real, twice.** `build-astro.sh` was run
+  end to end on an unfixed tree and again with this fix applied, each result zipped
+  exactly as `build-astro-candidate.sh` does it:
+  - unfixed → staging tree held 18 executable and **7 non-executable** scripts, the
+    archive stored them at `0o100644`, and the verifier exited 1 naming all seven.
+  - fixed → **25 of 25** scripts executable, verifier reports
+    `ARTIFACTS_INTERNALLY_CONSISTENT_WITH_UNKNOWN` (20 checks, 0 fail).
+  The red-before is therefore what a real cross-compile produced, not something
+  inferred from a diff or from a simulation of the build's copy step.
+- That same fixed build's `polaris-wifi.zip` carries `LICENCE-wifi.txt`,
+  `COPYING-LGPL-2.1.txt`, `NOTICE-iw.txt`, `NOTICE-wpa_supplicant.txt` and
+  `udhcpc.script`, which confirms #280/#281/#286 on produced bytes as well.
+- **Building is not blocked in this sandbox, contrary to the handover.** Docker is
+  reachable through `flatpak-spawn --host /usr/bin/docker`; there is simply no
+  `docker` on PATH here, so the self-recursing-shim diagnosis does not apply to this
+  shell. A shim in a scratch directory on PATH is sufficient — and that is exactly
+  what `test_build_toolchain_prerequisites` prescribes in its own failure text, so
+  it is sanctioned by the repo rather than improvised. With it that test passes,
+  which means the prerelease gate can go fully green here for the first time.
+- One trap found doing this: `build-astro.sh` bind-mounts `--out`, and the Flatpak
+  sandbox has its own `/tmp`, so an output directory under `/tmp` is not the one the
+  container mounts. The cross-compile succeeds and then dies on
+  `mkdir /out/COPY-TO-SD-CARD-ROOT: Permission denied`, which reads like a broken
+  toolchain but is not. Put `--out` somewhere shared with the host, e.g. under
+  `$HOME`.
+- The 13 new tests build their own zips rather than reading `out/`, which is
+  gitignored and would make them pass vacuously in CI. Confirmed non-vacuous:
+  reverting the `build-astro.sh` chmod fails exactly one test.
+- Not verified on hardware, and a PASS here does not claim it. The verdict is
+  `ARTIFACTS_INTERNALLY_CONSISTENT`; installed-file hashes, boot-hook persistence,
+  HTTP binding and a real plate solve still need the device matrix (#265).
+
 ## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
 
 - `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
