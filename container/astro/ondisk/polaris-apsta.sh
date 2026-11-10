@@ -38,10 +38,62 @@ say() { echo "$(date '+%m-%d %H:%M:%S') $*" | tee -a "$LOG"; }
 
 have() { [ -x "$WDIR/$1" ]; }
 
+# Must match udhcpc.script exactly: it is what wrote the file, and it is the only
+# way to tell "a resolv.conf we made" from one the firmware or an operator made.
+MARK="# added by polaris-wifi udhcpc.script"
+RESOLV=${RESOLV_CONF:-/etc/resolv.conf}
+TMPRESOLV=${RESOLV_TMP:-/tmp/polaris-resolv.conf}
+
+kill_pidfile() {
+    # $1 = pidfile, $2 = string that MUST appear in that pid's command line.
+    # A pidfile left by an earlier run can name a pid the kernel has since handed
+    # to something unrelated; killing it blind takes out a process that has
+    # nothing to do with wifi. Verify before signalling, and say which case we
+    # were in -- silently skipping a stale pidfile is how "down did nothing"
+    # becomes invisible.
+    [ -f "$1" ] || return 0
+    pid=$(tr -dc '0-9' < "$1" 2>/dev/null)
+    if [ -z "$pid" ]; then
+        say "$(basename "$1") is empty or unreadable -- removing it"
+        rm -f "$1"
+        return 0
+    fi
+    if ps 2>/dev/null | awk -v p="$pid" '$1 == p' | grep -q "$2"; then
+        kill "$pid" 2>/dev/null
+        say "stopped $2 (pid $pid, $(basename "$1"))"
+    else
+        say "$(basename "$1") names pid $pid which is not a $2 -- stale pidfile, removing without killing"
+    fi
+    rm -f "$1"
+}
+
+clear_lease_resolver() {
+    # udhcpc.script's deconfig branch does exactly this, but nothing ever sends
+    # deconfig: BusyBox udhcpc only calls the hook for bind/renew/rebind, and a
+    # plain `kill` is not one of those. So the cleanup had to move to where the
+    # teardown actually happens. Without it the dead lease's nameservers stay in
+    # /etc/resolv.conf and every lookup hangs on timeout -- worse than no
+    # resolver at all, which is what the device shipped with (#283).
+    if grep -q "$MARK" "$RESOLV" 2>/dev/null; then
+        rm -f "$RESOLV" 2>/dev/null
+        say "removed the lease resolver we wrote from $RESOLV"
+    fi
+    rm -f "$TMPRESOLV" 2>/dev/null
+}
+
 sta_down() {
-    [ -f /tmp/apsta-wpa.pid ] && kill "$(cat /tmp/apsta-wpa.pid)" 2>/dev/null
-    [ -f /tmp/apsta-dhcp.pid ] && kill "$(cat /tmp/apsta-dhcp.pid)" 2>/dev/null
-    rm -f /tmp/apsta-wpa.pid /tmp/apsta-dhcp.pid
+    kill_pidfile /tmp/apsta-wpa.pid wpa_supplicant
+    kill_pidfile /tmp/apsta-dhcp.pid udhcpc
+    # The boot-time auto-join starts its OWN supplicant and udhcpc under DIFFERENT
+    # pidfiles -- polaris-autojoin.sh uses -P /tmp/autojoin-wpa.pid and
+    # -p /tmp/autojoin-dhcp.pid. sta_down never looked at those, so `down` pulled
+    # the interface out from under two live processes: the supplicant kept
+    # holding the control socket and udhcpc kept renewing a lease on an interface
+    # that no longer existed, and `up` could not recover (scan returned EBUSY).
+    kill_pidfile /tmp/autojoin-wpa.pid wpa_supplicant
+    kill_pidfile /tmp/autojoin-dhcp.pid udhcpc
+    rm -f /var/run/wpa_supplicant/"$IFACE" 2>/dev/null
+    clear_lease_resolver
     ifconfig "$IFACE" down 2>/dev/null
     "$WDIR/iw" dev "$IFACE" del 2>/dev/null
 }
@@ -79,10 +131,11 @@ have wpa_supplicant || { say "missing $WDIR/wpa_supplicant"; exit 2; }
         [ -f /tmp/apsta-ok ] && exit 0     # we got an address; stand down
     done
     echo "$(date '+%m-%d %H:%M:%S') WATCHDOG: no address in ${TIMEOUT}s -- reverting" >> "$LOG"
-    [ -f /tmp/apsta-wpa.pid ] && kill "$(cat /tmp/apsta-wpa.pid)" 2>/dev/null
-    [ -f /tmp/apsta-dhcp.pid ] && kill "$(cat /tmp/apsta-dhcp.pid)" 2>/dev/null
-    ifconfig wlan1 down 2>/dev/null
-    /app/sd/polaris-wifi/iw dev wlan1 del 2>/dev/null
+    # Same teardown as an explicit `down`, not a partial copy of it. This path
+    # used to kill only apsta's own two pidfiles and leave the lease resolver
+    # behind, so a timed-out attempt left /etc/resolv.conf pointing at a router
+    # we never got a route to -- the identical symptom #283 reports for `down`.
+    sta_down
     echo "$(date '+%m-%d %H:%M:%S') WATCHDOG: station interface removed; AP untouched" >> "$LOG"
 ) </dev/null >/dev/null 2>&1 &
 

@@ -1,0 +1,50 @@
+camera layer report -- 2026-11-09T01:40:29Z
+device: root@192.168.0.1   webui: http://192.168.0.1:8090
+expected camera idVendor:idProduct = 25fb:0189
+
+-- layer 1: USB enumeration --------------------------------------------------
+/sys/bus/usb/devices/1-1.2 25fb:0189 PENTAX K-3 Mark III
+/sys/bus/usb/devices/1-1 1a40:0101 USB2.0 HUB
+/sys/bus/usb/devices/usb1 1d6b:0002 xHCI Host Controller
+/sys/bus/usb/devices/usb2 1d6b:0003 xHCI Host Controller
+[PASS] layer1-usb -- 25fb:0189 enumerated
+1-0:1.0 09/00/00 driver=hub
+1-1.2:1.0 06/01/01 driver=none
+1-1:1.0 09/00/00 driver=hub
+2-0:1.0 09/00/00 driver=none
+-- layer 2: pgphoto process --------------------------------------------------
+pid=10026
+state=S
+wchan=hrtimer_nanosleep
+threads=5
+--- restart lock ---
+ls: /var/run/openpolaris-pgphoto.restart.lock: No such file or directory
+lock_pid=[empty]
+--- supervisor ---
+1
+[PASS] layer2-pgphoto -- running as PID 10026
+[PASS] layer2-restart-lock -- no restart lock held
+[PASS] layer2-quarantine -- no quarantine lines in /app/Clog.txt
+-- layer 3: camera session (camlib + USB handle) -----------------------------
+--- mapped camlibs/port drivers ---
+--- usb fds ---
+0
+--- sockets ---
+1
+-- layer 4: client connection to pgphoto (:8080) -----------------------------
+pgphoto_inode=221310
+listening_on=00000000:1F90
+established_to_8080=0
+[UNKNOWN] layer4-client -- no client on :8080 right now -- httpd connects on demand for the stream, so idle is indistinguishable from a broken path; attach an app and re-run
+[UNKNOWN] layer3-camlib -- no camlib mapped and no client on :8080 -- consistent with lazy init while idle; re-run with an app attached to tell this apart from a real fault
+-- layer 5: published camera identity ----------------------------------------
+== /api/v1/camera/0/description ==
+{"Value":"Benro Polaris live-view camera via polaris-httpd","ClientTransactionID":1,"ServerTransactionID":12,"ErrorNumber":0,"ErrorMessage":""}
+== /api/v1/camera/0/camerastate ==
+{"Value":0,"ClientTransactionID":1,"ServerTransactionID":13,"ErrorNumber":0,"ErrorMessage":""}
+CameraState=0 (ASCOM: 0=Disconnected 1=DisconnectedPrepare 2=Connecting 3=Connected)
+[FAIL] layer5-published -- CameraState=Disconnected -- no camera session is published to the app
+-- verdict -------------------------------------------------------------------
+PASS=4 FAIL=1 UNKNOWN=2
+RESULT: at least one layer FAILED -- see the [FAIL] lines above for which one.
+Do not record recognition as working. Do not close #297 from this report alone.

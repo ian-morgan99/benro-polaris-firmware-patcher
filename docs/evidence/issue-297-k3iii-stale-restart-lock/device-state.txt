@@ -1,0 +1,47 @@
+=== USB enumeration ===
+/sys/bus/usb/devices/1-1.2 25fb:0189 PENTAX K-3 Mark III
+/sys/bus/usb/devices/1-1 1a40:0101 USB2.0 HUB
+/sys/bus/usb/devices/usb1 1d6b:0002 xHCI Host Controller
+/sys/bus/usb/devices/usb2 1d6b:0003 xHCI Host Controller
+
+=== 1-1.2 detail ===
+bConfigurationValue=1
+bDeviceClass=00
+bNumInterfaces= 1
+product=PENTAX K-3 Mark III
+manufacturer=RICOH IMAGING COMPANY, LTD.
+busnum=1
+devnum=4
+speed=480
+driver=../../../../../../../bus/usb/drivers/usb
+
+=== restart lock ===
+total 0
+drwxr-xr-x    2 root     root           224 May  9  2025 .
+drwxr-x---    5 1000     1000           800 Nov  8 23:36 ..
+-rw-r--r--    1 root     root             0 May  9  2025 pid
+  File: /var/run/openpolaris-pgphoto.restart.lock
+  Size: 224       	Blocks: 0          IO Block: 4096   directory
+Device: ch/12d	Inode: 1762        Links: 2
+Access: (0755/drwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2025-05-09 14:37:39.000000000
+Modify: 2025-05-09 14:37:39.000000000
+Change: 2025-05-09 14:37:39.000000000
+
+pidfile bytes: 0
+
+=== filesystem type of /var/run ===
+ubi0:ubifs               32112     19596     12516  61% /
+1
+
+=== processes ===
+  249 root       1:06 /app/lib/stage2/pgphoto.stage2ondisk
+  316 root       0:00 /app/bin/lighttpd -f /etc/lighttpd/lighttpd.conf -m /app/lib/lighttpd/
+  586 root       0:05 {camera_usb_supe} /bin/sh /app/lib/stage2/camera_usb_supervisor.sh
+  943 root       0:05 /app/astro/polaris-httpd --port 8090 --lat 51.000000 --lon 0.010000 --focal 70
+
+=== binary hashes ===
+64156951d2a388162f52ae906964c410  /app/restart_gphoto
+8789c3bbc9fabd20cb0b645c89c8111a  /app/lib/stage2/pgphoto.stage2ondisk
+88d9c00abdeb48ae5c67733c48487f9c  /app/lib/stage2/libgphoto2/2.5.34/pentax.so
+b29fd083166ef84fda62f24c70d5f4de  /app/lib/stage2/libgphoto2/2.5.34/ptp2.so

@@ -282,8 +282,16 @@ PY_TESTS=(
     tests/test_astro_build_wrapper.py
     tests/test_wifi_kit_packaging.py
     tests/test_wifi_licence_on_every_build_path.py
+    tests/test_apsta_down_stops_station.py
     tests/test_verify_published_candidate.py
     tests/test_setup_wifi_psk_not_in_argv.py
+    # Added alongside scripts/release/install-astro-kit.sh and
+    # docs/RELEASE-ENTRYPOINTS.md. Registered here deliberately: test_astro_regression.py
+    # was committed by PR #299 and never listed, so it ran for nobody until #301.
+    # A guard that is never executed protects nothing.
+    tests/test_astro_kit_install_entrypoint.py
+    tests/test_astro_kit_installer_behaviour.py
+    tests/test_release_entrypoints.py
     tests/test_camera_qualification_round.py
     tests/test_plate_solving_present.py
     tests/test_astro_candidate_wrapper.py
@@ -399,6 +407,71 @@ for patch_test in container/test_polaris_bulb_dispatch_patch.sh \
         bad "pgphoto machine-code patch: $name (log: /tmp/prerelease-${name}.log)"
     fi
 done
+
+# The pgphoto restart helper's lock handling, offline and package-free.
+#
+# These were never registered anywhere: container/test_restart_gphoto_launch_lock.sh
+# has existed since issue #77 without being run by any gate, which is how the same
+# class of defect reached a device. A stale /var/run/openpolaris-pgphoto.restart.lock
+# made every restart answer "refusing to race" and exit 1; because /var/run here is
+# UBIFS root flash rather than tmpfs, that survived reboots indefinitely, the USB
+# supervisor's bounded rebind could never succeed, and a correctly enumerated K-3 III
+# (25fb:0189 present in sysfs) was held quarantined for the whole boot while the WebUI
+# published model:none. Nothing above would have caught it: the helper is shell, it is
+# not exercised by any Python suite, and the symptom looks like a camera problem.
+for lock_test in container/test_restart_gphoto_launch_lock.sh \
+                 container/test_restart_gphoto_restart_lock.sh; do
+    name="$(basename "$lock_test" .sh)"
+    if sh "$lock_test" > "/tmp/prerelease-${name}.log" 2>&1; then
+        ok "pgphoto restart helper lock handling: $name"
+    else
+        bad "pgphoto restart helper lock handling: $name (log: /tmp/prerelease-${name}.log)"
+    fi
+done
+
+# Behavioural coverage for the issue #297 one-shot init trace (STAGE2_TRACE_INIT_ENTRY).
+#
+# container/test_stage2_loader_compile.sh only proves the loader builds for ARM. The trace logic
+# itself had no coverage: the shim is static (the .so exports 12 symbols and gp_camera_init is not
+# among them) so it cannot be called from outside, stage2_crash_handler reads ARM-only mcontext_t
+# fields so the file will not compile on x86, and qemu-arm is not in PATH here. The test therefore
+# extracts the real helper from container/stage2_loader.c with awk and compiles that, so it follows
+# production instead of drifting from it -- verified non-vacuous by mutating the array back to a
+# single shared flag, which makes it exit 1.
+if sh "$ROOT/container/test_stage2_init_trace.sh" \
+        > /tmp/prerelease-stage2-init-trace.log 2>&1; then
+    echo "PASS: stage2 init-trace one-shot logic (#297)"
+    pass=$((pass + 1))
+else
+    rc=$?
+    if [ "$rc" -eq 77 ]; then
+        echo "SKIP: stage2 init-trace one-shot logic (no C compiler)"
+        skip=$((skip + 1))
+    else
+        echo "FAIL: stage2 init-trace one-shot logic (#297) -- see /tmp/prerelease-stage2-init-trace.log"
+        tail -20 /tmp/prerelease-stage2-init-trace.log || true
+        fail=$((fail + 1))
+    fi
+fi
+
+# This gate itself shipped two bare command lines, `s` and `ped`, on 2026-11-09 -- the
+# tail fragments of "as" and "shipped" from a comment pasted in already hard-wrapped at
+# terminal width, so the wrapped remainder landed outside the comment as executable code.
+# It passed every check available: `bash -n` accepts it (two valid commands), `--help`
+# never reaches it, and the gate runs `set -uo pipefail` without `-e`, so the missing
+# commands returned 127 and execution continued to a green summary. Review on PR #298 is
+# what found it.
+#
+# The lesson generalises beyond this file: any script here can absorb a wrapped paste the
+# same way, and nothing in the toolchain would notice. So the check covers every tracked
+# .sh, not just this one.
+if sh "$ROOT/tests/test_shell_no_bare_fragments.sh" "$ROOT" \
+        > /tmp/prerelease-shell-fragments.log 2>&1; then
+    ok "no stray bare command lines in tracked shell scripts"
+else
+    bad "stray bare command lines in shell scripts (log: /tmp/prerelease-shell-fragments.log)"
+    sed -n '1,20p' /tmp/prerelease-shell-fragments.log
+fi
 
 # ----------------------------------------------------------------------------
 # 3. FwPkt package gates — only when a built package is supplied.
@@ -567,6 +640,27 @@ if [ -n "$BUILD" ]; then
         else
             bad "shipped .so dependencies or version pins (log: /tmp/prerelease-shipped-artifacts.log)"
             sed -n '1,20p' /tmp/prerelease-shipped-artifacts.log
+        fi
+
+        # The two cameras this product is sold to work with must be present in the
+        # camlib bytes that ship, not merely in the source tree.
+        #
+        # container/patch.sh logs "local-source target models: K-1 II and K-3 III
+        # present" after grepping source, and test_polaris_pentax_build_package.sh
+        # asserts that log line. Neither opens a .so. A camlib built from correct
+        # source but with the model table filtered or truncated passes all of it and
+        # still ships a camera nobody can see -- which is the shape of #297, where
+        # the operator's symptom was real while every source-side check was green.
+        #
+        # Asserted against ptp2.so specifically: verified on a real build that
+        # pentax.so carries Pentax:K1II/K3/K3II and 14 others but NOT
+        # 'Pentax:K-1 Mark II (PTP mode)' or 'Pentax:K-3 Mark III (MTP mode)'.
+        if sh "$ROOT/container/check_camlib_target_models.sh" "$STAGE2_DIR" \
+                > /tmp/prerelease-camlib-target-models.log 2>&1; then
+            ok "shipped camlib serves K-1 II and K-3 III"
+        else
+            bad "shipped camlib target models (log: /tmp/prerelease-camlib-target-models.log)"
+            sed -n '1,20p' /tmp/prerelease-camlib-target-models.log
         fi
     else
         skp "shipped .so dependency and version-pin gates (no stage2-ondisk tree beside $BUILD)"
