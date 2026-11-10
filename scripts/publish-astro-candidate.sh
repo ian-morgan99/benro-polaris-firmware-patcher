@@ -5,6 +5,7 @@ set -euo pipefail
 
 BUILD="" PR_REPO="https://github.com/ian-morgan99/PrivateResearch.git"
 PR_CHECKOUT="" NOTE="Astro candidate; build-only; physical qualification pending." STATUS="gated"
+SUPERSEDED_BY=""
 usage() {
   cat >&2 <<'EOF'
 usage: scripts/publish-astro-candidate.sh --build out/astro-id
@@ -20,6 +21,7 @@ while [ $# -gt 0 ]; do
     --build) BUILD="$2"; shift 2;; --repo) PR_REPO="$2"; shift 2;;
     --checkout) PR_CHECKOUT="$2"; shift 2;; --note) NOTE="$2"; shift 2;;
     --status) STATUS="$2"; shift 2;;
+    --superseded-by) SUPERSEDED_BY="$2"; shift 2;;
     -h|--help) usage;; *) die "unknown option: $1";;
   esac
 done
@@ -122,9 +124,26 @@ for file in install-manifest.json build-source-provenance.txt release-change-man
   install.log install-receipt.txt; do
   [ -f "$BUILD/$file" ] && cp "$BUILD/$file" "$PR_CHECKOUT/$DEST/"
 done
+# A superseded build stays published -- published bytes must not change under the same
+# candidate name -- but its README must not read as installable. Without this, someone
+# landing on 6.0.0.54.102 finds working-looking Route A steps and installs a build whose
+# goto solver exits 2.
+SUPERSEDED_BANNER=""
+if [ -n "$SUPERSEDED_BY" ]; then
+  # One quoted multi-line string. Appending $'\n' on separate lines looks equivalent
+  # and is not: without a joining operator bash treats each following line as its own
+  # command, so it dies at runtime while bash -n passes -- the same class of bug as the
+  # comment line in build-astro-candidate.sh that lost its '#'.
+  SUPERSEDED_BANNER="> **DO NOT INSTALL THIS BUILD.** It is superseded by $SUPERSEDED_BY.
+> Published bytes are kept unchanged so the record stays verifiable, but nothing
+> in this folder should be copied onto a card.
+"
+fi
+
 cat > "$PR_CHECKOUT/$DEST/README.md" <<EOF
 # Astro candidate $DISPLAY_FWVER — $ID
 
+$SUPERSEDED_BANNER
 This is a separately published Astro candidate. The FwPkt uses the shared
 camera baseline recorded in astro-candidate-manifest.json.
 
