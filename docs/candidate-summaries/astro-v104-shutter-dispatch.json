@@ -1,0 +1,64 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v103-executable-kit-and-gate-20261110",
+    "libgphoto2_commit": "806c3bda62d6c0c23ca7a3091fb42f3d7894172b",
+    "libgphoto2_ref": "Unchanged from v103. This candidate ships no driver change; every delta is in the Astro WebUI's shutter dispatch and its tests.",
+    "patcher_commit": "18218b3ea489fbac7ef383b6ba6d1f6e697928eb",
+    "patcher_ref": "The tree astro-v103 was built from, per its build-source-provenance.txt (patcher_commit). Verified ancestor of this branch with git merge-base --is-ancestor, so the inventory below states what v104 adds on top of v103.",
+    "previous_candidate_pins": {
+      "v103_libgphoto2": "806c3bda62d6c0c23ca7a3091fb42f3d7894172b",
+      "v103_patcher": "18218b3ea489fbac7ef383b6ba6d1f6e697928eb",
+      "v102_libgphoto2": "806c3bda62d6c0c23ca7a3091fb42f3d7894172b",
+      "v102_patcher": "2b8731a4f80baf536dbc32da59e2dd312b6aa341"
+    },
+    "why_this_is_a_cut_and_not_another_increment": "astro-v103 was published to PrivateResearch, so its bytes are immutable under this project's release policy and cannot be re-written in place. The #309 shutter defect is in shipped WebUI bytes that a user receives inside polaris-astro.zip, so it requires a rebuilt packet under a new version. The libgphoto2 pin is unchanged."
+  },
+  "purpose": "Make the Astro WebUI's shutter release follow Benro Connect's control contract for Pentax M and B modes: the ordinary trigger was sending c:0 (the continuation-shooting stop branch) instead of c:-1, and there was no bulb path at all, so a timed long exposure could not be started from the WebUI.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "fire() in container/astro/webui/app.js sent one hardcoded payload for every press: state:1;bulb:0;c:0;. c:0 belongs to Benro Connect's separate continuation-shooting stop branch; the ordinary single capture and the ordinary stop both use c:-1. Confirmed against the device's own traffic log rather than the decompilation alone: in /app/sd/system/log/Mlog_*.log on a live Polaris, state:1;bulb:0;c:-1; appears 27 times against 5 for c:0. Dispatch and completion reconciliation moved to container/astro/webui/shutter.js, which is DOM-free so it can be asserted under node; before this the payload lived inside a pointer-event handler and nothing could test it without a browser, which is how c:0 survived.",
+      "issues": ["#309", "#279"]
+    },
+    {
+      "component": "patcher",
+      "summary": "Added a timed bulb path. There was none: a user wanting a long exposure had to leave the WebUI and open Benro Connect. The same traffic log shows state:1;bulb:5;c:-1;, bulb:2 and bulb:42, i.e. duration rides in the bulb field. A new numeric field beside the shutter button supplies it. B mode is an explicit user intent and never an inference: no opcode in our documented set reports the camera's exposure mode (284 is the mount's operating mode Photo/Sun/Astro/Free program/Video, 286 is the connected camera's identity), so #309's 'verify B from the camera's mode information' cannot be satisfied as written, and inferring it from 268's shutter-list shape would be wrong anyway because a body can offer B in its list while sitting in M. Empty means the camera's own shutter setting, which is what Benro Connect sends for an ordinary capture and is safe in any mode. Fractional durations are refused rather than floored: the markup allows step 0.5 and flooring 2.5 to 2 would run a shorter exposure than was asked for with nothing on screen to say so.",
+      "issues": ["#309"]
+    },
+    {
+      "component": "patcher",
+      "summary": "Releasing during a running bulb sends exactly one source-aligned stop, state:0;bulb:0;c:-1;. No blind retry or alternate-subtype fallback anywhere on opcode 264, per the issue's double-fire warning. The hold-to-fire safety gate is unchanged. UI states are now distinct for queued, exposure started, writing card, file published, complete, failed and unknown/no-confirmation; a successful /api/link/send response is never rendered as a shot on its own.",
+      "issues": ["#309"]
+    },
+    {
+      "component": "patcher",
+      "summary": "The subsystem selector is deliberately not made client-settable. /api/link/send calls plink_send(cmd, pol->sub, args) and ignores anything the page sends; 264 is registered { 264, \"photo\", 2, 1, ... } in polaris-httpd.c, so shutter commands already ride subsystem 2, which the captured traffic confirms (type:2 for both M and timed B). A client-side override would be a second source of truth for a field the head silently ignores when wrong.",
+      "issues": ["#309"]
+    },
+    {
+      "component": "tests",
+      "summary": "tests/test_astro_shutter.js adds 17 deterministic tests covering M-mode single capture with the exact 264/2 payload, timed B with the selected duration, B cancelled during exposure including the stop command and terminal outcome, queued-never-reported-as-shot, stale cached reply rejection, negative-state refusals, and silence-past-deadline reporting unknown rather than failed. Mutation-tested: reintroducing c:0 fails 5 of them and node exits 1 so the pytest wrapper sees it rather than reporting a silent pass. tests/test_astro_shutter_node.py runs them under pytest and additionally asserts index.html loads shutter.js, because a JS suite can pass while the page never references the file.",
+      "issues": ["#309", "#292"]
+    },
+    {
+      "component": "docs",
+      "summary": "Candidate change summary records what is verified and what is not: no capture has been taken with this code, so the camera's response to these payloads from the WebUI is unobserved.",
+      "issues": ["#309"]
+    }
+  ],
+  "known_limits": [
+    "No capture has been taken with this code on any body. The payloads match observed Benro Connect traffic byte for byte and the server already places them on subsystem 2, but the camera's response to them from the WebUI has not been observed. That needs the supervised hardware round (#307).",
+    "B mode cannot be verified from the camera because no documented opcode reports the camera's exposure mode. B is therefore an explicit user intent only; the UI does not claim to have checked.",
+    "Completion is correlated against the 264 lifecycle and terminal idle state only. There is no 773 file-publication event surfaced by /api/link, so 'file published' is inferred from state:4 followed by state:0 rather than proven by a gallery entry.",
+    "EV control (#233) still fails on the K-1 II; this candidate does not change that.",
+    "The Astro boot hook is verified against a simulated card root in tests only and has never been installed on a device (#265 remains open).",
+    "There is still no CI (.github/workflows), so every gate here runs only if a human or agent invokes it (#308, #292)."
+  ],
+  "validation_focus": [
+    "M-mode single capture from the WebUI on a K-3 III: confirm a file lands in /app/sd/normal and the button reports shot only after state:0 follows state:4.",
+    "Timed B of a short duration (5s) from the WebUI: confirm bulb:5 is accepted rather than refused, and that the exposure runs approximately the requested time.",
+    "B cancelled mid-exposure: confirm the stop lands and the button reports the stopped outcome rather than success or failure.",
+    "Refusal path: confirm a negative 264 state paints failed with the state number and does not claim a file was written (#279).",
+    "Regression: confirm an ordinary capture still works after the payload change from c:0 to c:-1, since c:0 is what has been shipping."
+  ]
+}
