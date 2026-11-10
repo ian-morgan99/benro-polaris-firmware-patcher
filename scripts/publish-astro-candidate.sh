@@ -126,8 +126,11 @@ cat > "$PR_CHECKOUT/$DEST/README.md" <<EOF
 # Astro candidate $DISPLAY_FWVER — $ID
 
 This is a separately published Astro candidate. The FwPkt uses the shared
-camera baseline recorded in astro-candidate-manifest.json; the Astro solver,
-catalogue and indexes are in astro-bundle.tar.gz.
+camera baseline recorded in astro-candidate-manifest.json.
+
+Everything you need for Route A below is a .zip. No tar tool is required, and
+none of the on-device extractors handle .tar.gz -- astro-bundle.tar.gz exists
+for inspection and licensing only, and opening it needs 'tar xzf' on a PC.
 
 There are two ways to install, and they are not interchangeable. Route A needs only
 the microSD card. Route B needs a PC, SSH and this repo, and is the only one that can
@@ -142,14 +145,29 @@ prove an install happened.
 2. Copy polaris-astro.zip and polaris-wifi.zip to the SD card root and extract each.
    Both are rooted at their own directory with no wrapper, so they expand to
    polaris-astro/ and polaris-wifi/ directly on the card. Repeat every release.
-3. Reboot the camera. The reboot alone is the trigger; no command or marker file is
-   needed. Wi-Fi auto-join stays off until you create the file polaris-wifi/autojoin.
-4. Confirm by reading the firmware version in the app: it must show $DISPLAY_FWVER.
+3. Copy astrometry-indexes.zip to the SD card root and extract it. It is rooted at
+   astrometry/, so it expands to <SD root>/astrometry/index-41xx.fits. This is a
+   one-time copy -- it does not change between releases, so skip it if the folder is
+   already on the card. It is NOT inside polaris-astro.zip: without those index files
+   install_astro.sh prints "NO index files ... NOTHING WILL SOLVE" and the solver
+   never resolves a frame while everything else looks healthy.
+4. Run the installer once, over ssh:
+
+       ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
+
+   This is what installs the boot hook and copies the kit into /app/astro. Nothing
+   runs it for you: no shipped boot path calls install_astro.sh, so a card that has
+   simply been rebooted will flash the firmware from step 1 and then start nothing
+   astro-related. It also chains any pre-existing hook (the patcher's --ssh-key option
+   uses the same file), so ssh keeps working.
+5. Reboot the camera. Wi-Fi auto-join stays off until you create the file
+   polaris-wifi/autojoin.
+6. Confirm by reading the firmware version in the app: it must show $DISPLAY_FWVER.
    This is the only check available without a PC, and a reboot that did not flash looks
    identical to one that did -- so read it, do not assume it.
 
 astro-bundle.tar.gz contains the same trees plus licences and manifests. It is for
-inspection, not for copying onto the card.
+inspection, not for copying onto the card, and it needs tar rather than unzip.
 
 ## Route B -- systematic install (maintainers)
 
