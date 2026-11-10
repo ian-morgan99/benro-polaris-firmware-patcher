@@ -19,7 +19,13 @@ const fs = require('fs');
 const path = require('path');
 
 const APP = path.join(__dirname, 'astro', 'webui', 'app.js');
+const SHUTTER = path.join(__dirname, 'astro', 'webui', 'shutter.js');
 const src = fs.readFileSync(APP, 'utf8');
+/* #309 moved the phase decision into shutter.js so it could be asserted without
+   a browser. This file still tests what app.js PAINTS for each phase, which is a
+   different question and worth keeping, so the module is loaded in as a dependency
+   rather than the assertions being dropped. */
+const shutterSrc = fs.readFileSync(SHUTTER, 'utf8');
 
 /* Pull the shutter-reporting block out of the real file. Anchoring on the function
    declarations means this fails loudly if they are renamed or removed, instead of
@@ -34,7 +40,16 @@ function slice(from, to) {
 
 const block = slice('var SHOT_PROGRESS', 'function wireShutter');
 if (!/function reconcileShot/.test(block)) throw new Error('reconcileShot not in extracted block');
-if (!/function shotStateOf/.test(block)) throw new Error('shotStateOf not in extracted block');
+/* shotStateOf now lives in shutter.js, not app.js. Assert it is reachable from
+   the module instead of asserting a location that #309 deliberately changed --
+   silently deleting the check would have hidden a real regression. */
+if (!/function shotStateOf/.test(shutterSrc)) {
+  throw new Error('shotStateOf missing from shutter.js');
+}
+if (!/SHUTTER\.reconcile\(/.test(block)) {
+  throw new Error('reconcileShot no longer delegates to SHUTTER.reconcile, so the '
+    + 'tested painting may not be the code that ships');
+}
 
 /* ── harness ─────────────────────────────────────────────────────────────── */
 
@@ -60,9 +75,15 @@ function setTimeout(fn, ms) { if (ms > 0) reverted = true; return 0; }
 const S = { ops: {}, shotPending: null };
 
 const sandbox = { $, setHint, setTimeout, S, SHOT_TIMEOUT_MS_OVERRIDE: null };
+/* shutter.js first so SHUTTER exists when reconcileShot runs. Its module.exports
+   tail is inert here because `module` is undefined in this sandbox, exactly as it
+   is in the browser. */
 const factory = new Function('$', 'setHint', 'setTimeout', 'S',
-  block + '\nreturn { reconcileShot, shotStateOf, paintShot, SHOT_TIMEOUT_MS, SHOT_PROGRESS };');
+  shutterSrc + '\n' + block +
+  '\nreturn { reconcileShot, paintShot, SHOT_TIMEOUT_MS, SHOT_PROGRESS, SHUTTER };');
 const api = factory($, setHint, setTimeout, S);
+/* shotStateOf is now reached through the module. */
+api.shotStateOf = api.SHUTTER.shotStateOf;
 
 /* ── assertions ──────────────────────────────────────────────────────────── */
 
@@ -168,7 +189,14 @@ if (!fireBody) {
     fail++;
   }
   const recBody = (src.match(/function reconcileShot\(\) \{[\s\S]*?\n\}/) || [''])[0];
-  if (/paintShot\('shot'/.test(recBody)) {
+  /* #309 moved the label text into shutter.js's SHOT_PHASES, so grepping app.js
+     for a literal paintShot('shot') no longer describes how the label is produced.
+     Assert the two facts that actually matter instead: the module still maps
+     completion to 'shot', and reconcileShot paints from that table rather than
+     hardcoding a success string of its own. The behavioural assertion above (a
+     state:0 reply must paint 'shot') is what proves it end to end. */
+  if (/complete:\s*'shot'/.test(shutterSrc) &&
+      /SHUTTER\.SHOT_PHASES\[r\.phase\]/.test(recBody)) {
     console.log('  ok   reconcileShot owns the success label, keyed on state:0');
     pass++;
   } else {

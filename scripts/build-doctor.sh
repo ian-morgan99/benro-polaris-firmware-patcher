@@ -81,7 +81,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --libgphoto2) LIBGP="$2"; shift 2;;
         --stock)      STOCK="$2"; shift 2;;
-        --catalog)    CATALOG="$2"; shift 2;;
+        --catalog)    CATALOG="$2"; CATALOG_SUPPLIED=1; shift 2;;
         --image)      IMAGE="$2"; shift 2;;
         --offline)    OFFLINE=1; shift;;
         -h|--help)    sed -n '1,60p' "${BASH_SOURCE[0]}"; exit 0;;
@@ -89,12 +89,15 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-PASS=0; FAIL=0; WARN=0
+PASS=0; FAIL=0; WARN=0; SKIP=0
 ok()   { printf '  \033[32mOK\033[0m   %s\n' "$*"; PASS=$((PASS+1)); }
 bad()  { printf '  \033[31mFAIL\033[0m %s\n' "$*"; FAIL=$((FAIL+1)); }
 warn() { printf '  \033[33mWARN\033[0m %s\n' "$*"; WARN=$((WARN+1)); }
 hint() { printf '         %s\n' "$*"; }
 sect() { printf '\n== %s ==\n' "$*"; }
+# A check that cannot be run is not a pass. Counting it as OK is how a gate looks
+# green while judging nothing -- the vacuous-pass class behind issue #286.
+skip() { printf '  \033[36mSKIP\033[0m %s\n' "$*"; SKIP=$((SKIP+1)); }
 
 # Print the first meaningful line of captured stderr so the operator sees the
 # real reason, not our paraphrase of it.
@@ -105,27 +108,50 @@ sect "1. Docker: reachable, and able to see our files"
 
 # A sandboxed shell (Flatpak) has no docker socket. flatpak-spawn --host is the
 # supported way out, and it is what makes a plain `docker` callable at all.
-DOCKER_BIN="$(command -v docker 2>/dev/null || true)"
+#
+# THE TRAP THIS REPLACED. The old check probed `flatpak-spawn --host docker`, which
+# asks the HOST to resolve `docker` on the HOST's PATH. ~/.local/bin and ~/bin are on
+# it by default, and both are exactly where this script's own hint told people to put
+# a shim. So the host ran that shim, it tried to exec flatpak-spawn -- absent on the
+# host -- and died with rc=127. The doctor then reported "docker is not usable" and
+# advised installing the very shim that was already there causing it. Broke the v102
+# build on 2026-11-09, 82 minutes after v101 shipped with no shim at all.
+# tools/host-docker.sh resolves an absolute host path instead, which cannot be one of
+# our shims and so cannot recurse.
+# shellcheck disable=SC1091
+. "$ROOT/tools/host-docker.sh"
 DOCKER_MODE=""
-if [ -n "$DOCKER_BIN" ] && docker info >/dev/null 2>&1; then
-    DOCKER_MODE="direct"
-elif command -v flatpak-spawn >/dev/null 2>&1 \
-        && flatpak-spawn --host docker info >/dev/null 2>&1; then
-    DOCKER_MODE="flatpak-spawn"
+DOCKER_PREFIX="$(polaris_docker_prefix 2>/dev/null || true)"
+if [ -n "$DOCKER_PREFIX" ]; then
+    case "$DOCKER_PREFIX" in
+        docker) DOCKER_MODE="direct";;
+        *) DOCKER_MODE="flatpak-spawn-absolute";;
+    esac
 fi
 
 if [ "$OFFLINE" = 1 ]; then
     warn "skipped (--offline): the build needs Docker, so a green run here is not a green run there"
 elif [ -z "$DOCKER_MODE" ]; then
     bad "docker is not usable from this shell"
+    # Name the real cause. A docker on PATH that fails `docker info` is almost
+    # always a broken shim, and telling someone to install a second one makes it worse.
+    if polaris_docker_shadowed; then
+        hint "a 'docker' IS on PATH but does not work: $(command -v docker)"
+        hint "  that is the problem -- do not add another shim on top of it."
+        host_resolved="$(polaris_host_docker_resolved)"
+        if [ -n "$host_resolved" ]; then
+            hint "the HOST resolves 'docker' to: $host_resolved"
+            hint "  if that file execs flatpak-spawn, it cannot run on the host and"
+            hint "  returns rc=127, which looks like 'docker is not installed'."
+            hint "  Fix it to name an absolute host path, e.g."
+            hint "    exec /usr/bin/flatpak-spawn --host /usr/bin/docker \"\$@\""
+        fi
+    fi
     if [ -n "${FLATPAK_ID:-}" ]; then
         hint "this shell is inside Flatpak app $FLATPAK_ID, which does not expose the socket."
-        hint "Either install a shim so plain \`docker\` reaches the host:"
-        hint "  mkdir -p ~/.local/bin && cat >~/.local/bin/docker <<'SH'"
-        hint "  #!/bin/sh"
-        hint "  exec flatpak-spawn --host docker \"\$@\""
-        hint "  SH"
-        hint "  chmod +x ~/.local/bin/docker"
+        hint "Preferred: put this repo's shim on PATH -- it resolves an absolute host"
+        hint "path and cannot recurse:"
+        hint "  export PATH=\"$ROOT/tools/host-bin:\$PATH\""
         hint "or expose the socket and restart the app:"
         hint "  flatpak override --user --filesystem=/var/run/docker.sock $FLATPAK_ID"
     else
@@ -133,7 +159,8 @@ elif [ -z "$DOCKER_MODE" ]; then
         hint "or install the Docker CLI."
     fi
 else
-    ok "docker answers ($DOCKER_MODE): $( (docker info --format '{{.ServerVersion}}' 2>/dev/null || flatpak-spawn --host docker info --format '{{.ServerVersion}}' 2>/dev/null) || echo unknown)"
+    # Unquoted: DOCKER_PREFIX is words (`docker`, or `flatpak-spawn --host X`).
+    ok "docker answers ($DOCKER_MODE): $( $DOCKER_PREFIX info --format '{{.ServerVersion}}' 2>/dev/null || echo unknown)"
 fi
 
 # THE PROOF THAT COST THE MOST TIME TO LEARN.
@@ -144,9 +171,20 @@ fi
 # cost two build attempts to diagnose. The only way to know is to actually mount
 # a temp dir and read a sentinel back through the daemon.
 if [ -n "$DOCKER_MODE" ]; then
-    run_docker() { if [ "$DOCKER_MODE" = direct ]; then docker "$@"; else flatpak-spawn --host docker "$@"; fi; }
+    run_docker() { $DOCKER_PREFIX "$@"; }
 
-    probe="$(mktemp -d 2>/dev/null)"
+    # Probe the directory the BUILD will actually use, not the ambient one.
+    # build-astro.sh exports TMPDIR=$ROOT/out/.build-env/tmp precisely because
+    # /tmp is private to the sandbox while the daemon is on the host. Probing
+    # bare /tmp therefore reported RED on a host where the wrapper had already
+    # solved this -- a false failure that trains people to ignore the doctor.
+    if [ -n "${TMPDIR:-}" ]; then
+        probe="$(mktemp -d 2>/dev/null)"
+    else
+        buildtmp="$ROOT/out/.build-env/tmp"
+        mkdir -p "$buildtmp" 2>/dev/null || true
+        probe="$(TMPDIR="$buildtmp" mktemp -d 2>/dev/null)"
+    fi
     if [ -z "$probe" ]; then
         bad "mktemp -d produced nothing; cannot test bind mounts"
     else
@@ -160,7 +198,7 @@ if [ -n "$DOCKER_MODE" ]; then
         run_docker image inspect "$probe_img" >/dev/null 2>&1 || probe_img="busybox:latest"
         got="$(run_docker run --rm --entrypoint cat -v "$probe":/probe:ro "$probe_img" /probe/marker 2>&1)"
         if [ "$got" = "sentinel" ]; then
-            ok "bind mount works for TMPDIR=${TMPDIR:-<default>} ($probe is host-visible)"
+            ok "bind mount works for TMPDIR=${TMPDIR:-$ROOT/out/.build-env/tmp} ($probe is host-visible)"
         elif ! run_docker image inspect "$probe_img" >/dev/null 2>&1; then
             warn "could not test bind mounts: no image available to probe with"
             hint "run the doctor once after '$IMAGE' exists so this check can run."
@@ -307,7 +345,13 @@ else
     bad "stock packet not found: $STOCK"
 fi
 
-if [ -d "$CATALOG/tiles" ] && [ -f "$CATALOG/tiles.json" ]; then
+# Only checked when a catalogue was actually requested. A standard (non-Astro)
+# release has no catalogue at all, and this check runs against a default path that
+# only exists on some hosts -- so an unconditional FAIL here blocks releases that do
+# not need the thing it is complaining about.
+if [ "${CATALOG_SUPPLIED:-0}" != 1 ]; then
+    ok "catalogue package: not requested, skipped"
+elif [ -d "$CATALOG/tiles" ] && [ -f "$CATALOG/tiles.json" ]; then
     ok "catalogue package complete: $CATALOG"
 else
     bad "catalogue package incomplete: $CATALOG (needs tiles/ and tiles.json)"
@@ -382,17 +426,229 @@ else
     else
         bad "git diff --check reports whitespace errors"
     fi
+
+    # A force-added file is tracked, so it is not untracked, and it matches an ignore
+    # rule, so it is invisible to every working-tree check -- including the dirty test
+    # above. git add -f therefore defeats both .gitignore and 'tree must be clean' at
+    # once, permanently and silently.
+    #
+    # This happened for six weeks: 33 files totalling 33 MB under docs/evidence/ were
+    # tracked despite the rule at .gitignore line 118 ("do not re-add rotating logs or
+    # firmware-derived snapshots to the public repository"), 31 of them committed after
+    # that rule was written. The repo is PUBLIC.
+    #
+    # -c lists from the index, -i keeps only those matching an ignore rule. Without -c
+    # this reports nothing at all, because plain ls-files excludes tracked files.
+    STUCK=$(git -C "$ROOT" ls-files -i -c --exclude-standard 2>/dev/null)
+    if [ -n "$STUCK" ]; then
+        N=$(printf '%s\n' "$STUCK" | wc -l)
+        bad "$N tracked file(s) match .gitignore -- they were force-added and are"
+        bad "invisible to git status, so nothing else here will ever notice them"
+        printf '%s\n' "$STUCK" | head -8 | sed 's/^/           /'
+        [ "$N" -gt 8 ] && printf '           ... and %d more\n' "$((N - 8))"
+        hint "Raw hardware evidence belongs in PrivateResearch/polaris-evidence/, not"
+        hint "here. Copy it there first -- most of these have no other copy. Then:"
+        hint "  git rm --cached \$(git ls-files -i -c --exclude-standard)"
+        hint "which keeps the files on disk and stops tracking them. Never git add -f"
+        hint "a raw log; publish a .txt/.md summary with the lines you need quoted."
+    else
+        ok "no tracked file matches .gitignore (nothing force-added past the rules)"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+sect "7. Shipped scripts must carry an exec bit in git"
+
+# 6.0.0.54.102 shipped eight .sh files at mode 0644 inside polaris-astro.zip because
+# they are committed 100644 here and the build preserves that mode. On the device
+# polaris-goto-solve.sh is guarded by '[ ! -x ] && exit 2' so it aborts, while
+# frame-watch, goto-watch and pointing-model are guarded by '[ -x ]' and silently
+# disable -- features that stop working while everything reports success. The
+# archive-level gate catches this after a build, roughly fifteen minutes too late and
+# only if someone builds; this catches it before one starts.
+#
+# Checked against git's recorded mode, not the working tree: a locally chmod'd file
+# hides nothing, because the commit is what gets archived.
+OFFENDERS=""
+while IFS= read -r line; do
+    mode=${line%% *}
+    path=${line#*$'\t'}
+    case "$path" in *.sh) ;; *) continue ;; esac
+    head -c2 "$ROOT/$path" 2>/dev/null | grep -q '^#!' || continue
+    [ "$mode" = "100755" ] || OFFENDERS="$OFFENDERS$path "
+done < <(git -C "$ROOT" ls-files -s -- container/astro/ondisk 2>/dev/null)
+if [ -n "$OFFENDERS" ]; then
+    bad "shipped scripts with a shebang but no exec bit:$OFFENDERS"
+    hint "chmod +x and commit. They will ship non-executable and the device will"
+    hint "either exit 2 or silently disable the feature that uses them."
+else
+    ok "every shipped ondisk script is mode 100755 in git"
+fi
+
+# ---------------------------------------------------------------------------
+sect "8. Installer invariants and kit footprint"
+
+# Both faults below were found by installing 6.0.0.54.104 on the device, not by
+# building it. Neither is visible from a successful build; both are visible from
+# the source, which is why they live here rather than in the archive gate.
+INSTALL_SH="$ROOT/container/astro/ondisk/install_astro.sh"
+if [ -f "$INSTALL_SH" ]; then
+    # A firmware flash replaces /app and leaves the 68 MB UBIFS nearly full. The
+    # optional catalogue copy then hits ENOSPC, and under set -e that used to kill
+    # the script before the boot hook was written -- polaris-httpd on disk, port
+    # closed, nothing at boot, and no error anyone would notice. The hook must be
+    # installed while there is still guaranteed space.
+    HOOK_LN=$(grep -n 'boot hook installed ->' "$INSTALL_SH" | head -1 | cut -d: -f1)
+    if [ -z "$HOOK_LN" ]; then
+        bad "install_astro.sh: cannot locate the boot-hook step ('boot hook installed ->')"
+        hint "Section 9 asserts it runs before any optional copy. Update this check"
+        hint "if the message is renamed."
+    else
+        ok "install_astro.sh installs the boot hook (line $HOOK_LN)"
+    fi
+
+    # The 18.7 MB POLCAT01 solve data used to be mirrored into $DEST here. /app is a
+    # 68 MB ubifs, so on a freshly flashed camera that copy hit ENOSPC, set -e killed
+    # the script between the binaries and the boot hook, and the device booted with
+    # polaris-httpd on disk and nothing starting it -- issue #312. Nothing reads the
+    # mirror: every solver resolves the catalogue under /app/sd/polaris-astro. So it
+    # must not come back, in either install mode.
+    if grep -qE 'copy_optional .*catalogue|cp .*"\$SRC/catalogue' "$INSTALL_SH"; then
+        bad "install_astro.sh copies the catalogue into \$DEST again -- that mirror is 89%"
+        bad "of the kit and ENOSPCs on a freshly flashed /app, skipping autostart (#312)"
+        hint "Leave the solve data on the SD card. container/astro/test-install-enospc.sh"
+        hint "asserts no mirror appears in \$DEST; run it after changing the installer."
+    else
+        ok "install_astro.sh does not mirror the catalogue into /app (solve data stays on SD, #312)"
+    fi
+
+    # Same failure class as above: any optional copy that can abort the script must
+    # come AFTER autostart is registered, never before it.
+    CONF_LN=$(grep -n 'cp "$SRC/site.conf.example"' "$INSTALL_SH" | head -1 | cut -d: -f1)
+    if [ -n "$HOOK_LN" ] && [ -n "$CONF_LN" ] && [ "$HOOK_LN" -gt "$CONF_LN" ]; then
+        bad "install_astro.sh installs the boot hook (line $HOOK_LN) AFTER the optional"
+        bad "site.conf copy (line $CONF_LN) -- an ENOSPC on /app would skip autostart"
+        hint "Move the boot-hook block up, directly after the manifest check. See"
+        hint "container/astro/test-install-enospc.sh, which reproduces this exactly."
+    elif [ -n "$CONF_LN" ]; then
+        ok "install_astro.sh writes the boot hook before any optional copy (hook $HOOK_LN < site.conf $CONF_LN)"
+    fi
+
+    # sha256sum separates hash and name with TWO spaces. ${line#* } leaves a leading
+    # space on every name, so every comparison fails and a bundle that ships a
+    # manifest reports VERIFY FAILED on all 37 entries and exits 1.
+    if grep -qE 'name=\$\{line#\* \}' "$INSTALL_SH"; then
+        bad "install_astro.sh parses the manifest with \${line#* } -- sha256sum emits two"
+        bad "spaces, so every name keeps a leading space and verification always fails"
+        hint "Split the line into words instead: set -- \$line; exp=\$1; name=\$2"
+    else
+        ok "install_astro.sh parses manifest lines without relying on a single space"
+    fi
+else
+    bad "missing $INSTALL_SH"
+fi
+
+# The on-device manifest is what lets install_astro.sh compare bytes and
+# polaris-astro-sync.sh detect a stale binary. build-astro-bundle.sh has always
+# generated it, but nothing in production calls that script -- so every astro
+# candidate published to date shipped polaris-astro.zip without it, and the
+# installer quietly skipped verification. Assert it is produced by the script
+# production actually runs, and asserted against the finished archive.
+CAND_SH="$ROOT/scripts/build-astro-candidate.sh"
+if [ -f "$CAND_SH" ]; then
+    if grep -q 'polaris-astro.manifest' "$CAND_SH"; then
+        ok "build-astro-candidate.sh generates polaris-astro.manifest"
+    else
+        bad "build-astro-candidate.sh does not generate polaris-astro.manifest"
+        hint "Without it install_astro.sh prints 'installed files are unverified' and"
+        hint "skips byte comparison, so a stale polaris-httpd installs as if new."
+    fi
+    if grep -q 'polaris-astro.zip does not contain polaris-astro.manifest' "$CAND_SH"; then
+        ok "build-astro-candidate.sh asserts the manifest is inside the finished zip"
+    else
+        bad "build-astro-candidate.sh never asserts the manifest is inside polaris-astro.zip"
+        hint "A manifest on disk but excluded from the archive reaches no user. Assert"
+        hint "against the archive: unzip -Z1 \"\$z\" | grep -qx polaris-astro/polaris-astro.manifest"
+    fi
+else
+    bad "missing $CAND_SH"
+fi
+
+# /app is a 68 MB UBIFS and a flashed appfs.ubifs of 64 MB leaves almost nothing.
+# The mandatory kit (binaries + scripts, excluding the catalogue, which everything
+# reads from /app/sd) must fit in what remains after the firmware replaces /app.
+#
+# Measured on the device at .104: /app/astro held 15.1 MB once the unused catalogue
+# mirror was removed. The binaries only exist after a build, so this reads the most
+# recent bundle output; if there is none it says SKIP rather than reporting a
+# vacuous OK on a zero-byte du.
+BUNDLE_ROOT="$ROOT/out"
+LATEST_BUNDLE=$(ls -1dt "$BUNDLE_ROOT"/astro-v*/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro \
+                2>/dev/null | head -1)
+if [ -z "$LATEST_BUNDLE" ]; then
+    skip "kit footprint not measurable yet -- no built astro bundle under $BUNDLE_ROOT"
+    hint "This gate compares binaries + scripts against the /app budget. It can only"
+    hint "judge real bytes, so it is inert until one candidate has been built."
+else
+    # The candidate id is the path component that starts with astro-, not the
+    # immediate parent, which is always COPY-TO-SD-CARD-ROOT.
+    CAND_ID=$(printf '%s\n' "$LATEST_BUNDLE" | sed -n 's#.*/\(astro-v[^/]*\)/.*#\1#p')
+    [ -n "$CAND_ID" ] || CAND_ID=$(basename "$(dirname "$LATEST_BUNDLE")")
+    MAND_KB=0
+    for b in "$LATEST_BUNDLE"/polaris-* "$LATEST_BUNDLE"/*.sh; do
+        [ -f "$b" ] || continue
+        case "$b" in *.pcat|*.polcat|*.ptri) continue ;; esac
+        kb=$(du -k "$b" 2>/dev/null | cut -f1)
+        MAND_KB=$((MAND_KB + ${kb:-0}))
+    done
+    if [ "$MAND_KB" -eq 0 ]; then
+        skip "kit footprint measured 0 KB from $LATEST_BUNDLE -- nothing to judge"
+    elif [ "$MAND_KB" -gt 40960 ]; then
+        bad "mandatory kit is $((MAND_KB / 1024)) MB ($CAND_ID);"
+        bad "/app is 68 MB total and a flash replaces it wholesale, so this will not"
+        bad "install on a freshly flashed device"
+        hint "Move load-bearing data to the SD card. Everything already reads the"
+        hint "catalogue from /app/sd/polaris-astro -- keep new data there too."
+    else
+        ok "mandatory kit is $((MAND_KB / 1024)) MB ($CAND_ID), within the /app budget (warns above 40 MB)"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+sect "9. Publication path"
+
+# Publishing clones PrivateResearch into ${TMPDIR:-/tmp} unless a clean checkout is
+# supplied. That repo is ~26 GB: the first v102 publish died on SIGTERM mid-clone
+# because the clone could not finish inside the window, and /tmp here is far smaller
+# than the clone. This is checked before the build so it is not discovered after it.
+PR_TMP="${TMPDIR:-/tmp}"
+PR_FREE_KB=$(df -Pk "$PR_TMP" 2>/dev/null | awk 'NR==2{print $4}')
+if [ -n "${PR_CHECKOUT:-}" ] && [ -d "${PR_CHECKOUT:-}/.git" ]; then
+    if [ -n "$(git -C "$PR_CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null)" ]; then
+        bad "PR_CHECKOUT is dirty: $PR_CHECKOUT"
+        hint "publish-astro-candidate.sh refuses a dirty publication checkout by design."
+    else
+        ok "publication checkout clean and usable: $PR_CHECKOUT"
+    fi
+elif [ -n "$PR_FREE_KB" ] && [ "$PR_FREE_KB" -lt 30000000 ]; then
+    warn "${PR_TMP} has only $((PR_FREE_KB / 1024)) MB free; a fresh PrivateResearch clone needs ~26 GB"
+    hint "publish-astro-candidate.sh clones PrivateResearch into ${TMPDIR:-/tmp} by default."
+    hint "Point PR_CHECKOUT at an existing clean clone instead of cloning each time, e.g."
+    hint "  --checkout /home/ian/pr-publish"
+else
+    ok "${PR_TMP} has room for a fresh PrivateResearch clone ($(( ${PR_FREE_KB:-0} / 1024 )) MB free)"
 fi
 
 # ---------------------------------------------------------------------------
 printf '\n============================================================\n'
 if [ "$FAIL" -eq 0 ]; then
-    printf 'DOCTOR: GREEN -- %d checks passed, %d warning(s).\n' "$PASS" "$WARN"
+    printf 'DOCTOR: GREEN -- %d checks passed, %d warning(s), %d skipped.\n' "$PASS" "$WARN" "$SKIP"
+    [ "$SKIP" -gt 0 ] && printf 'Skipped checks judged nothing. Read the SKIP lines if one\n' && printf 'covers something you were relying on.\n'
     printf 'Every prerequisite was exercised, not merely looked for.\n'
     [ "$WARN" -gt 0 ] && printf 'Read the WARN lines above before a long build.\n'
     exit 0
 else
-    printf 'DOCTOR: RED -- %d failed, %d passed, %d warning(s).\n' "$FAIL" "$PASS" "$WARN"
+    printf 'DOCTOR: RED -- %d failed, %d passed, %d warning(s), %d skipped.\n' "$FAIL" "$PASS" "$WARN" "$SKIP"
     printf 'Fix every FAIL line above. Each one prints the exact command.\n'
     printf 'Do not start a build to "see what happens": these failures surface\n'
     printf 'deep inside a long run and report themselves as unrelated problems.\n'

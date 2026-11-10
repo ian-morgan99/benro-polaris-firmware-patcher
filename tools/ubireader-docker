@@ -57,15 +57,29 @@ fi
 
 # Resolve docker. A Flatpak sandbox has no socket, so plain `docker` may be absent
 # or unable to reach the daemon; flatpak-spawn --host is the supported route out.
-if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-    docker_run() { docker "$@"; }
-elif command -v flatpak-spawn >/dev/null 2>&1 \
-        && flatpak-spawn --host docker info >/dev/null 2>&1; then
-    docker_run() { flatpak-spawn --host docker "$@"; }
+#
+# Never probe or exec a bare `docker` through `--host`: the host resolves that name
+# on its own PATH, which commonly holds a shim of this same shape, so the host runs
+# that file and it dies trying to exec flatpak-spawn -- reported as "no daemon" when
+# a working daemon is in fact reachable. tools/host-docker.sh resolves an absolute
+# host path instead.
+# Parameter expansion, not dirname: this script is tested with PATH stripped to
+# an empty directory, where /usr/bin/dirname is not reachable. `cd` and `pwd` are
+# shell builtins, so they still work.
+case "$0" in
+    */*) SELF_DIR=$(CDPATH= cd -- "${0%/*}" && pwd) ;;
+    *)   SELF_DIR=$(CDPATH= pwd) ;;
+esac
+# shellcheck disable=SC1091
+. "$SELF_DIR/host-docker.sh"
+DOCKER_PREFIX="$(polaris_docker_prefix 2>/dev/null || true)"
+if [ -n "$DOCKER_PREFIX" ]; then
+    # Unquoted on purpose: the prefix is words, e.g. `docker` or
+    # `flatpak-spawn --host /usr/bin/docker`.
+    docker_run() { $DOCKER_PREFIX "$@"; }
 else
     echo "ubireader-docker: cannot reach a Docker daemon." >&2
-    echo "  (inside Flatpak, use 'flatpak-spawn --host docker' or install a shim" >&2
-    echo "   at ~/.local/bin/docker that execs it)" >&2
+    echo "  run scripts/build-doctor.sh, which names the exact cause" >&2
     exit 3
 fi
 

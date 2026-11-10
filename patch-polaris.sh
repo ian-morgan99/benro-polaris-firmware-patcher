@@ -96,7 +96,26 @@ esac
 # characters) instead of a host directory, so the run dies with exit 125.
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
+# docker must be callable as plain `docker`, because every `docker run -v` below
+# is written that way. Inside the VS Code Flatpak sandbox there is no docker binary
+# at all, so put this repo's shim first on PATH. tools/host-bin/docker resolves an
+# ABSOLUTE host path via tools/host-docker.sh; it deliberately does not run
+# `flatpak-spawn --host docker`, because that asks the host to resolve `docker` on
+# the host's PATH, where ~/.local/bin and ~/bin sit by default -- if either holds a
+# shim of that same shape the host runs it, it cannot exec flatpak-spawn, and it
+# dies with rc=127 reading exactly like "docker is not installed". That is what
+# stopped the v102 build (#308).
+if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    if [ -x "$HERE/tools/host-bin/docker" ]; then
+        PATH="$HERE/tools/host-bin:$PATH"
+        export PATH
+    fi
+fi
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found. Install Docker Desktop / docker." >&2; exit 1; }
+docker info >/dev/null 2>&1 || { echo "error: a 'docker' exists but cannot reach a daemon:" >&2
+    echo "       $(command -v docker)" >&2
+    echo "       run scripts/build-doctor.sh, which names the exact cause." >&2
+    exit 1; }
 docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
 PATCHER_COMMIT="unknown"
 PATCHER_DIRTY_HASH=""

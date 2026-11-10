@@ -1,0 +1,73 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v104-shutter-dispatch-20261110",
+    "libgphoto2_commit": "806c3bda62d6c0c23ca7a3091fb42f3d7894172b",
+    "libgphoto2_ref": "main",
+    "patcher_commit": "1e88637cf61d152f94e23f6e139adec4b9fa80c2",
+    "patcher_ref": "feature/astro-native-platesolve",
+    "previous_candidate_pins": [
+      "43dccb81b92b6b25f44957a4684f534393562028",
+      "806c3bda62d6c0c23ca7a3091fb42f3d7894172b"
+    ],
+    "why_this_is_a_cut_and_not_another_increment": "v104 is already installed on both test cameras, so the two libgphoto2 commits and the four installer fixes below are the only delta a tester receives. Nothing here changes the astro solve path's inputs, the bundle layout or the catalogue, so an upgrade over .104 is a straight overwrite rather than a re-install from stock."
+  },
+  "purpose": "Make the Pentax shutter list round-trip for whole-second values, and stop the astro installer from filling /app before it registers autostart. Both faults were found on hardware, not in a build: seconds entries such as 00-02 were accepted and then silently never applied, and a freshly flashed camera booted with polaris-httpd on disk and nothing starting it.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "issues": ["314", "276", "313"],
+      "summary": "ptp2/pentax now accepts MM-SS as an input spelling for whole-second shutter labels, so a seconds entry the user picks maps back to its exact wire value instead of being refused. pgphoto re-renders our 00:02 as 00-02 with its own %02u-%02u emitter and sends that spelling back on set; pentax_parse_shutter_duration only recognised ':', 's' and 'm', so the label matched no branch, the legacy plain-integer fallback also failed because strtoull stops at the separator, and the write was refused. Emission is unchanged and still MM:SS, so nothing we advertise on the wire changes. Malformed forms (00-60, 00-, 00--2, 00-2junk, 1m-10s) are still rejected."
+    },
+    {
+      "component": "libgphoto2",
+      "issues": ["322"],
+      "summary": "ptp2/pentax decodes the fixed PTP header of Pentax vendor properties 0xd02b (focus peaking) and 0xd035 (PC live view), which previously reported descriptor-parse=failed plus raw hex on every read. Only the provable header is decoded: 0xd02b is ARRAY_MASK|UINT16 and settable, disproving the UINT8 scalar assumption, so it stays withheld from scalar widgets; 0xd035 is UNDEF with no form, a null placeholder rather than a scalar. Vendor bytes past the header are counted and left verbatim, never normalised or exposed as writable."
+    },
+    {
+      "component": "tests",
+      "issues": ["314", "322"],
+      "summary": "test-pentax-utils.c gained coverage for both driver changes: MM-SS labels map to the same seconds as MM:SS (00-02, 00-30, 01-10, 02-00) while malformed forms are refused and are not rescued by the legacy plain-integer fallback, and the descriptor header parser is tested against the exact measured payloads plus mismatched-code, short-payload and NULL cases."
+    },
+    {
+      "component": "patcher",
+      "issues": ["312"],
+      "summary": "install_astro.sh no longer mirrors 18.7 MB of POLCAT01 solve data into /app. That mirror is 89% of the kit against a 68 MB ubifs, so on a freshly flashed camera it hit ENOSPC, set -e killed the script between the binaries and the boot hook, and the device booted with polaris-httpd present, port closed and no error anyone would notice. Nothing reads the mirror: every solver resolves the catalogue under /app/sd/polaris-astro."
+    },
+    {
+      "component": "patcher",
+      "issues": ["312"],
+      "summary": "The boot hook is now written before any optional copy, so a full /app can no longer skip autostart, and the installer verifies what it actually shipped before reporting success."
+    },
+    {
+      "component": "patcher",
+      "issues": ["321"],
+      "summary": "Each solve records its start, duration and a classified outcome, so a slow or failing solve is attributable from the log rather than inferred from silence."
+    },
+    {
+      "component": "tests",
+      "issues": ["312"],
+      "summary": "build-doctor.sh section 8 no longer asserts that the catalogue copy step exists. That check was written to compare its line number with the boot hook, and after the mirror was removed it reported RED on correct code while container/astro/test-install-enospc.sh passed all six assertions. It now guards the invariant that remains: the hook step exists, no catalogue mirror into $DEST has returned, and the hook precedes the one remaining optional copy."
+    },
+    {
+      "component": "docs",
+      "summary": "Route A install steps corrected to a single ssh command, and the installer output description no longer quotes a message the installer stopped printing. Added a plain-language user manual for the astro kit."
+    }
+  ],
+  "known_limits": [
+    "The MM-SS fix is not yet confirmed on hardware. In the captured sessions every hyphenated set returned ret:0, meaning our setter did not report an error, so either pgphoto sets by index rather than by label or it swallows our failure and reports success. This change removes a genuine blocker on the label round-trip; it is not proof that seconds values now stick.",
+    "Shutter sets still fail outright with ret:-2110 on both bodies before one eventually takes, and that code is not in libgphoto2's range. It is pgphoto-internal or a Ricoh vendor response passed through, and naming it needs ptp2 debug at GPLogLevel, which requires restarting pgphoto.",
+    "EV control (#233) still fails on the K-1 II; this candidate does not change that.",
+    "0xd02b and 0xd035 are decoded as headers only. Neither becomes a usable control in this release, and the vendor bytes past the header remain uninterpreted.",
+    "The astro web UI listens on 8090 only once polaris-httpd is running. On a device where the boot hook was never installed it stays closed after a reboot, which reads as unreachable rather than as an error.",
+    "The 8090 address printed by polaris-autojoin.sh is the wlan1 station lease, not the wlan0 AP address. A tester on the camera-side network cannot reach that address."
+  ],
+  "validation_focus": [
+    "K-1 II and K-3 III shutter list: select a whole-second entry such as 00-02 or 00-30 and confirm the read-back matches rather than returning 0. Repeat three times, since the first attempts have previously returned ret:-2110.",
+    "K-1 II and K-3 III shutter list: confirm a fraction entry (1/400, 13/10) still applies exactly as before, so the new input alias has not disturbed the existing path.",
+    "Malformed labels: confirm 00-60 and similar are refused rather than silently applied.",
+    "K-1 II focus peaking and PC live view: confirm the descriptor is reported as a parsed header with a conservative verdict instead of descriptor-parse=failed, and that neither appears as a writable scalar widget.",
+    "Fresh flash then astro install on a nearly full /app: confirm the boot hook is written, polaris-httpd starts at boot, port 8090 answers, and no catalogue mirror appears in /app/astro.",
+    "Plate solve after upgrade: confirm solves still read the catalogue from /app/sd/polaris-astro and that the new start/duration/outcome lines appear in the log.",
+    "Upgrade over .104 in place on both cameras, then re-run the standard camera control sweep to catch any regression from the two libgphoto2 commits."
+  ]
+}

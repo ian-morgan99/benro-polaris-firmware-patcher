@@ -90,6 +90,12 @@ SSH_USER_HOST = "root@192.168.0.1"
 PORT = 9090
 SD_LOG_DIR = "/app/sd/system/log"
 
+# Where the body's captures actually land. canary-probe.py defaults --output-dir
+# to this path and every DeviceFileCheck test asserts against it; /tmp holds no
+# captures, so baselining there reports "no new file" for a successful capture and
+# produces a false FAIL attributed to the camera (#305).
+DEVICE_OUTPUT_DIR = "/app/sd/normal"
+
 # Control opcodes, taken from the app's own traffic in docs/evidence rather than guessed:
 #   code[258] val[iso:]  code[259] val[wb:]  code[260] val[ev:]  code[261] val[s:]
 #   code[262] val[mode:] code[264] capture   code[268] shutter list
@@ -616,17 +622,28 @@ def case_wbs_04_5(recorder: Recorder, host: str, user_host: str) -> dict:
     return rec
 
 
-def case_wbs_04_6(recorder: Recorder, host: str, user_host: str) -> dict:
-    """WBS-04.6 manual shutter and file lifecycle (#279)."""
-    rec = {"wbs": "WBS-04.6", "issues": ["#279"], "title":
+def case_wbs_04_6(recorder: Recorder, host: str, user_host: str,
+                  device_output_dir: str = DEVICE_OUTPUT_DIR) -> dict:
+    """WBS-04.6 manual shutter and file lifecycle (#279).
+
+    #305: this case could never execute. It passed ``expected_files=`` to a
+    constructor that does not accept it, and called ``enabled`` -- a property --
+    as a method. Both raise TypeError, so the case aborted before sending a
+    shutter command while the suite stayed green, because no test constructed the
+    checker the way this round does.
+    """
+    rec = {"wbs": "WBS-04.6", "issues": ["#279", "#305", "#306"], "title":
            "Capture separates queued-command success from physical exposure"}
     reachable, detail = device_reachable(user_host)
     if not reachable:
         rec.update(status="BLOCKED", evidence=None, reason=f"device unreachable: {detail}")
         return rec
 
-    checker = cp.DeviceFileCheck(ssh_host=user_host, output_dir="/tmp", expected_files=1)
-    if not checker.enabled():
+    # The baseline must be the directory the body actually writes to. /tmp holds
+    # nothing on this device, so a check there reports "no new file" for a capture
+    # that succeeded -- a false FAIL attributed to the camera (#305).
+    checker = cp.DeviceFileCheck(ssh_host=user_host, output_dir=device_output_dir)
+    if not checker.enabled:
         rec.update(status="BLOCKED", evidence=None,
                    reason="file check unavailable; cannot prove a file was produced")
         return rec
@@ -658,18 +675,34 @@ def case_wbs_04_6(recorder: Recorder, host: str, user_host: str) -> dict:
     finally:
         p.close()
 
-    produced = checker.new_files()
-    rec["evidence"] = {"states_observed": states, "files_produced": produced}
+    # #306 measured a ~39 s gap between `will captureImage` and `captureImageEvent`
+    # on a K-1 II, with the file arriving after a client-side timeout had already
+    # declared failure. A single immediate new_files() here would hit the same trap
+    # and report "no file" for a capture that did succeed, so the wait is bounded by
+    # the exposure cap plus canary-probe's transfer margin rather than assumed zero.
+    observed, seen, complete = cp.wait_for_expected_output_set(
+        checker, 1, cp.MAX_TEST_EXPOSURE_SECONDS + cp.DEFAULT_TRANSFER_MARGIN_S)
+    produced = complete if complete else seen
+    rec["evidence"] = {"states_observed": states, "files_produced": produced,
+                       "file_inventory_observed": observed,
+                       "complete_output_set": bool(complete),
+                       "device_output_dir": device_output_dir}
     if not states:
         rec.update(status="FAIL", reason="capture produced no 264 state at all")
     elif "-110" in states:
         rec.update(status="FAIL", reason="state:-110 PHOTO_RECORD Fail (#279 reproduced)")
-    elif "0" in states and produced:
+    elif complete and "0" in states:
         rec.update(status="DEVICE_VERIFIED",
-                   reason=f"completed with {len(produced)} file(s)")
+                   reason=f"completed with {len(complete)} file(s) in {device_output_dir}")
+    elif not observed:
+        # The inventory itself never succeeded: this says nothing about the camera.
+        rec.update(status="UNKNOWN",
+                   reason=f"states={states}; file inventory unavailable under "
+                          f"{device_output_dir}, so a file cannot be confirmed or denied")
     else:
         rec.update(status="UNKNOWN",
-                   reason=f"states={states} files={produced}; cannot attribute")
+                   reason=f"states={states} files={produced}; no complete SP_ output "
+                          f"set within the transfer window, cannot attribute")
     return rec
 
 
@@ -760,7 +793,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--host", default=DEFAULT_HOST)
     ap.add_argument("--ssh-host", default=SSH_USER_HOST)
-    ap.add_argument("--outdir", default="/tmp/polaris-camera-qualification")
+    ap.add_argument("--outdir", default="/tmp/polaris-camera-qualification",
+                    help="local directory for the evidence bundle (not a device path)")
+    ap.add_argument("--device-output-dir", default=DEVICE_OUTPUT_DIR,
+                    help=f"on-device directory captures are written to, baselined by "
+                         f"WBS-04.6 (default {DEVICE_OUTPUT_DIR}; #305)")
     ap.add_argument("--plan", action="store_true", help="print cases, touch nothing")
     ap.add_argument("--analyze-only", metavar="BUNDLE",
                     help="re-score a saved bundle offline, no device")
@@ -786,8 +823,9 @@ def main() -> int:
          lambda r: case_wbs_04_4b(r, args.host, args.ssh_host)),
         ("WBS-04.5", "autofocus (#278)",
          lambda r: case_wbs_04_5(r, args.host, args.ssh_host)),
-        ("WBS-04.6", "capture lifecycle (#279)",
-         lambda r: case_wbs_04_6(r, args.host, args.ssh_host)),
+        ("WBS-04.6", "capture lifecycle (#279 #305)",
+         lambda r: case_wbs_04_6(r, args.host, args.ssh_host,
+                                 args.device_output_dir)),
         ("WBS-04.7", "Bulb cancel safety (#251)", lambda r: case_wbs_04_7(r, args)),
     ]
 

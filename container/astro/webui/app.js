@@ -957,20 +957,16 @@ function wireExposure() {
    is easier one-handed in the dark, and it maps onto a keyboard too. */
 var HOLD_MS = 450;
 
-/* Capture lifecycle states for opcode 264, kept in step with the terminal set in
-   scripts/capture-outcomes.py so the UI and the offline analyser agree on what a
-   code means. state:1 is only "initiated"; a capture is finished when state:0
-   follows state:4. */
-var SHOT_PROGRESS = { 1: 'exposing…', 2: 'exposing…', 3: 'exposing…', 4: 'writing card…' };
-
-/* Generous, because a long exposure legitimately takes tens of seconds and silence
-   is not evidence of failure. */
-var SHOT_TIMEOUT_MS = 90000;
-
-function shotStateOf(args) {
-  var m = /(?:^|;)state:(-?\d+)/.exec(args || '');
-  return m ? parseInt(m[1], 10) : null;
-}
+/* Capture lifecycle and dispatch live in shutter.js so they can be asserted
+   under node without a browser (see tests/test_astro_shutter.js). The labels and
+   the state table are kept there, in step with the terminal set in
+   scripts/capture-outcomes.py, so the UI and the offline analyser agree on what
+   a code means. */
+var SHOT_PROGRESS = {
+  started: 'exposing…', writing: 'writing card…', published: 'file written',
+  complete: 'shot', failed: 'failed', unknown: 'no confirmation',
+  queued: 'queued…', refused: 'mode not confirmed'
+};
 
 /* Paint the shutter button. Terminal labels revert by themselves so the button is
    ready for the next press without a refresh. */
@@ -987,45 +983,61 @@ function paintShot(label, cls, revert) {
 
 /* The POST to /api/link/send only means the command was QUEUED. The head answers
    asynchronously and its answer lands in the opcode cache that /api/link serves.
-   Before this, fire() painted 'shot' as soon as the POST resolved, so a capture the
-   camera refused (#279: state:-110 with PHOTO_RECORD Fail) still looked like success
-   on screen -- the same false-success class as the exposure writes in #276.
+   Before this, fire() painted 'shot' as soon as the POST resolved, so a capture
+   the camera refused (#279: state:-110 with PHOTO_RECORD Fail) still looked like
+   success on screen -- the same false-success class as the exposure writes in #276.
 
-   The reply is matched by opcode 264's count increasing since the press, so an older
-   cached answer cannot brand a new shot. Limit: any unrelated 264 traffic in that
-   window would be read as this shot's reply, which is why a timeout reports "no
-   confirmation" rather than "failed". */
+   The decision itself is shutter.js's; this function only paints what it returns.
+   Keeping the phase logic out of here is what makes #309's acceptance tests
+   possible at all, because a pointer-event handler cannot be asserted on.
+
+   Limit worth stating: the reply is matched by opcode 264's count increasing since
+   the press, so an older cached answer cannot brand a new shot -- but any unrelated
+   264 traffic in that window would be read as this shot's reply. That is why a
+   timeout reports "no confirmation" rather than "failed". */
 function reconcileShot() {
   var p = S.shotPending;
   if (!p) return;
   var rep = S.ops['264'];
 
-  if (rep && rep.count > p.countBefore) {
-    var st = shotStateOf(rep.args);
-    if (st === 0) {
-      paintShot('shot', 'fired', true);
-      setHint('');
-      S.shotPending = null;
-      return;
-    }
-    if (st !== null && st < 0) {
-      paintShot('failed: state ' + st, null, true);
-      setHint('<b>The camera refused the shot</b> (state ' + st + '). No file was '
-              + 'written. If this repeats, it is issue #279.');
-      S.shotPending = null;
-      return;
-    }
-    if (st !== null && SHOT_PROGRESS[st]) {
-      p.state = st;
-      paintShot(SHOT_PROGRESS[st], 'arming', false);
-    }
-  }
+  var r = SHUTTER.reconcile(p, rep, Date.now());
 
-  if (Date.now() - p.sentAt > SHOT_TIMEOUT_MS) {
-    paintShot('no confirmation', null, true);
-    setHint('<b>No capture confirmation from the head.</b> The frame may still have '
-            + 'been taken -- check the Gallery before assuming it failed.');
+  /* Carry forward what the lifecycle has shown, so a later state:0 can be told
+     apart from an idle echo. Only a reply that actually advanced the capture sets
+     these. */
+  if (r.sawStarted) { p.sawStarted = true; }
+  if (r.sawWriting) { p.sawWriting = true; }
+
+  if (r.phase === 'failed') {
+    paintShot(SHUTTER.SHOT_PHASES.failed + ': state ' + r.state, null, true);
+    setHint('<b>The camera refused the shot</b> (state ' + r.state + '). No file was '
+            + 'written. If this repeats, it is issue #279.');
     S.shotPending = null;
+    return;
+  }
+  if (r.phase === 'unknown') {
+    paintShot(SHUTTER.SHOT_PHASES.unknown, null, true);
+    setHint('<b>No capture confirmation from the head.</b> ' +
+            (r.reason ? r.reason + '. ' : '') +
+            'The frame may still have been taken -- check the Gallery before '
+            + 'assuming it failed.');
+    S.shotPending = null;
+    return;
+  }
+  if (r.terminal) {
+    /* A cancelled bulb is not the same outcome as a completed one: say which,
+       and for how long it ran. */
+    var label = (p.mode === 'B' && p.cancelled)
+      ? 'stopped at ' + Math.round((Date.now() - p.sentAt) / 1000) + 's'
+      : SHUTTER.SHOT_PHASES[r.phase];
+    paintShot(label, 'fired', true);
+    setHint('');
+    S.shotPending = null;
+    return;
+  }
+  if (SHOT_PROGRESS[r.phase]) {
+    p.phase = r.phase;
+    paintShot(SHOT_PROGRESS[r.phase], 'arming', false);
   }
 }
 
@@ -1061,15 +1073,42 @@ function wireShutter() {
      treated as a cancel. iOS support for setPointerCapture is partial, so this is
      the difference between a hold that fires and one that silently never does. */
   function leave() { if (!captured) cancel(); }
+  /* Read the bulb field. Empty or 0 means "the camera's own shutter setting",
+     which is what Benro Connect sends for an ordinary capture and is safe in any
+     mode; a positive number is an explicit timed bulb the user asked for by name.
+     #309 forbids inferring B from the camera, and nothing here does: the only way
+     to get bulb:>0 on the wire is for the user to type it. */
+  function bulbIntent() {
+    var el = $('#bulbsecs');
+    if (!el) return null;
+    var v = (el.value || '').trim();
+    if (v === '') return null;
+    return Number(v);
+  }
+
   function fire() {
     cancel();
     if (navigator.vibrate) navigator.vibrate(24);
+
+    var d = SHUTTER.decideDispatch(bulbIntent());
+    if (d.mode === 'refused') {
+      /* Say so and do nothing. Falling through to an ordinary capture would take
+         a frame the user did not ask for, and clamping 2.5s to 2s would run a
+         shorter exposure than they asked for -- both are silent changes to what
+         the camera does. */
+      paintShot(SHUTTER.SHOT_PHASES.refused, null, true);
+      setHint('<b>' + d.reason + '.</b> Nothing was sent.');
+      return;
+    }
+
     /* 264 SP_SET_PHOTO_RECORD_STATUS: state/bulb/c. Confirmed, because it
        commits a frame to the card. Snapshot the reply count first so reconcileShot
        can tell this press's answer from whatever was cached before it. */
     var before = S.ops['264'];
-    paintShot('firing…', 'arming', false);
-    send(264, 'state:1;bulb:0;c:0;', true).then(function (r) {
+    paintShot(d.mode === 'B' ? 'bulb ' + d.bulbSeconds + 's…' : SHOT_PROGRESS.queued,
+              'arming', false);
+
+    send(264, d.payload, true).then(function (r) {
       if (r && r.ok === false) {
         paintShot(r.error || 'shutter refused', null, true);
         return;
@@ -1078,14 +1117,44 @@ function wireShutter() {
       S.shotPending = {
         sentAt: Date.now(),
         countBefore: (before && before.count) || 0,
-        state: null
+        phase: 'queued',
+        mode: d.mode,
+        bulbSeconds: d.bulbSeconds,
+        sawStarted: false,
+        sawWriting: false,
+        cancelled: false
       };
+    });
+  }
+
+  /* Release the shutter on an exposure that is already running. #309 requires the
+     source-aligned stop (state:0;bulb:0;c:-1;) and forbids any blind retry or
+     alternate-subtype fallback after an ambiguous start: a retry could double-fire
+     or leave a long exposure uncontrolled. So this sends exactly one stop, once. */
+  function stopBulb() {
+    var p = S.shotPending;
+    if (!p || p.cancelled) return;
+    p.cancelled = true;
+    send(264, SHUTTER.stopPayload(), true).then(function (r) {
+      if (r && r.ok === false) {
+        setHint('<b>The stop was refused:</b> ' + (r.error || 'unknown') +
+                '. The exposure may still be running.');
+        p.cancelled = false;   /* let the user try once more deliberately */
+      }
     });
   }
 
   btn.addEventListener('pointerdown', begin);
   ['pointerup', 'pointercancel'].forEach(function (ev) {
-    btn.addEventListener(ev, cancel);
+    btn.addEventListener(ev, function (e) {
+      /* Before fire() the press is just a cancelled hold. After it, a bulb is
+         running and letting go means "stop the exposure" -- the one case where
+         releasing must put something on the wire. */
+      if (S.shotPending && S.shotPending.mode === 'B' && !S.shotPending.cancelled) {
+        stopBulb();
+      }
+      cancel(e);
+    });
   });
   btn.addEventListener('pointerleave', leave);
 

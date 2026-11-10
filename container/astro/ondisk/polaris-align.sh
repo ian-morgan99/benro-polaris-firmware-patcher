@@ -99,6 +99,29 @@ embed_solve_exif() {
 }
 emit_solution() { embed_solve_exif "$1"; echo "$1"; }
 
+# ---- solve diagnostics ----------------------------------------------------
+# Issue #321: a solve that times out leaves no trace of why. Mlog and Clog cover
+# the camera stack (pgphoto, ptp2, stage2) and never see this script at all, so a
+# timeout was indistinguishable from "too few stars", "wrong hint" or "would have
+# finished given more time".
+#
+# stdout is NOT touched. polaris-align.sh's contract is that stdout carries the
+# solver JSON and nothing else -- callers parse it -- so diagnostics go to stderr
+# and to SOLVE_LOG. autosolve.sh already redirects our stderr into its own log,
+# so this shows up there too without any caller change.
+#
+# Timing uses /proc/uptime, not date. busybox date has no %N on this device
+# (verified: `date +%s.%N` prints the literal ".%N"), and date is wall-clock --
+# the Polaris has no RTC and NTP can step the clock mid-solve, which would report
+# a negative or absurd duration. /proc/uptime is monotonic and already sub-second.
+SOLVE_LOG=${SOLVE_LOG:-/app/sd/polaris-astro/solve.log}
+solve_now() { awk '{print $1}' /proc/uptime 2>/dev/null || echo 0; }
+slog() {
+    _m="$(date '+%Y-%m-%d %H:%M:%S') $*"
+    echo "[polaris-align] $_m" >&2
+    { mkdir -p "$(dirname "$SOLVE_LOG")" 2>/dev/null; echo "$_m" >> "$SOLVE_LOG"; } 2>/dev/null || true
+}
+
 # ---- derive a pointing hint from the mount if we were not given one --------
 MOUNT_HINT=${MOUNT_HINT:-1}
 MOUNT_HOST=${MOUNT_HOST:-127.0.0.1}
@@ -160,6 +183,18 @@ W=$(sed -n 's/^# full resolution \([0-9]*\) x .*/\1/p' "$STARS")
 H=$(sed -n 's/^# full resolution [0-9]* x \([0-9]*\)/\1/p' "$STARS")
 [ -n "$W" ] && [ -n "$H" ] || { echo '{"solved":false,"error":"no image size"}'; exit 3; }
 
+# How many stars the extractor actually found. Header lines start with '#', so the
+# rest of the file is the star list. This is the single most useful number for #321:
+# a solve that times out having been given 4 stars is an image-quality problem, while
+# one given 200 stars is a search-space or CPU problem, and the two need opposite fixes.
+#
+# grep -vc prints "0" AND exits 1 when nothing matches, so appending "|| echo 0" would
+# capture the literal two lines "0\n0" and emit stars=0 followed by a stray line. The
+# count is always printed; only the exit status varies, so it is taken as-is and then
+# validated to be a plain integer.
+_star_count=$(grep -vc '^#' "$STARS" 2>/dev/null)
+case "$_star_count" in ''|*[!0-9]*) _star_count=0 ;; esac
+
 # Physical sensor width is not a required standard EXIF field. Resolve it in
 # an order that is useful for every camera type:
 #   explicit SENSOR_MM -> exact configured model profile -> EXIF 35 mm eq ->
@@ -170,6 +205,10 @@ EXIF_FOCAL35=$(sed -n 's/^# exif focal35-mm \([0-9][0-9.]*\).*/\1/p' "$STARS" | 
 PROFILE_MODEL=${CAMERA_MODEL:-$EXIF_CAMERA_MODEL}
 SENSOR_SOURCE=${SENSOR_SOURCE:-}
 SENSOR_ASSUMED=0
+
+# Logged after the EXIF fields exist -- logging them earlier would report "none"
+# every time, which is worse than not logging them at all.
+slog "extract: $(basename "$IMG") fullres=${W}x${H} downsample=$DOWNSAMPLE stars=$_star_count (max $MAXSTARS) camera='${EXIF_CAMERA_MODEL:-none}' focal_exif=${EXIF_FOCAL:-none} focal35=${EXIF_FOCAL35:-none}"
 
 sensor_profile_value() {
     _model=$1
@@ -280,8 +319,14 @@ solver_scale_args() {
 
 solve_with() {
     _scale=$1
+    # Every solve in this script funnels through here -- override, EXIF,
+    # configured, indexed-hint and blind alike -- so instrumenting it once covers
+    # all of them. The range fallback at the end calls the solver directly and is
+    # logged separately.
+    _t0=$(solve_now)
+    slog "solve start: bin=$SOLVER_BIN img=$(basename "$IMG") fullres=${W}x${H} ds=$DOWNSAMPLE stars=$_star_count focal=${_scale:-none} hint=${USE_HINT:-0}/${RA:-?}/${DEC:-?}/${RADIUS:-?} limit=${SOLVE_TIMEOUT}s"
     if [ "$SOLVER_BIN" != "polaris-solve" ]; then
-        [ -n "$_scale" ] || { echo '{"solved":false,"failure_reason":"focal_length_required"}'; return 1; }
+        [ -n "$_scale" ] || { slog "solve refused: no focal for $SOLVER_BIN"; echo '{"solved":false,"failure_reason":"focal_length_required"}'; return 1; }
         if [ "$SOLVER_BIN" = "polaris-solve-independent-search" ]; then
             set -- --catalog-dir "$INDEPENDENT_CATALOG_DIR" --manifest "$INDEPENDENT_CATALOG_MANIFEST" \
                 --triangle-index "$INDEPENDENT_TRIANGLE_INDEX" \
@@ -299,14 +344,43 @@ solve_with() {
         fi
         [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
             set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
-        "$ASTRO/$SOLVER_BIN" "$@"
-        return $?
+        _out=$("$ASTRO/$SOLVER_BIN" "$@")
+        _rc=$?
+        solve_finish "$_t0" "$_rc" "$_out" "$_scale"
+        printf '%s\n' "$_out"
+        return $_rc
     fi
     set -- $IDXARGS --stars "$STARS" --width "$W" --height "$H" --cpulimit "$SOLVE_TIMEOUT"
     [ -n "$_scale" ] && set -- "$@" $_scale
     [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
         set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
-    "$ASTRO/$SOLVER_BIN" "$@"
+    _out=$("$ASTRO/$SOLVER_BIN" "$@")
+    _rc=$?
+    solve_finish "$_t0" "$_rc" "$_out" "$_scale"
+    printf '%s\n' "$_out"
+}
+
+# Classify one finished solve into the four outcomes #321 asks about, which look
+# identical from outside: solved, timed out, found nothing, or produced nothing.
+# polaris-solve prints {"solved":false,"error":"timeout"} and exits 3 when its
+# SIGALRM wall-clock bound fires (polaris-solve.c on_timeout), so that string is
+# an unambiguous timeout rather than an inference from elapsed time.
+solve_finish() {
+    # $_lim is the bound actually passed to this solver run, and has to be a
+    # parameter rather than SOLVE_TIMEOUT: the range fallback uses RANGE_TIMEOUT
+    # (240 s), so reading the global here printed "reached the 45s bound" for a
+    # solve limited to 240 s. A wrong number in a diagnostic is worse than none.
+    _t0=$1; _rc=$2; _out=$3; _scale=$4; _lim=${5:-$SOLVE_TIMEOUT}
+    _el=$(awk -v a="$_t0" -v b="$(solve_now)" 'BEGIN{printf "%.2f", b-a}')
+    case "$_out" in
+        *'"solved":true'*)      _v="SOLVED" ;;
+        *'"error":"timeout"'*)  _v="TIMEOUT (reached the ${_lim}s bound -- may succeed with a longer one)" ;;
+        *'"solved":false'*)     _v="no match" ;;
+        *)                      _v="no output" ;;
+    esac
+    slog "solve $_v: ${_el}s rc=$_rc stars=$_star_count bin=$SOLVER_BIN${_scale:+ $_scale}"
+    [ "$_v" = "no match" ] && slog "  solver said: $(printf '%s' "$_out" | tr -d '\n' | head -c 200)"
+    return 0
 }
 
 # arcsec/pixel bounds implied by the focal range. Long lens -> small scale.
@@ -375,7 +449,14 @@ fi
 }
 [ -n "$TRIED" ] && echo "[polaris-align] $TRIED did not solve -- retrying across ${FOCAL_MIN}-${FOCAL_MAX}mm" >&2
 [ -n "$TRIED" ] || echo "[polaris-align] no focal known -- searching ${FOCAL_MIN}-${FOCAL_MAX}mm" >&2
+# This path bypasses solve_with, so it is timed and classified here too. It uses
+# RANGE_TIMEOUT rather than SOLVE_TIMEOUT, which is why the limit is printed: a
+# reader needs to know which bound was hit.
+_rt0=$(solve_now)
+slog "solve start: bin=$SOLVER_BIN img=$(basename "$IMG") fullres=${W}x${H} ds=$DOWNSAMPLE stars=$_star_count focal=range ${FOCAL_MIN}-${FOCAL_MAX}mm hint=${USE_HINT:-0}/${RA:-?}/${DEC:-?}/${RADIUS:-?} limit=${RANGE_TIMEOUT}s"
 OUT=$("$ASTRO/$SOLVER_BIN" $(range_args) $IDXARGS --stars "$STARS" \
      --width "$W" --height "$H" --cpulimit "$RANGE_TIMEOUT" \
      ${RA:+--ra "$RA"} ${DEC:+--dec "$DEC"} ${RADIUS:+--radius "$RADIUS"})
+_rc=$?
+solve_finish "$_rt0" "$_rc" "$OUT" "range ${FOCAL_MIN}-${FOCAL_MAX}mm" "$RANGE_TIMEOUT"
 case "$OUT" in *'"solved":true'*) emit_solution "$OUT";; *) echo "$OUT";; esac

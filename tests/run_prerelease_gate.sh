@@ -285,6 +285,13 @@ PY_TESTS=(
     tests/test_apsta_down_stops_station.py
     tests/test_verify_published_candidate.py
     tests/test_setup_wifi_psk_not_in_argv.py
+    # Added alongside scripts/release/install-astro-kit.sh and
+    # docs/RELEASE-ENTRYPOINTS.md. Registered here deliberately: test_astro_regression.py
+    # was committed by PR #299 and never listed, so it ran for nobody until #301.
+    # A guard that is never executed protects nothing.
+    tests/test_astro_kit_install_entrypoint.py
+    tests/test_astro_kit_installer_behaviour.py
+    tests/test_release_entrypoints.py
     tests/test_camera_qualification_round.py
     tests/test_plate_solving_present.py
     tests/test_astro_candidate_wrapper.py
@@ -294,6 +301,26 @@ PY_TESTS=(
     # array does not name. The suite is offline-safe -- it runs astro_regression/runner.py
     # with --offline and asserts on checked-in fixtures, no device, no network, 0.05 s.
     tests/test_astro_regression.py
+    # Added for #265: the Astro bundle was complete and its solver worked on-device,
+    # but nothing invoked polaris-astro-boot.sh, so the web UI never started on a
+    # fresh install. These tests need no device -- SD_ROOT/APP_ROOT are overridable
+    # precisely so the launch decision and the ssh-chaining decision (the one that
+    # decides whether an operator keeps ssh) can be checked here instead of only on
+    # hardware.
+    tests/test_astro_boot_hook.py
+    # Added for the v102 build blocker: `flatpak-spawn --host docker` resolves
+    # `docker` on the HOST's PATH, where a shim of that same shape re-enters itself
+    # and dies with rc=127 -- indistinguishable from "docker is not installed". It
+    # stopped the v102 build 82 minutes after v101 shipped, with nothing in the repo
+    # changed. These tests pin the absolute-path rule and check that the doctor no
+    # longer advises creating the very shim that causes it.
+    tests/test_host_docker_resolution.py
+    # Added for #309: the WebUI shutter dispatch. Offline-safe -- it shells out to
+    # node against container/astro/webui/shutter.js, which is DOM-free by design so
+    # the payload strings can be asserted without a browser or a device. The gate's
+    # own drift guard is what caught this: the suite existed but was not listed here,
+    # so it would have run on nothing at all.
+    tests/test_astro_shutter_node.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then

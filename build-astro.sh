@@ -92,8 +92,24 @@ drop_copyleft_binaries(){
 }
 trap 'astro_rc=$?; if [ "$astro_rc" != 0 ]; then drop_copyleft_binaries; fi' EXIT
 
+# Inside the VS Code Flatpak sandbox there is no docker binary and no socket, so
+# plain `docker` does not exist here even though the host has both. Prepend this
+# repo's shim, which resolves an ABSOLUTE host path via tools/host-docker.sh. It
+# deliberately avoids `flatpak-spawn --host docker`: that asks the host to resolve
+# `docker` on the host's PATH, where ~/.local/bin and ~/bin sit by default, so a
+# shim of that same shape on the host re-enters itself and dies with rc=127 -- which
+# reads exactly like "docker is not installed". That stopped the v102 build (#308).
+if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    if [ -x "$HERE/tools/host-bin/docker" ]; then
+        PATH="$HERE/tools/host-bin:$PATH"
+        export PATH
+    fi
+fi
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found." >&2; exit 1; }
-docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
+docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2
+    echo "       'docker' resolves to $(command -v docker)" >&2
+    echo "       run scripts/build-doctor.sh, which names the exact cause." >&2
+    exit 1; }
 
 echo "[*] building docker image '$IMG' (first run only)…"
 docker build -q -t "$IMG" -f "$HERE/docker/Dockerfile" "$HERE" >/dev/null
@@ -632,11 +648,34 @@ Over ssh instead of sneakernet, the same layout works:
 THEN EDIT /app/sd/polaris-astro/site.conf -- LAT and LON are required and
 cannot be guessed. Reboot, and open http://<polaris ip>:8090/.
 
+A firmware flash removes this kit -- re-run the installer after EVERY release
+--------------------------------------------------------------------------------
+Flashing replaces the whole appfs volume, and /app/astro lives on it. So every
+flash deletes both the plate solver and the boot hook that starts it:
+
+    before a flash:  /app/astro/polaris-httpd present, boot hook installed,
+                     port 8090 open
+    after a flash:   /app/astro absent, boot hook absent, port 8090 closed
+
+Copying the card and flashing is therefore NOT a complete upgrade. Step 2 or the
+ssh line above has to be repeated after every firmware flash, not just the first.
+A correct firmware version shown in the app is not evidence the kit came back --
+the only check that counts is that http://<polaris ip>:8090/ answers. If it
+refuses the connection, the kit is gone; re-run install_astro.sh and reboot.
+
 Joining your own Wi-Fi network (optional)
 -----------------------------------------
 By default the Polaris only runs its own access point at 192.168.0.1. The kit in
 polaris-wifi/ lets it also join a home network as a station, which is what you
 want if the mount and your camera need to be on the same LAN.
+
+When autojoin succeeds it prints a second address, for example "reach this
+device at http://192.168.68.15:8090/". That is the station lease on wlan1, not
+the access point on wlan0. Use it only from a device on that same home network.
+From a laptop or phone still attached to the Polaris access point, keep using
+http://192.168.0.1:8090/. If the printed address does not answer, check which of
+the two networks you are actually connected to before assuming the web UI is
+down.
 
 Two steps, over ssh, on the device:
 

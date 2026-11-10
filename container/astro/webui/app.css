@@ -432,6 +432,24 @@ main { flex: 1 1 auto; overflow-y: auto; padding: 14px; padding-bottom: 22px; }
 /* ─────────────────────────────── shutter ───────────────────────────── */
 
 .shutterrow { display: flex; gap: 10px; align-items: stretch; }
+/* #309: the bulb duration sits beside the shutter so a timed exposure is one
+   field away, but it must not compete for space with the button — the hold is
+   the safety gate and needs to stay comfortably thumb-sized in the dark. Empty
+   means "the camera's own shutter", which is why the placeholder says "B s"
+   rather than pre-filling a number: a prefilled value would silently turn every
+   ordinary press into a bulb. */
+.bulbsecs {
+  flex: 0 0 4.6rem;
+  min-height: 62px;
+  background: var(--card); color: var(--fg);
+  border: 1px solid var(--line); border-radius: var(--r);
+  font: inherit; text-align: center;
+  padding: 0 6px;
+}
+.bulbsecs:focus { border-color: var(--warn); outline: none; }
+/* A non-numeric entry is refused by shutter.js rather than clamped, so show it
+   rather than let the user press and wonder why nothing happened. */
+.bulbsecs:invalid { border-color: var(--warn); }
 .shutter {
   flex: 1 1 auto;
   min-height: 62px;

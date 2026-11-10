@@ -215,6 +215,7 @@ The image is a **matched compatibility unit**, not a collection of independently
 
 ### 6. First-hour checklist for another agent
 
+0. **Look up every build, release or device operation in [Release entrypoints](docs/RELEASE-ENTRYPOINTS.md) before doing it.** Every supported operation has one script and one command there; if an operation is not listed, do not improvise it — add the script and the row first. Hand-rolled `ssh`/`scp`/`tar` steps have repeatedly skipped verification silently.
 1. Read [CURRENT-STATE](docs/CURRENT-STATE.md), [RELEASE-VERSION-STATE](docs/RELEASE-VERSION-STATE.md), this diagram, and [HOW-IT-WORKS](docs/HOW-IT-WORKS.md). Determine **which version is installed**, not just the latest reserved version.
 2. Pin the exact patcher and libgphoto2 SHAs. Identify whether the tested device uses **full mode** or **ptp2-only**. Read `/proc/<pgphoto-pid>/maps` and `/proc/<pgphoto-pid>/exe` before attributing behaviour to a particular `ptp2.so`; verify hashes of the loaded files. Do not restart the daemon merely to gather evidence.
 3. Reproduce at the **lowest appropriate layer**: direct libgphoto2, packaged pgphoto, then Benro Connect. A success in one layer does not qualify the next.

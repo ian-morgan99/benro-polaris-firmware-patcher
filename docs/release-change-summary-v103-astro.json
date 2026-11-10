@@ -1,0 +1,122 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v102-focusdrive-and-astro-boot-20261109",
+    "libgphoto2_commit": "806c3bda62d6c0c23ca7a3091fb42f3d7894172b",
+    "libgphoto2_ref": "Unchanged from v102. This candidate ships no driver change; every delta is in the patcher's packaging and release gates, plus file modes on shipped scripts.",
+    "patcher_commit": "2b8731a4f80baf536dbc32da59e2dd312b6aa341",
+    "patcher_ref": "The tree astro-v102 was built from, per its own manifest (patcher.head_commit) and build-source-provenance.txt. Verified ancestor of this branch with git merge-base --is-ancestor, so the inventory below states what v103 adds on top of v102.",
+    "previous_candidate_pins": {
+      "v102_libgphoto2": "806c3bda62d6c0c23ca7a3091fb42f3d7894172b",
+      "v102_patcher": "2b8731a4f80baf536dbc32da59e2dd312b6aa341",
+      "v101_libgphoto2": "d899cbeb865f0ab917c266d9b6ce7e69785e9c6e",
+      "v101_patcher": "e1f240f3792646b7378fb0cb72a5e1c07b37eacd"
+    },
+    "why_this_is_a_cut_and_not_another_increment": "astro-v102 was published to PrivateResearch and is defective on the device: eight shell scripts ship inside polaris-astro.zip at mode 0644, so the goto solver exits 2 and three other features silently disable. Those are shipped bytes, not build plumbing, so the published packet cannot be patched in place -- it has to be rebuilt under a new version. The libgphoto2 pin is unchanged."
+  },
+  "purpose": "Replace the defective astro-v102 packet: eight shipped shell scripts were committed non-executable and therefore cannot run on the device. Also recovers the issue #292 archive-level release gate, which was absent from this branch entirely -- meaning v102 was built and published without ever running the check that exists to catch exactly this class of defect -- and wires it into both build producers so it aborts rather than warns. Packaging no longer stores every SD kit twice, which had pushed astro-bundle.tar.gz past GitHub's 100 MB limit and caused the first publish attempt to be rejected with GH001.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "ptp2/pentax now honours the manualfocusdrive RANGE magnitude on old-focus bodies instead of discarding it. Previously the old-focus path always sent amount=5 regardless of the requested step, so a focus drive moved by the wrong distance and the error was invisible because the call returned success. Adds pentax-utils helpers and unit tests covering the magnitude parse and the range clamp.",
+      "issues": [
+        "303"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "The Astro bundle now installs a boot hook so the stack starts itself when the card is present, instead of requiring an operator to start it by hand. The hook chains any pre-existing displaced hook FIRST and only then launches astro, so installing on a device that already carries an ssh hook does not lock the operator out; if the chain target is missing or unexecutable the install fails closed rather than silently replacing it.",
+      "issues": [
+        "265"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "The qualification harness for WBS-04.6 could never execute: it passed expected_files= into DeviceFileCheck, which is not that class's parameter, and misused enabled(), so the check reported success while running nothing. A passing result from it was therefore meaningless. Corrected so the check actually runs and its verdict means what it says.",
+      "issues": [
+        "305"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "Build prerequisites are now enforced rather than merely documented. AGENTS.md has always said to run scripts/build-doctor.sh before any candidate build and names build-release-candidate.sh as the only supported source-to-candidate entry point, but that script contained zero references to docker or the doctor, so the check was enforced by nothing. Both release entrypoints now run the doctor fail-closed before building and record build_doctor_status in provenance so a --skip-doctor is visible in the release evidence. In the Astro path the check moved ahead of step [1/7], because patch-polaris.sh is the long camera build and previously ran before any prerequisite was verified.",
+      "issues": [
+        "308"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "Fixed the defect that stopped this candidate from building. `flatpak-spawn --host docker` asks the host to resolve `docker` on the host's PATH, where ~/.local/bin and ~/bin are present by default; if either holds a shim of that same shape the host runs it, it cannot exec flatpak-spawn, and it dies with rc=127 reading exactly like 'docker is not installed'. That pattern was in four places here, including build-astro.sh which wrote a new shim of that shape, and build-doctor.sh's own failure hint told the operator to create precisely that file in ~/.local/bin -- the tool that detects the failure was recommending its cause. Replaced with tools/host-docker.sh, which resolves an absolute host path that cannot be one of our shims and so cannot recurse, and reports the real cause when a docker on PATH is broken.",
+      "issues": [
+        "308"
+      ]
+    },
+    {
+      "component": "tests",
+      "summary": "Added tests/test_host_docker_resolution.py, which pins the rule that no consumer hands a bare command name to --host and that the doctor no longer advises creating a recursing shim. Verified non-vacuous by reintroducing the defect and watching it fail. Also fixed a race in test_astro_boot_hook.py: the launcher starts the card script with setsid ... &, so the stub was still creating files while TemporaryDirectory ran rmtree, failing cleanup with ENOTEMPTY only when another suite ran first. It now waits for every effect it asserts; stable across five consecutive runs.",
+      "issues": [
+        "308"
+      ]
+    },
+    {
+      "component": "docs",
+      "summary": "Recorded 6.0.0.54.101 as consumed in the version registry before claiming .102. astro-v101 was built as .101 and never recorded, so --next still returned .101 -- the duplicate-version failure #169 exists to prevent, and building v102 as .101 would have produced two artifacts indistinguishable on hardware, since the device reports only a version string. Bound to the exact commits v101 was built from.",
+      "issues": [
+        "169"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "Eight shell scripts that ship in polaris-astro.zip were committed to container/astro/ondisk at mode 100644 while carrying a shebang, and the build faithfully preserves that mode into the archive: aa_rehearsal.sh, autofocus.sh, inject_test.sh, polaris-astro-hook.sh, polaris-frame-watch.sh, polaris-goto-solve.sh, polaris-goto-watch.sh and polaris-pointing-model.sh. On the device this is not cosmetic -- polaris-goto-solve.sh is guarded by '[ ! -x ] && exit 2', so the goto solver aborts outright, while frame-watch, goto-watch and pointing-model are guarded by '[ -x ]' and silently disable instead, leaving features that quietly stop working while everything reports success. All eight are now mode 100755. This affects every release built from this tree, including the published 6.0.0.54.102.",
+      "issues": [
+        "308"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "The issue #292 artifact gate was not on this branch: scripts/verify-published-astro-candidate.py and its tests exist only on fix/archive-level-release-gate-292, and git merge-base --is-ancestor confirms it is not an ancestor of the release branch. So astro-v102 was built and published without ever running the check whose purpose is to verify the archives a user receives rather than the build directory -- and that gate, once recovered, immediately failed v102 on the exec-bit defect above. It is now merged and invoked by both producers (scripts/build-astro-candidate.sh and scripts/build-astro-bundle.sh), after every archive exists so it cannot pass vacuously, and it aborts the build via die rather than printing a verdict that gets ignored. A third test asserting both producers call the gate existed nowhere in git -- it was an untracked file in a stale worktree and has been recovered and merged.",
+      "issues": [
+        "292"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "astro-bundle.tar.gz no longer stores the SD kit archives twice. COPY-TO-SD-CARD-ROOT held every kit both as extracted trees (which ASTRO-MANIFEST.sha256 covers and the README tells users to drag onto the card) and as .zip copies of those same trees; zipping already-compressed content saves nothing, so ~49 MB was pure redundancy that pushed the tarball to 110.50 MB and caused GitHub to reject the push with GH001 while every individual artifact stayed well under the limit. The bundle is now 63.8 MiB with all extracted entries intact, and all three SD archives publish as siblings beside FwPkt.zip where a user is actually handed them. astrometry-indexes.zip had never been published at all before this: the publish loop listed only polaris-astro.zip and polaris-wifi.zip, so the index archive was reachable only by untarring the bundle.",
+      "issues": [
+        "308"
+      ]
+    },
+    {
+      "component": "tests",
+      "summary": "Added test_every_shipped_shell_script_is_executable_in_git, which asserts against git's recorded mode rather than the working tree, so a locally chmod'd file cannot hide a commit that still ships 100644. It covers 26 shebang-bearing scripts and was mutation-tested: removing the bit from polaris-goto-solve.sh makes it fail, restoring it makes it pass. This class is now caught at commit time in milliseconds instead of roughly fifteen minutes into a build, and only if someone happens to build.",
+      "issues": [
+        "292"
+      ]
+    }
+  ],
+  "known_limits": [
+    "EV control (#233) still fails on the K-1 II; this candidate does not change that.",
+    "The -2110 capture drop rate (#274) has never been measured on a current build with the raw ret: field retained.",
+    "Wi-Fi auto-join has never associated with a real router; shipping the kit is not the same as qualifying it.",
+    "Physical camera qualification is a separate gate. A GREEN offline gate here is a build claim, not a hardware claim.",
+    "#303 is fixed in source and unit-tested only. No old-focus Pentax body has been driven with a non-default magnitude on real hardware, so the magnitude fix is unproven on device until that is run.",
+    "The Astro boot hook (#265) is verified against a simulated card root in tests. It has not been installed on a physical SD card or observed starting the stack on the device.",
+    "WBS-04.6 (#305) now executes, which means it has never produced a real result. A pass or fail from it on this candidate is the first one that has ever meant anything.",
+    "The #308 fix repairs docker resolution and diagnosis on THIS host. It does not make the release cycle immune to host drift: there is still no CI, every gate runs only if something remembers to invoke it, and a prerequisite that appears in none of the doctor's checks can still surface mid-build.",
+    "The repaired ~/bin/docker lives outside this repository. It was fixed in place with a backup at ~/bin/docker.pre-v102.bak, but a host-side file the release depends on is not reproducible and no test here covers it.",
+    "The exec-bit fix is verified by reopening the finished archive and reading stored unix modes. It has not been confirmed on a device: no card has been flashed with this build, so 'the goto solver now runs' is an inference from the mode plus the existing [ -x ] guard, not an observed result.",
+    "astro-v102 (6.0.0.54.102) remains published to PrivateResearch and is defective for the reason above. It must not be installed on hardware; this candidate supersedes it but does not retract it.",
+    "The recovered #292 gate now runs in both producers, but it has never been observed to catch a defect in a build that then shipped -- its one real finding so far was caught by running it by hand against an already-published candidate."
+  ],
+  "validation_focus": [
+    "K-1 II manual focus drive with a non-default step: confirm the body moves by the requested magnitude rather than a fixed amount, and that a rejected range is reported rather than silently clamped (#303)",
+    "Astro boot activation from the SD-rooted polaris-astro.zip on a physical card: confirm the stack starts without an operator starting it by hand, and that an existing ssh hook still runs first (#265)",
+    "WBS-04.6 on real hardware for the first time: record its actual verdict and evidence rather than treating a prior green as meaningful (#305)",
+    "K-1 II PC live-view preview: carried forward from .101, still unproven -- start preview, let it run unattended, confirm frames keep arriving instead of wedging after the first frame (#147)",
+    "iPhone live view garbled from mid-screen down on .101 despite the marker-walk EOI fix being present: reproduce or refute on .102 (#304)",
+    "K-3 III live view and held Bulb: confirm neither the EOI marker walk nor the focus-drive change regressed the timed Bulb path qualified on .97",
+    "Wi-Fi auto-join against a real router: the kit shipped in .99/.100 has never associated with an actual AP (#272/#273)",
+    "Web UI camera-write reconciliation: set a value the head rejects and confirm the page reports it as not applied rather than painting the chosen value",
+    "polaris-goto-solve.sh on a physical card: confirm it is executable after unzip at the card root and that a goto solve actually runs rather than exiting 2 (#308 exec-bit regression).",
+    "polaris-frame-watch.sh, polaris-goto-watch.sh and polaris-pointing-model.sh: confirm the features they gate now activate instead of silently disabling."
+  ]
+}

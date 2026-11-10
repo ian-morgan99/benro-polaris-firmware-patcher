@@ -338,3 +338,37 @@ def test_the_wired_block_actually_aborts(tmp_path):
         "the gate ran against a licence-less archive and the build continued anyway"
     )
     assert "ABORTED" in proc.stderr
+
+
+def test_every_shipped_shell_script_is_executable_in_git():
+    """A shebang without an exec bit ships a script that cannot run.
+
+    6.0.0.54.102 published polaris-astro.zip with eight .sh files at mode 0644.
+    polaris-goto-solve.sh is guarded by `[ ! -x ] && exit 2`, so the goto solver
+    aborts on the device; frame-watch, goto-watch and pointing-model are guarded by
+    `[ -x ]` and silently disable instead.  The archive-level gate catches this after
+    a build, which is ~15 minutes too late and only fires if someone builds.  This
+    assertion runs in milliseconds against the index, so the mode cannot be committed
+    wrong in the first place.
+
+    Checked against git's recorded mode rather than the working tree, because the
+    working tree can be chmod'd locally while the commit still ships 100644.
+    """
+    listing = subprocess.run(
+        ["git", "ls-files", "-s", "--", "container/astro/ondisk"],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout.splitlines()
+    offenders = []
+    for line in listing:
+        mode, _, rest = line.partition(" ")
+        path = rest.rpartition("\t")[2]
+        if not path.endswith(".sh"):
+            continue
+        first = open(os.path.join(ROOT, path), "rb").readline()
+        if not first.startswith(b"#!"):
+            continue          # sourced-only file, not meant to be executed
+        if mode != "100755":
+            offenders.append(f"{path} is {mode}")
+    assert not offenders, (
+        "shipped scripts with a shebang but no exec bit: " + ", ".join(offenders)
+    )

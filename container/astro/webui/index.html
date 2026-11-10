@@ -81,6 +81,15 @@
       <button id="shoot" class="shutter" type="button">
         <span class="ring"></span><span class="label">hold to shoot</span>
       </button>
+      <!-- #309: B is an explicit intent, never an inference. No opcode in our
+           documented set reports the camera's exposure mode -- 284 is the mount's
+           operating mode and 286 is the camera's identity -- so the only honest
+           way to offer a timed bulb is to ask for it by name. Empty means "let the
+           camera use its own shutter setting", which is what Benro Connect sends
+           for an ordinary capture and is safe in any mode. -->
+      <input id="bulbsecs" class="bulbsecs" type="number" min="1" max="3600"
+             step="1" inputmode="numeric" placeholder="B s"
+             aria-label="Bulb duration in seconds; leave empty for the camera's own shutter">
       <button id="rec" class="ghost rec" type="button">● rec</button>
     </div>
 
@@ -1029,6 +1038,9 @@
   <button data-tab="settings">Settings</button>
 </nav>
 
+<!-- shutter.js first: it is DOM-free and defines the dispatch contract app.js
+     calls into. Loading order matters -- app.js references it at boot. -->
+<script src="/shutter.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

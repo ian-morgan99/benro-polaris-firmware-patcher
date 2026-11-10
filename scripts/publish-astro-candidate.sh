@@ -5,6 +5,7 @@ set -euo pipefail
 
 BUILD="" PR_REPO="https://github.com/ian-morgan99/PrivateResearch.git"
 PR_CHECKOUT="" NOTE="Astro candidate; build-only; physical qualification pending." STATUS="gated"
+SUPERSEDED_BY=""
 usage() {
   cat >&2 <<'EOF'
 usage: scripts/publish-astro-candidate.sh --build out/astro-id
@@ -20,6 +21,7 @@ while [ $# -gt 0 ]; do
     --build) BUILD="$2"; shift 2;; --repo) PR_REPO="$2"; shift 2;;
     --checkout) PR_CHECKOUT="$2"; shift 2;; --note) NOTE="$2"; shift 2;;
     --status) STATUS="$2"; shift 2;;
+    --superseded-by) SUPERSEDED_BY="$2"; shift 2;;
     -h|--help) usage;; *) die "unknown option: $1";;
   esac
 done
@@ -98,7 +100,7 @@ fi
 # Guarded by the same refuse-to-replace rule as FwPkt.zip: once bytes are public they
 # must not change silently under the same candidate name.
 SD_ROOT="$BUILD/astro-bundle/COPY-TO-SD-CARD-ROOT"
-for sdzip in polaris-astro.zip polaris-wifi.zip; do
+for sdzip in polaris-astro.zip polaris-wifi.zip astrometry-indexes.zip; do
   [ -f "$SD_ROOT/$sdzip" ] || continue
   if [ "$EXISTING" = 1 ] && [ -f "$PR_CHECKOUT/$DEST/$sdzip" ]; then
     cmp -s "$SD_ROOT/$sdzip" "$PR_CHECKOUT/$DEST/$sdzip" \
@@ -107,14 +109,20 @@ for sdzip in polaris-astro.zip polaris-wifi.zip; do
     cp "$SD_ROOT/$sdzip" "$PR_CHECKOUT/$DEST/"
   fi
 done
-ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""
+ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""; INDEX_ZIP_SHA=""
 [ -f "$PR_CHECKOUT/$DEST/polaris-astro.zip" ] && \
   ASTRO_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-astro.zip" | awk '{print $1}')
 [ -f "$PR_CHECKOUT/$DEST/polaris-wifi.zip" ] && \
   WIFI_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-wifi.zip" | awk '{print $1}')
+[ -f "$PR_CHECKOUT/$DEST/astrometry-indexes.zip" ] && \
+  INDEX_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/astrometry-indexes.zip" | awk '{print $1}')
 SD_ROWS=""
 [ -n "$ASTRO_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-astro.zip SHA-256 | \`$ASTRO_ZIP_SHA\` |"$'\n'
 [ -n "$WIFI_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-wifi.zip SHA-256 | \`$WIFI_ZIP_SHA\` |"$'\n'
+# Route A step 3 tells the user to copy this archive, so it needs a digest to check
+# against like the other two. Without one they cannot tell a truncated download from a
+# good one, and a missing astrometry/ folder solves nothing while looking healthy.
+[ -n "$INDEX_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| astrometry-indexes.zip SHA-256 | \`$INDEX_ZIP_SHA\` |"$'\n'
 
 cp "$MANIFEST" "$PR_CHECKOUT/$DEST/"
 for file in install-manifest.json build-source-provenance.txt release-change-manifest.json \
@@ -122,18 +130,38 @@ for file in install-manifest.json build-source-provenance.txt release-change-man
   install.log install-receipt.txt; do
   [ -f "$BUILD/$file" ] && cp "$BUILD/$file" "$PR_CHECKOUT/$DEST/"
 done
+# A superseded build stays published -- published bytes must not change under the same
+# candidate name -- but its README must not read as installable. Without this, someone
+# landing on 6.0.0.54.102 finds working-looking Route A steps and installs a build whose
+# goto solver exits 2.
+SUPERSEDED_BANNER=""
+if [ -n "$SUPERSEDED_BY" ]; then
+  # One quoted multi-line string. Appending $'\n' on separate lines looks equivalent
+  # and is not: without a joining operator bash treats each following line as its own
+  # command, so it dies at runtime while bash -n passes -- the same class of bug as the
+  # comment line in build-astro-candidate.sh that lost its '#'.
+  SUPERSEDED_BANNER="> **DO NOT INSTALL THIS BUILD.** It is superseded by $SUPERSEDED_BY.
+> Published bytes are kept unchanged so the record stays verifiable, but nothing
+> in this folder should be copied onto a card.
+"
+fi
+
 cat > "$PR_CHECKOUT/$DEST/README.md" <<EOF
 # Astro candidate $DISPLAY_FWVER — $ID
 
+$SUPERSEDED_BANNER
 This is a separately published Astro candidate. The FwPkt uses the shared
-camera baseline recorded in astro-candidate-manifest.json; the Astro solver,
-catalogue and indexes are in astro-bundle.tar.gz.
+camera baseline recorded in astro-candidate-manifest.json.
 
-There are two ways to install, and they are not interchangeable. Route A needs only
-the microSD card. Route B needs a PC, SSH and this repo, and is the only one that can
-prove an install happened.
+Everything you need for Route A below is a .zip. No tar tool is required, and
+none of the on-device extractors handle .tar.gz -- astro-bundle.tar.gz exists
+for inspection and licensing only, and opening it needs 'tar xzf' on a PC.
 
-## Route A -- SD card only (no PC tooling, no SSH)
+There are two ways to install, and they are not interchangeable. Route A needs the microSD
+card plus one ssh command -- no PC tooling, no repo, no build. Route B needs a PC, SSH and
+this repo, and is the only one that can prove an install happened.
+
+## Route A -- SD card plus one ssh command (no repo, no build)
 
 1. Copy FwPkt.zip to the SD card root and EXTRACT it there, so the card ends up with a
    FwPkt/ folder containing camera/config, camera/uImage, camera/rootfs.ubifs and
@@ -142,14 +170,56 @@ prove an install happened.
 2. Copy polaris-astro.zip and polaris-wifi.zip to the SD card root and extract each.
    Both are rooted at their own directory with no wrapper, so they expand to
    polaris-astro/ and polaris-wifi/ directly on the card. Repeat every release.
-3. Reboot the camera. The reboot alone is the trigger; no command or marker file is
-   needed. Wi-Fi auto-join stays off until you create the file polaris-wifi/autojoin.
-4. Confirm by reading the firmware version in the app: it must show $DISPLAY_FWVER.
-   This is the only check available without a PC, and a reboot that did not flash looks
-   identical to one that did -- so read it, do not assume it.
+3. Copy astrometry-indexes.zip to the SD card root and extract it. It is rooted at
+   astrometry/, so it expands to <SD root>/astrometry/index-41xx.fits. This is a
+   one-time copy -- the index files themselves do not change between releases, so skip
+   it if the folder is already on the card. Note that the archive's SHA-256 below does
+   change from release to release even when the index files are identical: zip embeds
+   each file's build timestamp, so a different hash here is not evidence of a different
+   card payload. It is NOT inside polaris-astro.zip: without those index files
+   install_astro.sh prints "NO index files ... NOTHING WILL SOLVE" and the solver
+   never resolves a frame while everything else looks healthy.
+4. Run the installer over ssh:
+
+       ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
+
+   This is what installs the boot hook and copies the kit into /app/astro. Nothing
+   runs it for you: no shipped boot path calls install_astro.sh, so a card that has
+   simply been rebooted will flash the firmware from step 1 and then start nothing
+   astro-related. It also chains any pre-existing hook (the patcher's --ssh-key option
+   uses the same file), so ssh keeps working.
+
+   Run it after EVERY release, not just the first one. Flashing FwPkt replaces /app
+   wholesale, which deletes both /app/astro and the boot hook that was installed there.
+   A device that upgrades its firmware without re-running this command comes back on
+   the new firmware with no astro stack at all, and nothing tells you so.
+
+   The first line it prints is how much room /app has. That partition is 68 MB and a
+   flashed firmware image uses most of it, so "free on /app/astro" is often small. You may
+   also see a line saying the solve data stays on the SD card -- that is correct and
+   deliberate: every solver reads the catalogue from /app/sd/polaris-astro, which is where
+   step 2 put it, and /app is far too small to hold a copy. What must NOT be missing is the
+   line "boot hook installed".
+
+   Also look for "verified every manifest entry against /app/astro". If instead it says
+   "installed files are unverified", the polaris-astro folder on your card came from an
+   older release -- re-extract polaris-astro.zip from this one and run it again. Without
+   that verification an old server can stay in place while the install reports success.
+5. Reboot the camera. Wi-Fi auto-join stays off until you create the file
+   polaris-wifi/autojoin.
+6. Confirm two separate things, because they are independent and one passing does not
+   mean the other did:
+
+   - Firmware: read the version in the app. It must show $DISPLAY_FWVER. This is the
+     only check available without a PC, and a reboot that did not flash looks identical
+     to one that did -- so read it, do not assume it.
+   - Astro stack: open http://<polaris ip>:8090 in a browser on the same network. The
+     web UI appearing is the proof that the kit installed in step 4 actually started.
+     A correct firmware version with no page on port 8090 means step 4 was skipped or
+     did not finish.
 
 astro-bundle.tar.gz contains the same trees plus licences and manifests. It is for
-inspection, not for copying onto the card.
+inspection, not for copying onto the card, and it needs tar rather than unzip.
 
 ## Route B -- systematic install (maintainers)
 
@@ -159,6 +229,18 @@ Stages the extracted FwPkt tree, verifies every firmwareInfo MD5 on the device,
 records /proc/uptime before rebooting to prove the boot actually reset, and confirms
 build_id, both source commits and mandatory file SHA-256s afterwards. See
 docs/FIRMWARE-INSTALL-PROCESS.md.
+
+This flashes firmware only. It does not install, update, or restore the astro kit, and
+it prints installed-verified whether or not /app/astro exists. Flashing replaces /app,
+so on a device that already had the kit this leaves it gone -- server binary, scripts
+and boot hook all removed at once -- with the same installed-verified line at the end.
+Confirmed on-device upgrading to $DISPLAY_FWVER: after the flash /app/astro was empty
+and port 8090 closed, and the kit had to be reinstalled from the card:
+
+    ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
+
+Then reboot and check http://<polaris ip>:8090. installed-verified on its own is not
+evidence that the device can solve anything.
 
 | field | value |
 |---|---|
