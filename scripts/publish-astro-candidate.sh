@@ -179,7 +179,7 @@ prove an install happened.
    card payload. It is NOT inside polaris-astro.zip: without those index files
    install_astro.sh prints "NO index files ... NOTHING WILL SOLVE" and the solver
    never resolves a frame while everything else looks healthy.
-4. Run the installer once, over ssh:
+4. Run the installer over ssh:
 
        ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
 
@@ -188,11 +188,34 @@ prove an install happened.
    simply been rebooted will flash the firmware from step 1 and then start nothing
    astro-related. It also chains any pre-existing hook (the patcher's --ssh-key option
    uses the same file), so ssh keeps working.
+
+   Run it after EVERY release, not just the first one. Flashing FwPkt replaces /app
+   wholesale, which deletes both /app/astro and the boot hook that was installed there.
+   A device that upgrades its firmware without re-running this command comes back on
+   the new firmware with no astro stack at all, and nothing tells you so.
+
+   The first line it prints is how much room /app has. That partition is 68 MB and a
+   flashed firmware image uses most of it, so "free on /app/astro" is often small. If
+   the run ends with lines saying something "did not fit in /app/astro", that is
+   expected and harmless: the catalogue is read from the SD card, which is where step 2
+   put it. What must NOT be missing is the line "boot hook installed".
+
+   Also look for "verified every manifest entry against /app/astro". If instead it says
+   "installed files are unverified", the polaris-astro folder on your card came from an
+   older release -- re-extract polaris-astro.zip from this one and run it again. Without
+   that verification an old server can stay in place while the install reports success.
 5. Reboot the camera. Wi-Fi auto-join stays off until you create the file
    polaris-wifi/autojoin.
-6. Confirm by reading the firmware version in the app: it must show $DISPLAY_FWVER.
-   This is the only check available without a PC, and a reboot that did not flash looks
-   identical to one that did -- so read it, do not assume it.
+6. Confirm two separate things, because they are independent and one passing does not
+   mean the other did:
+
+   - Firmware: read the version in the app. It must show $DISPLAY_FWVER. This is the
+     only check available without a PC, and a reboot that did not flash looks identical
+     to one that did -- so read it, do not assume it.
+   - Astro stack: open http://<polaris ip>:8090 in a browser on the same network. The
+     web UI appearing is the proof that the kit installed in step 4 actually started.
+     A correct firmware version with no page on port 8090 means step 4 was skipped or
+     did not finish.
 
 astro-bundle.tar.gz contains the same trees plus licences and manifests. It is for
 inspection, not for copying onto the card, and it needs tar rather than unzip.
@@ -205,6 +228,18 @@ Stages the extracted FwPkt tree, verifies every firmwareInfo MD5 on the device,
 records /proc/uptime before rebooting to prove the boot actually reset, and confirms
 build_id, both source commits and mandatory file SHA-256s afterwards. See
 docs/FIRMWARE-INSTALL-PROCESS.md.
+
+This flashes firmware only. It does not install, update, or restore the astro kit, and
+it prints installed-verified whether or not /app/astro exists. Flashing replaces /app,
+so on a device that already had the kit this leaves it gone -- server binary, scripts
+and boot hook all removed at once -- with the same installed-verified line at the end.
+Confirmed on-device upgrading to $DISPLAY_FWVER: after the flash /app/astro was empty
+and port 8090 closed, and the kit had to be reinstalled from the card:
+
+    ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
+
+Then reboot and check http://<polaris ip>:8090. installed-verified on its own is not
+evidence that the device can solve anything.
 
 | field | value |
 |---|---|

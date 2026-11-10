@@ -198,6 +198,63 @@ busy or unrecognisable. The installer splits the reply on `#`, takes only the fr
 starting `286@`, and treats "no 286 frame" as idle (nothing answered the camera
 query). Only an explicit `286@...state:1` blocks a reboot.
 
+**4. `installed-verified` says nothing about the astro kit.** Upgrading the rig to
+`.104` with `release-fwpkt.sh` printed `Install status: installed-verified`,
+`build_id=v104`, `display_fwver=6.0.0.54.104` and `SP_EVENT_UPGRADE_SUCCESS` in
+Mlog — all true, all about the firmware alone. Afterwards `/app/astro` was empty,
+there was no boot hook, and port 8090 refused connections. The installer never
+mentions `/app/astro`, so a green run reads as "the device is ready" when the plate
+solver is gone entirely. See the next section.
+
+## Flashing firmware removes the astro kit
+
+Flashing replaces the whole `appfs` volume, and `/app/astro` lives on it. So every
+firmware flash deletes the astro stack **and** the boot hook that starts it:
+
+```
+before .104:  /app/astro/polaris-httpd present, /app/network_telnetd.sh = astro boot hook
+after  .104:  /app/astro absent, /app/network_telnetd.sh absent, port 8090 closed
+```
+
+Nothing warns about this. Route A step 4 and Route B both need
+`install_astro.sh` re-run after the flash, on every release, not just the first.
+Confirm it took by opening `http://<polaris ip>:8090` — a correct firmware version
+in the app is not evidence that the kit came back.
+
+**`/app` is 68 MB and a flashed image uses most of it.** Measured on the rig after
+the `.104` flash: `ubi1:ubifs 68.0M 68.0M 12.0K 100% /app`. `install_astro.sh`
+copied the 20 MB catalogue into `/app/astro`, hit `cp: write error: No space left
+on device`, and — because it runs under `set -e` and the catalogue copy sat *before*
+the boot hook — died there. The binaries had already landed, so the device looked
+installed while nothing could start. Two fixes:
+
+- The boot hook is now installed immediately after the manifest check, while space
+  is guaranteed, so a later failure costs optional data rather than autostart.
+- The catalogue copies go through `copy_optional()`, which reports what did not fit
+  and continues. Every consumer — `polaris-align.sh`, `polaris-guide.sh`,
+  `polaris-frame-watch.sh`, `polaris-autosolve.sh`, `polaris-astro-boot.sh` — reads
+  tiles from `/app/sd/polaris-astro/`, never from `/app/astro/`, so the mirror was
+  dead weight. Removing it on the rig took `/app` from 100% to 83%.
+
+Reproduced in `container/astro/test-install-enospc.sh`, which stubs `cp` to fail
+only on the optional payloads. Against the pre-fix installer it fails exactly as the
+device did — `polaris-httpd` installed, boot hook missing, exit 1.
+
+**No shipped astro candidate had a manifest.** `install_astro.sh` compares bytes
+against `polaris-astro.manifest`, and `build-astro-bundle.sh` has always generated
+one and failed closed if empty. But production runs
+`scripts/build-astro-candidate.sh`, which never created it — so every astro
+candidate published to date shipped `polaris-astro.zip` without one, the installer
+printed "installed files are unverified", and byte comparison silently never ran.
+That is the #292 silent no-op returning through packaging rather than code.
+
+Two bugs hid behind each other once it was fixed. `sha256sum` separates hash and
+name with **two** spaces, so the existing `${line#* }` parse left a leading space on
+every name and all 37 entries compared unequal; and scripts were copied *after*
+verification even though the manifest lists `*.sh`, so shipping a manifest would have
+made every install exit 1. Both are fixed, and `build-doctor.sh` section 8 now
+asserts the ordering statically, before a build starts.
+
 ## Do not copy files into `/app` directly
 
 `/app` is a writable UBIFS volume (`ubi1:ubifs on /app type ubifs (rw,relatime)`),
@@ -257,6 +314,11 @@ forgotten or improvised:
 6. Confirm the installer wrote `install_status=installed-verified` and
    `install-receipt.txt`; add the dated install record to `docs/CURRENT-STATE.md`,
    and save evidence under `docs/evidence/<candidate>-install-<date>/`.
+7. If the candidate carries an astro kit, re-run `install_astro.sh` after the flash
+   and confirm it printed both `boot hook installed` and `verified every manifest
+   entry`. "installed files are unverified" means the card holds an older kit.
+8. Open `http://<polaris ip>:8090`. The web UI is the only proof the kit survived
+   the flash; `installed-verified` on its own does not cover it.
 
 ## Related
 
@@ -264,3 +326,6 @@ forgotten or improvised:
 - `docs/LIBGPHOTO2-UPGRADE-PROCESS.md` — building a candidate
 - `scripts/verify-installed-build.sh` — the fail-closed identity comparison
 - `docs/evidence/o-v17b-install-20261019/INSTALL-VERIFICATION.md` — both traps, in full
+- `container/astro/test-install-enospc.sh` — reproduces the full-`/app` install failure
+  and asserts the boot hook survives it (`NOSPACE=0` runs the happy path,
+  `WITH_MANIFEST=1 TAMPER=1` asserts a stale binary is rejected)
