@@ -26,6 +26,44 @@
 - Not verified on hardware: no K-3 III is attached to this host. The claim that the
   body publishes no EV list is #269's own measurement (3/3 runs), not a new one.
 
+## Unreleased — `polaris-apsta.sh down` stopped nothing and left a dead resolver (issue #283)
+
+- `sta_down()` killed only `/tmp/apsta-wpa.pid` and `/tmp/apsta-dhcp.pid`, but
+  `polaris-autojoin.sh` starts its **own** supplicant and udhcpc under
+  `/tmp/autojoin-wpa.pid` and `/tmp/autojoin-dhcp.pid`. After a boot-time auto-join,
+  `down` therefore pulled the interface out from under two live processes: the
+  supplicant kept holding `/var/run/wpa_supplicant/<iface>` so the next scan
+  returned EBUSY, and udhcpc kept renewing a lease on an interface that no longer
+  existed. It reported "AP untouched" and exit 0 the whole time. `up` calls the
+  same function, which is why it could not recover either.
+- Teardown now stops both pidfile pairs, clears the control socket, and removes
+  the lease resolver. The `deconfig` branch in `udhcpc.script` was always the right
+  place for the resolver cleanup but nothing ever sent it — BusyBox udhcpc calls
+  its hook only for bind/renew/rebind, and a plain `kill` is not one of those — so
+  the cleanup moved to where the teardown actually happens. Only a file carrying
+  our own marker line is removed; a firmware- or operator-owned `/etc/resolv.conf`
+  is left alone.
+- Pidfiles are verified against the process's command line before anything is
+  signalled. A pidfile left by an earlier run can name a pid the kernel has since
+  handed to something unrelated, and killing it blind would take out an unrelated
+  process — worse than the bug being fixed. Stale pidfiles are removed and reported
+  rather than skipped silently.
+- The watchdog's timeout revert now calls `sta_down()` instead of keeping its own
+  partial copy, which used to kill two pidfiles and leave `/etc/resolv.conf`
+  pointing at a router it never got a route to — the same symptom, reached another
+  way.
+- `tests/test_apsta_down_stops_station.py` runs the real script against stubs and
+  asserts on what it did. `kill` is a shell builtin, so a PATH stub does not
+  intercept it (verified: the builtin wins and the real signal goes out) — the
+  tests instead spawn children they own and assert those children are actually
+  dead, so the kill is genuinely exercised and only ever against processes the
+  test started. Confirmed non-vacuous: against the pre-fix script 6 of 11 fail,
+  including "autojoin supplicant survives `down`". Registered in
+  `tests/run_prerelease_gate.sh`.
+- Not verified on hardware — no device reachable from this session, and #284's card
+  corruption would contaminate filesystem evidence anyway. The pidfile mismatch is
+  #283's own device observation; what was verified here is the teardown logic.
+
 ## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
 
 - `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
