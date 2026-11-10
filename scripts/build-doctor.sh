@@ -426,6 +426,60 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+sect "7. Shipped scripts must carry an exec bit in git"
+
+# 6.0.0.54.102 shipped eight .sh files at mode 0644 inside polaris-astro.zip because
+# they are committed 100644 here and the build preserves that mode. On the device
+# polaris-goto-solve.sh is guarded by '[ ! -x ] && exit 2' so it aborts, while
+# frame-watch, goto-watch and pointing-model are guarded by '[ -x ]' and silently
+# disable -- features that stop working while everything reports success. The
+# archive-level gate catches this after a build, roughly fifteen minutes too late and
+# only if someone builds; this catches it before one starts.
+#
+# Checked against git's recorded mode, not the working tree: a locally chmod'd file
+# hides nothing, because the commit is what gets archived.
+OFFENDERS=""
+while IFS= read -r line; do
+    mode=${line%% *}
+    path=${line#*$'\t'}
+    case "$path" in *.sh) ;; *) continue ;; esac
+    head -c2 "$ROOT/$path" 2>/dev/null | grep -q '^#!' || continue
+    [ "$mode" = "100755" ] || OFFENDERS="$OFFENDERS$path "
+done < <(git -C "$ROOT" ls-files -s -- container/astro/ondisk 2>/dev/null)
+if [ -n "$OFFENDERS" ]; then
+    bad "shipped scripts with a shebang but no exec bit:$OFFENDERS"
+    hint "chmod +x and commit. They will ship non-executable and the device will"
+    hint "either exit 2 or silently disable the feature that uses them."
+else
+    ok "every shipped ondisk script is mode 100755 in git"
+fi
+
+# ---------------------------------------------------------------------------
+sect "8. Publication path"
+
+# Publishing clones PrivateResearch into ${TMPDIR:-/tmp} unless a clean checkout is
+# supplied. That repo is ~26 GB: the first v102 publish died on SIGTERM mid-clone
+# because the clone could not finish inside the window, and /tmp here is far smaller
+# than the clone. This is checked before the build so it is not discovered after it.
+PR_TMP="${TMPDIR:-/tmp}"
+PR_FREE_KB=$(df -Pk "$PR_TMP" 2>/dev/null | awk 'NR==2{print $4}')
+if [ -n "${PR_CHECKOUT:-}" ] && [ -d "${PR_CHECKOUT:-}/.git" ]; then
+    if [ -n "$(git -C "$PR_CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null)" ]; then
+        bad "PR_CHECKOUT is dirty: $PR_CHECKOUT"
+        hint "publish-astro-candidate.sh refuses a dirty publication checkout by design."
+    else
+        ok "publication checkout clean and usable: $PR_CHECKOUT"
+    fi
+elif [ -n "$PR_FREE_KB" ] && [ "$PR_FREE_KB" -lt 30000000 ]; then
+    warn "${PR_TMP} has only $((PR_FREE_KB / 1024)) MB free; a fresh PrivateResearch clone needs ~26 GB"
+    hint "publish-astro-candidate.sh clones PrivateResearch into ${TMPDIR:-/tmp} by default."
+    hint "Point PR_CHECKOUT at an existing clean clone instead of cloning each time, e.g."
+    hint "  --checkout /home/ian/pr-publish"
+else
+    ok "${PR_TMP} has room for a fresh PrivateResearch clone ($(( ${PR_FREE_KB:-0} / 1024 )) MB free)"
+fi
+
+# ---------------------------------------------------------------------------
 printf '\n============================================================\n'
 if [ "$FAIL" -eq 0 ]; then
     printf 'DOCTOR: GREEN -- %d checks passed, %d warning(s).\n' "$PASS" "$WARN"
