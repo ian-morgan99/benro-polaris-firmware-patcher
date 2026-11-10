@@ -112,11 +112,16 @@ test('a cancelled B reports the terminal outcome, not success', function () {
   assert.notStrictEqual(r.phase, 'queued');
 });
 
-test('a stop that lands before any exposure started is unknown, not "shot"', function () {
-  const pending = { sentAt: 1000, countBefore: 7, mode: 'B', bulbSeconds: 30,
-                    sawStarted: false, sawWriting: false };
+test('a bare state:0 is still a completion, not "unknown"', function () {
+  /* /api/link caches one entry per opcode, so a fast capture is observed only at
+   * its final value -- the intermediate states overwrite each other between polls.
+   * Requiring a sighting of state:1/4 first would report ordinary successful
+   * captures as "no confirmation", which is a false failure and worse than the
+   * false success this module exists to remove. */
+  const pending = { sentAt: 1000, countBefore: 7, mode: 'M', sawStarted: false,
+                    sawWriting: false };
   const r = S.reconcile(pending, { args: 'state:0;', count: 9 }, 2000);
-  assert.strictEqual(r.phase, 'unknown');
+  assert.strictEqual(r.phase, 'complete');
   assert.strictEqual(r.terminal, true);
 });
 

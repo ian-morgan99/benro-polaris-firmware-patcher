@@ -145,16 +145,24 @@ function reconcile(pending, reply, now) {
     var st = shotStateOf(reply.args);
 
     if (st === 0) {
-      /* state:0 after having seen the capture actually progress is a completion.
-       * state:0 with nothing before it is ambiguous -- it can be the head
-       * echoing an idle state, or a stop that landed before any exposure
-       * started. Report it honestly rather than as "shot". */
-      if (pending.sawStarted) {
-        return { phase: pending.sawWriting ? 'published' : 'complete',
-                 terminal: true };
-      }
-      return { phase: 'unknown', terminal: true,
-               reason: 'the head reported idle without ever reporting an exposure' };
+      /* state:0 is the completion signal, and it is accepted on its own.
+       *
+       * An earlier version required having first seen an intermediate state
+       * before calling this a success. That was wrong, and here is why: /api/link
+       * caches ONE entry per opcode, so a capture that runs state:1 -> 4 -> 0
+       * inside one 500 ms poll window is observed only as its final value. The
+       * intermediate states are not queued, they overwrite each other. Requiring
+       * one would turn ordinary fast captures into "no confirmation" -- a false
+       * failure, which is the same class of defect as the false success this file
+       * exists to remove.
+       *
+       * Grepping the head's own log for outbound 264 replies returns nothing on
+       * this build (only inbound 'rcv msg from App' lines are recorded), so there
+       * is no evidence that intermediate states are ever observable at all. Do not
+       * invent a precondition that depends on them.
+       */
+      return { phase: pending.sawWriting ? 'published' : 'complete',
+               terminal: true };
     }
 
     if (st !== null && st < 0) {

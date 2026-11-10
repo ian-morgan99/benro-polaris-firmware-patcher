@@ -307,6 +307,12 @@ PY_TESTS=(
     # changed. These tests pin the absolute-path rule and check that the doctor no
     # longer advises creating the very shim that causes it.
     tests/test_host_docker_resolution.py
+    # Added for #309: the WebUI shutter dispatch. Offline-safe -- it shells out to
+    # node against container/astro/webui/shutter.js, which is DOM-free by design so
+    # the payload strings can be asserted without a browser or a device. The gate's
+    # own drift guard is what caught this: the suite existed but was not listed here,
+    # so it would have run on nothing at all.
+    tests/test_astro_shutter_node.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
