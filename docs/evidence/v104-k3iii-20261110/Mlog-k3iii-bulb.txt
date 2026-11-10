@@ -1,0 +1,9 @@
+[m[m[10:27:54:051 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[10:27:54:051 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[10:28:08:020 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[264],val[state:-1;/app/sd/normal/SP_0587.jpg]
+[m[m[10:28:08:020 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[264],val[state:-1]
+[m[m[10:28:08:020 [1;31mERROR[m-]:SP_MsgFromCameraProc[1343]:[0;32;31mPHOTO_RECORD Fail
+[m[10:28:17:010 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:11.87;capacity:89;ChargeState:1;
+[m[10:28:17:010 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:89;charge:1;]
+[m[m[10:28:24:135 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[10:28:24:136 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]

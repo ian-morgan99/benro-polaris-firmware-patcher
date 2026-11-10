@@ -1,0 +1,251 @@
+[m[m[10:35:51:612 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:265;val:-1
+[m[10:35:51:612 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[10:35:51:691 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:268;val:-1
+[m[10:35:51:692 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:275;val:-1
+[m[10:35:51:692 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:267;val:-1
+[m[10:35:51:692 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:266;val:-1
+[m[10:35:51:692 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[10:35:51:692 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[10:35:51:692 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[10:35:51:692 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[10:35:52:018 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:52:018 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:52:018 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[10:35:52:018 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 2
+[m[10:35:52:018 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[2] para 400
+[m[10:35:52:018 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 400
+[m[10:35:52:018 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[10:35:52:051 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:52:051 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:52:051 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,]
+[m[10:35:52:051 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[10:35:52:051 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00-01
+[m[10:35:52:051 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[10:35:52:051 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[10:35:52:051 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[10:35:52:052 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 2;
+[m[10:35:52:055 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:52:056 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:52:056 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[10:35:52:056 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 17
+[m[10:35:52:056 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[17] para f/3.2
+[m[10:35:52:056 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 3.200000 
+[m[10:35:52:056 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 17 
+[m[10:35:52:056 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[10:35:52:705 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:52:705 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:53:679 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:265;val:-1
+[m[10:35:53:680 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[10:35:53:682 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:268;val:-1
+[m[10:35:53:682 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[8]:type:0;code:0;val:
+[m[10:35:53:682 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:275;val:-1
+[m[10:35:53:682 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:267;val:-1
+[m[10:35:53:682 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:266;val:-1
+[m[10:35:53:683 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[10:35:53:683 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[10:35:53:683 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[10:35:53:683 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[10:35:54:457 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:54:457 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:54:457 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[10:35:54:457 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 2
+[m[10:35:54:457 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[2] para 400
+[m[10:35:54:457 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 400
+[m[10:35:54:457 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[10:35:54:494 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:54:494 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:54:494 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,]
+[m[10:35:54:495 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[10:35:54:495 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00-01
+[m[10:35:54:495 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[10:35:54:495 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[10:35:54:495 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[10:35:54:495 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 2;
+[m[10:35:54:499 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:54:499 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:54:499 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[10:35:54:500 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 17
+[m[10:35:54:500 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[17] para f/3.2
+[m[10:35:54:500 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 3.200000 
+[m[10:35:54:500 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 17 
+[m[10:35:54:500 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[10:35:55:231 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:55:231 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:55:402 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[10:35:55:402 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[10:35:55:402 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:265;val:-1
+[m[10:35:55:403 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[10:35:55:405 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:55:405 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:55:405 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[10:35:55:405 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 2
+[m[10:35:55:405 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[2] para 400
+[m[10:35:55:405 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 400
+[m[10:35:55:405 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[10:35:55:407 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:268;val:-1
+[m[10:35:55:407 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:275;val:-1
+[m[10:35:55:407 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:267;val:-1
+[m[10:35:55:407 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:266;val:-1
+[m[10:35:55:407 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[10:35:55:407 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[10:35:55:407 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[10:35:55:407 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[10:35:55:409 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:55:409 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:55:409 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,]
+[m[10:35:55:410 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[10:35:55:410 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00-01
+[m[10:35:55:410 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[10:35:55:410 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[10:35:55:410 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[10:35:55:410 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 2;
+[m[10:35:55:428 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:55:428 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:55:428 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[10:35:55:428 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 17
+[m[10:35:55:429 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[17] para f/3.2
+[m[10:35:55:429 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 3.200000 
+[m[10:35:55:429 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 17 
+[m[10:35:55:429 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[10:35:56:348 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:56:348 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:56:516 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:265;val:-1
+[m[10:35:56:516 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[10:35:56:533 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:56:534 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:35:56:534 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[10:35:56:534 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 2
+[m[10:35:56:534 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[2] para 400
+[m[10:35:56:534 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 400
+[m[10:35:56:534 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[10:35:56:595 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:268;val:-1
+[m[10:35:56:595 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:275;val:-1
+[m[10:35:56:595 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:267;val:-1
+[m[10:35:56:595 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:266;val:-1
+[m[10:35:56:595 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[10:35:56:595 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[10:35:56:595 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[10:35:56:595 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[10:35:56:616 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:56:616 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:35:56:616 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,]
+[m[10:35:56:616 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[10:35:56:616 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00-01
+[m[10:35:56:616 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[10:35:56:616 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[10:35:56:616 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[10:35:56:617 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 2;
+[m[10:35:56:619 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:56:619 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:35:56:619 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[10:35:56:619 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 17
+[m[10:35:56:619 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[17] para f/3.2
+[m[10:35:56:619 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 3.200000 
+[m[10:35:56:620 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 17 
+[m[10:35:56:620 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[10:35:57:301 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:11.93;capacity:91;ChargeState:1;
+[m[10:35:57:301 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:91;charge:1;]
+[m[m[10:35:57:651 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:57:651 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:2;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:35:58:413 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:259;val:wb:0;
+[m[10:35:58:413 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[259],val[wb:0;]
+[m[m[10:35:59:605 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[259],val[wb:0;ret:0;]
+[m[m[10:35:59:605 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[259],val[wb:0;ret:0;]
+[m[m[10:35:59:605 [1;32mINFO[m-]:SP_MsgFromCameraProc[1181]:SP_SET_WB OK
+[m[10:36:00:009 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:259;val:wb:0;
+[m[10:36:00:009 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[259],val[wb:0;]
+[m[m[10:36:00:323 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[259],val[wb:0;ret:0;]
+[m[m[10:36:00:323 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[259],val[wb:0;ret:0;]
+[m[m[10:36:00:323 [1;32mINFO[m-]:SP_MsgFromCameraProc[1181]:SP_SET_WB OK
+[m[10:36:01:956 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:265;val:-1
+[m[10:36:01:957 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[10:36:01:959 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:268;val:-1
+[m[10:36:01:960 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:275;val:-1
+[m[10:36:01:960 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:267;val:-1
+[m[10:36:01:960 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:266;val:-1
+[m[10:36:01:960 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[10:36:01:960 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[10:36:01:960 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[10:36:01:960 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[10:36:02:994 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:36:02:994 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:36:02:994 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[10:36:02:994 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 2
+[m[10:36:02:994 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[2] para 400
+[m[10:36:02:994 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 400
+[m[10:36:02:994 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[10:36:03:082 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:36:03:082 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:36:03:082 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,]
+[m[10:36:03:082 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[10:36:03:082 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00-01
+[m[10:36:03:082 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[10:36:03:082 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[10:36:03:082 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[10:36:03:082 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 2;
+[m[10:36:03:126 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:36:03:126 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:36:03:126 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[10:36:03:126 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 17
+[m[10:36:03:126 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[17] para f/3.2
+[m[10:36:03:126 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 3.200000 
+[m[10:36:03:126 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 17 
+[m[10:36:03:126 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[10:36:03:803 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:36:03:803 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:36:04:080 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:265;val:-1
+[m[10:36:04:080 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[10:36:04:084 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:36:04:084 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[m[m[10:36:04:084 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
+[m[10:36:04:084 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 2
+[m[10:36:04:084 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[2] para 400
+[m[10:36:04:084 [1;32mINFO[m-]:SP_GetCameraIso[228]:ISO 400
+[m[10:36:04:085 [1;32mINFO[m-]:SP_GetCameraIsoSort[214]:[0;35meSortIso = 1;
+[m[10:36:04:089 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:268;val:-1
+[m[10:36:04:089 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:275;val:-1
+[m[10:36:04:089 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[m[10:36:04:089 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:267;val:-1
+[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[10:36:04:089 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[m[10:36:04:089 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[0;32;32mrcv msg from App[8]:type:1;code:266;val:-1
+[m[10:36:04:089 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[10:36:04:089 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]
+[m[m[10:36:04:091 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:36:04:091 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[268],val[RD:0;V:0;R:00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,;]
+[m[m[10:36:04:091 [1;32mINFO[m-]:SP_MsgFromCameraProc[1266]:shutterString[00-01,00-02,00-03,00-04,00-05,00-06,00-08,00-10,00-13,00-15,00-20,00-25,00-30,]
+[m[10:36:04:091 [1;32mINFO[m-]:SP_MsgFromCameraProc[1271]:shutterString index 0
+[m[10:36:04:092 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[0] para 00-01
+[m[10:36:04:092 [1;32mINFO[m-]:SP_GetCameraShutter[405]:0.000000
+[m[10:36:04:092 [1;32mINFO[m-]:SP_GetCameraShutter[410]:u32ShutterUs 0 
+[m[10:36:04:092 [1;32mINFO[m-]:SP_GetCameraShutter[412]:u32ShutterIndex 0 
+[m[10:36:04:092 [1;32mINFO[m-]:SP_GetCameraShutterSort[369]:[0;35meSortShutter = 2;
+[m[10:36:04:094 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:36:04:095 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[275],val[RD:0;V:17;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[m[m[10:36:04:095 [1;32mINFO[m-]:SP_MsgFromCameraProc[1288]:fNumString[f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,]
+[m[10:36:04:095 [1;32mINFO[m-]:SP_MsgFromCameraProc[1293]:fNumString index 17
+[m[10:36:04:095 [1;32mINFO[m-]:SP_GetCameraPara[165]:index[17] para f/3.2
+[m[10:36:04:095 [1;32mINFO[m-]:SP_GetCameraFNum[675]:[0;35mf32FNum 3.200000 
+[m[10:36:04:095 [1;32mINFO[m-]:SP_GetCameraFNum[677]:u32FNumIndex 17 
+[m[10:36:04:095 [1;32mINFO[m-]:SP_GetCameraFNumSort[652]:[0;35meSortFNum = 2;
+[m[10:36:05:197 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[266],val[RD:0;V:0;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:36:05:197 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[266],val[RD:0;V:0;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[m[m[10:36:05:253 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:259;val:wb:1;
+[m[10:36:05:253 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[259],val[wb:1;]
+[m[m[10:36:05:574 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[259],val[wb:1;ret:0;]
+[m[m[10:36:05:574 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[259],val[wb:1;ret:0;]
+[m[m[10:36:05:574 [1;32mINFO[m-]:SP_MsgFromCameraProc[1181]:SP_SET_WB OK
+[m[10:36:06:505 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:259;val:wb:1;
+[m[10:36:06:506 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[259],val[wb:1;]
+[m[m[10:36:06:842 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[259],val[wb:1;ret:0;]
+[m[m[10:36:06:842 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[259],val[wb:1;ret:0;]
+[m[m[10:36:06:842 [1;32mINFO[m-]:SP_MsgFromCameraProc[1181]:SP_SET_WB OK
+[m[10:36:08:809 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:265;val:-1
+[m[10:36:08:809 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[265],val[-1]
+[m[m[10:36:08:880 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:268;val:-1
+[m[10:36:08:880 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:275;val:-1
+[m[10:36:08:880 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:267;val:-1
+[m[10:36:08:880 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[8]:type:1;code:266;val:-1
+[m[10:36:08:880 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[268],val[-1]
+[m[m[10:36:08:880 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[275],val[-1]
+[m[m[10:36:08:880 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[267],val[-1]
+[m[m[10:36:08:880 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[266],val[-1]

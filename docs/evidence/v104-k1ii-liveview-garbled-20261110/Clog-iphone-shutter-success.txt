@@ -1,0 +1,37 @@
+[pentax] capture=3 boundary=initiate-enter focus=2 companions=0
+[pentax] capture=3 boundary=initiate-return ptp=0x2001
+New file is in location /IMGP4086.DNG on the camera
+--- new file name IMGP4086.DNG
+[m[10:31:48:281 [1;32mINFO[m-]:captureImageEvent[1339]:[0;32;31m----captureImageEvent:0  Path:IMGP4086.DNG
+[m[10:31:48:281 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:4;IMGP4086.DNG]
+[m[m[10:31:48:481 [1;32mINFO[m-]:capture_image[3096]:----ARG_CAPTURE_IMAGE  0
+[m[10:31:48:582 [1;32mINFO[m-]:capture_image[3164]:----capture end   -3055 ms
+[m[10:31:48:582 [1;32mINFO[m-]:getImageToBuffer[2889]:[0;32;31m----gp_list_count  1  
+[m[10:31:48:582 [1;32mINFO[m-]:getImageToBuffer[2899]:[0;32;31m----gp_filesystem_get_file111  
+[m[10:31:48:688 [1;32mINFO[m-]:getImageToBuffer[2912]:[0;32;31m----gp_filesystem_get_file /IMGP4086.DNG ret = 0  
+[m[10:31:48:794 [1;32mINFO[m-]:getImageToBuffer[2940]:[0;32;31m----gp_file_get_data_and_size IMGP4086.DNG ret = 0  
+[m[10:31:48:803 [1;32mINFO[m-]:getImageToBuffer[2944]:[0;32;31m----gp_camera_file_delete IMGP4086.DNG ret = 0  
+[m[10:31:48:811 [1;32mINFO[m-]:capture_image[3171]:----get file to buffer   -229 ms
+[m[10:31:48:811 [1;32mINFO[m-]:capture_image[3176]:----capture out    
+[m[10:31:48:813 [1;32mINFO[m-]:captureImage[1579]:[m[10:31:48:813 [1;32mINFO[m-]:saveCaptureImage[1300]:[0;32;31m----will saveCaptureImage  sPath:./IMGP4086.DNG
+[0;32;31m----captureImage ret 0  p:  ./IMGP4086.DNG ; 
+[m[10:31:48:813 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:2;/app/sd/normal/SP_0588.jpg]
+[m[m[10:31:49:067 [1;32mINFO[m-]:savePhotoToAblum[1276]:[0;32;31m----savePhotoToAblum  /app/sd/normal/SP_0588.dng  ;ret 0 
+[m[10:31:49:067 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:3;/app/sd/normal/SP_0588.dng]
+[m[m[10:31:49:077 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:5; ]
+[mPentax preview stage get-frame returned 0x2001 (59556 bytes, 1 attempts, 18 ms).
+[m[10:31:50:481 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+Pentax preview stage get-frame returned 0x2001 (59653 bytes, 1 attempts, 16 ms).
+----handle_sign_pipe
+on client close..........2 
+Pentax preview stage get-frame returned 0x2001 (59408 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (59424 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (59400 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (59451 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (59514 bytes, 1 attempts, 20 ms).
+Pentax preview stage get-frame returned 0x2001 (59372 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (59529 bytes, 1 attempts, 19 ms).
+Pentax preview stage get-frame returned 0x2001 (59294 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (59487 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (59456 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (59439 bytes, 1 attempts, 17 ms).

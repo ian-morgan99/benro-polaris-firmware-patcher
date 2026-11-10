@@ -1,0 +1,54 @@
+Pentax preview stage get-frame returned 0x2001 (60135 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60021 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60180 bytes, 1 attempts, 20 ms).
+Pentax preview stage get-frame returned 0x2001 (60209 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60081 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60120 bytes, 1 attempts, 19 ms).
+Pentax preview stage get-frame returned 0x2001 (60089 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (59909 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60012 bytes, 1 attempts, 22 ms).
+Pentax preview stage get-frame returned 0x2001 (59923 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (59954 bytes, 1 attempts, 16 ms).
+[m[10:24:06:489 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[261],val[s:3;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 261  data: s:3;   --_isInit 1 
+
+*** Error ***              
+Failed to set new configuration value 3 for configuration entry shutterspeed.
+[m[10:24:07:441 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 3  value: 3 ret -6 
+[m[10:24:07:441 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[261],val[s:3;ret:-6;]
+[mPentax preview stage get-frame returned 0x2001 (59890 bytes, 1 attempts, 15 ms).
+[m[10:24:09:953 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[261],val[s:11;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 261  data: s:11;   --_isInit 1 
+
+*** Error ***              
+Failed to set new configuration value 11 for configuration entry shutterspeed.
+[m[10:24:10:794 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 31  info shutterspeed=11 ret -6 
+[m[10:24:10:794 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 3  value: 11 ret -6 
+[m[10:24:10:794 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[261],val[s:11;ret:-6;]
+[mPentax preview stage get-frame returned 0x2001 (59917 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (59691 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (59754 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (59775 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (59660 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (59741 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (59698 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (59590 bytes, 1 attempts, 16 ms).
+[m[10:24:27:127 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[276],val[fNum:18;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 276  data: fNum:18;   --_isInit 1 
+[m[10:24:28:562 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 7  value: 18 ret 0 
+[m[10:24:28:562 [1;32mINFO[m-]:camera_set_aperture[790]:[0;32;31m----camera_set_aperture configType 7  value: 18 ret 0 
+[m[10:24:28:562 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[276],val[fNum:18;ret:0;]
+[m[m[10:24:28:563 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 8  ret 0 
+[m[10:24:28:564 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:16;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[mPentax preview stage get-frame returned 0x2001 (59738 bytes, 1 attempts, 15 ms).
+[m[10:24:29:026 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[261],val[s:8;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 261  data: s:8;   --_isInit 1 
+
+*** Error ***              
+Failed to set new configuration value 8 for configuration entry shutterspeed.
+[m[10:24:29:168 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 31  info shutterspeed=8 ret -6 
+[m[10:24:29:168 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 3  value: 8 ret -6 
+[m[10:24:29:168 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[261],val[s:8;ret:-6;]
+[m[m[10:24:31:494 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 8  ret 0 
+[m[10:24:31:494 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[275],val[RD:0;V:18;R:f/22,f/20,f/18,f/16,f/14,f/13,f/11,f/10,f/9,f/8,f/7.1,f/6.3,f/5.6,f/5,f/4.5,f/4,f/3.5,f/3.2,f/2.8,;]
+[mPentax preview stage get-frame returned 0x2001 (59715 bytes, 1 attempts, 17 ms).

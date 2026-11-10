@@ -1,0 +1,132 @@
+[m[m[10:49:08:729 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:730 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:851 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:851 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:974 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:974 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:090 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:090 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:179 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:179 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:179 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:179 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:179 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:179 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:179 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:179 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:179 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:180 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:180 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:180 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:180 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:180 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:203 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:204 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:204 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:204 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:204 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:204 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:204 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:204 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:207 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:207 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:292 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:292 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:327 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:327 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:347 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:348 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:348 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:348 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:451 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:451 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:498 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:09:498 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:09:578 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:578 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:702 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:702 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:180 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:180 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:309 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:309 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:453 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:453 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:578 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:579 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:704 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:704 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:828 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:828 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:948 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:948 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:078 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:078 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:198 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:198 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:322 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:322 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:446 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:446 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:567 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:567 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:694 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:694 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:800 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:800 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:15:247 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:12.05;capacity:94;ChargeState:1;
+[m[10:49:15:247 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:94;charge:1;]
+[m[m[10:49:23:588 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:23:588 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:23:701 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:23:701 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:24:708 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:24:708 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:24:708 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:1;
+[m[10:49:24:708 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:24:708 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:24:708 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:1;]
+[m[m[10:49:25:208 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:25:208 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:25:361 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:25:361 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:25:470 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:25:470 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:25:498 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:0;
+[m[10:49:25:498 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:0;]
+[m[m[10:49:25:616 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:25:616 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:26:384 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361c0000255a ;
+[m[10:49:26:385 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361c0000255a ;]
+[m[m[10:49:50:819 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:0;
+[m[10:49:50:820 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:0;]
+[m[m[10:49:51:298 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:0;
+[m[10:49:51:299 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:0;]
+[m[m[10:49:51:619 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:51:619 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:51:747 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:51:748 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:52:376 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:1;
+[m[10:49:52:376 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:1;]
+[m[m[10:49:52:575 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:1;
+[m[10:49:52:576 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:1;]
+[m[m[10:49:53:319 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:53:319 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:53:441 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:53:441 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:53:479 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:53:479 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:53:591 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:53:591 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:53:768 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:1;code:262;val:mod:1;f:2;
+[m[10:49:53:768 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[262],val[mod:1;f:2;]
+[m[m[10:49:53:926 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:53:926 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:1;f:2;ret:0;]

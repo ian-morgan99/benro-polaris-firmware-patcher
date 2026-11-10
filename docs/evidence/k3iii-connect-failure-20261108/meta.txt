@@ -1,0 +1,23 @@
+== identity ==
+FwVer:6.0.0.54.97;date:2026.11.06;
+Linux (none) 4.9.37 #59 SMP Wed Sep 4 12:29:11 CST 2024 armv7l GNU/Linux
+ 23:48:05 up 11 min,  1 users,  load average: 1.23, 1.17, 0.72
+== provenance ==
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=3fb26e536ac169e4970d69516a9d45daf62563f5
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=5dbd19d81da9b29fa246bc94fb83708d63d496e9
+patcher_dirty_diff_hash=
+selected_camlibs=ptp2,pentax
+legacy_usbscsi=1
+build_id=astro-v97-liveview-diag-20261106
+display_fwver=6.0.0.54.97
+== processes ==
+  248 root       0:02 ./polestar_app
+  249 root       0:12 /app/lib/stage2/pgphoto.stage2ondisk
+== mounts ==
+/dev/mmcblk0p1 /app/sd vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=continue 0 0

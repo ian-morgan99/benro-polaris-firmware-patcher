@@ -1,0 +1,24 @@
+[m[10:28:08:009 [1;32mINFO[m-]:capture_image_with_Bulb[3321]:----blub timeout
+[m[10:28:08:020 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:-1;/app/sd/normal/SP_0587.jpg]
+[m[m[10:28:08:021 [1;32mINFO[m-]:captureBulbImage[1458]:[0;32;31m----captureBulbImage ret -1  p:   ; 
+Pentax preview stage get-frame returned 0x0000 (0 bytes, 0 attempts, 0 ms).
+Pentax preview stage restore-after-frame returned 0x2001.
+[stage2] preview: unknown error class (ret=-112) -- surfacing the original code without relabelling as CAMERA_BUSY and without arming the transient backoff (issue #127)
+Pentax preview stage get-frame returned 0x2001 (62107 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (61942 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (62049 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (62110 bytes, 1 attempts, 25 ms).
+Pentax preview stage get-frame returned 0x2001 (62014 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (61952 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (61941 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (61844 bytes, 1 attempts, 19 ms).
+Pentax preview stage get-frame returned 0x2001 (61868 bytes, 1 attempts, 18 ms).
+Pentax preview stage get-frame returned 0x2001 (62054 bytes, 1 attempts, 18 ms).
+Pentax preview stage get-frame returned 0x2001 (61851 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (58723 bytes, 1 attempts, 33 ms).
+Pentax preview stage get-frame returned 0x2001 (62081 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (61984 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (62180 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (62076 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (62222 bytes, 1 attempts, 23 ms).
+Pentax preview stage get-frame returned 0x2001 (62141 bytes, 1 attempts, 15 ms).

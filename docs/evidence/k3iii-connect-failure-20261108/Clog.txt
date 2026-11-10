@@ -1,0 +1,28 @@
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 285
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 290
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 295
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 300
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 305
+[m[23:41:38:382 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 310
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 315
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 320
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 325
