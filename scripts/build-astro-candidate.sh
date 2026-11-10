@@ -164,11 +164,10 @@ mkdir -p "$OUT"
 # Prerequisites, checked BEFORE the first build step (#306 follow-up).
 #
 # The doctor used to run only inside scripts/build-astro.sh, which this script
-calls
-# at step [2/7]. Step [1/7] is patch-polaris.sh -- the long camera build -- so on
-# 2026-11-09 a broken host was discovered *after* the expensive part had already
-# been attempted, and the failure surfaced as "no usable docker" from a script that
-# had nothing to do with the cause. Checking here moves that to seconds.
+# calls at step [2/7]. Step [1/7] is patch-polaris.sh -- the long camera build --
+# so on 2026-11-09 a broken host was discovered *after* the expensive part had
+# already been attempted, and the failure surfaced as "no usable docker" from a
+# script that had nothing to do with the cause. Checking here moves that to seconds.
 #
 # Provision first so the doctor sees the environment the build will actually use,
 # otherwise it reports blockers this wrapper would have handled anyway: TMPDIR must
