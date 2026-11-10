@@ -1,0 +1,111 @@
+[m[09:55:59:642 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[4],code[264],val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0585.jpg;c:-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 4 command: 264  data: state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0585.jpg;c:-1   --_isInit 1 
+[m[09:55:59:642 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:1;/app/sd/normal/SP_0585.jpg]
+[m[m[09:55:59:642 [1;32mINFO[m-]:captureImage[1485]:[0;32;31m----will captureImage status:1  focus:-1000  sPath:/app/sd/normal/SP_0585.jpg
+[m[09:55:59:642 [1;32mINFO[m-]:current_shutter[1719]:[0;32;31m----get_current_shutter 111  0 
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1702]:Label: Shutter Speed
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1783]:Current: 4/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 00-30
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 00-25
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 00-20
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 00-15
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 00-13
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 00-10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 00-08
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 00-06
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 00-05
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 00-04
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 00-03
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 25/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 00-02
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 16/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 13/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 00-01
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 8/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 6/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 18 5/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 19 4/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 20 3/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 21 1/4
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 22 1/5
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 23 1/6
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 24 1/8
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 25 1/10
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 26 1/13
+[m[09:55:59:747 [1;32mINFO[m-]:print_widget[1787]:Choice: 27 1/15
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 28 1/20
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 29 1/25
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 30 1/30
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 31 1/40
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 32 1/50
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 33 1/60
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 34 1/80
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 35 1/100
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 36 1/125
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 37 1/160
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 38 1/200
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 39 1/250
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 40 1/320
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 41 1/400
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 42 1/500
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 43 1/640
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 44 1/800
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 45 1/1000
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 46 1/1250
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 47 1/1600
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 48 1/2000
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 49 1/2500
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 50 1/3200
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 51 1/4000
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 52 1/5000
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 53 1/6400
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 54 1/8000
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1787]:Choice: 55 00-00
+[m[09:55:59:748 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[09:55:59:748 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info shutterspeed ret 0 
+[m[09:55:59:749 [1;32mINFO[m-]:updateCaptureInfo[622]:[0;32;31m----shutter speed  0.400000  
+[m[09:55:59:749 [1;32mINFO[m-]:current_shutter[1724]:[0;32;31m----get_current_shutter 22 0
+[m[09:55:59:749 [1;32mINFO[m-]:current_shutter[1735]:[0;32;31m----current_shutter  configInfo:s:4/10;  ret:0  sValue 4/10 
+[m[09:55:59:752 [1;32mINFO[m-]:print_widget[1702]:Label: Image Format
+[m[09:55:59:753 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[09:55:59:753 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[09:55:59:753 [1;32mINFO[m-]:print_widget[1783]:Current: RAW+JPEG
+[m[09:55:59:753 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 JPEG
+[m[09:55:59:753 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 RAW
+[m[09:55:59:753 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 RAW+JPEG
+[m[09:55:59:753 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[09:55:59:753 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info imageformat ret 0 
+[m[09:55:59:753 [1;32mINFO[m-]:numOfCaptureImage[3018]:----numOfCaptureImage  2
+[m[09:55:59:753 [1;32mINFO[m-]:capture_image[3076]:----capture
+[m[09:55:59:753 [1;32mINFO[m-]:clearCameraEvent[3026]:----clearCameraEvent  
+[m[09:55:59:783 [1;32mINFO[m-]:capture_image[3092]:---- will CAPTURE_IMAGE  
+[libgphoto2] gp_camera_capture: enter camera=0x3851a8 type=0 path=0xb68ef6fc context=0x387e00
+[pentax] capture=3 boundary=camlib-enter transfer=0 recovery=1 output_pending=0
+[pentax] capture=3 boundary=preconditions-enter
+[pentax] capture=3 boundary=preconditions-return ptp=0x2001 size=568
+[pentax] capture=3 boundary=initiate-enter focus=2 companions=1
+[pentax] capture=3 boundary=initiate-return ptp=0x2001
+New file is in location /K1II8723.JPG on the camera
+--- new file name K1II8723.JPG
+[m[09:56:08:306 [1;32mINFO[m-]:captureImageEvent[1339]:[0;32;31m----captureImageEvent:0  Path:K1II8723.JPG
+[m[09:56:08:306 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:4;K1II8723.JPG]
+[m[m[09:56:14:312 [1;32mINFO[m-]:capture_image[3096]:----ARG_CAPTURE_IMAGE  0
+[m[09:56:14:412 [1;32mINFO[m-]:capture_image[3164]:----capture end   -14660 ms
+[m[09:56:14:412 [1;32mINFO[m-]:getImageToBuffer[2889]:[0;32;31m----gp_list_count  2  
+[m[09:56:14:412 [1;32mINFO[m-]:getImageToBuffer[2899]:[0;32;31m----gp_filesystem_get_file111  
+[m[09:56:14:424 [1;32mINFO[m-]:getImageToBuffer[2905]:[0;32;31m----gp_filesystem_get_file22 only jpg del raw ret=0  
+[m[09:56:14:424 [1;32mINFO[m-]:getImageToBuffer[2899]:[0;32;31m----gp_filesystem_get_file111  
+[m[09:56:14:430 [1;32mINFO[m-]:getImageToBuffer[2912]:[0;32;31m----gp_filesystem_get_file /K1II8723.JPG ret = 0  
+[m[09:56:14:435 [1;32mINFO[m-]:getImageToBuffer[2940]:[0;32;31m----gp_file_get_data_and_size K1II8723.JPG ret = 0  
+[m[09:56:14:436 [1;32mINFO[m-]:getImageToBuffer[2944]:[0;32;31m----gp_camera_file_delete K1II8723.JPG ret = 0  
+[m[09:56:14:437 [1;32mINFO[m-]:capture_image[3171]:----get file to buffer   -24 ms
+[m[09:56:14:437 [1;32mINFO[m-]:capture_image[3176]:----capture out    
+[m[09:56:14:438 [1;32mINFO[m-]:captureImage[1579]:[m[09:56:14:438 [1;32mINFO[m-]:saveCaptureImage[1300]:[0;32;31m----will saveCaptureImage  sPath:./K1II8723.JPG
+[0;32;31m----captureImage ret 0  p:  ./K1II8723.JPG ; 
+[m[09:56:14:438 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:2;/app/sd/normal/SP_0585.jpg]
+[m[m[09:56:14:462 [1;32mINFO[m-]:savePhotoToAblum[1276]:[0;32;31m----savePhotoToAblum  /app/sd/normal/SP_0585.jpg  ;ret 0 
+[m[09:56:14:463 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:3;/app/sd/normal/SP_0585.jpg]
+[m[m[09:56:14:465 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[264],val[state:5; ]
+[m

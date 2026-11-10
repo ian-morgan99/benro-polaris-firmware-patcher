@@ -1,0 +1,26 @@
+Pentax preview stage get-frame returned 0x2001 (60466 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60324 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60197 bytes, 1 attempts, 16 ms).
+[m[10:22:49:232 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[258],val[iso:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 258  data: iso:2;   --_isInit 1 
+[m[10:22:49:544 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 31  info iso=2 ret 0 
+[m[10:22:49:545 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 0  value: 2 ret 0 
+[m[10:22:49:545 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[258],val[iso:2;ret:0;]
+[mPentax preview stage get-frame returned 0x2001 (60058 bytes, 1 attempts, 16 ms).
+[m[10:22:50:978 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 0  ret 0 
+[m[10:22:50:978 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:1;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[mPentax preview stage get-frame returned 0x2001 (60084 bytes, 1 attempts, 17 ms).
+[m[10:22:52:845 [1;32mINFO[m-]:updateCameraInfos[305]:[0;32;31m----updateCameraInfos configType 0  ret 0 
+[m[10:22:52:845 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[265],val[RD:0;V:2;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
+[mPentax preview stage get-frame returned 0x2001 (59950 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60132 bytes, 1 attempts, 14 ms).
+[m[10:22:57:336 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[259],val[wb:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 259  data: wb:2;   --_isInit 1 
+[m[10:22:57:679 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 31  info whitebalance=2 ret 0 
+[m[10:22:57:679 [1;32mINFO[m-]:setCameraConfigWithCommand[754]:[0;32;31m----setCameraConfig configType 1  value: 2 ret 0 
+[m[10:22:57:680 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[259],val[wb:2;ret:0;]
+[mPentax preview stage get-frame returned 0x2001 (60291 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60374 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60340 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (60409 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60178 bytes, 1 attempts, 19 ms).

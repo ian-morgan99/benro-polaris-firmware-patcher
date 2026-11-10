@@ -1,0 +1,154 @@
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 620
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 625
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 630
+[m[23:47:23:563 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:23:564 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:23:665 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:23:666 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:23:668 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 635
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 640
+[m[23:47:34:232 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:34:237 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:34:338 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:34:339 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:34:340 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[m[23:47:38:121 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:38:122 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:38:223 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:38:225 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:38:226 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 645
+[m[23:47:39:547 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+[m[23:47:41:109 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:41:111 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:41:212 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:41:213 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:41:214 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 650
+[m[23:47:44:568 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:44:574 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:44:676 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:44:677 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:44:678 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[m[23:47:47:851 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:47:872 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:47:974 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:47:976 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:47:977 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 655
+[m[23:47:51:181 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:51:189 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:51:290 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:51:291 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:51:293 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[m[23:47:54:465 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:54:466 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:54:567 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:54:568 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:54:570 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 660
+[m[23:47:57:547 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:47:57:558 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:47:57:659 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:47:57:660 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:47:57:661 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 665
+[m[23:48:00:734 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:48:00:736 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:48:00:837 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:48:00:838 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:48:00:839 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[m[23:48:03:957 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:48:03:959 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:48:04:060 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:48:04:062 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:48:04:063 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 670
+[m[23:48:07:251 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[268],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 268  data:    --_isInit 1 
+[m[23:48:07:255 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[275],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 275  data:    --_isInit 1 
+[m[23:48:07:357 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[265],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 265  data:    --_isInit 1 
+[m[23:48:07:358 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[267],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 267  data:    --_isInit 1 
+[m[23:48:07:359 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [131076] type[1],code[266],val[]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data:    --_isInit 1 

@@ -1,0 +1,21 @@
+== identity ==
+FwVer:6.0.0.54.104;date:2026.11.10;
+Linux (none) 4.9.37 #59 SMP Wed Sep 4 12:29:11 CST 2024 armv7l GNU/Linux
+ 09:52:37 up 31 min,  1 users,  load average: 1.11, 1.11, 1.00
+== provenance ==
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=806c3bda62d6c0c23ca7a3091fb42f3d7894172b
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=1e88637cf61d152f94e23f6e139adec4b9fa80c2
+patcher_dirty_diff_hash=
+selected_camlibs=ptp2,pentax
+legacy_usbscsi=1
+build_id=v104
+display_fwver=6.0.0.54.104
+== processes ==
+  249 root       0:03 ./polestar_app
+13663 root       0:10 /app/lib/stage2/pgphoto.stage2ondisk

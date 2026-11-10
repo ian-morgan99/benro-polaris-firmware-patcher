@@ -1,0 +1,34 @@
+total 6960
+drwxr-xr-x   19 root     root         16384 Jan  1  1970 .
+drwxr-xr-x   13 root     root          1832 Nov  7 12:20 ..
+drwxr-xr-x    2 root     root         16384 Sep  9 22:50 HDR
+drwxr-xr-x   53 root     root         16384 Nov  8 02:26 Lapse
+drwxr-xr-x    2 root     root         16384 Oct  2 23:48 System Volume Information
+drwxr-xr-x    2 root     root         16384 Nov  3 01:37 astrometry
+drwxr-xr-x    2 root     root         16384 Sep 14 15:27 bgsem
+-rwxr-xr-x    1 root     root             0 Oct  5 23:22 core
+drwxr-xr-x    2 root     root         16384 Sep  9 22:50 focusStack
+drwxr-xr-x    2 root     root         49152 Nov  8 02:10 normal
+drwxr-xr-x    5 root     root         16384 Oct  6 19:21 o-v16a
+drwxr-xr-x    4 root     root         16384 Oct  1 23:13 panorama
+-rwxr-xr-x    1 root     root          7969 Oct  5 20:14 pgphoto.prestage2.bak
+-rwxr-xr-x    1 root     root          8529 Oct  8 16:26 pgphoto.tracebak.1791476798
+-rwxr-xr-x    1 root     root          8504 Oct  9 00:12 pgphoto.wrapper-off.bak
+-rwxr-xr-x    1 root     root         10559 Oct  6 04:28 pgphoto.wrapper.dblprobe.bak
+-rwxr-xr-x    1 root     root          7969 Oct  5 22:11 pgphoto.wrapper.probebak
+drwxr-xr-x    4 root     root         16384 May 10  2025 polaris-astro
+drwxr-xr-x    2 root     root         16384 Nov  6 14:02 polaris-astro-min
+-rwxr-xr-x    1 root     root          1077 Nov  8 23:36 polaris-autosolve.log
+drwxr-xr-x    2 root     root         16384 May  9  2025 polaris-wifi
+-rwxr-xr-x    1 root     root        968712 Oct  5 20:14 ptp2.so.pre-v15t-4d592aad.bak
+-rwxr-xr-x    1 root     root        972824 Oct  6 04:08 ptp2.so.v15t
+-rwxr-xr-x    1 root     root            90 Oct 23 15:14 restart_gphoto.stock.bak
+-rwxr-xr-x    1 root     root          9585 Oct  9 12:04 stage2-crash-190-repro-20261009.log
+-rwxr-xr-x    1 root     root         28999 Oct  8 19:09 stage2-crash-20261008.log
+drwxr-xr-x    5 root     root         16384 Oct  5 20:14 stage2-ondisk
+-rwxr-xr-x    1 root     root       3643346 Oct  5 20:14 stage2-ov15s.tgz
+drwxr-xr-x    2 root     root         16384 Sep  9 22:50 starskyStack
+drwxr-xr-x    2 root     root         16384 Sep  9 22:50 sun
+drwxr-xr-x    3 root     root         16384 Sep  9 22:50 system
+drwxr-xr-x    2 root     root         16384 Nov  6 18:21 test-input
+-rwxr-xr-x    1 root     root       1000433 Nov  8 23:47 wifi-watch.log
