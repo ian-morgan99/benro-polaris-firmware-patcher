@@ -333,7 +333,17 @@ for spec in "polaris-astro.zip:polaris-astro" "polaris-wifi.zip:polaris-wifi" "a
   [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $root/ -- would not unzip to SD root"
 done
 
-tar -C "$OUT/astro-bundle" -czf "$OUT/astro-bundle.tar.gz" .
+# The SD-rooted .zip archives are excluded from astro-bundle.tar.gz. They are
+# published as siblings beside FwPkt.zip by publish-astro-candidate.sh, so keeping
+# them inside the tarball too stores every kit byte twice -- once extracted (which
+# ASTRO-MANIFEST.sha256 covers and which the README tells users to drag onto the
+# card) and once zipped. That duplication pushed astro-bundle.tar.gz to 110.50 MB,
+# past GitHub's 100 MB hard limit, so the push was rejected with GH001 while every
+# individual artifact (FwPkt.zip 65 MB, each SD zip) was well under it. The bundle
+# now holds extracted trees + licenses + manifest; the zips live at the publication
+# top level where a user is actually handed them.
+tar -C "$OUT/astro-bundle" --exclude='./COPY-TO-SD-CARD-ROOT/*.zip' \
+    -czf "$OUT/astro-bundle.tar.gz" .
 
 echo "[3/7] generating immutable FwPkt install manifest"
 python3 "$ROOT/scripts/generate-fwpkt-manifest.py" "$OUT" \

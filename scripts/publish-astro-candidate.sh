@@ -98,7 +98,7 @@ fi
 # Guarded by the same refuse-to-replace rule as FwPkt.zip: once bytes are public they
 # must not change silently under the same candidate name.
 SD_ROOT="$BUILD/astro-bundle/COPY-TO-SD-CARD-ROOT"
-for sdzip in polaris-astro.zip polaris-wifi.zip; do
+for sdzip in polaris-astro.zip polaris-wifi.zip astrometry-indexes.zip; do
   [ -f "$SD_ROOT/$sdzip" ] || continue
   if [ "$EXISTING" = 1 ] && [ -f "$PR_CHECKOUT/$DEST/$sdzip" ]; then
     cmp -s "$SD_ROOT/$sdzip" "$PR_CHECKOUT/$DEST/$sdzip" \
