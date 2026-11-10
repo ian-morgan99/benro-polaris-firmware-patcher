@@ -26,9 +26,13 @@ mkdir -p "$SRC/catalogue-tiles" "$BIN" "$ROOT/app/astro" \
 sed "s#/app/#$ROOT/app/#g" "$INSTALLER" > "$ROOT/install_astro.sh"
 
 # --- a bundle that looks real -------------------------------------------------
+# polaris-skysim is in this list on purpose. Unlike the catalogue data it IS read
+# from $DEST -- polaris-guide.sh and polaris-autosolve.sh invoke "$ASTRO/polaris-skysim"
+# by name -- so the installer must still copy it, and the assertion below would pass
+# vacuously if the file were simply absent from the bundle.
 for b in polaris-solve polaris-solve-independent polaris-solve-independent-search \
          polaris-exif-solve polaris-skysim-independent polaris-extract polaris-mount \
-         polaris-httpd polaris-logwatch polaris-match; do
+         polaris-httpd polaris-logwatch polaris-match polaris-skysim; do
     printf '#!/bin/sh\necho %s\n' "$b" > "$SRC/$b"; chmod +x "$SRC/$b"
 done
 for s in polaris-astro-boot.sh polaris-align.sh polaris-guide.sh \
@@ -53,7 +57,7 @@ if [ "${WITH_MANIFEST:-0}" = 1 ]; then
       { for b in polaris-httpd polaris-solve polaris-solve-independent \
                  polaris-solve-independent-search polaris-exif-solve \
                  polaris-skysim-independent polaris-extract polaris-logwatch \
-                 polaris-match polaris-mount; do
+                 polaris-match polaris-mount polaris-skysim; do
           [ -f "$b" ] && printf '%s\n' "$b"
         done
         for s in *.sh; do [ -f "$s" ] && printf '%s\n' "$s"; done
@@ -142,23 +146,36 @@ else
     echo "FAIL  installer aborted with rc=$rc"
     fail=1
 fi
-if [ "$NOSPACE" = 1 ]; then
-    # It must have said why, rather than dying on a bare cp error.
-    if echo "$out" | grep -qi "did not fit"; then
-        echo "PASS  reported the skipped catalogue copy explicitly"
-    else
-        echo "FAIL  silent about the failed catalogue copy"
-        fail=1
-    fi
+# The catalogue mirror must not exist at all, in either mode. It used to be copied
+# when there was room and skipped-with-a-note when there was not; both branches are
+# gone, because nothing reads it from $DEST and it is 89% of the kit on a 68 MB /app.
+if [ -e "$ROOT/app/astro/catalogue-tiles" ] || \
+   [ -e "$ROOT/app/astro/catalogue.polcat" ] || \
+   [ -e "$ROOT/app/astro/catalogue-tiles.ptri" ]; then
+    echo "FAIL  catalogue data mirrored into $DEST -- nothing reads it from there"
+    echo "      and it is what filled /app on .104 (issue #312)"
+    fail=1
 else
-    # Happy path: the optional data should actually be present.
-    if [ -f "$ROOT/app/astro/catalogue-tiles.ptri" ] && \
-       [ -d "$ROOT/app/astro/catalogue-tiles" ]; then
-        echo "PASS  optional catalogue copied when there is room"
-    else
-        echo "FAIL  optional catalogue missing although space was available"
-        fail=1
-    fi
+    echo "PASS  no catalogue mirror in \$DEST (stays on the SD card, where solvers read it)"
+fi
+if echo "$out" | grep -qi "solve data stays on the SD card"; then
+    echo "PASS  installer says where the solve data actually lives"
+else
+    echo "FAIL  installer silent about the catalogue location"
+    fail=1
+fi
+# polaris-skysim is the exception: polaris-guide.sh and polaris-autosolve.sh invoke
+# it as "$ASTRO/polaris-skysim", so it has to be in $DEST.
+if [ -x "$ROOT/app/astro/polaris-skysim" ]; then
+    echo "PASS  polaris-skysim installed (read from \$DEST by name)"
+else
+    echo "FAIL  polaris-skysim missing or not executable -- guide/autosolve would break"
+    fail=1
+fi
+# The ENOSPC stub is kept even though nothing should hit it now: if anyone re-adds a
+# catalogue copy later, this still proves the install cannot abort before the boot hook.
+if [ "$NOSPACE" = 1 ] && echo "$out" | grep -qi "No space left on device"; then
+    echo "NOTE  something still copies catalogue data under ENOSPC -- check the stub"
 fi
 
 rm -rf "$SRC" "$ROOT"

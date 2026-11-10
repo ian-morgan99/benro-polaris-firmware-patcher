@@ -61,6 +61,18 @@ for b in polaris-solve polaris-solve-independent polaris-solve-independent-searc
     cp "$SRC/$b" "$DEST/$b"; chmod +x "$DEST/$b"
 done
 
+# polaris-skysim is copied here too, and deliberately NOT in the loop above: it is
+# optional so the Astrometry.net-only bundle stays installable. It must still land
+# before the verification block below, because build-astro-candidate.sh lists it in
+# polaris-astro.manifest and that check compares every listed entry against $DEST.
+# Copying it afterwards made any bundle carrying a manifest fail VERIFY FAILED on
+# polaris-skysim alone and exit 1 -- the same class of bug that previously hit the
+# *.sh entries. polaris-guide.sh and polaris-autosolve.sh invoke "$ASTRO/polaris-skysim"
+# by name, so it has to be in $DEST; it is 608 KB.
+if [ -f "$SRC/polaris-skysim" ]; then
+    cp "$SRC/polaris-skysim" "$DEST/polaris-skysim"; chmod +x "$DEST/polaris-skysim"
+fi
+
 # ---- scripts (copied before verification) ----------------------------------
 # The manifest lists *.sh as well as the binaries, so these have to be in place
 # before the hashes are compared. They used to be copied afterwards, which meant
@@ -134,35 +146,32 @@ else
     echo "[astro]          start at boot."
 fi
 
-# A native solve is not usable without its separately versioned POLCAT01 data.
-# Keep this optional so the Astrometry.net-only bundle remains installable, but
-# copy the catalogue and manifest when the bundle contains them.
-# Every consumer of this data -- polaris-align.sh, polaris-guide.sh,
-# polaris-frame-watch.sh, polaris-autosolve.sh and polaris-astro-boot.sh -- reads
-# it from /app/sd/polaris-astro/, never from $DEST. The copy here is a convenience
-# mirror, so it must never be able to abort the install. Under set -e a plain cp
-# that hits ENOSPC is the last command in its && list and kills the script; that
-# is precisely what left .104 with no boot hook.
-copy_optional() {
-    [ -f "$1" ] || return 0
-    cp "$1" "$2" 2>/dev/null && return 0
-    echo "[astro] note: $(basename "$1") did not fit in $DEST -- using the SD copy at"
-    echo "[astro]       /app/sd/polaris-astro/ instead, which is what everything reads."
-    return 0
-}
-copy_optional "$SRC/catalogue.polcat" "$DEST/catalogue.polcat"
-copy_optional "$SRC/catalogue.manifest.json" "$DEST/catalogue.manifest.json"
-if [ -d "$SRC/catalogue-tiles" ]; then
-    mkdir -p "$DEST/catalogue-tiles" 2>/dev/null || true
-    for f in "$SRC"/catalogue-tiles/*.pcat; do
-        copy_optional "$f" "$DEST/catalogue-tiles/"
-    done
+# ---- catalogue data: deliberately NOT copied -------------------------------
+# The kit carries ~18.7 MB of POLCAT01 solve data (catalogue-tiles/, .ptri,
+# manifests). It used to be mirrored into $DEST here, and that mirror is the
+# single largest reason /app runs out of space: /app is a 68 MB ubifs and the
+# mirror is 89% of the kit. On a freshly flashed camera the copy hit ENOSPC,
+# set -e killed the script between the binaries and the boot hook, and the device
+# booted with the files present and nothing starting -- issue #312.
+#
+# Nothing reads it from $DEST. Every consumer resolves it on the SD card and
+# nothing anywhere overrides those defaults:
+#   polaris-align.sh / polaris-guide.sh / polaris-frame-watch.sh /
+#   polaris-autosolve.sh / polaris-astro-boot.sh ->
+#     INDEPENDENT_CATALOG       ${...:-/app/sd/polaris-astro/catalogue.polcat}
+#     INDEPENDENT_CATALOG_DIR   ${...:-/app/sd/polaris-astro/catalogue-tiles}
+#     INDEPENDENT_TRIANGLE_INDEX ${...:-/app/sd/polaris-astro/catalogue-tiles.ptri}
+# Grepping the tree for a non-/app/sd catalogue path returns nothing, and strings
+# on the shipped polaris-httpd finds no /app/astro/catalogue* reference. So this
+# is not a fallback for a missing card -- if the card is gone the solve fails
+# either way, because nothing would look in $DEST.
+#
+# polaris-skysim was already copied, above with the other binaries -- see the note
+# there about why it has to precede the manifest check.
+if [ -d "$SRC/catalogue-tiles" ] || [ -f "$SRC/catalogue.polcat" ]; then
+    echo "[astro] solve data stays on the SD card at /app/sd/polaris-astro -- that is"
+    echo "[astro]       where every solver reads it, and /app is too small to hold it."
 fi
-copy_optional "$SRC/catalogue-tiles.manifest.json" "$DEST/"
-copy_optional "$SRC/catalogue-tiles.ptri" "$DEST/"
-copy_optional "$SRC/catalogue-tiles.ptri.json" "$DEST/"
-# optional: only needed for simulated-sky testing
-[ -f "$SRC/polaris-skysim" ] && { cp "$SRC/polaris-skysim" "$DEST"/; chmod +x "$DEST/polaris-skysim"; }
 
 # (scripts were copied earlier, before the manifest check -- see that block)
 echo "[astro] installed -> $DEST"
