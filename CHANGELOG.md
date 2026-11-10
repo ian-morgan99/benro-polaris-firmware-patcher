@@ -137,6 +137,71 @@
   `ARTIFACTS_INTERNALLY_CONSISTENT`; installed-file hashes, boot-hook persistence,
   HTTP binding and a real plate solve still need the device matrix (#265).
 
+## Unreleased — a stale restart lock permanently blocked pgphoto restarts, so a healthy K-3 III was held quarantined (issue #297)
+
+**This is the functional regression.** A K-3 III attached to Polaris reports
+`manufacturer:none;model:none;state:-110`. It is not a model-table gap: the camera
+enumerates correctly on the device, `25fb:0189 PENTAX K-3 Mark III` is present in
+`/sys/bus/usb/devices/1-1.2`, and `pentax.so`/`ptp2.so` are installed. The failure is
+one layer downstream, inside our own helper.
+
+`/app/Clog.txt` on the device, repeating every few seconds for the whole boot:
+
+```
+[restart_gphoto] another restart owns /var/run/openpolaris-pgphoto.restart.lock; refusing to race
+[camera-usb] quarantined identity 1-1.2|25fb:0189|1:4 stable for 9 polls but bounded rebind failed; remaining degraded (issue #119)
+[camera-usb] rebind retry deferred until poll 2055
+```
+
+Step 0 of `restart_gphoto.sh` treated *any* existing lock directory as a live owner and
+exited 1. `/var/run` on this firmware is **UBIFS root flash, not tmpfs** — verified:
+`mount` lists only `devtmpfs on /dev`, and `df /var/run` reports `ubi0:ubifs`. So a lock
+left by a crash or power cut survives a reboot. The device carried one with an **empty**
+pid file and an mtime of 2025-05-09, long predating the current boot; `mkdir` on it fails
+with `File exists`, so every restart refused, across reboots, indefinitely.
+
+The consequence compounds: the USB supervisor's bounded rebind calls that helper, cannot
+succeed, and therefore holds a correctly enumerated camera in quarantine for the entire
+boot. The WebUI publishes `model:none` while the mount, link and attitude opcodes all work
+normally — which is why it reads as a camera-recognition bug rather than a lock bug.
+
+Step 2 of the same file has always reclaimed a stale *launch* lock by checking the owner
+(issue #77). Step 0 never got the same treatment. Fixed by making step 0 consistent with
+step 2: honour the lock only if its pid is alive **and** is a `restart_gphoto`, wait one
+second so a genuinely starting owner can publish its pid, then reclaim and say so.
+
+Ownership is checked against the command line, not mere `/proc` existence — a lock from an
+earlier boot can name a pid the kernel has since handed to an unrelated process, and
+counting that as an owner would reproduce the same permanent deadlock by a different route.
+
+**Verified on the device first, then in code.** Diagnosis came from live read-only SSH:
+sysfs enumeration, `/proc/249/maps`, the driver directories, `mount`, `df /var/run`, and
+`/app/Clog.txt`. The installed `/app/restart_gphoto` md5 is
+`64156951d2a388162f52ae906964c410`, identical to `container/ondisk/restart_gphoto.sh`, so
+this is our code path and not stock firmware.
+
+New `container/test_restart_gphoto_restart_lock.sh` covers four cases: the exact device
+condition (lock dir, empty pid) is reclaimed; a live `restart_gphoto` owner is honoured and
+the lock is left alone; a pid recycled to an unrelated process is treated as stale; and a
+normal restart emits no reclaim line. Confirmed non-vacuous — against the pre-fix script it
+fails case A with the device's own message, `another restart owns ... refusing to race`.
+
+**Both restart-helper lock tests are now registered in the prerelease gate.**
+`container/test_restart_gphoto_launch_lock.sh` has existed since issue #77 and was run by
+nothing — no gate, no CI, no release script referenced it. That is the same "a gate nobody
+calls is not a gate" failure that let `.99` ship without its licence, applied to the code
+that recovers the camera.
+
+Gate: **14 passed, 0 failed, 2 skipped**, drift guard green at 37 suites.
+
+**Not yet done.** The fix is in the tree; it has not been applied to the device, and the
+stale lock is still there. Removing `/var/run/openpolaris-pgphoto.restart.lock` on the
+running unit should let the supervisor's next rebind succeed, but that restarts pgphoto on
+a live mount and is left as an explicit operator decision. K-3 III recognition remains
+UNKNOWN/BLOCKED per #297 until the five-layer test passes on an installed candidate; this
+fix removes a definite blocker, it does not by itself prove recognition. The K-1 II was
+confirmed present on the PC (`25fb:0183`) but its behaviour against this fix is untested.
+
 ## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
 
 - `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
@@ -943,3 +1008,242 @@ Worth noting how this slipped through: #299 was merged test-only with no gate ru
 The drift guard exists precisely because `test_verify_installed_build.py` once sat unrun
 while the gate reported GREEN — it did its job here too, but only after the merge rather
 than before it.
+## Unreleased — shipped camlibs are now proven to serve the K-1 II and K-3 III (issue #297)
+
+`container/check_camlib_target_models.sh` opens the `ptp2.so` a device actually
+receives and requires both `Pentax:K-1 Mark II (PTP mode)` and
+`Pentax:K-3 Mark III (MTP mode)` to be present, that the file is an ARM shared
+object, and that `camlibs.manifest` hashes match the bytes beside them.
+
+Until now the only K-1 II / K-3 III evidence in the build was textual.
+`container/patch.sh` logs "local-source target models: K-1 II and K-3 III present"
+after grepping the **source tree**, and `test_polaris_pentax_build_package.sh`
+asserts that log line. Neither opens a `.so`. A camlib compiled from correct source
+but with the model table filtered, truncated, or built against a different
+libgphoto2 passes every one of those and still ships a camera nobody can see — which
+is the shape of #297: the operator's symptom was real while every source-side check
+was green.
+
+Asserted against `ptp2.so` specifically rather than "any camlib", because that was
+measured: `pentax.so` contains `Pentax:K1II`, `Pentax:K3`, `Pentax:K3II` and 14
+others, but **not** either target marker. Both are in `ptp2.so`. Checking the wrong
+camlib would fail a good build; checking "any" would let a build shipping only
+`pentax.so` pass while serving neither camera.
+
+The version directory is globbed rather than hardcoded to `2.5.34`, so a libgphoto2
+bump cannot silently skip the gate — a stale hardcoded path makes every `[ -f ]`
+guard false and the whole check passes vacuously.
+
+Non-vacuous, three ways: passes on a real v100 build; fails (exit 1) when the K-3 III
+marker is blanked out of a copy; fails (exit 1) when a manifest hash is perturbed.
+Two bugs in the first draft were caught by running it against real bytes rather than
+reasoning about it — `file` puts the architecture *after* "shared object", so an
+ordered glob rejected correct ARM binaries, and `printf | while` ran the marker loop
+in a subshell so recorded misses vanished.
+
+Registered in `run_prerelease_gate.sh`'s stage2 package section. Offline gate:
+**14 passed, 0 failed, 2 skipped**. With `--build`: **21 passed, 0 failed, 3
+skipped**, including the new check.
+
+This does not claim recognition works. It proves the shipped camlib *can name* both
+cameras; whether a session is ever opened against them is still unproven — on the
+device pgphoto currently has no camlib mapped at all.
+
+## Unreleased — a five-layer camera recognition report, read-only (#297)
+
+`scripts/diagnostic/camera-layer-report.sh` answers "is the camera recognised?" by
+measuring each layer separately and reporting PASS / FAIL / UNKNOWN per layer, so a
+symptom can be attributed instead of guessed at. It is strictly read-only: sysfs,
+`/proc`, and GETs against documented Alpaca queries. It never restarts, kills, unbinds
+or writes anything.
+
+Why it was needed. On the device that prompted this, `lsusb` showed the camera present,
+pgphoto was running, and polaris-httpd was serving — all three true, and the camera still
+invisible. The layers that actually differ were never being looked at: whether pgphoto has
+a camlib mapped, and what `CameraState` the app publishes.
+
+Current reading on the live device (`docs/evidence/issue-297-k3iii-stale-restart-lock/layer-report.txt`):
+
+```
+[PASS]    layer1-usb        25fb:0189 enumerated
+[PASS]    layer2-pgphoto    running as PID 10026
+[PASS]    layer2-restart-lock  no restart lock held
+[PASS]    layer2-quarantine no quarantine lines in /app/Clog.txt
+[UNKNOWN] layer3-camlib     no camlib mapped and no client on :8080
+[UNKNOWN] layer4-client     no client on :8080 right now
+[FAIL]    layer5-published  CameraState=Disconnected
+```
+
+Two of those are UNKNOWN on purpose, and that distinction is the point:
+
+- **layer 4** — `polaris-httpd` connects to pgphoto's :8080 *on demand* for the live-view
+  stream (`sa.sin_port = htons(8080)` then `GET /?action=stream`), not by polling. With no
+  app attached, zero connections is the expected idle state and says nothing about health.
+- **layer 3** — libgphoto2 loads a camlib when it builds its abilities list during
+  `gp_camera_init`. "Nothing mapped" means no session has opened since this process
+  started; whether that is a fault depends on whether anything asked. The verdict is
+  deferred until layer 4 is known: UNKNOWN with no client, FAIL if a client is connected
+  and still nothing loads.
+
+Both were initially written as FAIL. That was wrong — reporting an idle device as broken
+is how a measurement gap turns into a phantom bug.
+
+**layer 5 is the real finding.** `GET /api/v1/camera/0/camerastate` returns `Value:0`
+(ASCOM Disconnected) while `/connected` returns `true`. The app reports a camera device
+that has no session. That is measured, not inferred, and it is where recognition actually
+fails today.
+
+Routes were read from `container/astro/polaris-httpd.c`; the obvious guesses (`/status`,
+`/camera`) return "not found" on this server. Only read-only queries are used — the
+POST-only guard list (`/api/astro/capture`, `/api/stop`, …) is never touched.
+
+Not registered in the prerelease gate: it needs a reachable device, so it belongs with the
+device gates rather than the offline ones. Run it before and after any camera fix.
+
+## Fixed — the prerelease gate was executing two stray commands (#298 review)
+
+Review on PR #298 found bare command lines `s` and `ped` at lines 363/365 of
+`tests/run_prerelease_gate.sh`. They were mine: a comment pasted in already hard-wrapped
+at terminal width, so the wrapped remainder of "as" and "shipped" landed on its own line
+outside the comment and became executable code. Both lines are now part of the comment.
+
+Why nothing caught it. The gate runs `set -uo pipefail` — no `-e`. A missing command
+returns 127 and execution continues, so the defect survived `bash -n` (two syntactically
+valid commands), survived `--help`, and produced a green summary. Only reading the file or
+running with `set -x` would show it.
+
+Added `tests/test_shell_no_bare_fragments.sh`, registered in the gate, covering **every**
+tracked `.sh` rather than just this one — the hazard is any script absorbing a wrapped
+paste. It treats a bare short line as legitimate only if it is a shell keyword/builtin or a
+function defined in that same file (`purge` is called bare at line 65 of
+`polaris-autojoin.sh` and defined at line 36, so a naive keyword list would have flagged it).
+Tracked files only: `out/` holds copies of these scripts and would double every finding.
+
+Non-vacuous: flags `s` and `ped` when reintroduced (exit 1), passes on the current tree
+(117 tracked shell files, exit 0).
+
+Gate from the corrected head: **offline 15 passed, 0 failed, 2 skipped**; **with
+`--build`: 22 passed, 0 failed, 3 skipped**. Full output in
+`docs/evidence/issue-297-k3iii-stale-restart-lock/gate-{offline,package}.txt`.
+
+## Fixed — camera diagnostic under-reported clients, forcing layer 3 to UNKNOWN
+
+`scripts/diagnostic/camera-layer-report.sh` matched `:1F90` only in `/proc/net/tcp`'s remote
+column. pgphoto is the **server** on 8080, so established rows carry it in the *local* column.
+Measured against a live stream request with two connections open:
+
+```
+$3 ~ /:1F90$/                       -> 0    (what the tool did)
+($2 ~ /:1F90$/ || $3 ~ /:1F90$/)    -> 2    (correct)
+```
+
+The consequence was worse than a wrong count. Layer 3's verdict is deliberately deferred on
+layer 4 — "no camlib mapped" is UNKNOWN while idle because lazy init means nobody has asked
+yet, and only becomes FAIL once a client is connected. Under-reporting clients therefore kept
+layer 3 at UNKNOWN permanently, hiding the real state. With the fix and a stream held open:
+
+```
+[PASS] layer4-client -- 1 established connection(s) to :8080
+[FAIL] layer3-camlib -- a client is connected but no pentax.so/ptp2.so is mapped
+```
+
+## Improved — camera diagnostic no longer needs a client attached at the instant of the snapshot
+
+Layer 3 previously deferred entirely on an instantaneous `/proc/net/tcp` count. `polaris-httpd`
+opens its :8080 connection on demand, so a snapshot taken between requests shows zero and reads as
+"lazy init while idle" even when preview has been enabled for hours. Added a second, durable
+signal: opcode 292 (`preview-state`) from `polaris-httpd`'s read-only `/api/link`.
+
+Measured live, with no client connected:
+
+```
+polaris-httpd port=8090 preview-state=1
+camera-info: manufacturer:none;model:none;state:-110;storage:0;photoFormat:0;
+[FAIL] layer3-camlib -- preview-state=1 (pgphoto was told to run the :8080 stream) yet no
+       pentax.so/ptp2.so is mapped -- gp_camera_init did not load a camlib
+```
+
+Verdicts are now: client connected → FAIL; `preview-state=1` → FAIL; `preview-state=0` → UNKNOWN
+(nothing has asked); signal unavailable → UNKNOWN. Parse tested offline against `state:1`,
+`state:0` and a payload with no 292 at all, so an absent flag cannot produce a false FAIL. The
+port comes from httpd's cmdline rather than being assumed — it runs `--port 8090` here, and :80 is
+Benro's own lighttpd, which 404s these paths. Gate unchanged: 15 passed / 0 failed / 2 skipped.
+
+## Added — opt-in `gp_camera_init` entry trace (issue #297)
+
+`STAGE2_TRACE_INIT_ENTRY=1` makes the loader print up to three one-shot lines: that the shim was
+entered, that the real core symbol resolved, and what the real `gp_camera_init` returned. Unset
+costs nothing; it changes no control flow and no return value.
+
+This is the only way to answer the remaining #297 question. Our shipped libgphoto2 has logging
+compiled out — no `GP_DEBUG` string anywhere in the `.so`, and `nm -D` lists 195 exports with zero
+`gp_log*` symbols — so setting `GP_DEBUG` produces silence indistinguishable from "never called".
+The loader is ours and already wraps this call.
+
+Narrowing that motivated it: nothing libgphoto2 dlopens at runtime is mapped in pgphoto — neither
+a camlib (`pentax.so`/`ptp2.so`) nor an io backend (`usb1.so`/`usbscsi.so`). In `gp_camera_init`'s
+auto-detect path those two loads are adjacent (`gphoto2-camera.c:707` then `:709`), so their joint
+absence points at the abilities-list load rather than a later USB step.
+
+One flag per site, not one shared flag: a single flag would let the first trace suppress the rest,
+which is exactly the distinction being measured (never entered vs refused by the capture guard vs
+handed to libgphoto2). Verified with `gcc -std=gnu11 -Wall -Wextra`: zero diagnostics reference the
+new code.
+
+The ARM build was then verified for real. `arm-linux-gnueabi-gcc` is not installed on this host, so
+the gate reports SKIP (77) — but the compiler is present in the cached `polaris-patcher-pentax:latest`
+image, and running `container/test_stage2_loader_compile.sh` inside it exits 0: `ELF 32-bit LSB shared
+object, ARM, EABI5`, clean under `-Wall -Wextra -Werror`, the `stage2_model_uses_r5_shims` provenance
+marker intact, and both new strings (`STAGE2_TRACE_INIT_ENTRY`, `gp_camera_init returned %d`) present.
+An earlier probe that reported the Docker daemon unreachable was run from a `/tmp` worktree; from
+`$HOME` it works. Same cwd-dependent `flatpak-spawn` behaviour that made
+`test_build_toolchain_prerequisites` fail spuriously on main today — two false negatives, one cause.
+
+Offline gate unchanged: 15 passed / 0 failed / 2 skipped.
+
+## Added — behavioural test for the #297 init trace
+
+`container/test_stage2_init_trace.sh` covers the `STAGE2_TRACE_INIT_ENTRY` logic, which previously
+had no coverage at all: the shim is `static` (the `.so` exports 12 symbols and `gp_camera_init` is
+not among them) so it cannot be called from outside, `stage2_crash_handler` reads ARM-only
+`mcontext_t` fields so the file will not compile on x86, and `qemu-arm` is not in PATH here.
+
+It extracts the real helper from `container/stage2_loader.c` with awk rather than hand-copying it,
+so it follows production instead of drifting from it. Verified non-vacuous: collapsing the per-site
+array back to a single shared flag makes it exit 1. Registered in the offline gate and picked up by
+`tests/run_deterministic.sh`'s auto-discovery — 16 passed / 0 failed / 2 skipped, and 30 / 0 / 3.
+
+Three mistakes I made here are worth recording, because each one looked like success:
+
+- **Missing exec bit.** `run_deterministic.sh` runs `./$t`, not `sh ./$t`, so a non-executable test
+  exits 126 and is counted as a real failure. It passed when run as `sh path/to/test.sh` and failed
+  under the harness — testing it the way it is actually invoked is what caught this.
+- **Wrong counter names.** I wrote `PASS=$((PASS + 1))`; the gate uses lowercase `pass`. Under
+  `set -u` that aborted the entire gate mid-run with "PASS: unbound variable" and exit 1 — while my
+  own test line had already printed PASS. A green-looking line followed by a dead gate.
+- **A replica test that cannot catch regressions.** My first version hand-copied the helper into a
+  C file. It would have kept passing unchanged if production changed, and it also ran all cases in
+  one process, so the process-global flags made later cases legitimately silent — three false
+  failures blamed on correct code. Fresh child processes per case, and extraction instead of copying.
+
+## Finding — the camlibs load and the K-3 III is detected, outside pgphoto (#297)
+
+`/app/bin/gphoto2 --list-cameras` on the device reports **2492 cameras** and
+`--auto-detect` returns `Pentax K-3 Mark III (MTP mode)  usb:001,004`, using the shipped
+artifacts (`LD_LIBRARY_PATH=/app/lib/stage2:/app/lib`, `CAMLIBS=…/2.5.34`,
+`IOLIBS=…/0.12.2`). No rebuild, no install.
+
+Three controls keep that from being a false positive: `CAMLIBS=/nonexistent/dir` yields **0**
+cameras (no compiled-in fallback), `LD_DEBUG=files` shows only the three camlibs under the path I
+set (`camlibs.so`, `pentax.so`, `ptp2.so`), and `LD_DEBUG=libs` shows the library actually
+initialised is `/app/lib/libgphoto2.so.6`, byte-identical to the stage2 copy.
+
+This refutes every artifact-level hypothesis I had held: camlib not packaged, unsatisfiable
+`DT_NEEDED`, version-node mismatch on `gp_log@LIBGPHOTO2_5_0`, `camlibs.manifest` interference,
+`CAMLIBDIR_PREFIX_ENV` filtering, directory permissions, wrong library loaded, and "the USB layer
+cannot claim the device". The defect is specific to pgphoto: it maps `libgphoto2.so.6` and
+`libltdl.so.7` but never a camlib or port driver, even with a client connected and answered -- so
+it is not reaching `gp_abilities_list_load_dir`, despite carrying the same working env as root.
+
+`--auto-detect` opens the device briefly, so it was run only after `fuser` confirmed nothing held
+`/dev/bus/usb/*/*`. See `docs/findings/297-camlib-loads-outside-pgphoto.md`.

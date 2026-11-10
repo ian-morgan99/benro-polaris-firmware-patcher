@@ -869,8 +869,49 @@ static int stage2_capture_guard_enabled(void)
     return e && strcmp(e, "0") != 0;
 }
 
+/* Issue #297: one-shot entry trace for gp_camera_init.
+ *
+ * pgphoto answers GET /?action=stream with the MJPEG boundary and then no frame, while
+ * preview-state is already 1 -- yet nothing libgphoto2 dlopens at runtime is mapped: neither a
+ * camlib (pentax.so/ptp2.so) nor an io backend (usb1.so/usbscsi.so). In gp_camera_init's
+ * auto-detect path those two loads are adjacent (gphoto2-camera.c:707 then :709), so their joint
+ * absence points at the abilities-list load itself rather than a later USB step. What is still
+ * unknown is whether that function is entered at all on this path.
+ *
+ * It cannot be answered from libgphoto2: our shipped build has logging compiled out (no GP_DEBUG
+ * string anywhere in the .so, and nm -D lists 195 exports with zero gp_log* symbols), so setting
+ * GP_DEBUG yields silence indistinguishable from "never called". The loader is ours and already
+ * wraps this call, so it is the only place this can be observed.
+ *
+ * Opt-in and fires at most once per site: unset costs nothing, set costs a few lines per process,
+ * and it changes no control flow or return value. One flag PER SITE -- a single shared flag would
+ * let the first trace suppress the rest, which is precisely the distinction being measured. */
+#define STAGE2_INIT_TRACE_SITES 3
+static int g_init_entry_traced[STAGE2_INIT_TRACE_SITES] = { 0, 0, 0 };
+enum { STAGE2_TR_ENTER = 0, STAGE2_TR_CORE = 1, STAGE2_TR_RESULT = 2 };
+
+static void stage2_trace_init_entry(int site, const char *fmt, int arg)
+{
+    const char *e;
+    if (site < 0 || site >= STAGE2_INIT_TRACE_SITES || g_init_entry_traced[site])
+        return;
+    e = getenv("STAGE2_TRACE_INIT_ENTRY");
+    if (!e || strcmp(e, "0") == 0)
+        return;
+    g_init_entry_traced[site] = 1;
+    fprintf(stderr, "[stage2] init: ");
+    fprintf(stderr, fmt, arg);
+    fprintf(stderr, " (issue #297)\n");
+    fflush(stderr);
+}
+
 static int stage2_shim_gp_camera_init(void *camera, void *context)
 {
+    /* Issue #297: recorded before anything else can return early -- the capture guard below and
+     * an unresolved real init both bail without reaching libgphoto2, and distinguishing "pgphoto
+     * never called us" from "we refused" is the whole point of this trace. */
+    stage2_trace_init_entry(STAGE2_TR_ENTER, "ENTER gp_camera_init", 0);
+
     /* This shim runs after the host application has finished its own setup, so
      * it is the earliest point at which our crash handler can be re-asserted
      * over the application's (see stage2_reassert_crash_handler). */
@@ -903,7 +944,14 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
         return -1;                                   /* GP_ERROR */
     }
 
+    /* Issue #297: reached only when the real core symbol resolved. The three one-shot lines
+     * separate outcomes that look identical from outside: never entered, refused by the capture
+     * guard, or actually handed to libgphoto2 -- and the last one now carries the return code, so
+     * a GP_ERROR_* value is visible without libgphoto2 logging (which our build lacks). */
+    stage2_trace_init_entry(STAGE2_TR_CORE, "gp_camera_init -> real core", 0);
+
     int ret = g_real_gp_camera_init(camera, context);
+    stage2_trace_init_entry(STAGE2_TR_RESULT, "gp_camera_init returned %d", ret);
     if (ret != 0)                                    /* GP_OK == 0 */
         return ret;                                  /* init failed: pass through */
 

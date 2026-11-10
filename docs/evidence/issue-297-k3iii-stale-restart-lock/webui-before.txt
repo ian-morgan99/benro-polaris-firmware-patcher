@@ -1,0 +1,6 @@
+=== GET / ===
+curl: (28) Operation timed out after 8002 milliseconds with 0 bytes received
+
+=== TCP connect check ===
+curl: (28) Operation timed out after 5002 milliseconds with 0 bytes received
+http_code=000 connect=0.022111

@@ -1,0 +1,26 @@
+=== Polaris pre-release gate (2026-11-09T02:21:11Z) ===
+PASS: container deterministic harness (29 passed)
+PASS: python regression suite (612 passed)
+PASS: python test-list drift guard (37 suites, all listed)
+PASS: agent host check: scripts/check-agent-sandbox.py (VERDICT=SANDBOX_OK sandbox=enabled prerequisites=present)
+PASS: agent host check: scripts/check-agent-host-config.py (VERDICT=CONFIG_OK pins=present settings=/home/ian/.config/Code - Insiders/User/settings.json,.vscode/settings.json)
+PASS: code-780 version patch (exact copy, memset length preserved)
+PASS: pgphoto machine-code patch: test_polaris_bulb_dispatch_patch
+PASS: pgphoto machine-code patch: test_polaris_bulb_poll_budget_patch
+PASS: pgphoto machine-code patch: test_polaris_cancel_writer_patch
+PASS: pgphoto restart helper lock handling: test_restart_gphoto_launch_lock
+PASS: pgphoto restart helper lock handling: test_restart_gphoto_restart_lock
+PASS: no stray bare command lines in tracked shell scripts
+INFO: no --build given; package gates skipped (offline gate only)
+SKIP: provenance registry hash check (no built artifacts to compare) (prerequisite unavailable)
+PASS: rig tooling self-test (wait-for-rig.py argv well-formed)
+PASS: rig tooling self-test (capture-shutter-list.py argv well-formed)
+SKIP: libgphoto2 capture contract (no --libgphoto2-src supplied) (prerequisite unavailable)
+PASS: Bulb cancellation-return diagnostic (cancellation survives cleanup and publication; a failed stop still outranks it)
+=== Pre-release gate summary: 15 passed, 0 failed, 2 skipped ===
+Skipped: provenance registry hash check (no built artifacts to compare) libgphoto2 capture contract (no --libgphoto2-src supplied)
+GATE: GREEN — OFFLINE-QUALIFIED only (no package/device gates ran).
+This is NOT device-qualified or release-qualified: the mandatory device install
+hash checks (scripts/o-v17a-autonomous-install.sh verify phase against the
+immutable install-manifest.json) and the physical Benro Connect / Manual / Bulb
+regression remain separate mandatory gates before a release is declared.
