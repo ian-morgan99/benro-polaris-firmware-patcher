@@ -15,26 +15,37 @@
   "changes": [
     {
       "component": "libgphoto2",
-      "summary": "ptp2/pentax now accepts MM-SS as an input spelling for whole-second shutter labels, so a seconds entry the user picks maps back to its exact wire value instead of being rejected. pgphoto re-renders our 00:02 as 00-02 with its own %02u-%02u emitter and sends that spelling back on set; pentax_parse_shutter_duration only recognised ':', 's' and 'm', so the label matched no branch, the legacy plain-integer fallback also failed because strtoull stops at the separator, and the write was refused. Emission is unchanged and still MM:SS, so nothing we advertise on the wire changes. Malformed forms (00-60, 00-, 00--2, 00-2junk, 1m-10s) are still rejected."
+      "issues": ["314", "276", "313"],
+      "summary": "ptp2/pentax now accepts MM-SS as an input spelling for whole-second shutter labels, so a seconds entry the user picks maps back to its exact wire value instead of being refused. pgphoto re-renders our 00:02 as 00-02 with its own %02u-%02u emitter and sends that spelling back on set; pentax_parse_shutter_duration only recognised ':', 's' and 'm', so the label matched no branch, the legacy plain-integer fallback also failed because strtoull stops at the separator, and the write was refused. Emission is unchanged and still MM:SS, so nothing we advertise on the wire changes. Malformed forms (00-60, 00-, 00--2, 00-2junk, 1m-10s) are still rejected."
     },
     {
       "component": "libgphoto2",
+      "issues": ["322"],
       "summary": "ptp2/pentax decodes the fixed PTP header of Pentax vendor properties 0xd02b (focus peaking) and 0xd035 (PC live view), which previously reported descriptor-parse=failed plus raw hex on every read. Only the provable header is decoded: 0xd02b is ARRAY_MASK|UINT16 and settable, disproving the UINT8 scalar assumption, so it stays withheld from scalar widgets; 0xd035 is UNDEF with no form, a null placeholder rather than a scalar. Vendor bytes past the header are counted and left verbatim, never normalised or exposed as writable."
     },
     {
-      "component": "astro installer",
+      "component": "tests",
+      "issues": ["314", "322"],
+      "summary": "test-pentax-utils.c gained coverage for both driver changes: MM-SS labels map to the same seconds as MM:SS (00-02, 00-30, 01-10, 02-00) while malformed forms are refused and are not rescued by the legacy plain-integer fallback, and the descriptor header parser is tested against the exact measured payloads plus mismatched-code, short-payload and NULL cases."
+    },
+    {
+      "component": "patcher",
+      "issues": ["312"],
       "summary": "install_astro.sh no longer mirrors 18.7 MB of POLCAT01 solve data into /app. That mirror is 89% of the kit against a 68 MB ubifs, so on a freshly flashed camera it hit ENOSPC, set -e killed the script between the binaries and the boot hook, and the device booted with polaris-httpd present, port closed and no error anyone would notice. Nothing reads the mirror: every solver resolves the catalogue under /app/sd/polaris-astro."
     },
     {
-      "component": "astro installer",
+      "component": "patcher",
+      "issues": ["312"],
       "summary": "The boot hook is now written before any optional copy, so a full /app can no longer skip autostart, and the installer verifies what it actually shipped before reporting success."
     },
     {
-      "component": "astro solve logging",
+      "component": "patcher",
+      "issues": ["321"],
       "summary": "Each solve records its start, duration and a classified outcome, so a slow or failing solve is attributable from the log rather than inferred from silence."
     },
     {
-      "component": "release gate",
+      "component": "tests",
+      "issues": ["312"],
       "summary": "build-doctor.sh section 8 no longer asserts that the catalogue copy step exists. That check was written to compare its line number with the boot hook, and after the mirror was removed it reported RED on correct code while container/astro/test-install-enospc.sh passed all six assertions. It now guards the invariant that remains: the hook step exists, no catalogue mirror into $DEST has returned, and the hook precedes the one remaining optional copy."
     },
     {
