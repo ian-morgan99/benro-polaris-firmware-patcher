@@ -92,8 +92,24 @@ drop_copyleft_binaries(){
 }
 trap 'astro_rc=$?; if [ "$astro_rc" != 0 ]; then drop_copyleft_binaries; fi' EXIT
 
+# Inside the VS Code Flatpak sandbox there is no docker binary and no socket, so
+# plain `docker` does not exist here even though the host has both. Prepend this
+# repo's shim, which resolves an ABSOLUTE host path via tools/host-docker.sh. It
+# deliberately avoids `flatpak-spawn --host docker`: that asks the host to resolve
+# `docker` on the host's PATH, where ~/.local/bin and ~/bin sit by default, so a
+# shim of that same shape on the host re-enters itself and dies with rc=127 -- which
+# reads exactly like "docker is not installed". That stopped the v102 build (#308).
+if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    if [ -x "$HERE/tools/host-bin/docker" ]; then
+        PATH="$HERE/tools/host-bin:$PATH"
+        export PATH
+    fi
+fi
 command -v docker >/dev/null 2>&1 || { echo "error: docker not found." >&2; exit 1; }
-docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2; exit 1; }
+docker info >/dev/null 2>&1 || { echo "error: docker daemon not running." >&2
+    echo "       'docker' resolves to $(command -v docker)" >&2
+    echo "       run scripts/build-doctor.sh, which names the exact cause." >&2
+    exit 1; }
 
 echo "[*] building docker image '$IMG' (first run only)…"
 docker build -q -t "$IMG" -f "$HERE/docker/Dockerfile" "$HERE" >/dev/null
