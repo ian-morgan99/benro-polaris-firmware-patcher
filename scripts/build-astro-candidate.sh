@@ -387,6 +387,10 @@ CHANGE_MANIFEST_SHA256="$(sha256sum "$OUT/release-change-manifest.json" | awk '{
 {
   echo "release_change_manifest=release-change-manifest.json"
   echo "release_change_manifest_sha256=$CHANGE_MANIFEST_SHA256"
+  # Recorded, not merely enforced. A SKIP_DOCTOR=1 exception must be visible in the
+  # release evidence; a variable that is set and then dropped proves nothing.
+  echo "build_doctor_status=$DOCTOR_STATUS"
+  echo "build_doctor_log=doctor.log"
 } >> "$OUT/build-source-provenance.txt"
 
 echo "[8/9] checking candidate identity"
