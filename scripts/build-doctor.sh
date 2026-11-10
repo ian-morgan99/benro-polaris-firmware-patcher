@@ -89,12 +89,15 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-PASS=0; FAIL=0; WARN=0
+PASS=0; FAIL=0; WARN=0; SKIP=0
 ok()   { printf '  \033[32mOK\033[0m   %s\n' "$*"; PASS=$((PASS+1)); }
 bad()  { printf '  \033[31mFAIL\033[0m %s\n' "$*"; FAIL=$((FAIL+1)); }
 warn() { printf '  \033[33mWARN\033[0m %s\n' "$*"; WARN=$((WARN+1)); }
 hint() { printf '         %s\n' "$*"; }
 sect() { printf '\n== %s ==\n' "$*"; }
+# A check that cannot be run is not a pass. Counting it as OK is how a gate looks
+# green while judging nothing -- the vacuous-pass class behind issue #286.
+skip() { printf '  \033[36mSKIP\033[0m %s\n' "$*"; SKIP=$((SKIP+1)); }
 
 # Print the first meaningful line of captured stderr so the operator sees the
 # real reason, not our paraphrase of it.
@@ -455,7 +458,114 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-sect "8. Publication path"
+sect "8. Installer invariants and kit footprint"
+
+# Both faults below were found by installing 6.0.0.54.104 on the device, not by
+# building it. Neither is visible from a successful build; both are visible from
+# the source, which is why they live here rather than in the archive gate.
+INSTALL_SH="$ROOT/container/astro/ondisk/install_astro.sh"
+if [ -f "$INSTALL_SH" ]; then
+    # A firmware flash replaces /app and leaves the 68 MB UBIFS nearly full. The
+    # optional catalogue copy then hits ENOSPC, and under set -e that used to kill
+    # the script before the boot hook was written -- polaris-httpd on disk, port
+    # closed, nothing at boot, and no error anyone would notice. The hook must be
+    # installed while there is still guaranteed space.
+    HOOK_LN=$(grep -n 'boot hook installed ->' "$INSTALL_SH" | head -1 | cut -d: -f1)
+    CAT_LN=$(grep -n 'copy_optional "$SRC/catalogue.polcat"' "$INSTALL_SH" | head -1 | cut -d: -f1)
+    if [ -z "$HOOK_LN" ] || [ -z "$CAT_LN" ]; then
+        bad "install_astro.sh: cannot locate the boot-hook or catalogue-copy step"
+        hint "Section 9 asserts their order. Update this check if either is renamed."
+    elif [ "$HOOK_LN" -gt "$CAT_LN" ]; then
+        bad "install_astro.sh installs the boot hook (line $HOOK_LN) AFTER the optional"
+        bad "catalogue copies (line $CAT_LN) -- an ENOSPC on /app skips autostart"
+        hint "Move the boot-hook block up, directly after the manifest check. See"
+        hint "container/astro/test-install-enospc.sh, which reproduces this exactly."
+    else
+        ok "install_astro.sh writes the boot hook before any optional copy (hook $HOOK_LN < catalogue $CAT_LN)"
+    fi
+
+    # sha256sum separates hash and name with TWO spaces. ${line#* } leaves a leading
+    # space on every name, so every comparison fails and a bundle that ships a
+    # manifest reports VERIFY FAILED on all 37 entries and exits 1.
+    if grep -qE 'name=\$\{line#\* \}' "$INSTALL_SH"; then
+        bad "install_astro.sh parses the manifest with \${line#* } -- sha256sum emits two"
+        bad "spaces, so every name keeps a leading space and verification always fails"
+        hint "Split the line into words instead: set -- \$line; exp=\$1; name=\$2"
+    else
+        ok "install_astro.sh parses manifest lines without relying on a single space"
+    fi
+else
+    bad "missing $INSTALL_SH"
+fi
+
+# The on-device manifest is what lets install_astro.sh compare bytes and
+# polaris-astro-sync.sh detect a stale binary. build-astro-bundle.sh has always
+# generated it, but nothing in production calls that script -- so every astro
+# candidate published to date shipped polaris-astro.zip without it, and the
+# installer quietly skipped verification. Assert it is produced by the script
+# production actually runs, and asserted against the finished archive.
+CAND_SH="$ROOT/scripts/build-astro-candidate.sh"
+if [ -f "$CAND_SH" ]; then
+    if grep -q 'polaris-astro.manifest' "$CAND_SH"; then
+        ok "build-astro-candidate.sh generates polaris-astro.manifest"
+    else
+        bad "build-astro-candidate.sh does not generate polaris-astro.manifest"
+        hint "Without it install_astro.sh prints 'installed files are unverified' and"
+        hint "skips byte comparison, so a stale polaris-httpd installs as if new."
+    fi
+    if grep -q 'polaris-astro.zip does not contain polaris-astro.manifest' "$CAND_SH"; then
+        ok "build-astro-candidate.sh asserts the manifest is inside the finished zip"
+    else
+        bad "build-astro-candidate.sh never asserts the manifest is inside polaris-astro.zip"
+        hint "A manifest on disk but excluded from the archive reaches no user. Assert"
+        hint "against the archive: unzip -Z1 \"\$z\" | grep -qx polaris-astro/polaris-astro.manifest"
+    fi
+else
+    bad "missing $CAND_SH"
+fi
+
+# /app is a 68 MB UBIFS and a flashed appfs.ubifs of 64 MB leaves almost nothing.
+# The mandatory kit (binaries + scripts, excluding the catalogue, which everything
+# reads from /app/sd) must fit in what remains after the firmware replaces /app.
+#
+# Measured on the device at .104: /app/astro held 15.1 MB once the unused catalogue
+# mirror was removed. The binaries only exist after a build, so this reads the most
+# recent bundle output; if there is none it says SKIP rather than reporting a
+# vacuous OK on a zero-byte du.
+BUNDLE_ROOT="$ROOT/out"
+LATEST_BUNDLE=$(ls -1dt "$BUNDLE_ROOT"/astro-v*/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro \
+                2>/dev/null | head -1)
+if [ -z "$LATEST_BUNDLE" ]; then
+    skip "kit footprint not measurable yet -- no built astro bundle under $BUNDLE_ROOT"
+    hint "This gate compares binaries + scripts against the /app budget. It can only"
+    hint "judge real bytes, so it is inert until one candidate has been built."
+else
+    # The candidate id is the path component that starts with astro-, not the
+    # immediate parent, which is always COPY-TO-SD-CARD-ROOT.
+    CAND_ID=$(printf '%s\n' "$LATEST_BUNDLE" | sed -n 's#.*/\(astro-v[^/]*\)/.*#\1#p')
+    [ -n "$CAND_ID" ] || CAND_ID=$(basename "$(dirname "$LATEST_BUNDLE")")
+    MAND_KB=0
+    for b in "$LATEST_BUNDLE"/polaris-* "$LATEST_BUNDLE"/*.sh; do
+        [ -f "$b" ] || continue
+        case "$b" in *.pcat|*.polcat|*.ptri) continue ;; esac
+        kb=$(du -k "$b" 2>/dev/null | cut -f1)
+        MAND_KB=$((MAND_KB + ${kb:-0}))
+    done
+    if [ "$MAND_KB" -eq 0 ]; then
+        skip "kit footprint measured 0 KB from $LATEST_BUNDLE -- nothing to judge"
+    elif [ "$MAND_KB" -gt 40960 ]; then
+        bad "mandatory kit is $((MAND_KB / 1024)) MB ($CAND_ID);"
+        bad "/app is 68 MB total and a flash replaces it wholesale, so this will not"
+        bad "install on a freshly flashed device"
+        hint "Move load-bearing data to the SD card. Everything already reads the"
+        hint "catalogue from /app/sd/polaris-astro -- keep new data there too."
+    else
+        ok "mandatory kit is $((MAND_KB / 1024)) MB ($CAND_ID), within the /app budget (warns above 40 MB)"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+sect "9. Publication path"
 
 # Publishing clones PrivateResearch into ${TMPDIR:-/tmp} unless a clean checkout is
 # supplied. That repo is ~26 GB: the first v102 publish died on SIGTERM mid-clone
@@ -482,12 +592,13 @@ fi
 # ---------------------------------------------------------------------------
 printf '\n============================================================\n'
 if [ "$FAIL" -eq 0 ]; then
-    printf 'DOCTOR: GREEN -- %d checks passed, %d warning(s).\n' "$PASS" "$WARN"
+    printf 'DOCTOR: GREEN -- %d checks passed, %d warning(s), %d skipped.\n' "$PASS" "$WARN" "$SKIP"
+    [ "$SKIP" -gt 0 ] && printf 'Skipped checks judged nothing. Read the SKIP lines if one\n' && printf 'covers something you were relying on.\n'
     printf 'Every prerequisite was exercised, not merely looked for.\n'
     [ "$WARN" -gt 0 ] && printf 'Read the WARN lines above before a long build.\n'
     exit 0
 else
-    printf 'DOCTOR: RED -- %d failed, %d passed, %d warning(s).\n' "$FAIL" "$PASS" "$WARN"
+    printf 'DOCTOR: RED -- %d failed, %d passed, %d warning(s), %d skipped.\n' "$FAIL" "$PASS" "$WARN" "$SKIP"
     printf 'Fix every FAIL line above. Each one prints the exact command.\n'
     printf 'Do not start a build to "see what happens": these failures surface\n'
     printf 'deep inside a long run and report themselves as unrelated problems.\n'

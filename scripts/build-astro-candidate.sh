@@ -247,6 +247,37 @@ ASTRO_ARGS=(--out "$OUT/astro-bundle" --image "$IMAGE" --focal-min "$FMIN" \
 [ "$NO_INDEXES" = 1 ] && ASTRO_ARGS+=(--no-indexes)
 bash "$ROOT/build-astro.sh" "${ASTRO_ARGS[@]}"
 [ -d "$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro" ] || die "Astro tree missing"
+
+# The on-device manifest, generated HERE because this is the script production
+# actually runs. scripts/build-astro-bundle.sh has always created it and fails
+# closed if empty, but nothing in production calls that script -- so every astro
+# candidate published so far shipped polaris-astro.zip WITHOUT it. install_astro.sh
+# then prints "installed files are unverified" and skips its byte comparison, and
+# polaris-astro-sync.sh at boot falls back to copy-if-missing: a new release can
+# install nothing at all while reporting success. That is the #292 silent no-op,
+# reintroduced by packaging rather than by code.
+#
+# Paths are relative to the astro directory because that is the directory both
+# install_astro.sh and polaris-astro-sync.sh hash against.
+SD_ASTRO="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro"
+ASTRO_MANIFEST="$SD_ASTRO/polaris-astro.manifest"
+(
+  cd "$SD_ASTRO"
+  {
+    for b in polaris-httpd polaris-solve polaris-solve-independent \
+             polaris-solve-independent-search polaris-exif-solve \
+             polaris-skysim-independent polaris-extract polaris-logwatch \
+             polaris-match polaris-skysim polaris-mount; do
+      [ -f "$b" ] && printf '%s\n' "$b"
+    done
+    for s in *.sh; do [ -f "$s" ] && printf '%s\n' "$s"; done
+  } | sort -u |
+    while IFS= read -r f; do sha256sum "$f"; done
+) > "$ASTRO_MANIFEST"
+[ -s "$ASTRO_MANIFEST" ] || die "generated $ASTRO_MANIFEST is empty"
+grep -q 'polaris-httpd$' "$ASTRO_MANIFEST" \
+  || die "$ASTRO_MANIFEST does not cover polaris-httpd (the web UI lives inside it)"
+
 (
   cd "$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
   find . -type f -print0 | sort -z |
@@ -332,6 +363,19 @@ for spec in "polaris-astro.zip:polaris-astro" "polaris-wifi.zip:polaris-wifi" "a
   bad=$(unzip -Z1 "$z" | grep -vc "^$root/" || true)
   [ "$bad" = "0" ] || die "$z has $bad entr(ies) outside $root/ -- would not unzip to SD root"
 done
+
+# Assert against the finished archive, not the staging directory: a manifest that
+# exists on disk but is excluded from polaris-astro.zip is exactly how .104 shipped
+# without one. The user extracts the zip; the tree beside it never reaches the card.
+if [ -f "$SD_ROOT/polaris-astro.zip" ]; then
+  unzip -Z1 "$SD_ROOT/polaris-astro.zip" | grep -qx "polaris-astro/polaris-astro.manifest" \
+    || die "polaris-astro.zip does not contain polaris-astro.manifest -- install_astro.sh would skip byte verification and the boot sync could not detect a stale binary"
+  msz=$(unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest 2>/dev/null | wc -c)
+  [ "$msz" -gt 0 ] || die "polaris-astro.zip stores polaris-astro.manifest as an empty file"
+  unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest \
+    | grep -q 'polaris-httpd$' \
+    || die "polaris-astro.manifest inside the zip does not cover polaris-httpd"
+fi
 
 # The SD-rooted .zip archives are excluded from astro-bundle.tar.gz. They are
 # published as siblings beside FwPkt.zip by publish-astro-candidate.sh, so keeping
