@@ -19,6 +19,8 @@
 #   --skip-verify      skip the post-reboot verification (fire-and-forget)
 #   --max-wait SECS    max seconds to wait for device to return (default 900)
 #   --allow-busy       proceed even if a camera is present/busy (code 286 state:1)
+#   --no-kit           do not install the astro kit afterwards (default: install
+#                      it whenever the candidate carries one)
 #
 # What it does:
 #   0. Gate: candidate zip digest vs install-manifest.json, device identity
@@ -33,6 +35,11 @@
 #      require /proc/uptime to have RESET — an AP-link flap is not a reboot
 #   6. Confirm: fail-closed exact comparison of build_id, both source commits,
 #      display version and every mandatory installed file's SHA-256
+#   7. Astro kit: if the candidate carries one, stage it and run install_astro.sh
+#      via scripts/release/install-astro-kit.sh. A flash replaces appfs, which is
+#      where /app/astro and its boot hook live, so every flash deletes the plate
+#      solver and port 8090 goes closed. This step is not optional by default
+#      because skipping it silently produces a device that looks installed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
@@ -43,6 +50,7 @@ SKIP_TRIGGER=0
 SKIP_VERIFY=0
 MAX_WAIT=900
 ALLOW_BUSY=0
+INSTALL_KIT=1
 GIMBAL_PORT=9090
 UPTIME_BEFORE=""
 UPTIME_AFTER=""
@@ -55,7 +63,8 @@ while [ $# -gt 0 ]; do
     --skip-verify) SKIP_VERIFY=1; shift;;
     --max-wait) MAX_WAIT="$2"; shift 2;;
     --allow-busy) ALLOW_BUSY=1; shift;;
-    -h|--help) sed -n '2,32p' "$0"; exit 0;;
+    --no-kit) INSTALL_KIT=0; shift;;
+    -h|--help) sed -n '2,42p' "$0"; exit 0;;
     *) BUILD_DIR="$1"; shift;;
   esac
 done
@@ -375,4 +384,27 @@ if [ "$SKIP_TRIGGER" = "0" ] && [ "$SKIP_VERIFY" = "0" ]; then
   } > "$BUILD_DIR/install-status.txt"
   echo "Install receipt: $BUILD_DIR/install-receipt.txt"
   echo "Install status: installed-verified"
+fi
+
+# --- 7. Astro kit ------------------------------------------------------------
+# A flash replaces appfs, and /app/astro plus its boot hook live there, so the
+# plate solver and everything that starts it are gone the moment the new
+# firmware boots. The device then reports the right FwVer with port 8090 closed,
+# which reads as a good install. Install the kit here so it cannot be forgotten;
+# --reboot lets the new boot hook run, since install_astro.sh only registers it.
+if [ "$SKIP_TRIGGER" = "1" ]; then
+  echo "(staged only, no flash performed; the astro kit is left untouched)"
+elif [ "$INSTALL_KIT" = "0" ]; then
+  if [ -d "$BUILD_DIR/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro" ]; then
+    echo "WARN: --no-kit given, and the flash just removed /app/astro and its boot"
+    echo "      hook. Port 8090 stays closed until the kit is re-installed:"
+    echo "        ./scripts/release/install-astro-kit.sh $BUILD_DIR"
+  fi
+elif [ -d "$BUILD_DIR/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro" ]; then
+  echo
+  echo "--- [7/7] Installing the astro kit (a flash removed it) ---"
+  "$ROOT/scripts/release/install-astro-kit.sh" "$BUILD_DIR" \
+    --host "$HOST" --ssh-user "$SSH_USER" --no-indexes --reboot
+else
+  echo "(no astro kit in this candidate; nothing further to install)"
 fi

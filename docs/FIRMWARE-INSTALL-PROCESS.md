@@ -217,10 +217,35 @@ before .104:  /app/astro/polaris-httpd present, /app/network_telnetd.sh = astro 
 after  .104:  /app/astro absent, /app/network_telnetd.sh absent, port 8090 closed
 ```
 
-Nothing warns about this. Route A step 4 and Route B both need
-`install_astro.sh` re-run after the flash, on every release, not just the first.
-Confirm it took by opening `http://<polaris ip>:8090` — a correct firmware version
-in the app is not evidence that the kit came back.
+`release-fwpkt.sh` now does this itself as phase 7: after a confirmed flash it
+runs `scripts/release/install-astro-kit.sh`, which stages the kit, verifies every
+staged byte against `ASTRO-MANIFEST.sha256`, runs `install_astro.sh`, reboots so
+the new boot hook fires, and **fails closed unless port 8090 is actually
+serving**. Pass `--no-kit` only when deliberately leaving the solver off, and the
+script will say so. To run the step on its own:
+
+```sh
+./scripts/release/install-astro-kit.sh out/<candidate> --no-indexes --reboot
+```
+
+Route A step 4 and Route B still need `install_astro.sh` re-run after the flash,
+on every release, not just the first. Confirm it took by opening
+`http://<polaris ip>:8090` — a correct firmware version in the app is not evidence
+that the kit came back.
+
+**Stage with tar over ssh, never `scp`.** The device's sshd has no `sftp-server`
+subsystem, so `scp` dies with `scp: Connection closed`, and legacy `scp -O` hangs.
+This is why `release-fwpkt.sh` streams `FwPkt/` as one tar archive over a single
+ssh session, and why the kit installer does the same:
+
+```sh
+tar czf - polaris-astro | ssh root@<ip> 'tar xzf - -C /app/sd && sync'
+```
+
+Hand staging has also tended to copy `polaris-astro/` only, leaving a stale
+`polaris-wifi/` on the card. The installer stages both by default and skips only
+the ~1 GB of astrometry indexes, which survive a flash because they live on the
+card.
 
 **`/app` is 68 MB and a flashed image uses most of it.** Measured on the rig after
 the `.104` flash: `ubi1:ubifs 68.0M 68.0M 12.0K 100% /app`. `install_astro.sh`
