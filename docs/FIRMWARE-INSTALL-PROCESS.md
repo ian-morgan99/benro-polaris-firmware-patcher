@@ -22,8 +22,8 @@ produce. Pick by audience, not by convenience.
 
 | | **Systematic** (agent / developer) | **Manual** (end user) |
 |---|---|---|
-| Who | Us, with a PC, SSH and this repo | Anyone, with the microSD card only |
-| Needs | Host tooling, SSH to the device, `git` checkout | Nothing but the card and the camera |
+| Who | Us, with a PC, SSH and this repo | Anyone, with the card plus one ssh command |
+| Needs | Host tooling, SSH to the device, `git` checkout | The card, the camera, and one `ssh` command to run `install_astro.sh` |
 | Firmware (`FwPkt`) | `scripts/release/release-fwpkt.sh` | Copy/extract `FwPkt/` to SD root, reboot |
 | Astro + Wi-Fi kits | `scp`/rsync into `/app/sd/…`, or re-flash | Copy the zip to SD root, unzip there |
 | Proof produced | MD5s on-device, uptime reset, `build_id`, both source commits, mandatory file SHA-256s | Version screen only — **no proof of a flash** |
@@ -96,8 +96,9 @@ route. That left a user with instructions that install the astro stack and silen
 nothing about the firmware — the exact shape of #58, produced by documentation rather
 than code.
 
-The template now states both routes explicitly: Route A (SD card only) covers extracting
-`FwPkt/`, the two kit archives, rebooting, and **reading the version back in the app**;
+The template now states both routes explicitly: Route A (SD card plus one ssh command) covers
+extracting `FwPkt/`, the two kit archives, running `install_astro.sh`, rebooting, and
+**reading the version back in the app**;
 Route B gives the `release-fwpkt.sh` command. The version string is interpolated from
 `$DISPLAY_FWVER`, so the check a user can actually perform is stated in the artifact they
 hold.

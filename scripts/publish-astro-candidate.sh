@@ -157,11 +157,11 @@ Everything you need for Route A below is a .zip. No tar tool is required, and
 none of the on-device extractors handle .tar.gz -- astro-bundle.tar.gz exists
 for inspection and licensing only, and opening it needs 'tar xzf' on a PC.
 
-There are two ways to install, and they are not interchangeable. Route A needs only
-the microSD card. Route B needs a PC, SSH and this repo, and is the only one that can
-prove an install happened.
+There are two ways to install, and they are not interchangeable. Route A needs the microSD
+card plus one ssh command -- no PC tooling, no repo, no build. Route B needs a PC, SSH and
+this repo, and is the only one that can prove an install happened.
 
-## Route A -- SD card only (no PC tooling, no SSH)
+## Route A -- SD card plus one ssh command (no repo, no build)
 
 1. Copy FwPkt.zip to the SD card root and EXTRACT it there, so the card ends up with a
    FwPkt/ folder containing camera/config, camera/uImage, camera/rootfs.ubifs and
@@ -195,10 +195,11 @@ prove an install happened.
    the new firmware with no astro stack at all, and nothing tells you so.
 
    The first line it prints is how much room /app has. That partition is 68 MB and a
-   flashed firmware image uses most of it, so "free on /app/astro" is often small. If
-   the run ends with lines saying something "did not fit in /app/astro", that is
-   expected and harmless: the catalogue is read from the SD card, which is where step 2
-   put it. What must NOT be missing is the line "boot hook installed".
+   flashed firmware image uses most of it, so "free on /app/astro" is often small. You may
+   also see a line saying the solve data stays on the SD card -- that is correct and
+   deliberate: every solver reads the catalogue from /app/sd/polaris-astro, which is where
+   step 2 put it, and /app is far too small to hold a copy. What must NOT be missing is the
+   line "boot hook installed".
 
    Also look for "verified every manifest entry against /app/astro". If instead it says
    "installed files are unverified", the polaris-astro folder on your card came from an
