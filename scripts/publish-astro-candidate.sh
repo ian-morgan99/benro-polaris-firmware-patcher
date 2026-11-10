@@ -109,14 +109,20 @@ for sdzip in polaris-astro.zip polaris-wifi.zip astrometry-indexes.zip; do
     cp "$SD_ROOT/$sdzip" "$PR_CHECKOUT/$DEST/"
   fi
 done
-ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""
+ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""; INDEX_ZIP_SHA=""
 [ -f "$PR_CHECKOUT/$DEST/polaris-astro.zip" ] && \
   ASTRO_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-astro.zip" | awk '{print $1}')
 [ -f "$PR_CHECKOUT/$DEST/polaris-wifi.zip" ] && \
   WIFI_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-wifi.zip" | awk '{print $1}')
+[ -f "$PR_CHECKOUT/$DEST/astrometry-indexes.zip" ] && \
+  INDEX_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/astrometry-indexes.zip" | awk '{print $1}')
 SD_ROWS=""
 [ -n "$ASTRO_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-astro.zip SHA-256 | \`$ASTRO_ZIP_SHA\` |"$'\n'
 [ -n "$WIFI_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-wifi.zip SHA-256 | \`$WIFI_ZIP_SHA\` |"$'\n'
+# Route A step 3 tells the user to copy this archive, so it needs a digest to check
+# against like the other two. Without one they cannot tell a truncated download from a
+# good one, and a missing astrometry/ folder solves nothing while looking healthy.
+[ -n "$INDEX_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| astrometry-indexes.zip SHA-256 | \`$INDEX_ZIP_SHA\` |"$'\n'
 
 cp "$MANIFEST" "$PR_CHECKOUT/$DEST/"
 for file in install-manifest.json build-source-provenance.txt release-change-manifest.json \
@@ -166,8 +172,11 @@ prove an install happened.
    polaris-astro/ and polaris-wifi/ directly on the card. Repeat every release.
 3. Copy astrometry-indexes.zip to the SD card root and extract it. It is rooted at
    astrometry/, so it expands to <SD root>/astrometry/index-41xx.fits. This is a
-   one-time copy -- it does not change between releases, so skip it if the folder is
-   already on the card. It is NOT inside polaris-astro.zip: without those index files
+   one-time copy -- the index files themselves do not change between releases, so skip
+   it if the folder is already on the card. Note that the archive's SHA-256 below does
+   change from release to release even when the index files are identical: zip embeds
+   each file's build timestamp, so a different hash here is not evidence of a different
+   card payload. It is NOT inside polaris-astro.zip: without those index files
    install_astro.sh prints "NO index files ... NOTHING WILL SOLVE" and the solver
    never resolves a frame while everything else looks healthy.
 4. Run the installer once, over ssh:
