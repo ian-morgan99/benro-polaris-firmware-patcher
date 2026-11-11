@@ -1,0 +1,378 @@
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:08:727 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:08:727 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:08:729 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:08:729 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:731 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:08:731 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:08:731 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:08:848 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:08:848 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:08:851 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:08:851 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:852 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:08:852 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:08:852 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:08:971 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:08:972 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:08:974 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:08:974 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:08:975 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:08:975 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:08:975 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:09:088 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:09:088 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:09:090 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:09:090 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:091 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:09:091 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:09:091 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:09:205 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:09:205 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:09:207 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:09:207 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:209 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:09:209 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:09:209 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:09:324 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:09:324 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:09:326 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:09:327 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:329 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:09:329 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:09:329 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:09:448 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:09:448 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:09:451 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:09:451 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:452 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:09:452 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:09:452 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:09:576 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:09:576 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:09:578 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:09:578 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:579 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:09:579 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:09:579 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:09:700 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:09:700 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:09:702 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:09:702 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:09:703 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:09:703 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:09:703 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:11:177 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:11:177 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:11:179 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:11:180 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:181 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:11:181 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:11:181 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:11:307 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:11:307 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:11:309 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:11:309 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:310 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:11:311 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:11:311 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax preview stage get-frame returned 0x2001 (60730 bytes, 1 attempts, 15 ms).
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:11:451 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:11:451 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:11:453 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:11:453 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:454 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:11:455 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:11:455 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:11:576 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:11:576 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:11:578 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:11:578 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:580 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:11:580 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:11:580 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:11:701 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:11:701 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:11:704 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:11:704 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:705 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:11:705 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:11:705 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:11:826 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:11:826 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:11:828 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:11:828 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:829 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:11:830 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:11:830 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:11:945 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:11:945 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:11:948 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:11:948 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:11:949 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:11:949 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:11:949 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:12:076 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:12:076 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:12:078 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:12:078 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:079 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:12:079 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:12:079 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:12:196 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:12:196 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:12:198 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:12:198 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:199 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:12:200 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:12:200 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:12:319 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:12:319 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:12:322 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:12:322 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:323 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:12:323 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:12:323 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:12:443 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:12:443 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:12:445 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:12:446 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:447 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:12:447 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:12:447 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:12:565 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:12:565 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:12:567 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:12:567 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:568 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:12:568 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:12:568 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:12:691 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:12:691 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:12:693 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:12:694 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:12:695 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:12:695 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:12:695 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:12:797 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:12:797 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:12:800 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:12:800 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[mPentax preview stage get-frame returned 0x2001 (60569 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60442 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (60424 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (60482 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60534 bytes, 1 attempts, 18 ms).
+[m[10:49:23:588 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:23:588 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:23:588 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:23:698 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:23:698 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:23:701 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:23:701 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:24:709 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:24:709 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:24:709 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:25:206 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:25:206 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:25:208 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:25:208 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:25:209 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:25:210 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:25:210 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax preview stage get-frame returned 0x2001 (60111 bytes, 1 attempts, 15 ms).
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:25:358 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:25:358 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:25:360 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:25:361 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:25:362 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:1;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:25:362 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:25:362 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:25:468 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:4  ret:0 
+[m[10:49:25:468 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:4  ret:0 
+[m[10:49:25:470 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 4 ret 0 fDelay 2
+[m[10:49:25:470 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:25:498 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:0;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:25:498 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:25:498 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:25:614 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:2  ret:0 
+[m[10:49:25:614 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:2  ret:0 
+[m[10:49:25:616 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 2 ret 0 fDelay 2
+[m[10:49:25:616 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:0;ret:0;]
+[mPentax preview stage get-frame returned 0x2001 (59722 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (59906 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60277 bytes, 1 attempts, 19 ms).
+Pentax preview stage get-frame returned 0x2001 (60355 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60552 bytes, 1 attempts, 17 ms).
+Pentax preview stage get-frame returned 0x2001 (60672 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60928 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (60684 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (62949 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60565 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60587 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60358 bytes, 1 attempts, 17 ms).
+[m[10:49:50:820 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:0;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:50:821 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:50:821 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:51:616 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:2  ret:0 
+[m[10:49:51:616 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:2  ret:0 
+[m[10:49:51:618 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 2 ret 0 fDelay 2
+[m[10:49:51:619 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:51:620 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:0;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:0;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:51:620 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:51:620 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax preview stage get-frame returned 0x2001 (60143 bytes, 1 attempts, 13 ms).
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:51:745 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:2  ret:0 
+[m[10:49:51:745 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:2  ret:0 
+[m[10:49:51:747 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 2 ret 0 fDelay 2
+[m[10:49:51:747 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:0;ret:0;]
+[m[m[10:49:52:376 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:1;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:52:376 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:52:376 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:53:316 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:4  ret:0 
+[m[10:49:53:316 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:4  ret:0 
+[m[10:49:53:319 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 4 ret 0 fDelay 2
+[m[10:49:53:319 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:1;ret:0;]
+[m[m[10:49:53:320 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:1;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:1;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:53:321 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:53:321 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:53:438 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:4  ret:0 
+[m[10:49:53:438 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:4  ret:0 
+[m[10:49:53:440 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 4 ret 0 fDelay 2
+[m[10:49:53:440 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:1;ret:0;]
+[mPentax preview stage get-frame returned 0x2001 (62898 bytes, 1 attempts, 14 ms).
+[m[10:49:53:479 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:53:479 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:53:479 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:53:589 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:53:589 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:53:591 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:53:591 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:53:769 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:2;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:2;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:53:769 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:53:769 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:53:923 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:6  ret:0 
+[m[10:49:53:923 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:6  ret:0 
+[m[10:49:53:925 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: 6 ret 0 fDelay 2
+[m[10:49:53:926 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:2;ret:0;]
+[m[m[10:49:55:254 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:4;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:4;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:55:255 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:55:255 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:55:458 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:-2  ret:0 
+[m[10:49:55:458 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:-2  ret:0 
+[m[10:49:55:461 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: -2 ret 0 fDelay 2
+[m[10:49:55:461 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:4;ret:0;]
+[mPentax preview stage get-frame returned 0x2001 (63892 bytes, 1 attempts, 16 ms).
+[m[10:49:55:863 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[262],val[mod:1;f:4;]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 262  data: mod:1;f:4;   --_isInit 1 
+--- change focus mode ret 0
+[m[10:49:55:863 [1;32mINFO[m-]:camera_autoFocus_enable[797]:[0;32;31m----camera_autoFocus_enable  0
+[m[10:49:55:863 [1;32mINFO[m-]:updateCameraManualFocus[3711]:[0;32;31m----updateCameraManualFocus 
+Pentax manual focus drive (new) returned response 0x2001.
+[m[10:49:55:999 [1;32mINFO[m-]:updateCameraManualFocus[3787]:[0;32;31m----updateCameraManualFocus focus:-2  ret:0 
+[m[10:49:55:999 [1;32mINFO[m-]:updateCameraManualFocus[3821]:----updateCameraManualFocus end focus:-2  ret:0 
+[m[10:49:56:001 [1;32mINFO[m-]:setFocusChange[1068]:[0;32;31m----setFocusMode configType 4  value: -2 ret 0 fDelay 2
+[m[10:49:56:001 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[262],val[mod:1;f:4;ret:0;]
+[m

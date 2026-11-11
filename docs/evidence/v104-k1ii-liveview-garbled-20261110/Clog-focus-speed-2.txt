@@ -1,0 +1,4 @@
+Pentax preview stage get-frame returned 0x2001 (58662 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (58655 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (58715 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (58633 bytes, 1 attempts, 19 ms).

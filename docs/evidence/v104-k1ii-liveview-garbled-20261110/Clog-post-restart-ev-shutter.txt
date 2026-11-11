@@ -1,0 +1,48 @@
+[m[10:48:08:836 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info exposurecompensation ret -1 
+[m[10:48:08:837 [1;32mINFO[m-]:recv_ipc_msg[129]:[0;32;32m------ recv_ipc_msg success; msg_id [65538] type[1],code[266],val[-1]
+[m[spc_ipc_message_handler]     [1;33m--- spc_ipc_message_handler --- type: 1 command: 266  data: -1   --_isInit 1 
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1702]:Label: WhiteBalance
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1703]:Readonly: 0
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1781]:Type: RADIO
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1783]:Current: multi-auto
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 0 auto
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 1 multi-auto
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 2 daylight
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 3 shade
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 4 cloudy
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 5 fluorescent-d
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 6 fluorescent-n
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 7 fluorescent-w
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 8 fluorescent-l
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 9 tungsten
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 10 flash
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 11 cte
+[m[10:48:08:838 [1;32mINFO[m-]:print_widget[1787]:Choice: 12 manual-1
+[m[10:48:08:839 [1;32mINFO[m-]:print_widget[1787]:Choice: 13 manual-2
+[m[10:48:08:839 [1;32mINFO[m-]:print_widget[1787]:Choice: 14 manual-3
+[m[10:48:08:839 [1;32mINFO[m-]:print_widget[1787]:Choice: 15 color-temp-1
+[m[10:48:08:839 [1;32mINFO[m-]:print_widget[1787]:Choice: 16 color-temp-2
+[m[10:48:08:839 [1;32mINFO[m-]:print_widget[1787]:Choice: 17 color-temp-3
+[m[10:48:08:839 [1;32mINFO[m-]:print_widget[1802]:-----------------END
+[m[10:48:08:839 [1;32mINFO[m-]:deal_camera_control_handler[2856]:[0;32;31m----camera_control_handler command 29  info whitebalance ret 0 
+[m[10:48:08:839 [1;32mINFO[m-]:getCameraConfig[734]:[0;32;31m----getCameraConfig configType 1  ret 0 
+[m[10:48:08:839 [1;32mINFO[m-]:send_ipc_msg_retry[80]:[0;32;32m------SP_sendMsg success; id[98307] type[1],code[266],val[RD:0;V:1;R:auto,multi-auto,daylight,shade,cloudy,fluorescent-d,fluorescent-n,fluorescent-w,fluorescent-l,tungsten,flash,cte,manual-1,manual-2,manual-3,color-temp-1,color-temp-2,color-temp-3,;]
+[mPentax preview stage get-frame returned 0x2001 (59817 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60333 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60298 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60822 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60645 bytes, 1 attempts, 18 ms).
+Pentax preview stage get-frame returned 0x2001 (60036 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60563 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (60421 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60359 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60215 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (60040 bytes, 1 attempts, 14 ms).
+Pentax preview stage get-frame returned 0x2001 (59936 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (60112 bytes, 1 attempts, 15 ms).
+Pentax preview stage get-frame returned 0x2001 (59979 bytes, 1 attempts, 16 ms).
+Pentax preview stage get-frame returned 0x2001 (59708 bytes, 1 attempts, 25 ms).
+Pentax preview stage get-frame returned 0x2001 (59844 bytes, 1 attempts, 14 ms).
+[m[10:48:44:984 [1;32mINFO[m-]:camera_connected_to_app[1634]:[0;32;31m----camera_connected_to_app connected:1 
+on client close..........3 
+Pentax preview stage get-frame returned 0x2001 (59946 bytes, 1 attempts, 17 ms).
