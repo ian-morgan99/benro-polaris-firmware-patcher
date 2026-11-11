@@ -245,9 +245,24 @@ mount_send() {
 # full-res frame and destroys a live-view one: 960x640 becomes 240x160, far too
 # small to solve. Observed on hardware -- the live-view solve failed with the
 # extractor reporting "240x160 decoded at 1/4 (full 960x640)".
+# Where pick_downsample leaves the frame dimensions it read, for solve_frame to
+# log. It has to be a file: solve_frame calls pick_downsample as $(...), which runs
+# in a subshell, so a variable assigned inside it is invisible to the caller (proved
+# with a minimal POSIX test rather than assumed). Same /tmp convention this script
+# already uses for autosolve-lv.jpg and simstatus.json -- single calibration flow,
+# so these are not raced.
+FRAME_DIMS_FILE=/tmp/polaris-frame-dims
+
 pick_downsample() {
-    _w=$("$ASTRO/polaris-extract" --jpeg "$1" --downsample 8 2>/dev/null \
-         | sed -n 's/^# full resolution \([0-9]*\) x .*/\1/p')
+    # Issue #321 needs the frame size on the solve line. Capture width AND height
+    # here, while we are already reading the file, rather than paying for a second
+    # polaris-extract pass purely to print dimensions -- that cost is not
+    # acceptable on this CPU. stdout keeps returning only the downsample number so
+    # the existing caller in keep_failed_frame is unaffected.
+    _dims=$("$ASTRO/polaris-extract" --jpeg "$1" --downsample 8 2>/dev/null \
+            | sed -n 's/^# full resolution *\([0-9][0-9]*\) *x *\([0-9][0-9]*\).*/\1 x \2/p')
+    printf '%s' "$_dims" > "$FRAME_DIMS_FILE" 2>/dev/null
+    _w=$(echo "$_dims" | sed -n 's/^\([0-9]*\) .*/\1/p')
     [ -n "$_w" ] || { echo 4; return; }
     if   [ "$_w" -ge 6000 ]; then echo 4
     elif [ "$_w" -ge 3000 ]; then echo 2
@@ -299,6 +314,20 @@ solve_frame() {
     _f=$1; _hra=$2; _hdec=$3
     [ -s "$_f" ] || return 1
     _ds=$(pick_downsample "$_f")
+    FRAME_DIMS=$(cat "$FRAME_DIMS_FILE" 2>/dev/null)
+    # Issue #321: a solve that timed out left no record of how long it ran, so
+    # "slow but eventually fine", "burned the whole cpulimit" and "failed in
+    # milliseconds" were indistinguishable in the log. Duration alone is not
+    # actionable either -- cost is set by frame size and downsample, so both go
+    # on the same line. The project's historical "361 s blind solve" was measured
+    # on full-res 8192 px frames; without the size on the line that number cannot
+    # be compared against a live-view solve.
+    #
+    # Caveat kept honest: this is wall-clock, not monotonic. The app sets the
+    # Polaris clock from its own 782 message, so a time sync landing mid-solve can
+    # report a bogus duration. A negative or absurd value means that happened --
+    # it does not mean the solve was instant.
+    _t0=$(date +%s)
     # polaris-align.sh takes the hint POSITIONALLY: <img> <focal> <ra> <dec> <radius>.
     # HINT_RA/HINT_DEC env vars are NOT read -- setting those silently solved
     # blind, and blind is ~50x slower at this focal length (361.7s vs 7.3s
@@ -316,17 +345,21 @@ solve_frame() {
         _out=$(DOWNSAMPLE="$_ds" FOCAL_MM="$FOCAL" \
             sh "$ASTRO/polaris-align.sh" "$_f" "$FOCAL" "$_hra" "$_hdec" "${HINT_RADIUS:-60}" 2>>"$LOG")
         if echo "$_out" | grep -q '"solved":true'; then
+            log "solve: hinted ok  $(( $(date +%s) - _t0 ))s  frame=${FRAME_DIMS:-?} downsample=$_ds radius=${HINT_RADIUS:-60}"
             echo "$_out"; return 0
         fi
         # Hinted solve failed: the hint itself may be the problem. Retry blind.
         # At live-view resolution that costs seconds, not minutes -- the project's
         # old 361 s blind figure was measured on full-res 8192 px frames.
-        log "hinted solve failed -- retrying blind (the hint may be the problem)"
+        log "hinted solve failed after $(( $(date +%s) - _t0 ))s -- retrying blind (the hint may be the problem)"
+        _t1=$(date +%s)
         DOWNSAMPLE="$_ds" FOCAL_MM="$FOCAL" MOUNT_HINT=0 \
             sh "$ASTRO/polaris-align.sh" "$_f" "$FOCAL" 2>>"$LOG"
+        log "solve: blind (after hint miss) $(( $(date +%s) - _t1 ))s  frame=${FRAME_DIMS:-?} downsample=$_ds"
     else
         DOWNSAMPLE="$_ds" FOCAL_MM="$FOCAL" MOUNT_HINT=0 \
             sh "$ASTRO/polaris-align.sh" "$_f" "$FOCAL" 2>>"$LOG"
+        log "solve: blind $(( $(date +%s) - _t0 ))s  frame=${FRAME_DIMS:-?} downsample=$_ds"
     fi
 }
 

@@ -334,6 +334,16 @@ PY_TESTS=(
     # and the script's own comments claimed otherwise. These assert the CLAIMS are
     # honest, which is the part fixable without the relocation decision.
     tests/test_setup_wifi_no_false_privacy_claim.py
+    # Added for #321: a plate-solve that timed out left no record of how long it ran,
+    # so "slow but eventually fine", "burned the whole cpulimit" and "failed in
+    # milliseconds" were indistinguishable in the log. These extract the real
+    # pick_downsample/solve_frame from the shipped script and execute them against
+    # stubbed polaris-extract/polaris-align.sh, asserting on produced log output rather
+    # than grepping source; mutation-tested (deleting a duration fails them, restoring
+    # passes). Offline-safe: no device, no network. Also pins that both functions stay
+    # POSIX-sh clean, since the script declares #!/bin/sh and runs under busybox on the
+    # device -- a bashism there is a real defect, unlike the bash-declaring scripts.
+    tests/test_autosolve_timing.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
