@@ -68,6 +68,13 @@
         "#273"
       ],
       "summary": "The Settings Wi-Fi auto-join toggle was a silent no-op and the page had no way to enter credentials. app.js posted {autojoin:1}; /api/wifi reads 'action' and matches autojoin_on/autojoin_off, so the request matched no branch, fell through to the status block and returned HTTP 200 with {\"ok\":true,...,\"autojoin\":false} -- success reported for a change that never happened. The handler was always correct; only app.js had drifted, and the embedded fallback page already posted the right verb, so two clients disagreed about one endpoint. Now the client sends action=autojoin_on/off and reverts the box on refusal; the server rejects an unrecognised POST instead of falling through to status, so a future client drift fails loudly. Added SSID/password fields plus save (action=save) and join-now (action=up, which runs the exact boot script). Covered by tests/test_wifi_api_contract.py, which compiles polaris-httpd for the host and issues real HTTP requests: 3 fail / 2 pass on the unfixed code, 5 pass fixed. Not verified on hardware -- the autojoin file write and a real association were not exercised."
+    },
+    {
+      "component": "patcher",
+      "issues": [
+        "#302"
+      ],
+      "summary": "setup-wifi.sh claimed wpa.conf was protected by permissions; it is not. /app/sd is vfat mounted fmask=0022, which has no per-file permission model, so chmod 600 returns success and changes nothing -- proved on-device by the reporter (touch, chmod 600, ls -l -> still 755). wpa.conf holds a WPA2 PSK hash sufficient to join the network without the passphrase, so it is readable by every process on the Polaris and by anyone who puts the card in a PC. The header said 'the file is chmod 600 -- treat it as a credential' and the comment written into wpa.conf itself said 'keep it private' -- both asserted protection the filesystem cannot provide, and the in-file line is what a user sees when they cat it. Both now state the real exposure (vfat, fmask=0022, readable by any process or card-holder); the summary prints the mode actually stored and warns when world-readable. The chmod is kept (harmless, correct where honoured) with a comment saying not to read it as protection. NOT done: option 1 from the issue -- move the config to /var/lib/polaris (UBIFS, where chmod works) -- that needs a read-fallback for existing cards and touches four consumers, so it is a distribution decision, not a unilateral patch. Covered by tests/test_setup_wifi_no_false_privacy_claim.py (asserts the claims are honest; 4 fail / 1 passes when reverted). Not verified on hardware: the warning branch fires only on a real vfat mount."
     }
   ],
   "known_limits": [
