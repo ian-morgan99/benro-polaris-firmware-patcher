@@ -195,3 +195,161 @@ Worth recording because each produced a confidently wrong answer.
   unfixed.
 - **`test-gp-port` fails on plain main** in the `no-ci` suite. Pre-existing, unrelated to Pentax,
   excluded by the documented host check. Not investigated.
+
+---
+
+# Continuation, same day — #273 shipped, and a test that silently tested nothing
+
+Second autonomous block after the record above. Everything below is pushed or explicitly
+marked as not done.
+
+## 8. #273 — auto-join toggle was a silent no-op; settings page had no credential entry
+
+`app.js` posted `{autojoin:1}`. `/api/wifi` reads `action` and matches `autojoin_on` /
+`autojoin_off`. The request matched no branch, fell through into the status block, and answered
+HTTP 200 with `{"ok":true,...,"autojoin":false}` — success reported for a change that never
+happened. The handler was correct all along; only the client had drifted. The embedded fallback
+page already posted the right verb, so two clients disagreed about one endpoint and the page most
+people use was the wrong one.
+
+Established by **executing** the server rather than reading it:
+
+| build | `POST autojoin=1` response |
+|---|---|
+| unfixed | `{"ok":true,"ap_ip":"","sta_ip":"","ssid":"","configured":false,"autojoin":false}` |
+| fixed | `{"ok":false,"error":"unknown or missing action (expected save, autojoin_on, …)"}` |
+
+Second half of the issue: the card had a "Join my network at power-up" switch and no SSID or
+password field — those lived only in the fallback page, so turning auto-join on from Settings
+joined whatever was configured elsewhere, or nothing. Added SSID/password fields, save
+(`action=save`, same verb the fallback page uses), and join-now (`action=up`, which runs the exact
+boot script rather than a second implementation that could drift).
+
+The server-side rejection is the part worth keeping even though the client is fixed: an endpoint
+that answers `ok:true` to a request it did not understand will reproduce this bug silently the
+next time a client drifts. Enumerated every `/api/wifi` caller first — only two exist, both send
+a valid action, so nothing regresses.
+
+## 9. My own regression test skipped in the gate — the exact failure mode I criticised
+
+`tests/test_wifi_api_contract.py` passed locally and **skipped inside the prerelease gate**.
+`polaris-httpd.c` includes `webui.h`, which `embed_webui.py` generates and `.gitignore` excludes
+at line 62. My working tree had a stale copy from an earlier build, so gcc found it here; the gate
+builds from a fresh clone where it does not exist, gcc failed with "No such file or directory",
+and the fixture skipped.
+
+The gate reported **GREEN** while three of five tests were skipped, and the skip was invisible
+because the suite only prints a passed count. This is precisely the #292/#299 failure mode I
+documented in section 4 — a check that exists, is registered, and runs on nothing. I criticised
+that pattern and then shipped it myself.
+
+Fixed by generating `webui.h` into the fixture's own tmp dir and compiling with `-I` at it, so the
+test needs nothing absent from the repository. Verified where it previously failed — in the build
+clone with no `webui.h`: **5 passed** (was 2 passed / 3 skipped). The rebuild's gate count moved
+from 700 to **703**, which is the +3 executing tests that were being skipped.
+
+The two source-assertion tests were the only ones the gate had actually been running; the three
+that distinguish "answered ok" from "answered ok because nothing matched" were the ones silently
+absent.
+
+## 10. A contract audit that produced three false positives
+
+I scripted a comparison of every key `app.js` posts against every key each handler reads, and it
+flagged `/api/astro/align`, `/api/astro/goto` and `/api/astro/track` as sending unread
+parameters. All three were artefacts: the regex matched the first occurrence of the path, which is
+a `post_only[]` list, not the handler. Confirmed by posting real requests to a natively built
+server — all three returned domain errors ("control link is down", "set your observing location
+first"), i.e. they parsed their parameters and proceeded. `/api/wifi` was the only genuine
+mismatch. Reported as false positives rather than filing three bugs.
+
+## 11. #142 — premise partly wrong; two of its three open questions answered offline
+
+- **The capture path does not emit `GP_EVENT_FILE_ADDED` at all.** `camera_pentax_capture_internal`
+  (library.c:6757) fills the `CameraFilePath *path` out-parameter, including
+  `strcpy (path->folder, "/")` at :7444, and returns. No emission anywhere in 7300–7800. So the two
+  announcements are two different APIs — `gp_camera_capture()`'s return value and a later
+  `gp_camera_wait_for_event()` — not two events to deduplicate. Producer-side suppression has
+  nothing to suppress against; it would require new state, not consulting existing state.
+- **Q2 (fork or upstream): both.** The generic folder `/` at :4737 is upstream — Marcus Meissner,
+  2014, `c013a23996`, *"…to handle that CaptureComplete comes before the ObjectAdded event"*. Our
+  Pentax site at :7444 is `342c053ae4` "Add guarded Pentax tethering core". Not a regression we
+  introduced; upstream's capture contract meeting a consumer that treats the two channels as two
+  files.
+- **Q3 (handle-based suppression): not directly implementable.** `params->pentax.candidate_handle`
+  is set at :7432 and **cleared to 0 at :7746 before the function returns**, and is never read in
+  the event path. At ObjectAdded time it is 0. Suppression keyed on it would never fire, or would
+  need the handle retained past capture end — colliding with the clearing logic and with the
+  reconciliation path that reuses the same field.
+
+Recommended folder normalisation instead of suppression. **No code pushed**: Q1's live trace is
+the decisive one (does pgphoto fire `captureImageEvent` off both channels, or only the event?), it
+needs a device with `GP_LOG_D`, and I cannot reproduce a SIGSEGV in a closed-source ELF offline.
+
+## 12. #138 — already fixed on main; verified rather than reimplemented
+
+The issue is written against baseline `63a894b08` (v90). On current main,
+`ptp_pentax_camera_shutdown` is no longer called anywhere in `library.c`; fixed by `6fe00aeb6`
+(2026-10-30), an ancestor of main. The mock-transaction test the issue demands already exists —
+`tests/test-pentax-camera-exit.c`, registered at `tests/meson.build:36-41` — and passes on the
+commit v106 pins:
+
+```
+PASS: real camera_exit, no shutdown, ordered cleanup, error precedence, non-Pentax controls
+```
+
+Its assertion is the right shape: the stub still *records* `PTP_OC_PENTAX_CameraShutdown`, and
+`finish()` asserts an exact transaction count (`operation_count == restore + disable + close`), so
+a stray `0x9002` fails rather than being tolerated. Only the hardware half (bounded read timing,
+idle-reconnect qualification on K-1 II / K-3 III) remains, and I did not claim #138 closed on the
+offline half alone.
+
+## 13. v106 rebuilt — final state
+
+`astro-v106-appliance-fixes-20261111`, fwver `6.0.0.54.106`: **GATE GREEN (23 passed, 0 failed,
+3 skipped)**, python regression suite **703 passed**, drift guard **48 suites all listed**,
+artifact verdict 21 checks / 0 fail / 1 unknown, candidate identity **PASS (deployable)**.
+Manifest `declared_changes` carries 8 entries including #273; lifecycle is
+`built: true`, everything else false.
+
+Verified in the **shipped ARM binary** by inflating the gzip-embedded assets: posts
+`action=autojoin_on`; old body-less payload absent; `#wifi-ssid`/`#wifi-psk` wired; `action: 'save'`
+and `action: 'up'` present; `id="wifi-ssid"`/`id="wifi-save"` in the embedded HTML; controls for
+the earlier work still present (`applyOutcome`, `decideDispatch`). Server rejection string present
+in the binary. Driver unchanged from the previous build at md5 `83ea3baf01df…` vs v105's
+`b18d45a8bc1d…`.
+
+One gate-adjacent finding: `offline_gated` in the release manifest is a **hardcoded literal**
+(`create-release-change-manifest.py:238`), not derived from the gate result. It reads `false` on a
+candidate whose gate is green. Not corrected here — changing what a release record asserts is the
+owner's call, and it may be deliberate (meaning "gated offline *and* hardware-qualified").
+
+## 14. Mistakes in this block, recorded plainly
+
+- **Marked the #328 reproducer complete in my todo list when I had not written it.** What I had
+  actually produced was an executing test for #273; the #328 work was a feasibility investigation.
+  Caught while re-reading the list and corrected immediately. #328 remains unwritten.
+- **Shipped a test that skipped silently in the gate** (section 9) — the failure mode I had
+  criticised two hours earlier in the same document.
+- **First `app.js` edit broke the file's syntax.** The replacement swallowed the closing braces of
+  `wireSettings()` and the following section header; `node --check` reported "Unexpected end of
+  input". Reverted, inspected exact bytes with `cat -A`, redid it minimally. Final diff is one line
+  replaced plus additions.
+- **Wrote a UI message referencing a "Join now" control that did not exist.** Caught by grepping
+  for the id before committing; added the control properly on `action=up` rather than deleting the
+  sentence.
+- **Reported "changes recorded: 0"** from the manifest. My key guess was wrong — the field is
+  `declared_changes`, which holds 8 entries. The record was complete all along.
+- **Three false-positive bug claims** from a scripted contract audit (section 10).
+
+## Still not done
+
+- **#328's widget-revert fix and its offline reproducer.** Investigated for feasibility, never
+  written. The blocker identified: `params->pentax.candidate_handle` is cleared before return and
+  the write path needs a stubbed transport; `test-pentax-keep-live-view-toggle.c` shows the
+  precedent for driving `camera_set_single_config` offline, but it covers a virtual toggle, not a
+  property write that fails verification.
+- **#331** (GPL/LGPL licences never reach the user) — still open, distribution decision.
+- **No hardware verification of anything.** No Polaris reachable, no Pentax on USB. #273's actual
+  file write (`/app/sd/polaris-wifi/autojoin`) and a real association are unexercised; whether
+  joining succeeds on the device is still a hardware question. Nothing installed, flashed or
+  published.
