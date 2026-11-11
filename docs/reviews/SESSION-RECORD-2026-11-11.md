@@ -462,3 +462,70 @@ unchanged at md5 `83ea3baf01df…`. Manifest carries 9 `declared_changes`; lifec
 - **#302 option 1** (relocate to UBIFS) — distribution decision.
 - **#328 fix** — needs a device plus a semantics decision.
 - **#331** (licences never reach the user), **#297** root cause, **#318** pending the answers above.
+
+---
+
+# Fourth autonomous block — driver issue #140 closed with executable red/green evidence
+
+## 19. #140: an executable regression for the held-Bulb cancellation path
+
+The static contract test asserts source substrings and ordering, which cannot show that a
+cancellation actually returns `GP_ERROR_CANCEL` without writing a shutter. Commit `4fba11d81`
+added exactly such a guard to the deferred camera-timed fallback and nothing executable proved
+it worked. The precedent that makes this worth having is in our own history: the v75 shutter
+readback change passed every offline gate and then physically hung every timed capture.
+
+Built `tests/test-pentax-bulb-action.c` on the house pattern — `ptp2_pentax_bulb_action`
+extracted verbatim from `library.c` by the same `extract()` helper the camera-exit harness uses,
+so no duplicated logic and no test-only symbol in the camlib ABI. `pentax-utils.c` is compiled
+directly, so the model gate, `pentax_bulb_hold_to_seconds` and the whole-second wire layout are
+production code rather than paraphrases. Only transport, capture path and
+`gp_camera_get_abilities` are mocked; the clock is scripted (1000 ms → 25500 ms) so the asserted
+shutter value is exactly `(1<<32)|25` instead of depending on wall-clock rounding.
+
+**Red-before / green-after**, which is the whole point:
+```
+guard removed from library.c -> FAIL case 1 line 171: ... == GP_ERROR_CANCEL; operations=SC
+guard restored               -> PASS: 15 cases
+```
+`operations=SC` makes the bug visible: without the guard the driver writes the shutter **and**
+starts a capture on a request the user already cancelled.
+
+**Proved not to duplicate `test-pentax-bulb-lifecycle`**, which #140 explicitly warns against:
+with the guard removed that test still passes while mine fails. It drives a fake lifecycle state
+machine through a `check_cancel` callback and never runs `ptp2_pentax_bulb_action`, so it cannot
+see this path.
+
+## 20. Two traps that each produce a silent PASS
+
+Both were hit for real while building this, not theorised:
+
+1. **`config.h` defines `LIBGPHOTO2_ENABLE_PENTAX_RESEARCH_CAPTURE` to 0** when the meson option
+   is off, so an `#ifndef` guard does not catch it — the macro *is* defined, just falsey. The
+   function body then compiles to `return GP_ERROR_NOT_SUPPORTED` and every assertion runs against
+   a stub that does nothing. Caught by reading `meson.build:230` and `builddir`'s config.h rather
+   than assuming. The harness `#undef`s and forces it on, because the appliance build passes
+   `-DLIBGPHOTO2_ENABLE_PENTAX_RESEARCH_CAPTURE=1` (`container/build_ptp2.sh:344`) — that is the
+   code that actually ships. Worth knowing independently of this test: **the shipped driver's
+   Pentax research-capture paths exist only because of that CPPFLAGS line**, and an autotools
+   build without it silently compiles them out.
+2. **A generated `.inc` left in the source tree shadows the build-dir copy.** A quoted `#include`
+   searches the including file's directory first, so my hand-generated `tests/*.inc` won over the
+   freshly regenerated one. I removed the guard from `library.c`, rebuilt, and the harness reported
+   **PASS against stale code** — exactly the false-green #140 exists to prevent. `.gitignore` now
+   covers `/tests/*.inc`.
+
+This is the same failure class as sections 9 and 16: a check that passes because what it actually
+examined differs from what was intended. Three instances in one day, all caught by verifying the
+mechanism rather than trusting the verdict.
+
+## 21. No rebuild required, and why
+
+`git diff --name-only` outside `tests/` and `.gitignore` is empty — zero production files touched,
+so `ptp2.so` is byte-identical to the one already in the v106 candidate (`83ea3baf01df…`). Rebuilding
+would have burned ~15 minutes to produce an identical artifact. Recorded rather than done.
+
+`meson test`: 23 ok, 3 fail. All three (`test-gp-port`, `test-gphoto2`, `test-pentax-aperture-alias`)
+reproduce with my changes stashed, so they pre-date this commit — verified before claiming it.
+
+Driver `530c879fe` pushed to `origin/main`; tree clean.
