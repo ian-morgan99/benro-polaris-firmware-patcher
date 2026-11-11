@@ -1,0 +1,68 @@
+# Offline pre-release gate on every push and pull request.
+#
+# Why this exists: issue #308 open item 1 -- "There is no .github/workflows. Every
+# gate here runs only if a human or agent remembers to invoke it." AGENTS.md says
+# run scripts/build-doctor.sh before any candidate build and tests/run_prerelease_gate.sh
+# before declaring a release ready, but nothing enforced either one. A rule that
+# depends on remembering is not a gate.
+#
+# This runs the documented offline gate verbatim -- ./tests/run_prerelease_gate.sh with
+# no arguments, which its own usage block defines as "all offline checks". It is not a
+# reimplementation: if the gate gains a check, CI runs it automatically. The gate is
+# fail-closed and reports missing prerequisites as SKIP rather than silent green, so
+# a runner without docker or without a built FwPkt.zip still produces an honest verdict.
+#
+# Deliberately NOT done here:
+#   * No --build / --canary / --two-shot. Those need a built package and a physical
+#     Polaris + Pentax on the other end. There is no self-hosted runner with the rig,
+#     and pretending otherwise would turn hardware gates into fake greens.
+#   * No --libgphoto2-src pointing at the driver repo's main branch. The gate comment
+#     says this check exists because .75 shipped a driver regression nothing caught, and
+#     it is meant to run "against the exact tree that built this candidate". A moving
+#     main is not that tree, so it stays an honest SKIP here until a pinned checkout is
+#     wired to a specific candidate.
+#   * No build-doctor.sh. It probes host docker and container tooling; on a GitHub
+#     runner those are absent by design, so it would report prerequisite gaps that mean
+#     nothing. The gate's own docker handling covers the useful part.
+
+name: offline-gate
+
+on:
+  push:
+    branches: [main, feature/astro-native-platesolve]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  prerelease-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # The suite is stdlib-only (verified: no numpy/scipy/astropy/cv2 imports in
+          # tests/*.py), so there is no requirements install step.
+          #
+          # Honesty note on the version: this suite has only ever been *executed* on
+          # CPython 3.13.15 (the development host). 3.12 was chosen here because a grep
+          # for 3.12/3.13-only syntax (type statements, type[] generics, except*) finds
+          # nothing in tests/*.py, so 3.12 should be safe -- but that is inference, not
+          # a verified run. If this job ever fails on a syntax or stdlib-behaviour
+          # difference, bump to '3.13' rather than debugging the suite.
+          python-version: '3.12'
+
+      - name: Offline pre-release gate
+        # The gate prints its own "N passed, M failed, K skipped" summary and a final
+        # GATE: GREEN/RED line, then exits non-zero on RED. Do not pipe it through tee
+        # or tail -- the exit code is the verdict and a pipeline would mask it.
+        run: ./tests/run_prerelease_gate.sh
+
+      - name: Show gate verdict
+        if: always()
+        run: |
+          echo "## Gate output" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E '^(PASS|FAIL|SKIP):|summary|GATE:' /tmp/prerelease-*.log 2>/dev/null | head -60 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

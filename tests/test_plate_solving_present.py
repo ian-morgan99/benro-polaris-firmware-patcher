@@ -426,18 +426,46 @@ def test_source_branch_is_still_ahead():
 
 
 def test_build_toolchain_prerequisites():
-    """'Merged' is not 'buildable'. Skips rather than fails: a missing toolchain is
-    an environment gap, not an unmerged feature, and CI hosts legitimately lack
-    docker."""
+    """'Merged' is not 'buildable'. Two different situations, deliberately handled
+    differently:
+
+      * docker is simply absent -- an environment gap, not an unmerged feature. CI
+        hosts legitimately lack it, so this SKIPS. AGENTS.md gate policy says a
+        missing prerequisite is reported as SKIP and never as silent green.
+      * something named 'docker' is on PATH but does not answer `docker info` --
+        that is issue #308's actual defect (a shim doing `exec flatpak-spawn --host
+        docker`, which the host cannot resolve), and it must still FAIL. Skipping it
+        would hide the exact breakage that stopped the v102 build.
+
+    The original body asserted in both cases, contradicting its own docstring. That
+    was never exercised because the suite had only ever run on hosts where a working
+    docker shim happened to be on PATH; a fresh clone with no docker turned it RED
+    and surfaced the contradiction.
+    """
     if not merged():
         pytest.skip("solver not merged yet")
     route = docker_available()
-    assert route, (
-        "solver sources are merged but the build cannot run: no reachable docker "
-        "daemon. build-astro.sh exits 1 without docker, and again if `docker info` "
-        "fails. Inside a Flatpak sandbox a shim like "
-        "'exec flatpak-spawn --host docker \"$@\"' on PATH is sufficient."
-    )
+    if not route:
+        shadowed = shutil.which("docker")
+        if shadowed:
+            # Present but unresponsive: this is the #308 defect, not an absent tool.
+            probe = subprocess.run([shadowed, "info"], capture_output=True, text=True)
+            detail = (probe.stderr or probe.stdout).strip()[:200]
+            pytest.fail(
+                f"`docker` resolves to {shadowed} yet yields no working route "
+                f"(docker info exit {probe.returncode}: {detail!r}). This is the shape "
+                "of issue #308 -- a shim that asks the host to resolve `docker` on the "
+                "host's PATH. Resolve an absolute host path instead (see "
+                "tools/host-docker.sh), or remove the broken shim so this reports as an "
+                "absent prerequisite and skips."
+            )
+        pytest.skip(
+            "solver sources are merged but this host cannot build them: no docker on "
+            "PATH and no flatpak-spawn portal (environment gap, not an unmerged "
+            "feature). build-astro.sh exits 1 without docker, and again if `docker info` "
+            "fails. Inside a Flatpak sandbox a shim like 'exec flatpak-spawn --host "
+            "docker \"$@\"' on PATH is sufficient."
+        )
     soft_missing = [name for name, _ in BUILD_PREREQS_SOFT
                     if shutil.which(name) is None]
     if soft_missing:
