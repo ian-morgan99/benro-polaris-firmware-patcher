@@ -467,6 +467,34 @@ def parse_exposure_mode_raw(text: str) -> int | None:
 # for in front of a capture.
 EXPOSURE_MODE_QUERY_TIMEOUT_S = 10.0
 
+# Why the last query returned None, so a caller can say WHY instead of reporting
+# a generic precondition failure. None means the previous call succeeded. Set by
+# camera_exposure_mode(); read by the --require-exposure-mode precondition path.
+# A module-level side channel rather than a changed return type because four call
+# sites and existing tests assert `int | None`.
+EXPOSURE_MODE_LAST_REASON: str | None = None
+
+
+def classify_exposure_mode_failure(rc: int, stderr: str) -> str:
+    """Name the reason a conditions read produced no mode, from gphoto2's stderr.
+
+    Measured on a live K-1 II (2026-11-11): with pgphoto holding the camera the
+    read fails at USB interface claim, before any PTP request is sent. Reporting
+    that as "no parsable reply" sends the reader looking at the camera when the
+    blocker is a local file descriptor.
+    """
+    low = stderr.lower()
+    if "could not claim interface" in low or "device or resource busy" in low:
+        return ("usb-busy: pgphoto holds the camera, so gphoto2 could not claim "
+                "interface 0 (-53); no PTP request was sent")
+    if "unable to find any ptp camera" in low or "no camera" in low:
+        return "no-camera: nothing matched a PTP camera on the device"
+    if "unrecognized" in low and "pentaxconditions" in low:
+        return "widget-absent: this camlib has no pentaxconditions widget"
+    if rc == 124 or "timed out" in low:
+        return "timeout: the query exceeded its bound"
+    return f"rc={rc} with no recognised cause in stderr"
+
 
 def camera_exposure_mode(ssh_host: str | None,
                          ssh_options: list[str] | None = None,
@@ -490,36 +518,57 @@ def camera_exposure_mode(ssh_host: str | None,
     the caller falls back to the list-shape heuristic. A diagnostic must never be
     able to break a capture that would otherwise have run.
 
-    NOT YET VERIFIED ON HARDWARE. This opens a second gphoto2 session against a
-    camera the running ``pgphoto`` already holds, and this project has a history
-    of PTP/USB fragility around concurrent access (docs/CURRENT-STATE.md
-    "camera busy", docs/evidence/o-v16c-context-lifetime-20261009). The query is
-    read-only and bounded, but the interaction has not been observed on a live
-    body. Set ``POLARIS_EXPOSURE_MODE_QUERY=0`` to fall back to the pre-#206
-    behaviour entirely if a run shows any sign of disturbance.
+    VERIFIED ON HARDWARE, AND IT FAILS THERE (2026-11-11, K-1 II 25fb:0183).
+    This opens a second gphoto2 session against a camera the running ``pgphoto``
+    already holds, and on a live body that loses: gphoto2 exits 1 with
+    ``-53 'Could not claim the USB device'`` because pgphoto owns interface 0,
+    so no PTP request is ever sent. The docstring previously said "the query is
+    read-only and bounded" -- true of the PTP transaction, but irrelevant, since
+    the failure happens at USB claim before any transaction starts. ``pgphoto``
+    itself refuses a second instance outright ("pgphoto already owned by PID N;
+    refusing duplicate launch"), so there is no in-process alternative either.
+    This is why hardware qualification is currently blocked: see #206.
+
+    Set ``POLARIS_EXPOSURE_MODE_QUERY=0`` to fall back to the pre-#206 behaviour
+    entirely if a run shows any sign of disturbance.
     """
+    global EXPOSURE_MODE_LAST_REASON
     if not ssh_host:
+        EXPOSURE_MODE_LAST_REASON = "no-ssh-target"
         return None
     if os.environ.get("POLARIS_EXPOSURE_MODE_QUERY", "1") == "0":
+        EXPOSURE_MODE_LAST_REASON = "disabled-by-env"
         return None
     env = ("LD_LIBRARY_PATH=/app/lib/stage2:/app/lib "
            "CAMLIBS=/app/lib/stage2/libgphoto2/2.5.34 "
            "IOLIBS=/app/lib/stage2/libgphoto2_port/0.12.2")
-    cmd = f"{env} /app/bin/gphoto2 --get-config pentaxconditions 2>/dev/null"
+    # stderr is captured, not discarded. It used to be `2>/dev/null`, which made
+    # every failure look identical: stdout empty, rc=1, log line "no parsable
+    # exposure-mode-raw in the reply". Measured on a live K-1 II on 2026-11-11,
+    # the truth was `-53 'Could not claim the USB device'` -- pgphoto PID 32149
+    # holds interface 0, so gphoto2 never sent a PTP request at all. "The camera
+    # did not answer" and "I never reached the camera" need different fixes, and
+    # the only datum that tells them apart was being thrown away by design.
+    cmd = f"{env} /app/bin/gphoto2 --get-config pentaxconditions"
     options = ssh_options or ["ssh", "-o", "BatchMode=yes",
                               "-o", "ConnectTimeout=5"]
     try:
         proc = subprocess.run(options + [ssh_host, cmd], capture_output=True,
                               text=True, timeout=timeout, check=False)
     except (OSError, subprocess.SubprocessError) as exc:
+        EXPOSURE_MODE_LAST_REASON = f"transport:{type(exc).__name__}"
         print(f"{stamp()} EXPOSURE_MODE query failed ({type(exc).__name__}); "
               f"falling back to list-shape heuristic (#206)", flush=True)
         return None
     mode = parse_exposure_mode_raw(proc.stdout)
     if mode is None:
+        EXPOSURE_MODE_LAST_REASON = classify_exposure_mode_failure(
+            proc.returncode, proc.stderr or "")
         print(f"{stamp()} EXPOSURE_MODE no parsable exposure-mode-raw in the "
-              f"reply (rc={proc.returncode}); falling back to list-shape "
-              f"heuristic (#206)", flush=True)
+              f"reply (rc={proc.returncode}, cause={EXPOSURE_MODE_LAST_REASON}); "
+              f"falling back to list-shape heuristic (#206)", flush=True)
+    else:
+        EXPOSURE_MODE_LAST_REASON = None
     return mode
 
 
@@ -1062,13 +1111,20 @@ def main() -> int:
         if args.shot:
             result["mode_before"] = camera_exposure_mode(args.ssh_host)
             if args.require_exposure_mode and result["mode_before"] is None:
-                print(f"{stamp()} PRECONDITION exposure-mode-raw unavailable; refusing to "
-                      "capture, because a case that cannot state its mode cannot claim it",
-                      flush=True)
+                # Name the cause. "exposure-mode-raw could not be read" was true
+                # but useless: on the live rig the real reason is that pgphoto owns
+                # interface 0 and gphoto2 never reached the camera, which is a
+                # different bug from a camera that answers with no such field.
+                # qualification-verdict.py prints this string straight into its
+                # PROBLEM line, so the round verdict now says why it is blocked.
+                cause = EXPOSURE_MODE_LAST_REASON or "unknown"
+                print(f"{stamp()} PRECONDITION exposure-mode-raw unavailable "
+                      f"(cause={cause}); refusing to capture, because a case that "
+                      f"cannot state its mode cannot claim it", flush=True)
                 result["status"] = "error"
                 result["rc"] = EXIT_PRECONDITION
                 result["verdict"] = "mode-unavailable"
-                result["reason"] = "exposure-mode-raw could not be read"
+                result["reason"] = f"exposure-mode-raw could not be read: {cause}"
                 return EXIT_PRECONDITION
 
         if args.shot:

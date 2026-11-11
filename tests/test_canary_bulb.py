@@ -801,3 +801,126 @@ def test_slot_derived_duration_is_not_capped():
     mod = load_probe()
     budget = mod.effective_shot_timeout(30.0, 45, resolved_seconds=1200.0)
     assert budget >= 1200.0
+
+
+# ---------------------------------------------------------------------------
+# #206 on hardware (2026-11-11, K-1 II 25fb:0183). The conditions read does not
+# fail because the camera is uncooperative -- it fails at USB interface claim,
+# before any PTP request is sent, because pgphoto owns the device. The probe used
+# to discard stderr, so every distinct cause printed the same "no parsable
+# exposure-mode-raw in the reply" line and a blocked round could not say why.
+# These fixtures are the literal bytes captured from the live rig.
+
+USB_BUSY_STDERR = (
+    "*** Error ***              \n"
+    "An error occurred in the io-library ('Could not claim the USB device'): "
+    "Could not claim interface 0 (Device or resource busy). Make sure no other "
+    "program (gvfs-gphoto2-volume-monitor) or kernel module (such as sdc2xx, "
+    "stv680, spca50x) is using the device and you have read/write access to the "
+    "device.\n"
+    "*** Error (-53: 'Could not claim the USB device') ***       \n"
+)
+
+
+def test_usb_busy_is_named_not_reported_as_unparsable():
+    """The exact live failure must be classified, not flattened to rc=1."""
+    mod = load_probe()
+    cause = mod.classify_exposure_mode_failure(1, USB_BUSY_STDERR)
+    assert cause.startswith("usb-busy"), cause
+    assert "-53" in cause, f"the gphoto2 error code must survive: {cause}"
+    assert "no PTP request was sent" in cause, (
+        f"must say the camera was never reached, not that it refused: {cause}"
+    )
+
+
+def test_causes_are_distinguishable():
+    """A camera that answers with no field and a camera we cannot reach are
+    different bugs; one classifier must not swallow both."""
+    mod = load_probe()
+    usb = mod.classify_exposure_mode_failure(1, USB_BUSY_STDERR)
+    absent = mod.classify_exposure_mode_failure(
+        1, "Unrecognized configuration name 'pentaxconditions'")
+    nocam = mod.classify_exposure_mode_failure(
+        1, "*** Error *** Unable to find any PTP camera.")
+    assert usb.startswith("usb-busy"), usb
+    assert absent.startswith("widget-absent"), absent
+    assert nocam.startswith("no-camera"), nocam
+    assert len({usb.split(":")[0], absent.split(":")[0], nocam.split(":")[0]}) == 3
+
+
+def test_unknown_cause_is_not_silently_blanked():
+    """An unrecognised stderr must still report something checkable."""
+    mod = load_probe()
+    cause = mod.classify_exposure_mode_failure(7, "something else entirely")
+    assert cause == "rc=7 with no recognised cause in stderr", cause
+
+
+def test_query_keeps_stderr_and_records_the_cause(monkeypatch):
+    """Functional: the shipped command must not discard stderr any more, and a
+    failed read must leave a named reason behind."""
+    mod = load_probe()
+    monkeypatch.delenv("POLARIS_EXPOSURE_MODE_QUERY", raising=False)
+    captured = {}
+
+    class Proc:
+        returncode = 1
+        stdout = ""
+        stderr = USB_BUSY_STDERR
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = " ".join(cmd)
+        return Proc()
+
+    monkeypatch.setattr(mod.subprocess, "run", fake_run)
+    assert mod.camera_exposure_mode("root@192.168.0.1") is None
+    assert "2>/dev/null" not in captured["cmd"], (
+        f"stderr must be captured by the probe, got: {captured['cmd']}"
+    )
+    assert mod.EXPOSURE_MODE_LAST_REASON.startswith("usb-busy"), (
+        mod.EXPOSURE_MODE_LAST_REASON
+    )
+
+
+def test_successful_read_clears_the_stale_reason(monkeypatch):
+    """A later success must not leave an old cause on the side channel, or a
+    subsequent generic failure would be blamed on the wrong thing."""
+    mod = load_probe()
+    monkeypatch.delenv("POLARIS_EXPOSURE_MODE_QUERY", raising=False)
+
+    class Proc:
+        returncode = 0
+        stdout = "Label: pentaxconditions\nValue: state=0; exposure-mode-raw=9;\n"
+        stderr = ""
+
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: Proc())
+    assert mod.camera_exposure_mode("root@192.168.0.1") == 9
+    assert mod.EXPOSURE_MODE_LAST_REASON is None
+
+
+def test_reason_is_set_for_the_non_ssh_paths(monkeypatch):
+    """The two early returns also produce None; a caller must be able to tell
+    'no target' and 'operator disabled the query' from a camera failure."""
+    mod = load_probe()
+    assert mod.camera_exposure_mode(None) is None
+    assert mod.EXPOSURE_MODE_LAST_REASON == "no-ssh-target"
+    monkeypatch.setenv("POLARIS_EXPOSURE_MODE_QUERY", "0")
+    assert mod.camera_exposure_mode("root@192.168.0.1") is None
+    assert mod.EXPOSURE_MODE_LAST_REASON == "disabled-by-env"
+
+
+def test_precondition_reason_carries_the_cause():
+    """qualification-verdict.py prints result["reason"] verbatim into its PROBLEM
+    line, so the cause has to be in that string for a blocked round to explain
+    itself without re-running anything."""
+    import re
+    src = (Path(__file__).parents[1] / "scripts" / "canary-probe.py").read_text()
+    block = re.search(
+        r'if args\.require_exposure_mode and result\["mode_before"\] is None:'
+        r'.*?return EXIT_PRECONDITION', src, re.S)
+    assert block, "precondition block not found -- was it renamed?"
+    body = block.group(0)
+    assert "EXPOSURE_MODE_LAST_REASON" in body, (
+        "the precondition must report the classified cause, not a generic string"
+    )
+    assert re.search(r'result\["reason"\] = f"exposure-mode-raw could not be read: '
+                     r'\{cause\}"', body), body
