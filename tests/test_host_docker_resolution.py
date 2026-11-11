@@ -25,6 +25,8 @@ import os
 import re
 import subprocess
 
+from shell_parse import interpreter_for, parse_check
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 LIB = os.path.join(ROOT, "tools", "host-docker.sh")
@@ -106,9 +108,11 @@ def test_build_astro_writes_an_absolute_path_shim():
 # ── behaviour ────────────────────────────────────────────────────────────────
 
 def test_library_is_sourceable_and_parses():
+    # build-doctor.sh and build-astro.sh declare #!/usr/bin/env bash; parsing them
+    # with dash on a runner rejects syntax they never execute. Honour the shebang.
     for path in (LIB, HOST_BIN, UBI, DOCTOR, BUILD_ASTRO):
-        proc = sh(f"sh -n {path!r}")
-        assert proc.returncode == 0, f"{path}: {proc.stderr}"
+        proc = parse_check(path)
+        assert proc.returncode == 0, f"{path} ({interpreter_for(path)}): {proc.stderr}"
 
 
 def test_prefix_is_usable_on_this_host():

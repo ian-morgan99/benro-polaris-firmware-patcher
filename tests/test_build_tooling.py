@@ -552,6 +552,22 @@ def test_doctor_reports_gate_tools_off_path(tmp_path: Path):
         (fakehome / ".local" / "bin" / tool).chmod(0o755)
 
     env = clean_env(HOME=str(fakehome), PATH="/usr/bin:/bin", TMPDIR=str(tmp_path))
+
+    # The scenario under test is "installed but off PATH". build-doctor.sh searches
+    # /usr/bin/$tool, $HOME/.local/bin/$tool and /usr/local/bin/$tool, so the branch
+    # is only reachable when the tool is genuinely absent from the restricted PATH.
+    # GitHub runners ship /usr/bin/bwrap, where `command -v` finds it and reporting
+    # "on PATH" is the *correct* answer -- asserting otherwise would demand a wrong
+    # diagnosis. Skip on such hosts rather than fake it (AGENTS.md: a prerequisite
+    # that cannot be exercised is reported, never silently passed).
+    for tool in ("bwrap", "slirp4netns"):
+        if shutil.which(tool, path="/usr/bin:/bin"):
+            pytest.skip(
+                f"{tool} is genuinely on the restricted PATH here "
+                f"({shutil.which(tool, path='/usr/bin:/bin')}), so the "
+                "'installed but off PATH' case cannot be constructed on this host"
+            )
+
     p = run(["bash", str(DOCTOR), "--offline",
              "--libgphoto2", str(tmp_path / "nope"),
              "--stock", str(tmp_path / "nope.zip"),

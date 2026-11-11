@@ -30,6 +30,8 @@ import sys
 import tempfile
 import time
 
+from shell_parse import interpreter_for, parse_check
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 HOOK = os.path.join(ROOT, "container", "astro", "ondisk", "polaris-astro-hook.sh")
@@ -91,9 +93,12 @@ def test_launcher_path_in_patch_sh_resolves_under_docker_copy():
 
 
 def test_both_scripts_parse():
+    # Not `sh -n`: container/patch.sh declares #!/bin/bash, and on a runner /bin/sh
+    # is dash, which rejects bash-only syntax that the script never runs under.
+    # See tests/shell_parse.py for why the declared interpreter is the right one.
     for path in (HOOK, PATCH_SH):
-        proc = subprocess.run(["sh", "-n", path], capture_output=True, text=True)
-        assert proc.returncode == 0, f"{path}: {proc.stderr}"
+        proc = parse_check(path)
+        assert proc.returncode == 0, f"{path} ({interpreter_for(path)}): {proc.stderr}"
 
 
 # ── the launch decision ──────────────────────────────────────────────────────
