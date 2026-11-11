@@ -692,3 +692,65 @@ Driver `origin/main` = `530c879fe`, clean. Patcher `origin/main` and
 
 Still no hardware: rig unreachable, no Pentax/Benro on USB. Nothing installed, flashed or
 published anywhere. Every issue that needs physical qualification remains open, correctly.
+
+---
+
+# Seventh autonomous block — measured #331 rather than accepting its estimates
+
+## 30. #331: the issue's two load-bearing numbers are both wrong
+
+The licence-reachability unknown appeared in my own v106 build, so I measured it instead of
+repeating the issue's figures. Both of the numbers that shape the decision turned out to be off.
+
+**"5 licence files never reach a user" — actually 1.** The gate at
+`verify-published-astro-candidate.py:401-402` flags every `.txt` under `/licenses/` whose *path*
+lacks `COPY-TO-SD-CARD-ROOT`. It compares paths, never content. Hashing the members:
+
+| file | sha256 (12) | inside the copied tree? |
+|---|---|---|
+| `COPYING-GPL-2.txt` | `8177f9751321` | yes, byte-identical (`polaris-astro/`) |
+| `COPYING-LGPL-2.1.txt` | `dc626520dcd5` | yes, byte-identical (`polaris-wifi/`) |
+| `NOTICE-iw.txt` | `5932fb70481e` | yes, byte-identical (`polaris-wifi/`) |
+| `NOTICE-wpa_supplicant.txt` | `a87ac4e333d0` | yes, byte-identical (`polaris-wifi/`) |
+| `README-GPL.txt` | `0539c034bbaf` | **no — genuinely absent** |
+
+Four are duplicates the check counts twice. The real exposure is one 6913-byte file.
+
+**"Option 2 adds ~100 MB+" — actually 16.9 MiB.** Summing the tarballs in `licenses/`:
+astrometry.net 11858563 + wpa_supplicant 3511622 + jpeg-9f 1081470 + libnl 1000913 + iw 194022 +
+two build recipes = **17702317 bytes**. Option 2 is cheap enough that the "unambiguous compliance"
+route may just be worth taking, which the ~100 MB figure made look expensive.
+
+**Also found:** `COPY-TO-SD-CARD-ROOT/polaris-astro/SOURCE-OFFER.txt` does ship inside the copied
+tree and does offer source — but its *primary* pointer is "in `licenses/` next to
+`COPY-TO-SD-CARD-ROOT/`", which is precisely the directory a user copying only the SD archives
+never receives. It has a repo URL and an ask-the-distributor fallback, so it isn't a dead end, but
+the first instruction is wrong for that delivery route. Fixing that is a text edit, not a
+licensing decision.
+
+**On making the gate decidable:** copying `README-GPL.txt` into the copied tree would *not* clear
+the check — the originals still sit in `licenses/`, so it would still report 5. The check has to
+compare content, flagging a file only when no identical member exists under `COPY-TO-SD-CARD-ROOT`.
+With that change today's artifact reports 1 unknown, not 5.
+
+Did not implement any of it: it is a licensing decision and I cannot verify what physically reaches
+a user without a device. Posted the measurements so the choice between options 1 and 2 can be made
+on real numbers.
+
+## 31. The pattern across this session
+
+Five instances today of a confident statement that was wrong on inspection:
+
+1. `test-pentax-capture-contract.py` — 10 skipped, assertions never ran (fixed in block 1).
+2. A stale generated `.inc` in the source tree shadowing the build-dir copy — my #140 harness
+   reported PASS against code I had just edited.
+3. A stale `ptp2.so` — new test assertions ran against an old camlib, producing a false diagnosis
+   of driver #148 that I caught before posting.
+4. My own claim that `.106`'s `ptp2.so` was byte-identical to `.105`'s — wrong, because I carried
+   the #140 commit's "test-only" reasoning onto a range that also contains #148, which changes
+   `config.c`. The appfs hashes disagreed.
+5. #331's "5 files" and "~100 MB" — both path-based and remembered figures rather than measured ones.
+
+Every one was caught by measuring the artifact instead of reasoning about its intended content, and
+in each case the measurement cost one or two commands: `git log <range>`, a manifest field, a
+`sha256sum`, a `du`. Worth making that reflexive before writing down what a build contains.
