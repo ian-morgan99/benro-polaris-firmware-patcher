@@ -61,6 +61,13 @@
         "#312"
       ],
       "summary": "The kit install is scripted and every release entrypoint is indexed. install-astro-kit.sh stages a candidate over tar+ssh, verifies every byte against ASTRO-MANIFEST.sha256, runs install_astro.sh, reboots for the boot hook and fails closed unless :8090 is serving. docs/RELEASE-ENTRYPOINTS.md indexes operation to command, with a test asserting no scripts/release/ script goes unindexed."
+    },
+    {
+      "component": "patcher",
+      "issues": [
+        "#273"
+      ],
+      "summary": "The Settings Wi-Fi auto-join toggle was a silent no-op and the page had no way to enter credentials. app.js posted {autojoin:1}; /api/wifi reads 'action' and matches autojoin_on/autojoin_off, so the request matched no branch, fell through to the status block and returned HTTP 200 with {\"ok\":true,...,\"autojoin\":false} -- success reported for a change that never happened. The handler was always correct; only app.js had drifted, and the embedded fallback page already posted the right verb, so two clients disagreed about one endpoint. Now the client sends action=autojoin_on/off and reverts the box on refusal; the server rejects an unrecognised POST instead of falling through to status, so a future client drift fails loudly. Added SSID/password fields plus save (action=save) and join-now (action=up, which runs the exact boot script). Covered by tests/test_wifi_api_contract.py, which compiles polaris-httpd for the host and issues real HTTP requests: 3 fail / 2 pass on the unfixed code, 5 pass fixed. Not verified on hardware -- the autojoin file write and a real association were not exercised."
     }
   ],
   "known_limits": [
