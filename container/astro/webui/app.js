@@ -1245,8 +1245,63 @@ function wireSettings() {
     .then(function (r) { return r.json(); })
     .then(function (d) { join.checked = !!(d.autojoin || d.auto_join); })
     .catch(function () {});
+  /* #273: this used to post {autojoin:1}. The handler only understands
+   * action=autojoin_on / autojoin_off, so the request matched no branch, fell
+   * through to the status block and came back {"ok":true} carrying the
+   * unchanged wifi state. The box visibly flipped, nothing happened, and
+   * nothing said so. Send the action the handler actually reads, and put the
+   * box back if the head refuses. */
   join.addEventListener('change', function () {
-    post('/api/wifi', { autojoin: join.checked ? 1 : 0 });
+    var want = join.checked;
+    post('/api/wifi', { action: want ? 'autojoin_on' : 'autojoin_off' })
+      .then(function (r) {
+        if (r && r.ok === false) {
+          join.checked = !want;
+          setHint('<b>Auto-join not changed:</b> ' + (r.error || 'the head refused'));
+        } else {
+          setHint(want ? '<b>Auto-join on</b>' : '<b>Auto-join off</b>');
+        }
+      });
+  });
+
+  /* #273: the settings page had a join toggle but no way to enter which network
+   * to join -- the credentials lived only in the fallback page, so anyone who
+   * never found that page could turn auto-join on and have it join nothing.
+   * action=save is the same endpoint the fallback page uses; the server stages
+   * the key at 0600, wipes it from its own memory and never returns it. */
+  $('#wifi-save').addEventListener('click', function () {
+    var ssid = $('#wifi-ssid').value.trim();
+    var psk = $('#wifi-psk').value;
+    var state = $('#wifi-state');
+    if (!ssid || psk.length < 8) {
+      state.textContent = 'Enter a network name and a password of at least 8 characters.';
+      return;
+    }
+    post('/api/wifi', { action: 'save', ssid: ssid, psk: psk }).then(function (r) {
+      $('#wifi-psk').value = '';
+      if (r && r.ok === false) {
+        state.textContent = 'Not saved: ' + (r.error || 'the head refused');
+      } else {
+        state.textContent = 'Saved "' + ssid + '". Turn on "Join my network at '
+          + 'power-up" to use it, or press join now.';
+      }
+    });
+  });
+
+  /* action=up runs the very script boot runs, so testing from this page tests
+   * the real path rather than a second implementation that could drift. It can
+   * take 45 s, hence the explicit waiting message -- without one the button
+   * looks broken and people press it again. */
+  $('#wifi-join').addEventListener('click', function () {
+    var state = $('#wifi-state');
+    state.textContent = 'Joining… (up to 45 s)';
+    post('/api/wifi', { action: 'up' }).then(function (r) {
+      if (r && r.ok === false) {
+        state.textContent = 'Did not join: ' + (r.error || 'the head refused');
+        return;
+      }
+      state.textContent = (r && r.log) ? String(r.log).slice(-400) : 'Join attempted.';
+    });
   });
 }
 

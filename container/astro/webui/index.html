@@ -990,6 +990,22 @@
 
     <div class="card">
       <h3>Wi-Fi</h3>
+      <div class="field">
+        <label for="wifi-ssid">Network name</label>
+        <div class="fieldrow">
+          <input id="wifi-ssid" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="your home network">
+        </div>
+      </div>
+      <div class="field">
+        <label for="wifi-psk">Password</label>
+        <div class="fieldrow">
+          <input id="wifi-psk" type="password" autocomplete="off" placeholder="at least 8 characters">
+          <button id="wifi-save" class="ghost sm" type="button">save</button>
+          <button id="wifi-join" class="ghost sm" type="button">join now</button>
+        </div>
+      </div>
+      <p class="tiny dim" id="wifi-state"></p>
       <label class="switch">
         <input id="autojoin" type="checkbox">
         <span>Join my network at power-up</span>

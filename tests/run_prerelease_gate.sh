@@ -324,6 +324,12 @@ PY_TESTS=(
     # own drift guard is what caught this: the suite existed but was not listed here,
     # so it would have run on nothing at all.
     tests/test_astro_shutter_node.py
+    # #273: the auto-join toggle posted a parameter the handler never read,
+    # so every flip was a silent no-op reported as success. This suite compiles
+    # polaris-httpd for the host and issues real HTTP requests against it, because
+    # only a live response distinguishes 'answered ok' from 'answered ok because
+    # nothing matched'. It fails on the unfixed server and passes on the fixed one.
+    tests/test_wifi_api_contract.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then

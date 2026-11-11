@@ -4523,6 +4523,18 @@ static void handle(int fd) {
                 respond_json(fd, out);
                 return;
             }
+            /* #273: a POST whose action we do not recognise used to fall through
+             * into the status block below and answer {"ok":true,...} carrying the
+             * current wifi state. The caller had asked for a change, received HTTP
+             * 200 with ok:true, and concluded the change had taken effect. It had
+             * not. That is exactly how the auto-join toggle came to look like it
+             * worked: app.js posts "autojoin=1", which matches no action at all,
+             * so every flip of that checkbox was a silent no-op reported as a
+             * success. Reject instead -- a broken contract should fail loudly on
+             * the first call rather than quietly forever. */
+            respond_json(fd, "{\"ok\":false,\"error\":\"unknown or missing action "
+                "(expected save, autojoin_on, autojoin_off, up or down)\"}");
+            return;
         }
 
         /* status: SSID yes, key never */
