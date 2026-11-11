@@ -9,10 +9,17 @@
       "17f78ae0dc0696bd212c83160092fbf2c9ccc54f",
       "49b67fa44c668575d1914dc4d82f62ba47923101"
     ],
-    "why_this_is_a_cut_and_not_another_increment": "The libgphoto2 pin is byte-identical to v105's -- 49b67fa44 -- so the camera stack a tester already has is unchanged and an upgrade over .105 is a straight overwrite. Every change in this cut is on the appliance side: the astro WebUI, the stage2 loader, the wifi station script, the release gate and the kit installer. Nothing here alters the solve path's inputs, the bundle layout or the catalogue."
+    "why_this_is_a_cut_and_not_another_increment": "One libgphoto2 commit is in this cut, 49b67fa44 -> 96cb7b8b4, and it is a single added table row with no shared helper touched. Everything else is appliance-side: the astro WebUI, the stage2 loader, the wifi station script, the release gate and the kit installer. Nothing here alters the solve path's inputs, the bundle layout or the catalogue, so an upgrade over .105 is a straight overwrite."
   },
   "purpose": "Close the v105 field-test findings that are fixable in code we own, and stop the release process from shipping archives it never opened. Four defects reached main since .105: an empty Pentax choice list reported CAMERA_BUSY forever; polaris-apsta.sh down stopped nothing and left a dead resolver; the release gate verified a build directory instead of the archives a user actually receives; and a stale restart lock permanently blocked pgphoto restarts, quarantining a healthy K-3 III. Separately the astro WebUI's Apply-last button wrote a mount alignment from a solution the user could not see.",
   "changes": [
+    {
+      "component": "libgphoto2",
+      "issues": [
+        "#148"
+      ],
+      "summary": "ptp2/pentax routes the standard libgphoto2 name exposurecompensation to the Pentax EV handler. Benro Connect requests that name (code 267) while the Pentax-specific entry is pentaxdirectev, and modern Pentax bodies omit 0x5010 from the generic menu path, so the name a consumer actually asks for resolved to nothing on a K-1 II. Adds one PTP_VENDOR_PENTAX row in capture_settings_menu[] pointing at the same descriptor-driven handler, so the body's own advertised enumeration is exposed rather than a fabricated range. Recovered from 0ca7c9205, never landed during the 2026-11-09 consolidation. Its recorded blocker -- test-pentax-aperture-alias failing at line 298 with GP_OK and a NULL widget -- no longer reproduces: verified by control on an isolated worktree, where removing the row reproduces that exact failure and adding it passes, and where asserting a wrong choice count fails, proving the assertion is live rather than skipped. Offline fixture only; no hardware qualification."
+    },
     {
       "component": "patcher",
       "issues": [
@@ -57,13 +64,14 @@
     }
   ],
   "known_limits": [
-    "The libgphoto2 pin is unchanged from v105 (49b67fa44). No driver change is included, because the six pgphoto issues filed against v105 (#323-#328) do not reproduce at the library boundary and libgphoto2's own AGENTS.md forbids a driver change for a consumer-discovered failure without a repo-local reproducer.",
+    "The libgphoto2 pin moves 49b67fa44 -> 96cb7b8b4 for one Pentax-only menu row. It is verified by an offline seeded-descriptor fixture only: no hardware run qualified it, so per the driver's own rules 'the build passes' is not 'this is correct'. Whether a real K-1 II answers 0x5010 the way the seeded descriptor does is untested, as is the GP_WIDGET_TEXT fallback for bodies that advertise no enumeration.",
     "The #323-#328 claims were checked against the shipped binaries and found unimplementable as specified: the cited helpers are static and not exported from ptp2.so, params->pentax.vendor_mode_enabled is internal to the camlib and unreachable from pgphoto's public API, and both public config entry points already funnel into the guarded _put_ handlers. Corrections are pending on those issues.",
     "The #329 fix is verified by execution under node (17 assertion groups, mutation-checked) but not on hardware: no mount was reachable during development, so 'alignment written' reflects what /api/apply reported rather than independently confirmed mount state.",
     "Issue #251 remains release-blocking for the standard camera owner.",
     "The K-3 III recognition fault (#297) is diagnosed to layer 3 and not yet fixed; this cut carries the read-only diagnostics only."
   ],
   "validation_focus": [
+    "K-1 II exposure compensation via the standard name: gphoto2 --get-config exposurecompensation must return the body's advertised list rather than an empty config, and pentaxdirectev must still behave as before.",
     "K-3 III exposurecompensation: the control must answer rather than reporting busy forever.",
     "polaris-apsta.sh down: the station must actually come down and resolv.conf must be restored.",
     "Release archives: open polaris-astro.zip and polaris-wifi.zip from the finished candidate and confirm the exec bits and wifi licence files are present in the archive, not just on disk.",
