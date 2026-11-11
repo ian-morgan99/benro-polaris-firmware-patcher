@@ -292,6 +292,9 @@ PY_TESTS=(
     tests/test_astro_kit_install_entrypoint.py
     tests/test_astro_kit_installer_behaviour.py
     tests/test_release_entrypoints.py
+    # #329 apply-last contract: the .js holds the decision table, the _node.py is
+    # the pytest wrapper that actually invokes it under node.
+    tests/test_astro_solve_apply_node.py
     tests/test_camera_qualification_round.py
     tests/test_plate_solving_present.py
     tests/test_astro_candidate_wrapper.py

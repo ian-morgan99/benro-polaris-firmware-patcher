@@ -1,5 +1,47 @@
 # Changelog
 
+## Unreleased — "Apply last" wrote an alignment from a solution the user could not see (issue #329)
+
+- `#solve-apply` posted an empty body to `/api/apply`, showed nothing on success,
+  and on failure showed only a bare error string. The user therefore wrote a mount
+  alignment from a solution whose RA/Dec, roll and pixel scale were never displayed,
+  even though `/api/state` already returns the whole solver JSON and `/api/apply`
+  already reports `age_sec`. The built-in fallback page in `polaris-httpd.c` has shown
+  all of it for a long time; only the main WebUI threw it away.
+- The decision table now lives in `container/astro/webui/solve-apply.js`, DOM-free and
+  network-free like `shutter.js` (#309), so it can be asserted under node. Before the
+  request the button states exactly what is about to be written — RA/Dec, roll, pixel
+  scale, star count — and afterwards reports whether the alignment was actually written
+  together with the frame age the server returned.
+- **A reply that never arrived can no longer read as success.** `applyOutcome()` treats
+  a missing body, a non-object, an array, or an object with no `ok` field as *not
+  confirmed*. Previously any such reply fell through to a generic failure line that
+  looked like the head had refused the write, which is a different event and needs to be
+  said differently. This is the same false-pass class of bug libgphoto2 #143 removed on
+  the driver side.
+- **Focal length is deliberately not threaded into apply**, contrary to one reading of
+  #329. Focal selects the search space at *solve* time; once a frame is solved RA/Dec are
+  already resolved and applying them writes no focal anywhere. `polaris-httpd.c` runs every
+  solve as `--focal auto` on purpose — "Forcing g_focal here would reintroduce the bug that
+  cost a whole night" — so sending a UI focal through apply would recreate that defect. The
+  field is shown for context instead.
+- **The align checkbox is deliberately not consulted by this button either.** `#solve-align`
+  means "write the solution as the alignment when I *solve*", and `/api/apply` always writes
+  the alignment — that is its whole job. Honouring an unticked box would mean silently doing
+  nothing, so the button label is the contract.
+- **No client-side staleness gate.** `/api/state` does not report frame age — only
+  `/api/apply`'s reply carries `age_sec` — so a UI-side refusal would be guessing. The server
+  re-reads the epoch itself and is the authority; its message is surfaced verbatim.
+  `APPLY_MAX_AGE_SEC` mirrors the C constant and a test asserts the two agree, so drift fails
+  the gate instead of silently diverging.
+- Verified by execution, not pattern-matching: `tests/test_astro_solve_apply.js` runs the real
+  module under node (17 assertion groups) via `tests/test_astro_solve_apply_node.py`, registered
+  in `PY_TESTS`. Mutation-checked — restoring the old empty-body post fails exactly one test,
+  and making `applyOutcome()` accept a missing reply fails exactly one group. Full suite 697
+  passed, 15 skipped.
+- Not verified on hardware: no mount was reachable from this session, so "alignment written"
+  reflects what `/api/apply` reported, not an independently confirmed mount state.
+
 ## Unreleased — a permanently-empty choice list returned CAMERA_BUSY forever (issue #269)
 
 - On the K-3 III, `exposurecompensation` publishes **no** allowed-values list at

@@ -2183,7 +2183,14 @@ function paintSolveState(st) {
     (st.status === 'running' && st.elapsed_sec ? ' (' + st.elapsed_sec + 's)' : '');
   $('#solve-cancel').hidden = st.status !== 'running';
   var sol = (st.solution && st.solution !== null && typeof st.solution === 'object') ? st.solution : null;
-  $('#solve-solution').textContent = sol ? fmtRaDec(sol) : (st.solution ? 'solved' : '—');
+  /* Retained for #solve-apply: the button must say what it is about to write.
+   * /api/state carries the whole solver JSON, so no extra request is needed. */
+  S.solveState = st;
+  /* solve-apply.js gives roll/scale/star count; if that asset ever fails to load
+   * the page still shows RA/Dec rather than throwing on an undefined global. */
+  $('#solve-solution').textContent =
+    (typeof SOLVE_APPLY !== 'undefined' && sol) ? SOLVE_APPLY.describeSolution(sol) || fmtRaDec(sol) || 'solved'
+      : (sol ? fmtRaDec(sol) : (st.solution ? 'solved' : '—'));
   if (st.log != null) { var lp = $('#solve-log'); lp.textContent = st.log || '—'; lp.scrollTop = lp.scrollHeight; }
   /* Status card rides the same reply. */
   var m = S.ops['284'] ? kv(S.ops['284'].args) : {};
@@ -2264,9 +2271,34 @@ function wireObservatoryTools() {
   };
   $('#solve-now').addEventListener('click', function () { solve('capture'); });
   $('#solve-latest').addEventListener('click', function () { solve('latest'); });
+  /* Apply last (#329). Used to post an empty body and show nothing on success,
+   * so the user wrote an alignment from a solution they could not see. The
+   * decision table lives in solve-apply.js and is asserted under node by
+   * tests/test_astro_solve_apply.js; this handler only wires it to the DOM.
+   *
+   * The align checkbox (#solve-align) is intentionally NOT consulted here. It
+   * means "write the solution as the alignment when I solve", and /api/apply
+   * always writes the alignment -- that is its whole job. Sending apply=0 would
+   * be a no-op the server ignores, so honouring the checkbox would mean silently
+   * doing nothing when it is unticked. The button's label is the contract. */
   $('#solve-apply').addEventListener('click', function () {
-    post('/api/apply', {}).then(function (r) {
-      if (r && r.ok === false) setHint('<b>Apply:</b> ' + (r.error || ''));
+    var st = S.solveState || {};
+    var req = (typeof SOLVE_APPLY !== 'undefined')
+      ? SOLVE_APPLY.applyRequest(st)
+      : { send: !!(st.solution && st.solution.solved === true), query: '', reason: 'no solved frame to apply' };
+    if (!req.send) { setHint('<b>Apply:</b> ' + req.reason); return; }
+    var desc = (typeof SOLVE_APPLY !== 'undefined') ? SOLVE_APPLY.describeSolution(st.solution) : null;
+    setHint('<b>Apply:</b> writing ' + (desc || 'the last solution') + ' \u2026');
+    post('/api/apply' + req.query, {}).then(function (r) {
+      var o = (typeof SOLVE_APPLY !== 'undefined')
+        ? SOLVE_APPLY.applyOutcome(r)
+        : { ok: !!(r && r.ok === true), text: (r && r.ok === true) ? 'Alignment written' : 'Apply: ' + ((r && r.error) || 'failed') };
+      setHint('<b>Apply:</b> ' + o.text);
+      solveGet();
+    }).catch(function () {
+      /* A rejected fetch means the reply never arrived, which must not read as a
+       * successful write. */
+      setHint('<b>Apply:</b> no usable reply from the head - alignment not confirmed');
       solveGet();
     });
   });

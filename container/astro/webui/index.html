@@ -1041,6 +1041,8 @@
 <!-- shutter.js first: it is DOM-free and defines the dispatch contract app.js
      calls into. Loading order matters -- app.js references it at boot. -->
 <script src="/shutter.js"></script>
+<!-- solve-apply.js likewise: DOM-free, defines the apply-last contract (#329). -->
+<script src="/solve-apply.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>
