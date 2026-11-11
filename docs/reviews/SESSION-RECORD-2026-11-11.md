@@ -754,3 +754,87 @@ Five instances today of a confident statement that was wrong on inspection:
 Every one was caught by measuring the artifact instead of reasoning about its intended content, and
 in each case the measurement cost one or two commands: `git log <range>`, a manifest field, a
 `sha256sum`, a `du`. Worth making that reflexive before writing down what a build contains.
+
+---
+
+# Eighth autonomous block — CI brought up green, three latent host bugs exposed
+
+## 32. #308 open item 1 closed: the documented gate now runs on every push
+
+`.github/workflows/offline-gate.yml` invokes `./tests/run_prerelease_gate.sh` verbatim -- its own
+usage block defines no-arguments as "all offline checks". Not a reimplementation, so the gate gaining
+a check means CI runs it automatically. Deliberately excluded: `--build/--canary/--two-shot` (need a
+built package and a physical Polaris + Pentax; there is no runner with the rig), `--libgphoto2-src`
+pointing at driver main (the gate comment says this check exists because .75 shipped a driver
+regression nothing caught, and it must run "against the exact tree that built this candidate" -- a
+moving main is not that tree), and `build-doctor.sh` (probes host docker/container tooling a runner
+lacks by design).
+
+**Final state: both branches GREEN.** `13 passed, 0 failed, 5 skipped`, `GATE: GREEN -- OFFLINE-QUALIFIED
+only`. Took three RED runs to get there. Each exposed a different latent bug, and each was invisible
+until the previous one was fixed.
+
+## 33. The three layers, and what each one actually was
+
+**Layer 1 -- a test that contradicted its own docstring.** `test_build_toolchain_prerequisites` has
+said "Skips rather than fails ... CI hosts legitimately lack docker" since 71f5d174, but the body
+asserted. Never exercised because the suite had only ever run on hosts with a working docker shim on
+PATH (here `~/bin/docker`, resolving via the flatpak-spawn portal). Split into the two cases the
+docstring describes: absent -> SKIP with the remediation text kept in the reason; present-but-yielding-
+no-route -> still FAIL, because that is #308's actual defect and a blanket skip would have made the
+test vacuous for the one thing it exists to catch. Both branches exercised directly.
+
+**Layer 2 -- undeclared dependencies.** I asserted "the suite is stdlib-only" in my first commit
+message. The grep behind it was true as far as it went -- no numpy/scipy/astropy/cv2 -- but I
+concluded from it that there was nothing to install, which was false. `pytest`, `pyelftools` and
+`unicorn` were imported and declared nowhere: no requirements.txt, no pyproject.toml, nothing in
+AGENTS.md. One cause explained all five failures. `requirements-ci.txt` now pins them; it also records
+what is deliberately excluded and why node is optional (its absence makes checks SKIP, not fail).
+
+**Layer 3 -- wrong interpreter.** Two tests ran `sh -n` over scripts declaring `#!/bin/bash`. Here
+/bin/sh is a bash symlink so bash-only syntax parsed; on ubuntu-latest /bin/sh is dash. Proven, not
+inferred: `container/patch.sh` uses here-strings at lines 111/159/161/264/302 -- a pure bashism -- and
+correctly declares bash. The scripts were fine; the tests were wrong. Added `tests/shell_parse.py`
+which honours the shebang, keeping the genuinely useful half: a script declaring `#!/bin/sh` is still
+parsed with sh, so a real bashism in a POSIX script still fails. Verified all four `#!/bin/sh` scripts
+under test are dash-clean (one grep hit was a false positive -- `$((i + 1))` is POSIX arithmetic).
+Left `test_bind_hook_survives_busybox_sh` alone: it asserts busybox-sh compatibility for a `#!/bin/sh`
+script, which is the check that *should* use plain sh.
+
+Third failure was different in kind: `test_doctor_reports_gate_tools_off_path` fabricates bwrap in
+`~/.local/bin` and asserts "NOT on PATH", but runners ship `/usr/bin/bwrap`, so `command -v` finds it
+and reporting "on PATH" is the *correct* answer. The test was demanding a wrong diagnosis on hosts
+where its premise cannot hold. Now skips with the reason; still exercises the branch on hosts like
+this one where both tools live only in `~/.local/bin`.
+
+## 34. My fresh-clone simulation reported GREEN while the real runner was RED
+
+That is the sixth instance today of a check reporting a verdict about an environment nobody else has
+-- the same class as the stale `ptp2.so` and the stale generated `.inc`. The simulation used my
+development machine's globally installed packages. Two fixes to the habit: reproduce in a bare venv
+with a runner-like PATH and a HOME containing no VS Code settings, and treat the first real run as
+part of the change rather than a confirmation of it.
+
+Adding `upload-artifact` on failure paid for itself immediately: the gate prints one line per check and
+writes detail to `/tmp/prerelease-*.log`, so without artifacts a RED runner says *which* check failed
+and nothing about *why*. The three layer-3 diagnoses came straight out of the downloaded logs instead
+of another local reproduction cycle.
+
+## 35. No new build this block, and why that is the right call
+
+Checked rather than assumed. `out/astro-v106-autonomous-harness-20261111/build-source-provenance.txt`
+records `git_commit=530c879fe...`, which **is** current driver HEAD, and `patcher_commit=73e3066`.
+Everything since in the patcher is `.github/workflows/`, `requirements-ci.txt`, `tests/` and `docs/` --
+`git diff --name-only ef77a3d..HEAD | grep -E '^(container|scripts|tools)/'` returns nothing. Driver
+has no delta at all. A v107 would produce a byte-identical artifact and consume a version number for
+no reason. Builds are for changed production content, not for changed test content.
+
+## 36. #308 item 4 is real drift, and I did not silently reconcile it
+
+`~/bin/docker` (repaired in place, backup at `~/bin/docker.pre-v102.bak`) and the tracked
+`tools/host-bin/docker` differ **in code, not just comments**. The tracked one sources
+`tools/host-docker.sh` and calls `polaris_docker_prefix`; the live one hardcodes
+`exec /usr/bin/flatpak-spawn --host /usr/bin/docker "$@"`. Both work here -- `docker_available()`
+returns "portal" either way -- but they are not the same implementation, and the tracked one is the
+one CI and other hosts will use. Overwriting a working host shim to match the repo is a change to the
+user's machine that I am not making unasked; it is recorded here as open drift instead.
