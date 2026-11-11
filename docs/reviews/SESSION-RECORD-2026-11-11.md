@@ -529,3 +529,83 @@ would have burned ~15 minutes to produce an identical artifact. Recorded rather 
 reproduce with my changes stashed, so they pre-date this commit — verified before claiming it.
 
 Driver `530c879fe` pushed to `origin/main`; tree clean.
+
+---
+
+# Fifth autonomous block — #142 provenance answered, and a false diagnosis I nearly shipped
+
+## 22. Driver #142: answered the open questions from source, found the proposed fix unimplementable
+
+**Q2 (upstream or fork?) — fork-introduced, definitively.** `camera_pentax_capture_internal`
+exists 0 times in `upstream/master` and 5 times in our tree; upstream has no Pentax capture
+path at all. The first report (`folder == "/"`) comes from `library.c:7444`, which is entirely
+ours, so this is not inherited and not something to wait on upstream for. Upstream did just
+merge `abccf4ee2` "Fix FOLDER_ADDED handling for Olympus cameras" — I read the diff; it
+distinguishes `PTP_OFC_Association` from real objects, a different bug that does not help us.
+
+**Q1 — the two paths are confirmed but are not the same object.** All 11 `GP_EVENT_FILE_ADDED`
+sites in both trees are inside `camera_wait_for_event`, identical structure. The Pentax capture
+path does *not* emit an event; it fills `CameraFilePath` and registers via
+`gp_filesystem_set_file_noop` at `:7622`. So there are two filesystem entries with different
+folders for one file — which is exactly why pgphoto's name-based guard catches some (2 survived)
+and not others, matching the reporter's table.
+
+**Q3 — RAW+JPEG is why this cannot simply be suppressed**, and the proposed handle-based
+suppression is not implementable: `pentax_candidate_filename` yields a *name only*. There is no
+PTP object handle in scope at `:7444`, so nothing can be recorded on the first report for the
+ObjectAdded path to match. Suppression would need name+folder normalisation (fragile, and it
+collides with our deliberate suffixed-publish on name collision) or a new PTP round-trip per
+capture on a path whose latency is already issue #141.
+
+Suggested instead: normalise the folder at the producer so both reports agree and pgphoto's
+existing guard works. Not implemented — with no camera I cannot verify the consumer's guard
+actually fires on normalised folders, and "the consumer now dedupes it" is precisely the kind of
+inference that let v75 pass every offline gate and then hang every timed capture.
+
+## 23. The most important thing in this block: a false diagnosis I caught before posting
+
+`test-pentax-aperture-alias` was failing at line 298 — `ret == GP_OK && ev != NULL` — which is
+driver issue #148's reported symptom *verbatim*. I read the lookup code, found that the new alias
+row has `propid = 0` and that `config.c:15762` gates `propid == 0` rows on
+`have_prop(vendorid, type)`, and had a complete diagnosis forming that the fix commit's routing
+was unreachable.
+
+**It was wrong.** A full `ninja -C builddir` relinked `ptp2.so` and the test passed. The build
+directory predated `96cb7b8b4`: ninja recompiled the *test source*, so brand-new assertions ran
+against an *old camlib*. `ninja -C builddir tests/<name>` does not relink `ptp2.so`; only a full
+build did.
+
+I had already written most of a comment to #148 describing the routing bug. Had I posted it, the
+issue would have been misdiagnosed by confident-sounding analysis of exactly the code that was
+not the cause. The correction is in the comment I did post, with the wrong turn described rather
+than quietly dropped.
+
+**Third variant of the same failure today:** a skipped test (assertions never ran), a stale
+generated `.inc` (assertions ran against old source), and a stale `.so` (new assertions ran
+against an old library). All three produce a confident verdict about the wrong artifact. The
+common fix is to verify *what was actually examined* before reporting what it means — check the
+artifact's mtime or content, not just that the command exited.
+
+## 24. #148 evidence now recorded
+
+Ran on the exact SHA after a full rebuild: passes. Negative control performed as recommended —
+deleting only the `exposurecompensation` row from `capture_settings_menu[]` reproduces
+`FAIL line 298` while every other assertion passes, proving the row is load-bearing rather than
+incidental. Restored; tree clean.
+
+Still open and correctly so: everything requiring hardware (Benro Connect EV list/write/readback
+on a real K-1 II and K-3 III). The seeded descriptor is our *model* of what the camera advertises;
+if a real body differs, this test cannot show it. I did not claim the physical regression is fixed.
+
+Also corrected: my fourth-block commit message said "23 ok, 3 fail" for `meson test`. After the
+full rebuild it is **24 ok, 2 fail** — `test-pentax-aperture-alias` was one of the three, and it
+was stale-artifact noise, not a pre-existing failure. The remaining two are `test-gp-port` (in
+the explicitly excluded `no-ci` suite) and `test-gphoto2` ("Setting model... ERROR: Unknown
+model", needs a real camera).
+
+## 25. Still not done
+
+No hardware verification of anything, unchanged all session — rig unreachable, no Pentax/Benro on
+USB. Nothing installed, flashed or published. #142's folder-normalisation fix is written-up but
+unimplemented pending a device. #302 option 1, #328's restore-on-failure, #331 and #297's root
+cause all remain open for the same reason or because they need a decision I should not make alone.
