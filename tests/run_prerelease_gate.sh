@@ -330,6 +330,10 @@ PY_TESTS=(
     # only a live response distinguishes 'answered ok' from 'answered ok because
     # nothing matched'. It fails on the unfixed server and passes on the fixed one.
     tests/test_wifi_api_contract.py
+    # #302: chmod 600 is a no-op on vfat (fmask=0022), so wpa.conf is world-readable
+    # and the script's own comments claimed otherwise. These assert the CLAIMS are
+    # honest, which is the part fixable without the relocation decision.
+    tests/test_setup_wifi_no_false_privacy_claim.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
