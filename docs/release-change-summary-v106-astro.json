@@ -1,0 +1,73 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v105-mmss-shutter-descriptors-20261110",
+    "libgphoto2_commit": "49b67fa44c668575d1914dc4d82f62ba47923101",
+    "libgphoto2_ref": "main",
+    "patcher_commit": "17f78ae0dc0696bd212c83160092fbf2c9ccc54f",
+    "patcher_ref": "feature/astro-native-platesolve",
+    "previous_candidate_pins": [
+      "17f78ae0dc0696bd212c83160092fbf2c9ccc54f",
+      "49b67fa44c668575d1914dc4d82f62ba47923101"
+    ],
+    "why_this_is_a_cut_and_not_another_increment": "The libgphoto2 pin is byte-identical to v105's -- 49b67fa44 -- so the camera stack a tester already has is unchanged and an upgrade over .105 is a straight overwrite. Every change in this cut is on the appliance side: the astro WebUI, the stage2 loader, the wifi station script, the release gate and the kit installer. Nothing here alters the solve path's inputs, the bundle layout or the catalogue."
+  },
+  "purpose": "Close the v105 field-test findings that are fixable in code we own, and stop the release process from shipping archives it never opened. Four defects reached main since .105: an empty Pentax choice list reported CAMERA_BUSY forever; polaris-apsta.sh down stopped nothing and left a dead resolver; the release gate verified a build directory instead of the archives a user actually receives; and a stale restart lock permanently blocked pgphoto restarts, quarantining a healthy K-3 III. Separately the astro WebUI's Apply-last button wrote a mount alignment from a solution the user could not see.",
+  "changes": [
+    {
+      "component": "stage2 loader (appliance)",
+      "issues": [
+        "269"
+      ],
+      "summary": "A permanently-empty choice list was reported to the app as CAMERA_BUSY. On the K-3 III exposurecompensation publishes no allowed-values list at all: the current value reads back but the list is empty, and the loader turned that into an infinite busy state rather than a terminal answer. It now returns the value with an empty list instead of retrying forever."
+    },
+    {
+      "component": "wifi station script (appliance)",
+      "issues": [
+        "283"
+      ],
+      "summary": "polaris-apsta.sh down stopped nothing and left a dead resolver behind. The stop path signalled the wrong process and never restored resolv.conf, so a station that was told to come down still appeared up to anything that asked."
+    },
+    {
+      "component": "release gate",
+      "issues": [
+        "292"
+      ],
+      "summary": "The artifact gate now verifies the published archives rather than the build directory, and both producers invoke it. A verifier that reads a staging tree passes vacuously because out/ is gitignored; the gate now opens the zips a user receives. Wired into build-astro-candidate.sh and build-astro-bundle.sh so it runs on every build instead of being a check someone has to remember to call."
+    },
+    {
+      "component": "camera restart control (appliance)",
+      "issues": [
+        "297"
+      ],
+      "summary": "A stale restart lock permanently blocked pgphoto restarts, so a healthy K-3 III stayed quarantined until reboot. The lock is now reclaimed when its holder is gone."
+    },
+    {
+      "component": "astro WebUI",
+      "issues": [
+        "329"
+      ],
+      "summary": "Apply-last states what it is about to write and never reports an unconfirmed write as success. #solve-apply posted an empty body, showed nothing on success and only a bare error string on failure, so the user wrote a mount alignment from a solution whose RA/Dec, roll and pixel scale were never displayed -- although /api/state already returns the whole solver JSON and /api/apply already reports age_sec. The decision table moved to container/astro/webui/solve-apply.js, DOM-free like shutter.js, asserted under node."
+    },
+    {
+      "component": "release tooling",
+      "issues": [
+        "312"
+      ],
+      "summary": "The kit install is scripted and every release entrypoint is indexed. install-astro-kit.sh stages a candidate over tar+ssh, verifies every byte against ASTRO-MANIFEST.sha256, runs install_astro.sh, reboots for the boot hook and fails closed unless :8090 is serving. docs/RELEASE-ENTRYPOINTS.md indexes operation to command, with a test asserting no scripts/release/ script goes unindexed."
+    }
+  ],
+  "known_limits": [
+    "The libgphoto2 pin is unchanged from v105 (49b67fa44). No driver change is included, because the six pgphoto issues filed against v105 (#323-#328) do not reproduce at the library boundary and libgphoto2's own AGENTS.md forbids a driver change for a consumer-discovered failure without a repo-local reproducer.",
+    "The #323-#328 claims were checked against the shipped binaries and found unimplementable as specified: the cited helpers are static and not exported from ptp2.so, params->pentax.vendor_mode_enabled is internal to the camlib and unreachable from pgphoto's public API, and both public config entry points already funnel into the guarded _put_ handlers. Corrections are pending on those issues.",
+    "The #329 fix is verified by execution under node (17 assertion groups, mutation-checked) but not on hardware: no mount was reachable during development, so 'alignment written' reflects what /api/apply reported rather than independently confirmed mount state.",
+    "Issue #251 remains release-blocking for the standard camera owner.",
+    "The K-3 III recognition fault (#297) is diagnosed to layer 3 and not yet fixed; this cut carries the read-only diagnostics only."
+  ],
+  "validation_focus": [
+    "K-3 III exposurecompensation: the control must answer rather than reporting busy forever.",
+    "polaris-apsta.sh down: the station must actually come down and resolv.conf must be restored.",
+    "Release archives: open polaris-astro.zip and polaris-wifi.zip from the finished candidate and confirm the exec bits and wifi licence files are present in the archive, not just on disk.",
+    "pgphoto restart: clear a stale restart lock and confirm pgphoto comes back without a reboot.",
+    "Astro WebUI Apply-last: it must name the solution before writing and report the frame age afterwards; with no solve performed it must refuse and say why."
+  ]
+}
