@@ -353,3 +353,112 @@ owner's call, and it may be deliberate (meaning "gated offline *and* hardware-qu
   file write (`/app/sd/polaris-wifi/autojoin`) and a real association are unexercised; whether
   joining succeeds on the device is still a hardware question. Nothing installed, flashed or
   published.
+
+---
+
+# Third autonomous block — #302 shipped, three issues found un-implementable as written
+
+## 15. #302 — a false security claim in shipped code, fixed honestly
+
+`setup-wifi.sh` said *"the file is chmod 600 -- treat it as a credential"* and wrote
+*"contains a PSK hash; keep it private"* **into `wpa.conf` itself**. `/app/sd` is vfat
+mounted `fmask=0022`, which has no per-file permission model: `chmod 600` returns success
+and changes nothing. The reporter proved this on-device (touch, chmod 600, `ls -l` → still
+755). `wpa.conf` holds a WPA2 PSK hash — sufficient to join the network without the
+passphrase — so it is readable by every process on the Polaris and by anyone who puts the
+card in a PC.
+
+The in-file line is the worse of the two: it is what a user sees with `cat`, and it tells
+someone to keep private a file that cannot be made private, on the exact medium they are
+being asked to carry. A false security claim is worse than none — reading it reasonably
+concludes the secret is protected and stops thinking about it.
+
+**Fixed the claim, not the exposure.** Both texts now state the real situation (vfat,
+`fmask=0022`, readable by any process or card-holder); the summary prints the mode actually
+stored and warns when world-readable. The chmod is kept — harmless, and correct on a
+filesystem that honours it — with a comment saying plainly not to read it as protection.
+
+Deliberately **not** done: option 1 from the issue (move the config to `/var/lib/polaris`,
+UBIFS where chmod works). It needs a read-fallback so existing cards keep working and
+touches four consumers (`setup-wifi.sh`, `polaris-autojoin.sh`, `polaris-apsta.sh`, the
+httpd handler). That is a distribution decision with a compatibility surface.
+
+Checked for the same lie elsewhere before committing: `polaris-httpd.c` stages the key at
+`/tmp/.wpa-psk`, which is tmpfs, so `chmod 0600` there genuinely works — the app.js comment
+I wrote yesterday about staging "at 0600" is accurate and was left alone. No response ever
+echoes the psk back (grepped the whole handler).
+
+**Why the existing suite missed it:** `test_setup_wifi_psk_not_in_argv.py::
+test_config_written_with_private_mode` asserts `mode == 0o600`, and passes — on ext4, where
+chmod works. It validated the behaviour on a filesystem that honours chmod rather than the
+one the file actually lives on. That test stays (the chmod is still correct where it works),
+but it is exactly why the claim survived review, and it is the same class of mistake as
+section 9: a check that passes because its environment differs from production.
+
+New suite asserts on the **claims**, not the mode, since the mode can't change without the
+relocation decision. Mutation check: script reverted → 4 fail / 1 passes; the survivor is
+the cleanup control. Registered in `PY_TESTS` (49 suites). Full suite 727 passed (was 722).
+
+## 16. Three issues whose premises did not survive inspection
+
+**#321 — already implemented.** I was about to add solve logging, found a dead
+`g_nfield_for_timeout` variable that looked like a half-finished feature, and started
+implementing. Checked `git log -S` first: `b495d70 feat(astro): log solve start, duration
+and classified outcome (#321)` already exists **and is in the shipped v106 bundle** (6 hits
+in the built `polaris-align.sh`). It logs start/duration/classified outcome with star count
+precisely to separate the issue's four hypotheses. No work needed; caught before duplicating
+it. The dead variable is real but harmless and I left it rather than churn unrelated code.
+
+**#318 — the mechanism does not exist on our side.** "USB compatibility mode" is a **camera
+menu setting**, not a Polaris one. `docs/CURRENT-STATE.md:886-938` records the investigation
+of exactly this toggle: *"the menu bit is **not logged**"* and, on the closest log line,
+*"This is an app camera-control/connection transition, **not a direct readback of the
+camera's USB compatibility menu setting**."* No file, property, PTP descriptor or log line
+reveals it; grepping our tree finds no representation at all. No documented intent links the
+WebUI to it either. I did not build a best-effort gate on camera presence or the `code 297
+mode:0/1` transition: presence changes for many reasons, and the panel is how you diagnose
+why a camera is absent — gating it on presence would remove the tool precisely when it's
+needed. Offered instead: keep the panel up and state that USB compatibility mode on the body
+is a known cause when no camera is reachable. No code pushed.
+
+**#328 — real, mechanism confirmed, but not fixable correctly offline.** Traced it fully:
+`_put_Pentax_DirectShutter` (`config.c:12193`) verifies and returns an error on failure with
+nothing touching the widget (:12305-12308); `_put_Ricoh_ShutterSpeed` only *reads* the widget
+(:5320); the generic core forwards it untouched and keeps no snapshot
+(`gphoto2-camera.c:1131-1146`). So after a failed write the widget still holds the requested
+value — #328 exactly, and why #325's read-back guard doesn't fix it alone.
+
+The obvious fix is wrong for this camera: refreshing via `_get_Pentax_DirectShutter` calls
+`GetDevicePropValue` for 0xd00f, which **this very handler documents the K-1 II refuses**
+(:12273-12281). The correct fix — snapshot before write, restore on failure, Pentax-gated —
+needs a device to prove the restore branch runs and that restoring a `const char*` into the
+widget's own string list survives descriptor refetch. Getting that lifetime wrong is a
+use-after-free on every Pentax write. AGENTS.md §110-137 requires an impact statement and
+non-Pentax evidence for this path. No code pushed; asked for a device and a decision on
+revert-vs-unknown semantics.
+
+Also confirmed pgphoto is a stock Benro binary from the FwPkt, not source we own — so the
+consumer side of #328 isn't fixable by us either.
+
+## 17. v106 rebuilt with #302 — final state
+
+Rebuilt through the documented clean-clone process at `571538e`. **GATE GREEN** (23 passed,
+0 failed, 3 pre-existing skips), python suite **708 passed** — exactly 703 + my 5 new tests,
+which is how I confirmed they *ran* rather than skipped, the failure mode from section 9.
+Drift guard **49 suites all listed**. Artifact verdict 21 checks / 0 fail / 1 unknown (#331).
+Candidate identity **PASS (deployable)**.
+
+Verified in the shipped bundle: honest text present (5 hits), old false claim absent (0),
+in-file "keep it private" absent (0). Earlier fixes still intact — `action=autojoin_on`,
+`#wifi-ssid`/`#wifi-psk`, `applyOutcome`, `decideDispatch`, server rejection string. Driver
+unchanged at md5 `83ea3baf01df…`. Manifest carries 9 `declared_changes`; lifecycle
+`built: true`, everything else false.
+
+## 18. Still not done
+
+- **No hardware verification of anything.** Rig unreachable all session (`192.168.0.1`), no
+  Pentax/Benro on USB. #302's warning branch fires only on a real vfat mount and is unexercised;
+  #273's actual file write and association are unexercised. Nothing installed, flashed or published.
+- **#302 option 1** (relocate to UBIFS) — distribution decision.
+- **#328 fix** — needs a device plus a semantics decision.
+- **#331** (licences never reach the user), **#297** root cause, **#318** pending the answers above.
