@@ -478,17 +478,28 @@ EXPOSURE_MODE_LAST_REASON: str | None = None
 def classify_exposure_mode_failure(rc: int, stderr: str) -> str:
     """Name the reason a conditions read produced no mode, from gphoto2's stderr.
 
-    Measured on a live K-1 II (2026-11-11): with pgphoto holding the camera the
-    read fails at USB interface claim, before any PTP request is sent. Reporting
-    that as "no parsable reply" sends the reader looking at the camera when the
-    blocker is a local file descriptor.
+    Two branches are anchored in bytes captured from a live K-1 II on 2026-11-11,
+    one per device state that was actually observed:
+
+      * camera ON, pgphoto holding it -> "Could not claim interface 0 (Device or
+        resource busy)" / "-53". The read dies at USB interface claim, before any
+        PTP request is sent.
+      * camera OFF -> "Could not detect any camera". Nothing to talk to at all.
+
+    Reporting either as "no parsable exposure-mode-raw in the reply" sends the
+    reader looking at the camera's behaviour when the real blocker is a local file
+    descriptor, or at a camera that is simply switched off. Those need different
+    responses, and before stderr was captured all three looked identical.
     """
     low = stderr.lower()
     if "could not claim interface" in low or "device or resource busy" in low:
         return ("usb-busy: pgphoto holds the camera, so gphoto2 could not claim "
                 "interface 0 (-53); no PTP request was sent")
-    if "unable to find any ptp camera" in low or "no camera" in low:
-        return "no-camera: nothing matched a PTP camera on the device"
+    if ("unable to find any ptp camera" in low
+            or "could not detect any camera" in low
+            or "no camera" in low):
+        return ("no-camera: gphoto2 sees no PTP camera on the device; is it "
+                "switched on?")
     if "unrecognized" in low and "pentaxconditions" in low:
         return "widget-absent: this camlib has no pentaxconditions widget"
     if rc == 124 or "timed out" in low:

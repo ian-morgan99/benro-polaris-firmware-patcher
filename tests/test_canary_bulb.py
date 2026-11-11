@@ -924,3 +924,18 @@ def test_precondition_reason_carries_the_cause():
     )
     assert re.search(r'result\["reason"\] = f"exposure-mode-raw could not be read: '
                      r'\{cause\}"', body), body
+
+
+def test_camera_off_is_named_not_reported_as_unparsable():
+    """Second live device state, captured 2026-11-11 with the K-1 II switched off:
+    gphoto2 says "Could not detect any camera". The earlier wording ("no camera")
+    did not match it, so this asserts against the literal bytes rather than a guess.
+    A round run with the body powered down must say so instead of implying the
+    camera answered and refused."""
+    mod = load_probe()
+    cause = mod.classify_exposure_mode_failure(
+        1, "*** Error ***              \nCould not detect any camera\n")
+    assert cause.startswith("no-camera"), cause
+    assert "switched on" in cause, (
+        f"must point at the operator-actionable cause: {cause}"
+    )
