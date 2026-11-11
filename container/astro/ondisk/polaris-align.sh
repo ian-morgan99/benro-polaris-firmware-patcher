@@ -336,17 +336,23 @@ solve_with() {
                 --solver-timeout "$INDEPENDENT_SOLVER_TIMEOUT" \
                 --search-timeout "$INDEPENDENT_SEARCH_TIMEOUT" \
                 --scale-tol "$SOLVE_SCALE_TOL" $_scale
+            # The bound that can produce failure_reason:"timeout" for this solver is
+            # the search deadline, not SOLVE_TIMEOUT: polaris-solve-independent-search.c
+            # emits that value only once search_deadline has passed. Naming the wrong
+            # bound would attribute a timeout to a limit this solver was never given.
+            _bound=$INDEPENDENT_SEARCH_TIMEOUT
         else
             set -- --catalog "$INDEPENDENT_CATALOG" --stars "$STARS" --width "$W" --height "$H" \
                 --cpulimit "$SOLVE_TIMEOUT" --max-catalog "$INDEPENDENT_MAX_CATALOG" \
                 --anchor-stars "$INDEPENDENT_ANCHOR_STARS" \
                 --scale-tol "$SOLVE_SCALE_TOL" $_scale
+            _bound=$SOLVE_TIMEOUT
         fi
         [ "$USE_HINT" = "1" ] && [ -n "$RA" ] && [ -n "$DEC" ] && [ -n "$RADIUS" ] && \
             set -- "$@" --ra "$RA" --dec "$DEC" --radius "$RADIUS"
         _out=$("$ASTRO/$SOLVER_BIN" "$@")
         _rc=$?
-        solve_finish "$_t0" "$_rc" "$_out" "$_scale"
+        solve_finish "$_t0" "$_rc" "$_out" "$_scale" "$_bound"
         printf '%s\n' "$_out"
         return $_rc
     fi
@@ -362,9 +368,19 @@ solve_with() {
 
 # Classify one finished solve into the four outcomes #321 asks about, which look
 # identical from outside: solved, timed out, found nothing, or produced nothing.
-# polaris-solve prints {"solved":false,"error":"timeout"} and exits 3 when its
-# SIGALRM wall-clock bound fires (polaris-solve.c on_timeout), so that string is
-# an unambiguous timeout rather than an inference from elapsed time.
+# The two solvers report a timeout with different vocabularies, and both have to
+# be matched or one of them is silently misfiled:
+#   polaris-solve.c                    {"solved":false,"error":"timeout"}  rc=3
+#       its SIGALRM wall-clock bound (on_timeout).
+#   polaris-solve-independent-search.c {"solved":false,"failure_reason":
+#                                      "timeout","attempts":N,...}          rc=7
+#       emitted only when search_deadline > 0 and has passed, so it is never an
+#       inference -- the sibling value "search_exhausted" means every tile was
+#       tried within the budget, which is a different diagnosis entirely.
+# Observed on hardware with polaris-solve-independent-search: a real timeout was
+# logged as "solve no match: 50.37s rc=7 ... solver said:
+# {\"solved\":false,\"failure_reason\":\"timeout\",...}" because only the first
+# vocabulary was matched -- exactly the confusion #321 exists to remove.
 solve_finish() {
     # $_lim is the bound actually passed to this solver run, and has to be a
     # parameter rather than SOLVE_TIMEOUT: the range fallback uses RANGE_TIMEOUT
@@ -372,14 +388,17 @@ solve_finish() {
     # solve limited to 240 s. A wrong number in a diagnostic is worse than none.
     _t0=$1; _rc=$2; _out=$3; _scale=$4; _lim=${5:-$SOLVE_TIMEOUT}
     _el=$(awk -v a="$_t0" -v b="$(solve_now)" 'BEGIN{printf "%.2f", b-a}')
+    _dump=0
     case "$_out" in
-        *'"solved":true'*)      _v="SOLVED" ;;
-        *'"error":"timeout"'*)  _v="TIMEOUT (reached the ${_lim}s bound -- may succeed with a longer one)" ;;
-        *'"solved":false'*)     _v="no match" ;;
-        *)                      _v="no output" ;;
+        *'"solved":true'*)              _v="SOLVED" ;;
+        *'"error":"timeout"'*)          _v="TIMEOUT (reached the ${_lim}s bound -- may succeed with a longer one)" ;;
+        *'"failure_reason":"timeout"'*) _v="TIMEOUT (search bound ${_lim}s reached after attempts, not exhausted -- may succeed with a longer one)" ;;
+        *'"failure_reason":"search_exhausted"'*) _v="no match (all tiles searched within ${_lim}s -- not a timeout)"; _dump=1 ;;
+        *'"solved":false'*)             _v="no match"; _dump=1 ;;
+        *)                              _v="no output" ;;
     esac
     slog "solve $_v: ${_el}s rc=$_rc stars=$_star_count bin=$SOLVER_BIN${_scale:+ $_scale}"
-    [ "$_v" = "no match" ] && slog "  solver said: $(printf '%s' "$_out" | tr -d '\n' | head -c 200)"
+    [ "$_dump" = 1 ] && slog "  solver said: $(printf '%s' "$_out" | tr -d '\n' | head -c 200)"
     return 0
 }
 

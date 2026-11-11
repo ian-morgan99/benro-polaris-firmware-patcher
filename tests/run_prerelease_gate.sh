@@ -344,6 +344,17 @@ PY_TESTS=(
     # POSIX-sh clean, since the script declares #!/bin/sh and runs under busybox on the
     # device -- a bashism there is a real defect, unlike the bash-declaring scripts.
     tests/test_autosolve_timing.py
+    # Issue #321 follow-up, found on hardware rather than in source. solve_finish()
+    # matched only polaris-solve.c's "error":"timeout" and so filed every
+    # polaris-solve-independent-search timeout -- which reports
+    # "failure_reason":"timeout" with rc=7 -- under "no match". The salvaged solve.log
+    # from a K-3 III shows exactly that: 'solve no match: 50.37s rc=7' beside a solver
+    # line saying failure_reason:timeout. Executes the real solve_finish() extracted
+    # from polaris-align.sh and asserts on produced log lines, including that
+    # search_exhausted stays a non-match so the two remain distinguishable in both
+    # directions. Mutation-tested (removing the new clause fails 3 of 7, restoring
+    # passes). Offline-safe: no device, no network.
+    tests/test_solve_timeout_classification.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
