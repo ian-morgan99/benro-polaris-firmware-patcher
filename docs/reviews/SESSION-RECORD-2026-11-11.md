@@ -609,3 +609,86 @@ No hardware verification of anything, unchanged all session — rig unreachable,
 USB. Nothing installed, flashed or published. #142's folder-normalisation fix is written-up but
 unimplemented pending a device. #302 option 1, #328's restore-on-failure, #331 and #297's root
 cause all remain open for the same reason or because they need a decision I should not make alone.
+
+---
+
+# Sixth autonomous block — durable v106 build, and a version-registry drift
+
+## 26. Why I rebuilt: I could not answer "where is the artifact now"
+
+`RELEASE-IDENTITY-PROCESS.md` asks four questions of every candidate. The second is *"which exact
+artifact was built, and where is it now?"* — and for the v106 candidate recorded earlier today I
+could not answer it. It went to a temporary directory that no longer exists. Nothing was wrong
+with the build; the record just could not be tied to bytes.
+
+So I rebuilt with the documented entrypoint into `out/`, which is durable (and gitignored, so the
+artifact itself is not committed — only its identity):
+
+```
+./scripts/build-astro.sh --version 106 --slug autonomous-harness \
+    --summary docs/release-change-summary-v106-astro.json
+
+candidate_id astro-v106-autonomous-harness-20261111
+display_fwver 6.0.0.54.106
+libgphoto2    530c879fe7959ac4ccf4f4620a3032d49e45c293
+patcher       73e3066123b7640205f5cbe72207757ae5429cad
+FwPkt.zip     273c697a3465b13bd0ba780f184ae7632c2d5b738688ccce2a92d0dfabc3415e
+astro-bundle  ab2d8f9e357285fc72241fdcf77afc1318d01552b872103945f4d71fe4d4c358
+```
+
+Gates: shared camera gate **GREEN (24 passed / 0 failed / 2 prerequisite skips)**, focused Astro
+tests 78 passed / 6 skipped, `CANDIDATE IDENTITY: PASS (deployable)`.
+
+The two skips are prerequisite gaps, not passes: the `firmwareInfo` manifest gate and the
+provenance registry hash check both skip because no stock `FwPkt.zip` is in the repo. Recorded as
+gaps per the process, not counted as green checks.
+
+**Not a clean pass.** The artifact verifier's verdict is `ARTIFACTS_INTERNALLY_CONSISTENT_WITH_UNKNOWN`
+— 21 checks, 0 fail, **1 unknown**: licence-reachability, "5 licence files live outside
+`COPY-TO-SD-CARD-ROOT` and therefore never reach a user who copies the SD archives". That is
+issue #331 and predates this build. I did not relabel it as a pass.
+
+Lifecycle: **built only**. Not installed, flashed, published or hardware qualified.
+
+## 27. Registry drift: `.104` and `.105` were built but never registered
+
+While checking whether `.106` was safe to claim I found `docs/RELEASE-VERSION-STATE.md` saying
+`last_display_fwver=6.0.0.54.103`, while `out/` held manifests for `6.0.0.54.104` and
+`6.0.0.54.105`, both `candidate-build-only`.
+
+This matters concretely, not cosmetically: the consumed list is what `verify_display_fwver` uses
+to refuse re-issuing a version. A version absent from that list is re-issuable, so a future build
+could have claimed `.104` or `.105` and produced two different artifacts with the same app-visible
+version — exactly the ambiguity the identity process exists to prevent.
+
+Registered both retroactively, reading driver/patcher commits and FwPkt hashes from their own
+`astro-candidate-manifest.json` rather than from memory:
+
+| version | driver | patcher | FwPkt sha256 |
+|---|---|---|---|
+| `.104` | `806c3bda62d6` | `1e88637cf61d` | `428db3d0334f8a3d…` |
+| `.105` | `49b67fa44c66` | `17f78ae0dc06` | `bbe675f469662b00…` |
+
+Verified mechanically rather than by inspection: `verify_display_fwver_monotonic.py --next` now
+returns `6.0.0.54.107`, which it would not if the list were inconsistent. (My first attempt ran
+that `.py` through `bash` and produced shell syntax errors — my error, not the script's.)
+
+## 28. Two things about the build system worth remembering
+
+- **`scripts/build-astro-candidate.sh:92` requires branch `feature/astro-native-platesolve`.** My
+  first attempt failed with `ERROR: wrong Astro branch: main`. That branch is identical to `main`
+  (`73e3066`) and has been kept in step all session, so building from it changes nothing about
+  what ships. The guard also rejects *any* untracked file, so the tree must be fully clean.
+- **Two files share the name `build-astro.sh`**, which `RELEASE-PROCESS-DETERMINISM.md` row 3
+  already flags as unresolved. The root one is a different POSIX script for the plate-solver
+  bundle; `scripts/build-astro.sh` is the documented entrypoint that delegates to
+  `build-astro-candidate.sh`. I used the latter. That duplicate is still there, still unfixed.
+
+## 29. State at the end of this block
+
+Driver `origin/main` = `530c879fe`, clean. Patcher `origin/main` and
+`origin/feature/astro-native-platesolve` = `ef77a3d`, clean. Durable candidate in
+`out/astro-v106-autonomous-harness-20261111/`.
+
+Still no hardware: rig unreachable, no Pentax/Benro on USB. Nothing installed, flashed or
+published anywhere. Every issue that needs physical qualification remains open, correctly.
