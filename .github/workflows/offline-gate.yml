@@ -42,22 +42,41 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          # The suite is stdlib-only (verified: no numpy/scipy/astropy/cv2 imports in
-          # tests/*.py), so there is no requirements install step.
-          #
           # Honesty note on the version: this suite has only ever been *executed* on
-          # CPython 3.13.15 (the development host). 3.12 was chosen here because a grep
-          # for 3.12/3.13-only syntax (type statements, type[] generics, except*) finds
-          # nothing in tests/*.py, so 3.12 should be safe -- but that is inference, not
-          # a verified run. If this job ever fails on a syntax or stdlib-behaviour
+          # CPython 3.13.15 (the development host) and in a 3.13 venv mimicking a
+          # runner. 3.12 was chosen because a grep for 3.12/3.13-only syntax (type
+          # statements, type[] generics, except*) finds nothing in tests/*.py or
+          # container/*.py, so 3.12 should be safe -- but that is inference, not a
+          # verified run. If this job ever fails on a syntax or stdlib-behaviour
           # difference, bump to '3.13' rather than debugging the suite.
           python-version: '3.12'
+
+      - name: Install gate prerequisites
+        # The first run of this workflow was RED with 5 failures, and the cause was
+        # here: the suite imports pytest, elftools (pyelftools) and unicorn, none of
+        # which were declared anywhere in the repository. They happened to be present
+        # on the development machine, so "offline-safe" was quietly conflated with
+        # "self-contained" and a clean runner had neither. requirements-ci.txt now
+        # pins them; see that file for what is deliberately excluded.
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements-ci.txt
 
       - name: Offline pre-release gate
         # The gate prints its own "N passed, M failed, K skipped" summary and a final
         # GATE: GREEN/RED line, then exits non-zero on RED. Do not pipe it through tee
         # or tail -- the exit code is the verdict and a pipeline would mask it.
         run: ./tests/run_prerelease_gate.sh
+
+      - name: Upload gate logs on failure
+        if: failure()
+        # The gate writes detail to /tmp/prerelease-*.log and prints only one line per
+        # check. Without this, a RED run says which check failed and nothing about why,
+        # which is exactly what made the first RED run slow to diagnose -- I had to
+        # reproduce locally instead of reading the failure.
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-logs
+          path: /tmp/prerelease-*.log
+          if-no-files-found: ignore
 
       - name: Show gate verdict
         if: always()

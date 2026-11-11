@@ -1,0 +1,24 @@
+# Third-party packages the offline gate needs, and nothing else.
+#
+# Why this file exists: the suite has always been described as "offline-safe by
+# design" (pytest.ini) and it is -- it never touches the Polaris. But "offline" was
+# never the same as "self-contained". Three packages were imported without being
+# declared anywhere, so a fresh clone passed on a developer's machine and failed on
+# a clean runner. The first CI run proved it: 5 checks RED, all of them either
+# `python -m pytest` or a container patch test importing elftools/unicorn.
+#
+# Pinned to the exact versions the gate was verified GREEN against on 2026-11-11
+# (CPython 3.13.15, bare venv, runner-like PATH, HOME with no VS Code settings):
+#   Pre-release gate summary: 14 passed, 0 failed, 4 skipped -- GATE GREEN
+#
+# Deliberately NOT listed here:
+#   * cv2 / numpy / scipy / astropy -- imported only by the ad-hoc hardware probes in
+#     the repository root (test_ioptron.py, test_v4l2.py and friends). pytest.ini
+#     scopes testpaths to tests/ precisely so those are never collected. They need a
+#     physical device and are not part of the suite.
+#   * node -- some container tests shell out to it. Without it those checks SKIP,
+#     which the gate reports honestly rather than as silent green, so it is optional.
+
+pytest==9.2.0
+pyelftools==0.33
+unicorn==2.1.4
