@@ -14,44 +14,44 @@
   "purpose": "Close the v105 field-test findings that are fixable in code we own, and stop the release process from shipping archives it never opened. Four defects reached main since .105: an empty Pentax choice list reported CAMERA_BUSY forever; polaris-apsta.sh down stopped nothing and left a dead resolver; the release gate verified a build directory instead of the archives a user actually receives; and a stale restart lock permanently blocked pgphoto restarts, quarantining a healthy K-3 III. Separately the astro WebUI's Apply-last button wrote a mount alignment from a solution the user could not see.",
   "changes": [
     {
-      "component": "stage2 loader (appliance)",
+      "component": "patcher",
       "issues": [
-        "269"
+        "#269"
       ],
       "summary": "A permanently-empty choice list was reported to the app as CAMERA_BUSY. On the K-3 III exposurecompensation publishes no allowed-values list at all: the current value reads back but the list is empty, and the loader turned that into an infinite busy state rather than a terminal answer. It now returns the value with an empty list instead of retrying forever."
     },
     {
-      "component": "wifi station script (appliance)",
+      "component": "patcher",
       "issues": [
-        "283"
+        "#283"
       ],
       "summary": "polaris-apsta.sh down stopped nothing and left a dead resolver behind. The stop path signalled the wrong process and never restored resolv.conf, so a station that was told to come down still appeared up to anything that asked."
     },
     {
-      "component": "release gate",
+      "component": "packaging",
       "issues": [
-        "292"
+        "#292"
       ],
       "summary": "The artifact gate now verifies the published archives rather than the build directory, and both producers invoke it. A verifier that reads a staging tree passes vacuously because out/ is gitignored; the gate now opens the zips a user receives. Wired into build-astro-candidate.sh and build-astro-bundle.sh so it runs on every build instead of being a check someone has to remember to call."
     },
     {
-      "component": "camera restart control (appliance)",
+      "component": "patcher",
       "issues": [
-        "297"
+        "#297"
       ],
       "summary": "A stale restart lock permanently blocked pgphoto restarts, so a healthy K-3 III stayed quarantined until reboot. The lock is now reclaimed when its holder is gone."
     },
     {
-      "component": "astro WebUI",
+      "component": "patcher",
       "issues": [
-        "329"
+        "#329"
       ],
       "summary": "Apply-last states what it is about to write and never reports an unconfirmed write as success. #solve-apply posted an empty body, showed nothing on success and only a bare error string on failure, so the user wrote a mount alignment from a solution whose RA/Dec, roll and pixel scale were never displayed -- although /api/state already returns the whole solver JSON and /api/apply already reports age_sec. The decision table moved to container/astro/webui/solve-apply.js, DOM-free like shutter.js, asserted under node."
     },
     {
-      "component": "release tooling",
+      "component": "packaging",
       "issues": [
-        "312"
+        "#312"
       ],
       "summary": "The kit install is scripted and every release entrypoint is indexed. install-astro-kit.sh stages a candidate over tar+ssh, verifies every byte against ASTRO-MANIFEST.sha256, runs install_astro.sh, reboots for the boot hook and fails closed unless :8090 is serving. docs/RELEASE-ENTRYPOINTS.md indexes operation to command, with a test asserting no scripts/release/ script goes unindexed."
     }
