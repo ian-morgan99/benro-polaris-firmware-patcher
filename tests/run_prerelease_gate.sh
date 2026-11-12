@@ -18,7 +18,10 @@
 #       --bulb-seconds 30 --expected-sw 6.0.0.54.52
 #   ./tests/run_prerelease_gate.sh --canary --expected-files 1 \
 #       --expected-build-dir out/<candidate>
-#   ./tests/run_prerelease_gate.sh --require-bulb-cancel-return
+#   ./tests/run_prerelease_gate.sh --require-arm-emulation \
+#       --arm-harness-src /path/to/benro-polaris-test-harness/src
+#
+   ./tests/run_prerelease_gate.sh --require-bulb-cancel-return
 #
 # --require-bulb-cancel-return turns the issue #251 cancellation-return
 # diagnostic from a SKIP into a FAIL when its prerequisites are missing. It is
@@ -49,6 +52,8 @@ DEVICE_LIBS=""
 LIBGPHOTO2_SRC=""
 REQUIRE_BULB_CANCEL_RETURN=0
 BULB_ARGS=()
+REQUIRE_ARM_EMULATION=0
+ARM_HARNESS_SRC="${POLARIS_HARNESS_SRC:-}"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -65,6 +70,8 @@ while [ $# -gt 0 ]; do
         --expected-sw) EXPECTED_SW="${2:?}"; shift 2 ;;
         --expected-build-dir) EXPECTED_BUILD_DIR="${2:?}"; shift 2 ;;
         --require-bulb-cancel-return) REQUIRE_BULB_CANCEL_RETURN=1; shift ;;
+        --require-arm-emulation) REQUIRE_ARM_EMULATION=1; shift ;;
+        --arm-harness-src) ARM_HARNESS_SRC="${2:?}"; shift 2 ;;
         --device-libs)  DEVICE_LIBS="${2:?}"; shift 2 ;;
         --libgphoto2-src) LIBGPHOTO2_SRC="${2:?}"; shift 2 ;;
         -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
@@ -937,6 +944,59 @@ check_bulb_cancel_return() {
     fi
 }
 check_bulb_cancel_return
+
+# ----------------------------------------------------------------------------
+# issue #340: execute the candidate's own Stage-2 binary under the harness ARM
+# emulator. This is the only check that runs the shipped pgphoto at all, so a
+# green gate without it has never loaded the bytes we intend to install -- an ABI
+# or camlib mismatch is invisible to every hash comparison in this script.
+#
+# It asserts only what an emulator can honestly prove: the executed bytes match
+# install-manifest.json, every dynamic relocation resolves, and the entry point
+# runs a bounded instruction budget without fault. It does NOT qualify the
+# candidate for deployment; the script prints its exclusions on every run so a
+# pass is not over-read as device qualification.
+#
+# Deliberately NOT implied by --build. The harness lives in a separate workspace
+# and unicorn is not a declared dependency of this repo, so implying it would
+# turn "I do not have the harness checked out" into a red build -- the same
+# failure mode issue #338 documents for the v90 diagnostic input. Opt in with
+# --require-arm-emulation once the harness is a declared prerequisite.
+# ----------------------------------------------------------------------------
+check_arm_emulation() {
+    local build_dir="${BUILD:-$EXPECTED_BUILD_DIR}"
+    if [ -z "$build_dir" ]; then
+        if [ "$REQUIRE_ARM_EMULATION" = "1" ]; then
+            bad "ARM emulation of Stage-2: --require-arm-emulation given but no --build/--expected-build-dir"
+        else
+            skp "ARM emulation of Stage-2 (no candidate build directory given)"
+        fi
+        return
+    fi
+    local out="/tmp/prerelease-arm-emulation.json"
+    local log="/tmp/prerelease-arm-emulation.log"
+    local args=(--build "$build_dir" --output "$out")
+    [ -n "$ARM_HARNESS_SRC" ] && args+=(--harness-src "$ARM_HARNESS_SRC")
+
+    python3 "$ROOT/scripts/release/check-arm-emulation.py" "${args[@]}" >"$log" 2>&1
+    local rc=$?
+    case "$rc" in
+        0)
+            ok "ARM emulation of Stage-2 (loads, relocates and executes the candidate binary; see $out)" ;;
+        3|2)
+            bad "ARM emulation of Stage-2 (log: $log)"
+            sed -n 's/^FAIL: /      /p' "$log" | head -6 ;;
+        5)
+            if [ "$REQUIRE_ARM_EMULATION" = "1" ]; then
+                bad "REQUIRED ARM emulation of Stage-2 not run: $(grep -m1 '^PREREQ:' "$log" || echo 'prerequisite unavailable')"
+            else
+                skp "ARM emulation of Stage-2 ($(grep -m1 '^PREREQ:' "$log" | sed 's/^PREREQ: //' || echo 'prerequisite unavailable'))"
+            fi ;;
+        *)
+            bad "ARM emulation of Stage-2 (unexpected exit $rc; log: $log)" ;;
+    esac
+}
+check_arm_emulation
 
 # ----------------------------------------------------------------------------
 # Summary. Green gate = zero runnable failures; skips are reported, never
