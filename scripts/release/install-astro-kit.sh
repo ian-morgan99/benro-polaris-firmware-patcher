@@ -82,7 +82,12 @@ KIT_MANIFEST="$BUILD_DIR/astro-bundle/ASTRO-MANIFEST.sha256"
 
 # sshd here has no sftp-server subsystem, so scp cannot work at all. Everything
 # goes through one tar stream over a single ssh session.
-SSH_ARGS=(-o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=10)
+# ServerAliveCountMax is raised deliberately: the kit stream is ~70 MB and the
+# remote `tar xzf` + `sync` on vfat runs at ~2.1 MB/s, so the session is silent
+# for well over the 30 s that ServerAliveInterval=10 with the default
+# ServerAliveCountMax=3 will tolerate. Without this the stream is killed mid-
+# transfer on a device that is behaving normally.
+SSH_ARGS=(-o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=60)
 
 # The device runs busybox sh (no bash), so anything piped to `sh -s` is POSIX.
 probe_device() {

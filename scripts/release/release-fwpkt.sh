@@ -228,12 +228,48 @@ echo "--- [2/6] Staging FwPkt/ tree to /app/sd/FwPkt/ ---"
 # Remove any existing partial tree first (clean slate)
 ssh -o BatchMode=yes "$SSH" 'rm -rf /app/sd/FwPkt 2>/dev/null; true'
 
-# Stream the tree
+# Stream the tree.
+#
+# ServerAliveCountMax must be raised here. The default is 3, so with
+# ServerAliveInterval=10 ssh tears the session down after 30 s of silence -- and
+# the remote side *is* silent for that long, because `tar xzf` plus `sync` on a
+# vfat card runs at ~2.1 MB/s, so an 86 MB tree takes ~40 s with nothing written
+# to stdout. The default settings therefore kill a transfer that is progressing
+# normally. Observed on .106: "Timeout, server 192.168.0.1 not responding" /
+# "tar: -: Wrote only 2048 of 10240 bytes", with the device never rebooting and
+# a truncated tree left at /app/sd/FwPkt. 10 s x 60 = 600 s of tolerance.
 echo "Streaming $(du -sh "$FWPKT_DIR" | cut -f1) to device..."
 tar czf - -C "$BUILD_DIR" FwPkt | \
-  ssh -o BatchMode=yes -o ServerAliveInterval=10 "$SSH" 'tar xzf - -C /app/sd && sync'
+  ssh -o BatchMode=yes -o ServerAliveInterval=10 -o ServerAliveCountMax=60 \
+      "$SSH" 'tar xzf - -C /app/sd && sync'
 echo "Staged. Verifying on-device layout..."
 ssh -o BatchMode=yes "$SSH" 'ls /app/sd/FwPkt/ && echo OK'
+
+# A short tree is the failure this whole phase exists to prevent: vfat here is
+# mounted errors=continue, so a truncated write can look like a completed one.
+# Compare total apparent bytes on-device against local before trusting the stage.
+# Apparent bytes, not disk usage: ext4 and FAT32 allocate at different
+# granularities, so `du -sk` would disagree across the two even for a byte-perfect
+# copy. Summing `ls -l` field 5 is metadata-only (no re-read of 86 MB) and immune
+# to `find -exec ... +` batching, which matters because the device runs BusyBox
+# 1.26.2 -- it has no `find -printf`, and `wc -c` prints no "total" label when a
+# batch holds exactly one file. Phase 3's firmwareInfo MD5 pass remains the
+# authoritative content check; this only catches a short tree early enough to
+# remove it before the on-boot watcher can consume it.
+LOCAL_BYTES="$(find "$FWPKT_DIR" -type f -exec ls -l {} + 2>/dev/null | awk '{s+=$5} END{print s+0}')"
+REMOTE_BYTES="$(ssh -o BatchMode=yes "$SSH" 'cd /app/sd/FwPkt 2>/dev/null && find . -type f -exec ls -l {} + 2>/dev/null | awk "{s+=\$5} END{print s+0}"' | tr -dc '0-9')"
+echo "Staged tree: ${REMOTE_BYTES:-0} bytes on device vs ${LOCAL_BYTES} bytes local"
+if [ "${LOCAL_BYTES:-0}" -eq 0 ]; then
+  echo "ERROR: cannot total local $FWPKT_DIR; refusing to stage blind." >&2
+  exit 3
+fi
+if [ "${REMOTE_BYTES:-0}" -lt "$LOCAL_BYTES" ]; then
+  echo "ERROR: staged tree is short (${REMOTE_BYTES:-0} bytes vs $LOCAL_BYTES)." >&2
+  echo "       Removing /app/sd/FwPkt so the watcher cannot consume a partial" >&2
+  echo "       packet, then aborting before any reboot." >&2
+  ssh -o BatchMode=yes "$SSH" 'rm -rf /app/sd/FwPkt; sync' || true
+  exit 4
+fi
 
 # Remove any stray zip/partial transfer left by an earlier attempt. The watcher
 # consumes the tree, but a stale FwPkt.zip beside it has caused ambiguous runs and
