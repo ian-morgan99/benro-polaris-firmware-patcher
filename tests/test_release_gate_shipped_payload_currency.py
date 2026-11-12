@@ -57,6 +57,12 @@ def make_patcher_repo(path: Path) -> tuple[Path, str]:
     ondisk.mkdir(parents=True)
     (ondisk / "polaris-autosolve.sh").write_text("#!/bin/sh\necho v1\n", encoding="utf-8")
     (ondisk / "install_astro.sh").write_text("#!/bin/sh\necho install\n", encoding="utf-8")
+    # The bundle builder, which generates README.txt. Shipped text comes from here,
+    # not from ondisk, so R5 must watch it too.
+    (repo / "build-astro.sh").write_text(
+        "#!/bin/sh\ncat > README.txt <<EOF\nDrag COPY-TO-SD-CARD-ROOT onto the card.\nEOF\n",
+        encoding="utf-8",
+    )
     run("git", "-C", str(repo), "add", "-A")
     run("git", "-C", str(repo), "commit", "-m", "baseline")
     first = run("git", "-C", str(repo), "rev-parse", "HEAD")
@@ -187,3 +193,38 @@ def test_r5_detects_tampered_copy_matching_neither_commit(tmp_path: Path):
     rc, out = gate(repo, packet, head, state)
     assert rc != 0, "a shipped script that differs from its recorded commit must fail:\n" + out
     assert "install_astro.sh" in out, out
+
+
+def test_r5_catches_a_stale_readme_generator(tmp_path: Path):
+    """Currency arm for GENERATED shipped text.
+
+    README.txt is a heredoc inside build-astro.sh, so a stale generator yields a
+    stale bundle while every copied ondisk script matches byte-for-byte. An
+    ondisk-only scope reports OK on that packet. This is the exact shape of the
+    miss found on 2026-11-12: the astro builder requires branch
+    feature/astro-native-platesolve, whose tip was 8 commits behind main and still
+    emitted the scp instruction removed in edc5f4d.
+    """
+    repo, first = make_patcher_repo(tmp_path)
+    state = make_state(tmp_path)
+
+    # Packet built from 'first'; ondisk is untouched afterwards, so the integrity
+    # arm and the ondisk currency check both stay clean.
+    packet = make_packet(tmp_path, repo, first)
+
+    # main changes only the generator.
+    (repo / "build-astro.sh").write_text(
+        "#!/bin/sh\ncat > README.txt <<EOF\nDrag COPY-TO-SD-CARD-ROOT onto the card.\n"
+        "Do NOT use scp; this device has no sftp-server subsystem.\nEOF\n",
+        encoding="utf-8",
+    )
+    run("git", "-C", str(repo), "commit", "-am", "fix(docs): stop telling users to run scp")
+    run("git", "-C", str(repo), "push", "--quiet", "origin", "main")
+
+    rc, out = gate(repo, packet, first, state)
+    assert rc != 0, (
+        "a build whose README generator is behind main must not pass:\n" + out
+    )
+    assert "build-astro.sh" in out, (
+        "R5 must name the stale generator:\n" + out
+    )

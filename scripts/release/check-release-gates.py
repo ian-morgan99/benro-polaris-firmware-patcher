@@ -69,7 +69,17 @@ def run(args, cwd=None):
 # so a build that predates such a change is shipping different code than its
 # recorded commit implies. Kept as a list of repo-relative prefixes rather than
 # a hardcoded file list so new ondisk scripts are covered automatically.
-SHIPPED_PATHS = ("container/astro/ondisk",)
+#
+# build-astro.sh is in this list even though it is not itself copied into the
+# packet, because it GENERATES shipped text: README.txt, SOURCE-OFFER.txt and
+# LICENCE-wifi.txt are heredocs inside it. A stale generator produces a stale
+# bundle while every copied script matches byte-for-byte, so an ondisk-only scope
+# reports OK on a packet whose user-facing instructions are wrong. That is not
+# hypothetical: on 2026-11-12 the astro builder requires branch
+# feature/astro-native-platesolve, whose tip was 8 commits behind main and still
+# contained the scp instruction removed from README.txt in edc5f4d. R5's ondisk
+# comparison found nothing, because nothing under container/astro/ondisk differed.
+SHIPPED_PATHS = ("container/astro/ondisk", "build-astro.sh")
 
 
 def find_shipped_dir(packet_dir, subdir):
