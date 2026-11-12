@@ -423,6 +423,8 @@ forgotten or improvised:
 
 1. Prints the exact command for the candidate it just built:
    `== 6. install this candidate (the only supported path) ==`
+   That phrase means the only supported *installer script* — it does not exclude
+   Route A, which is the supported route for end users who have no PC tooling.
 2. Writes `install-status.txt` next to the candidate with `install_command` and
    `install_status=not-installed`. After phase 6 passes, the supported
    `release-fwpkt.sh` installer changes that status to `installed-verified` and
@@ -434,8 +436,75 @@ forgotten or improvised:
    it from the host fails with `EACCES`; under `set -e` that aborted the build
    *after* publishing, which is what happened on `.72`.
 
+## Arm the keepalive before touching the device
+
+**Binding for every agent session that talks to a Polaris, install or not.** Start
+`scripts/polaris-bt-keepalive.sh` in the background *before* the first SSH command,
+and leave it running until the work is finished and verified.
+
+```sh
+nohup scripts/polaris-bt-keepalive.sh > /tmp/polaris-bt-keepalive.out 2>&1 &
+tail -f /tmp/polaris-bt-keepalive.log     # wait for phase=ssh-up
+```
+
+The reason is not tidiness — it is that **losing the radio has no remote recovery
+path**. Three documented behaviours combine into that:
+
+| mechanism | effect | source |
+|---|---|---|
+| Wi-Fi auto-off | 60 s after the *last registered* client leaves, the firmware powers the radio down and unloads `bcmdhd_wlan`. The SSID disappears; ssh, :8090, Alpaca and LX200 all go with it. | `docs/ASTRO.md`, "The Wi-Fi turns itself off 60 seconds after the app disconnects" |
+| AP idle timer | ~5 min with no traffic on TCP 9090. Polling 284/822 does **not** reset it. | `scripts/polaris-bt-keepalive.sh` header, `KEEPALIVE-WAKE-INVESTIGATION-2026-09-07` |
+| BLE wake is unavailable | The rig never advertises LE — `SP_BlueSetAdvertiseState: advertise on` / `Failed to register advertising object` on every boot. There is nothing for `bluetoothctl connect` to reach. | `docs/evidence/rig-le-advertising-absent-20261027/SUMMARY.md` |
+
+So once the radio is down, neither SSH nor a wake pulse can get back in; it needs a
+physical power cycle. Bursty one-shot SSH is therefore actively harmful: every
+short-lived session ends with a client leaving, and the tools that would rescue us
+cannot.
+
+Two distinct mechanisms, both worth having — they guard different timers:
+
+- **Device-side Keep Awake** sends `1&808&2&type:0;#`, which is what actually
+  registers a client (`SP_ClientCtxAdd: type[wifi]; WifiCount[n]`). A plain held TCP
+  socket does *not* register and changes nothing. Off by default: it costs battery,
+  and registering while the mount is unaligned makes the Benro app demand a compass
+  calibration.
+- **Host-side `polaris-bt-keepalive.sh`** pings `1&266&0&#` on 9090 every 30 s to
+  reset the AP idle timer, and retains a GATT link for the whole session to reset the
+  ~90 s AP watchdog. Read its terminal `phase=` line, not a vague success:
+  `ssh-up`, `joined-ssh-down`, `not-advertising`, `connect-aborted`,
+  `ap-not-visible`, `control-up`. `not-advertising` means below the wakeable state
+  and needs a physical wake.
+
+### What this cost on 2026-11-12 (v107)
+
+The flash itself verified clean — `4.0.0.32 → 6.0.0.54.107`, uptime reset, all 11
+mandatory files SHA-256 matched, kit auto-starting on :8090 after a cold boot. Then
+access was lost and never came back:
+
+```
+20:06:02Z  flash reboot issued          (uptime 2934.06, FwVer 4.0.0.32)
+20:07:19Z  AP associated                (boot #1, uptime 57.28)
+20:12:13Z  reboot #2 issued deliberately, to test boot-hook persistence
+20:12:18Z  AP dropped                   (this one was our own reboot)
+20:13:14Z  last confirmed alive         (canary PROBE-DONE, camera answered, rxerr 0)
+20:13:29Z  AP gone                      (never re-associated; ssid-not-found at 20:14:19)
+```
+
+About **6 minutes of usable uptime** across two boots, and the cause of the final
+drop is *not established* — no client ever registered via 808, so the 60 s rule has
+nothing to hang on, and `rxerr` was 0 at the last healthy read. Diagnosing it needed
+`/app/Mlog.txt`, which needed the device, which needed a power cycle. That is the
+whole point of arming the keepalive first: the verification window is short and the
+cost of losing it is physical access.
+
+Batch post-flash verification into one session rather than bursty one-shots, and do
+not reboot a second time until the checks that need the reboot are queued up.
+
 ## Checklist for every install
 
+0. **Keepalive armed and `phase=ssh-up`** (see "Arm the keepalive before touching
+   the device"). This precedes staging; there is no remote recovery once the radio
+   drops.
 1. Candidate has a registry row in `docs/FWPKT-PROVENANCE-CONTRACT.md` (zip MD5 +
    SHA-256, appfs MD5, both commit links). No row → do not stage. Confirm the zip
    digest matches the row before staging: display version alone cannot identify a

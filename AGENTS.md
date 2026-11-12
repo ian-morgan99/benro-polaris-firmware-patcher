@@ -242,8 +242,31 @@ Anything we believe is currently working MUST have a coded regression test, and 
 
 ## Wake and keep-alive (Polaris) — exact commands
 
-- **Wake:** gimbal must be powered on; BT connect to `48:E7:DA:D4:B5:72` is the wake pulse. If Wi-Fi/SSH is down, use `scripts/polaris-bt-keepalive.sh` (independent BT link + SSH reach path).
-- **Keep alive:** idle timeout is ~5 min of no TCP traffic on 9090. For any job longer than a few minutes run:
+**Standing rule: the keepalive runs in the background for every session that talks
+to a Polaris, from before the first SSH command until the work is verified.** Not
+optional, and not scoped to long jobs. Bursty one-shot SSH is actively harmful —
+each short-lived session ends with a client leaving, and once the radio is down
+nothing host-side can bring it back (see `docs/FIRMWARE-INSTALL-PROCESS.md`, "Arm
+the keepalive before touching the device").
+
+```sh
+nohup scripts/polaris-bt-keepalive.sh > /tmp/polaris-bt-keepalive.out 2>&1 &
+tail -f /tmp/polaris-bt-keepalive.log     # wait for phase=ssh-up
+```
+
+Read the terminal `phase=` value, never a vague success: `ssh-up`,
+`joined-ssh-down`, `not-advertising`, `connect-aborted`, `ap-not-visible`,
+`control-up`.
+
+- **Wake — corrected.** `bluetoothctl connect 48:E7:DA:D4:B5:72` is *documented* as
+the wake pulse, but it cannot be delivered from Linux: the rig never advertises LE
+(`SP_BlueSetAdvertiseState: advertise on` / `Failed to register advertising object`
+on every boot), so there is nothing to connect to. Verified again 2026-11-12 outside
+the sandbox — adapter present, receives other devices, target `not available`. See
+`docs/evidence/rig-le-advertising-absent-20261027/SUMMARY.md`. Treat
+`phase=not-advertising` as **needs a physical power cycle**, not a host-side bug.
+- **Keep alive:** idle timeout is ~5 min of no TCP traffic on 9090. Polling 284/822
+does **not** reset it. For any job longer than a few minutes run:
 
   ```sh
   while :; do printf '1&266&0&#' | timeout 4 nc -q1 192.168.0.1 9090 >/dev/null 2>&1; sleep 30; done &
@@ -310,8 +333,10 @@ touching the live device. Load-bearing rules, restated:
   `ian-morgan99/OpenPolaris`; evidenced defects may be modelled in
   `BenroHardwareValidator/benro-polaris-test-harness` (harness PASS ≠ physical
   support).
-- **Wake/keepalive:** BT connect to `48:E7:DA:D4:B5:72` is the wake pulse
-  (gimbal must be powered on); keep long jobs alive with the 9090 ping loop
+- **Wake/keepalive:** run `scripts/polaris-bt-keepalive.sh` in the background for
+  every Polaris session. BT connect to `48:E7:DA:D4:B5:72` is *documented* as the
+  wake pulse but is undeliverable from Linux — the rig never advertises LE, so a
+  dead radio needs a physical power cycle. Keep jobs alive with the 9090 ping loop
   (`1&266&0&#` every 30 s). Details in the skill.
 
 ## Canonical workspaces and handover convergence
