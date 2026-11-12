@@ -159,8 +159,39 @@ failed=""; skipped=""
     }
 
 ok()   { pass=$((pass+1)); echo "PASS: $1"; }
-bad()  { fail=$((fail+1)); failed="$failed $1"; echo "FAIL: $1"; }
 skp()  { skip=$((skip+1)); skipped="$skipped $1"; echo "SKIP: $1 (prerequisite unavailable)"; }
+
+# A failure that names a log file must print that log.
+#
+# Every check in this gate redirects its output to /tmp/prerelease-*.log and, on
+# failure, reported only the path. Locally that is fine -- the file is still there
+# when you look. In CI it is not: the runner is thrown away, so the message
+# "FAIL: container deterministic harness (exit 1; log: /tmp/prerelease-deterministic.log)"
+# is a dead end. On 2026-11-12 PR #334 -- a docs-only change -- failed exactly this
+# check, and nothing about *why* was recoverable from the run log at all. The only
+# way to learn anything was to re-run, which happened to pass, so the failure was
+# recorded as a flake with no evidence either way. That is the same class of problem
+# as reporting OK for a check that never ran: a gate that cannot explain its own
+# red verdict is not usable as a gate.
+#
+# Dumping happens inside bad() rather than at each call site so it also covers any
+# check added later, and so a site cannot forget it.
+bad() {
+    fail=$((fail+1)); failed="$failed $1"; echo "FAIL: $1"
+    local msg="$1" log
+    for log in $(printf '%s\n' "$msg" | grep -oE '/[^ ]+\.log' | sort -u); do
+        if [ -f "$log" ]; then
+            # Tail, not cat: the interesting part of a failing harness is the end,
+            # and some of these logs are large. 120 lines is enough to see which
+            # sub-test died and its assertion, without flooding CI logs.
+            echo "----- begin $log (last 120 lines) -----"
+            tail -n 120 "$log" 2>/dev/null || echo "  (could not read $log)"
+            echo "----- end $log -----"
+        else
+            echo "  (named log does not exist: $log)"
+        fi
+    done
+}
 
 # Resolve a FUNCTIONAL ubireader_extract_files. A wrapper can be on PATH yet
 # crash at import time (its Python module installed for a different interpreter),
@@ -391,6 +422,17 @@ PY_TESTS=(
     # release. Parses the heredoc that generates README.txt, so a comment in
     # build-astro.sh explaining why scp is wrong does not trip it. Offline-safe.
     tests/test_bundle_readme_no_scp.py
+    # bad() must print the log a failure names. Every check here redirects to
+    # /tmp/prerelease-*.log and used to report only the path, which is fine locally
+    # and useless in CI where the runner is discarded. PR #334 (docs-only) failed
+    # "container deterministic harness" with nothing recoverable from the run log;
+    # the only way to learn anything was a re-run, which passed, so it went down as
+    # an unexplainable flake. Extracts bad() from this script and executes it,
+    # asserting on produced output rather than grepping source: the named log's
+    # contents must appear, a trailing ')' must not corrupt the path, a message with
+    # no log stays unaffected, a missing log says so, and the fail counter still
+    # increments exactly once. Offline-safe: writes only under tmp_path.
+    tests/test_gate_failure_prints_its_log.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
