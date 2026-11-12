@@ -25,14 +25,29 @@ produce. Pick by audience, not by convenience.
 | Who | Us, with a PC, SSH and this repo | Anyone, with the card plus one ssh command |
 | Needs | Host tooling, SSH to the device, `git` checkout | The card, the camera, and one `ssh` command to run `install_astro.sh` |
 | Firmware (`FwPkt`) | `scripts/release/release-fwpkt.sh` | Copy/extract `FwPkt/` to SD root, reboot |
-| Astro + Wi-Fi kits | `scp`/rsync into `/app/sd/…`, or re-flash | Copy the zip to SD root, unzip there |
+| Astro + Wi-Fi kits | `scripts/release/install-astro-kit.sh` (tar over ssh) | Copy the zip to SD root, unzip there, then run `install_astro.sh` over ssh |
 | Proof produced | MD5s on-device, uptime reset, `build_id`, both source commits, mandatory file SHA-256s | Version screen only — **no proof of a flash** |
-| Failure mode | Fails closed at six phases | Silent: installs nothing and looks fine (#58) |
+| Failure mode | Fails closed at seven phases | Silent: installs nothing and looks fine (#58) |
 
-**The systematic route is the only supported one for firmware.** Everything below
-this section describes it. The manual route is documented because users must have one
-and because we keep writing instructions that assume SSH they do not have — but it
-carries no verification, so a manual install is never evidence of an installed build.
+**Both routes are supported, and documentation must support both.** Which one to use
+is decided by what the install has to prove, not by convenience:
+
+- Use the **systematic route** whenever the result is evidence — qualifying a
+candidate, closing an issue, or any claim that a specific build is installed. It is
+the only route that can distinguish "flashed" from "booted normally after a flash
+that did nothing".
+- Use the **manual route** for end users, who have no PC tooling and no repo. It is
+a supported path for them, but it produces no proof, so a manual install must never
+be reported as evidence that a build is installed.
+
+Never mix them in one set of instructions. Every failure recorded under "Traps" below
+came from instructions that assumed the reader had the other route's tools.
+
+**Neither route is zero-touch.** Both need exactly one ssh command after the flash, for
+the same reason: a flash replaces `appfs`, which deletes `/app/astro` *and*
+`/app/network_telnetd.sh` — and that hook is what starts the web UI. The hook is
+installed **by** `install_astro.sh`, so it cannot run itself into existence after a
+flash. See "Flashing firmware removes the astro kit".
 
 ### Why "copy the zip and reboot" is not enough for FwPkt
 
@@ -60,8 +75,21 @@ appfs.ubifs}`. The reboot alone is the trigger; no marker file or command is nee
    Both are rooted at their own directory, so they expand to `polaris-astro/` and
    `polaris-wifi/`. Repeat every release. If the release also carries
    `astrometry-indexes.zip`, extract that once — it is ~44 MB and never changes.
-3. Reboot. The watcher flashes from `/app/sd/FwPkt/`, then the boot hook installs the
-   astro stack. Wi-Fi auto-join stays off until the user creates
+3. Reboot. Only the firmware watcher runs at this boot — **nothing installs the astro
+   stack for you.** The boot hook that starts the web UI lives at
+   `/app/network_telnetd.sh`, which the flash just deleted, and it is created by
+   `install_astro.sh`; a script cannot install the hook that is supposed to run it.
+   So after this reboot the web UI is down until step 4.
+4. Run the installer once, over ssh (the device's AP is `polaris_d13e86`; join it and
+   the device is `root@192.168.0.1`):
+
+   ```sh
+   ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
+   ```
+
+   Expect both `verified every manifest entry` and `boot hook installed`. Then reboot
+   again, or open `http://<polaris ip>:8090` once the script has started it.
+   Wi-Fi auto-join stays off until the user creates
    `/app/sd/polaris-wifi/autojoin`.
 
 The card mounts `vfat` with `fmask=0022`, so extracted files land `755` and binaries

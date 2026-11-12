@@ -157,9 +157,12 @@ Everything you need for Route A below is a .zip. No tar tool is required, and
 none of the on-device extractors handle .tar.gz -- astro-bundle.tar.gz exists
 for inspection and licensing only, and opening it needs 'tar xzf' on a PC.
 
-There are two ways to install, and they are not interchangeable. Route A needs the microSD
-card plus one ssh command -- no PC tooling, no repo, no build. Route B needs a PC, SSH and
-this repo, and is the only one that can prove an install happened.
+There are two ways to install, and both are supported. Pick by what the install has to
+prove, not by convenience. Route A needs the microSD card plus one ssh command -- no PC
+tooling, no repo, no build. Route B needs a PC, SSH and this repo, and is the only one
+that can prove an install happened. Use Route B whenever the result is evidence (closing
+an issue, qualifying a build); use Route A for end users. Neither route is zero-touch:
+a flash deletes /app/astro and its boot hook, so both need one ssh command afterwards.
 
 ## Route A -- SD card plus one ssh command (no repo, no build)
 
@@ -230,17 +233,19 @@ records /proc/uptime before rebooting to prove the boot actually reset, and conf
 build_id, both source commits and mandatory file SHA-256s afterwards. See
 docs/FIRMWARE-INSTALL-PROCESS.md.
 
-This flashes firmware only. It does not install, update, or restore the astro kit, and
-it prints installed-verified whether or not /app/astro exists. Flashing replaces /app,
-so on a device that already had the kit this leaves it gone -- server binary, scripts
-and boot hook all removed at once -- with the same installed-verified line at the end.
-Confirmed on-device upgrading to $DISPLAY_FWVER: after the flash /app/astro was empty
-and port 8090 closed, and the kit had to be reinstalled from the card:
+By default this also reinstalls the astro kit: flashing replaces /app, which deletes
+/app/astro and the boot hook that starts the web UI, so after confirming the flash it
+runs scripts/release/install-astro-kit.sh -- stages the kit, verifies every staged byte
+against ASTRO-MANIFEST.sha256, runs install_astro.sh, reboots so the new hook fires, and
+fails closed unless port 8090 is actually serving. Pass --no-kit only to leave the solver
+off deliberately; the script prints a warning saying so when you do.
+
+If you do pass --no-kit, restore the kit yourself from the card:
 
     ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
 
-Then reboot and check http://<polaris ip>:8090. installed-verified on its own is not
-evidence that the device can solve anything.
+Either way, confirm http://<polaris ip>:8090 in a browser. installed-verified on its own
+proves the firmware, not that the device can solve anything.
 
 | field | value |
 |---|---|

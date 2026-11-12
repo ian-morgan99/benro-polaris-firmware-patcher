@@ -35,7 +35,7 @@ Rules that apply to every row:
 
 | Operation | Command | Verifies |
 | --- | --- | --- |
-| **Flash firmware** (the only supported path) | `./scripts/release/release-fwpkt.sh out/<candidate>` | Six phases: gate (zip digest vs `install-manifest.json`, device identity, idle camera), stage the extracted `FwPkt/` tree, on-device MD5s vs `firmwareInfo`, reboot, `/proc/uptime` must have RESET, then exact `build_id` + both source commits + every mandatory file's SHA-256. **Phase 7 installs the astro kit** |
+| **Flash firmware** (the only supported installer script; end users without a PC use Route A in the candidate README) | `./scripts/release/release-fwpkt.sh out/<candidate>` | Six phases: gate (zip digest vs `install-manifest.json`, device identity, idle camera), stage the extracted `FwPkt/` tree, on-device MD5s vs `firmwareInfo`, reboot, `/proc/uptime` must have RESET, then exact `build_id` + both source commits + every mandatory file's SHA-256. **Phase 7 installs the astro kit** |
 | Install/re-install the astro kit alone | `./scripts/release/install-astro-kit.sh out/<candidate> --no-indexes --reboot` | Stages via tar over ssh, verifies every staged byte against `ASTRO-MANIFEST.sha256`, runs `install_astro.sh`, requires the boot hook, `/app/astro/polaris-httpd`, and port 8090 actually serving |
 | Confirm what is running right now | `./scripts/verify-installed-build.sh out/<candidate>` | `build_id`, both source commits, display version, mandatory installed file hashes |
 
