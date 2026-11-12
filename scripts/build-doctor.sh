@@ -308,23 +308,65 @@ else
     done
 
     # Reachability. The builder requires the pin to be an ancestor of a real
-    # branch on origin so provenance points at something fetchable. A fresh local
-    # clone can carry a stale refs/remotes/origin/main, which makes a perfectly
-    # good pin look orphaned -- that cost one attempt here.
-    origin_main="$(git -C "$LIBGP" rev-parse -q --verify origin/main 2>/dev/null || true)"
-    if [ -z "$origin_main" ]; then
-        bad "this clone has no refs/remotes/origin/main"
-        hint "fetch it:  git -C $LIBGP fetch origin 'refs/remotes/origin/*:refs/remotes/origin/*'"
+    # branch on origin so provenance points at something fetchable.
+    #
+    # This used to test ancestry against refs/remotes/origin/main read straight
+    # from disk, and nothing in this script ever contacted origin. That made the
+    # section title "at a reachable pin" a claim it never verified: a clone whose
+    # origin/main is months old still reported OK, and a genuinely orphaned pin
+    # could look fine if the stale ref happened to contain it. It also produced
+    # the inverse failure the comment below records -- a good pin judged orphaned
+    # against an old tip. Both come from judging a local ref as if it were the
+    # remote.
+    #
+    # So: ask origin what its main actually is, refresh if we are behind, then
+    # judge ancestry against that. If origin cannot be reached this reports SKIP,
+    # not OK -- per the rule at the top of this file, a check that did not run is
+    # not a pass.
+    origin_url="$(git -C "$LIBGP" remote get-url origin 2>/dev/null || true)"
+    if [ "$OFFLINE" = 1 ]; then
+        skip "skipped (--offline): 'reachable pin' was NOT verified against origin"
+    elif [ -z "$origin_url" ]; then
+        skip "no 'origin' remote in $LIBGP; cannot verify the pin is reachable upstream"
+        hint "the builder needs the pin to exist on a real branch for provenance."
     else
-        if git -C "$LIBGP" merge-base --is-ancestor HEAD origin/main 2>/dev/null; then
-            ok "HEAD is reachable from origin/main (${origin_main:0:9})"
+        REMOTE_MAIN="$(timeout 60 git -C "$LIBGP" ls-remote origin refs/heads/main 2>/dev/null \
+            | awk '{print $1}' || true)"
+        if [ -z "$REMOTE_MAIN" ]; then
+            skip "cannot reach origin at $origin_url; 'reachable pin' was NOT verified"
+            hint "offline, or the remote is down. Re-run this doctor with network to"
+            hint "confirm the pin is on origin/main rather than only in a local ref."
         else
-            bad "HEAD ${head:0:9} is NOT reachable from this clone's origin/main (${origin_main:0:9})"
-            hint "The builder will say 'orphan or unmerged commit?'. Before believing that,"
-            hint "check the ref is current -- a fresh local clone copies whatever origin/main"
-            hint "the source repo had, which may be stale:"
-            hint "  git -C $LIBGP fetch origin 'refs/remotes/origin/*:refs/remotes/origin/*'"
-            hint "Then re-run this doctor."
+            ok "origin reachable; origin/main = ${REMOTE_MAIN:0:9}"
+            local_main="$(git -C "$LIBGP" rev-parse -q --verify refs/remotes/origin/main 2>/dev/null || true)"
+            if [ -z "$local_main" ]; then
+                bad "this clone has no refs/remotes/origin/main"
+                hint "fetch it:  git -C $LIBGP fetch origin 'refs/remotes/origin/*:refs/remotes/origin/*'"
+            elif [ "$local_main" != "$REMOTE_MAIN" ]; then
+                hint "local refs/remotes/origin/main (${local_main:0:9}) is stale; refreshing"
+                if timeout 180 git -C "$LIBGP" fetch -q origin \
+                        '+refs/heads/main:refs/remotes/origin/main' 2>/dev/null; then
+                    local_main="$(git -C "$LIBGP" rev-parse -q --verify refs/remotes/origin/main)"
+                    ok "refreshed refs/remotes/origin/main -> ${local_main:0:9}"
+                else
+                    bad "could not refresh refs/remotes/origin/main from origin"
+                    hint "the ancestry test below would judge a stale tip. Fix the remote or"
+                    hint "fetch by hand before building."
+                fi
+            else
+                ok "refs/remotes/origin/main is current with origin"
+            fi
+
+            if [ -n "$local_main" ]; then
+                if git -C "$LIBGP" merge-base --is-ancestor HEAD "$local_main" 2>/dev/null; then
+                    ok "HEAD is reachable from origin/main (${local_main:0:9})"
+                else
+                    bad "HEAD ${head:0:9} is NOT reachable from origin/main (${local_main:0:9})"
+                    hint "The builder will say 'orphan or unmerged commit?'. This was checked"
+                    hint "against the live tip fetched above, so it is not a stale-ref artefact:"
+                    hint "the commit really is not on main. Merge it first."
+                fi
+            fi
         fi
     fi
 fi

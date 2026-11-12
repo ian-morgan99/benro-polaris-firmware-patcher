@@ -355,6 +355,42 @@ PY_TESTS=(
     # directions. Mutation-tested (removing the new clause fails 3 of 7, restoring
     # passes). Offline-safe: no device, no network.
     tests/test_solve_timeout_classification.py
+    # R5 in scripts/release/check-release-gates.py. R3 only proves the build commit
+    # is an ancestor of origin/main, so a candidate built from a merged-but-behind
+    # commit passes every gate while shipping stale payload. That happened to v106:
+    # patcher 73e3066123b7 is an ancestor of main, R3 printed OK and "(build commit
+    # is contained in origin/main)", yet main had moved 20 commits ahead and two of
+    # those change files that ship inside the packet (polaris-autosolve.sh and
+    # polaris-align.sh, both #321). The built copies lacked FRAME_DIMS_FILE entirely.
+    # These tests build a throwaway patcher repo with a real local origin remote and
+    # assert R5 refuses a stale packet, accepts a current one, stays scoped to shipped
+    # paths (a docs-only advance on main must not block a release), fails closed when
+    # the comparison cannot run, and catches a copy matching neither commit. Verified
+    # against the pre-R5 script: all five fail there, where it prints "All gates
+    # passed." Offline-safe: every remote is a bare repo under tmp_path.
+    tests/test_release_gate_shipped_payload_currency.py
+    # build-doctor.sh section 3 is titled "at a reachable pin" and RELEASE-ENTRYPOINTS
+    # advertises that it checks the pin is reachable from origin, but the script never
+    # contacted origin -- it read refs/remotes/origin/main off disk and tested ancestry
+    # against that. A months-old local ref still printed OK (the vacuous-pass class
+    # behind issue #286), and a good pin could be reported orphaned against a stale
+    # tip, which the script's own header records as a lost build attempt. Now it asks
+    # origin what main actually is, refreshes if behind, and SKIPs rather than OKs when
+    # origin is unreachable. These tests force a clone whose remote-tracking ref is
+    # deliberately stale and assert the doctor notices, plus that --offline never
+    # prints a reachability claim it did not verify. Offline-safe: origin is a local
+    # bare repo; no network.
+    tests/test_build_doctor_pin_reachability.py
+    # The bundle README.txt shipped an instruction to run
+    #   scp -r COPY-TO-SD-CARD-ROOT/. root@<ip>:/app/sd/
+    # under the heading "the same layout works". It does not work: this device's sshd
+    # has no sftp-server subsystem, so scp dies with "Connection closed" and legacy
+    # `scp -O` hangs -- documented as binding in RELEASE-ENTRYPOINTS.md, and already
+    # forbidden inside the staging scripts by test_astro_kit_install_entrypoint.py.
+    # Nothing covered the prose we ship to users, which is how it survived every
+    # release. Parses the heredoc that generates README.txt, so a comment in
+    # build-astro.sh explaining why scp is wrong does not trip it. Offline-safe.
+    tests/test_bundle_readme_no_scp.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then

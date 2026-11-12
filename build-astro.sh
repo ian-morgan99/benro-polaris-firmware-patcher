@@ -640,10 +640,20 @@ container/astro/build_gaia_package.sh, pass its output to
 build-astro.sh --catalog-package, and set SOLVER_BIN=polaris-solve-independent-search
 in site.conf only after the ARM and capture qualification gates are complete.
 
-Over ssh instead of sneakernet, the same layout works:
+Over ssh instead of sneakernet, do NOT use scp. This device's sshd has no
+sftp-server subsystem, so scp dies with "scp: Connection closed", and the legacy
+fallback "scp -O" hangs without reporting why. The command is deliberately not
+printed here: it looks runnable, it was in this README for months, and users
+copied it.
 
-    scp -r COPY-TO-SD-CARD-ROOT/. root@<polaris ip>:/app/sd/
-    ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
+The supported ssh path is the installer script, which streams one tar archive
+over a single ssh session and verifies every staged byte against
+ASTRO-MANIFEST.sha256 before running anything:
+
+    scripts/release/install-astro-kit.sh out/<candidate> --no-indexes --reboot
+
+It needs a patcher checkout. Without one, use the card: drag the contents of
+COPY-TO-SD-CARD-ROOT/ onto the microSD card as described above.
 
 THEN EDIT /app/sd/polaris-astro/site.conf -- LAT and LON are required and
 cannot be guessed. Reboot, and open http://<polaris ip>:8090/.

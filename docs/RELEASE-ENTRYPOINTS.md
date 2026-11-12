@@ -27,7 +27,7 @@ Rules that apply to every row:
 | Prove the build host works before spending a build | `./scripts/build-doctor.sh` | Docker reachability and bind mounts, ubireader actually running, libgphoto2 pin reachable from origin, stock packet + catalogue present, gate prerequisites, patcher tree clean, exec bits, installer invariants, kit footprint, publication space |
 | Build an Astro candidate (the normal path) | `./scripts/build-astro.sh --version N --slug NAME --summary docs/release-change-summary-vN-astro.json` | Runs the doctor first, provisions a private bin dir + host-visible TMPDIR + self-contained libgphoto2 clone at the pin, then verifies the artifacts, not just the exit code |
 | Build a camera-only candidate | `./scripts/release/build-and-install.sh --install` with `CANDIDATE_ID` and `CHANGE_SUMMARY` set | Same builder path, optional verified deploy |
-| Check release gates before publishing | `python3 scripts/release/check-release-gates.py --fwver V --patcher-commit SHA --libgphoto2-commit SHA --packet-dir DIR` | Version registry, exact source commits, packet contents; fails closed |
+| Check release gates before publishing | `python3 scripts/release/check-release-gates.py --fwver V --patcher-commit SHA --libgphoto2-commit SHA --packet-dir DIR` | Version registry, exact source commits, packet contents, and that the shipped on-disk scripts match the recorded commit. Fails closed |
 | Publish a candidate to PrivateResearch | `./scripts/publish-astro-candidate.sh --build out/<candidate>` | Publication archives, not the staging directory |
 | Verify what a user would actually receive | `python3 scripts/verify-published-astro-candidate.py <archive>` | The shipped archives byte-for-byte against the candidate manifest |
 
