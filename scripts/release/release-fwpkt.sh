@@ -120,10 +120,34 @@ if ! timeout 5 ssh -o BatchMode=yes -o ConnectTimeout=5 "$SSH" 'true' 2>/dev/nul
 fi
 echo "SSH: OK"
 
+# /app/sd must hold the whole extracted FwPkt/ tree. The mount is vfat with
+# errors=continue, so a full card reports a successful write while truncating
+# it; a warning here would let a truncated packet reach the on-boot watcher and
+# be flashed. This gate therefore fails closed.
 SD_FREE_KB="$(ssh -o BatchMode=yes "$SSH" 'df -k /app/sd 2>/dev/null | tail -1' | awk '{print $4}')"
 echo "/app/sd free: ${SD_FREE_KB:-unknown} KB"
-if [ -n "$SD_FREE_KB" ] && [ "$SD_FREE_KB" -lt 100000 ]; then
-  echo "WARN: low space on /app/sd (${SD_FREE_KB} KB)" >&2
+FWPKT_NEED_KB="$(du -sk "$FWPKT_DIR" 2>/dev/null | awk '{print $1}')"
+case "$FWPKT_NEED_KB" in (*[!0-9]*|'') FWPKT_NEED_KB=0;; esac
+# +10%: FAT32 rounds every file up to its cluster, and the watcher writes a log
+# beside the tree while it consumes it.
+FWPKT_MIN_KB=$((FWPKT_NEED_KB + FWPKT_NEED_KB / 10))
+if [ "$FWPKT_NEED_KB" -eq 0 ]; then
+  echo "ERROR: cannot size $FWPKT_DIR; refusing to stage blind." >&2
+  exit 3
+fi
+if [ -z "$SD_FREE_KB" ]; then
+  echo "ERROR: cannot read free space on /app/sd; refusing to stage blind." >&2
+  exit 3
+fi
+if [ "$SD_FREE_KB" -lt "$FWPKT_MIN_KB" ]; then
+  echo "ERROR: /app/sd has $((SD_FREE_KB / 1024)) MB free but the FwPkt tree needs" >&2
+  echo "       ~$((FWPKT_MIN_KB / 1024)) MB (tree + 10% FAT cluster rounding)." >&2
+  echo "       vfat here is mounted errors=continue: an over-full card reports" >&2
+  echo "       success and truncates the write anyway." >&2
+  echo "       Use a larger card, or stage FwPkt alone, flash, then install the" >&2
+  echo "       astro kit once SP_DelUpgradeFiles has freed /app/sd/FwPkt." >&2
+  echo "       See docs/FIRMWARE-INSTALL-PROCESS.md, 'Card capacity and phased staging'." >&2
+  exit 3
 fi
 
 # Device identity: the running FwVer must be a recognisable 6.0.0.54.x string.

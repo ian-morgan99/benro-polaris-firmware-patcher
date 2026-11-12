@@ -310,6 +310,84 @@ Direct copies are acceptable **only** as a temporary diagnostic explicitly
 authorised by the user, and they invalidate qualification evidence for that
 candidate (see `AGENTS.md`). Record it in the candidate's `SUMMARY.md` when done.
 
+## Card capacity and phased staging
+
+`/app/sd` is mounted vfat with **`errors=continue`**:
+
+```
+/dev/mmcblk0p1 on /app/sd type vfat (rw,relatime,...,errors=continue)
+```
+
+The kernel does not abort or remount read-only when the card fills or returns a
+metadata error. A write that cannot be satisfied **reports success and truncates
+the file**. `release-fwpkt.sh` verifies staged bytes with `firmwareInfo` MD5s
+after staging, so a truncated packet is caught — but only if staging is
+attempted at all, and only before the reboot. A card that is merely *nearly*
+full is the dangerous case, because the largest member can truncate while the
+smaller ones verify clean.
+
+Measured from the published `6.0.0.54.106` packet (extracted bytes, not zip
+size):
+
+| Payload | Extracted |
+|---|---|
+| `FwPkt/` tree | 87,728 KB (`appfs.ubifs` alone is 64,356,352 B) |
+| `polaris-astro/` | 19,770 KB |
+| `polaris-wifi/` | 3,924 KB |
+| `astrometry/` indexes | 45,135 KB |
+
+`release-fwpkt.sh` now **fails closed** before staging if free space on `/app/sd`
+is below the tree size plus 10% (FAT32 rounds every file up to its cluster, and
+the watcher writes a log beside the tree while consuming it). Previously it only
+printed `WARN: low space` and continued.
+
+**Phased staging is the supported way to install onto a small card.** The on-boot
+watcher's `SP_DelUpgradeFiles` step removes `/app/sd/FwPkt` after a successful
+flash, so the ~86 MB the firmware consumes is returned before the astro kit needs
+the card. Sequence:
+
+1. Stage **only** the `FwPkt/` tree and flash. The gate needs ~94 MB free for
+   `.106`; on a 118 MB filesystem with 115 MB free this passes with ~21 MB spare.
+2. Confirm the flash (uptime reset, `SP_EVENT_UPGRADE_SUCCESS`, and
+   `/app/sd/FwPkt` gone — that last one is both proof of a real flash and the
+   signal that space has been reclaimed).
+3. Then run `scripts/release/install-astro-kit.sh`. `polaris-astro` alone needs
+   ~21 MB, `polaris-astro` + `polaris-wifi` ~26 MB, and adding the indexes ~74 MB;
+   all three fit in 115 MB free.
+
+Do **not** stage the firmware tree and the astro kit together on a card under
+~200 MB: the combined payload exceeds the card, and with `errors=continue` the
+failure can present as a successful stage.
+
+`install-astro-kit.sh` separately requires **≥3 MB free on `/app`** (a 68 MB
+ubifs) because `install_astro.sh` copies binaries there before writing the boot
+hook; a short write after the binaries skips autostart (issue #312). After a
+flash `/app` is nearly full — check `df -k /app` and free space before the kit
+step rather than letting the gate abort mid-install.
+
+## Registry coverage
+
+Checklist item 1 requires a row in `docs/FWPKT-PROVENANCE-CONTRACT.md` before
+staging. Two facts about that requirement, both learned the hard way:
+
+1. **Nothing enforces it.** No script reads the provenance table.
+   `release-fwpkt.sh` only reads `build-source-provenance.txt` for a `build_id`.
+   The rule is documentation-only, which is how `.104` and `.105` were flashed
+   with no row at all. Rows for `.104`, `.105` and `.106` were added
+   retroactively on 2026-11-11 from digests re-read out of the published
+   artifacts, so the table is now continuous through `.106`.
+2. **The Astro flow does not claim versions.** `build-astro-candidate.sh` takes
+   `--display-fwver` as an argument and nothing writes back to
+   `docs/RELEASE-VERSION-STATE.md`. Two builds can therefore carry the same
+   display version. This has happened at `.97` (issue #169) and again at `.106`,
+   where an unpublished local build declares the same version with a different
+   driver pin and a different zip digest. **Identify a candidate by zip SHA-256,
+   never by display version.**
+
+Before staging anything, confirm the zip digest against the registry row. For
+`.106` that is `273c697a3465b13bd0ba780f184ae7632c2d5b738688ccce2a92d0dfabc3415e`
+(68,407,830 bytes).
+
 ## Release process wiring
 
 `scripts/build-release-candidate.sh` now does two things so install cannot be
@@ -331,19 +409,28 @@ forgotten or improvised:
 ## Checklist for every install
 
 1. Candidate has a registry row in `docs/FWPKT-PROVENANCE-CONTRACT.md` (zip MD5 +
-   SHA-256, appfs MD5, both commit links). No row → do not stage.
-2. `install-manifest.json` present and zip digest matches (the installer checks
+   SHA-256, appfs MD5, both commit links). No row → do not stage. Confirm the zip
+   digest matches the row before staging: display version alone cannot identify a
+   candidate (see "Registry coverage").
+2. `/app/sd` has room for the extracted `FwPkt/` tree plus 10%. The installer
+   checks this and refuses to stage if it does not (see "Card capacity and phased
+   staging"). A card formatted by the camera can be far smaller than the card's
+   advertised capacity — read `df -k /app/sd`, do not assume.
+3. `install-manifest.json` present and zip digest matches (the installer checks
    this; it must never be bypassed).
-3. Camera idle, or `--allow-busy` only after confirming no exposure is in flight.
-4. Run the installer. Do not interrupt the 5–10 min dark period.
-5. Confirm phase 6 passed and uptime reset was reported.
-6. Confirm the installer wrote `install_status=installed-verified` and
+4. Camera idle, or `--allow-busy` only after confirming no exposure is in flight.
+5. Run the installer. Do not interrupt the 5–10 min dark period.
+6. Confirm phase 6 passed and uptime reset was reported.
+7. Confirm the installer wrote `install_status=installed-verified` and
    `install-receipt.txt`; add the dated install record to `docs/CURRENT-STATE.md`,
    and save evidence under `docs/evidence/<candidate>-install-<date>/`.
-7. If the candidate carries an astro kit, re-run `install_astro.sh` after the flash
+8. If the candidate carries an astro kit, re-run `install_astro.sh` after the flash
    and confirm it printed both `boot hook installed` and `verified every manifest
    entry`. "installed files are unverified" means the card holds an older kit.
-8. Open `http://<polaris ip>:8090`. The web UI is the only proof the kit survived
+   Check `df -k /app` first: a flash leaves `/app` nearly full, and issue #312
+   costs autostart on a short write there. Confirm `/app/sd/FwPkt` is gone — that
+   is both proof of a real flash and the signal that space has been reclaimed.
+9. Open `http://<polaris ip>:8090`. The web UI is the only proof the kit survived
    the flash; `installed-verified` on its own does not cover it.
 
 ## Related
