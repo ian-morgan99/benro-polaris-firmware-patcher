@@ -86,6 +86,7 @@ Reuse what the builder already emits rather than inventing a format.
 manifest.json {
   "schema": 1,
   "package_id": "astro-v95-<slug>-YYYYMMDD",
+  "release_sequence": 95,               // integer; the ONLY ordering key
   "kind": "astro-bundle",              // "astro-bundle" | "camera-firmware"
   "min_firmware": "6.0.0.54.95",       // refuse if installed fwver is lower
   "created_utc": "...",
@@ -96,6 +97,14 @@ manifest.json {
 
 `ASTRO-MANIFEST.sha256` remains the authoritative per-file hash list; `manifest.json` adds
 identity, kind and version gate. Both must agree — a disagreement is a hard reject.
+
+**`release_sequence` is mandatory and is the only field used for ordering.**
+`package_id` is identity only and must never be compared. Lexicographic comparison of
+the slug is wrong in both directions: `astro-v100-…` sorts *below* `astro-v95-…`, so a
+v100 upgrade over an installed v95 would be rejected as a downgrade, while a v95
+package would be accepted as an upgrade after v100 is installed. Slugs also perturb
+ordering within one version. A missing or non-integer `release_sequence` is a hard
+reject — do not fall back to `package_id`, because that silently reinstates the bug.
 
 ## 6. Deploy algorithm (idempotent, fail-closed)
 
@@ -115,13 +124,26 @@ Runs from the bootstrap hook at boot, and can be run by hand.
    e. Extract to `staging/<package-id>/`, verify **every** sha256 in `manifest.json` and
       `ASTRO-MANIFEST.sha256`. Any mismatch → delete staging, reject, keep previous install
       untouched.
-   f. Refuse downgrade: if `package_id` sorts below the applied one and the archive is not
-      explicitly marked `allow_downgrade`, reject.
-   g. Apply: run `install_astro.sh` with `SRC=staging/<package-id>`. It already checks each
-      required binary rather than best-effort copying, and already preserves an existing
-      `network_telnetd.sh` by chaining it (C3).
-   h. On success: move staging → `applied/<package-id>/`, append to `deploy-state.txt`
-      (`utc, package_id, archive sha256, result`), write `DEPLOY-STATUS=ok <id>`, `sync`.
+   f. Refuse downgrade: compare `release_sequence` (integer) against the applied
+      package's recorded sequence, **not** `package_id`. Lower → reject unless the
+      archive is explicitly marked `allow_downgrade`. Missing/non-integer
+      `release_sequence` → reject.
+   g. Apply: run `install_astro.sh` with `SRC=staging/<package-id>` and
+      `DEST=<staging>/<package-id>/root`, i.e. into a **separate destination**, not
+      `/app/astro` directly.
+
+      `install_astro.sh` as it stands is **not** transactional: it checks and copies
+      each binary inside the same loop (`[ -f "$SRC/$b" ] || exit 1` then `cp`), so a
+      missing later binary aborts after earlier ones have already been written.
+      Assuming it leaves a previous install untouched is therefore wrong. Before this
+      step can satisfy (i), the installer must either validate every required file
+      first and copy only after all checks pass, or write to `DEST` and be activated
+      by an atomic rename into `/app/astro`. Until then, a failed apply can leave a
+      mixed install and step (i) cannot honour its promise.
+   h. On success: move staging → `applied/<package-id>/`, activate `DEST` over
+      `/app/astro`, append to `deploy-state.txt`
+      (`utc, package_id, release_sequence, archive sha256, result`),
+      write `DEPLOY-STATUS=ok <id>`, `sync`.
    i. On failure: leave the previous install alone, write `DEPLOY-STATUS=failed <id>:
       <reason>` to SD (C6 — the record must survive reboot and outlive Mlog's ~30 s).
 3. Start `polaris-httpd` as today.
