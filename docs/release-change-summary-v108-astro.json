@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v107-current-pins-20261112",
+    "libgphoto2_commit": "9ec24138d20e0779693d3e262c20f5426b5e82c5",
+    "libgphoto2_ref": "main of ian-morgan99/libgphoto2. UNCHANGED from v107 -- the tree is byte-identical, so no driver behaviour differs between .107 and .108.",
+    "patcher_commit": "8e6d9a2585c14ee0f0b420c2f2e2bfaece961806",
+    "patcher_ref": "main of ian-morgan99/benro-polaris-firmware-patcher; v107's head_commit. Four commits behind the 0fcbbfd used here, all four on the patcher side only.",
+    "previous_candidate_pins": {
+      "astro-v107-current-pins-20261112": {
+        "libgphoto2": "9ec24138d20e0779693d3e262c20f5426b5e82c5",
+        "patcher": "8e6d9a2585c14ee0f0b420c2f2e2bfaece961806"
+      }
+    }
+  },
+  "purpose": "Fix issue #341, where a plate solve failed on an image that had solved before. The cause is not the indexes: all ten shipped index files were compared sha256 against the release archive on-device and matched exactly (DIGEST_MISMATCH=0), and the same bytes solve in ~2 s when given enough stars. polaris-align.sh defaults DOWNSAMPLE to 4, chosen for an ~6000 px camera frame, and the WebUI upload path passes no DOWNSAMPLE at all -- so a phone-downscaled 1920x1280 upload is decoded at 1/4 (480x320) and yields single-digit stars, which a triangle solver cannot match against an all-sky index. It returns search_exhausted, which reads like missing index files. Also ships the ARM emulator gate that was previously never invoked on the release path, and corrections to the install documentation that were actively wrong.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "polaris-align.sh re-extracts once at downsample 1 when the first pass is starved: fewer than STARVED_STAR_FLOOR (25) stars, width below STARVED_WIDTH_MAX (3000), and DOWNSAMPLE above 1. Healthy frames take no extra decode pass. STARVED_RETRY=0 restores the old behaviour; all three knobs are env-overridable so a qualification run can tune them without a rebuild.",
+      "issues": ["#341"]
+    },
+    {
+      "component": "patcher",
+      "summary": "scripts/release/check-arm-emulation.py executes the candidate's Stage-2 binary under the harness ARM emulator and is wired into run_prerelease_gate.sh as an opt-in check. Enforced: manifest SHA-256 match, ELF segments fully backed by file data, relocations resolve, entry point runs for the instruction budget without fault. Exit 4 (recorded-but-unverified) is kept distinct from exit 0. The structural segment check exists because the loader zero-fills missing file data, so a truncated ELF otherwise appears to execute 100k instructions successfully.",
+      "issues": []
+    },
+    {
+      "component": "patcher",
+      "summary": "docs/FIRMWARE-INSTALL-PROCESS.md and the generated candidate README now present both install routes as supported, with the selection rule stated. Two claims were factually wrong and are corrected: the manual route told users the boot hook installs the astro stack after a reboot (it cannot -- the flash deletes /app/network_telnetd.sh and that hook is created by install_astro.sh), and the README told maintainers release-fwpkt.sh does not restore the kit (it has done so as phase 7 by default). The routes table also listed scp, which the same document forbids because sshd has no sftp-server subsystem.",
+      "issues": []
+    }
+  ],
+  "known_limits": [
+    "The #341 fix is verified offline against the shipped script with stubbed extract/solve binaries, and by mutation (disabling the guard fails exactly the #341 case). It has NOT yet been exercised on the device against a real upload. The on-device evidence in this summary is the diagnosis, not the fix.",
+    "At ds=4 sigma=3 (66 stars) the solve TIMED OUT at 60 s while ds=4 sigma=2 (303 stars) solved in 6.8 s with the same scale range. More stars was faster, which is non-monotonic and unexplained. A fix tuned only on 'more stars is better' could behave unexpectedly in this regime.",
+    "polaris-align.sh and polaris-autosolve.sh still choose downsample differently. This fixes the failure mode without unifying them; unifying touches the qualified capture path and is deliberately left separate.",
+    "The ARM emulator gate covers Stage-2 load and execution only. It does not cover shutter closure, PTP or physical camera behaviour, the on-boot upgrade watcher, appfs layout, Wi-Fi/auto-join, or the astro kit. Supervised physical K-1 II / K-3 III testing remains required.",
+    "The SD-card (Route A) install path is still not independently tested end-to-end on a fresh card. Its mechanism is verified but nobody has run the whole user sequence and confirmed the flash."
+  ],
+  "validation_focus": [
+    "Confirm installed build_id and both source commits with scripts/verify-installed-build.sh.",
+    "Confirm /app/lib/stage2/pgphoto.stage2ondisk matches v107's byte-for-byte, since libgphoto2 is unchanged -- any difference here would mean the patcher side altered the binary.",
+    "Re-run the #341 reproduction on-device: upload /app/sd/test-input/upload-1794522364-704-G7D9gnBg.jpeg through the WebUI gallery and confirm solve.log now shows a 'starved ... retrying at downsample 1 (#341)' line followed by a solved result.",
+    "Confirm a normal full-size capture still solves with exactly one extract call -- no extra decode pass on the healthy path.",
+    "Confirm the astro kit survived the flash: /app/astro present, boot hook installed, port 8090 serving."
+  ]
+}
