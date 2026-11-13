@@ -150,12 +150,20 @@ if [ "$SD_FREE_KB" -lt "$FWPKT_MIN_KB" ]; then
   exit 3
 fi
 
-# Device identity: the running FwVer must be a recognisable 6.0.0.54.x string.
+# Device identity: the running FwVer must be a recognisable 6.0.0.54 family string.
 # A blank or foreign version means we are not talking to the Polaris and must
 # not be reflashed.
+#
+# Issue #337: this used to be *6.0.0.54.* , which demands a patch suffix and so
+# refuses a device reporting exactly "6.0.0.54" -- in family, but with nothing
+# after the dot. The guard is for family membership, not for a suffix. The
+# obvious widening to *6.0.0.54* is wrong in the other direction: as a substring
+# it also matches 6.0.0.541 and 6.0.0.5490, which are different families.
+# [!0-9] tests the terminator instead, so 6.0.0.54 and 6.0.0.54.107 pass while
+# 6.0.0.541 is still refused.
 CUR_FWVER="$(ssh -o BatchMode=yes "$SSH" 'cat /app/FwVer 2>/dev/null' || true)"
 case "$CUR_FWVER" in
-  *6.0.0.54.*) echo "Device identity: OK (running $CUR_FWVER)";;
+  *6.0.0.54[!0-9]*|*6.0.0.54) echo "Device identity: OK (running $CUR_FWVER)";;
   *) echo "ERROR: unexpected device FwVer '${CUR_FWVER:-<unreadable>}' — refusing destructive flash" >&2; exit 3;;
 esac
 

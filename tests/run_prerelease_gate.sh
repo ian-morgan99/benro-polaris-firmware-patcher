@@ -348,6 +348,15 @@ PY_TESTS=(
     # o-main-<timestamp> -- only CHANGE_SUMMARY's mandatory check made it visible.
     # Offline: stubs flatpak-spawn and runs the real script with no docker on PATH.
     tests/test_build_and_install_env_forwarding.py
+    # #337: both device-identity guards read *6.0.0.54.* , which demands a patch
+    # suffix and refuses a device reporting exactly "6.0.0.54" -- in family, but
+    # with nothing after the dot. The guard is for family membership, so it was
+    # stricter than the thing it claims to test, and it fails exit 3 mid-deploy
+    # with no override. Widening to *6.0.0.54* would be worse: it matches
+    # 6.0.0.541. The shipped pattern tests the terminator instead. Offline: pulls
+    # the pattern out of both scripts and evaluates it under real bash, which also
+    # pins the two copies together -- they share no helper.
+    tests/test_release_fwpkt_identity_pattern.py
     # Added by PR #299 (ta/astro-regression-suite) but never registered here, which left
     # main RED: the drift guard below fails whenever a tests/test_*.py exists that this
     # array does not name. The suite is offline-safe -- it runs astro_regression/runner.py

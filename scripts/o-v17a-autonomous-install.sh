@@ -230,12 +230,15 @@ phase_auth() {
   fi
   log "AUTH: candidate digest matches manifest ($ZIP_SHA256)"
   check_host_key || return 1
-  # Device identity: the running FwVer must be a 6.0.0.54.x family string we can
+  # Device identity: the running FwVer must be a 6.0.0.54 family string we can
   # reason about (a foreign/blank version means we are not talking to the Polaris).
+  # Issue #337: same terminator test as scripts/release/release-fwpkt.sh -- accept
+  # "6.0.0.54" with no patch suffix, still refuse "6.0.0.541". tests/
+  # test_release_fwpkt_identity_pattern.py keeps the two patterns in step.
   local cur
   cur="$(ssh_dev "cat /app/FwVer 2>/dev/null")"
   case "$cur" in
-    *6.0.0.54.*) log "AUTH: device identity OK (current FwVer: $cur)";;
+    *6.0.0.54[!0-9]*|*6.0.0.54) log "AUTH: device identity OK (current FwVer: $cur)";;
     *) log "AUTH: unexpected device FwVer '${cur:-<unreadable>}' — refusing destructive install"; return 1;;
   esac
   # Idle/camera-state check: query code 286. A camera in capture (state:1 with a
