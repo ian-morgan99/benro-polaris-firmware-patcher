@@ -260,6 +260,78 @@ bash "$ROOT/build-astro.sh" "${ASTRO_ARGS[@]}"
 # Paths are relative to the astro directory because that is the directory both
 # install_astro.sh and polaris-astro-sync.sh hash against.
 SD_ASTRO="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro"
+
+# Issue #331, on the path production actually runs.
+#
+# The same fix was first written into scripts/build-astro-bundle.sh, which the
+# comment further down this file already records as never being called by
+# anything. It therefore had no effect: the v108 build failed its artifact gate
+# with "no licence texts under polaris-astro/licenses/", which is the gate doing
+# its job rather than a spurious failure -- it reads the finished archive, so a
+# copy that never happened cannot pass.
+#
+# licenses/ sits OUTSIDE COPY-TO-SD-CARD-ROOT, so a user who follows this
+# bundle's own README and copies only the SD tree receives polaris-solve and
+# polaris-skysim -- GPL v2-or-later, because qfits-an is linked in -- with no
+# licence text and no source offer. The tarball beside the tree is a build
+# artefact, not a distribution medium. This mirrors what the wifi kit already
+# does: the texts travel inside the tree the user copies, next to the binaries
+# they cover. Only the texts go on the card (~46 KB); the corresponding source
+# is reached by the written offer below, which is the alternative GPL v2 section
+# 3 explicitly allows.
+#
+# Note the source path differs from build-astro-bundle.sh: OUT here is the
+# candidate root, so the licence texts are under astro-bundle/, not licenses/.
+ASTRO_LIC_SRC="$OUT/astro-bundle/licenses"
+SD_ASTRO_LIC="$SD_ASTRO/licenses"
+mkdir -p "$SD_ASTRO_LIC" || die "cannot create $SD_ASTRO_LIC"
+for lf in COPYING-GPL-2.txt COPYING-LGPL-2.1.txt README-GPL.txt; do
+  [ -f "$ASTRO_LIC_SRC/$lf" ] \
+    || die "issue #331: $ASTRO_LIC_SRC/$lf is missing, cannot ship a licence inside the SD tree"
+  cp "$ASTRO_LIC_SRC/$lf" "$SD_ASTRO_LIC/$lf" || die "cannot copy $lf into the SD tree"
+done
+[ -s "$SD_ASTRO_LIC/README-GPL.txt" ] \
+  || die "issue #331: README-GPL.txt did not land in $SD_ASTRO_LIC -- GPL binaries would ship with no offer"
+
+cat > "$SD_ASTRO/LICENCE-astro.txt" << 'OFFER'
+Copyleft licences applying to polaris-solve and polaris-skysim
+==============================================================
+
+These two binaries are GPL v2-or-later. They link astrometry.net's qfits-an
+FITS reader, whose files carry the ESO "GNU General Public License ... either
+version 2 of the License, or (at your option) any later version" notice.
+
+The full licence texts are beside this file, in polaris-astro/licenses/:
+
+  COPYING-GPL-2.txt      the GNU GPL v2
+  COPYING-LGPL-2.1.txt   the GNU LGPL v2.1 (applies to libnl, used by the
+                         separate polaris-wifi kit -- see its own LICENCE-wifi.txt)
+  README-GPL.txt         which components are copyleft, why, the per-file
+                         licence census, sha256 of every source archive, and
+                         the upstream URLs
+
+Written offer for corresponding source (GPL v2 section 3)
+---------------------------------------------------------
+The exact source used to build these binaries is:
+
+  astrometry.net-0.98.tar.gz     upstream source that was compiled
+  jpeg-9f.tar.gz                 IJG libjpeg, statically linked into polaris-extract
+  polaris-build-recipe.tar.gz    our build recipe, the BSD-3 GSL shim, and our C sources
+
+Those archives are published alongside this release in the bundle's top-level
+licenses/ directory, and in the patcher repository under .astro-src-cache. If
+you received these binaries without that directory, request a copy from whoever
+supplied them; under GPL v2 section 3 they must provide the source with the
+binary or a written offer to do so.
+
+Everything else in polaris-astro/ (polaris-extract's star finder, polaris-mount,
+polaris-httpd, polaris-link/jog/prog/astro, polaris-logwatch, polaris-match and
+all *.sh) is MIT or BSD-3 and talks to the GPL binaries as separate processes
+over files and sockets -- nothing GPL is linked into them.
+OFFER
+[ -s "$SD_ASTRO/LICENCE-astro.txt" ] \
+  || die "issue #331: could not write $SD_ASTRO/LICENCE-astro.txt"
+
 ASTRO_MANIFEST="$SD_ASTRO/polaris-astro.manifest"
 (
   cd "$SD_ASTRO"
@@ -375,6 +447,21 @@ if [ -f "$SD_ROOT/polaris-astro.zip" ]; then
   unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest \
     | grep -q 'polaris-httpd$' \
     || die "polaris-astro.manifest inside the zip does not cover polaris-httpd"
+
+  # Issue #331, asserted against the archive rather than the staging tree. The
+  # first attempt at this fix copied the texts on a path nothing calls, so the
+  # files never existed; a check on the directory would have been vacuous and a
+  # check on the tree alone would still pass if zip excluded them. polaris-solve
+  # and polaris-skysim are GPL v2-or-later (qfits-an is linked in), so shipping
+  # them in this archive with no licence text and no source offer is a violation,
+  # not merely an unverified bundle.
+  for f in LICENCE-astro.txt licenses/COPYING-GPL-2.txt \
+           licenses/COPYING-LGPL-2.1.txt licenses/README-GPL.txt; do
+    unzip -Z1 "$SD_ROOT/polaris-astro.zip" | grep -qx "polaris-astro/$f" \
+      || die "polaris-astro.zip does not contain $f -- GPL binaries would reach the user with no licence alongside them (issue #331)"
+    lsz=$(unzip -p "$SD_ROOT/polaris-astro.zip" "polaris-astro/$f" 2>/dev/null | wc -c)
+    [ "$lsz" -gt 0 ] || die "polaris-astro.zip stores $f as an empty file -- an empty licence is not a licence"
+  done
 fi
 
 # The SD-rooted .zip archives are excluded from astro-bundle.tar.gz. They are
