@@ -395,16 +395,44 @@ def check_tar(candidate: str, rep: Report) -> None:
             rep.add("astro-bundle.tar.gz", "path-safety", "FAIL", f"unsafe members: {bad[:5]}")
         else:
             rep.add("astro-bundle.tar.gz", "archive-readable", "PASS", f"{len(names)} members, no traversal")
-        # The licences directory inside the tarball sits OUTSIDE
-        # COPY-TO-SD-CARD-ROOT, so it never reaches anyone copying the SD
-        # archives.  Say so rather than let its presence read as compliance.
+        # Issue #331: the bundle's top-level licenses/ sits OUTSIDE
+        # COPY-TO-SD-CARD-ROOT, so it reaches nobody who follows this bundle's
+        # own README and copies only the SD tree.  That used to be reported as
+        # UNKNOWN because no route had been chosen.  One has been: build-astro-
+        # bundle.sh now copies the licence texts into polaris-astro/licenses/ and
+        # writes a written source offer beside the GPL binaries, mirroring what
+        # the wifi kit already did.  The check is therefore decidable and this is
+        # a real pass/fail from here on -- silence would be the wrong outcome,
+        # because a bundle that ships polaris-solve with no licence text is not
+        # merely unverified, it is non-compliant.
         lic = [n for n in names if "/licenses/" in n and n.endswith(".txt")]
         outside = [n for n in lic if "COPY-TO-SD-CARD-ROOT" not in n]
-        if outside:
+        sd_lic = sorted(
+            n for n in names
+            if "COPY-TO-SD-CARD-ROOT/polaris-astro/licenses/" in n and n.endswith(".txt")
+        )
+        offer = [n for n in names if n.endswith("COPY-TO-SD-CARD-ROOT/polaris-astro/LICENCE-astro.txt")]
+        gpl_bin = [n for n in names if n.endswith("/polaris-astro/polaris-solve")]
+        if not gpl_bin:
+            rep.add("astro-bundle.tar.gz", "licence-reachability", "NOT_APPLICABLE",
+                    "no GPL binaries in this bundle")
+        elif sd_lic and offer:
             rep.add(
-                "astro-bundle.tar.gz", "licence-reachability", "UNKNOWN",
-                f"{len(outside)} licence files live outside COPY-TO-SD-CARD-ROOT and "
-                "therefore never reach a user who copies the SD archives",
+                "astro-bundle.tar.gz", "licence-reachability", "PASS",
+                f"{len(sd_lic)} licence text(s) plus LICENCE-astro.txt ship inside "
+                "COPY-TO-SD-CARD-ROOT/polaris-astro, so a user copying the SD tree "
+                f"receives them with the GPL binaries ({len(outside)} archive-only "
+                "copies remain outside, covered by the written offer)",
+            )
+        else:
+            missing = []
+            if not sd_lic:
+                missing.append("no licence texts under polaris-astro/licenses/")
+            if not offer:
+                missing.append("no LICENCE-astro.txt beside the GPL binaries")
+            rep.add(
+                "astro-bundle.tar.gz", "licence-reachability", "FAIL",
+                "GPL binaries reach the user without their licences: " + "; ".join(missing),
             )
         return
     rep.add("astro-bundle.tar.gz", "archive-readable", "NOT_APPLICABLE", "no tarball in this candidate")

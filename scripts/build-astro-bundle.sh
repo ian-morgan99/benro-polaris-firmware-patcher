@@ -233,6 +233,70 @@ SD_WIFI="$SD_ROOT/polaris-wifi"
 [ -f "$SD_ASTRO/polaris-frame-watch.sh" ] || die "bundle is missing frame watcher"
 [ -f "$OUT/licenses/README-GPL.txt" ] || die "bundle is missing corresponding-source notice"
 
+# Issue #331: the copyleft texts sat only in the bundle's top-level licenses/,
+# which is OUTSIDE COPY-TO-SD-CARD-ROOT. A user who follows this bundle's own
+# README and copies COPY-TO-SD-CARD-ROOT to an SD card therefore receives
+# polaris-solve and polaris-skysim -- GPL v2-or-later, because qfits-an is
+# linked in -- with no licence text and no source offer at all. The tarball
+# beside them is a build artefact, not a distribution medium.
+#
+# This mirrors what the wifi kit already does below: licence texts travel inside
+# the tree the user actually copies, next to the binaries they cover. Only the
+# texts go in (~46 KB); the corresponding-source tarballs stay outside and are
+# reached by the written offer, which is the alternative GPL v2 section 3
+# explicitly allows. Shipping ~18 MB of tarballs on every card was rejected as
+# the wrong trade for a route that is already compliant.
+SD_ASTRO_LIC="$SD_ASTRO/licenses"
+mkdir -p "$SD_ASTRO_LIC" || die "cannot create $SD_ASTRO_LIC"
+for lf in COPYING-GPL-2.txt COPYING-LGPL-2.1.txt README-GPL.txt; do
+  [ -f "$OUT/licenses/$lf" ] || die "issue #331: $OUT/licenses/$lf is missing, cannot ship a licence inside the SD tree"
+  cp "$OUT/licenses/$lf" "$SD_ASTRO_LIC/$lf" || die "cannot copy $lf into the SD tree"
+done
+[ -s "$SD_ASTRO_LIC/README-GPL.txt" ] \
+  || die "issue #331: README-GPL.txt did not land in $SD_ASTRO_LIC -- GPL binaries would ship with no offer"
+
+# The written offer, beside the binaries it covers. It has to be readable without
+# opening the archive elsewhere on the card, so it names the files and says where
+# the source is rather than merely pointing at a directory the user may not have.
+cat > "$SD_ASTRO/LICENCE-astro.txt" << 'OFFER'
+Copyleft licences applying to polaris-solve and polaris-skysim
+==============================================================
+
+These two binaries are GPL v2-or-later. They link astrometry.net's qfits-an
+FITS reader, whose files carry the ESO "GNU General Public License ... either
+version 2 of the License, or (at your option) any later version" notice.
+
+The full licence texts are beside this file, in polaris-astro/licenses/:
+
+  COPYING-GPL-2.txt      the GNU GPL v2
+  COPYING-LGPL-2.1.txt   the GNU LGPL v2.1 (applies to libnl, used by the
+                         separate polaris-wifi kit -- see its own LICENCE-wifi.txt)
+  README-GPL.txt         which components are copyleft, why, the per-file
+                         licence census, sha256 of every source archive, and
+                         the upstream URLs
+
+Written offer for corresponding source (GPL v2 section 3)
+---------------------------------------------------------
+The exact source used to build these binaries is:
+
+  astrometry.net-0.98.tar.gz     upstream source that was compiled
+  jpeg-9f.tar.gz                 IJG libjpeg, statically linked into polaris-extract
+  polaris-build-recipe.tar.gz    our build recipe, the BSD-3 GSL shim, and our C sources
+
+Those archives are published alongside this release in the bundle's top-level
+licenses/ directory, and in the patcher repository under .astro-src-cache. If
+you received these binaries without that directory, request a copy from whoever
+supplied them; under GPL v2 section 3 they must provide the source with the
+binary or a written offer to do so.
+
+Everything else in polaris-astro/ (polaris-extract's star finder, polaris-mount,
+polaris-httpd, polaris-link/jog/prog/astro, polaris-logwatch, polaris-match and
+all *.sh) is MIT or BSD-3 and talks to the GPL binaries as separate processes
+over files and sockets -- nothing GPL is linked into them.
+OFFER
+[ -s "$SD_ASTRO/LICENCE-astro.txt" ] \
+  || die "issue #331: could not write $SD_ASTRO/LICENCE-astro.txt"
+
 # The wifi kit is the same silent-failure class as the astro manifest below: the
 # boot hook checks for /app/sd/polaris-wifi/polaris-autojoin.sh and simply does
 # nothing when it is absent, so a bundle that omits it reports a successful
