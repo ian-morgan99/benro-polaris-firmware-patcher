@@ -17,7 +17,9 @@
     {
       "component": "patcher",
       "summary": "polaris-align.sh re-extracts once at downsample 1 when the first pass is starved: fewer than STARVED_STAR_FLOOR (25) stars, width below STARVED_WIDTH_MAX (3000), and DOWNSAMPLE above 1. Healthy frames take no extra decode pass. STARVED_RETRY=0 restores the old behaviour; all three knobs are env-overridable so a qualification run can tune them without a rebuild.",
-      "issues": ["#341"]
+      "issues": [
+        "#341"
+      ]
     },
     {
       "component": "patcher",
@@ -28,6 +30,27 @@
       "component": "patcher",
       "summary": "docs/FIRMWARE-INSTALL-PROCESS.md and the generated candidate README now present both install routes as supported, with the selection rule stated. Two claims were factually wrong and are corrected: the manual route told users the boot hook installs the astro stack after a reboot (it cannot -- the flash deletes /app/network_telnetd.sh and that hook is created by install_astro.sh), and the README told maintainers release-fwpkt.sh does not restore the kit (it has done so as phase 7 by default). The routes table also listed scp, which the same document forbids because sshd has no sftp-server subsystem.",
       "issues": []
+    },
+    {
+      "component": "patcher",
+      "summary": "The astro kit now ships the copyleft licence texts and a written source offer INSIDE the SD tree. astrometry.net (GPL-2) and the bundled JPEG/EXIF reader (IJG) are compiled into polaris-solve and polaris-extract, but their terms previously sat only in out/<candidate>/licenses/, which is never copied to the card -- a user following either install route received binaries with no licence and no way to obtain the corresponding source. The astro kit's own notice also stated the bundle ships no copy, so the omission was self-documenting rather than accidental. build-astro.sh now copies the texts into COPY-TO-SD-CARD-ROOT/polaris-astro/licenses/ and writes an offer naming the files actually present; verify-astro-candidate.py's reachability check became decidable instead of returning UNKNOWN.",
+      "issues": [
+        "#331"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "release-fwpkt.sh's device identity guard now tests family membership (6.0.0.54 with an optional patch suffix) instead of requiring a patch suffix. The old pattern rejected a valid 6.0.0.54 head, and the naive fix would have accepted 6.0.0.541 by treating the dot as optional. Both call sites share one predicate and a drift test guards them.",
+      "issues": [
+        "#337"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "The pre-release gate locates its pinned v90 Bulb diagnostic input by sha256 across durable locations rather than reading it from a prunable out/ path. A missing copy is still a prerequisite skip; a present-but-different copy stays loud, because silently substituting a different binary would make the cancellation check meaningless.",
+      "issues": [
+        "#338"
+      ]
     }
   ],
   "known_limits": [
