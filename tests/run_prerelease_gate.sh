@@ -479,6 +479,13 @@ PY_TESTS=(
     # no log stays unaffected, a missing log says so, and the fail counter still
     # increments exactly once. Offline-safe: writes only under tmp_path.
     tests/test_gate_failure_prints_its_log.py
+    # The gate once re-invoked itself forever because a usage example in this
+    # file's header lost its leading '#': 80,787 processes and no verdict at
+    # all. This asserts the recursion guard is installed before anything can
+    # spawn, that a nested invocation exits 3 immediately, and that no line in
+    # the header block is executable. It must run early and always -- a gate
+    # that produces no output is worse than one that fails.
+    tests/test_gate_no_self_recursion.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
@@ -1048,7 +1055,20 @@ check_arm_emulation() {
     fi
     local out="/tmp/prerelease-arm-emulation.json"
     local log="/tmp/prerelease-arm-emulation.log"
-    local args=(--build "$build_dir" --output "$out")
+    # --build is the packet directory (out/<candidate>/FwPkt), but the manifest
+    # and the Stage-2 binary live at the candidate root. check-arm-emulation.py
+    # looks for install-manifest.json inside --build and rglobs it for
+    # pgphoto.stage2ondisk, so passing FwPkt made it exit 2 -- "manifest not
+    # found" -- before its prerequisite checks ran. That converts a missing
+    # harness into a hard failure: the script's own contract is that an absent
+    # prerequisite exits 5 and the gate reports SKIP, never a pass. A check that
+    # cannot find its inputs must not read as a defect in the candidate.
+    local emu_dir="$build_dir"
+    if [ ! -f "$emu_dir/install-manifest.json" ] \
+       && [ -f "$(dirname "$emu_dir")/install-manifest.json" ]; then
+        emu_dir="$(dirname "$emu_dir")"
+    fi
+    local args=(--build "$emu_dir" --output "$out")
     [ -n "$ARM_HARNESS_SRC" ] && args+=(--harness-src "$ARM_HARNESS_SRC")
 
     python3 "$ROOT/scripts/release/check-arm-emulation.py" "${args[@]}" >"$log" 2>&1
