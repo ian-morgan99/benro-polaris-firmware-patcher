@@ -611,6 +611,7 @@ static long long g_pentax_preview_last_fetch = 0;
 
 /* GP result codes in this libgphoto2 (port-result.h / gphoto2-result.h). */
 #define STAGE2_GP_ERROR_TIMEOUT (-10)   /* GP_ERROR_TIMEOUT */
+#define STAGE2_GP_ERROR_CANCEL (-112)   /* GP_ERROR_CANCEL */
 #define STAGE2_GP_ERROR_CAMERA_BUSY (-110) /* GP_ERROR_CAMERA_BUSY */
 #define STAGE2_GP_ERROR_CAMERA_ERROR (-113) /* GP_ERROR_CAMERA_ERROR */
 /* CameraCaptureType from gphoto2-camera.h.  Only still-image capture is
@@ -800,9 +801,22 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
          * NOT silently relabel it as GP_ERROR_CAMERA_BUSY, which would hide a real
          * (possibly terminal) failure behind a "camera busy" retry and delay the
          * recovery path.  So: known transient -> bounded backoff; unknown -> surface
-         * the original code without arming the BUSY cooldown. */
+         * the original code without arming the BUSY cooldown.
+         *
+         * GP_ERROR_CANCEL (-112) belongs with the known transients, not the unknown
+         * ones.  It means the host's cancel callback declined this one operation, so
+         * no frame was produced -- it is not a transport failure and not terminal.
+         * The ptp2 Pentax preview path returns it before the first frame attempt when
+         * the context is already cancelled on entry (observed on v107 K-3 III and
+         * v104 K-1 II, always immediately after a capture attempt).  pgphoto has no
+         * branch for -112, so surfacing it leaves the pane rendering a code it cannot
+         * interpret.  CAMERA_BUSY is the state pgphoto already handles by showing
+         * pending and polling again, which is the correct outcome for "no frame this
+         * time".  Translating a genuinely transient result does not conflict with the
+         * invariant above, which forbids relabelling TERMINAL failures. */
         int is_known_transient = (ret == STAGE2_GP_ERROR_TIMEOUT) ||
-                                 (ret == STAGE2_GP_ERROR_CAMERA_BUSY);
+                                 (ret == STAGE2_GP_ERROR_CAMERA_BUSY) ||
+                                 (ret == STAGE2_GP_ERROR_CANCEL);
 
         if (!is_known_transient) {
             fprintf(stderr, "[stage2] preview: unknown error class (ret=%d) -- "
@@ -832,6 +846,11 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
             fprintf(stderr, "[stage2] preview-backoff: %d consecutive transient failures "
                             "(last ret=%d) -- backing off %ds (issues #36/#55/#127)\n",
                     g_pentax_preview_timeouts, ret, cooldown_s);
+        }
+        if (ret == STAGE2_GP_ERROR_CANCEL) {
+            fprintf(stderr, "[stage2] preview: cancelled by host (-112) -- reporting "
+                            "CAMERA_BUSY so the pane shows pending and polls again\n");
+            return STAGE2_GP_ERROR_CAMERA_BUSY;
         }
     } else {
         if (g_pentax_preview_timeouts)

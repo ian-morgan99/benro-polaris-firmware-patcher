@@ -129,6 +129,38 @@ int main(void)
     assert(g_pentax_preview_session_unhealthy == 0); /* not a transport failure either */
     printf("  PASS: unknown error is surfaced (not relabelled as CAMERA_BUSY, no backoff armed)\n");
 
+    /* GP_ERROR_CANCEL (-112) is a KNOWN transient, not an unknown class.  The ptp2
+     * Pentax preview path returns it when the host's cancel callback declines the
+     * fetch -- observed on v107 K-3 III and v104 K-1 II immediately after a capture
+     * attempt, always with zero bytes and zero frame attempts.  pgphoto has no
+     * branch for -112, so surfacing it left the live-view pane rendering a code it
+     * cannot interpret.  It must instead be counted toward the bounded backoff and
+     * reported as CAMERA_BUSY, which pgphoto already renders as pending-and-retry. */
+    reset_fixture();
+    fake_capture_result = -112;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL)
+           == STAGE2_GP_ERROR_CAMERA_BUSY);
+    assert(g_pentax_preview_timeouts == 1);          /* counted as a transient */
+    assert(g_pentax_preview_session_unhealthy == 0); /* not a transport failure */
+    printf("  PASS: GP_ERROR_CANCEL is treated as transient and reported as CAMERA_BUSY\n");
+
+    /* A cancelled preview must not disable the capability or wedge the session: once
+     * the backoff budget is exhausted the governor cools down, and a successful fetch
+     * afterwards clears the counter. */
+    reset_fixture();
+    fake_capture_result = -112;
+    for (int i = 0; i < STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT; i++)
+        assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL)
+               == STAGE2_GP_ERROR_CAMERA_BUSY);
+    assert(g_pentax_preview_backoff_until != 0);     /* cooldown armed */
+    assert(g_pentax_preview_disabled == 0);          /* preview NOT disabled */
+    g_pentax_preview_backoff_until = 0;              /* cooldown elapsed */
+    g_pentax_preview_last_fetch = 0;
+    fake_capture_result = 0;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
+    assert(g_pentax_preview_timeouts == 0);          /* recovered cleanly */
+    printf("  PASS: repeated cancellations cool down and recover, never disabling preview\n");
+
     printf("[test_stage2_preview_error_class] ALL PASS\n");
     return 0;
 }
