@@ -20,8 +20,7 @@
 #       --expected-build-dir out/<candidate>
 #   ./tests/run_prerelease_gate.sh --require-arm-emulation \
 #       --arm-harness-src /path/to/benro-polaris-test-harness/src
-#
-   ./tests/run_prerelease_gate.sh --require-bulb-cancel-return
+#   ./tests/run_prerelease_gate.sh --require-bulb-cancel-return
 #
 # --require-bulb-cancel-return turns the issue #251 cancellation-return
 # diagnostic from a SKIP into a FAIL when its prerequisites are missing. It is
@@ -32,6 +31,26 @@
 # 2 = usage error.
 # ============================================================================
 set -uo pipefail
+
+# Recursion guard. A usage example was once pasted into the header comment block
+# without its leading '#', so bash executed it and the gate re-invoked itself
+# forever -- 80,000 processes, and every gate log was nothing but
+# "shell level (1000) too high" with no verdict at all. The run looked like it
+# had produced no result rather than like a bug, which is the worst failure mode
+# a release gate can have: silence instead of a red light.
+#
+# A nested invocation is never legitimate here -- no test in the suite executes
+# this script, they only assert on its text -- so refuse immediately and loudly.
+if [ -n "${POLARIS_GATE_RUNNING:-}" ]; then
+    printf 'FATAL: run_prerelease_gate.sh is already running (depth=%s). Refusing to nest.\n' \
+        "$POLARIS_GATE_RUNNING" >&2
+    printf '       A gate that recurses produces no verdict, which reads as an\n' >&2
+    printf '       inconclusive run rather than a failure. Check for an uncommented\n' >&2
+    printf '       command line in this file (see tests/test_gate_no_self_recursion.py).\n' >&2
+    exit 3
+fi
+POLARIS_GATE_RUNNING=1
+export POLARIS_GATE_RUNNING
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"

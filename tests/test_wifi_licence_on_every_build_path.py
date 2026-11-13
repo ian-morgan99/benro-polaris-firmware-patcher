@@ -224,11 +224,42 @@ def test_candidate_path_asserts_on_the_archive_not_the_staging_dir():
 
     Checking the staging directory is what let .99 pass: the file can exist on disk and
     still be absent from the archive a user is handed.
+
+    This originally asserted the literal form `unzip -Z1 "$SD_ROOT/polaris-wifi.zip" |
+    grep -qx`. That form is wrong under `set -o pipefail`: grep -q exits on its first
+    match, unzip then dies of SIGPIPE (141), and pipefail reports 141 -- so a check that
+    *passed* returned failure. It failed nondeterministically depending on where in the
+    listing the match fell (measured: 39 false failures in 40 runs on a 694-member
+    archive). Membership now goes through zip_has_member(), which still reads the entry
+    list out of the archive, so the property this test exists to protect is unchanged.
+
+    Asserting the property rather than the syntax, and additionally forbidding the
+    broken form from coming back.
     """
     text = CANDIDATE.read_text()
-    assert re.search(r'unzip\s+-Z1\s+"\$SD_ROOT/polaris-wifi\.zip"\s*\|\s*grep\s+-qx', text), (
+
+    # Membership must still be decided from the archive's own entry list.
+    assert re.search(r"unzip\s+-Z1", text), (
+        "candidate path no longer reads entries out of the kit archives at all"
+    )
+    assert re.search(r'zip_has_member\s+"\$SD_ROOT/polaris-wifi\.zip"', text) or \
+        re.search(r'unzip\s+-Z1\s+"\$SD_ROOT/polaris-wifi\.zip"', text), (
         "candidate path does not test membership by reading entries out of polaris-wifi.zip"
     )
+
+    # The broken form must not return: `unzip ... | grep -q` is a false failure under
+    # pipefail. `grep -vc` and `grep -v` are fine -- they consume the whole listing, so
+    # the writer never gets SIGPIPE.
+    vulnerable = [
+        ln for ln in text.splitlines()
+        if re.search(r"unzip[^|]*\|\s*grep\s+-[a-zA-Z]*q", ln) and not ln.lstrip().startswith("#")
+    ]
+    assert not vulnerable, (
+        "`unzip | grep -q` reintroduced; under `set -o pipefail` a successful match "
+        "returns 141 because grep closes the pipe and unzip dies of SIGPIPE: "
+        + str(vulnerable[:2])
+    )
+
     # The names are iterated, so assert the loop's list covers all four rather than
     # looking for four literal greps that a loop would never contain.
     lists = re.findall(r"for f in ([^;]*); do", text)
