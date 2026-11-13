@@ -337,6 +337,12 @@ PY_TESTS=(
     tests/test_plate_solving_present.py
     tests/test_astro_candidate_wrapper.py
     tests/test_shipped_marker_check.py
+    # #341: the WebUI upload path passes no DOWNSAMPLE, so a downscaled upload is
+    # decoded at 1/4 whatever its size and the solver gets single-digit stars. It
+    # returns "search_exhausted", which reads like missing index files -- the
+    # indexes were verified byte-for-byte intact, so the misdiagnosis was easy.
+    # Offline: drives the shipped polaris-align.sh with stubbed extract/solve.
+    tests/test_align_starved_downsample_retry.py
     # Added by PR #299 (ta/astro-regression-suite) but never registered here, which left
     # main RED: the drift guard below fails whenever a tests/test_*.py exists that this
     # array does not name. The suite is offline-safe -- it runs astro_regression/runner.py

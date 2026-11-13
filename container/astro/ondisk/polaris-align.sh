@@ -195,6 +195,34 @@ H=$(sed -n 's/^# full resolution [0-9]* x \([0-9]*\)/\1/p' "$STARS")
 _star_count=$(grep -vc '^#' "$STARS" 2>/dev/null)
 case "$_star_count" in ''|*[!0-9]*) _star_count=0 ;; esac
 
+# Issue #341. DOWNSAMPLE is chosen for an ~6000 px camera frame, and the WebUI
+# upload path passes no DOWNSAMPLE at all, so a phone-downscaled upload lands on
+# 4 regardless of its real size. A 1920x1280 JPEG decoded at 1/4 is 480x320 and
+# yields single-digit stars; a triangle solver cannot match that against an
+# all-sky index, so it returns "search_exhausted" -- which reads like missing
+# index files but is not. Measured on-device with the same bytes and the same
+# indexes: ds=4 sigma=5 gives 6 stars and fails, ds=1 gives ~300 and solves in
+# ~2 s against index-4117.
+#
+# Re-extract once at the smallest downsample when the first pass is starved on a
+# small frame. Healthy frames take no extra decode pass at all, which is why this
+# is preferred over making the default size-aware: that would need a probe pass
+# (polaris-autosolve.sh's pick_downsample decodes at 1/8 just to read the
+# dimensions) on every solve, including the full-size captures that already pick
+# 4 correctly. The floor and width cap are overridable so a qualification run can
+# tune them without a rebuild.
+if [ "${STARVED_RETRY:-1}" != "0" ] && [ "$DOWNSAMPLE" -gt 1 ] \
+   && [ "$_star_count" -lt "${STARVED_STAR_FLOOR:-25}" ] \
+   && [ "$W" -lt "${STARVED_WIDTH_MAX:-3000}" ]; then
+    slog "extract: starved ($_star_count stars at ds=$DOWNSAMPLE on ${W}x${H}), retrying at downsample 1 (#341)"
+    "$ASTRO/polaris-extract" --jpeg "$IMG" --downsample 1 \
+        --max-stars "$MAXSTARS" --stats > "$STARS" 2>&2 || {
+        echo '{"solved":false,"error":"extract failed"}'; exit 3; }
+    _star_count=$(grep -vc '^#' "$STARS" 2>/dev/null)
+    case "$_star_count" in ''|*[!0-9]*) _star_count=0 ;; esac
+    DOWNSAMPLE=1
+fi
+
 # Physical sensor width is not a required standard EXIF field. Resolve it in
 # an order that is useful for every camera type:
 #   explicit SENSOR_MM -> exact configured model profile -> EXIF 35 mm eq ->
