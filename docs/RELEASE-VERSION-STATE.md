@@ -6,8 +6,13 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.107
+last_display_fwver=6.0.0.54.108
 ```
+
+`.108` was claimed and published 2026-11-13 by the Astro candidate flow, again by hand:
+`build-astro-candidate.sh` still has no version-claim step of its own, so nothing writes
+back here. The structural fix -- having the Astro flow claim its own version -- remains
+open and was deliberately not attempted mid-release because it changes build behaviour.
 
 Backfilled 2026-11-07. `.97` and `.98` were both issued but never recorded here, so
 `--next` offered `.96` while `.97` was already published *and* running on hardware --
@@ -28,6 +33,7 @@ reads these lines and refuses to hand out any of them again, **regardless of wha
 entry, only add one when a candidate is claimed.
 
 ```text
+consumed_display_fwver=6.0.0.54.108
 consumed_display_fwver=6.0.0.54.107
 consumed_display_fwver=6.0.0.54.99
 consumed_display_fwver=6.0.0.54.106
@@ -74,6 +80,7 @@ consumed_display_fwver=6.0.0.54.57
 consumed_display_fwver=6.0.0.54.56
 consumed_display_fwver=6.0.0.54.54
 consumed_display_fwver=6.0.0.54.55
+version_commit_binding=6.0.0.54.108|libgphoto2=51f636d825013dcb87bab972a329114f12a7063a|patcher=4a412fff06df7cb04597d70f75a21a77a5340e40
 version_commit_binding=6.0.0.54.107|libgphoto2=9ec24138d20e0779693d3e262c20f5426b5e82c5|patcher=8e6d9a2585c14ee0f0b420c2f2e2bfaece961806
 version_commit_binding=6.0.0.54.99|libgphoto2=7e6dec95f383ba5902ed2a7ee6c11cd48a359188|patcher=caab172dcd1c245b21d552948acd3c9518e7c69d
 version_commit_binding=6.0.0.54.98|libgphoto2=7e6dec95f383ba5902ed2a7ee6c11cd48a359188|patcher=24449f5a3a5f09b392014a1d0f8ddf575a2693d0
