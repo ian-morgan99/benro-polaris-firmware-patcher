@@ -343,6 +343,11 @@ PY_TESTS=(
     # indexes were verified byte-for-byte intact, so the misdiagnosis was easy.
     # Offline: drives the shipped polaris-align.sh with stubbed extract/solve.
     tests/test_align_starved_downsample_retry.py
+    # The host re-exec dropped every documented env override. CANDIDATE_ID and
+    # BUILD_ID have timestamp defaults, so a named candidate silently rebuilt as
+    # o-main-<timestamp> -- only CHANGE_SUMMARY's mandatory check made it visible.
+    # Offline: stubs flatpak-spawn and runs the real script with no docker on PATH.
+    tests/test_build_and_install_env_forwarding.py
     # Added by PR #299 (ta/astro-regression-suite) but never registered here, which left
     # main RED: the drift guard below fails whenever a tests/test_*.py exists that this
     # array does not name. The suite is offline-safe -- it runs astro_regression/runner.py

@@ -61,7 +61,20 @@ if ! command -v docker >/dev/null 2>&1; then
     echo "ERROR: Docker is unavailable and flatpak-spawn is not present." >&2
     exit 2
   }
-  exec flatpak-spawn --host bash "$0" "${ORIGINAL_ARGS[@]}"
+  # flatpak-spawn --host starts the child with a fresh environment, so every
+  # override this script documents (usage() names six) is silently dropped on
+  # the way to the host. CANDIDATE_ID and BUILD_ID then fall back to their
+  # $(date -u +%Y%m%dT%H%M%SZ) defaults, which does not fail loudly -- it builds
+  # a candidate under a timestamped identity while the operator believes they
+  # asked for a named one. Observed: CANDIDATE_ID=astro-v108-starved-extract-20261112
+  # re-executed as o-main-20261113T001741Z, and only CHANGE_SUMMARY's mandatory
+  # check turned a silent misbuild into an error. Forward the values explicitly;
+  # --env=NAME=value is verified to propagate where a bare inherited var does not.
+  SPAWN_ENV=()
+  for _v in STOCK_FWPKT LIBGPHOTO_REPO CANDIDATE_ID DISPLAY_FWVER BUILD_ID CHANGE_SUMMARY; do
+    [ -n "${!_v+set}" ] && SPAWN_ENV+=(--env="$_v=${!_v}")
+  done
+  exec flatpak-spawn --host "${SPAWN_ENV[@]}" bash "$0" "${ORIGINAL_ARGS[@]}"
 fi
 
 docker info >/dev/null 2>&1 || {
