@@ -132,15 +132,64 @@ static starxy_t* read_star_xyls(const char* fn) {
     return sxy;
 }
 
-/* Add an index file, or every index file in a directory. */
-static int add_indexes(solver_t* solver, const char* path, int verbose) {
+/* Add an index file, or every index file in a directory.
+ *
+ * When a pixel-scale range is known (the normal case: EXIF gives us focal length
+ * and sensor width), indexes whose quads cannot possibly fall inside it are
+ * dropped here rather than handed to the solver. Upstream astrometry.net does
+ * exactly this in onefield.c via index_overlaps_scale_range(); our front end
+ * previously loaded every --index it was given, so a solve at 20 arcsec/pixel
+ * still paid for parsing and iterating the 1-arcsec indexes. On the device's
+ * 2-core ARMv7 that is wall-clock we would rather spend on indexes that can
+ * actually match.
+ *
+ * The quad range is derived the same way upstream derives it, from
+ * DEFAULT_QSF_LO/DEFAULT_QSF_HI (0.1 and 1.0, include/astrometry/onefield.h),
+ * but widened across the whole scale window instead of a single nominal scale:
+ * the smallest possible quad uses funits_lower and the largest uses
+ * funits_upper. That errs towards keeping indexes, so the filter can never
+ * discard one that was in fact usable -- it only ever removes ones that are
+ * certainly out of range.
+ */
+#define QSF_LO 0.1
+#define QSF_HI 1.0
+
+/* add_indexes() outcomes. A skip is not a failure: reporting one as "could not
+ * load" would send an operator chasing a corrupt file that is perfectly fine,
+ * which is exactly the kind of misleading diagnostic this project has had to
+ * clean up elsewhere. */
+#define IDX_ADDED     1
+#define IDX_SKIPPED   0
+#define IDX_FAILED   (-1)
+
+static int add_indexes(solver_t* solver, const char* path, int verbose,
+                       double slo, double shi, double W, double H,
+                       int scale_filter, int* skipped) {
     index_t* ind = index_load(path, 0, NULL);
-    if (ind) {
-        solver_add_index(solver, ind);
-        if (verbose) fprintf(stderr, "[polaris-solve] index %s\n", ind->indexname);
-        return 1;
+    if (!ind) return IDX_FAILED;
+
+    if (scale_filter && slo > 0 && shi >= slo && W > 0 && H > 0) {
+        double minside = (W < H) ? W : H;
+        double maxside = (W > H) ? W : H;
+        double quadlo = QSF_LO * minside * slo;
+        double quadhi = QSF_HI * maxside * shi;
+        if (!index_overlaps_scale_range(ind, quadlo, quadhi)) {
+            if (verbose)
+                fprintf(stderr, "[polaris-solve] index %s skipped: quads [%.1f, %.1f] arcmin "
+                                "outside image range [%.1f, %.1f] arcmin\n",
+                        ind->indexname,
+                        arcsec2arcmin(ind->index_scale_lower),
+                        arcsec2arcmin(ind->index_scale_upper),
+                        arcsec2arcmin(quadlo), arcsec2arcmin(quadhi));
+            index_free(ind);
+            if (skipped) (*skipped)++;
+            return IDX_SKIPPED;
+        }
     }
-    return 0;
+
+    solver_add_index(solver, ind);
+    if (verbose) fprintf(stderr, "[polaris-solve] index %s\n", ind->indexname);
+    return IDX_ADDED;
 }
 
 int main(int argc, char** argv) {
@@ -230,9 +279,26 @@ int main(int argc, char** argv) {
     solver_set_field_bounds(solver, 0, W, 0, H);
     if (have_radec && radius > 0) solver_set_radec(solver, ra, dec, radius);
 
+    /* Two passes. The first keeps only indexes whose quad sizes can overlap the
+     * pixel-scale window we are searching. If that rejects every index we retry
+     * unfiltered: a wrong focal length in EXIF would otherwise turn "search
+     * everything and fail slowly" into "refuse to search at all", which is a
+     * worse failure mode than the one the filter is meant to avoid. */
+    int nskipped = 0;
     for (i = 0; i < nidx; i++)
-        if (!add_indexes(solver, idxpaths[i], verbose))
+        if (add_indexes(solver, idxpaths[i], verbose, slo, shi, W, H, 1, &nskipped) == IDX_FAILED)
             fprintf(stderr, "[polaris-solve] WARNING: could not load index %s\n", idxpaths[i]);
+    if (solver_n_indices(solver) == 0 && nskipped > 0) {
+        fprintf(stderr, "[polaris-solve] scale filter rejected all %i indexes; "
+                        "retrying unfiltered\n", nskipped);
+        nskipped = 0;
+        for (i = 0; i < nidx; i++)
+            if (add_indexes(solver, idxpaths[i], verbose, slo, shi, W, H, 0, NULL) == IDX_FAILED)
+                fprintf(stderr, "[polaris-solve] WARNING: could not load index %s\n", idxpaths[i]);
+    }
+    if (verbose && nskipped > 0)
+        fprintf(stderr, "[polaris-solve] scale filter skipped %i of %i indexes\n",
+                nskipped, nidx);
     if (solver_n_indices(solver) == 0) {
         fprintf(stderr, "[polaris-solve] no indexes loaded\n");
         return 1;
