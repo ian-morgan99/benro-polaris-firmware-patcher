@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.106
+last_display_fwver=6.0.0.54.107
 ```
 
 Backfilled 2026-11-07. `.97` and `.98` were both issued but never recorded here, so
@@ -28,6 +28,7 @@ reads these lines and refuses to hand out any of them again, **regardless of wha
 entry, only add one when a candidate is claimed.
 
 ```text
+consumed_display_fwver=6.0.0.54.107
 consumed_display_fwver=6.0.0.54.99
 consumed_display_fwver=6.0.0.54.106
 consumed_display_fwver=6.0.0.54.105
@@ -73,6 +74,7 @@ consumed_display_fwver=6.0.0.54.57
 consumed_display_fwver=6.0.0.54.56
 consumed_display_fwver=6.0.0.54.54
 consumed_display_fwver=6.0.0.54.55
+version_commit_binding=6.0.0.54.107|libgphoto2=9ec24138d20e0779693d3e262c20f5426b5e82c5|patcher=8e6d9a2585c14ee0f0b420c2f2e2bfaece961806
 version_commit_binding=6.0.0.54.99|libgphoto2=7e6dec95f383ba5902ed2a7ee6c11cd48a359188|patcher=caab172dcd1c245b21d552948acd3c9518e7c69d
 version_commit_binding=6.0.0.54.98|libgphoto2=7e6dec95f383ba5902ed2a7ee6c11cd48a359188|patcher=24449f5a3a5f09b392014a1d0f8ddf575a2693d0
 version_commit_binding=6.0.0.54.97|libgphoto2=3fb26e536ac169e4970d69516a9d45daf62563f5|patcher=5dbd19d81da9b29fa246bc94fb83708d63d496e9
