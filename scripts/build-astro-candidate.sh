@@ -377,17 +377,35 @@ SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
 # guarantees this directory exists on the real path, so reaching the die means the
 # tree really is missing.
 [ -d "$SD_ROOT" ] || die "SD staging tree missing: $SD_ROOT -- cannot verify the kit archives"
-if [ -d "$SD_ROOT/polaris-wifi" ]; then
-  command -v zip >/dev/null 2>&1 || die "wifi kit present but 'zip' is not installed -- cannot produce the archive users are given"
-  (
-    cd "$SD_ROOT"
-    rm -f polaris-astro.zip polaris-wifi.zip
-    zip -qrX polaris-astro.zip polaris-astro
-    zip -qrX polaris-wifi.zip polaris-wifi
-    [ -d astrometry ] && { rm -f astrometry-indexes.zip; zip -qrX astrometry-indexes.zip astrometry; }
-    true
-  )
-fi
+# polaris-astro.zip is rebuilt unconditionally, not only when the wifi kit
+# happens to be present. The inner bundle builder can leave an archive behind
+# that predates anything added to the tree afterwards, and the assertions below
+# read the archive rather than the tree -- so a zip that does not match the tree
+# it is meant to represent must be rebuilt, not reused. Rebuilding here makes the
+# archive a function of the final tree, so "present in the tree" and "present in
+# what the user extracts" cannot diverge.
+#
+# The old form wrapped this in a subshell ending with `true`, which swallowed any
+# failing command inside it: a zip that errored part-way through left an archive
+# on disk missing entries, the assertions then refused it, and the real cause --
+# the failed zip -- was never reported. Each step is checked explicitly now.
+(
+  cd "$SD_ROOT" || exit 1
+  command -v zip >/dev/null 2>&1 || { echo "ERROR: 'zip' is not installed -- cannot produce the archives users are given" >&2; exit 1; }
+  rm -f polaris-astro.zip
+  zip -qrX polaris-astro.zip polaris-astro \
+    || { echo "ERROR: failed to build polaris-astro.zip" >&2; exit 1; }
+  if [ -d polaris-wifi ]; then
+    rm -f polaris-wifi.zip
+    zip -qrX polaris-wifi.zip polaris-wifi \
+      || { echo "ERROR: failed to build polaris-wifi.zip" >&2; exit 1; }
+  fi
+  if [ -d astrometry ]; then
+    rm -f astrometry-indexes.zip
+    zip -qrX astrometry-indexes.zip astrometry \
+      || { echo "ERROR: failed to build astrometry-indexes.zip" >&2; exit 1; }
+  fi
+) || die "could not produce the SD kit archives -- see the ERROR lines above"
 
 # The copyleft offer must be inside the archive, not merely on disk beside it.
 if [ -f "$SD_ROOT/polaris-wifi.zip" ]; then
@@ -439,6 +457,14 @@ done
 # Assert against the finished archive, not the staging directory: a manifest that
 # exists on disk but is excluded from polaris-astro.zip is exactly how .104 shipped
 # without one. The user extracts the zip; the tree beside it never reaches the card.
+#
+# Missing is a hard failure, not a skip. Every check in this block used to sit
+# behind [ -f "$SD_ROOT/polaris-astro.zip" ], so an archive that was never built
+# skipped all of them and the script went on to exit 0 -- the vacuous pass this
+# file's own comment calls out as issue #286's bug class, reproduced here a second
+# time. The rebuild above makes absence a real anomaly rather than a normal state.
+[ -f "$SD_ROOT/polaris-astro.zip" ] \
+  || die "polaris-astro.zip was not produced -- every assertion below would have been skipped and the release would have shipped an unverified kit"
 if [ -f "$SD_ROOT/polaris-astro.zip" ]; then
   unzip -Z1 "$SD_ROOT/polaris-astro.zip" | grep -qx "polaris-astro/polaris-astro.manifest" \
     || die "polaris-astro.zip does not contain polaris-astro.manifest -- install_astro.sh would skip byte verification and the boot sync could not detect a stale binary"
