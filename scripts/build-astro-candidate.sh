@@ -499,9 +499,12 @@ if [ -f "$SD_ROOT/polaris-astro.zip" ]; then
     || die "polaris-astro.zip does not contain polaris-astro.manifest -- install_astro.sh would skip byte verification and the boot sync could not detect a stale binary"
   msz=$(unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest 2>/dev/null | wc -c)
   [ "$msz" -gt 0 ] || die "polaris-astro.zip stores polaris-astro.manifest as an empty file"
-  # Same SIGPIPE class as above: read the manifest, then match in bash.
+  # Same SIGPIPE class as above: read the member, then match against it. A
+  # here-string keeps grep's original anchored semantics ("polaris-httpd" at the
+  # end of any line -- manifest lines are "<sha256>  <name>") while giving grep a
+  # regular file to read instead of a pipe that can be closed under it.
   manifest_text=$(unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest 2>/dev/null || true)
-  [[ $manifest_text == *$'\n'polaris-httpd ]] \
+  grep -q 'polaris-httpd$' <<< "$manifest_text" \
     || die "polaris-astro.manifest inside the zip does not cover polaris-httpd"
 
   # Issue #331, asserted against the archive rather than the staging tree. The
