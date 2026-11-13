@@ -407,10 +407,33 @@ SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
   fi
 ) || die "could not produce the SD kit archives -- see the ERROR lines above"
 
+# Membership test for a zip member, without a pipeline.
+#
+# `unzip -Z1 archive | grep -qx pattern` is wrong under `set -o pipefail`, and
+# wrong in the direction that breaks a release: grep -q exits the moment it
+# matches, unzip then dies of SIGPIPE (141), and pipefail reports 141 -- so a
+# check that DID find the member returns failure and the script dies claiming the
+# archive is missing something it contains. Whether it fires depends on where the
+# match falls in the listing relative to the pipe buffer, which is why the
+# manifest assertion passed while the licence assertion did not, on the same
+# archive, seconds apart. Verified directly:
+#   set -o pipefail; unzip -Z1 polaris-astro.zip | grep -qx ...  -> status 141
+#   without pipefail                                             -> status 0
+# Listing into a variable and matching with case has no pipeline, so there is no
+# SIGPIPE to misreport.
+zip_has_member() {
+    local z="$1" want="$2" listing
+    listing=$(unzip -Z1 "$z" 2>/dev/null) || return 1
+    case $'\n'"$listing"$'\n' in
+        *$'\n'"$want"$'\n'*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # The copyleft offer must be inside the archive, not merely on disk beside it.
 if [ -f "$SD_ROOT/polaris-wifi.zip" ]; then
   for f in LICENCE-wifi.txt COPYING-LGPL-2.1.txt NOTICE-iw.txt NOTICE-wpa_supplicant.txt; do
-    unzip -Z1 "$SD_ROOT/polaris-wifi.zip" | grep -qx "polaris-wifi/$f" \
+    zip_has_member "$SD_ROOT/polaris-wifi.zip" "polaris-wifi/$f" \
       || die "polaris-wifi.zip does not contain $f -- shipping copyleft binaries with no licence alongside them is an LGPL s4 violation"
   done
   # Present is not enough: a zero-byte LICENCE-wifi.txt satisfies the listing above
@@ -420,8 +443,14 @@ if [ -f "$SD_ROOT/polaris-wifi.zip" ]; then
     [ "$sz" -gt 0 ] || die "polaris-wifi.zip stores $f as an empty file -- an empty licence is not a licence"
   done
   # The offer must name the versions it offers source for.
-  unzip -p "$SD_ROOT/polaris-wifi.zip" polaris-wifi/LICENCE-wifi.txt \
-    | grep -qE 'libnl-[0-9]+\.[0-9]' \
+  #
+  # Read the member into a variable and match with bash's =~ rather than piping
+  # unzip into grep -q: -q exits at the first match, which leaves unzip dying of
+  # SIGPIPE, and pipefail then reports that as a failure of a check that actually
+  # succeeded. Measured on a real candidate: 39 of 40 runs of the piped form
+  # returned failure for a member that was present.
+  lic_text=$(unzip -p "$SD_ROOT/polaris-wifi.zip" polaris-wifi/LICENCE-wifi.txt 2>/dev/null || true)
+  [[ $lic_text =~ libnl-[0-9]+\.[0-9] ]] \
     || die "LICENCE-wifi.txt inside the zip names no libnl version -- an offer that names no version is not an offer"
   # Modes come from the archive, because boot gates auto-join on [ -x ]. Use plain
   # `unzip -Z`: with -Z1 the long-listing header is suppressed and this would read
@@ -466,12 +495,13 @@ done
 [ -f "$SD_ROOT/polaris-astro.zip" ] \
   || die "polaris-astro.zip was not produced -- every assertion below would have been skipped and the release would have shipped an unverified kit"
 if [ -f "$SD_ROOT/polaris-astro.zip" ]; then
-  unzip -Z1 "$SD_ROOT/polaris-astro.zip" | grep -qx "polaris-astro/polaris-astro.manifest" \
+  zip_has_member "$SD_ROOT/polaris-astro.zip" "polaris-astro/polaris-astro.manifest" \
     || die "polaris-astro.zip does not contain polaris-astro.manifest -- install_astro.sh would skip byte verification and the boot sync could not detect a stale binary"
   msz=$(unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest 2>/dev/null | wc -c)
   [ "$msz" -gt 0 ] || die "polaris-astro.zip stores polaris-astro.manifest as an empty file"
-  unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest \
-    | grep -q 'polaris-httpd$' \
+  # Same SIGPIPE class as above: read the manifest, then match in bash.
+  manifest_text=$(unzip -p "$SD_ROOT/polaris-astro.zip" polaris-astro/polaris-astro.manifest 2>/dev/null || true)
+  [[ $manifest_text == *$'\n'polaris-httpd ]] \
     || die "polaris-astro.manifest inside the zip does not cover polaris-httpd"
 
   # Issue #331, asserted against the archive rather than the staging tree. The
@@ -483,7 +513,7 @@ if [ -f "$SD_ROOT/polaris-astro.zip" ]; then
   # not merely an unverified bundle.
   for f in LICENCE-astro.txt licenses/COPYING-GPL-2.txt \
            licenses/COPYING-LGPL-2.1.txt licenses/README-GPL.txt; do
-    unzip -Z1 "$SD_ROOT/polaris-astro.zip" | grep -qx "polaris-astro/$f" \
+    zip_has_member "$SD_ROOT/polaris-astro.zip" "polaris-astro/$f" \
       || die "polaris-astro.zip does not contain $f -- GPL binaries would reach the user with no licence alongside them (issue #331)"
     lsz=$(unzip -p "$SD_ROOT/polaris-astro.zip" "polaris-astro/$f" 2>/dev/null | wc -c)
     [ "$lsz" -gt 0 ] || die "polaris-astro.zip stores $f as an empty file -- an empty licence is not a licence"
