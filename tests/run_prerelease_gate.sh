@@ -935,14 +935,48 @@ check_libgphoto2_capture_contract
 # missing prerequisite is a SKIP unless a real candidate is being gated (--build)
 # or --require-bulb-cancel-return was given, in which case it is a FAIL.
 check_bulb_cancel_return() {
-    local input="$ROOT/out/o-v18m-k1ii-pgphoto-readiness-20261029/stage2-ondisk/ondisk/pgphoto.stage2ondisk"
     local want="8973d9486e0207446cc111234ed39e878676ce1f3edca2967a97db86c8d9eaac"
-    local why=""
-    if [ ! -f "$input" ]; then
-        why="immutable v90 diagnostic input is absent"
-    elif [ "$(sha256sum "$input" | awk '{print $1}')" != "$want" ]; then
-        bad "Bulb cancellation-return diagnostic: input hash mismatch, refusing a substituted binary"
-        return 0
+    local why="" input=""
+
+    # Issue #338: this used to be a single hardcoded path under out/, which is
+    # gitignored and routinely pruned. Under --build a missing input is a FAIL,
+    # so "I cleaned my scratch directory" turned into a red candidate with the
+    # message "immutable v90 diagnostic input is absent" -- which reads like a
+    # corrupted artifact and invites someone to substitute a similar-looking
+    # binary. Three copies exist on disk and only some of them are the right
+    # bytes: builds/v9k-74-77 holds pgphoto.stage2ondisk at 00d8e9e8..., not
+    # 8973d948..., so a naive "use whichever file is present" would have run the
+    # wrong binary and reported a false green.
+    #
+    # So: search the durable locations, but accept a candidate only if it hashes
+    # to $want. The hash stays the single authority; the search only removes the
+    # dependency on one prunable directory. PRIVATE_RESEARCH is optional and the
+    # gate runs under `set -u`, so default it rather than referencing it bare.
+    local prroot="${PRIVATE_RESEARCH:-$HOME/Documents/VSCodeProjects/PrivateResearch}"
+    for cand in \
+        "$ROOT/out/o-v18m-k1ii-pgphoto-readiness-20261029/stage2-ondisk/ondisk/pgphoto.stage2ondisk" \
+        "$prroot/firmware-packets/6.0.0.54.90--o-v18m-k1ii-pgphoto-readiness-20261029/extracted_appfs/stage2-ondisk/ondisk/pgphoto.stage2ondisk"
+    do
+        [ -f "$cand" ] || continue
+        if [ "$(sha256sum "$cand" | awk '{print $1}')" = "$want" ]; then
+            input="$cand"
+            break
+        fi
+    done
+
+    if [ -z "$input" ]; then
+        # Distinguish "no copy anywhere" from "a copy exists but is not the
+        # pinned bytes". They need opposite responses: the first is a missing
+        # local prerequisite (skip, or fail under --build), the second means the
+        # immutable artifact is corrupt or has been substituted, which must stay
+        # loud in every mode -- that refusal is the whole point of pinning it.
+        if ls "$ROOT"/out/*/stage2-ondisk/ondisk/pgphoto.stage2ondisk \
+              "$HOME"/Documents/VSCodeProjects/PrivateResearch/firmware-packets/*o-v18m-k1ii-pgphoto-readiness*/extracted_appfs/stage2-ondisk/ondisk/pgphoto.stage2ondisk \
+              >/dev/null 2>&1; then
+            bad "Bulb cancellation-return diagnostic: a v90 pgphoto is present but does not hash to $want -- refusing to run it, and do NOT substitute a similar-looking binary"
+            return 0
+        fi
+        why="immutable v90 diagnostic input is absent. Restore it from PrivateResearch firmware-packets/6.0.0.54.90--o-v18m-k1ii-pgphoto-readiness-20261029 (expected sha256 $want); out/ is gitignored so it is not committed."
     elif ! python3 -c "import unicorn, elftools" 2>/dev/null; then
         why="unicorn or pyelftools not importable"
     else
