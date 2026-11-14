@@ -39,8 +39,11 @@ verified.
 
 ## Prepared artifacts for this morning
 
-The direct-PC candidate has already been built and tested from clean LibGphoto2
-main. The run-scoped details are:
+The direct-PC candidates were built and tested from clean LibGphoto2 main. The
+generic host-check prefix is suitable for discovery and offline tests only; it
+has `pentax_research_capture=false` and must not be used for Pentax preview.
+The research-enabled prefix is the candidate for the K-1 preview lane. The
+run-scoped details are:
 
 ```text
 source SHA: fc1599552c268bdf863106cf3505d609ea158edc
@@ -50,6 +53,12 @@ ptp2.so SHA-256: b9536dc8f0568237adb1f8784490994fa441fcd15854de622d44e8953acd946
 libgphoto2.so SHA-256: 9f464c7a1b51148857dbfff17d84e44431e3e9219a9a179f9570c3b8b92a30a6
 PC evidence root: /tmp/pentax-window-20261114-k1ii-pc
 Polaris evidence root: /tmp/polaris-window-20261114-k3iii
+
+research-enabled source SHA: fc1599552c268bdf863106cf3505d609ea158edc
+research-enabled build/prefix: /tmp/pentax-research-host.Iqq8or/prefix
+research-enabled ptp2.so SHA-256: b13f6d1464bb2d2f31b0365f86665ad3d5de953f40274454c0e011f53818d4f6
+research-enabled libgphoto2.so SHA-256: 5b397bcbf9618b574a405637320904ca8d7455eea0229938ba566aae55b9a2b0
+K-1 current evidence: /tmp/pentax-window-20261114-k1ii-pc/research-enabled
 Polaris preflight report: /tmp/polaris-window-20261114-k3iii/layer-report.txt
 K-3 III Bulb probe: /tmp/pentax-k3-probe.kExEGAYg/build/tests/pentax-bulb-qualification-probe
 Bulb probe SHA-256: 2a434b0f8ac66f3921694f3f7469dc670eb22116f96ac910d4db85d3fa3ca2e2
