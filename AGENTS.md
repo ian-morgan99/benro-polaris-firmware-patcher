@@ -2,6 +2,19 @@
 
 These instructions apply to all automated or human-assisted work in this repository.
 
+## Read `docs/WHO-DOES-WHAT.md` first
+
+This project spans two repositories and the issue numbers are easy to mix up. If
+you are unsure which repo, branch, or issue number something belongs to, read
+`docs/WHO-DOES-WHAT.md`. In one line: **this repo is everything except the camera
+library; `ian-morgan99/libgphoto2` is the C library that talks to cameras.**
+
+Deciding rule for a new issue: does the fix require changing C code that talks to
+the camera? Yes → driver repo (`#1xx`). No → this repo (`#2xx`). If a fix needs
+both, it is tracked **here** and references the driver change. A firmware binary
+change is never tracked as a driver issue — see libgphoto2 #145, closed 2026-11-05
+and folded into this repo's #251.
+
 ## Two-agent working agreement
 
 This project is worked by two agents with deliberately separated roles.
@@ -40,6 +53,17 @@ custom retry loops) when a documented, proven process exists.
 - `polaris-debugging` — SSH access, gimbal-vs-router diagnosis, keepalives.
 - `polaris-release` — the shared fail-closed source-to-candidate build and
   provenance process. Use `scripts/build-release-candidate.sh` for releases.
+
+Before any candidate build, run `scripts/build-doctor.sh`. It takes seconds and
+proves each build prerequisite actually *works* rather than merely existing —
+Docker reachable *and* able to bind-mount our files, ubireader that runs, a
+self-contained libgphoto2 clone at a reachable pin. Building astro-v97 took six
+failed attempts because six prerequisites passed existence checks and failed
+anyway, each reporting itself as an unrelated problem. Use
+`scripts/build-astro.sh --version N --summary FILE` for Astro candidates; it runs
+the doctor, provisions what it can inside the repo, and refuses to build rather
+than producing something misleading. The full message-to-cause table is in
+`docs/REPRODUCIBLE-BUILD-RUNBOOK.md`.
 
 If a documented process fails, diagnose *why* (link drop? device state?) and
 retry the documented process or fall back to its documented fallbacks. Only

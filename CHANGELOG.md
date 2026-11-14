@@ -1,5 +1,144 @@
 # Changelog
 
+## Unreleased — setup-wifi.sh put the Wi-Fi password in a process argument (issue #290)
+
+- `setup-wifi.sh` called `wpa_passphrase "$SSID" "$PSK"`, putting the plaintext
+  network password in argv. `/proc` is mounted on the Polaris, so any process could
+  read it from `/proc/<pid>/cmdline` for as long as `wpa_passphrase` ran, and it also
+  appeared in `ps`. The script's own header asserted the password was "never passed as
+  a command-line argument (which would show in `ps`)" — the claim and the code were
+  read as one document instead of the claim being checked against the invocation below
+  it, which is how this survived review.
+- The passphrase now goes in on stdin. Verified against the device's own
+  `wpa_passphrase` build that both forms produce a byte-identical `psk=` line, so the
+  resulting `wpa.conf` is unchanged. The stdin form additionally prints a
+  `# reading passphrase from stdin` banner, which is stripped alongside the existing
+  `#psk=` plaintext comment — filtering only the comment would have written the
+  password into `wpa.conf`, a worse leak than the one being fixed.
+- Verified on a stub that reproduces the device's observed output: the child receives
+  `ARGV:[MyNet][]` (empty second argument), `wpa.conf` carries the expected hash with
+  zero occurrences of the plaintext, mode stays `600`, and no `.wpa.tmp` credential is
+  left behind. Not yet re-run on the device — it became unreachable mid-session
+  (ping fails, port 22 closed). The hash-equality claim *is* from the device, captured
+  before it went down.
+- `tests/test_setup_wifi_psk_not_in_argv.py` asserts what the child process actually
+  received rather than the script's text, and that both plaintext output forms are
+  filtered. Confirmed non-vacuous: against the pre-fix script 4 of its 7 assertions
+  fail; restored, all 7 pass. Registered in `tests/run_prerelease_gate.sh`.
+- Cards already in the field keep the old script until the kit is re-extracted from a
+  rebuilt zip; the password they typed is not recoverable from `wpa.conf`, but anyone
+  with local process access while it ran could have read it.
+
+## Unreleased — copyleft wifi binaries shipped with no licence and no source offer (issue #286)
+
+- The published `polaris-wifi.zip` at
+  `PrivateResearch/firmware-packets/6.0.0.54.99--astro-v99-wifi-20261108/`
+  (SHA-256 `bd5f7db4…`) contains ten entries and none of them is a licence.
+  It ships `wpa_supplicant`, `wpa_cli`, `wpa_passphrase` and `iw`, all four
+  statically linked against libnl (LGPL-2.1) by `container/astro/build_wifi.sh`.
+  LGPL v2.1 §4 requires the licence copy and a corresponding-source offer to
+  accompany the object code, and the README's own instruction is "unzip
+  polaris-wifi.zip at the SD card root" — so a user receives copyleft binaries
+  and no licence at all.
+- A gate existed and should have refused. `scripts/build-astro-bundle.sh:317`
+  dies if any of the four files is missing from `$SD_WIFI`. It landed in 55759cd
+  and is an ancestor of caab172, the patcher commit recorded in that candidate's
+  provenance, so it was present at build time and never ran — because
+  `scripts/build-astro-candidate.sh` calls `build-astro.sh` directly and tars the
+  result itself. **A gate on one of two build paths is not a gate.**
+- Worse than the handover described: no production script calls
+  `build-astro-bundle.sh` at all, and neither `build-astro.sh` nor
+  `build-astro-candidate.sh` creates `polaris-astro.zip` or `polaris-wifi.zip`.
+  The archives that were published for `.99` were therefore produced outside any
+  tracked build path, and `publish-astro-candidate.sh` skips a missing zip
+  silently (`[ -f ] || continue`), so absence passed unnoticed. A wrapper-built
+  zip from 02:17 does contain all four notices; the published bytes stamped 11:37
+  contain none — two different builds, and only the unguarded one was handed out.
+- Licence generation now lives in `build-astro.sh`, beside the existing astro
+  licence step, so every producer of a wifi kit writes them. File names come from
+  the gate that already checks them (`LICENCE-wifi.txt`, `COPYING-LGPL-2.1.txt`,
+  `NOTICE-iw.txt`, `NOTICE-wpa_supplicant.txt`) rather than from the abandoned
+  fix in `4b54611`, which wrote `SOURCE-OFFER.txt` and would have satisfied LGPL
+  while failing that gate. Versions are derived from the tarball filenames written
+  into `licenses/`, not from variables — an offer that names no version is not an
+  offer, and deriving from the filenames makes drift impossible. Fails closed on a
+  missing or empty notice, which trips the existing EXIT trap and removes the four
+  libnl-linked binaries from the bundle.
+- `build-astro-candidate.sh` now builds the SD-rooted archives itself and asserts
+  against the finished archive rather than the staging directory: all four notices
+  present, non-empty when read back out with `unzip -p`, the offer naming a real
+  libnl version, every binary executable as stored in the zip, and every entry
+  rooted at its own directory so it unzips at the card root (#58). The wrapper's
+  check is retained as a second line of defence.
+- `tests/test_wifi_licence_on_every_build_path.py` tests the path, not the text:
+  it runs the real generation block out of `build-astro.sh` against a fabricated
+  `licenses/` tree with no docker and no rig. Confirmed non-vacuous — reverted
+  both scripts to their pre-fix state and 8 of its 9 assertions fail; restored,
+  all 9 pass. Registered in `tests/run_prerelease_gate.sh` (drift guard now at 35
+  suites). The archive-level assertions were also mutation-tested individually:
+  notice absent from the tree, notice empty, offer naming no version, and a binary
+  stored non-executable each fail the build with its own message.
+- Verified on produced bytes, not from a diff. A real cross-compile ran through
+  `build-astro.sh` (the exact script the candidate path invokes) with the cached
+  source tarballs, and the candidate path's archive block was run over the tree it
+  produced. The resulting `polaris-wifi.zip` contains all four notices, read back
+  out of the archive: `LICENCE-wifi.txt` 1791 B, `COPYING-LGPL-2.1.txt` 26530 B,
+  `NOTICE-iw.txt` 849 B, `NOTICE-wpa_supplicant.txt` 965 B. All seven executables
+  are stored `-rwxr-xr-x`, every entry is rooted at `polaris-wifi/`, and the offer
+  names libnl-3.7.0, iw-5.19 and wpa_supplicant-2.10 with working upstream URLs.
+  The same tree also carries `udhcpc.script` at 4583 B, so #280's fix is present in
+  the same artifact.
+- Two vacuous-pass traps were found and closed while verifying this. Running the
+  archive block against a wrong `OUT` skipped every assertion and still exited 0 —
+  the guard now dies if the staging tree is absent, confirmed by pointing it at a
+  nonexistent path. And deleting a licence from an already-built zip proves nothing,
+  because the block rebuilds the archive from the staging directory; the mutations
+  that actually exercise the gate are made to the tree, and those do fail closed.
+- The published `.99` is left as published. Its bytes are recorded by SHA-256 in
+  its README and `publish-astro-candidate.sh` refuses to replace published
+  archives; swapping them silently would break the provenance discipline the
+  publication exists to provide. Needs a human decision: publish a new candidate
+  id with the fix and note an erratum against `.99`, or add
+  `ERRATUM-wifi-licence.txt` beside it.
+
+## Unreleased — the station kit could join a network and use none of it (issues #280, #281)
+
+- `polaris-wifi.zip` never contained `udhcpc.script`. Both `polaris-autojoin.sh`
+  and `polaris-apsta.sh` call `udhcpc -s "$WDIR/udhcpc.script"`, and BusyBox
+  udhcpc configures nothing itself — it obtains a lease and hands it to whatever
+  `-s` names. With the file absent the lease is granted and silently discarded,
+  so auto-join associated, logged `lease of 192.168.68.63 obtained`, and left
+  `wlan1` with no address and no default route. This shipped broken from b367ed8
+  (the commit that first built the kit) to caab172, so every wifi zip ever
+  produced is missing it. It is now copied into the kit, named explicitly in
+  `chmod 755` (`*.sh` would have left it 644), and gated in three places: the
+  staging check, the release wrapper's fail-closed list, and the zip permission
+  loop that verifies the mode actually stored inside the archive.
+- The bind hook applied `$ip`, `$router` and `$subnet` from the lease environment
+  and ignored `$dns`, and this firmware has no `/etc/resolv.conf`, no
+  `/tmp/resolv.conf` and no `/usr/share/udhcpc/default.script`. A joined network
+  therefore reached raw IPs and resolved nothing. `bound|renew` now writes the
+  offered nameservers, guarded so a lease without a DNS option cannot blank a
+  working file, compared with `cmp` first because it runs on every renew against
+  UBIFS, and removed on `deconfig` only if it carries our marker — unreachable
+  nameservers make every lookup hang rather than fail fast.
+- Verified on hardware. Before: `wpa_state=COMPLETED`, no `inet addr` on wlan1,
+  no default route. After: `192.168.68.63/255.255.252.0`, `default via
+  192.168.68.1 dev wlan1`, `ping -I wlan1 1.1.1.1` 0% loss, and
+  `nslookup github.com` resolving through the DHCP-offered servers. hostapd and
+  the AP on wlan0 untouched throughout. The DNS path was exercised under BusyBox
+  sh on the device with log and resolver paths redirected to /tmp.
+- `tests/test_wifi_kit_packaging.py` asserts the copy list contains it, and for
+  the general class that every `$WDIR/<name>` a shipped wifi script references
+  which exists in `container/astro/ondisk/` is actually copied. Confirmed
+  non-vacuous: run against caab172's `build-astro.sh` the same extraction reports
+  it absent. 5 passed (new), 52 passed across `container/astro/tests`,
+  `tools/tests` and `tests/test_astro_build_wrapper.py`.
+- Cards already in the field are not fixed by this change — `install_astro.sh`
+  does not deploy the wifi kit, which is read in place from
+  `/app/sd/polaris-wifi/`. They need the file copied manually or a re-flash of
+  the zip. See #280 for the one-liner.
+
 ## Unreleased — restore direct still-capture dispatch (issue #122)
 
 - Removed the Stage-2 `gp_camera_capture` wrapper and its independent cooldown.
@@ -644,3 +783,26 @@ Inspect via `git cat-file -p v0.3.0-pentax-hdmi-combined-720p60`.
   the regression is red on the parent revision.
 - Evidence and hardware qualification plan: `docs/issue-k1ii-pgphoto-readiness.md`.
 - This is a patcher/runtime fix; no libgphoto2 source change is included.
+
+## Fixed — main has been RED since PR #299 merged
+
+`tests/test_astro_regression.py` arrived with PR #299 but was never added to `PY_TESTS` in
+`tests/run_prerelease_gate.sh`, so the drift guard failed main's gate:
+
+```
+FAIL: python suites exist but are not run by this gate: tests/test_astro_regression.py
+=== Pre-release gate summary: 10 passed, 1 failed, 3 skipped ===
+GATE: RED — do not stage/install the FwPkt until the failed checks pass.
+```
+
+Registering it restores GREEN (38 suites, 615 passed — up from 612, so the three new tests
+actually run rather than sitting collected-but-unexecuted).
+
+The suite is offline-safe and belongs in the offline list: it invokes
+`tests/astro_regression/runner.py --offline`, asserts on checked-in fixtures, touches no
+device and no network, and completes in 0.05 s.
+
+Worth noting how this slipped through: #299 was merged test-only with no gate run attached.
+The drift guard exists precisely because `test_verify_installed_build.py` once sat unrun
+while the gate reported GREEN — it did its job here too, but only after the merge rather
+than before it.

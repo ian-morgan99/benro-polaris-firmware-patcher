@@ -18,6 +18,11 @@
 #       --bulb-seconds 30 --expected-sw 6.0.0.54.52
 #   ./tests/run_prerelease_gate.sh --canary --expected-files 1 \
 #       --expected-build-dir out/<candidate>
+#   ./tests/run_prerelease_gate.sh --require-bulb-cancel-return
+#
+# --require-bulb-cancel-return turns the issue #251 cancellation-return
+# diagnostic from a SKIP into a FAIL when its prerequisites are missing. It is
+# implied automatically whenever --build is supplied.
 #   ./tests/run_prerelease_gate.sh --host 192.168.0.1 --port 9090 --bind 192.168.0.4
 #
 # Exit codes: 0 = gate green (skips allowed), 1 = a runnable check failed,
@@ -42,6 +47,7 @@ EXPECTED_SW=""
 EXPECTED_BUILD_DIR=""
 DEVICE_LIBS=""
 LIBGPHOTO2_SRC=""
+REQUIRE_BULB_CANCEL_RETURN=0
 BULB_ARGS=()
 
 while [ $# -gt 0 ]; do
@@ -58,6 +64,7 @@ while [ $# -gt 0 ]; do
         --bulb-shutter-index) BULB_INDEX="${2:?}"; shift 2 ;;
         --expected-sw) EXPECTED_SW="${2:?}"; shift 2 ;;
         --expected-build-dir) EXPECTED_BUILD_DIR="${2:?}"; shift 2 ;;
+        --require-bulb-cancel-return) REQUIRE_BULB_CANCEL_RETURN=1; shift ;;
         --device-libs)  DEVICE_LIBS="${2:?}"; shift 2 ;;
         --libgphoto2-src) LIBGPHOTO2_SRC="${2:?}"; shift 2 ;;
         -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
@@ -107,6 +114,12 @@ if [ -n "$BULB_SECONDS" ]; then
     if [ -n "$BULB_INDEX" ]; then
         BULB_ARGS+=(--bulb-shutter-index "$BULB_INDEX")
     fi
+fi
+# Issue #251: gating a real candidate always requires the cancellation-return
+# diagnostic. It is implied rather than opt-in so a candidate can never be
+# declared offline-qualified without the return path having been executed.
+if [ -n "$BUILD" ]; then
+    REQUIRE_BULB_CANCEL_RETURN=1
 fi
 pass=0; fail=0; skip=0
 failed=""; skipped=""
@@ -245,6 +258,10 @@ PY_TESTS=(
     tests/test_pentax_bulb_variations.py
     tests/test_astro_multishot.py
     tests/test_display_fwver_monotonic.py
+    tests/test_build_and_install_entrypoint.py
+    tests/test_build_tooling.py
+    tests/test_polaris_bulb_dispatch_arm.py
+    tests/test_polaris_bulb_cancel_result_arm.py
     tests/test_agent_sandbox_check.py
     tests/test_agent_host_config_check.py
     tests/test_app_burst_protocol.py
@@ -262,6 +279,19 @@ PY_TESTS=(
     tests/test_release_change_manifest.py
     tests/test_watch_app_crash.py
     tests/test_bt_wake_radio_liveness.py
+    tests/test_astro_build_wrapper.py
+    tests/test_wifi_kit_packaging.py
+    tests/test_wifi_licence_on_every_build_path.py
+    tests/test_setup_wifi_psk_not_in_argv.py
+    tests/test_camera_qualification_round.py
+    tests/test_plate_solving_present.py
+    tests/test_astro_candidate_wrapper.py
+    tests/test_shipped_marker_check.py
+    # Added by PR #299 (ta/astro-regression-suite) but never registered here, which left
+    # main RED: the drift guard below fails whenever a tests/test_*.py exists that this
+    # array does not name. The suite is offline-safe -- it runs astro_regression/runner.py
+    # with --offline and asserts on checked-in fixtures, no device, no network, 0.05 s.
+    tests/test_astro_regression.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
@@ -331,6 +361,23 @@ if sh container/test_polestar_fwver_patch.sh > /tmp/prerelease-fwver-patch.log 2
 else
     bad "code-780 version patch (log: /tmp/prerelease-fwver-patch.log)"
 fi
+
+# Same reasoning as above, for the three pgphoto machine-code patches. Each one
+# rewrites ARM instructions inside pgphoto, and a wrong encoding is invisible to
+# every Python test: an earlier draft of the cancel writer encoded "mov r2,#0" as
+# "and r2,r0,#0" and "strb r2,[ip]" as a post-indexed str, which would have shipped
+# a pgphoto that corrupted memory instead of cancelling. All three are offline
+# (patch_data works on bytes) and must run even with no built package supplied.
+for patch_test in container/test_polaris_bulb_dispatch_patch.sh \
+                  container/test_polaris_bulb_poll_budget_patch.sh \
+                  container/test_polaris_cancel_writer_patch.sh; do
+    name="$(basename "$patch_test" .sh)"
+    if bash "$patch_test" > "/tmp/prerelease-${name}.log" 2>&1; then
+        ok "pgphoto machine-code patch: $name"
+    else
+        bad "pgphoto machine-code patch: $name (log: /tmp/prerelease-${name}.log)"
+    fi
+done
 
 # ----------------------------------------------------------------------------
 # 3. FwPkt package gates — only when a built package is supplied.
@@ -617,6 +664,52 @@ check_libgphoto2_capture_contract() {
     fi
 }
 check_libgphoto2_capture_contract
+
+# --- issue #251: exact-binary cancellation-return diagnostic
+# The dispatcher retargets capture_image_with_Bulb's GP_ERROR_CANCEL branch onto
+# its normal stop path. Two stock instructions then overwrite the helper's return
+# slot after wait_and_handle_event has recorded -52 there: the stop-callback
+# result at +0x438 and the getImageToBuffer result at +0x6dc. Until both were
+# fixed, a cancelled Bulb capture returned 0 - indistinguishable from success -
+# which is exactly what made the v87 red-cancel report so dangerous: the app was
+# told the shot completed.
+#
+# This is the only offline check that executes that return path at all, so a
+# green gate without it has never looked at cancellation. It runs against the
+# immutable v90 binary by SHA-256 and reconstructs the patch in memory; nothing
+# on disk is modified. Its input lives under out/ and is not committed, so a
+# missing prerequisite is a SKIP unless a real candidate is being gated (--build)
+# or --require-bulb-cancel-return was given, in which case it is a FAIL.
+check_bulb_cancel_return() {
+    local input="$ROOT/out/o-v18m-k1ii-pgphoto-readiness-20261029/stage2-ondisk/ondisk/pgphoto.stage2ondisk"
+    local want="8973d9486e0207446cc111234ed39e878676ce1f3edca2967a97db86c8d9eaac"
+    local why=""
+    if [ ! -f "$input" ]; then
+        why="immutable v90 diagnostic input is absent"
+    elif [ "$(sha256sum "$input" | awk '{print $1}')" != "$want" ]; then
+        bad "Bulb cancellation-return diagnostic: input hash mismatch, refusing a substituted binary"
+        return 0
+    elif ! python3 -c "import unicorn, elftools" 2>/dev/null; then
+        why="unicorn or pyelftools not importable"
+    else
+        local objdump_bin
+        if ! objdump_bin="$(resolve_objdump)"; then
+            why="no functional arm-linux-gnueabi-objdump on PATH or /run/host/usr/bin"
+        elif OBJDUMP="$objdump_bin" python3 tools/audit_polaris_bulb_cancel.py "$input" \
+                >/tmp/prerelease-bulb-cancel-return.log 2>&1; then
+            ok "Bulb cancellation-return diagnostic (cancellation survives cleanup and publication; a failed stop still outranks it)"
+        else
+            bad "Bulb cancellation-return diagnostic (log: /tmp/prerelease-bulb-cancel-return.log)"
+        fi
+        return 0
+    fi
+    if [ "$REQUIRE_BULB_CANCEL_RETURN" = "1" ]; then
+        bad "REQUIRED Bulb cancellation-return diagnostic not run: $why"
+    else
+        skp "Bulb cancellation-return diagnostic ($why)"
+    fi
+}
+check_bulb_cancel_return
 
 # ----------------------------------------------------------------------------
 # Summary. Green gate = zero runnable failures; skips are reported, never

@@ -24,6 +24,75 @@ Result on a real R5 Mark II (flash-verified end-to-end): **immediate detection,
 settings that stick, live view, no "no card" warning, and capture that downloads
 both JPEG and RAW.** See [docs/TESTED.md](docs/TESTED.md).
 
+## Polaris Astro plate-solving
+
+The Astro work is a separate, additive feature branch. Its current architecture,
+what is actually wired, evidence, safety boundaries and remaining qualification
+work are documented in the [Astro plate-solving README](docs/ASTRO-README.md).
+
+Short version: the native ARM bundle and guarded host pipeline build
+successfully, but the complete physical capture-to-tracking journey is not yet
+qualified. Astrometry.net remains the default solver; the native-C solver is a
+research alternative. The Astro branch defaults to **build and do not deploy**.
+
+
+### Astro WebGUI origins and changes in this fork
+
+**If you are testing the Astro WebGUI and reporting a bug, start here.**
+The original browser interface and most of its mount features were built in
+[Blaine Miller's `astro-plate-solving` branch](https://github.com/blaineam/benro-polaris-firmware-patcher/tree/astro-plate-solving).
+We have **extended** that work, not built a new WebGUI. This is a source-level
+comparison made on **6 November 2026** against
+[Blaine's checked revision `6bbf67a8`](https://github.com/blaineam/benro-polaris-firmware-patcher/tree/6bbf67a8b762a9926a42da0f5444f0c0364ff9f0)
+and this repository's `main`. “Our fork” means a change found here but not
+in that upstream revision; it does **not** identify which individual agent
+authored it or prove it is installed in your running firmware.
+
+**What Blaine already provided**
+
+| Feature | Original source | Practical attribution |
+| --- | --- | --- |
+| Web interface, tabs, dark theme, mobile layout, navigation, core JavaScript | `container/astro/webui/index.html`, `app.js`, `app.css` | **Blaine.** Our `app.css` is byte-identical to his (Git blob `8725eb7bf4e3bbba62b2af38483a236739c4984b`). |
+| HTTP control server, mount telemetry, original gallery, Alpaca/INDI/LX200 services | `container/astro/polaris-httpd.c`, `polaris-link.c` | **Blaine**, subsequently extended in our fork. |
+| Astro mode control, mount alignment, GOTO, tracking, manual movement and original capture controls | `polaris-httpd.c`, `polaris-mount.c`, `webui/app.js` | **Blaine.** This was already integrated with the real Polaris protocol: 284 (mode), 517 (position), 519 (GOTO), 527 (heading/alignment), 531 (tracking), plus other control commands. It was never merely a static plate-solving website. |
+| **Drift display, graph and guiding controls** | `container/astro/polaris-match.c`, `ondisk/polaris-guide.sh`, `webui/app.js` (`paintGuide`, `/api/guide`) | **Blaine.** It compares stars between frames, converts image shift to arcseconds and displays it. |
+| **Drift correction** | `ondisk/polaris-guide.sh` | **Blaine.** If enabled, it uses a bounded `goto-radec` to re-centre, **not** independent motor-rate adjustment. Defaults include 30-second checks, 60-arcsecond threshold and **`DRY_RUN=1`**. |
+| Original Astrometry.net solver, calibration/auto-alignment, focus sweep | `polaris-solve.c`, `polaris-extract.c`, `polaris-align.sh`, `polaris-autosolve.sh`, `ondisk/autofocus.sh` | **Blaine.** Our `autofocus.sh` is byte-identical to his (Git blob `5ebbc5f2622ac4e4a1f5ef075636c539860f75c3`). |
+
+**What was specifically added or changed in our fork**
+
+| New or modified functionality | Exact location | What to report as our addition |
+| --- | --- | --- |
+| **Gallery → Historic image solver test** | Added card in `container/astro/webui/index.html`; `galRenderTestImages`, `galTestUpload`, `galTestStart`, `galTestPoll`, `galTestCancel` in `webui/app.js`. | Upload/select a historic JPEG, choose **Astrometry.net** or **Native indexed (research)**, supply optional focal/sensor/sky hints, run/cancel and view results. Blaine's original **gallery** is not ours; this **test card** is. |
+| **Isolated historic-image test API** | New `/api/test/upload`, `/api/test/solve`, `/api/test/state`, `/api/test/cancel` handlers, test-job files and `test-input` media category in `polaris-httpd.c`. | Upload, test-run, progress or cancel defects. Upload accepts only JPEGs and has a 32 MiB limit. This route is designed **not** to issue motor commands or rewrite EXIF; verify on the actual installed version before relying on that boundary. |
+| **Optional solve after WebGUI GOTO** | Modified the existing `/api/astro/goto` handler: `GOTO_PLATESOLVE=1` invokes our `ondisk/polaris-goto-solve.sh` rather than the ordinary GOTO route. | Blaine wrote the original GOTO control. **Our post-slew solve/recentre option** and integration failures belong to our fork; physical pointing qualification remains open. |
+| **Benro Connect GOTO-completion and completed-frame watchers** | New `ondisk/polaris-goto-watch.sh`, `ondisk/polaris-goto-solve.sh`, `ondisk/polaris-frame-watch.sh`; those files are absent from Blaine's checked branch. | Optional app-GOTO observation, solving of **already published** Polaris JPEGs, session targeting, drift/field-rotation measurements and telemetry. **This is separate from Blaine's original drift-guiding screen.** |
+| **Read-only accepted-solve API** | New `GET /api/astro/solve` in `polaris-httpd.c`, reading `target.json` and `last-frame-solution.json`. | Missing/stale results from this endpoint. |
+| **Independent native-C/Gaia solving** | Added `polaris-solve-independent.c`, `polaris-solve-independent-search.c`, `build_gaia_package.sh`, `camera-sensors.tsv` and packaging changes; absent upstream. | Native-indexed solver selection, Gaia catalogue/index coverage, independent search and focal/sensor handling. **Blaine's Astrometry.net path remains the default reference.** |
+| **Optional solve-result EXIF write-back** | Added `container/astro/polaris-exif-solve.c` and guarded integration; absent upstream. | Changes to **Polaris-side JPEG** metadata; camera-card originals must remain untouched. `EXIF_WRITEBACK=1` is opt-in pending qualification. |
+| **Additional guiding options** | Our `ondisk/polaris-guide.sh` extends Blaine's script with `SOLVER_BIN`, independent-catalogue, search/quality and hint parameters. | A defect specific to **our solver selection or qualification gates** is ours; the basic drift measurement/corrective-GOTO approach is Blaine's. |
+| **Reproducible, guarded Astro builds** | Extended `build-astro.sh` with Gaia/catalogue packaging, source archives and cache; added `scripts/build-astro-bundle.sh` (absent upstream). | Build, package, source-provenance or deployment-gating issues. The supported Astro workflow **builds without deploying** by default. |
+
+**What has not been added or proven:** Independent fine-rate motor control is
+**not a working WebGUI feature yet**. Patcher [issue #240](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/240)
+tracks exposing the firmware's apparent per-axis floating-point `J` command.
+Its rate conversion, stop/hold behaviour, command ownership and physical
+qualification are outstanding. Neither Blaine's GOTO-based guiding nor our
+additional image telemetry proves fine-rate guiding works. Preserve all stock
+Polaris features under [issue #259](https://github.com/ian-morgan99/benro-polaris-firmware-patcher/issues/259).
+
+**Where to log a WebGUI bug:** open an issue **in this repository**, even if the
+affected code was inherited, because our firmware and build are what you are
+testing. Title it `[Astro WebGUI][Blaine baseline]`, `[Astro WebGUI][Our addition]`
+or `[Astro WebGUI][Origin uncertain]` as appropriate. State the exact page
+or button, expected/actual result, steps to reproduce, browser, camera, USB
+mode, Polaris firmware/build ID, **standard versus Astro** variant, Git commit
+and deployed artifact hash if known. Include a timestamp and non-sensitive
+browser/server/Mlog output. Mark origin **uncertain** if our integration
+could have changed inherited behaviour; don't label a Blaine source line
+as proof that the current regression originated upstream.
+
+
 ## Architecture map — agent onboarding (October 2026)
 
 > **Scope and confidence.** This is the documented architecture of the camera-control path and firmware packaging, not a claim that every runtime edge has been independently traced on the device. The active installed/qualified build and its exceptions are recorded in [CURRENT-STATE](docs/CURRENT-STATE.md) and [RELEASE-VERSION-STATE](docs/RELEASE-VERSION-STATE.md). **Never substitute GitHub HEAD for the installed libgphoto2 commit.** For detailed binary/ABI evidence see [HOW-IT-WORKS](docs/HOW-IT-WORKS.md); for source selection and upgrade gates see [canonical-pentax-source](docs/canonical-pentax-source.md).
