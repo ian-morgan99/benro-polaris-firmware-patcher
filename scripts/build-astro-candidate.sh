@@ -7,31 +7,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ID="" STOCK="" LIBSRC="" OUT="" DISPLAY_FWVER="" BUILD_ID=""
 CHANGE_SUMMARY=""
 CAMERA_BASELINE="397320411a1355f06d21233435e144d24efc4207"
-# Driver pin: libgphoto2 main. Moved off feature/polaris-capture-events on
-# 2026-11-05, when that branch was fast-forwarded into main as 3fb26e536.
-# Carries #233 capability row + #235 K-1 II shutter gate (both from PR #144,
-# previously verified by content: pentax_model_answers_undeclared_generic_props
-# and pentax_shutter_write_permitted), plus the deferred-Bulb cancellation fix
-# from PR #139 and 17 commits that were on the feature branch but never on main.
-# Verified a clean superset of the previous pin by scripts/pin-divergence-check.sh.
-# Advanced to 7e6dec95f on 2026-11-08 for the v99 candidate. Driver main had moved past
-# v97's pin while work accumulated unreleased on feature/astro-native-platesolve, so the
-# tree was building from a driver commit that no release had ever named. The delta is one
-# commit and it is documentation only ("docs: state which repo owns which work"), verified:
-#   git log --oneline 3fb26e536..7e6dec95f  -> exactly one line, no camlib or library source
-#   scripts/pin-divergence-check.sh         -> ancestry OK, patch-equiv 0 missing, PASS
-# So the shipped .so set is unchanged from v97 and can be checked byte-for-byte against
-# v97's install-manifest.json. Advancing here costs nothing and stops the pin drifting.
-LIB_BASELINE="7e6dec95f383ba5902ed2a7ee6c11cd48a359188"
-# The pin the previous shipped Astro candidate used. A new pin must be a superset of it, not merely
-# reachable from a branch: 855f718e is reachable from feature/polaris-capture-events yet is missing
-# nine shipped-code commits that driver main gained after the branches diverged at 83240b36a on
-# 2026-10-28 (stale-session safety barriers, deferred Bulb cancellation, IT2 white-balance alias,
-# RAW container format, AF release mode, K-1 live-view contract). Pinning it would regress v94.
-# Set to v97's pin rather than v94's: v97 is the last candidate that was actually published and
-# run on hardware, so that is the release this one must be proved not to regress. The gate runs
-# only when LIB_BASELINE differs from this value, so leaving it at v94 would have skipped the
-# comparison against the release that matters.
+# Driver selection is mandatory for every candidate: no silently stale fallback.
+# Supply --libgphoto2-commit FULL_SHA and record it in the release summary.
+LIB_BASELINE=""
+# Previous released driver pin is retained only for regression/superset checking.
 PREVIOUS_LIB_BASELINE="3fb26e536ac169e4970d69516a9d45daf62563f5"
 CATALOG_PACKAGE="" FMIN="14" FMAX="400" SENSOR="36"
 ASTRO_SRC_CACHE="${ASTRO_SRC_CACHE:-$ROOT/out/.astro-src-cache}"
@@ -69,6 +48,7 @@ while [ $# -gt 0 ]; do
     *) die "unknown option: $1";;
   esac
 done
+[ -n "$LIB_BASELINE" ] || die "explicit --libgphoto2-commit FULL_SHA is required; no default driver pin is permitted"
 [ -n "$ID" ] && [ -n "$STOCK" ] && [ -n "$LIBSRC" ] &&
 [ -n "$DISPLAY_FWVER" ] && [ -n "$BUILD_ID" ] && [ -n "$CATALOG_PACKAGE" ] &&
 [ -n "$CHANGE_SUMMARY" ] || usage
