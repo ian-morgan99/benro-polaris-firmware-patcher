@@ -1,0 +1,15 @@
+# --depth probe, 192.168.0.1, blind search, all 10 indexes, polaris-solve 161b3d28.
+# Two runs per cell for the first table; one run per cell for the depth ladder.
+# "t"=solved, "f"=not solved. solve_ms from --timings timings_ms.solve.
+
+stars=50   depth=0  run: true/23504.9ms true/23912.9ms
+stars=50   depth=3  run: false/334.1ms  false/320.1ms
+stars=200  depth=0  run: true/1627.0ms  true/1635.0ms
+stars=200  depth=3  run: true/1659.8ms  true/1618.2ms
+stars=400  depth=0  run: true/3487.8ms  true/3453.1ms
+stars=400  depth=3  run: false/996.4ms  false/1018.0ms
+
+stars=50:  d3=f/342.7ms d4=f/2202.9ms d5=f/6490.7ms d6=f/8931.8ms d8=f/>12s d10=f/>12s
+stars=400: d3=f/1058.1ms d4=t/3506.8ms d5=t/3650.2ms d6=t/3468.4ms d8=t/3454.8ms d10=t/3574.9ms
+
+# depth 1 and 2 on a 200-star field: solved=false, ~0.2-1.6 ms (search returns immediately).
