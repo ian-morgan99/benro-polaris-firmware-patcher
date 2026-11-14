@@ -53,7 +53,7 @@
 #
 # Options:
 #   --slug NAME          short name in the candidate id (default: build)
-#   --pin SHA            libgphoto2 commit (default: origin/main tip of the canonical repo)
+#   --pin SHA            REQUIRED full 40-character libgphoto2 commit (no default)
 #   --libgphoto2 DIR     existing self-contained clone to use instead of provisioning
 #   --stock FILE         stock FwPkt.zip (default: the BenroPolarisPatcher copy)
 #   --catalog DIR        catalogue package (default: gaia-dr3-g10)
@@ -105,6 +105,9 @@ while [ $# -gt 0 ]; do
 done
 
 case "$VERSION" in ''|*[!0-9]*) die "--version must be a number (got '${VERSION:-<empty>}')";; esac
+[ -n "$PIN" ] || die "explicit --pin FULL_SHA is required; no implicit origin/main pin is permitted"
+case "$PIN" in (*[!0-9a-f]*) die "--pin must be a lowercase hexadecimal full commit SHA";; esac
+[ "${#PIN}" -eq 40 ] || die "--pin must be a full 40-character commit SHA"
 [ -f "$STOCK" ] || die "stock FwPkt not found: $STOCK"
 [ -d "$CATALOG/tiles" ] || die "catalogue package has no tiles/: $CATALOG"
 
@@ -288,14 +291,6 @@ if [ -z "$LIBSRC" ]; then
             || die "could not clone $LIB_REPO into $LIBSRC"
     fi
     [ -d "$LIBSRC/.git" ] || die "$LIBSRC is a git worktree or not a repo; the build needs a self-contained clone"
-
-    # Resolve the pin. Default to the canonical repo's origin/main tip, which is
-    # where driver work lands.
-    if [ -z "$PIN" ]; then
-        PIN="$(git -C "$LIB_REPO" rev-parse origin/main 2>/dev/null)" \
-            || die "could not read origin/main in $LIB_REPO; pass --pin explicitly"
-        note "driver pin defaults to canonical origin/main: ${PIN:0:9}"
-    fi
 
     # Refresh remote-tracking refs from the canonical repo. A local clone copies
     # whatever refs/remotes/origin/* the source had, which may be stale; testing
