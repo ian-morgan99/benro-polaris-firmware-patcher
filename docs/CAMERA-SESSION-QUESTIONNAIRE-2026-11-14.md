@@ -93,6 +93,27 @@ focus, capture, or cable move. An unanswered item is a gate, not an assumption.
 Use the direct-PC/libgphoto2 cards first:
 `LibGphoto2/libgphoto2/docs/pentax/CAMERA-WINDOW-OPERATIVE-CARDS.md`.
 
+## Battery-split morning allocation
+
+For this physical window, keep the bodies on separate hosts so each body has a
+single owner and the battery change is not spent moving the same body between
+hosts:
+
+- **K-3 III → direct PC/libgphoto2.** Use the exact model string
+  `Pentax K-3 Mark III (MTP mode)` and the fresh isolated host build recorded
+  below. This is the camera-side LibGphoto2 qualification lane.
+- **K-1 II → real Polaris.** Use the exact model string
+  `Pentax K-1 Mark II (PTP mode)` and the existing Patcher qualification round.
+  This is integration evidence against the installed Polaris package; it does
+  not replace a direct-PC K-1 II reproduction or justify a library change.
+
+The two lanes may run in parallel after both independent provenance baselines
+are captured, but never share a camera client. Do not start Benro Connect or
+OpenPolaris during the first Polaris pass. Reserve the battery change for the
+body that reaches a later recovery/Bulb gate; do not spend it during discovery,
+and stop rather than forcing a low-battery capture or recovery. Bulb and any
+cancellation remain last, supervised, and optional.
+
 1. Record body firmware, USB identity, battery, mode, lens, media, and exact
    current source/build provenance.
 2. Run read-only identity, conditions, config, and runtime-loader checks.
