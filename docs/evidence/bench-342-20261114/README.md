@@ -50,3 +50,31 @@ the cost is compute, not I/O.
 directory contains one real image, the #341 upload, whose WCS is self-consistent but not
 externally verified. The corpus and independent truth remain open work; do not treat this
 baseline as corpus-wide.
+
+## After the extraction fix (`b820b25`) — `device-after-*.jsonl`
+
+Re-measured with the same tool, same image, same indexes. The meta records prove which
+binary ran: `polaris_extract_md5` is `1224d8b1…` in the before files and `0007e8c0…`
+(the hoisted build) in the after files.
+
+| stage | warm before | warm after | cold before | cold after |
+|---|---|---|---|---|
+| `polaris-extract` | 1800 ms | **1230 ms** | 1850 ms | **1260 ms** |
+| solver quad search | 1606 ms | 1615 ms | 1846 ms | 1836 ms |
+| index open/read | 348 ms | 350 ms | 456 ms | 471 ms |
+| star list parse | 2.4 ms | 2.5 ms | 3.9 ms | 3.9 ms |
+| **total capture→result** | **3800 ms** | **3250 ms** | **4230 ms** | **3640 ms** |
+
+10/10 runs still solved, same index-4117, same logodds 87.8, peak RSS unchanged (~11.6 MB).
+The quad-search and index-load figures are flat within noise, which is the expected result:
+the change touches only extraction, so anything that did not move confirms the measurement
+is not just global drift.
+
+**Revised ranking.** Quad search is now #1 at ~50% (was 42%), extraction #2 at ~38% (was
+47%). #344's parameter benchmarking (`--depth`, star count, quad bounds) is the next target;
+index load remains capped near 11%.
+
+**Correction.** The WBS entry for `b820b25` says total moves to "~3.14 s warm". That was
+arithmetic on the extraction delta, not a measurement. The measured warm total is **3.25 s**
+(3800 → 3250 ms). The difference is that `total_ms` includes process start-up and the star
+file round-trip, which the per-stage figures do not.
