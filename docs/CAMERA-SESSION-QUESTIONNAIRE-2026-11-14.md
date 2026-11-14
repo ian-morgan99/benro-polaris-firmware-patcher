@@ -37,6 +37,32 @@ Do not describe a v108 result as current-driver qualification unless a new
 candidate is built with an explicit current pin and its installed bytes are
 verified.
 
+## Prepared artifacts for this morning
+
+The direct-PC candidate has already been built and tested from clean LibGphoto2
+main. The run-scoped details are:
+
+```text
+source SHA: fc1599552c268bdf863106cf3505d609ea158edc
+camera-code baseline: 1bf8ba51a83144f16872fa8cdca6d386bc9d191f
+build/prefix: /tmp/pentax-host-check.neyQN1VX/prefix
+ptp2.so SHA-256: b9536dc8f0568237adb1f8784490994fa441fcd15854de622d44e8953acd9461
+libgphoto2.so SHA-256: 9f464c7a1b51148857dbfff17d84e44431e3e9219a9a179f9570c3b8b92a30a6
+PC evidence root: /tmp/pentax-window-20261114-k3iii-pc
+Polaris evidence root: /tmp/polaris-window-20261114-k1ii
+Polaris preflight report: /tmp/polaris-window-20261114-k1ii/layer-report.txt
+```
+
+The PC no-device preflight loaded the prepared `CAMLIBS` and `IOLIBS` paths and
+found no Pentax attached. The Polaris preflight reached the head and found
+pgphoto alive with no camera USB identity or camlib mapped. These are readiness
+results, not camera results.
+
+For the PC session, set `LD_LIBRARY_PATH` to the prepared `prefix/lib`,
+`CAMLIBS` to `prefix/lib/libgphoto2/2.5.34`, and `IOLIBS` to
+`prefix/lib/libgphoto2_port/0.12.2`; the first debug log must show those exact
+paths before any K-3 III operation.
+
 ## Questions to answer before connecting a camera
 
 The operator should answer these in plain language before any write, preview,
