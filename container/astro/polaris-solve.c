@@ -16,6 +16,7 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -77,13 +78,44 @@ static void usage(const char* me) {
 "                      grind for many minutes.\n"
 "    --parity 0|1|2    0=normal 1=flipped 2=both (default 2)\n"
 "    --no-tweak        skip the 2nd-order SIP refinement (TAN fit only)\n"
+"    --timings         add timings_ms{star_read,index_load,solve} and peak_rss_kb\n"
+"                      to the JSON, for benchmarking (issue #342). Off by default.\n"
 "    --verbose\n", me);
 }
 
+/* Monotonic, not wall clock. The Polaris has no RTC and sets its time over NTP
+ * once the network is up; a step during a solve would make a gettimeofday delta
+ * read as negative or as many minutes. Issue #342 needs stage timings that can
+ * be compared across runs, so the clock must not be able to move underneath them.
+ * CLOCK_MONOTONIC is in glibc 2.24 (the target) and needs no -lrt on modern glibc. */
 static double now_seconds(void) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec + ts.tv_nsec * 1e-9;
+}
+
+/* Opt-in per-stage timings (issue #342). Off by default so the JSON the mount
+ * and the webui parse stays byte-for-byte what it was; --timings appends them.
+ * stdout carries only the result line, so these go out on that same line. */
+static int g_timings = 0;
+static double t_star_ms = 0, t_index_ms = 0, t_solve_ms = 0;
+
+/* Peak resident set of this process, in kB. ru_maxrss is kB on Linux and the
+ * solver's index loading is the RAM question #342 asks about. */
+static long peak_rss_kb(void) {
+    struct rusage ru;
+    if (getrusage(RUSAGE_SELF, &ru) != 0) return -1;
+    return ru.ru_maxrss;
+}
+
+/* Render the timing tail for the result JSON. Empty string when not requested.
+ * Kept as one helper so the solved and unsolved lines cannot drift apart. */
+static void timings_tail(char* buf, size_t n) {
+    if (!g_timings) { buf[0] = '\0'; return; }
+    snprintf(buf, n,
+             ",\"timings_ms\":{\"star_read\":%.1f,\"index_load\":%.1f,"
+             "\"solve\":%.1f},\"peak_rss_kb\":%ld",
+             t_star_ms, t_index_ms, t_solve_ms, peak_rss_kb());
 }
 
 /* "x y [flux]" per line; '#' comments and blank lines skipped. */
@@ -203,7 +235,7 @@ int main(int argc, char** argv) {
     double slo = 0, shi = 0;
     double ra = 0, dec = 0, radius = 0;
     int have_radec = 0, depth = 0, parity = 2, verbose = 0, tweak = 1;
-    double cpulimit = 0, t0, dt;
+    double cpulimit = 0, t0, dt, ta;
 
     for (i = 1; i < argc; i++) {
         const char* a = argv[i];
@@ -225,6 +257,7 @@ int main(int argc, char** argv) {
         else if (!strcmp(a, "--cpulimit"))   cpulimit = atof(NEXT());
         else if (!strcmp(a, "--parity"))     parity = atoi(NEXT());
         else if (!strcmp(a, "--no-tweak"))   tweak = 0;
+        else if (!strcmp(a, "--timings"))    g_timings = 1;
         else if (!strcmp(a, "--verbose"))    verbose = 1;
         else if (!strcmp(a, "-h") || !strcmp(a, "--help")) { usage(argv[0]); return 0; }
         else { fprintf(stderr, "unknown option: %s\n", a); usage(argv[0]); return 2; }
@@ -236,7 +269,9 @@ int main(int argc, char** argv) {
     log_to(stderr);          /* keep stdout clean: it carries only our JSON */
     fits_use_error_system();
 
+    ta = now_seconds();
     field = starsfn ? read_star_text(starsfn) : read_star_xyls(xylsfn);
+    t_star_ms = (now_seconds() - ta) * 1000.0;
     if (!field) return 1;
 
     /* pixel scale search range, in arcsec/pixel */
@@ -285,6 +320,7 @@ int main(int argc, char** argv) {
      * everything and fail slowly" into "refuse to search at all", which is a
      * worse failure mode than the one the filter is meant to avoid. */
     int nskipped = 0;
+    ta = now_seconds();
     for (i = 0; i < nidx; i++)
         if (add_indexes(solver, idxpaths[i], verbose, slo, shi, W, H, 1, &nskipped) == IDX_FAILED)
             fprintf(stderr, "[polaris-solve] WARNING: could not load index %s\n", idxpaths[i]);
@@ -303,10 +339,17 @@ int main(int argc, char** argv) {
         fprintf(stderr, "[polaris-solve] no indexes loaded\n");
         return 1;
     }
+    /* Covers the filtered pass and the unfiltered retry together: #342 asks how
+     * much of a solve is index I/O, and the retry is part of that cost. */
+    t_index_ms = (now_seconds() - ta) * 1000.0;
 
     t0 = now_seconds();
     solver_run(solver);
     dt = now_seconds() - t0;
+    t_solve_ms = dt * 1000.0;
+
+    char tail[128];
+    timings_tail(tail, sizeof tail);
 
     if (solver->best_match_solves) {
         tan_t* wcs = &(solver->best_match.wcstan);
@@ -323,17 +366,17 @@ int main(int argc, char** argv) {
                "\"pixscale_arcsec\":%.6f,\"field_w_deg\":%.4f,\"field_h_deg\":%.4f,"
                "\"parity\":\"%s\",\"cd\":[%.9g,%.9g,%.9g,%.9g],"
                "\"index\":\"%s\",\"logodds\":%.3f,\"nmatch\":%i,\"nfield\":%i,"
-               "\"solve_seconds\":%.3f}\n",
+               "\"solve_seconds\":%.3f%s}\n",
                cra, cdec, orient, pscale,
                arcsec2deg(pscale * W), arcsec2deg(pscale * H),
                (det < 0) ? "normal" : "flipped",
                wcs->cd[0][0], wcs->cd[0][1], wcs->cd[1][0], wcs->cd[1][1],
                solver->best_index ? solver->best_index->indexname : "?",
                solver->best_match.logodds, solver->best_match.nmatch,
-               starxy_n(field), dt);
+               starxy_n(field), dt, tail);
         return 0;
     }
-    printf("{\"solved\":false,\"nfield\":%i,\"solve_seconds\":%.3f}\n",
-           starxy_n(field), dt);
+    printf("{\"solved\":false,\"nfield\":%i,\"solve_seconds\":%.3f%s}\n",
+           starxy_n(field), dt, tail);
     return 3;
 }
