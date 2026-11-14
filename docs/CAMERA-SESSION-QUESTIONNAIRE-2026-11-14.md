@@ -48,9 +48,9 @@ camera-code baseline: 1bf8ba51a83144f16872fa8cdca6d386bc9d191f
 build/prefix: /tmp/pentax-host-check.neyQN1VX/prefix
 ptp2.so SHA-256: b9536dc8f0568237adb1f8784490994fa441fcd15854de622d44e8953acd9461
 libgphoto2.so SHA-256: 9f464c7a1b51148857dbfff17d84e44431e3e9219a9a179f9570c3b8b92a30a6
-PC evidence root: /tmp/pentax-window-20261114-k3iii-pc
-Polaris evidence root: /tmp/polaris-window-20261114-k1ii
-Polaris preflight report: /tmp/polaris-window-20261114-k1ii/layer-report.txt
+PC evidence root: /tmp/pentax-window-20261114-k1ii-pc
+Polaris evidence root: /tmp/polaris-window-20261114-k3iii
+Polaris preflight report: /tmp/polaris-window-20261114-k3iii/layer-report.txt
 K-3 III Bulb probe: /tmp/pentax-k3-probe.kExEGAYg/build/tests/pentax-bulb-qualification-probe
 Bulb probe SHA-256: 2a434b0f8ac66f3921694f3f7469dc670eb22116f96ac910d4db85d3fa3ca2e2
 ```
@@ -63,7 +63,7 @@ results, not camera results.
 For the PC session, set `LD_LIBRARY_PATH` to the prepared `prefix/lib`,
 `CAMLIBS` to `prefix/lib/libgphoto2/2.5.34`, and `IOLIBS` to
 `prefix/lib/libgphoto2_port/0.12.2`; the first debug log must show those exact
-paths before any K-3 III operation.
+paths before any K-1 II operation.
 
 ## Questions to answer before connecting a camera
 
@@ -127,13 +127,16 @@ For this physical window, keep the bodies on separate hosts so each body has a
 single owner and the battery change is not spent moving the same body between
 hosts:
 
-- **K-3 III → direct PC/libgphoto2.** Use the exact model string
-  `Pentax K-3 Mark III (MTP mode)` and the fresh isolated host build recorded
-  below. This is the camera-side LibGphoto2 qualification lane.
-- **K-1 II → real Polaris.** Use the exact model string
-  `Pentax K-1 Mark II (PTP mode)` and the existing Patcher qualification round.
-  This is integration evidence against the installed Polaris package; it does
-  not replace a direct-PC K-1 II reproduction or justify a library change.
+- **K-1 II → direct PC/libgphoto2.** Use the exact model string
+  `Pentax K-1 Mark II (PTP mode)` and the fresh isolated host build recorded
+  below. This is the camera-side LibGphoto2 qualification lane. The K-1 ISO
+  helper is usable only when its source-advertised 200 baseline is present; do
+  not force that helper for another baseline.
+- **K-3 III → real Polaris.** Use the exact model string
+  `Pentax K-3 Mark III (MTP mode)` and the generic K3-aware canary tooling. This
+  is integration evidence against the installed Polaris package. Do **not** run
+  the K-1-II-specific `camera-qualification-round.py` against the K-3 III, and
+  do not treat this lane as direct-libgphoto2 qualification.
 
 The two lanes may run in parallel after both independent provenance baselines
 are captured, but never share a camera client. Do not start Benro Connect or
@@ -142,20 +145,60 @@ body that reaches a later recovery/Bulb gate; do not spend it during discovery,
 and stop rather than forcing a low-battery capture or recovery. Bulb and any
 cancellation remain last, supervised, and optional.
 
+### K-1 II direct-PC lane
+
+1. Prove the exact isolated loader paths and enumerate PTP `25fb:0183` as
+   `Pentax K-1 Mark II (PTP mode)`; MSC `25fb:0182` is a hard stop.
+2. Run source-faithful identity, live-conditions, and config reads. Use the
+   K-1-specific safe helpers only after the current advertised values are
+   recorded: preview, ISO round trip only from the helper's 200 baseline,
+   shutter round trip, and focus with physical lens observation.
+3. For every write, use live condition polling, changed-value read-back, exact
+   restoration, and a fresh-session check. Stop on the first mismatch or
+   malformed preview; do not retry an ambiguous shutter event.
+4. Ordinary capture is optional and follows the same evidence rules. The
+   K-3-only direct-PC Bulb probe is not a K-1 test; K-1 Bulb remains held unless
+   an existing source-faithful K-1 procedure is identified and explicitly
+   approved.
+
+### K-3 III Polaris lane
+
+1. Capture Polaris `/app/FwVer`, package/component hashes, and the fresh USB
+   identity. Run `scripts/control-liveness.py --attempts 2` and stop if the
+   service is unhealthy or the camera identity is absent.
+2. Run `scripts/canary-probe.py --probe` with the exact live firmware value,
+   then `--list-shutters --result-json ...` to record the advertised output
+   format, exposure mode, and shutter list. These are the discovery gates.
+3. Only after those gates pass, and only with explicit capture approval, run one
+   `canary-probe.py --shot --require-exposure-mode` using the camera's observed
+   expected file count. It is a capture gate, not a restoration test; record
+   preview state, lifecycle states, output publication, and post-operation
+   control state.
+4. Run `canary-two-shot.py` only after the first K-3 capture is complete and
+   the exact output prefix/file count are known. Use no stale candidate files
+   and one client owner.
+5. K-3 Bulb and cancellation are optional last gates. Do not use the held
+   direct-PC K-3 Bulb probe on Polaris, do not guess a stop command, and do not
+   run cancellation without direct physical observation and recovery authority.
+
+For both lanes:
+
 1. Record body firmware, USB identity, battery, mode, lens, media, and exact
    current source/build provenance.
-2. Run read-only identity, conditions, config, and runtime-loader checks.
-3. Run one-frame Live View, validate the complete JPEG and state restoration,
-   then run five frames only if the first gate passes.
+2. Run read-only identity, conditions, config, and runtime-loader checks for
+   the lane's own host before any write or capture.
+3. Run the smallest preview/discovery gate defined for that lane and validate
+   the complete result and state restoration where the lane supports it.
 4. Run one setting at a time, with changed-value read-back, exact restoration,
    and fresh-session verification.
-5. Run focus only after Live View is valid and the physical AF/MF state is
-   confirmed.
-6. Run ordinary capture only after the preceding gates pass.
+5. Run focus only after the lane's preview/readiness gate is valid and the
+   physical AF/MF state is confirmed.
+6. Run ordinary capture only after the preceding gates pass and the output
+   contract is known.
 7. Run Bulb last, with short durations first and cancellation only under direct
    observation.
-8. Move the cable to Polaris only after the direct operation under comparison
-   has passed and all PC owners have exited.
+8. Keep the K-1 PC and K-3 Polaris evidence roots separate; never move either
+   body between hosts during this battery window.
 9. On Polaris, collect `/app/FwVer`, provenance, component hashes, fresh USB
    identity, Mlog/Clog snapshots, first PTP/IPC operation, output publication,
    and post-operation control state before claiming a result.
