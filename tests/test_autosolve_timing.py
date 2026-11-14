@@ -25,25 +25,34 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 AUTOSOLVE = os.path.join(ROOT, "container", "astro", "ondisk", "polaris-autosolve.sh")
+# Issue #341 moved pick_downsample() out of autosolve into a file both solve paths
+# source, so the upload path and the capture path cannot drift. extract_function
+# therefore searches autosolve first, then this shared helper.
+PICK_HELPER = os.path.join(ROOT, "container", "astro", "ondisk", "pick_downsample.sh")
 
 
 def extract_function(name: str) -> str:
-    """Return the verbatim POSIX-sh definition of `name` from the shipped script."""
-    with open(AUTOSOLVE, "r", encoding="utf-8", errors="replace") as handle:
-        lines = handle.read().splitlines()
-    start = None
-    for i, line in enumerate(lines):
-        if re.match(rf"^{re.escape(name)}\(\)\s*{{", line):
-            start = i
-            break
-    if start is None:
-        raise AssertionError(f"{name}() not found in {AUTOSOLVE}")
-    # Brace counting: the script uses no nested braces inside these two functions,
-    # and a column-0 '}' is the terminator in this file's style.
-    for j in range(start + 1, len(lines)):
-        if lines[j] == "}":
-            return "\n".join(lines[start:j + 1])
-    raise AssertionError(f"unterminated {name}() in {AUTOSOLVE}")
+    """Return the verbatim POSIX-sh definition of `name` from the shipped scripts."""
+    for path in (AUTOSOLVE, PICK_HELPER):
+        if not os.path.isfile(path):
+            continue
+        with open(path, "r", encoding="utf-8", errors="replace") as handle:
+            lines = handle.read().splitlines()
+        start = None
+        for i, line in enumerate(lines):
+            if re.match(rf"^{re.escape(name)}\(\)\s*{{", line):
+                start = i
+                break
+        if start is None:
+            continue
+        # Brace counting: these functions use no nested braces, and a column-0 '}'
+        # is the terminator in this file's style.
+        for j in range(start + 1, len(lines)):
+            if lines[j] == "}":
+                return "\n".join(lines[start:j + 1])
+        raise AssertionError(f"unterminated {name}() in {path}")
+    raise AssertionError(
+        f"{name}() not found in {AUTOSOLVE} or {PICK_HELPER}")
 
 
 def build_sandbox(tmp_path, align_stdout: str, align_rc: int = 0) -> dict:

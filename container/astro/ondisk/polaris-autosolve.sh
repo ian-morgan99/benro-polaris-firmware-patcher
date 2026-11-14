@@ -253,22 +253,25 @@ mount_send() {
 # so these are not raced.
 FRAME_DIMS_FILE=/tmp/polaris-frame-dims
 
-pick_downsample() {
-    # Issue #321 needs the frame size on the solve line. Capture width AND height
-    # here, while we are already reading the file, rather than paying for a second
-    # polaris-extract pass purely to print dimensions -- that cost is not
-    # acceptable on this CPU. stdout keeps returning only the downsample number so
-    # the existing caller in keep_failed_frame is unaffected.
-    _dims=$("$ASTRO/polaris-extract" --jpeg "$1" --downsample 8 2>/dev/null \
-            | sed -n 's/^# full resolution *\([0-9][0-9]*\) *x *\([0-9][0-9]*\).*/\1 x \2/p')
-    printf '%s' "$_dims" > "$FRAME_DIMS_FILE" 2>/dev/null
-    _w=$(echo "$_dims" | sed -n 's/^\([0-9]*\) .*/\1/p')
-    [ -n "$_w" ] || { echo 4; return; }
-    if   [ "$_w" -ge 6000 ]; then echo 4
-    elif [ "$_w" -ge 3000 ]; then echo 2
-    else                          echo 1
-    fi
-}
+# Issue #341: this policy used to live inline here while polaris-align.sh pinned
+# DOWNSAMPLE=4, and the two drifted -- which is exactly how a small WebUI upload got
+# decoded at 1/4 and starved the solver. The rule now lives in one sourced file that
+# both scripts read, so a change to the thresholds cannot land on one path only.
+# Behaviour is unchanged for autosolve: it still returns only the number on stdout
+# (its caller in keep_failed_frame is unaffected) and still records the frame
+# dimensions it had to read anyway, for #321's solve line.
+if [ -f "$ASTRO/pick_downsample.sh" ]; then
+    . "$ASTRO/pick_downsample.sh"
+else
+    # Partial install. Deliberately NOT a second copy of the thresholds -- that is
+    # the drift this file exists to prevent. Take the historical safe default and
+    # say so loudly instead.
+    echo "[autosolve] WARNING: $ASTRO/pick_downsample.sh missing; using ds=4" >&2
+    pick_downsample() {
+        [ -n "${FRAME_DIMS_FILE:-}" ] && : > "$FRAME_DIMS_FILE" 2>/dev/null
+        echo 4
+    }
+fi
 
 # Keep frames we could not solve. A failed solve currently leaves NOTHING to
 # look at -- the frame is discarded and the log keeps 200 characters of solver

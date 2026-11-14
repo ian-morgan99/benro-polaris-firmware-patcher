@@ -52,7 +52,10 @@ INDEPENDENT_ATTEMPTS=${INDEPENDENT_ATTEMPTS:-40}
 INDEPENDENT_SOLVER_TIMEOUT=${INDEPENDENT_SOLVER_TIMEOUT:-10}
 INDEPENDENT_SEARCH_TIMEOUT=${INDEPENDENT_SEARCH_TIMEOUT:-45}
 INDEPENDENT_BLIND_FALLBACK=${INDEPENDENT_BLIND_FALLBACK:-0}
-DOWNSAMPLE=${DOWNSAMPLE:-4}
+# DOWNSAMPLE is deliberately NOT defaulted here. Issue #341: pinning it to 4 made
+# every small upload decode at 1/4 and starve the solver. It is resolved after IMG
+# is known, from the frame's real width, unless the caller set it -- autosolve does,
+# on every capture call, so captures keep paying nothing extra.
 MAXSTARS=${MAXSTARS:-200}
 # never let one frame block the loop; a mismatched hint can grind for minutes
 SOLVE_TIMEOUT=${SOLVE_TIMEOUT:-45}
@@ -60,6 +63,20 @@ SOLVE_TIMEOUT=${SOLVE_TIMEOUT:-45}
 IMG="$1"
 FOCAL="${2:-}"
 RA="${3:-}"; DEC="${4:-}"; RADIUS="${5:-}"
+
+# Issue #341, fix (1): one size-aware downsample policy shared with autosolve, so the
+# upload path and the capture path cannot drift apart again. Only resolved when unset,
+# because the probe is a decode pass at --downsample 8 and autosolve already passes an
+# explicit value. If the helper is missing (partial install) fall back to the historical
+# 4 rather than failing a solve outright.
+if [ -z "${DOWNSAMPLE:-}" ]; then
+    if [ -f "$ASTRO/pick_downsample.sh" ]; then
+        . "$ASTRO/pick_downsample.sh"
+        DOWNSAMPLE=$(pick_downsample "$IMG")
+    else
+        DOWNSAMPLE=4
+    fi
+fi
 # The WebUI uses the explicit word auto for an optional focal input. Treat it
 # as absent so EXIF/profile/cache inference remains the normal path.
 [ "$FOCAL" = "auto" ] && FOCAL=""
