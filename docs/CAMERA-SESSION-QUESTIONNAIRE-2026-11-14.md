@@ -51,6 +51,8 @@ libgphoto2.so SHA-256: 9f464c7a1b51148857dbfff17d84e44431e3e9219a9a179f9570c3b8b
 PC evidence root: /tmp/pentax-window-20261114-k3iii-pc
 Polaris evidence root: /tmp/polaris-window-20261114-k1ii
 Polaris preflight report: /tmp/polaris-window-20261114-k1ii/layer-report.txt
+K-3 III Bulb probe: /tmp/pentax-k3-probe.kExEGAYg/build/tests/pentax-bulb-qualification-probe
+Bulb probe SHA-256: 2a434b0f8ac66f3921694f3f7469dc670eb22116f96ac910d4db85d3fa3ca2e2
 ```
 
 The PC no-device preflight loaded the prepared `CAMLIBS` and `IOLIBS` paths and
