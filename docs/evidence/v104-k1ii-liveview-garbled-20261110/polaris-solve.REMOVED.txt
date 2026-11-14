@@ -1,0 +1,25 @@
+polaris-solve — removed from this evidence directory
+
+A 652,156-byte ARM build of `polaris-solve` was committed here while capturing the
+v104 K-1 II live-view evidence. It has been deleted: the repository distributes no
+binaries (see the top of .gitignore — "NEVER commit firmware or firmware-derived
+blobs"), nothing in the tree referenced this file, and a build is reproducible from
+source with container/astro/build_solver.sh, so the blob carried no information that
+its identity does not.
+
+The identity below is enough to confirm that any copy you still hold is the same one
+that was attached to this investigation.
+
+  sha256    8b45fc4777b1b94bca349e8e32d39aafd8f646e618a6144dd7ab6f93d62d0b54
+  size      652156 bytes
+  buildid   2be89de3834b9e781cbd12f33eb7fc41b7854847
+  format    ELF 32-bit LSB pie executable, ARM, EABI5 version 1 (SYSV),
+            dynamically linked, interpreter /lib/ld-linux.so.3,
+            for GNU/Linux 3.2.0, not stripped
+
+Rebuild it with:
+
+  SRCCACHE=<dir-with-astrometry.net-0.98> bash container/astro/build_solver.sh arm <outdir>
+
+The surrounding Clog/Mlog captures in this directory are the actual evidence and are
+unaffected.
