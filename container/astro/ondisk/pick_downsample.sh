@@ -1,8 +1,11 @@
-#!/bin/sh
 # ============================================================================
 #  pick_downsample.sh -- one downsample policy for every solve path.
 #
-#  Sourced, not executed:
+#  SOURCED ONLY. Deliberately has no shebang: it defines a function and has no
+#  main body, so executing it would do nothing. tests/
+#  test_verify_published_candidate.py treats a shebangless .sh in ondisk/ as
+#  sourced-only and exempt from the exec bit, which is exactly what this is.
+#
 #      . "$ASTRO/pick_downsample.sh"
 #      DS=$(pick_downsample "$FRAME")
 #
