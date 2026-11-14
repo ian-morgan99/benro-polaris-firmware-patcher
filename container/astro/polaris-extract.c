@@ -27,6 +27,74 @@ static float* bgmap = NULL;      /* per-tile background */
 static float* nsmap = NULL;      /* per-tile noise (MAD -> sigma) */
 static int tiles_w = 0, tiles_h = 0, tile = 64;
 
+/* Hoisted bilinear weights.
+ *
+ * map_at() below recomputes fx/fy (two floating-point divisions), the clamps and
+ * the fractional parts for EVERY pixel, twice -- background and noise. On a real
+ * 1920x1280 frame that is 4.9M calls doing 9.8M divisions, and ARMv7 division is
+ * slow enough to be the dominant cost of star detection.
+ *
+ * fx depends only on x and fy only on y, so both are computed once into tables
+ * here and the inner loop becomes four multiplies with no division at all. The
+ * products are formed in exactly the order map_at() forms them, so results are
+ * bit-identical -- verified against the original for power-of-two AND
+ * non-power-of-two tile sizes (tile=48 is where a reciprocal-substitution
+ * shortcut visibly changed star positions, so this keeps the division).
+ *
+ * Six arrays of W or H doubles: ~25 KB on a 1920x1280 frame. If any allocation
+ * fails the tables are released and every caller falls back to map_at(). */
+static double *wx_a = NULL, *wx_x0 = NULL, *wx_x1 = NULL;
+static double *wy_a = NULL, *wy_y0 = NULL, *wy_y1 = NULL;
+
+static void build_weight_tables(int W, int H) {
+    int i;
+#ifdef POLARIS_EXTRACT_NO_HOIST
+    /* Test hook: leave every table NULL so all callers take the map_at() path.
+     * tests/test_extract_threshold_hoist.py builds the same source twice -- once
+     * with this defined, once without -- and requires byte-identical star lists.
+     * Without that differential there is nothing to catch a "faster" rewrite that
+     * quietly moves star positions. */
+    (void)W; (void)H;
+    return;
+#endif
+    free(wx_a); free(wx_x0); free(wx_x1);
+    free(wy_a); free(wy_y0); free(wy_y1);
+    wx_a = (double*)malloc((size_t)W * sizeof(double));
+    wx_x0 = (double*)malloc((size_t)W * sizeof(double));
+    wx_x1 = (double*)malloc((size_t)W * sizeof(double));
+    wy_a = (double*)malloc((size_t)H * sizeof(double));
+    wy_y0 = (double*)malloc((size_t)H * sizeof(double));
+    wy_y1 = (double*)malloc((size_t)H * sizeof(double));
+    if (!wx_a || !wx_x0 || !wx_x1 || !wy_a || !wy_y0 || !wy_y1) {
+        /* Release whatever DID allocate -- nulling the pointers would leak it --
+         * then leave them all NULL so callers use map_at() as before. */
+        free(wx_a); free(wx_x0); free(wx_x1);
+        free(wy_a); free(wy_y0); free(wy_y1);
+        wx_a = wx_x0 = wx_x1 = wy_a = wy_y0 = wy_y1 = NULL;
+        return;
+    }
+    for (i = 0; i < W; i++) {
+        double fx = ((double)i - tile * 0.5) / tile;
+        int x0, x1; double ax;
+        if (fx < 0) fx = 0;
+        x0 = (int)fx; x1 = x0 + 1;
+        if (x1 > tiles_w - 1) x1 = tiles_w - 1;
+        if (x0 > tiles_w - 1) x0 = tiles_w - 1;
+        ax = fx - (int)fx;
+        wx_a[i] = ax; wx_x0[i] = x0; wx_x1[i] = x1;
+    }
+    for (i = 0; i < H; i++) {
+        double fy = ((double)i - tile * 0.5) / tile;
+        int y0, y1; double ay;
+        if (fy < 0) fy = 0;
+        y0 = (int)fy; y1 = y0 + 1;
+        if (y1 > tiles_h - 1) y1 = tiles_h - 1;
+        if (y0 > tiles_h - 1) y0 = tiles_h - 1;
+        ay = fy - (int)fy;
+        wy_a[i] = ay; wy_y0[i] = y0; wy_y1[i] = y1;
+    }
+}
+
 /* bilinear interpolation between tile centres */
 static double map_at(const float* m, int x, int y) {
     double fx = ((double)x - tile * 0.5) / tile;
@@ -333,6 +401,7 @@ int main(int argc, char** argv) {
     const char* fn = NULL;
     int ds = 4, minpix = 3, maxpix = 500, maxstars = 300, margin = 16, stats = 0;
     int gray_pgm = 0;   /* dump the decoded grayscale as a binary PGM, no stars */
+    int dump_thresh = 0; /* test-only: print per-pixel threshold from both paths */
     int focus_metric = 0;   /* print one sharpness line for autofocus, no stars */
     int thumb_max = 0;      /* >0: emit a colour JPEG thumbnail of this max dim, no stars */
     double focal_mm = 0.0;                 /* from EXIF; 0 = unknown */
@@ -368,6 +437,7 @@ int main(int argc, char** argv) {
         else if (!strcmp(a, "--tile"))       tile = atoi(NEXT());
         else if (!strcmp(a, "--stats"))      stats = 1;
         else if (!strcmp(a, "--gray-pgm"))   gray_pgm = 1;
+        else if (!strcmp(a, "--dump-thresholds")) dump_thresh = 1;
         else if (!strcmp(a, "--focus-metric")) focus_metric = 1;
         else if (!strcmp(a, "--thumb"))      thumb_max = atoi(NEXT());
         else if (!strcmp(a, "-h") || !strcmp(a, "--help")) { usage(argv[0]); return 0; }
@@ -487,6 +557,52 @@ int main(int argc, char** argv) {
         bg = bgmap[(th / 2) * tw + (tw / 2)];
         noise = nsmap[(th / 2) * tw + (tw / 2)];
     }
+    build_weight_tables(W, H);
+
+    /* --dump-thresholds: print the per-pixel threshold computed BOTH ways.
+     *
+     * This exists because comparing star lists between a hoisted and an
+     * un-hoisted build is a weak guard. During development a wrong interpolation
+     * weight was tried that changed the threshold materially, and on the frames
+     * available it still produced byte-identical star lists -- the blobs were
+     * bright enough that a slightly different background did not change which
+     * pixels cleared it. A differential that cannot see a real numerical error is
+     * worse than no test, because it reads as coverage.
+     *
+     * Dumping every pixel's threshold from both code paths makes any deviation
+     * visible directly. Test-only; never set by a shipped build.
+     */
+    if (dump_thresh) {
+        int dx, dy;
+        for (dy = 0; dy < H; dy++) {
+            for (dx = 0; dx < W; dx++) {
+                double via_mapat = map_at(bgmap, dx, dy)
+                                 + ksigma * map_at(nsmap, dx, dy);
+                double via_hoist;
+                if (wx_a) {
+                    double ax = wx_a[dx], ay = wy_a[dy];
+                    size_t r0 = (size_t)wy_y0[dy] * tiles_w;
+                    size_t r1 = (size_t)wy_y1[dy] * tiles_w;
+                    int cx0 = (int)wx_x0[dx], cx1 = (int)wx_x1[dx];
+                    double b = (1 - ax) * (1 - ay) * bgmap[r0 + cx0]
+                             + ax * (1 - ay) * bgmap[r0 + cx1]
+                             + (1 - ax) * ay * bgmap[r1 + cx0]
+                             + ax * ay * bgmap[r1 + cx1];
+                    double n = (1 - ax) * (1 - ay) * nsmap[r0 + cx0]
+                             + ax * (1 - ay) * nsmap[r0 + cx1]
+                             + (1 - ax) * ay * nsmap[r1 + cx0]
+                             + ax * ay * nsmap[r1 + cx1];
+                    via_hoist = b + ksigma * n;
+                } else {
+                    via_hoist = via_mapat;
+                }
+                printf("%.17g %.17g\n", via_hoist, via_mapat);
+            }
+        }
+        free(gray); free(bgmap); free(nsmap);
+        free(wx_a); free(wx_x0); free(wx_x1); free(wy_a); free(wy_y0); free(wy_y1);
+        return 0;
+    }
 
     /* Connected components above threshold, iterative flood fill. */
     {
@@ -508,7 +624,20 @@ int main(int argc, char** argv) {
                 int sp = 0, npix = 0;
                 double sx = 0, sy = 0, sf = 0;
                 int minx, maxx, miny, maxy;
-                if (label[idx] || gray[idx] <= map_at(bgmap, x, y) + ksigma * map_at(nsmap, x, y))
+                double thr;
+                if (wx_a) {
+                    double ax = wx_a[x], ay = wy_a[y];
+                    size_t r0 = (size_t)wy_y0[y] * tiles_w, r1 = (size_t)wy_y1[y] * tiles_w;
+                    int cx0 = (int)wx_x0[x], cx1 = (int)wx_x1[x];
+                    double b = (1 - ax) * (1 - ay) * bgmap[r0 + cx0] + ax * (1 - ay) * bgmap[r0 + cx1]
+                             + (1 - ax) * ay * bgmap[r1 + cx0] + ax * ay * bgmap[r1 + cx1];
+                    double n = (1 - ax) * (1 - ay) * nsmap[r0 + cx0] + ax * (1 - ay) * nsmap[r0 + cx1]
+                             + (1 - ax) * ay * nsmap[r1 + cx0] + ax * ay * nsmap[r1 + cx1];
+                    thr = b + ksigma * n;
+                } else {
+                    thr = map_at(bgmap, x, y) + ksigma * map_at(nsmap, x, y);
+                }
+                if (label[idx] || gray[idx] <= thr)
                     continue;
                 label[idx] = 1; stack[sp++] = (int)idx;
                 minx = maxx = x; miny = maxy = y;
@@ -619,6 +748,7 @@ int main(int argc, char** argv) {
         else                          score = sharp;
         printf("focus score=%.4f hfr=%.4f stars=%d sharp=%.4f\n", score, medhfr, nstars, sharp);
         free(gray); free(label); free(stack); free(stars); free(bgmap); free(nsmap);
+        free(wx_a); free(wx_x0); free(wx_x1); free(wy_a); free(wy_y0); free(wy_y1);
         return 0;
     }
 
@@ -649,5 +779,6 @@ int main(int argc, char** argv) {
     }
 
     free(gray); free(label); free(stack); free(stars); free(bgmap); free(nsmap);
+    free(wx_a); free(wx_x0); free(wx_x1); free(wy_a); free(wy_y0); free(wy_y1);
     return nstars > 0 ? 0 : 3;
 }
