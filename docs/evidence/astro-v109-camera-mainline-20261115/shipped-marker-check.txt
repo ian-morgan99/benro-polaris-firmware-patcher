@@ -1,0 +1,7 @@
+artifact : out/astro-v109-camera-mainline-20261115/stage2-ondisk/libgphoto2/2.5.34/ptp2.so
+built    : e4840f4290ad5acc4df5c228dc9520b044366b87
+baseline : 51f636d825013dcb87bab972a329114f12a7063a
+scope    : camlibs/ptp2  (derived from ptp2.so)
+
+no shipped-code commits missing from the candidate
+RESULT: PASS -- nothing to verify

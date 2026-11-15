@@ -104,7 +104,7 @@ def make_state(path: Path) -> Path:
     return state
 
 
-def gate(repo: Path, packet: Path, commit: str, state: Path) -> tuple[int, str]:
+def gate(repo: Path, packet: Path, commit: str, state: Path, *extra: str) -> tuple[int, str]:
     r = subprocess.run(
         [
             "python3", str(GATE),
@@ -113,6 +113,7 @@ def gate(repo: Path, packet: Path, commit: str, state: Path) -> tuple[int, str]:
             "--packet-dir", str(packet),
             "--repo", str(repo),
             "--state", str(state),
+            *extra,
         ],
         capture_output=True, text=True,
     )
@@ -228,3 +229,60 @@ def test_r5_catches_a_stale_readme_generator(tmp_path: Path):
     assert "build-astro.sh" in out, (
         "R5 must name the stale generator:\n" + out
     )
+
+
+def test_publication_accepts_only_the_exact_claimed_commit_set(tmp_path):
+    repo, first = make_patcher_repo(tmp_path)
+    packet = make_packet(tmp_path, repo, first)
+    state = make_state(tmp_path)
+    driver = "a" * 40
+    state.write_text(state.read_text()
+                     + "consumed_display_fwver=6.0.0.54.107\n"
+                     + f"version_commit_binding=6.0.0.54.107|libgphoto2={driver}|patcher={first}\n")
+    before = state.read_text()
+    rc, out = gate(repo, packet, first, state, "--claimed", "--libgphoto2-commit", driver)
+    assert rc == 0, out
+    assert state.read_text() == before  # verification never reclaims or rewrites
+    rc, out = gate(repo, packet, first, state, "--claimed", "--libgphoto2-commit", "b" * 40)
+    assert rc != 0 and "not bound" in out
+    rc, out = gate(repo, packet, first, state, "--claimed")
+    assert rc != 0 and "both exact full source SHAs" in out
+    rc, out = gate(repo, packet, first, state)
+    assert rc != 0 and "already issued" in out  # minting reuse stays forbidden
+
+
+def test_publication_rejects_an_unclaimed_version(tmp_path):
+    repo, first = make_patcher_repo(tmp_path)
+    packet = make_packet(tmp_path, repo, first)
+    state = make_state(tmp_path)
+    rc, out = gate(repo, packet, first, state, "--claimed", "--libgphoto2-commit", "a" * 40)
+    assert rc != 0
+    assert "requires a consumed version" in out
+
+
+def test_packet_accepts_builder_layout_but_rejects_conflicting_archives(tmp_path):
+    repo, first = make_patcher_repo(tmp_path)
+    packet = make_packet(tmp_path, repo, first)
+    state = make_state(tmp_path)
+    root_zip = packet / "polaris-astro.zip"
+    nested = packet / "astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro.zip"
+    root_zip.rename(nested)
+    rc, out = gate(repo, packet, first, state)
+    assert rc == 0, out
+    root_zip.write_bytes(b"different")
+    rc, out = gate(repo, packet, first, state)
+    assert rc != 0 and "conflicting copies" in out
+
+
+def test_packet_directory_and_empty_files_do_not_count_as_archives(tmp_path):
+    repo, first = make_patcher_repo(tmp_path)
+    packet = make_packet(tmp_path, repo, first)
+    state = make_state(tmp_path)
+    archive = packet / "FwPkt.zip"
+    archive.write_bytes(b"")
+    rc, out = gate(repo, packet, first, state)
+    assert rc != 0 and "R4 FwPkt.zip missing" in out
+    archive.unlink()
+    archive.mkdir()
+    rc, out = gate(repo, packet, first, state)
+    assert rc != 0 and "R4 FwPkt.zip missing" in out

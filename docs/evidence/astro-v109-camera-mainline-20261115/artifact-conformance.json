@@ -1,0 +1,141 @@
+{
+  "contract_version": "astro-release-contract-v1",
+  "candidate": "out/astro-v109-camera-mainline-20261115",
+  "generated_utc": "2026-11-15T02:05:57Z",
+  "python": "3.12.3",
+  "verdict": "ARTIFACTS_INTERNALLY_CONSISTENT",
+  "note": "PASS means the archives are internally consistent. It is NOT HARDWARE_QUALIFIED: installed-file hashes, boot-hook persistence, HTTP binding and a real plate solve require the device matrix (#265).",
+  "counts": {
+    "checks": 21,
+    "fail": 0,
+    "unknown": 0
+  },
+  "checks": [
+    {
+      "component": "polaris-wifi",
+      "check": "archive-readable",
+      "verdict": "PASS",
+      "reason": "polaris-wifi.zip: CRC ok, 14 members"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "single-root",
+      "verdict": "PASS",
+      "reason": "single root 'polaris-wifi'"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "no-symlinks",
+      "verdict": "PASS",
+      "reason": "no symlink members"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "mandatory-member",
+      "verdict": "PASS",
+      "reason": "LICENCE-wifi.txt present (1791 bytes)"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "mandatory-member",
+      "verdict": "PASS",
+      "reason": "COPYING-LGPL-2.1.txt present (26530 bytes)"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "mandatory-member",
+      "verdict": "PASS",
+      "reason": "NOTICE-iw.txt present (849 bytes)"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "mandatory-member",
+      "verdict": "PASS",
+      "reason": "NOTICE-wpa_supplicant.txt present (965 bytes)"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "mandatory-member",
+      "verdict": "PASS",
+      "reason": "udhcpc.script present (4583 bytes)"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "offer-names-versions",
+      "verdict": "PASS",
+      "reason": "names every staged upstream version"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "executable-mode",
+      "verdict": "PASS",
+      "reason": "all scripts and ELF binaries carry an exec bit"
+    },
+    {
+      "component": "polaris-astro",
+      "check": "archive-readable",
+      "verdict": "PASS",
+      "reason": "polaris-astro.zip: CRC ok, 699 members"
+    },
+    {
+      "component": "polaris-astro",
+      "check": "single-root",
+      "verdict": "PASS",
+      "reason": "single root 'polaris-astro'"
+    },
+    {
+      "component": "polaris-astro",
+      "check": "no-symlinks",
+      "verdict": "PASS",
+      "reason": "no symlink members"
+    },
+    {
+      "component": "polaris-astro",
+      "check": "mandatory-member",
+      "verdict": "PASS",
+      "reason": "COPYING-GPL-2.txt present (18092 bytes)"
+    },
+    {
+      "component": "polaris-astro",
+      "check": "mandatory-member",
+      "verdict": "PASS",
+      "reason": "SOURCE-OFFER.txt present (619 bytes)"
+    },
+    {
+      "component": "polaris-astro",
+      "check": "executable-mode",
+      "verdict": "PASS",
+      "reason": "all scripts and ELF binaries carry an exec bit"
+    },
+    {
+      "component": "polaris-wifi",
+      "check": "consumer-drift",
+      "verdict": "PASS",
+      "reason": "3 sibling references resolve"
+    },
+    {
+      "component": "polaris-astro",
+      "check": "consumer-drift",
+      "verdict": "PASS",
+      "reason": "3 sibling references resolve"
+    },
+    {
+      "component": "FwPkt",
+      "check": "extracted-tree",
+      "verdict": "PASS",
+      "reason": "camera/{uImage,rootfs.ubifs,appfs.ubifs}, FwVer, firmwareInfo present"
+    },
+    {
+      "component": "astro-bundle.tar.gz",
+      "check": "archive-readable",
+      "verdict": "PASS",
+      "reason": "747 members, no traversal"
+    },
+    {
+      "component": "astro-bundle.tar.gz",
+      "check": "licence-reachability",
+      "verdict": "PASS",
+      "reason": "3 licence text(s) plus LICENCE-astro.txt ship inside COPY-TO-SD-CARD-ROOT/polaris-astro, so a user copying the SD tree receives them with the GPL binaries (5 archive-only copies remain outside, covered by the written offer)"
+    }
+  ]
+}

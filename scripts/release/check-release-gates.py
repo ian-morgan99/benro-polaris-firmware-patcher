@@ -3,10 +3,10 @@
 
 Five rules, enforced in code rather than memory:
 
-  R1  The display version is incremented BEFORE anything is deployed. Concretely:
-      the version must already be recorded in the consumed registry, and must be
-      strictly greater than every version ever recorded. Claiming is a separate,
-      earlier step from shipping.
+  R1  Before building, the display version must be unused and newer than the
+      registry. Before publication (--claimed), the builder must already have
+      bound that version to these exact source commits. Validating that same
+      binding is not issuing a second candidate; a mismatched binding fails.
 
   R2  Every ZIP is published to PrivateResearch with the commits it contains shown.
       This prints that commit list so it can be pasted into RELEASE-IDENTITY.md,
@@ -47,6 +47,7 @@ Exit 0 = all gates pass. Non-zero = do not ship.
 """
 
 import argparse
+import filecmp
 import os
 import re
 import subprocess
@@ -171,6 +172,8 @@ def tail(version):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--claimed", action="store_true",
+                    help="verify an already gated exact version/commit binding before publication")
     ap.add_argument("--fwver", help="display firmware version this release claims")
     ap.add_argument("--patcher-commit", help="exact patcher commit the ZIP was built from")
     ap.add_argument("--libgphoto2-commit", help="exact libgphoto2 commit the ZIP was built from")
@@ -199,17 +202,26 @@ def main():
     fails, warns = [], []
 
     # ---- R1: incremented before deploy ---------------------------------------
-    if not args.fwver.startswith(FAMILY):
+    if not re.fullmatch(r"6\.0\.0\.54\.(0|[1-9][0-9]*)", args.fwver):
         fails.append("R1 %s is not in family %s" % (args.fwver, FAMILY))
-    if args.fwver in consumed:
-        fails.append("R1 %s was already issued -- it is in the consumed registry and "
-                     "must never be reused" % args.fwver)
     highest = max(consumed, key=tail)
-    if tail(args.fwver) <= tail(highest):
-        fails.append("R1 %s is not ahead of the highest recorded version %s"
-                     % (args.fwver, highest))
-    if last and tail(args.fwver) <= tail(last):
-        fails.append("R1 %s is not ahead of last_display_fwver=%s" % (args.fwver, last))
+    if args.claimed:
+        commits = (args.libgphoto2_commit or "", args.patcher_commit)
+        if any(not re.fullmatch(r"[0-9a-f]{40}", value) for value in commits):
+            fails.append("R1 --claimed requires both exact full source SHAs")
+        if args.fwver not in consumed:
+            fails.append("R1 publication requires a consumed version recorded by the builder")
+        if bindings.get(args.fwver) != commits:
+            fails.append("R1 claimed version is not bound to these exact source commits")
+    else:
+        if args.fwver in consumed:
+            fails.append("R1 %s was already issued -- it is in the consumed registry and "
+                         "must never be reused" % args.fwver)
+        if tail(args.fwver) <= tail(highest):
+            fails.append("R1 %s is not ahead of the highest recorded version %s"
+                         % (args.fwver, highest))
+        if last and tail(args.fwver) <= tail(last):
+            fails.append("R1 %s is not ahead of last_display_fwver=%s" % (args.fwver, last))
     # A version that is ahead of the registry but already running on hardware is the
     # #169 failure. The registry can be behind reality; the device cannot lie about
     # what it is running.
@@ -250,8 +262,19 @@ def main():
             fails.append("R4 packet directory not found: %s" % args.packet_dir)
             r4 = "FAIL"
         else:
-            present = set(os.listdir(args.packet_dir))
-            missing = [n for n in ("FwPkt.zip", "polaris-astro.zip") if n not in present]
+            missing = []
+            for name in ("FwPkt.zip", "polaris-astro.zip"):
+                # The builder keeps the SD archive in the bundle; the publisher
+                # copies it to the packet root. Both documented layouts count.
+                candidates = [os.path.join(args.packet_dir, name)]
+                if name == "polaris-astro.zip":
+                    candidates.append(os.path.join(args.packet_dir, "astro-bundle",
+                                                   "COPY-TO-SD-CARD-ROOT", name))
+                present = [p for p in candidates if os.path.isfile(p) and os.path.getsize(p)]
+                if not present:
+                    missing.append(name)
+                elif len(present) > 1 and not filecmp.cmp(present[0], present[1], shallow=False):
+                    missing.append(name + " (conflicting copies)")
             for need in missing:
                 fails.append("R4 %s missing from the packet -- a release ships both "
                              "archives together" % need)

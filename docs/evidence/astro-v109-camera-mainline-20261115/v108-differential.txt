@@ -1,0 +1,6 @@
+comparing astro-v108-starved-extract-20261113 (6.0.0.54.108) -> astro-v109-camera-mainline-20261115 (6.0.0.54.109)
+3 of 11 shipped files changed:
+  /app/FwVer
+  /app/lib/stage2/libgphoto2/2.5.34/ptp2.so  <- libgphoto2 PTP driver (camera protocol behaviour)
+  /app/openpolaris-libgphoto2-provenance.txt
+PASS: shipped artifacts differ and the change set is reported

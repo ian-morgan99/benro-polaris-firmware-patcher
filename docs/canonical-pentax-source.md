@@ -1,5 +1,19 @@
 # Canonical Pentax source — what to build, and how to upgrade it safely
 
+## 2026-11-15 — v109 candidate; not installed or physically qualified
+
+Candidate `astro-v109-camera-mainline-20261115` (`6.0.0.54.109`) uses clean
+patcher `fcc2b5fa54e5c8a30893866c81c98531ba42e5ee` and driver
+`e4840f4290ad5acc4df5c228dc9520b044366b87`. Final offline gate: 27 passed,
+0 failed, 0 gate-level skips; Python 815 passed / 13 test-level skips.
+Candidate source pointer only, NOT a qualified camera baseline.
+Canonical library checkout: /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2.
+
+The [v109 evidence record](evidence/astro-v109-camera-mainline-20261115/SUMMARY.md)
+and WBS 8.17.17 supersede the dated "latest" and workspace claims below.
+Earlier entries remain historical evidence, not current installed identity.
+#251, setting restoration, RAW+JPEG and non-Pentax qualification remain open.
+
 This document identifies the libgphoto2 source that the Polaris patcher may consume. It is a provenance pointer, **not permission to move to a newer SHA without qualification**.
 
 Normative upgrade process: [`LIBGPHOTO2-UPGRADE-PROCESS.md`](LIBGPHOTO2-UPGRADE-PROCESS.md).

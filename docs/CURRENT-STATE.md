@@ -1,5 +1,18 @@
 # Current repository state
 
+## 2026-11-15 — v109 candidate; not installed or physically qualified
+
+Candidate `astro-v109-camera-mainline-20261115` (`6.0.0.54.109`) uses clean
+patcher `fcc2b5fa54e5c8a30893866c81c98531ba42e5ee` and driver
+`e4840f4290ad5acc4df5c228dc9520b044366b87`. Final offline gate: 27 passed,
+0 failed, 0 gate-level skips; Python 815 passed / 13 test-level skips.
+No hardware was touched; v108 is the last recorded partial camera evidence.
+
+The [v109 evidence record](evidence/astro-v109-camera-mainline-20261115/SUMMARY.md)
+and WBS 8.17.17 supersede the dated "latest" and workspace claims below.
+Earlier entries remain historical evidence, not current installed identity.
+#251, setting restoration, RAW+JPEG and non-Pentax qualification remain open.
+
 ## 2026-10-30 — source-only #251 follow-up; no new firmware
 
 Authorized delivery work remains on `main` in `/home/ian/polaris-build-73`.
