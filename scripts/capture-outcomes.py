@@ -7,12 +7,13 @@ negative, including for captures that completed normally:
     capture_image[3164]:----capture end   -23398 ms   <- SUCCESS, produced SP_0365.dng
     capture_image[3164]:----capture end   -71634 ms   <- the real failure
 
-Measured over the archived bundles in docs/evidence: 216 `capture end` lines, of
-which **0 are positive** and 47 correspond to an actual failure. Treating a negative
-duration as a timeout therefore over-reports failures by roughly 4.6x across the
-archive (and 17x over the 20-bundle subset examined in #218). This cost a wrong
-conclusion once already: an initial analysis reported "34 capture timeouts" and
-inferred several failure modes that did not exist.
+The totals depend on the exact log paths supplied, because the repository contains
+multiple preserved generations and some sessions have both raw and cleaned copies.
+The classifier reports its counts from the supplied inputs instead of embedding an
+archive-wide total that will go stale as evidence is added. Treating a negative
+duration as a timeout over-reports failures; this cost a wrong conclusion once
+already when an initial analysis reported "34 capture timeouts" and inferred
+several failure modes that did not exist.
 
 Outcome is decided instead by the markers that actually distinguish the cases:
 
@@ -47,7 +48,12 @@ FILE_MADE = re.compile(r"(SP_\d+\.dng|[A-Za-z0-9_]+\.(?:dng|jpg))", re.I)
 TIMESTAMP = re.compile(r"\[(?P<ts>\d{2}:\d{2}:\d{2}[:.]?\d*)")
 
 # Terminal states observed on this camera that mean the capture did not complete.
-TERMINAL_ERROR_STATES = {-6, -10, -110, -1005, -7, -99}
+# These are application-level terminal states observed in preserved device logs.
+# -108 is the pgphoto file-transfer failure (`gp_filesystem_get_file ... ret =
+# -108`, followed by `captureImage ret -108` and `PHOTO_RECORD Fail`). A nearby
+# filename is contradictory evidence, not success: the file may be a partial
+# output or belong to the next request (#142/#145).
+TERMINAL_ERROR_STATES = {-6, -7, -10, -99, -108, -110, -1005}
 
 # Measured in docs/evidence/bulb-session-20260930-0201/raw/Clog_000180.log: the
 # `ERROR: Could not capture image.` line is emitted *before* its `capture end` line,

@@ -486,6 +486,12 @@ PY_TESTS=(
     # the header block is executable. It must run early and always -- a gate
     # that produces no output is worse than one that fails.
     tests/test_gate_no_self_recursion.py
+    # Keep all offline-safe camera/astro helper contracts under the same gate;
+    # the drift guard must not report these as unrun after they are added.
+    tests/test_extract_threshold_hoist.py
+    tests/test_fetch_indexes_integrity.py
+    tests/test_pick_downsample_shared.py
+    tests/test_solve_stage_timings.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then

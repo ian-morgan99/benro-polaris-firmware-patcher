@@ -139,6 +139,25 @@ def test_contradictory_evidence_is_surfaced_not_resolved():
     assert summary["contradictory_failures"] == 1, summary
 
 
+def test_terminal_transfer_error_is_failure_even_with_nearby_filename():
+    """A pgphoto -108 transfer failure is not a successful capture (#218)."""
+    mod = load()
+    body = ("[02:00:00:000 INFO-]:capture_image[3164]:----capture end   -1750 ms\n"
+            "[02:00:00:100 INFO-]:state:4;IMGP3584.JPG\n"
+            "[02:00:00:200 INFO-]:state:-108;/app/sd/normal/SP_0064.jpg\n")
+    with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False) as fh:
+        fh.write(body)
+        path = fh.name
+    try:
+        records, summary = mod.classify([path])
+    finally:
+        os.unlink(path)
+    assert records[0]["outcome"] == "FAIL", records
+    assert records[0]["file_produced"] == "IMGP3584.JPG", records
+    assert records[0]["contradictory_evidence"] is True, records
+    assert summary["failures_total"] == 1, summary
+
+
 def test_markdown_summaries_are_not_parsed_as_logs():
     """docs/evidence is full of SUMMARY.md files quoting log lines as evidence."""
     mod = load()

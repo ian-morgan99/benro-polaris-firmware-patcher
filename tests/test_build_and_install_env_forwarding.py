@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """The host re-exec must not silently drop the documented env overrides.
 
-Offline. Puts a stub `flatpak-spawn` and no `docker` on PATH, runs the real
-scripts/release/build-and-install.sh, and asserts the re-exec carries every
+Offline. Puts a stub `flatpak-spawn` and an isolated command PATH with no
+`docker`, runs the real scripts/release/build-and-install.sh, and asserts the
+re-exec carries every
 override it documents in usage(). No device, no network, no docker.
 
 Why: flatpak-spawn --host starts its child with a fresh environment. The script
@@ -52,6 +53,9 @@ class EnvForwardingTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
+        copy = getattr(self, "copy", None)
+        if copy is not None:
+            copy.unlink(missing_ok=True)
 
     def _script_copy(self):
         """The real script, with only its PATH-prepend reordered.
@@ -71,14 +75,26 @@ class EnvForwardingTest(unittest.TestCase):
                       "this test's stub-shadowing trick needs updating")
         self.assertIn("SPAWN_ENV", src,
                       "the env-forwarding block is gone from build-and-install.sh")
-        copy = self.tmp / "build-and-install.copy.sh"
-        copy.write_text(src.replace(needle, 'export PATH="$PATH:/usr/bin:/bin"'))
+        # Keep the copy under scripts/release so the script's own ROOT
+        # calculation still resolves to this checkout rather than `/`.
+        copy = SCRIPT.with_name(".build-and-install-env-test.sh")
+        self.copy = copy
+        copy.write_text(src.replace(needle, 'export PATH="$PATH"'))
         return copy
 
     def _run(self, overrides):
         env = dict(os.environ)
-        # Stub dir first; the reordered PATH in the copy keeps it first.
-        env["PATH"] = str(self.bin) + ":/usr/bin:/bin"
+        # Keep the real Docker executable out of the test PATH. This host has
+        # Docker in /bin as well as /usr/bin, so merely omitting /usr/bin is not
+        # sufficient to exercise the flatpak-spawn branch. The script reaches
+        # only these utilities before the stub exits.
+        for name in ("bash", "date", "dirname", "mkdir", "tee"):
+            target = Path("/bin") / name
+            if target.exists():
+                link = self.bin / name
+                if not link.exists():
+                    link.symlink_to(target)
+        env["PATH"] = str(self.bin) + ":/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin"
         env.pop("DOCKER_HOST", None)
         for k in DOCUMENTED:
             env.pop(k, None)
