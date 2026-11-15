@@ -333,6 +333,15 @@ def wrapper_sandbox(tmp_path: Path):
 
 
 def _wrapper(root: Path, *args, extra_env=None):
+    # Every invocation now chooses its driver explicitly. Source-refusal tests
+    # use the fixture's real HEAD; early input checks need only a valid SHA.
+    if "--pin" not in args:
+        pin = "a" * 40
+        if "--libgphoto2" in args:
+            src = args[args.index("--libgphoto2") + 1]
+            head = run(["git", "-C", src, "rev-parse", "HEAD"]).stdout.strip()
+            pin = head if len(head) == 40 else pin
+        args = (*args, "--pin", pin)
     env = clean_env(HOME=str(root.parent / "fakehome"))
     # The fixture's fake bin sits beside the repo. Going first means the wrapper's
     # docker/ubireader probes never touch the host, which is what makes these tests

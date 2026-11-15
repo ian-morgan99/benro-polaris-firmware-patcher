@@ -9,10 +9,11 @@ version family, or missing the fifth build component.
 last_display_fwver=6.0.0.54.108
 ```
 
-`.108` was claimed and published 2026-11-13 by the Astro candidate flow, again by hand:
-`build-astro-candidate.sh` still has no version-claim step of its own, so nothing writes
-back here. The structural fix -- having the Astro flow claim its own version -- remains
-open and was deliberately not attempted mid-release because it changes build behaviour.
+`.108` was claimed and published 2026-11-13 by the Astro candidate flow by hand.
+As of 2026-11-15, `build-astro-candidate.sh` checks the registry before building
+and records the version plus both exact source commits after the shared gate
+and identity checks pass. The manual-claim descriptions below are historical,
+not instructions for new releases.
 
 Backfilled 2026-11-07. `.97` and `.98` were both issued but never recorded here, so
 `--next` offered `.96` while `.97` was already published *and* running on hardware --

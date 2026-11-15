@@ -53,17 +53,14 @@ class EnvForwardingTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
-        copy = getattr(self, "copy", None)
-        if copy is not None:
-            copy.unlink(missing_ok=True)
 
     def _script_copy(self):
-        """The real script, with only its PATH-prepend reordered.
+        """The real script with PATH normalization disabled in a temporary repo.
 
         Line 16 is `export PATH="/usr/bin:/bin:$PATH"`, which puts the real
         /usr/bin/flatpak-spawn ahead of any stub dir on PATH -- shadowing it by
-        PATH order is therefore impossible. Reordering to append instead keeps
-        every other line identical, so the branch under test still runs for real.
+        PATH order is therefore impossible. Disabling just that normalization
+        keeps every other line identical, so the branch under test runs for real.
         The copy asserts on the forwarding block's presence: if that code is ever
         removed or renamed, this test fails loudly instead of quietly passing
         against a script that no longer contains it.
@@ -75,10 +72,10 @@ class EnvForwardingTest(unittest.TestCase):
                       "this test's stub-shadowing trick needs updating")
         self.assertIn("SPAWN_ENV", src,
                       "the env-forwarding block is gone from build-and-install.sh")
-        # Keep the copy under scripts/release so the script's own ROOT
-        # calculation still resolves to this checkout rather than `/`.
-        copy = SCRIPT.with_name(".build-and-install-env-test.sh")
-        self.copy = copy
+        # Preserve the relative hierarchy, but never write into the live repo:
+        # the wrapper creates logs under ROOT/out before invoking the stub.
+        copy = self.tmp / "repo" / "scripts" / "release" / SCRIPT.name
+        copy.parent.mkdir(parents=True, exist_ok=True)
         copy.write_text(src.replace(needle, 'export PATH="$PATH"'))
         return copy
 
@@ -94,13 +91,14 @@ class EnvForwardingTest(unittest.TestCase):
                 link = self.bin / name
                 if not link.exists():
                     link.symlink_to(target)
-        env["PATH"] = str(self.bin) + ":/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin"
+        env["PATH"] = str(self.bin)
         env.pop("DOCKER_HOST", None)
         for k in DOCUMENTED:
             env.pop(k, None)
         env.update(overrides)
-        subprocess.run(["bash", str(self._script_copy())], env=env,
-                       capture_output=True, text=True, timeout=120)
+        result = subprocess.run(["bash", str(self._script_copy())], env=env,
+                                capture_output=True, text=True, timeout=120)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         if not self.rec.exists():
             return []
         return [ln.strip() for ln in self.rec.read_text().splitlines() if ln.strip()]

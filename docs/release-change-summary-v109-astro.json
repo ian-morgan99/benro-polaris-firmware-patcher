@@ -1,0 +1,76 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v108-starved-extract-20261113",
+    "libgphoto2_commit": "51f636d825013dcb87bab972a329114f12a7063a",
+    "patcher_commit": "4a412fff06df7cb04597d70f75a21a77a5340e40"
+  },
+  "purpose": "Build v109 from the accepted camera and Astro mainline changes since the physically observed v108 packet, with explicit driver selection and automatic version-to-commit binding. Build-only candidate; no physical qualification is inferred.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "daef5b7be routes held-Bulb start through the shared capture admission/recovery path instead of permanently refusing a pending prior output. Active Bulb and active transfer remain refused; production-path regressions cover these distinctions.",
+      "issues": [
+        "ian-morgan99/libgphoto2#165",
+        "ian-morgan99/benro-polaris-firmware-patcher#251"
+      ]
+    },
+    {
+      "component": "libgphoto2",
+      "summary": "1bf8ba51a restricts form-less Pentax scalar controls to the IT2-source-defined UINT16 color-temperature domain (2500..10000 K, 10 K steps); unknown scalar domains are withheld. a09622106 makes exposure/processing timeout phases and existing budgets visible on stderr without widening timeouts.",
+      "issues": [
+        "ian-morgan99/libgphoto2#164",
+        "ian-morgan99/libgphoto2#106"
+      ]
+    },
+    {
+      "component": "libgphoto2",
+      "summary": "4cbfcf27e propagates failed single-config getters rather than returning GP_OK with no usable widget. Tests cover unavailable controls. Consumer-only -2110 and K-3 III restore failures remain unresolved, not worked around.",
+      "issues": [
+        "ian-morgan99/benro-polaris-firmware-patcher#327",
+        "ian-morgan99/libgphoto2#143"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "Includes the Astro agent's accepted mainline work: pixel-scale index pruning (80f3ee9), shared size-aware downsample policy (08bd619), verified index downloads (4e43427), opt-in monotonic solve timings (d5f9a78), and bilinear-weight hoisting (b820b25). No additional solver-policy tuning is introduced in this camera release.",
+      "issues": [
+        "#288",
+        "#341",
+        "#342",
+        "#343",
+        "#344"
+      ]
+    },
+    {
+      "component": "packaging",
+      "summary": "Integrates PR #346's explicit full-SHA selection and adds supplied-source pin matching, main-only Astro candidates, preflight version checks, automatic post-gate version/commit binding, and nonzero failure for missing artifacts even when the child exits zero.",
+      "issues": [
+        "#346",
+        "#216"
+      ]
+    },
+    {
+      "component": "tests",
+      "summary": "Capture evidence classification recognizes -108 transfer failure despite a nearby filename; the prerelease gate includes the four previously omitted Astro suites; host re-exec tests use a temporary repo and hermetic command PATH, never real candidate log directories.",
+      "issues": [
+        "#218",
+        "#216"
+      ]
+    }
+  ],
+  "validation_focus": [
+    "Clean exact-SHA direct-host driver regression suite; source/pin ancestry, shipped ARM ELF ABI/dependencies and markers; package manifests and firmwareInfo digests.",
+    "Compare shipped v109 artifacts against exact v108, including the Astro SD archives, and preserve all gate transcripts and skips.",
+    "After separate review and supported installation: exact loaded-runtime identity, K-1 II ordinary two-shot repeat, valid settings arrays, changed-value read-back and restoration, RAW+JPEG reconciliation, then bounded timed/held Bulb and cancellation with physical closure proof.",
+    "Fresh K-3 III direct-PC session must resolve the prior failed shutter restoration and USB disappearance before requalification; Canon R5 II and other previously qualified camera paths need regression hardware.",
+    "Astro real-image upload and captured-image solve timings, preview ownership, file publication, and camera/head integration remain separate end-to-end gates."
+  ],
+  "known_limits": [
+    "No installation or new physical camera operation is performed by this candidate build. v108 K-1 II ordinary-capture successes are baseline evidence only, not v109 passes.",
+    "Recent v108 evidence outranks historical failures, especially pre-304 tests. K-1 II command-261 -2110, initial ordinary-capture -1005/-110, K-3 III failed shutter restoration/USB loss, true Bulb/cancel, and RAW+JPEG publication remain open.",
+    "An offline or emulator pass does not prove shutter closure, settings restoration, full camera compatibility, or OpenPolaris end-to-end behavior.",
+    "The source host gate uses Meson; shipped ARM libraries use autotools. Inspect shipped artifacts separately and record prerequisite skips.",
+    "No guessed vendor opcodes, new firmware offsets, unconditional retries, synthesized camera lists, or timeout expansion are introduced.",
+    "Independent review of exact source commits, provenance, private artifact hashes, and physical qualification is required before release-qualified status."
+  ]
+}

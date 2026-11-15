@@ -53,7 +53,7 @@
 #
 # Options:
 #   --slug NAME          short name in the candidate id (default: build)
-#   --pin SHA            libgphoto2 commit (default: origin/main tip of the canonical repo)
+#   --pin SHA            REQUIRED full 40-character libgphoto2 commit (no default)
 #   --libgphoto2 DIR     existing self-contained clone to use instead of provisioning
 #   --stock FILE         stock FwPkt.zip (default: the BenroPolarisPatcher copy)
 #   --catalog DIR        catalogue package (default: gaia-dr3-g10)
@@ -105,6 +105,9 @@ while [ $# -gt 0 ]; do
 done
 
 case "$VERSION" in ''|*[!0-9]*) die "--version must be a number (got '${VERSION:-<empty>}')";; esac
+[ -n "$PIN" ] || die "explicit --pin FULL_SHA is required; no implicit origin/main pin is permitted"
+case "$PIN" in (*[!0-9a-f]*) die "--pin must be a lowercase hexadecimal full commit SHA";; esac
+[ "${#PIN}" -eq 40 ] || die "--pin must be a full 40-character commit SHA"
 [ -f "$STOCK" ] || die "stock FwPkt not found: $STOCK"
 [ -d "$CATALOG/tiles" ] || die "catalogue package has no tiles/: $CATALOG"
 
@@ -289,14 +292,6 @@ if [ -z "$LIBSRC" ]; then
     fi
     [ -d "$LIBSRC/.git" ] || die "$LIBSRC is a git worktree or not a repo; the build needs a self-contained clone"
 
-    # Resolve the pin. Default to the canonical repo's origin/main tip, which is
-    # where driver work lands.
-    if [ -z "$PIN" ]; then
-        PIN="$(git -C "$LIB_REPO" rev-parse origin/main 2>/dev/null)" \
-            || die "could not read origin/main in $LIB_REPO; pass --pin explicitly"
-        note "driver pin defaults to canonical origin/main: ${PIN:0:9}"
-    fi
-
     # Refresh remote-tracking refs from the canonical repo. A local clone copies
     # whatever refs/remotes/origin/* the source had, which may be stale; testing
     # reachability against a stale tip makes a good pin look orphaned. That cost
@@ -313,6 +308,7 @@ fi
 [ -d "$LIBSRC/.git" ] || die "$LIBSRC is not a self-contained git clone (a worktree will not work; see header)"
 [ -f "$LIBSRC/configure.ac" ] || die "$LIBSRC has no configure.ac -- not a libgphoto2 checkout"
 ACTUAL_PIN="$(git -C "$LIBSRC" rev-parse HEAD)"
+[ "$ACTUAL_PIN" = "$PIN" ] || die "requested driver pin $PIN does not match $LIBSRC HEAD $ACTUAL_PIN"
 if [ -n "$(git -C "$LIBSRC" status --porcelain --untracked-files=all)" ]; then
     die "$LIBSRC is dirty. The build compiles what is on disk, so a dirty tree
        produces a candidate whose recorded pin does not describe its contents."
@@ -425,6 +421,8 @@ if [ "$rc" -eq 0 ] && [ -s "$OUT/FwPkt.zip" ] && [ -s "$OUT/astro-candidate-mani
     echo "Register the hashes in docs/FWPKT-PROVENANCE-CONTRACT.md before publishing."
 else
     echo "BUILD FAILED (exit $rc)"
+    # A zero exit from the child cannot turn missing artifacts into success.
+    [ "$rc" -ne 0 ] || rc=1
     [ -s "$OUT/FwPkt.zip" ] && echo "  WARNING: a partial FwPkt.zip exists -- do NOT use it"
     note "log ${LOG#$ROOT/}"
     if [ -f "$LOG" ]; then
