@@ -1,0 +1,13 @@
+====================================================================
+Release gates -- 6.0.0.54.109
+====================================================================
+R1 version claimed before deploy : OK (registry highest 6.0.0.54.109, last 6.0.0.54.109)
+R3 code merged to main           : OK
+R4 both archives present         : OK
+R5 shipped payload current       : OK
+
+Commits involved (for RELEASE-IDENTITY.md / README):
+  fcc2b5fa54e5  fix(build): refresh stale Docker route before Astro preflight  (2026-11-15 02:03:44 +0000)
+  (build commit is contained in origin/main; origin/main is 1 commit(s) ahead -- R5 checks whether any of them ship in this packet)
+
+All gates passed.
