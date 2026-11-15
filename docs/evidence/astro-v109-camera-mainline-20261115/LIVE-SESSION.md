@@ -1,8 +1,8 @@
 # v109 deployment and camera session — 2026-11-15
 
-Status: IN PROGRESS from 11:54 UTC. This is a later, explicitly authorized
-hardware round; PUBLICATION.md describes the earlier build/publication boundary.
-Artifact bytes and build/driver SHAs remain unchanged.
+Status: CLOSED with explicit remaining gates, at the user's request to hand over
+and stop. Deployment succeeded; no v109 capture was attempted. This later,
+authorized round does not change the binary archives or their build/source SHAs.
 
 ## Boundaries and preflight
 
@@ -63,8 +63,29 @@ obligations remain. User cannot power-cycle now. Driver records committed in
 
 ## Deployment result
 
-Canonical release-fwpkt.sh started 11:56:31, with default Astro kit installation.
-Transfer/verification/reboot/result still pending. No success claimed yet.
+Canonical release-fwpkt.sh started 11:56:31 and exited 0, including the default
+Astro kit installation. The transfer was slow but completed: 89,816,752 staged
+bytes matched, and all six firmwareInfo MD5 entries passed. Reboot was proven by
+uptime 142467 -> 267 seconds. Exact build_id, display version and both source
+commits passed at 12:19:09 UTC. The installer wrote install_status=installed-verified.
+
+Astro/Wi-Fi: 713 staged files passed SHA-256; installed /app/astro manifest passed;
+existing site.conf preserved; ten index files found. Its required boot-hook reboot
+completed, then httpd=1, hook=1, port8090=1 at 12:26:30 UTC.
+
+Important audit finding: release-fwpkt.sh's header promises all mandatory installed
+camera-file hashes, but verify-installed-build.sh/verify_installed_build.py compare
+only provenance and FwVer. The 11 camera-file hashes and loaded-module mappings
+were NOT independently verified. Do not promote the script's receipt into that
+stronger claim. No runtime verifier was weakened or substituted.
+
+Installer transcript SHA-256:
+553bc16e87744fae889565260a3c49dd011a5b258500741d12f7250acee74d14.
+Receipt SHA-256:
+feb8e83e98e086a13003cb9464f7cceab11f451bce2cb0b86f953241889c685c.
+
+At 17:10 UTC the AP route was unavailable; the address routed via the wired LAN
+and SSH refused. No further device action followed. Current battery state is unknown.
 
 ## Evidence and qualification
 
@@ -72,3 +93,25 @@ Raw logs, USB debug, original image bytes and installation transcript belong in
 the private v109 release directory under evidence/v109-live. Keep archive bytes
 unchanged and update SHA256SUMS after adding records. #251 and all unrun camera,
 RAW+JPEG, setting-restoration, physical-focus and non-Pentax gates remain open.
+
+Independent review was requested under the release skill, but the reviewer and
+main tool access hit a usage limit. It did not complete and is not an approval.
+The installer already running completed during that interruption. At the later
+user request to finish records and stop, no new camera test/review was started.
+The PC capture count is zero; v109 K-1 II capture count is zero. No postflash
+Mlog/Clog bundle could be collected before the AP became unavailable. Preflash
+all-generation logs, new PC debug, install transcript/receipt and 142 passing
+offline live-harness tests are preserved privately.
+
+## Next owner — bounded checklist, not permission to run unattended
+
+1. Read WBS 8.17.18 and coordinating issues #216/#145/#251; complete independent
+   review against immutable fcc2b5f/e4840f4 and published archive hashes.
+2. When Polaris is available, verify its AP identity, exact runtime identity,
+   all 11 mandatory installed-file hashes and loaded mappings. Close the
+   installer verification gap with fail-closed tests; never infer it from version.
+3. Obtain postflash logs and fresh in-process K-1 II conditions, then run the
+   prepared bounded canaries only if safe. Keep the app keep-alive owner intact.
+4. Power-cycle PC K-3 III physically, then same-SHA fresh conditions and preview.
+   Verify the original shutter restoration obligation before any setting test.
+5. Keep #251/manual Bulb/cancel, RAW+JPEG and non-Pentax gates open until proven.

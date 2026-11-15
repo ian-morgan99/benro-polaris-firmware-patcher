@@ -1,15 +1,21 @@
 # Current repository state
 
-## 2026-11-15 — v109 candidate; not installed or physically qualified
+## 2026-11-15 — v109 deployed; camera qualification pending
 
 Candidate `astro-v109-camera-mainline-20261115` (`6.0.0.54.109`) uses clean
 patcher `fcc2b5fa54e5c8a30893866c81c98531ba42e5ee` and driver
 `e4840f4290ad5acc4df5c228dc9520b044366b87`. Final offline gate: 27 passed,
 0 failed, 0 gate-level skips; Python 815 passed / 13 test-level skips.
-No hardware was touched; v108 is the last recorded partial camera evidence.
+Deployment completed: firmware identity at 12:19:09 UTC, Astro kit at 12:26:30.
+Staged firmware MD5s, reboot reset, exact source identity and kit hashes passed.
+Audit found the firmware identity helper does NOT check all installed camera-file
+hashes despite its caller's header; that separate runtime gate remains open.
+No v109 camera captures ran. PC K-3 III startup failed before capture; independent
+review was interrupted by the usage limit. At 17:10 the AP route was unavailable.
+See [final live handover](evidence/astro-v109-camera-mainline-20261115/LIVE-SESSION.md).
 
 The [v109 evidence record](evidence/astro-v109-camera-mainline-20261115/SUMMARY.md)
-and WBS 8.17.17 supersede the dated "latest" and workspace claims below.
+and WBS 8.17.18 supersede the dated "latest" and workspace claims below.
 Earlier entries remain historical evidence, not current installed identity.
 #251, setting restoration, RAW+JPEG and non-Pentax qualification remain open.
 

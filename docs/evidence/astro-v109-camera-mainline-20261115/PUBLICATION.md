@@ -1,5 +1,11 @@
 # v109 publication receipt — 2026-11-15
 
+Later deployment update: firmware identity and Astro kit passed installation
+at 12:19:09/12:26:30 UTC. No v109 captures ran. Installed camera-file hashes,
+independent review and physical qualification remain open. The original
+publication-stage account below is historical; see [LIVE-SESSION.md](LIVE-SESSION.md)
+and WBS 8.17.18 for the completed handover and explicit verification gap.
+
 PrivateResearch artifact commit:
 `ca09e479076d10552aa2b7fe513b3006a3950689`.
 
@@ -66,7 +72,7 @@ The additional ten open PrivateResearch issues are snapshotted/dispositioned
 privately, making 337 across all five repositories; research restrictions are
 preserved.
 
-## Handoff state
+## Handoff state at original publication, before later deployment
 
 Build source fcc2b5fa54e5c8a30893866c81c98531ba42e5ee and driver
 e4840f4290ad5acc4df5c228dc9520b044366b87 remain immutable. Later main commits

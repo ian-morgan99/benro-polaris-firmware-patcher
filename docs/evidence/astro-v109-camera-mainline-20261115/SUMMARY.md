@@ -1,8 +1,10 @@
 # v109 camera/mainline release evidence — 2026-11-15
 
-Publication candidate only; NOT installed or physically qualified. Issue #251
-remains a release-qualification blocker. Publication is not a waiver or
-authority to install. Historical hardware results are not overwritten.
+Update: user-authorized deployment completed on 2026-11-15; firmware identity
+verified at 12:19:09 UTC and Astro kit at 12:26:30. Camera qualification and
+installed camera-file hash verification remain open. No v109 capture ran.
+Issue #251 remains blocking. See [LIVE-SESSION.md](LIVE-SESSION.md) for exact
+receipts, the identity-versus-hash verification gap and the final handover.
 
 ## Exact identity
 

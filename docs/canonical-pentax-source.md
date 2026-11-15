@@ -1,16 +1,19 @@
 # Canonical Pentax source — what to build, and how to upgrade it safely
 
-## 2026-11-15 — v109 candidate; not installed or physically qualified
+## 2026-11-15 — v109 deployed; camera qualification pending
 
 Candidate `astro-v109-camera-mainline-20261115` (`6.0.0.54.109`) uses clean
 patcher `fcc2b5fa54e5c8a30893866c81c98531ba42e5ee` and driver
 `e4840f4290ad5acc4df5c228dc9520b044366b87`. Final offline gate: 27 passed,
 0 failed, 0 gate-level skips; Python 815 passed / 13 test-level skips.
-Candidate source pointer only, NOT a qualified camera baseline.
+Installed identity matches this source tuple (12:19:09 UTC); it is NOT a
+qualified camera baseline. All installed camera-file hashes and loaded mappings
+remain a separate gate: the canonical identity helper does not verify them.
+Astro kit hashes/boot hook/port passed at 12:26:30. No v109 capture ran.
 Canonical library checkout: /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2.
 
 The [v109 evidence record](evidence/astro-v109-camera-mainline-20261115/SUMMARY.md)
-and WBS 8.17.17 supersede the dated "latest" and workspace claims below.
+and WBS 8.17.18 supersede the dated "latest" and workspace claims below.
 Earlier entries remain historical evidence, not current installed identity.
 #251, setting restoration, RAW+JPEG and non-Pentax qualification remain open.
 
