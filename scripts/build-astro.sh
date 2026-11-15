@@ -231,7 +231,16 @@ export TMPDIR="$TMPROOT"
 # never be one of our shims, so it cannot recurse.
 # shellcheck disable=SC1091
 . "$ROOT/tools/host-docker.sh"
-if ! (command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1); then
+if (command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1); then
+    # ENVBIN is prepended below. A shim left from a Flatpak build must not
+    # shadow a working native Docker when this run is outside Flatpak.
+    NATIVE_DOCKER="$(command -v docker)"
+    if [ "$NATIVE_DOCKER" != "$ENVBIN/docker" ]; then
+        printf '#!/bin/sh\n# Generated for the currently verified Docker route.\nexec "%s" "$@"\n' \
+            "$NATIVE_DOCKER" > "$ENVBIN/docker"
+        chmod +x "$ENVBIN/docker"
+    fi
+else
     DOCKER_PREFIX="$(polaris_docker_prefix 2>/dev/null || true)"
     case "$DOCKER_PREFIX" in
         ""|docker) ;;   # empty = unusable; `docker` already works, nothing to write

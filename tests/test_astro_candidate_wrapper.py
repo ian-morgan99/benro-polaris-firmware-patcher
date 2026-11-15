@@ -150,3 +150,26 @@ def test_zero_child_exit_with_missing_artifacts_is_failure(tmp_path):
                     CANDIDATE_ID="fixture", FWVER="6.0.0.54.109")
     assert result.returncode != 0
     assert "BUILD FAILED" in result.stdout
+
+
+def test_stale_generated_docker_cannot_shadow_working_route(tmp_path):
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    shutil.copy(ROOT / "tools/host-docker.sh", tools)
+    native = tmp_path / "native"
+    native.mkdir()
+    docker = native / "docker"
+    docker.write_text("#!/bin/sh\nexit 0\n")
+    docker.chmod(0o755)
+    envbin = tmp_path / "build-bin"
+    envbin.mkdir()
+    stale = envbin / "docker"
+    stale.write_text("#!/bin/sh\nexit 127\n")
+    stale.chmod(0o755)
+    text = (ROOT / "scripts/build-astro.sh").read_text()
+    setup = text[text.index('. "$ROOT/tools/host-docker.sh"'):text.index('# ubireader:')]
+    result = _shell(setup, ROOT=tmp_path, ENVBIN=envbin,
+                    PATH=f"{native}:{os.environ['PATH']}")
+    assert result.returncode == 0, result.stderr
+    assert subprocess.run([str(stale), "info"]).returncode == 0
+    assert str(docker) in stale.read_text()

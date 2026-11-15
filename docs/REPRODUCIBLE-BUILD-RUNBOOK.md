@@ -1,5 +1,16 @@
 # Reproducible Polaris candidate build
 
+## Current entrypoint and ownership — 2026-11-15
+
+Use canonical BenroPolarisPatcher main and LibGphoto2/libgphoto2 main under
+/home/ian/Documents/VSCodeProjects. The polaris-build-73, v86 and feature-branch
+paths below describe historical setups, not current delivery checkouts.
+Astro builds require an explicit reviewed full driver SHA:
+`scripts/build-astro.sh --version N --pin FULL_DRIVER_SHA --summary FILE`.
+The builder now checks version uniqueness before compilation and records the
+version/commit binding after its gates pass. Commit that record and the
+provenance row after publication. A candidate is not installed or qualified.
+
 This is the canonical procedure for producing a Benro Polaris firmware
 candidate from the current patcher `main` and Pentax/libgphoto2 `main`. It
 produces a candidate package and evidence; it does not by itself prove camera
