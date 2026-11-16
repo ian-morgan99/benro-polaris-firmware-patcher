@@ -15,6 +15,54 @@ any process restart, USB reset, power cycle, or second shutter.
 | Stage-2 enter + Pentax `initiate-return` is PTP DeviceBusy/non-OK | Camera rejected the request or the response leaves state uncertain. | libgphoto2 now arms `recovery_required`; do not replay. A later request needs a fresh positive strict probe. | Automatic retries or claims that no exposure occurred based only on the response. |
 | InitiateCapture succeeded, but candidate/transfer/publication is missing | Post-initiation camera, transfer, pgphoto lifetime or publication failure. | Preserve logs and the camera-side candidate; keep next shutter blocked; recover only with verified ownership. | Restarting into a new capture generation or deleting candidate data. |
 | USB disconnect/reset or pgphoto PID changes | Transport/session generation changed. | Record kernel USB events, PID/generation, Clog/Mlog and candidate state; rebind only after preservation and fresh camera init. | Call it a completed capture or immediately send another shutter. |
+| Identity goes to `none` with **no** driver error (`0x2001` right up to the drop) | Camera-side USB wedge, not a libgphoto2 failure. Observed on a K-3 III when Live View was stopped while a goto slew was still running (issue #347). | Power-cycle the **camera body**, not the mount. See "A host reboot does not recover the camera" below. | Reboot Polaris and conclude the link is dead; gate recovery on a driver error, because there is none. |
+
+## A host reboot does not recover the camera (issue #347)
+
+When the body drops off USB permanently, **restarting Polaris does not help** —
+and it looks like it should, because the mount comes back completely healthy.
+Observed 2026-11-16 on a K-3 III (`25fb:0189`, serial `8093033`):
+
+- The last Live View frame returned `0x2001` normally (73,189 bytes, first
+  attempt, 16 ms). One second later the identity broadcast went to
+  `manufacturer:none;model:none` and `[camera-usb] stable identity change:
+  1-1.2|25fb:0189|1:4 -> none`.
+- There is **no driver-side error to gate on**: zero `0x02ff`, zero I/O errors,
+  zero `-1` in the whole session. All 137 frames succeeded on first attempt.
+- After a reboot, the next two sessions contain no `25fb` at all, and that
+  boot's `dmesg` has no `usb 1-1.2` lines — versus the previous boot, which
+  showed the body enumerating properly before dying on a
+  `reset high-speed USB device`.
+- The hub itself is fine: unbind/rebind of `1-1` logs `hub 1-1:1.0: 4 ports
+  detected`, with nothing attached to any port. Rebinding the xHCI controller
+  (`100e0000.xhci_0`) restores the hub cleanly and still does not bring the
+  camera back.
+
+A USB device wedged internally generally needs its own power cycle, and a host
+reboot never gives it one. **Power-cycle the body** (battery out, or off and
+back on). Do not conclude the link is dead from a rebooted mount with an empty
+bus.
+
+Two related traps in the same incident:
+
+- **`usbmode` is persisted to flash.** The USB compatibility toggle (`code:813`,
+  logged as `setting usbmode to N`) writes through `SP_SaveUserParamToFlash`, so
+  it survives a reboot and can independently suppress enumeration. In this
+  capture it was set to `0` eight minutes *after* the camera was already gone,
+  so it cannot have caused the drop — but "camera absent after reboot" may be
+  **two stacked faults**. Set `usbmode` back to `1` *and* power-cycle the body.
+  The live value is not readable from `mtd2` (`userParam` yields only a factory
+  placeholder block), `authorized_default` is empty, and debugfs is not mounted.
+- **`usb_disconnect` is not a Clog event.** It appears zero times in both affected
+  sessions; it is a kernel `dmesg` line. Grepping Clog for it finds nothing and
+  can wrongly suggest no detach was recorded. The Clog-side markers are the
+  identity broadcast going to `none` and the supervisor's `stable identity
+  change: … -> none`.
+
+The supervisor now logs one `camera_absent: <identity> has not re-enumerated for
+N polls …` line per episode (patcher `052125d`), so the outage is visible instead
+of the supervisor polling an empty bus silently. That reports the fault; it does
+not recover it — recovery remains open under issue #146.
 
 ## Current code mitigation
 
