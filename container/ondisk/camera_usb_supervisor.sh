@@ -64,6 +64,16 @@ REBIND_STABLE_POLLS=${OPENPOLARIS_USB_REBIND_STABLE_POLLS:-4}
 #     so a long outage costs one line rather than thousands. Set to 0 to disable.
 # A camera that was never present at boot is not an absence: nothing was lost.
 ABSENT_ANNOUNCE_POLLS=${OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS:-30}
+# Issue #347 follow-up: every post-mortem so far had to be reconstructed by hand
+# from Clog/Mlog, and the kernel's side of the event was simply gone -- dmesg on
+# this device retains only a few hundred lines and had already rolled past the
+# drop. Mlog carries only userspace uevents, so the kernel's own reason (disconnect
+# / reset failure / xhci halt) is never recoverable after the fact. Both recorded
+# losses happened while a goto slew was running, and in one the kernel removed the
+# camera 6 ms after `GotoAuTask: SP_GOTO_STA_WAIT_RESULT`, so the kernel view is
+# the evidence we are missing. Dump it once, at the moment of loss.
+#   ABSENT_EVIDENCE -- 0 disables the dump entirely.
+ABSENT_EVIDENCE=${OPENPOLARIS_USB_ABSENT_EVIDENCE:-1}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
 
@@ -112,6 +122,47 @@ fingerprint() {
         dev=$(cat "$d/devnum" 2>/dev/null)
         printf '%s|%s:%s|%s:%s\n' "${d##*/}" "$vendor" "$product" "$bus" "$dev"
     done | sort
+}
+
+# Issue #347 follow-up: capture the kernel's view of the bus at the instant the
+# camera is lost. Every post-mortem to date had to be rebuilt from Clog/Mlog
+# alone, and dmesg on this device holds only a few hundred lines -- by the time
+# anyone looked it had already rolled past the drop, so the kernel side of the
+# event was unrecoverable. Mlog carries only userspace uevents, so the kernel's
+# own reason for the removal (disconnect / reset failure / xhci halt) never
+# survives to be read. Both recorded losses happened while a goto slew was
+# running, and in one the kernel removed the camera 6 ms after
+# `GotoAuTask: SP_GOTO_STA_WAIT_RESULT`, which makes the kernel's report the
+# decisive missing evidence.
+#
+# Read-only and strictly bounded: one dmesg tail, one module parameter, and the
+# power/runtime state of whatever is still attached. Nothing here writes, resets,
+# suspends or restarts anything -- recovery is #146's scope, not this one.
+dump_usb_evidence() {
+    lost="$1"
+    echo "[camera-usb] usb-evidence: capturing kernel view after losing ${lost}" >&2
+    if command -v dmesg >/dev/null 2>&1; then
+        # Tail only: the ring buffer is small on this kernel and the interesting
+        # lines (disconnect / reset / suspend-resume failures) are the newest.
+        dmesg 2>/dev/null | grep -iE "usb|xhci|hub" | tail -25 >&2
+    else
+        echo "[camera-usb] usb-evidence: dmesg unavailable" >&2
+    fi
+    for p in /sys/module/usbcore/parameters/autosuspend \
+             /sys/module/usbcore/parameters/blinkenlights; do
+        [ -r "$p" ] && echo "[camera-usb] usb-evidence: ${p}=$(cat "$p" 2>/dev/null)" >&2
+    done
+    # Runtime power state of the remaining topology. If the camera link was
+    # suspended at the moment it died, that is the single most useful fact we
+    # can record -- and today it is invisible, because the device node is gone
+    # by the time anyone inspects it.
+    for d in "$SYSFS_USB"/*; do
+        [ -d "$d/power" ] || continue
+        printf '[camera-usb] usb-evidence: %s control=%s status=%s\n' \
+            "${d##*/}" \
+            "$(cat "$d/power/control" 2>/dev/null)" \
+            "$(cat "$d/power/runtime_status" 2>/dev/null)" >&2
+    done
 }
 
 if ! mkdir "$LOCKDIR" 2>/dev/null; then
@@ -192,6 +243,7 @@ while :; do
            && [ "$absent_polls" -ge "$ABSENT_ANNOUNCE_POLLS" ] \
            && [ "$absent_announced" = "0" ]; then
             echo "[camera-usb] camera_absent: ${last_seen_identity} has not re-enumerated for $absent_polls polls (poll $polls); pgphoto has no device to bind and will not recover on its own -- power-cycle or replug the body (issue #347)" >&2
+            [ "$ABSENT_EVIDENCE" = "1" ] && dump_usb_evidence "$last_seen_identity"
             absent_announced=1
         fi
     fi

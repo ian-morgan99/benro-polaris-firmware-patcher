@@ -15,7 +15,7 @@ any process restart, USB reset, power cycle, or second shutter.
 | Stage-2 enter + Pentax `initiate-return` is PTP DeviceBusy/non-OK | Camera rejected the request or the response leaves state uncertain. | libgphoto2 now arms `recovery_required`; do not replay. A later request needs a fresh positive strict probe. | Automatic retries or claims that no exposure occurred based only on the response. |
 | InitiateCapture succeeded, but candidate/transfer/publication is missing | Post-initiation camera, transfer, pgphoto lifetime or publication failure. | Preserve logs and the camera-side candidate; keep next shutter blocked; recover only with verified ownership. | Restarting into a new capture generation or deleting candidate data. |
 | USB disconnect/reset or pgphoto PID changes | Transport/session generation changed. | Record kernel USB events, PID/generation, Clog/Mlog and candidate state; rebind only after preservation and fresh camera init. | Call it a completed capture or immediately send another shutter. |
-| Identity goes to `none` with **no** driver error (`0x2001` right up to the drop) | Camera-side USB wedge, not a libgphoto2 failure. Observed on a K-3 III when Live View was stopped while a goto slew was still running (issue #347). | Power-cycle the **camera body**, not the mount. See "A host reboot does not recover the camera" below. | Reboot Polaris and conclude the link is dead; gate recovery on a driver error, because there is none. |
+| Identity goes to `none` with **no** driver error (`0x2001` right up to the drop) | Kernel removes the device mid-teardown while a goto slew is running; the removal uevent stream stops early and the body never re-enumerates. Not a libgphoto2 failure (issue #347). | Power-cycle the **camera body**, not the mount. See "A host reboot does not recover the camera" below. | Reboot Polaris and conclude the link is dead; gate recovery on a driver error, because there is none. |
 
 ## A host reboot does not recover the camera (issue #347)
 
@@ -23,12 +23,23 @@ When the body drops off USB permanently, **restarting Polaris does not help** �
 and it looks like it should, because the mount comes back completely healthy.
 Observed 2026-11-16 on a K-3 III (`25fb:0189`, serial `8093033`):
 
-- The last Live View frame returned `0x2001` normally (73,189 bytes, first
-  attempt, 16 ms). One second later the identity broadcast went to
-  `manufacturer:none;model:none` and `[camera-usb] stable identity change:
-  1-1.2|25fb:0189|1:4 -> none`.
+- The kernel removes the device first. `Mlog` shows `NetlinkUeventTask` emitting
+  `remove@/…/xhci_0/usb1/1-1/1-1.2` and only *then* does the app broadcast
+  `code[274],val[state:0;]`, followed ~1 s later by
+  `manufacturer:none;model:none`. The `state:0` broadcast is a **consequence** of
+  removal, not a cause — an earlier version of this note claimed Live View was
+  being stopped and had the causality backwards.
+- A healthy teardown emits the full uevent set (six lines: interfaces then the
+  device). The fatal removal emitted only **two** and stopped, so the teardown
+  path itself appears to have been interrupted.
+- Motor activity predicts recovery, not the drop: the one removal with zero motor
+  events in a ±20 s window re-enumerated 12 minutes later; both removals that
+  never returned had hundreds of motor events in that window, and in session 31
+  the kernel removed the camera **6 ms** after `GotoAuTask: SP_GOTO_STA_WAIT_RESULT`.
 - There is **no driver-side error to gate on**: zero `0x02ff`, zero I/O errors,
-  zero `-1` in the whole session. All 137 frames succeeded on first attempt.
+  zero `-1` in the whole session. All 137 frames succeeded on first attempt, and
+  the last `Pentax preview stage get-frame` returned `0x2001` normally (73,189
+  bytes, 1 attempt, 16 ms) shortly before the bus went silent.
 - After a reboot, the next two sessions contain no `25fb` at all, and that
   boot's `dmesg` has no `usb 1-1.2` lines — versus the previous boot, which
   showed the body enumerating properly before dying on a

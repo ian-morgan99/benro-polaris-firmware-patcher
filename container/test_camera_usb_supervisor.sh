@@ -440,6 +440,12 @@ kill "$absent_pid" 2>/dev/null || true; wait "$absent_pid" 2>/dev/null || true
 test "$(grep -c 'camera_absent' "$ABSENT_LOG")" -eq 1
 grep -q 'camera_absent: 1-1|25fb:0189|1:3' "$ABSENT_LOG"
 
+# Issue #347 follow-up: losing the camera must also capture the kernel's view of
+# the bus, because dmesg on the device rolls past the event before anyone can
+# look. Bounded to one dump per episode for the same reason the announcement is.
+grep -q 'usb-evidence: capturing kernel view after losing 1-1|25fb:0189|1:3' "$ABSENT_LOG"
+test "$(grep -c 'usb-evidence: capturing' "$ABSENT_LOG")" -eq 1
+
 # A camera absent from the very first poll was never present, so nothing was
 # lost: no absence line at all.
 rm -rf "$TMP/sys" "$TMP/run"
@@ -450,6 +456,7 @@ OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
 OPENPOLARIS_USB_STARTUP_GRACE_POLLS=1 OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=3 \
 OPENPOLARIS_USB_MAX_POLLS=20 sh "$SUPERVISOR" >"$NEVER_LOG" 2>&1
 test "$(grep -c 'camera_absent' "$NEVER_LOG")" -eq 0
+test "$(grep -c 'usb-evidence' "$NEVER_LOG")" -eq 0
 
 # If the body comes back, the episode closes with a camera_returned line.
 rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"

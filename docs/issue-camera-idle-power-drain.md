@@ -161,12 +161,12 @@ Consequences:
 - **R1 ("enable USB runtime PM for the camera device only") is already the
   default here** and should not be implemented as written. Re-reading §4 R1 before
   acting on it matters — it would be a no-op at best.
-- The 2-second window is aggressive for a camera link. A suspend/resume cycle
-  landing mid-operation is now a **candidate cause of the permanent USB drop in
-  #347**, not just a power question. Both #347 drops follow a `code[274] state:0`
-  IPC event by exactly ~1.007 s, which is consistent with a timer-driven suspend
-  rather than a random hardware wedge. That timing is unexplained and is the most
-  promising lead in #347.
+- The 2-second window is aggressive for a camera link and stays a candidate
+  contributor, but it does **not** explain the ~1 s delay seen in #347. That gap
+  sits between the kernel's `remove@` uevent and `polestar_app` reporting
+  `manufacturer:none`, so it is userspace detection latency on a ~1 s cycle -- not
+  a timer-driven suspend. No `code[264]` capture was in flight within three
+  minutes of either loss, which also rules out a 1 s exposure.
 - L1 being refuted does **not** close this issue: L2 (keep-LV armed at init) and
   L3 (PTP session never closed) are independent and remain unmeasured. A camera
   held awake by an open claimed session can still fail to sleep even with
