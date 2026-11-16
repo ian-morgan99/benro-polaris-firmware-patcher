@@ -138,6 +138,53 @@ If the camera can be let to sleep when idle, an overnight soak stops being a bat
 
 ---
 
+## 5. M1 partial result (2026-11-16) — **L1 is REFUTED on this device**
+
+Measured on the live Polaris (`192.168.0.1`, kernel `4.9.37 xhci-hcd`) while no
+camera was attached:
+
+```
+/sys/module/usbcore/parameters/autosuspend = 2
+per-device power/control                   = auto   (all devices)
+hub 1-1 power/runtime_status               = suspended
+hub 1-1 power/control                      = auto
+```
+
+**L1 predicted the opposite.** §2 assumed an embedded vendor kernel would ship
+autosuspend *disabled* (`autosuspend=-1`, or devices pinned to `power/control=on`)
+so the camera could never enter its sleep state. In fact autosuspend is **enabled
+with a 2-second idle timeout**, and the hub really does suspend. The condition L1
+says is missing is present.
+
+Consequences:
+
+- **R1 ("enable USB runtime PM for the camera device only") is already the
+  default here** and should not be implemented as written. Re-reading §4 R1 before
+  acting on it matters — it would be a no-op at best.
+- The 2-second window is aggressive for a camera link. A suspend/resume cycle
+  landing mid-operation is now a **candidate cause of the permanent USB drop in
+  #347**, not just a power question. Both #347 drops follow a `code[274] state:0`
+  IPC event by exactly ~1.007 s, which is consistent with a timer-driven suspend
+  rather than a random hardware wedge. That timing is unexplained and is the most
+  promising lead in #347.
+- L1 being refuted does **not** close this issue: L2 (keep-LV armed at init) and
+  L3 (PTP session never closed) are independent and remain unmeasured. A camera
+  held awake by an open claimed session can still fail to sleep even with
+  autosuspend enabled, because the interface is in use.
+
+Caveats on this measurement: taken with **no camera attached**, so it does not
+show the camera device's own `power/autosuspend` value or whether the Pentax
+interface reports suspend support. It also cannot show behaviour *during* a
+session. A repeat with a body connected is still needed for M1 proper.
+
+While testing I set `autosuspend=-1` and pinned `usb1`/`1-1` to
+`power/control=on`; the hub moved to `active`. This is **runtime only** — it does
+not survive a reboot, and nothing in `container/ondisk/*` sets any of these
+values. It neither fixed nor ruled out anything, because the camera was already
+gone at that point.
+
+---
+
 ## 6. Ambiguity to resolve before work starts
 
 1. **Subject is settled:** camera battery. #119/#66 were camera-side too (see §1).
