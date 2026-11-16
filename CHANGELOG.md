@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased — a camera that vanishes mid-session is now reported, not polled silently (issue #347)
+
+- `container/ondisk/camera_usb_supervisor.sh` logged the transition to no-camera
+  (`stable identity change: 1-1.2|25fb:0189|1:3 -> none`), restarted pgphoto
+  successfully, and then produced **no further output for the remaining 22 minutes**
+  of the session while the body stayed gone. Post-mortem had to be reconstructed by
+  hand from `Clog` and `Mlog`, and `dmesg` retained no USB or xhci lines at all, so
+  the kernel's side of the event was unrecoverable. The supervisor now emits one
+  `camera_absent: <identity> has not re-enumerated for N polls …` line per absence
+  episode, naming the identity that disappeared and stating plainly that pgphoto has
+  no device to bind and will not recover on its own. A return closes the episode with
+  `camera_returned`.
+- **One line per episode, not one per poll.** A long outage costs a single log line
+  rather than thousands; `OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS` (default 30) sets the
+  threshold and `0` disables the check.
+- **A camera that was never present is not an absence.** Nothing was lost, so nothing
+  is reported — asserted by a dedicated case.
+- The tracking block runs *before* the #121 startup-grace branch, which `continue`s.
+  Without that ordering a body lost during the grace window — exactly when a slew at
+  boot can drop it — would never be counted, and `last_seen_identity` is seeded from
+  the boot baseline for the same reason. Both were found by the new test failing, not
+  by reading the code.
+- Recovery is deliberately **not** attempted here: #146 owns the reconnect invariant,
+  and this issue is the "say so loudly" half of that requirement.
+- `container/test_camera_usb_supervisor.sh` gained a case asserting exactly one
+  absence line naming the lost identity, no line for a never-present camera, and a
+  `camera_returned` line after reattach. Mutation-checked: reverting the supervisor
+  change fails the new case. Waits on log content rather than a fixed poll budget —
+  the first version raced startup under harness load and failed for the wrong reason.
+  Deterministic harness now 30 passed / 0 failed / 3 skipped.
+
 ## Unreleased — "Apply last" wrote an alignment from a solution the user could not see (issue #329)
 
 - `#solve-apply` posted an empty body to `/api/apply`, showed nothing on success,

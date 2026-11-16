@@ -382,6 +382,105 @@ wait "$SUP_PID" 2>/dev/null || true
 test "$(wc -l < "$RESTART_LOG")" -eq 1
 grep -q 'stable identity change' "$TMP/selected.out"
 
+# Issue #347: a camera that vanishes and never returns must be reported, not
+# polled silently forever. In the captured session a goto slew took the K-3 III
+# off USB; the supervisor logged the transition to `none`, restarted pgphoto, and
+# then produced no further output for the rest of the session -- post-mortem had
+# to be reconstructed by hand from two files. Assert:
+#   * exactly ONE camera_absent line naming the identity that disappeared;
+#   * a camera never present at boot is NOT treated as an absence;
+#   * a return closes the episode with camera_returned.
+#
+# These must not depend on wall-clock races: the supervisor runs with MAX_POLLS=0
+# (never self-exits) and the test waits for the expected line, then terminates it.
+# Relying on a fixed poll budget instead made this flaky under harness load -- the
+# budget could be exhausted before the removal was observed, so no announcement
+# ever fired and the assertion failed for the wrong reason.
+wait_for_log() {
+    _f=$1; _pat=$2; _i=0
+    while [ "$_i" -lt 200 ]; do
+        grep -q "$_pat" "$_f" 2>/dev/null && return 0
+        sleep 0.05; _i=$((_i + 1))
+    done
+    return 1
+}
+
+# The supervisor takes its baseline identity BEFORE the first poll, so the body
+# must be removed only after that baseline is logged. Removing it immediately
+# races startup: the supervisor then starts with an empty baseline, nothing was
+# ever "seen", and no absence can be reported.
+wait_for_baseline() {
+    wait_for_log "$1" 'supervisor ready; identity=1-1|25fb:0189|1:3'
+}
+
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0189 1 3          # K-3 III present at boot
+ABSENT_LOG=$TMP/absent.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=1 OPENPOLARIS_USB_STABLE_POLLS=2 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=2 OPENPOLARIS_USB_MAX_RESTARTS=6 \
+OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=5 OPENPOLARIS_USB_MAX_POLLS=0 \
+    sh "$SUPERVISOR" >"$ABSENT_LOG" 2>&1 &
+absent_pid=$!
+if ! wait_for_baseline "$ABSENT_LOG"; then
+    kill "$absent_pid" 2>/dev/null || true; wait "$absent_pid" 2>/dev/null || true
+    echo "FAIL: supervisor never baselined the present camera (issue #347)"; exit 1
+fi
+rm -rf "$TMP/sys/1-1"
+if ! wait_for_log "$ABSENT_LOG" 'camera_absent'; then
+    kill "$absent_pid" 2>/dev/null || true; wait "$absent_pid" 2>/dev/null || true
+    echo "FAIL: no camera_absent line produced (issue #347)"; cat "$ABSENT_LOG"; exit 1
+fi
+# Let further polls run: the announcement must not repeat every poll.
+sleep 0.5
+kill "$absent_pid" 2>/dev/null || true; wait "$absent_pid" 2>/dev/null || true
+
+test "$(grep -c 'camera_absent' "$ABSENT_LOG")" -eq 1
+grep -q 'camera_absent: 1-1|25fb:0189|1:3' "$ABSENT_LOG"
+
+# A camera absent from the very first poll was never present, so nothing was
+# lost: no absence line at all.
+rm -rf "$TMP/sys" "$TMP/run"
+mkdir -p "$TMP/sys" "$TMP/run"
+NEVER_LOG=$TMP/never.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=1 OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=3 \
+OPENPOLARIS_USB_MAX_POLLS=20 sh "$SUPERVISOR" >"$NEVER_LOG" 2>&1
+test "$(grep -c 'camera_absent' "$NEVER_LOG")" -eq 0
+
+# If the body comes back, the episode closes with a camera_returned line.
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0189 1 3
+RETURN_LOG=$TMP/return.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=1 OPENPOLARIS_USB_STABLE_POLLS=2 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=2 OPENPOLARIS_USB_MAX_RESTARTS=6 \
+OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=3 OPENPOLARIS_USB_MAX_POLLS=0 \
+    sh "$SUPERVISOR" >"$RETURN_LOG" 2>&1 &
+return_pid=$!
+if ! wait_for_baseline "$RETURN_LOG"; then
+    kill "$return_pid" 2>/dev/null || true; wait "$return_pid" 2>/dev/null || true
+    echo "FAIL: supervisor never baselined the present camera (issue #347)"; exit 1
+fi
+rm -rf "$TMP/sys/1-1"
+if ! wait_for_log "$RETURN_LOG" 'camera_absent'; then
+    kill "$return_pid" 2>/dev/null || true; wait "$return_pid" 2>/dev/null || true
+    echo "FAIL: no camera_absent line before reattach (issue #347)"; exit 1
+fi
+make_usb 1-1 25fb 0189 1 9          # body returns on a new devnum
+if ! wait_for_log "$RETURN_LOG" 'camera_returned'; then
+    kill "$return_pid" 2>/dev/null || true; wait "$return_pid" 2>/dev/null || true
+    echo "FAIL: no camera_returned line after reattach (issue #347)"; exit 1
+fi
+kill "$return_pid" 2>/dev/null || true; wait "$return_pid" 2>/dev/null || true
+
+echo 'PASS: camera USB supervisor reports a camera that vanishes and never returns, once per episode (issue #347)'
+
 echo 'PASS: camera USB supervisor keys the fingerprint to the selected camera and ignores unrelated cameras (issue #126)'
 echo 'PASS: camera USB supervisor validates lock ownership and restarts once after a stable camera identity change (issue #57)'
 echo 'PASS: camera USB supervisor preserves pending identity and retries after a competing restart lock clears'

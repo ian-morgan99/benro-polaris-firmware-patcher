@@ -51,6 +51,19 @@ RESTART_RETRY_POLLS=${OPENPOLARIS_USB_RESTART_RETRY_POLLS:-5}
 # same order as the churn cooldown) -- a genuinely stable, reconnected camera
 # clears it quickly; a flapping one never does.
 REBIND_STABLE_POLLS=${OPENPOLARIS_USB_REBIND_STABLE_POLLS:-4}
+# Issue #347: a goto slew took the K-3 III off USB mid-session and it never came
+# back. The supervisor logged `stable identity change: 1-1.2|25fb:0189|1:3 ->
+# none`, restarted pgphoto successfully, and then said nothing for the remaining
+# 22 minutes of the session -- it just kept polling an empty bus. Post-mortem had
+# to be reconstructed by hand from two log files, and `dmesg` retained no USB
+# lines at all. This is the "say so loudly" half of #146's observability
+# requirement; #146 itself owns the recovery half.
+#   ABSENT_ANNOUNCE_POLLS -- after this many consecutive polls with an empty bus,
+#     log one `camera_absent` line naming the identity that disappeared and how
+#     long it has been gone. Announced once per absence episode, not every poll,
+#     so a long outage costs one line rather than thousands. Set to 0 to disable.
+# A camera that was never present at boot is not an absence: nothing was lost.
+ABSENT_ANNOUNCE_POLLS=${OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS:-30}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
 
@@ -138,6 +151,15 @@ quarantined=0
 qcandidate=""
 qstable=0
 retry_after_poll=0
+# Issue #347: last non-empty identity we ever saw, how many consecutive polls it
+# has been absent, and whether this episode has already been announced. Seeded
+# from the boot baseline: a camera present at launch is already "seen" before the
+# first poll, and the startup-grace branch below `continue`s without ever running
+# the tracking block -- so seeding here is what lets a loss during the grace
+# window be reported at all.
+last_seen_identity=$baseline
+absent_polls=0
+absent_announced=0
 # Issue #119: minimum polls between restarts. The stable-change detector already
 # requires STABLE_POLLS consecutive identical polls; requiring the larger of that
 # and RESTART_COOLDOWN_POLLS spaces out restarts so a fast re-enumeration flap
@@ -150,6 +172,29 @@ while :; do
     sleep "$POLL_SECS"
     current=$(fingerprint)
     polls=$((polls + 1))
+
+    # Issue #347: record a camera that disappeared and stayed gone. Deliberately
+    # placed BEFORE the startup-grace branch, which `continue`s: without this, a
+    # body lost during the grace window -- exactly when a slew at boot can drop it
+    # -- would never be counted. Keyed on `current` being empty rather than on the
+    # baseline, so it fires whether the loss was absorbed by grace, adopted as
+    # healthy, or is sitting pending a restart.
+    if [ -n "$current" ]; then
+        if [ "$absent_announced" = "1" ]; then
+            echo "[camera-usb] camera_returned: ${current} after $absent_polls absent polls (poll $polls)"
+        fi
+        last_seen_identity=$current
+        absent_polls=0
+        absent_announced=0
+    elif [ -n "$last_seen_identity" ]; then
+        absent_polls=$((absent_polls + 1))
+        if [ "$ABSENT_ANNOUNCE_POLLS" -gt 0 ] \
+           && [ "$absent_polls" -ge "$ABSENT_ANNOUNCE_POLLS" ] \
+           && [ "$absent_announced" = "0" ]; then
+            echo "[camera-usb] camera_absent: ${last_seen_identity} has not re-enumerated for $absent_polls polls (poll $polls); pgphoto has no device to bind and will not recover on its own -- power-cycle or replug the body (issue #347)" >&2
+            absent_announced=1
+        fi
+    fi
 
     # Issue #121: during the startup grace window, absorb identity changes into
     # the baseline without restarting pgphoto. A camera that is already powered
