@@ -74,6 +74,20 @@ ABSENT_ANNOUNCE_POLLS=${OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS:-30}
 # the evidence we are missing. Dump it once, at the moment of loss.
 #   ABSENT_EVIDENCE -- 0 disables the dump entirely.
 ABSENT_EVIDENCE=${OPENPOLARIS_USB_ABSENT_EVIDENCE:-1}
+# Issue #347 follow-up: candidate mitigation, opt-in. This host runs
+# usbcore.autosuspend=2 with every device on power/control=auto, so an idle USB
+# device is suspended after two seconds -- including a camera link. That is far
+# more aggressive than a desktop would use for a PTP body, and a suspend/resume
+# cycle landing mid-operation is a plausible way to lose the device outright.
+# Pinning the camera's own interface to "on" removes that variable without
+# touching global policy or any other device.
+#   USB_PIN_POWER -- 1 pins each detected camera device's power/control to "on"
+#     every poll; 0 (default) leaves kernel policy untouched.
+# Deliberately default-off: it changes device behaviour, and #147 requires power
+# changes to be made at the ownership layer with evidence rather than as a global
+# governor. It is also NOT proven to help -- motor activity, not suspend timing,
+# is what correlates with recovery so far. Enable it only to test it.
+USB_PIN_POWER=${OPENPOLARIS_USB_PIN_POWER:-0}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
 
@@ -138,6 +152,28 @@ fingerprint() {
 # Read-only and strictly bounded: one dmesg tail, one module parameter, and the
 # power/runtime state of whatever is still attached. Nothing here writes, resets,
 # suspends or restarts anything -- recovery is #146's scope, not this one.
+# Issue #347 follow-up: optionally keep the camera's USB interface out of runtime
+# suspend. Only ever touches devices that already matched as a camera, never the
+# hub or controller, and never writes anything else. Best-effort: sysfs may be
+# read-only or the attribute absent, in which case this is a silent no-op.
+pin_camera_power() {
+    for d in "$SYSFS_USB"/*; do
+        [ -r "$d/idVendor" ] && [ -r "$d/idProduct" ] || continue
+        vendor=$(tr 'A-F' 'a-f' < "$d/idVendor" 2>/dev/null)
+        product=$(tr 'A-F' 'a-f' < "$d/idProduct" 2>/dev/null)
+        if [ -n "$SELECTED_VENDOR" ]; then
+            [ "$vendor" = "$(printf '%s' "$SELECTED_VENDOR" | tr 'A-F' 'a-f')" ] || continue
+            [ -z "$SELECTED_PRODUCT" ] || [ "$product" = "$(printf '%s' "$SELECTED_PRODUCT" | tr 'A-F' 'a-f')" ] || continue
+        else
+            camera_vendor "$vendor" || continue
+        fi
+        [ -w "$d/power/control" ] || continue
+        [ "$(cat "$d/power/control" 2>/dev/null)" = "on" ] && continue
+        echo on > "$d/power/control" 2>/dev/null \
+            && echo "[camera-usb] usb-power: pinned ${vendor}:${product} power/control=on (autosuspend disabled for this device; issue #347)" >&2
+    done
+}
+
 dump_usb_evidence() {
     lost="$1"
     echo "[camera-usb] usb-evidence: capturing kernel view after losing ${lost}" >&2
@@ -222,6 +258,7 @@ echo "[camera-usb] supervisor ready; identity=${baseline:-none}"
 while :; do
     sleep "$POLL_SECS"
     current=$(fingerprint)
+    [ "$USB_PIN_POWER" = "1" ] && pin_camera_power
     polls=$((polls + 1))
 
     # Issue #347: record a camera that disappeared and stayed gone. Deliberately

@@ -14,6 +14,10 @@ make_usb() {
     printf '%s\n' "$3" > "$dir/idProduct"
     printf '%s\n' "$4" > "$dir/busnum"
     printf '%s\n' "$5" > "$dir/devnum"
+    # Real sysfs exposes power/control; the pin path must not be exercised
+    # against a directory that lacks it.
+    mkdir -p "$dir/power"
+    printf 'auto\n' > "$dir/power/control"
 }
 
 RESTART_LOG=$TMP/restarts
@@ -487,6 +491,37 @@ fi
 kill "$return_pid" 2>/dev/null || true; wait "$return_pid" 2>/dev/null || true
 
 echo 'PASS: camera USB supervisor reports a camera that vanishes and never returns, once per episode (issue #347)'
+
+# Issue #347 follow-up: the host runs usbcore.autosuspend=2, so an idle camera
+# link is suspended after two seconds. Pinning is offered as an opt-in test
+# knob only -- it must stay OFF by default (it changes device behaviour and is
+# not proven to help) and must touch nothing but the camera device.
+rm -rf "$TMP/sys" "$TMP/run"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0189 1 3
+make_usb 1-2 1234 5678 1 4          # unrelated device: must never be pinned
+PIN_DEFAULT=$TMP/pin_default.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=1 OPENPOLARIS_USB_MAX_POLLS=6 \
+sh "$SUPERVISOR" >"$PIN_DEFAULT" 2>&1
+test "$(grep -c 'usb-power' "$PIN_DEFAULT")" -eq 0
+test "$(cat "$TMP/sys/1-1/power/control")" = "auto"
+
+rm -rf "$TMP/run"
+mkdir -p "$TMP/run"
+PIN_ON=$TMP/pin_on.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=1 OPENPOLARIS_USB_MAX_POLLS=6 \
+OPENPOLARIS_USB_PIN_POWER=1 sh "$SUPERVISOR" >"$PIN_ON" 2>&1
+grep -q 'usb-power: pinned 25fb:0189 power/control=on' "$PIN_ON"
+test "$(cat "$TMP/sys/1-1/power/control")" = "on"
+# The unrelated device must be left alone, and the pin must not repeat per poll.
+test "$(cat "$TMP/sys/1-2/power/control")" = "auto"
+test "$(grep -c 'usb-power: pinned' "$PIN_ON")" -eq 1
+
+echo 'PASS: camera USB supervisor leaves USB power policy alone by default and pins only the camera when opted in (issue #347)'
 
 echo 'PASS: camera USB supervisor keys the fingerprint to the selected camera and ignores unrelated cameras (issue #126)'
 echo 'PASS: camera USB supervisor validates lock ownership and restarts once after a stable camera identity change (issue #57)'
