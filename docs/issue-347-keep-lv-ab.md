@@ -41,20 +41,36 @@ Two things make it worth testing now:
 
 ## What to run
 
-Same body both times (**K-3 III** — PC live view does not exist on other bodies),
-same starting charge, camera attached after Polaris boots (that is how every
-captured session has run).
+**Run the keep-on arm only.** It is what ships today, and it is exactly the
+condition that killed the camera in session 34, so the primary hypothesis can be
+tested without touching the hazardous path.
 
-| Run | Setting | Action |
-|---|---|---|
-| A | `STAGE2_PENTAX_KEEP_LV=1` (current default) | Start preview, let it stream steadily, then start a goto slew. Keep both running ~2 min. |
-| B | `STAGE2_PENTAX_KEEP_LV=0` | Identical sequence. |
+The keep-off arm (per-frame teardown) is **opt-in** via `--run-teardown-arm`,
+because that is the path that machine-gunned the shutter in early field testing.
+Only enable it while watching the camera, and pull power if you hear the shutter.
+
+Preview load is capped by **request count** (`--max-requests`, default 25), never
+by wall-clock time — a duration-based loop over the teardown path is how you get
+hundreds of actuations. Every run counts card images before and after and aborts
+the whole experiment on the first new image.
+
+Same body both times (**K-3 III**, the body that actually failed in #347), same
+starting charge, camera attached after Polaris boots (that is how every captured
+session has run). Do not switch bodies mid-experiment: the K-1 II's live view
+behaves differently — it cannot report `d035`, replies to "no new frame" with a
+generic error, and runs about one frame per 7-8 s versus the K-3 III's faster
+cadence (issue #86 was a K-1 II teardown taking the camera off USB).
+
+| Arm | Setting | Action | Default |
+|---|---|---|---|
+| keep-on | `STAGE2_PENTAX_KEEP_LV=1` | Start preview, pull ≤25 frames, then a bounded yaw slew while streaming. | **yes** |
+| keep-off | `STAGE2_PENTAX_KEEP_LV=0` | Identical sequence. | no — opt-in |
 
 Repeat each at least 3 times. One success in condition B is not proof; three is
 reasonable.
 
-Set it in the pgphoto wrapper environment before pgphoto starts — the C loader reads
-`STAGE2_*`, not `OPENPOLARIS_*`.
+Set it in `/var/run/openpolaris-stage2.env`; the script does this and restarts
+pgphoto so the value actually takes effect (the loader reads it at camera-init).
 
 ## What to record for every run
 
@@ -73,9 +89,11 @@ Set it in the pgphoto wrapper environment before pgphoto starts — the C loader
 
 | Result | Conclusion | Next step |
 |---|---|---|
-| A fails, B survives repeatedly | keep-LV is implicated | Implement idle live-view release properly — see R2 in `docs/issue-camera-idle-power-drain.md`. It must go at the session-ownership layer, **not** as a process-global timer in `stage2_loader.c` (#147 forbids that; a naive version was already tried and rejected). |
-| Both survive | sustained streaming is not the trigger | Stop chasing live view. Focus on the truncated teardown uevent and capture kernel evidence on the next real loss. |
-| Both fail | motor load during streaming is fatal regardless of teardown policy | Investigate mount-side power/controller behaviour during slews. |
+| Any new card image during preview | **Shutter tripwire tripped** — preview requests are producing real captures | Abort entirely. This is its own fault, not an A/B input. Do not raise `--max-requests`. |
+| keep-on loses the camera (single arm) | Primary hypothesis reproduced | Do **not** run the teardown arm to "confirm" — it is the shutter-hazardous path. Go straight to R2 in `docs/issue-camera-idle-power-drain.md`: idle live-view release at the session-ownership layer, **not** a process-global timer in `stage2_loader.c` (#147 forbids that; a naive version was already tried and rejected). |
+| keep-on survives, repeated | Not yet conclusive | The fatal case was n=1. Repeat before concluding anything. |
+| Both arms survive (opt-in run) | sustained streaming is not the trigger | Stop chasing live view. Focus on the truncated teardown uevent and capture kernel evidence on the next real loss. |
+| Both fail (opt-in run) | motor load during streaming is fatal regardless of teardown policy | Investigate mount-side power/controller behaviour during slews. |
 
 ## Also worth doing in the same sitting
 
@@ -89,7 +107,16 @@ Set it in the pgphoto wrapper environment before pgphoto starts — the C loader
 
 ## Known limits of this test
 
+- **The shutter hazard is real and not fully explained.** With keep-LV off, every
+  preview request tears live view down and restarts it; early field testing on a
+  K-3 III reported that escalating into repeated real captures. The escalation point
+  is *not* in our sources — pgphoto is proprietary, and the ptp2 Pentax preview path
+  only writes `d035` (the `InitiateOpenCapture` call inside `camera_capture_preview`
+  is the Fuji branch). So the harness detects and stops rather than assuming it
+  cannot happen. The card-image tripwire catches it *after* the fact, not before —
+  which is why the hazardous arm stays opt-in and needs a human watching.
 - The fatal case is **n=1**. This experiment exists precisely because we have almost
   no data, so treat early results as directional.
-- I have been wrong twice on #347 (inverted causality, mislabelled opcode). Anything
-  here that contradicts a fresh log should lose.
+- I have been wrong twice on #347 (inverted causality, mislabelled opcode), and once
+  more here by designing an unsafe harness. Anything that contradicts a fresh log or
+  a field observation from you should lose.
