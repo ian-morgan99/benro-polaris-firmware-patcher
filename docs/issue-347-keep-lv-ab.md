@@ -1,7 +1,22 @@
 # Does keeping live view on cause the K-3 III to fall off USB? (issue #347)
 
-**Status:** not run. Written 2026-11-16 while the rig was unavailable, so it can be
-executed in one sitting when it is back.
+**Status:** scripted — `scripts/keep-lv-ab.py`. Not yet run.
+
+```
+scripts/keep-lv-ab.py --plan                                  # touches nothing
+scripts/keep-lv-ab.py --host 192.168.0.1 --i-am-present --confirm-move
+scripts/keep-lv-ab.py --analyze-only docs/evidence/<bundle>    # re-score offline
+```
+
+It moves the mount, so it refuses to run without both confirmation flags. Evidence
+(dmesg first, then Mlog/Clog) is captured per run into `docs/evidence/`.
+
+Before this was possible at all, `STAGE2_PENTAX_KEEP_LV` could not be changed on a
+running device: the loader reads it at `gp_camera_init` and advertises
+"set STAGE2_PENTAX_KEEP_LV=0 to A/B", but pgphoto is launched by the vendor watchdog
+with a fixed environment, so there was no caller to export it from. The wrapper now
+reads that one allowlisted key from `/var/run/openpolaris-stage2.env` (grepped, not
+sourced; value must be 0 or 1; applied value logged on every start).
 
 ## Why this test exists
 
