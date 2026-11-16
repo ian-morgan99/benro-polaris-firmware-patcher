@@ -81,7 +81,31 @@ mixed = [{"arm":"keep-on","run":1,"camera_after":False},
          {"arm":"keep-on","run":2,"camera_after":True},
          {"arm":"keep-off","run":1,"camera_after":True}]
 assert "IMPLICATED" in ab.verdict(mixed)
-print("ok verdict: all five outcomes, and partial survival still reads as failure")
+
+# The default run is keep-on ONLY, because the teardown arm is the one that
+# machine-gunned the shutter. A single-arm result must still be interpretable.
+on_only_fail = [{"arm":"keep-on","run":1,"camera_after":False}]
+assert "REPRODUCED" in ab.verdict(on_only_fail)
+assert "repeat" in ab.verdict([{"arm":"keep-on","run":1,"camera_after":True}])
+
+# The shutter tripwire outranks every other outcome, including a clean pass.
+tripped = [{"arm":"keep-on","run":1,"camera_after":True,"aborted":"NEW CARD IMAGE"}]
+assert "SHUTTER TRIPWIRE" in ab.verdict(tripped)
+tripped2 = rows(True, True) + [{"arm":"keep-off","run":9,"camera_after":True,
+                                "aborted":"NEW CARD IMAGE after request 4"}]
+assert "SHUTTER TRIPWIRE" in ab.verdict(tripped2)
+
+# The hazardous arm must not be reachable without an explicit opt-in.
+assert ab.ARM_ON == ("keep-on", "1") and ab.ARM_OFF == ("keep-off", "0")
+print("ok verdict: all outcomes, single-arm runs, and the shutter tripwire wins")
 PY
+
+# The default plan must NOT include the keep-off (per-frame teardown) arm.
+OUT=$(python3 "$AB" --plan)
+printf '%s\n' "$OUT" | grep -q 'arm keep-on'
+printf '%s\n' "$OUT" | grep -q 'keep-off arm SKIPPED by default'
+printf '%s\n' "$OUT" | grep -q 'COUNT-capped, never time-based'
+# And it must be opt-in only.
+printf '%s\n' "$(python3 "$AB" --plan --run-teardown-arm)" | grep -q 'arm keep-off'
 
 echo 'PASS: keep-lv A/B analyser counts frames/uevents and verdicts without over-claiming (issue #347)'

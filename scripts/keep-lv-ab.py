@@ -27,21 +27,37 @@ post-mortem had to be reconstructed by hand from two log files, and dmesg had
 already rolled past the event by the time anyone looked. Evidence capture is
 built in, not documented.
 
+Design decision worth stating plainly: the keep-LV-OFF arm is the hazardous one,
+so it is NOT run by default. The default run only exercises keep-LV-ON, which is
+what ships today and is exactly the condition that killed the camera in session 34
+-- so the primary hypothesis can be tested without touching the teardown path at
+all. Comparing against keep-LV-OFF requires --run-teardown-arm and should only be
+done while watching the camera.
+
 Usage:
     keep-lv-ab.py --plan                     what it would run; touches nothing
     keep-lv-ab.py --host 192.168.0.1 --i-am-present --confirm-move
+    keep-lv-ab.py --run-teardown-arm ...     also test the hazardous arm, by choice
     keep-lv-ab.py --analyze-only BUNDLE      re-score saved bytes offline
 
 Safety:
-  * Moves the mount. Requires BOTH --i-am-present and --confirm-move, because a
-    slew under load is exactly the condition that has previously killed the
-    camera permanently and it must never be fired unattended or by a retry.
-  * The slew is a bounded yaw nudge from --slew-deg (default 15), not a goto to
-    an arbitrary sky coordinate, so it cannot drive into a hard stop chasing a
-    target the harness invented.
-  * Live view is always stopped on exit, including on error and Ctrl-C: leaving
-    PC live view asserted is precisely the state that keeps a Pentax awake and
-    wedged.
+  * **This must never fire the shutter repeatedly.** With keep-LV OFF (the legacy
+    per-frame teardown) every preview request tears PC live view down and restarts
+    it, and on a K-3 III that path has been observed to escalate into real captures
+    -- the shutter "machine-gunning" reported from early field testing. The exact
+    escalation point is not in our sources (pgphoto is proprietary; the ptp2 Pentax
+    preview path itself only writes d035), so the field observation is treated as
+    authoritative and the harness is written to *detect and stop* rather than to
+    assume it cannot happen.
+  * Preview load is therefore bounded by REQUEST COUNT, never by wall-clock time.
+    A time-based loop over a per-frame-teardown body is exactly how you get
+    hundreds of actuations.
+  * Every run counts images on the card before and after. Any new image aborts the
+    whole experiment immediately -- a shutter firing during this test is a finding,
+    not something to average over.
+  * Moves the mount. Requires BOTH --i-am-present and --confirm-move.
+  * Live view is always stopped on exit, including on error and Ctrl-C: leaving PC
+    live view asserted is precisely the state that keeps a Pentax awake and wedged.
 """
 from __future__ import annotations
 
@@ -81,7 +97,10 @@ RESTART = "/app/restart_gphoto"
 # sourced: only STAGE2_PENTAX_KEEP_LV is honoured.
 ENV_FILE = "/var/run/openpolaris-stage2.env"
 
-ARMS = ("keep-on", "keep-off")
+# The keep-off arm is hazardous (per-frame teardown -> observed shutter
+# machine-gunning), so it is not a default; see --run-teardown-arm.
+ARM_ON = ("keep-on", "1")
+ARM_OFF = ("keep-off", "0")
 CAMERA_VENDORS = ("25fb",)          # Pentax / Ricoh
 # Presence markers pgphoto/polestar_app actually emit. Verified against the
 # retained session 34 logs: a present body is reported as
@@ -214,31 +233,58 @@ def clear_arm(user_host: str) -> None:
     ssh_run(user_host, f"rm -f {ENV_FILE}", timeout=30)
 
 
-def stream_preview(p: cp.Polaris, seconds: float, stop_after: bool) -> int:
-    """Start PC live view and keep consuming frames for `seconds`.
+def card_image_count(user_host: str) -> tuple[int, list[str]]:
+    """Count images on the card. Used as a shutter tripwire.
 
-    Returns the number of frames actually pulled. This is the sustained-stream
-    condition that session 34 was in when it died -- a continuous pull, not the
-    bursty polling that has always survived.
+    If a preview request escalates into a real capture -- which is what the early
+    per-frame-teardown field reports described -- it lands a file on the card. That
+    is cheap to detect and it is the only signal available here, because pgphoto's
+    own decision logic is not in our sources.
     """
+    rc, out = ssh_run(user_host,
+                      "find /app/sd -maxdepth 4 -type f "
+                      r"\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.dng' \) "
+                      "2>/dev/null | sort", timeout=60)
+    files = [l.strip() for l in out.splitlines() if l.strip()]
+    return (len(files) if rc == 0 else -1), files
+
+
+def stream_preview(p: cp.Polaris, max_requests: int, stop_after: bool,
+                   user_host: str, tripwire: list[str]) -> dict:
+    """Pull a bounded number of preview frames. Never time-based.
+
+    Bounding by count rather than duration is deliberate: with keep-LV off every
+    request tears live view down and restarts it, so a wall-clock loop on a slow
+    body issues far fewer requests than on a fast one, and on a fast body it can
+    issue hundreds. The count is the thing that must be capped.
+
+    Aborts on the first new card image: a shutter firing mid-test is a finding.
+    """
+    out = {"requests": 0, "frames": 0, "aborted": None}
     p.send(291, 2, "state:1;")
-    frames = 0
-    deadline = time.monotonic() + seconds
     try:
-        while time.monotonic() < deadline:
+        for _ in range(max_requests):
             try:
-                code, _payload = p.frame(deadline)
+                code, _payload = p.frame(time.monotonic() + 15.0)
             except TimeoutError:
-                break
+                continue
             if code == 291:
-                frames += 1
+                out["frames"] += 1
+            out["requests"] += 1
+            n, files = card_image_count(user_host)
+            new = [f for f in files if f not in tripwire]
+            if n >= 0 and new:
+                out["aborted"] = f"NEW CARD IMAGE after request {out['requests']}: {new[:3]}"
+                log(f"  !! {out['aborted']} -- preview is escalating to real "
+                    f"captures. STOPPING.")
+                break
     finally:
         if stop_after:
             try:
                 p.send(291, 2, "state:0;")
             except OSError:
                 pass
-    return frames
+    return out
 
 
 def slew(user_host: str, yaw_deg: float) -> tuple[int, str]:
@@ -293,16 +339,34 @@ def analyse(log_dir: str) -> dict:
 
 
 def verdict(results: list[dict]) -> str:
-    """Interpret both arms. Deliberately refuses to over-claim on small n."""
+    """Interpret the runs. Deliberately refuses to over-claim on small n."""
     def survived(arm):
         rows = [r for r in results if r["arm"] == arm]
         if not rows:
             return None
         return all(r.get("camera_after") for r in rows)
 
+    # A shutter tripwire outranks everything else: producing real captures during a
+    # preview test is a finding on its own and must never be reported as a pass.
+    tripped = [r for r in results if r.get("aborted")]
+    if tripped:
+        return (f"SHUTTER TRIPWIRE TRIPPED ({len(tripped)} run(s)): preview "
+                f"requests produced new card images -- {tripped[0]['aborted']}. "
+                f"Do not re-run with more requests. This is the machine-gun "
+                f"failure mode; it needs its own investigation, not an A/B.")
+
     on, off = survived("keep-on"), survived("keep-off")
-    if on is None or off is None:
-        return "INCOMPLETE - one arm has no runs; do not draw a conclusion"
+    if on is None:
+        return "INCOMPLETE - no keep-on runs; do not draw a conclusion"
+    if off is None:
+        # The default run is keep-on only, because the teardown arm is the hazardous
+        # one. A single-arm result still answers the primary question.
+        return ("REPRODUCED - keep-on lost the camera under sustained streaming "
+                "with motor load. The primary hypothesis holds; do not run the "
+                "teardown arm to 'confirm', it is the shutter-hazardous path.") \
+            if not on else \
+            ("keep-on survived this run. Not conclusive on its own -- the fatal "
+             "case was n=1, so repeat before concluding anything.")
     if not on and off:
         return ("KEEP-LV IMPLICATED - keep-on lost the camera, keep-off survived. "
                 "Implement idle live-view release per R2 in "
@@ -323,7 +387,14 @@ def main() -> int:
     ap.add_argument("--host", default="192.168.0.1")
     ap.add_argument("--ssh-host", default=SSH_USER_HOST)
     ap.add_argument("--runs", type=int, default=3, help="repetitions per arm")
-    ap.add_argument("--stream-secs", type=float, default=90.0)
+    ap.add_argument("--max-requests", type=int, default=25,
+                    help="HARD cap on preview requests per run. Never time-based: "
+                         "with keep-LV off each request tears live view down and "
+                         "restarts it, which is the path that machine-gunned the "
+                         "shutter in early field testing.")
+    ap.add_argument("--run-teardown-arm", action="store_true",
+                    help="also run STAGE2_PENTAX_KEEP_LV=0. This is the hazardous "
+                         "arm; off by default. Only use while watching the camera.")
     ap.add_argument("--slew-deg", type=float, default=15.0,
                     help="bounded yaw nudge; not an arbitrary sky target")
     ap.add_argument("--plan", action="store_true", help="print the plan, touch nothing")
@@ -334,19 +405,28 @@ def main() -> int:
 
     if args.analyze_only:
         log_dir = os.path.join(args.analyze_only, "logs")
-        print(json.dumps(verdict(_load_results(args.analyze_only)), indent=2))
+        print(verdict(_load_results(args.analyze_only)))
         print(json.dumps(analyse(log_dir), indent=2))
         return 0
 
-    plan = [f"arm {a}: STAGE2_PENTAX_KEEP_LV={v}" for a, v in
-            zip(ARMS, ("1", "0"))]
+    arms = [ARM_ON]
+    if args.run_teardown_arm:
+        arms.append(ARM_OFF)
     if args.plan:
         print("PLAN (nothing executed):")
-        for p in plan:
-            print(f"  {p}")
-        print(f"  per run: restart pgphoto -> confirm applied value -> start PC live "
-              f"view -> stream frames {args.stream_secs}s -> bounded yaw slew "
-              f"{args.slew_deg}deg while streaming -> stop both -> check camera present")
+        for a, v in arms:
+            print(f"  arm {a}: STAGE2_PENTAX_KEEP_LV={v}")
+        print(f"  per run: restart pgphoto -> confirm applied value -> count card "
+              f"images -> start PC live view -> pull at most {args.max_requests} "
+              f"frames (COUNT-capped, never time-based) -> bounded yaw slew "
+              f"{args.slew_deg}deg -> stop live view -> re-count card images -> "
+              f"check camera present")
+        print("  aborts the WHOLE experiment on the first new card image: preview "
+              "requests producing real captures is a finding, not noise")
+        if not args.run_teardown_arm:
+            print("  keep-off arm SKIPPED by default. It is the per-frame-teardown "
+                  "path that machine-gunned the shutter in early field testing; add "
+                  "--run-teardown-arm only while watching the camera.")
         print(f"  evidence per run: dmesg (first, it rolls), Mlog/Clog, "
               f"supervisor usb-evidence lines")
         print(f"  arms repeated {args.runs}x each")
@@ -358,6 +438,11 @@ def main() -> int:
               "--confirm-move.", file=sys.stderr)
         return 2
 
+    if args.run_teardown_arm:
+        print("NOTE: keep-off arm enabled. Watch the camera. If you hear the shutter, "
+              "pull the camera's power immediately -- the card-image tripwire detects "
+              "it after the fact, not before.", file=sys.stderr)
+
     if not camera_present(args.ssh_host):
         print("BLOCKED: no Pentax on USB before we start. Attach and power the "
               "body first; a run without a camera proves nothing.", file=sys.stderr)
@@ -367,8 +452,11 @@ def main() -> int:
                           f"issue-347-keep-lv-ab-{dt.date.today():%Y%m%d}")
     os.makedirs(bundle, exist_ok=True)
     results: list[dict] = []
+    stop_all = False
     try:
-        for arm, value in zip(ARMS, ("1", "0")):
+        for arm, value in arms:
+            if stop_all:
+                break
             ok, detail = arm_keep_lv(args.ssh_host, value)
             log(f"armed {arm} (STAGE2_PENTAX_KEEP_LV={value}): {detail}")
             if not ok:
@@ -379,13 +467,18 @@ def main() -> int:
                 log(f"=== {label} ===")
                 before = snapshot_logs(args.ssh_host,
                                        os.path.join(bundle, "logs"), label)
+                n_before, tripwire = card_image_count(args.ssh_host)
+                log(f"  card images before: {n_before}")
                 p = cp.Polaris(args.host, MOUNT_PORT, None, 10.0)
-                frames = 0
+                stream = {"requests": 0, "frames": 0, "aborted": None}
                 try:
-                    frames = stream_preview(p, args.stream_secs, stop_after=False)
-                    rc, body = slew(args.host, args.slew_deg)
-                    log(f"  slew rc={rc} {body[:120]}")
-                    time.sleep(20)
+                    stream = stream_preview(p, args.max_requests, stop_after=False,
+                                            user_host=args.ssh_host,
+                                            tripwire=tripwire)
+                    if not stream["aborted"]:
+                        rc, body = slew(args.host, args.slew_deg)
+                        log(f"  slew rc={rc} {body[:120]}")
+                        time.sleep(20)
                 finally:
                     stop_slew(args.host)
                     try:
@@ -394,14 +487,24 @@ def main() -> int:
                         pass
                     p.close()
                 time.sleep(5)
+                n_after, _files = card_image_count(args.ssh_host)
                 present = camera_present(args.ssh_host)
                 after = snapshot_logs(args.ssh_host,
                                       os.path.join(bundle, "logs"), label)
-                results.append({"arm": arm, "run": n, "frames": frames,
+                results.append({"arm": arm, "run": n, **stream,
+                                "images_before": n_before, "images_after": n_after,
                                 "camera_after": present,
                                 "logs_before": before.get("captured"),
                                 "logs_after": after.get("captured")})
-                log(f"  {label}: frames={frames} camera_present={present}")
+                log(f"  {label}: requests={stream['requests']} "
+                    f"frames={stream['frames']} images {n_before}->{n_after} "
+                    f"camera_present={present}")
+                if stream["aborted"] or (n_before >= 0 and n_after > n_before):
+                    log("  SHUTTER TRIPWIRE TRIPPED - aborting the entire experiment. "
+                        "Preview requests are producing real captures. Do not re-run "
+                        "with more requests; this needs its own investigation.")
+                    stop_all = True
+                    break
                 if not present:
                     log("  CAMERA LOST - stopping this arm; power-cycle the body "
                         "before continuing (a host reboot does not recover it)")
