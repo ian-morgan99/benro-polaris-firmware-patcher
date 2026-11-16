@@ -33,6 +33,41 @@ export STAGE2_CAPTURE_EMPTY_PATH_CHECK=${STAGE2_CAPTURE_EMPTY_PATH_CHECK:-1}
 # K-1 II regression check are complete.  Set STAGE2_SHUTTER_FALLBACK=1 for a
 # controlled fallback run.
 export STAGE2_SHUTTER_FALLBACK=${STAGE2_SHUTTER_FALLBACK:-0}
+# Issue #347: make STAGE2_PENTAX_KEEP_LV toggleable on a running device.
+#
+# The Stage-2 loader already reads this variable (stage2_loader.c, SHIM #4) and
+# defaults it ON, but pgphoto is launched by the vendor watchdog with a fixed
+# environment, so exporting it here from the caller's environment does nothing:
+# there is no caller to export it from. Without this, the documented
+# "STAGE2_PENTAX_KEEP_LV=0 to A/B" escape hatch in the loader comment is not
+# actually reachable on hardware -- which is why the keep-LV A/B has never run.
+#
+# So read one allowlisted key from a file instead. The file is read, not sourced:
+# only this exact key is honoured, it must be 0 or 1, and anything else is
+# ignored with a warning. No arbitrary shell from flash.
+#
+# Shipped default is unchanged (ON). The applied value is logged on every start
+# so an override left behind by a test run can never become a silent accident --
+# that is the same class of problem as the stale restart lock in issue #297.
+STAGE2_ENV_FILE=${OPENPOLARIS_STAGE2_ENV_FILE:-$RUN_DIR/openpolaris-stage2.env}
+if [ -r "$STAGE2_ENV_FILE" ]; then
+    KLV_LINE=$(grep -m1 '^STAGE2_PENTAX_KEEP_LV=' "$STAGE2_ENV_FILE" 2>/dev/null || true)
+    KLV_VAL=${KLV_LINE#STAGE2_PENTAX_KEEP_LV=}
+    case "$KLV_VAL" in
+        0|1)
+            export STAGE2_PENTAX_KEEP_LV="$KLV_VAL"
+            echo "[stage2] keep-lv: override from $STAGE2_ENV_FILE -> STAGE2_PENTAX_KEEP_LV=$KLV_VAL" >&2
+            ;;
+        "")
+            # Key absent: the file may hold other allowlisted keys. Leave the
+            # loader default in place and say nothing; silence here is correct
+            # because no override was requested.
+            ;;
+        *)
+            echo "[stage2] keep-lv: ignoring STAGE2_PENTAX_KEEP_LV='$KLV_VAL' in $STAGE2_ENV_FILE (must be 0 or 1); using loader default ON" >&2
+            ;;
+    esac
+fi
 # On-demand preview gate interval (seconds). Pin it ONLY when the operator
 # explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
 # model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --

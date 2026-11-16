@@ -13,6 +13,8 @@ echo launched
 echo "preview_backoff=$STAGE2_PENTAX_PREVIEW_BACKOFF"
 echo "preview_interval=$STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS"
 echo "capture_trace=$STAGE2_CAPTURE_TRACE"
+echo "keep_lv=${STAGE2_PENTAX_KEEP_LV-<unset>}"
+echo "injected_other=${OTHER_KEY-<unset>}"
 echo "pgphoto_preload=$LD_PRELOAD"
 EOF
 chmod +x "$TMP/stage2/pgphoto.stage2ondisk"
@@ -61,9 +63,41 @@ rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
 OUT=$(STAGE2_CAPTURE_TRACE=1 run_wrapper 2>&1)
 printf '%s\n' "$OUT" | grep -q '^capture_trace=1$'
 
-# A live but unrelated PID is stale ownership (PID reuse); it must not wedge
-# every future launch.
+# Issue #347: STAGE2_PENTAX_KEEP_LV must be toggleable on a running device. The
+# loader defaults it ON and pgphoto is launched by the vendor watchdog with a
+# fixed environment, so the documented "=0 to A/B" escape hatch was unreachable
+# on hardware until the wrapper began reading one allowlisted key from a file.
 rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
+OUT=$(run_wrapper 2>&1)
+printf '%s\n' "$OUT" | grep -q '^keep_lv=<unset>$'
+
+rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
+printf 'STAGE2_PENTAX_KEEP_LV=0\n' > "$TMP/run/openpolaris-stage2.env"
+OUT=$(run_wrapper 2>&1)
+printf '%s\n' "$OUT" | grep -q '^keep_lv=0$'
+printf '%s\n' "$OUT" | grep -q 'keep-lv: override from .* -> STAGE2_PENTAX_KEEP_LV=0'
+
+rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
+printf 'STAGE2_PENTAX_KEEP_LV=1\n' > "$TMP/run/openpolaris-stage2.env"
+OUT=$(run_wrapper 2>&1)
+printf '%s\n' "$OUT" | grep -q '^keep_lv=1$'
+
+# The file is read, not sourced: only the allowlisted key is honoured, and a
+# malformed value must fall back to the loader default rather than be exported.
+# The payload below is what would execute if anyone ever replaced the grep with
+# `. "$STAGE2_ENV_FILE"`, so it is a real regression guard, not a tautology.
+rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
+printf 'STAGE2_PENTAX_KEEP_LV=0; touch %s/pwned\nOTHER_KEY=pwned\n' "$TMP" \
+    > "$TMP/run/openpolaris-stage2.env"
+OUT=$(run_wrapper 2>&1)
+printf '%s\n' "$OUT" | grep -q '^keep_lv=<unset>$'
+printf '%s\n' "$OUT" | grep -q 'ignoring STAGE2_PENTAX_KEEP_LV='
+printf '%s\n' "$OUT" | grep -q '^injected_other=<unset>$'
+[ ! -e "$TMP/pwned" ]
+rm -f "$TMP/run/openpolaris-stage2.env"
+
+# A live but unrelated PID is stale ownership (PID reuse); it must not wedge
+# every future launch.rm -f "$TMP/run/openpolaris-pgphoto.pid" "$TMP/run/openpolaris-pgphoto.backoff"
 mkdir -p "$TMP/run/openpolaris-pgphoto.launch.lock"
 echo $$ > "$TMP/run/openpolaris-pgphoto.launch.lock/pid"
 mkdir -p "$TMP/proc/$$"
