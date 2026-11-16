@@ -53,10 +53,19 @@ search during a live capture. Blind fallback can be enabled explicitly for a
 controlled research run, but it remains inappropriate for the unattended frame
 watcher.
 
-The historic test job additionally sets `MOUNT_HINT=0`, `EXIF_WRITEBACK=0`, and
-`EMBED_SOLVE_EXIF=0`. The native solver remains a research option: bounded
-execution is now safe to test, but it is not yet a qualified replacement for
-Astrometry.net.
+The historic test job sets `EXIF_WRITEBACK=0` and `EMBED_SOLVE_EXIF=0`, and
+enables the mount-pose solve hint (`MOUNT_HINT`) only when a site is known
+(`g_have_pos`). It was previously pinned to `MOUNT_HINT=0`, which forced every
+native solve on this path to run blind; blind cannot finish against the compact
+index, so those runs ended in `rc=7` timeouts while Astrometry.net solved the
+same frame in seconds. The hint is suppressed when no site has been set, because
+`g_lat`/`g_lon` default to 0/0 and `altaz2radec` would return a plausible but
+wrong Greenwich position, and a wrong hint fails more slowly than no hint. The
+hint radius stays `polaris-align.sh`'s own default of 60 degrees. Querying the
+pose consumes the 518 telemetry broadcast only -- `handshake()` sends 520 and
+284 and no control opcode -- so the path remains non-motor.
+The native solver remains a research option: bounded execution is now safe to
+test, but it is not yet a qualified replacement for Astrometry.net.
 
 ## Evidence so far
 

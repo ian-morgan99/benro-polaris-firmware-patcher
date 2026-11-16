@@ -699,13 +699,30 @@ static int start_test_solve(const char *rel, const char *solver, const char *foc
       for (i = 3; i < 64; i++) close(i);
       logfd = open(TEST_LOG, O_WRONLY | O_CREAT | O_TRUNC, 0644);
       if (logfd >= 0) { dup2(logfd, 1); dup2(logfd, 2); if (logfd > 2) close(logfd); }
+      /* A position hint is worth ~50x on a narrow field (polaris-align.sh:25,
+         measured on the device: 7.3 s hinted vs 361.7 s blind at 4.5 deg).
+         This path used to force MOUNT_HINT=0, so every native solve here ran
+         BLIND -- and blind cannot win against this index: INDEPENDENT_ATTEMPTS
+         is 40 at up to 10 s each under a 45 s search deadline, so ~4-5 of the
+         648 tiles get tried before rc=7. That is why _IMG9359.JPG timed out at
+         ~50 s on the native solver while Astrometry.net solved the same frame,
+         same star list, in 1.49 s.
+         Enable the mount-pose hint -- but ONLY when a site is actually known.
+         g_lat/g_lon default to 0/0 and altaz2radec returns plausible numbers
+         for Greenwich, so an unset site would hand the solver a confidently
+         WRONG hint, and a wrong hint is worse than none: it fails, and it fails
+         slowly. HINT_RADIUS stays polaris-align.sh's single default (60 deg),
+         which covers the measured 37.5 deg compass error.
+         pose reads the 518 broadcast only -- handshake() sends 520/284 and no
+         control opcode -- so this adds no motor command to a path that must
+         stay non-motor. */
       snprintf(cmd, sizeof cmd,
-          "LAT=%.6f LON=%.6f MOUNT_HINT=0 EXIF_WRITEBACK=0 EMBED_SOLVE_EXIF=0 "
+          "LAT=%.6f LON=%.6f MOUNT_HINT=%d EXIF_WRITEBACK=0 EMBED_SOLVE_EXIF=0 "
           "SOLVER_BIN=%s %sSOLVE_TIMEOUT=45 RANGE_TIMEOUT=90 "
           "INDEPENDENT_SEARCH_TIMEOUT=45 INDEPENDENT_SOLVER_TIMEOUT=10 "
           "INDEPENDENT_BLIND_FALLBACK=0 sh %s/polaris-align.sh '%s' %s%s > %s 2>> %s",
-          g_lat, g_lon, formatted, sensor_env, g_astro, abs, focal_arg, hint,
-          TEST_RESULT, TEST_LOG);
+          g_lat, g_lon, g_have_pos ? 1 : 0, formatted, sensor_env, g_astro, abs,
+          focal_arg, hint, TEST_RESULT, TEST_LOG);
       { int rc = system(cmd); test_set_status(rc == 0 ? "done" : "failed"); }
       unlink(TEST_PID); _exit(0);
     }

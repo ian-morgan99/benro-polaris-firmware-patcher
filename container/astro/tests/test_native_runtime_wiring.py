@@ -99,10 +99,30 @@ def test_historic_test_path_is_non_motor_and_separate_from_live_job():
     js = (ROOT / "astro" / "webui" / "app.js").read_text()
     assert 'TEST_STATUS' in httpd and 'TEST_RESULT' in httpd and 'TEST_PID' in httpd
     assert '/api/test/upload' in httpd and 'TEST_MAX_UPLOAD' in httpd
-    assert 'EXIF_WRITEBACK=0' in httpd and 'MOUNT_HINT=0' in httpd
+    assert 'EXIF_WRITEBACK=0' in httpd and 'EMBED_SOLVE_EXIF=0' in httpd
+    # The hint is derived from the mount's pose, but only when a site is known:
+    # g_lat/g_lon default to 0/0 and altaz2radec returns plausible Greenwich
+    # numbers, so an unset site must NOT produce a hint. A wrong hint fails,
+    # and it fails slowly.
+    assert 'MOUNT_HINT=%d' in httpd and 'g_have_pos ? 1 : 0' in httpd
     assert 'kill(-pid, SIGTERM)' in httpd
     assert 'gal-test-file' in html and 'gal-test-image' in html
     assert '/api/test/solve' in js and '/api/test/upload' in js and '/api/test/state' in js
+
+
+def test_mount_pose_hint_sends_no_control_opcode():
+    """Enabling MOUNT_HINT on the historic path makes it connect to the mount.
+    That connection must stay read-only: pose consumes the 518 telemetry
+    broadcast, and handshake() sends only 520 (app registration) and 284."""
+    mount = (ROOT / "astro" / "polaris-mount.c").read_text()
+    hs = mount[mount.index("static void handshake(conn_t* c)"):]
+    hs = hs[:hs.index("\n}")]
+    assert '"1&520&2&state:1;#"' in hs and '"1&284&2&-1#"' in hs
+    for motor in ("519", "513", "514", "521", "531", "532", "533", "534", "549"):
+        assert ('&%s&' % motor) not in hs
+    pose = mount[mount.index('if (!strcmp(cmd, "pose"))'):]
+    pose = pose[:pose.index("conn_close(&c); return 0;")]
+    assert 'wait_for(&c, "518"' in pose and "conn_send" not in pose
 
 
 def test_align_rejects_missing_image_before_solver_access():
