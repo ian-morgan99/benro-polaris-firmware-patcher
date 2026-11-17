@@ -11,7 +11,10 @@
 #   ./scripts/pull-mlog-clog.sh root@192.168.0.1 /tmp/polaris-logs
 #
 # Output: <output-dir>/polaris-logs-<timestamp>.tar.gz containing:
-#   meta.txt          — identity check, FwVer, provenance, uptime, ps, mounts
+#   meta.txt          — identity check, FwVer, provenance, uptime, ps, mounts, USB/network state
+#   dmesg.txt         — kernel USB/storage/crash ring buffer at collection time
+#   stage2-crash.log  — persistent pgphoto crash records, if present
+#   pgphoto-maps.txt  — loaded pgphoto mappings, if pgphoto is running
 #   system-log/       — every Mlog_*/Clog_* (and any other) log on the SD card
 #   sd-root-listing   — what is at the SD root (FwPkt staging state)
 set -euo pipefail
@@ -45,11 +48,21 @@ ssh -o BatchMode=yes "$HOST" '{
   ps | grep -E "polestar|pgphoto" | grep -v grep
   echo "== mounts (SD card) =="
   cat /proc/mounts | grep -E "mmcblk|/app/sd" || true
+  echo "== USB =="
+  lsusb 2>/dev/null || true
+  echo "== network sockets =="
+  cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || true
   echo "== sd root =="
   ls -la /app/sd 2>/dev/null || echo "(SD not mounted at /app/sd)"
 }' > "$STAGE/meta.txt" 2>&1
 ssh -o BatchMode=yes "$HOST" 'cat /app/Mlog.txt' > "$STAGE/Mlog-current.txt"
 ssh -o BatchMode=yes "$HOST" 'cat /app/Clog.txt' > "$STAGE/Clog-current.txt"
+ssh -o BatchMode=yes "$HOST" 'dmesg 2>&1' > "$STAGE/dmesg.txt" ||
+  printf '%s\n' '(dmesg unavailable)' > "$STAGE/dmesg.txt"
+ssh -o BatchMode=yes "$HOST" 'cat /app/stage2-crash.log 2>&1' > "$STAGE/stage2-crash.log" ||
+  printf '%s\n' '(no /app/stage2-crash.log)' > "$STAGE/stage2-crash.log"
+ssh -o BatchMode=yes "$HOST" 'P=$(ps 2>/dev/null | grep pgphoto.stage2ondisk | grep -v grep | awk "{print \$1}" | head -1); if [ -n "$P" ]; then cat /proc/$P/maps; else echo "(pgphoto not running)"; fi' > "$STAGE/pgphoto-maps.txt" ||
+  printf '%s\n' '(pgphoto maps unavailable)' > "$STAGE/pgphoto-maps.txt"
 ssh -o BatchMode=yes "$HOST" 'ls -la /app/sd' > "$STAGE/sd-root-listing" 2>&1 || true
 
 mkdir -p "$STAGE/system-log"

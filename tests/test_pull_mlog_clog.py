@@ -26,6 +26,9 @@ case \"$command\" in
     ;;
   'cat /app/Mlog.txt') cat \"$root/app/Mlog.txt\" ;;
   'cat /app/Clog.txt') cat \"$root/app/Clog.txt\" ;;
+  *dmesg*) printf 'usb test\\n' ;;
+  *stage2-crash.log*) cat \"$root/app/stage2-crash.log\" ;;
+  *maps*) printf 'maps test\\n' ;;
   'ls -la /app/sd') printf 'FwPkt\\n' ;;
   *'== identity =='*)
     printf '== identity ==\\nFwVer:6.0.0.54.62\\nLinux polaris\\nup 1 day\\n'
@@ -49,6 +52,7 @@ def test_pull_script_streams_logs_and_current_tails_without_remote_stage(tmp_pat
     log_dir = device / "app/sd/system/log"
     (device / "app/bin").mkdir(parents=True)
     log_dir.mkdir(parents=True)
+    (device / "app/stage2-crash.log").write_text("crash evidence", encoding="utf-8")
     (device / "app/Mlog.txt").write_text("live mlog\n", encoding="utf-8")
     (device / "app/Clog.txt").write_text("live clog\n", encoding="utf-8")
     (log_dir / "Mlog_000274.log").write_text("rotated mlog\n", encoding="utf-8")
@@ -80,6 +84,9 @@ def test_pull_script_streams_logs_and_current_tails_without_remote_stage(tmp_pat
         assert any(name.endswith("meta.txt") for name in members)
         assert any(name.endswith("Mlog-current.txt") for name in members)
         assert any(name.endswith("Clog-current.txt") for name in members)
+        assert any(name.endswith("dmesg.txt") for name in members)
+        assert any(name.endswith("stage2-crash.log") for name in members)
+        assert any(name.endswith("pgphoto-maps.txt") for name in members)
         assert any(name.endswith("system-log/Mlog_000274.log") for name in members)
         assert any(name.endswith("system-log/Clog_000274.log") for name in members)
         assert any(name.endswith("system-log/error_000274.log") for name in members)

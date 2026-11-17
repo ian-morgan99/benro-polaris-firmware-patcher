@@ -252,16 +252,25 @@ if [ -z "$STATE" ]; then
   # UNKNOWN so nobody reads "could not probe" as "probe said broken".
   record "layer5-published" UNKNOWN "no CameraState from $WEBUI -- re-run from a host that can reach it"
 else
-  # ASCOM CameraState: 0 Disconnected, 1 DisconnectedPrepare, 2 Connecting, 3 Connected.
-  # Anything else is a value this build does not document, so it is reported rather than
-  # guessed at.
-  say "CameraState=$STATE (ASCOM: 0=Disconnected 1=DisconnectedPrepare 2=Connecting 3=Connected)"
+  # This implementation deliberately returns 0 because capture is synchronous:
+  # container/astro/polaris-httpd.c:1386 says "always Idle". Do not apply a generic
+  # ASCOM state table here: 0 is not evidence that the Pentax session is disconnected.
+  # The actual published camera identity is checked below from the code-286 snapshot.
+  say "CameraState=$STATE (polaris-httpd: 0=Idle; not a camera-presence signal)"
   case "$STATE" in
-    3) record "layer5-published" PASS "CameraState=Connected -- identity is reaching the application" ;;
-    0) record "layer5-published" FAIL "CameraState=Disconnected -- no camera session is published to the app" ;;
-    1|2) record "layer5-published" UNKNOWN "CameraState=$STATE -- mid-handshake, re-run after it settles" ;;
-    *) record "layer5-published" UNKNOWN "unrecognised CameraState=$STATE -- not a documented value for this build" ;;
+    0) record "layer5-camera-state" PASS "CameraState=0 is source-defined Idle; it is not treated as disconnected" ;;
+    *) record "layer5-camera-state" UNKNOWN "CameraState=$STATE is unexpected for this source; inspect the installed polaris-httpd" ;;
   esac
+fi
+
+# Code 286 is the application-facing camera snapshot. Unlike CameraState, it carries
+# the camera model and therefore is the signal used for this layer's identity verdict.
+if [ -z "$CAMINFO" ]; then
+  record "layer5-published" UNKNOWN "no code-286 camera snapshot from /api/link"
+elif printf '%s\n' "$CAMINFO" | grep -qiE 'model:[[:space:]]*(none|;|$)'; then
+  record "layer5-published" FAIL "code-286 published no camera model: $CAMINFO"
+else
+  record "layer5-published" PASS "code-286 published camera identity: $CAMINFO"
 fi
 
 hr "verdict"

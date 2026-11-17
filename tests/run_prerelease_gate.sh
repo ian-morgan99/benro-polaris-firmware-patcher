@@ -324,6 +324,7 @@ PY_TESTS=(
     tests/test_app_burst_protocol.py
     tests/test_canary_file_check.py
     tests/test_pull_mlog_clog.py
+    tests/test_camera_layer_report.py
     tests/test_autonomous_install.py
     tests/test_assert_orphan_wrote.py
     tests/test_capture_outcomes.py
@@ -486,6 +487,7 @@ PY_TESTS=(
     # the header block is executable. It must run early and always -- a gate
     # that produces no output is worse than one that fails.
     tests/test_gate_no_self_recursion.py
+    tests/test_webui_serves_and_stays_serving.py
     # Keep all offline-safe camera/astro helper contracts under the same gate;
     # the drift guard must not report these as unrun after they are added.
     tests/test_extract_threshold_hoist.py
@@ -1024,9 +1026,9 @@ check_bulb_cancel_return() {
         return 0
     fi
     if [ "$REQUIRE_BULB_CANCEL_RETURN" = "1" ]; then
-        bad "REQUIRED Bulb cancellation-return diagnostic not run: $why"
+        bad "REQUIRED Bulb cancellation-return diagnostic not run: ${why:-no prerequisite reason recorded}"
     else
-        skp "Bulb cancellation-return diagnostic ($why)"
+        skp "Bulb cancellation-return diagnostic (${why:-no prerequisite reason recorded})"
     fi
 }
 check_bulb_cancel_return
