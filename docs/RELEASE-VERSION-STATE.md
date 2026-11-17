@@ -6,7 +6,7 @@ and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
 ```text
-last_display_fwver=6.0.0.54.109
+last_display_fwver=6.0.0.54.110
 ```
 
 `.108` was claimed and published 2026-11-13 by the Astro candidate flow by hand.
@@ -35,6 +35,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.108
+consumed_display_fwver=6.0.0.54.110
 consumed_display_fwver=6.0.0.54.109
 consumed_display_fwver=6.0.0.54.107
 consumed_display_fwver=6.0.0.54.99
@@ -112,6 +113,7 @@ version_commit_binding=6.0.0.54.101|libgphoto2=d899cbeb865f0ab917c266d9b6ce7e697
 version_commit_binding=6.0.0.54.102|libgphoto2=806c3bda62d6c0c23ca7a3091fb42f3d7894172b|patcher=2b8731a4f80baf536dbc32da59e2dd312b6aa341
 version_commit_binding=6.0.0.54.103|libgphoto2=806c3bda62d6c0c23ca7a3091fb42f3d7894172b|patcher=18218b3ea489fbac7ef383b6ba6d1f6e697928eb
 version_commit_binding=6.0.0.54.109|libgphoto2=e4840f4290ad5acc4df5c228dc9520b044366b87|patcher=fcc2b5fa54e5c8a30893866c81c98531ba42e5ee
+version_commit_binding=6.0.0.54.110|libgphoto2=4ef07e9209e827a3ab0013edd5ac1f874892c423|patcher=3b76afaa1769850db8f94042ea6f6f551af94f45
 ```
 
 ## Version-to-commit binding (one version, one set of commits)
