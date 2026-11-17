@@ -17,7 +17,7 @@ description: One front door for every build type. Explicit phase state machine B
 |-------|---------|------------------------|----------------|
 | `BUILT` | Candidate built, artifacts present, offline gate green | `scripts/build-astro.sh` / `scripts/release/build-and-install.sh` | `out/<candidate>/` complete |
 | `ARCHIVES_VERIFIED` | All archives verified byte-for-byte against manifest | `scripts/verify-published-astro-candidate.py` | Remote hashes match local |
-| `DOCS_GENERATED` | `INSTALL.md`, `CHANGELOG.md`, README generated from manifests | `scripts/create-release-change-manifest.py` + doc generator | Human-readable docs present |
+| `DOCS_GENERATED` | `INSTALL.md`, `CHANGELOG.md`, README generated from manifests | **NOT YET IMPLEMENTED** — no script emits these | Human-readable docs present |
 | `PRIVATE_PUBLISHED` | All artifacts uploaded to PrivateResearch | `scripts/publish-astro-candidate.sh` | Remote listing shows all files |
 | `REMOTE_VERIFIED` | Independent verifier proves remote entry is complete | `polaris-release-artifact-auditor` skill | Exact remote hashes, layout, docs |
 | `DEVICE_INSTALLED` | Flashed to device via `fwpkt-update-flow` | `scripts/release/release-fwpkt.sh` | `build_id` + uptime reset + hashes |
@@ -34,8 +34,12 @@ description: One front door for every build type. Explicit phase state machine B
 python3 scripts/verify-published-astro-candidate.py out/<candidate>
 
 # 3. Generate docs (DOCS_GENERATED)
+# NOT YET IMPLEMENTED. scripts/create-release-change-manifest.py writes
+# release-change-manifest.json and RELEASE-IDENTITY.md only; no script in the repo
+# emits INSTALL.md or CHANGELOG.md. Until a generator exists this phase is done by
+# hand -- do not mark DOCS_GENERATED complete on the strength of the command below
+# succeeding, because it produces neither document.
 python3 scripts/create-release-change-manifest.py out/<candidate>
-# (INSTALL.md and CHANGELOG.md are produced from exact manifests and commit diffs)
 
 # 4. Publish to PrivateResearch (PRIVATE_PUBLISHED)
 ./scripts/publish-astro-candidate.sh --build out/<candidate>
