@@ -3124,8 +3124,77 @@ static void link_reconcile(void) {
     else      plink_close();
 }
 
-/* Serve an embedded asset. Returns 1 if the path matched. */
-static int serve_asset(int fd, const char *path) {
+/* Did the client ask for gzip?
+ *
+ * Tokenised properly rather than substring-matched, because a naive strstr(req,
+ * "gzip") is wrong in both directions: it matches "x-gzip" (fine) but also
+ * "notgzip", and more importantly it ignores "gzip;q=0", which is an explicit
+ * refusal. It must also stop at the end of the Accept-Encoding header, or a
+ * later header that happens to contain the word is read as consent. */
+static int header_wants_gzip(const char *req) {
+    const char *p = req, *end;
+    while (*p) {
+        if (!strncasecmp(p, "accept-encoding:", 16)) {
+            p += 16;
+            break;
+        }
+        /* Advance to the next header line. */
+        while (*p && *p != '\n') p++;
+        if (*p == '\n') p++;
+    }
+    if (!*p) return 0;
+
+    /* The header value runs to the blank line or the next header. */
+    end = p;
+    while (*end && *end != '\r' && *end != '\n') end++;
+
+    while (p < end) {
+        const char *tok = p, *tokend;
+        double q = 1.0;
+        while (p < end && (*p == ' ' || *p == ',' || *p == '\t')) p++;
+        tok = p;
+        while (p < end && *p != ',' && *p != ';') p++;
+        tokend = p;
+        while (tokend > tok && (*(tokend - 1) == ' ' || *(tokend - 1) == '\t')) tokend--;
+
+        /* Parameters: take q= if present. */
+        while (p < end && *p == ';') {
+            p++;
+            while (p < end && (*p == ' ' || *p == '\t')) p++;
+            if (p + 2 <= end && !strncasecmp(p, "q=", 2)) {
+                q = atof(p + 2);
+                while (p < end && *p != ',') p++;
+            } else {
+                while (p < end && *p != ',') p++;
+            }
+        }
+
+        {
+            size_t tl = (size_t)(tokend - tok);
+            if (tl == 4 && !strncasecmp(tok, "gzip", 4) && q > 0.0) return 1;
+            /* "*" means any encoding is acceptable, but RFC 9110 ranks identity
+             * above it when the client offers no explicit preference, and gzip
+             * with an explicit q is what browsers actually send. Honour "*" only
+             * when it is not refused. */
+            if (tl == 1 && tok[0] == '*' && q > 0.0) return 1;
+        }
+        if (p < end && *p == ',') p++;
+    }
+    return 0;
+}
+
+/* Serve an embedded asset. Returns 1 if the path matched.
+ *
+ * accept_gzip is whether the client advertised gzip in Accept-Encoding. It
+ * decides BOTH the body we send and whether we claim Content-Encoding at all,
+ * and the two must agree. Sending a gzipped body with no Content-Encoding header
+ * hands the browser raw gzip bytes it will render as garbage; sending
+ * Content-Encoding: gzip to a client that never asked for it is the mirror error
+ * and breaks anything that does not decompress (proxies, curl without
+ * --compressed, hardened clients that strip Accept-Encoding). Both were possible
+ * here because the header was driven purely by how the asset happened to be
+ * stored, ignoring the request entirely. */
+static int serve_asset(int fd, const char *path, int accept_gzip) {
     size_t i;
     const char *want = (!strcmp(path, "/")) ? "/index.html" : path;
     for (i = 0; i < WEBUI_ASSET_COUNT; i++) {
@@ -3133,6 +3202,11 @@ static int serve_asset(int fd, const char *path) {
         if (strcmp(a->path, want)) continue;
         {
             char hdr[512];
+            const unsigned char *body;
+            size_t len;
+            int enc;
+            if (a->gzip && accept_gzip) { body = a->body; len = a->len; enc = 1; }
+            else                        { body = a->raw; len = a->rawlen; enc = 0; }
             int hl = snprintf(hdr, sizeof hdr,
                 "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %zu\r\n"
                 "%s"
@@ -3141,11 +3215,17 @@ static int serve_asset(int fd, const char *path) {
                  * exactly the bug that is impossible to diagnose remotely.
                  * no-cache still allows a 304 revalidation, which is cheap. */
                 "Cache-Control: no-cache\r\n"
+                /* Vary is not decoration. The response now differs on
+                 * Accept-Encoding, so a shared cache that ignores this header
+                 * can hand a gzipped body to a client that cannot decode it --
+                 * reintroducing the exact failure this function exists to avoid,
+                 * but only for some users, which is far harder to diagnose. */
+                "Vary: Accept-Encoding\r\n"
                 "Connection: close\r\n\r\n",
-                a->ctype, a->len,
-                a->gzip ? "Content-Encoding: gzip\r\n" : "");
+                a->ctype, len,
+                enc ? "Content-Encoding: gzip\r\n" : "");
             send_all(fd, hdr, (size_t)hl);
-            send_all(fd, (const char *)a->body, a->len);
+            send_all(fd, (const char *)body, len);
         }
         return 1;
     }
@@ -3158,6 +3238,50 @@ static void handle(int fd) {
     long content_length = 0;
     ssize_t n;
     char method[16] = {0}, target[1024] = {0}, path[1024], *qs;
+
+    /* BOUND THE READS. This is a single-threaded select() server: handle() runs
+     * inline on the one thread that also serves every other client, drives the
+     * mount link and ticks the slewing state machine. A read() with no deadline
+     * therefore does not just stall one request -- it stops the whole product.
+     *
+     * That is exactly what "the webui will not open" was. Browsers routinely
+     * open a speculative connection and send nothing on it (preconnect,
+     * HTTP/2-style early connect, a tab backgrounded mid-request, or a proxy
+     * that keeps a warm socket). select() reports the listening socket readable
+     * the instant a connection lands, so we accepted, entered handle(), called
+     * read() and blocked there forever. Every later request -- including GET /
+     * from the very next tab -- queued behind it and timed out, while the port
+     * stayed open and still answered a bare TCP connect, so the server looked
+     * healthy from outside. Reproduced on v110 by accepting one connection,
+     * sending nothing, and watching four consecutive GETs time out at 8 s; they
+     * recovered only when that socket was closed.
+     *
+     * Two different deadlines, because the two phases have different reasons to
+     * be slow:
+     *
+     *   head (3 s)  a client that has sent nothing at all is not slow, it is
+     *               absent. Preconnect sockets never produce a request, so
+     *               waiting long for one just burns the single thread. Three
+     *               seconds is ample for a first packet on the head's own AP and
+     *               short enough that several speculative connections cannot add
+     *               up to a page load the user gives up on.
+     *
+     *   body (15 s) once a request head has arrived the client is real, and a
+     *               multipart JPEG upload over a flaky phone link can genuinely
+     *               take many seconds between segments. Cutting that off early
+     *               would break the historic-image solver test, which POSTs a
+     *               several-megabyte file.
+     *
+     * SO_SNDTIMEO bounds the write side for the same reason as the head: a client
+     * that stops reading a 56 KB page would otherwise block send() once its
+     * socket buffer fills, and that blocks everything else again. */
+    {
+        struct timeval tv;
+        tv.tv_sec = 3; tv.tv_usec = 0;
+        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+        tv.tv_sec = 15; tv.tv_usec = 0;
+        setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv);
+    }
 
     /* Read headers, then DRAIN Content-Length bytes of body.
      *
@@ -3186,6 +3310,16 @@ static void handle(int fd) {
             body = hdr_end + 4;
             if (cl) clen = atol(cl + 15);
             {
+                /* A complete request head proves the client is real, so relax to
+                 * the body deadline before draining. Multipart JPEG uploads for
+                 * the historic-image solver test are several megabytes over a
+                 * phone link and legitimately take many seconds between segments;
+                 * the 3 s head timeout exists only to shed silent preconnect
+                 * sockets, not to throttle genuine transfers. */
+                struct timeval tv;
+                tv.tv_sec = 15; tv.tv_usec = 0;
+                setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
+
                 body_have = have - (size_t)(body - req);
                 content_length = clen;
                 while ((long)body_have < clen && have < sizeof req - 1) {
@@ -3290,7 +3424,7 @@ static void handle(int fd) {
         respond(fd, 200, "text/html; charset=utf-8", PAGE, sizeof PAGE - 1);
         return;
     }
-    if (serve_asset(fd, path)) return;
+    if (serve_asset(fd, path, header_wants_gzip(req))) return;
 
     /* One live-view frame, same-origin, so the overlays can read its pixels. */
     if (!strcmp(path, "/api/snapshot")) { serve_snapshot(fd); return; }

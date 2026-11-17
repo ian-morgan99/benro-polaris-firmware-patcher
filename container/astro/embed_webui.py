@@ -116,10 +116,27 @@ def main():
             if len(body) >= len(raw):      # tiny files can grow
                 body, enc = raw, 0
         name = ident(rel)
+        # Both encodings are embedded so the response can honour what the client
+        # actually asked for. Serving gzip to a client that never advertised it
+        # is an HTTP violation: RFC 9110 says Content-Encoding applies to the
+        # stored representation and the payload must be acceptable to any client,
+        # regardless of Accept-Encoding. A proxy, a CLI fetch or a hardened
+        # client that strips Accept-Encoding then receives bytes it is told are
+        # HTML but are not -- curl without --compressed shows binary garbage and
+        # no closing </html>, which is indistinguishable from a truncated file.
+        # The cost is the raw bytes again (~245 KB for this UI); /app has room,
+        # and the alternative -- decompressing at runtime -- would need zlib in
+        # the cross-compiled image, which it does not carry.
         chunks.append("static const unsigned char %s[] = {\n%s\n};\n"
                       % (name, c_array(body)))
-        table.append('    { "/%s", %s, sizeof %s, "%s", %d },'
-                     % (rel, name, name, MIME[ext], enc))
+        if enc:
+            rname = name + "_raw"
+            chunks.append("static const unsigned char %s[] = {\n%s\n};\n"
+                          % (rname, c_array(raw)))
+        else:
+            rname = name
+        table.append('    { "/%s", %s, sizeof %s, "%s", %d, %s, sizeof %s },'
+                     % (rel, name, name, MIME[ext], enc, rname, rname))
         total_raw += len(raw)
         total_out += len(body)
 
@@ -133,10 +150,13 @@ def main():
         out.write("\n".join(chunks))
         out.write("\ntypedef struct {\n"
                   "    const char          *path;   /* request path, leading slash   */\n"
-                  "    const unsigned char *body;\n"
+                  "    const unsigned char *body;   /* gzip form when gzip==1        */\n"
                   "    size_t               len;\n"
                   "    const char          *ctype;\n"
-                  "    int                  gzip;   /* 1 => send Content-Encoding    */\n"
+                  "    int                  gzip;   /* 1 => body is gzipped          */\n"
+                  "    const unsigned char *raw;    /* identity form, for clients that\n"
+                  "                                  did not ask for gzip            */\n"
+                  "    size_t               rawlen;\n"
                   "} webui_asset_t;\n\n")
         out.write("static const webui_asset_t WEBUI_ASSETS[] = {\n")
         out.write("\n".join(table))
