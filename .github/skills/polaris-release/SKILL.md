@@ -1,67 +1,56 @@
 ---
 name: polaris-release
-description: Build and publish a provenance-complete Polaris firmware candidate from libgphoto2 main.
+description: Legacy release skill — now a concise routing guide that delegates to polaris-release-orchestrator. Does not duplicate the release lifecycle; references the authoritative orchestrator skill instead.
 ---
 
-# Polaris release skill
+# Polaris release — routing guide (delegates to polaris-release-orchestrator)
 
-Use this skill whenever producing a firmware candidate intended for review,
-installation, or physical testing. Do not hand-roll a Docker build, copy
-runtime binaries into `/app`, or publish a ZIP without provenance.
+This skill is a **concise routing guide**. It does not duplicate the release
+lifecycle. The authoritative lifecycle is in
+`.github/skills/polaris-release-orchestrator/SKILL.md` (phase state machine
+`BUILT → ARCHIVES_VERIFIED → DOCS_GENERATED → PRIVATE_PUBLISHED → REMOTE_VERIFIED`,
+plus `DEVICE_INSTALLED` and `HARDWARE_QUALIFIED`).
 
-## Required command
+## When to use
 
-Resolve the two inputs first. Do not guess their paths and do not conclude either
-is absent from a glob you chose yourself:
+Use this skill only to locate the correct entrypoint for a release operation.
+Every operation is performed by a script indexed in `docs/RELEASE-ENTRYPOINTS.md`.
+Do not hand-roll a Docker build, copy runtime binaries into `/app`, or publish a
+ZIP without provenance.
 
-```sh
-eval "$(./scripts/resolve-release-inputs.sh --shell)"
-# or, when more than one clean libgphoto2 tree exists, pick one deliberately:
-POLARIS_LIBGPHOTO2=/path/to/the/tree/you/want ./scripts/resolve-release-inputs.sh
-```
+## Canonical entrypoints
 
-It prints `POLARIS_STOCK_FWPKT` and `POLARIS_LIBGPHOTO2`, or explains exactly why
-it could not. Several sessions asserted "the stock firmware is not present" and
-"there is no clean libgphoto2 checkout" and treated the release as blocked; both
-claims were false every time, because the lookup searched the wrong tree by the
-wrong name. The inputs have always been on disk. Ask the script, not memory.
+| Operation | Command | Phase reached |
+|-----------|---------|---------------|
+| Prove build host works | `./scripts/build-doctor.sh` | Pre-flight |
+| Build an Astro candidate | `./scripts/build-astro.sh --version N --pin FULL_DRIVER_SHA --slug NAME --summary ...` | `BUILT` |
+| Build a camera-only candidate | `./scripts/release/build-and-install.sh --install` | `BUILT` (+ optional install) |
+| Verify archives | `python3 scripts/verify-published-astro-candidate.py out/<candidate>` | `ARCHIVES_VERIFIED` |
+| Generate docs | `python3 scripts/create-release-change-manifest.py out/<candidate>` | `DOCS_GENERATED` |
+| Publish to PrivateResearch | `./scripts/publish-astro-candidate.sh --build out/<candidate>` | `PRIVATE_PUBLISHED` |
+| Verify remote entry | `polaris-release-artifact-auditor` skill | `REMOTE_VERIFIED` |
+| Flash to device | `scripts/release/release-fwpkt.sh out/<candidate>` | `DEVICE_INSTALLED` |
+| Physical camera matrix | `scripts/canary-probe.py` / `--two-shot` | `HARDWARE_QUALIFIED` |
 
-It refuses to choose between two usable libgphoto2 trees rather than picking one,
-because a version is bound to one exact commit set and silently building from the
-stale tree would produce a version describing commits that were never compiled.
-The trees here live in *different repositories*, so their `behind origin/main`
-counts are not comparable to each other — read the printed sha and date and choose.
+## Build success ≠ release success
 
-Then build:
+`scripts/build-astro.sh` prints `BUILD SUCCEEDED` and `Nothing was ... uploaded`.
+`scripts/build-astro-candidate.sh` finishes `candidate complete (build-only)`
+and explicitly `No ... upload was performed`. Both reach `BUILT` only — **not**
+released. A candidate is not released until `REMOTE_VERIFIED` on PrivateResearch
+with complete artifacts, `INSTALL.md`, and `CHANGELOG.md`.
 
-```sh
-./scripts/build-release-candidate.sh \
-  <candidate-id> "$POLARIS_STOCK_FWPKT" "$POLARIS_LIBGPHOTO2" [build-id] \
-  --change-summary docs/templates/release-change-summary.json
-```
+## What this skill does NOT do
 
-The script refuses a missing/dirty/detached/non-`main` libgphoto2 checkout, and
-also refuses a **dirty patcher checkout** before doing any expensive work. It
-first runs the libgphoto2 Meson deterministic regression pack, then builds
-from the supplied stock FwPkt, runs the patcher/package deterministic
-pre-release gate, recomputes hashes, and uploads the exact ZIP to
-PrivateResearch. A failure at either layer stops the release.
-
-**One version, one set of commits.** The app-visible version is derived, never
-typed, and when the candidate passes the gate it is claimed *and bound* to the
-exact libgphoto2 and patcher commits it was built from, in
-`docs/RELEASE-VERSION-STATE.md`. Both directions are enforced: a version may
-never describe a second commit set, and an unchanged commit set may never be
-issued under a new version. That is why a dirty patcher tree is refused — a
-binding made from uncommitted work would be a claim about a commit that does not
-describe the build. Commit or stash first, then release. Rebuilding an unchanged
-tree to "try again" is expected to fail here; change something or reuse the
-existing version.
-
-The regression order is therefore: libgphoto2 unit/production-path tests,
-patcher and Stage-2 tests, package/manifest validation, then (only after
-installation) the live canary and physical camera matrix. No hardware claim
-is inferred from the offline pack.
+- Does **not** define a competing release lifecycle. The orchestrator skill is
+  authoritative.
+- Does **not** treat "upload FwPkt only" as a sufficient release definition.
+  Publication requires FwPkt + all companion archives + docs + remote
+  verification.
+- Does **not** handle device installation — that is `fwpkt-update-flow`
+  (`DEVICE_INSTALLED` only).
+- Does **not** handle camera qualification — that is `pentax-hardware-stability`
+  and the canary gates (`HARDWARE_QUALIFIED` only).
 
 ## Required handoff
 
@@ -74,17 +63,6 @@ Record and hand over all of:
 * appfs MD5;
 * PrivateResearch commit and path;
 * gate result and any skipped prerequisites.
-
-`--change-summary` is mandatory. The builder generates
-`release-change-manifest.json` and `RELEASE-IDENTITY.md` containing the exact
-source SHAs, every commit since the declared baselines, stock-package hash,
-ZIP hashes, and appfs hash. The identity verifier and private uploader refuse
-to publish a candidate without these records.
-
-The candidate is **not installed** merely because the script succeeds. Device
-installation must use `fwpkt-update-flow`, followed by runtime provenance and
-the camera canary. Keep direct libgphoto2, packaged Polaris, and OpenPolaris
-results separate.
 
 ## Review rule
 

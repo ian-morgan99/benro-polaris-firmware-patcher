@@ -46,13 +46,37 @@ that skill first and follow it exactly**. Do not invent an alternative approach
 "as you go along" (e.g. hand-rolled chunked transfers, ad-hoc HTTP servers,
 custom retry loops) when a documented, proven process exists.
 
+- `polaris-release-orchestrator` — ONE front door for every build type. Phase
+  state machine `BUILT → ARCHIVES_VERIFIED → DOCS_GENERATED → PRIVATE_PUBLISHED →
+  REMOTE_VERIFIED`, plus `DEVICE_INSTALLED` and `HARDWARE_QUALIFIED`. Delegates
+  to scripts; build success is not release success. Incorporates #356.
+- `polaris-release-artifact-auditor` — verifies actual published bytes on the
+  PrivateResearch remote listing (not local staging): all companion packages,
+  archive roots, modes, manifests, licences, hashes, index coverage, downloadability.
+  Implements #292/#350.
+- `polaris-release-documentation` — generates mandatory `INSTALL.md`,
+  `CHANGELOG.md`, README, compatibility matrix, recovery/rollback and install
+  verification from exact manifests and commit diffs.
+- `polaris-release-reconciliation` — audits built candidates vs PrivateResearch
+  index; detects missing/incomplete/mislabelled versions; produces version-by-version
+  exception ledger. Backfills v110/v111.
+- `polaris-regression-preservation-review` — for each PR affecting camera,
+  firmware, Astro, Wi-Fi or installation: changed-component manifest,
+  stock/previous-version feature diff, negative regression tests, explicit
+  unverified hardware matrix.
 - `fwpkt-update-flow` — the ONLY sanctioned way to stage/install firmware on a
   device (tar-stream the extracted tree, on-device MD5 verify, `/sbin/reboot`).
-- `fwpkt-private-upload` — publish every built zip to PrivateResearch in the
-  same session it is built.
+  Device installation only (`DEVICE_INSTALLED`), not publication.
+- `fwpkt-private-upload` — uploads `FwPkt.zip` to PrivateResearch
+  (`PRIVATE_PUBLISHED` phase only). Does NOT treat FwPkt-only upload as a
+  sufficient release definition.
 - `polaris-debugging` — SSH access, gimbal-vs-router diagnosis, keepalives.
-- `polaris-release` — the shared fail-closed source-to-candidate build and
-  provenance process. Use `scripts/build-release-candidate.sh` for releases.
+- `polaris-release` — legacy routing guide; delegates to
+  `polaris-release-orchestrator`. Does not define a competing lifecycle.
+- `astro-multishot-qualification` — deterministic repeated Pentax capture
+  qualification on physical hardware.
+- `pentax-hardware-stability` — Pentax K-3 III / K-1 II stability investigations.
+- `conversation-review` — audit of agent-work process and ledgers.
 
 Before any candidate build, run `scripts/build-doctor.sh`. It takes seconds and
 proves each build prerequisite actually *works* rather than merely existing —

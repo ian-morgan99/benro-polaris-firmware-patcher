@@ -1,41 +1,46 @@
 ---
 name: fwpkt-private-upload
-description: Publish every newly built FwPkt.zip to the PRIVATE ian-morgan99/PrivateResearch repo (firmware-packets/<display-version>--<registry-id>/) so other agents can fetch it online, while keeping the public repos free of firmware bytes. USE FOR: right after any patch-polaris.sh build produces out/<name>/FwPkt.zip; when another agent or machine needs a zip that only exists on this box; backfilling an existing out/ or builds/ zip that was never uploaded. DO NOT USE FOR: staging the zip onto the SD card (fwpkt-update-flow skill), building the zip itself (container/ + patch-polaris.sh), or committing zip bytes to any PUBLIC repo.
+description: Legacy private-upload skill — now a concise routing guide that delegates to polaris-release-orchestrator's PRIVATE_PUBLISHED phase. Uploads FwPkt.zip only; does not treat FwPkt-only upload as a sufficient release definition. Companion archives, docs, and remote verification are handled by the orchestrator and artifact-auditor skills.
 ---
 
-# FwPkt private upload — HARD RULE
+# FwPkt private upload — routing guide (delegates to polaris-release-orchestrator)
 
-> **HARD RULE.** Every `FwPkt.zip` this project produces is uploaded to the
-> **private** `ian-morgan99/PrivateResearch` repo under
-> `firmware-packets/<display-version>--<registry-id>/` **in the same session it is built**, before
-> the build is handed off, installed, or discussed. The public repos
-> (`BenroPolarisPatcher`, `OpenPolaris`, the libgphoto2 fork) keep only the
-> registry *row* (hashes + commit links); the zip *bytes* live in
-> PrivateResearch. This is the `zip_location` column the provenance contract
-> reserved — it now exists, and it is this repo.
+This skill is a **concise routing guide**. It uploads `FwPkt.zip` to the private
+`ian-morgan99/PrivateResearch` repo. It does **not** treat an FwPkt-only upload
+as a sufficient release definition — a release requires FwPkt + all companion
+archives + docs + remote verification, per the
+`polaris-release-orchestrator` skill.
 
-## Why this rule exists
+## When to use
 
-- Zips are ~66 MB of firmware-derived bytes; the public repos' `.gitignore`
-  says "NEVER commit firmware or firmware-derived blobs".
-- A zip that only exists in one agent's `out/` directory is invisible to every
-  other agent and machine. The 2026-09-07/08 v3 incident was exactly this: a
-  hand-zipped tree whose outer hash matched no registry entry, so nobody could
-  say "the zip on the card is build X".
-- PrivateResearch is private (not public), so publishing there does not leak
-  firmware bytes to the world — but it *is* online and cloneable by any agent
-  with access, which is the point.
+Use this skill to upload a firmware ZIP after a build produces
+`out/<name>/FwPkt.zip`. It is one phase (`PRIVATE_PUBLISHED`) of the
+orchestrator lifecycle, not the whole release.
 
-## The flow (run this after every successful build)
+## Canonical command
 
 ```bash
-cd /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher
 bash .github/skills/fwpkt-private-upload/scripts/upload-fwpkt-to-pr.sh \
   --build out/<name>-<date> \
   --id <registry-id> \
   --status candidate \
   --note "<one line: what this build changes>"
 ```
+
+## What this skill does NOT do
+
+- Does **not** publish companion archives (`polaris-astro.zip`,
+  `polaris-wifi.zip`, `astrometry-indexes.zip`) — that is
+  `scripts/publish-astro-candidate.sh`, driven by the orchestrator.
+- Does **not** generate `INSTALL.md` or `CHANGELOG.md` — that is
+  `polaris-release-documentation`.
+- Does **not** verify the remote entry — that is
+  `polaris-release-artifact-auditor`.
+- Does **not** stage the zip to the SD card — that is `fwpkt-update-flow`
+  (device installation only).
+- Does **not** treat "FwPkt uploaded" as "release complete."
+
+## The flow (run this after every successful build)
 
 The script does, in order (all fail-closed):
 
