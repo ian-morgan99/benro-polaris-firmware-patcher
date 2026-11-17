@@ -32,6 +32,12 @@ BT_MAC="${OPENPOLARIS_BT_MAC:-48:E7:DA:D4:B5:72}"
 AP_SSID="${OPENPOLARIS_AP_SSID:-polaris_d13e86}"
 SSH_HOST="${OPENPOLARIS_SSH:-root@192.168.0.1}"
 LOG="/tmp/polaris-bt-keepalive.log"
+# Issue #339: the keepalive must be armed for EVERY session that touches a
+# Polaris, not just long live gates. "Arm it first" is a prose rule, and prose
+# rules are what let the v107 deploy lose the radio mid-session. A PID file makes
+# it machine-checkable, so scripts/release/release-fwpkt.sh can refuse to start a
+# destructive flash rather than discovering the loss afterwards.
+PIDFILE="${OPENPOLARIS_KEEPALIVE_PID:-/tmp/polaris-bt-keepalive.pid}"
 PING_INTERVAL=30          # protocol-ping cadence while in control-up
 CONTROL_WINDOW=10         # pings per control-up window before re-checking
 AP_WAIT_POLLS=12          # 12 x 5 s = 60 s AP wait (skill default)
@@ -157,7 +163,16 @@ wait_ssh() {
   return 1
 }
 
-trap 'bt_release; log "phase=exit; GATT released, control owner gone"' EXIT
+# Own the PID file for exactly one lifetime: write it here, remove it on exit.
+# Stale-file handling follows the same reasoning as the restart lock in issue
+# #297 -- /tmp is not guaranteed clean, so a leftover pid must never be taken as
+# proof a keepalive is running. Only remove our own.
+echo "$$" > "$PIDFILE"
+cleanup_pidfile() {
+    [ -f "$PIDFILE" ] || return 0
+    [ "$(cat "$PIDFILE" 2>/dev/null)" = "$$" ] && rm -f "$PIDFILE"
+}
+trap 'bt_release; cleanup_pidfile; log "phase=exit; GATT released, control owner gone"' EXIT
 
 log "=== Polaris keepalive v2.2 started (pid $$) ==="
 # Report what we can actually verify at startup, rather than looping on a scan

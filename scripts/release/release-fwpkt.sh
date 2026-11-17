@@ -150,6 +150,37 @@ if [ "$SD_FREE_KB" -lt "$FWPKT_MIN_KB" ]; then
   exit 3
 fi
 
+# Issue #339: arm the keepalive before touching the device. This is enforced
+# rather than advised because the advisory version is what lost the v107 rig: a
+# deploy is a sequence of short SSH commands, none individually long, and the
+# radio went down between them with no host-side recovery.
+#
+# Checked before the destructive flash, not after. A stale PID file is not proof
+# (see issue #297 on locks surviving reboot on UBIFS), so the process must
+# actually exist and still be the keepalive.
+#
+# Override deliberately exists: #337 criticised this script for hard-stopping
+# with no documented way forward. OPENPOLARIS_ALLOW_NO_KEEPALIVE=1 proceeds, but
+# says so loudly -- an unattended flash without a keepalive is a known way to
+# lose the device for the rest of the session.
+KEEPALIVE_PID="${OPENPOLARIS_KEEPALIVE_PID:-/tmp/polaris-bt-keepalive.pid}"
+if [ "${OPENPOLARIS_ALLOW_NO_KEEPALIVE:-0}" = "1" ]; then
+  echo "WARNING: proceeding with NO verified keepalive (override set). If the" >&2
+  echo "         radio drops mid-deploy there is no host-side recovery." >&2
+elif [ -f "$KEEPALIVE_PID" ] && kill -0 "$(cat "$KEEPALIVE_PID" 2>/dev/null)" 2>/dev/null \
+     && grep -q polaris-bt-keepalive "/proc/$(cat "$KEEPALIVE_PID")/cmdline" 2>/dev/null; then
+  echo "Keepalive: OK (pid $(cat "$KEEPALIVE_PID"))"
+else
+  echo "ERROR: no Polaris keepalive is running. Arm it first:" >&2
+  echo "         nohup scripts/polaris-bt-keepalive.sh > /tmp/polaris-bt-keepalive.out 2>&1 &" >&2
+  echo "         tail -f /tmp/polaris-bt-keepalive.log   # wait for phase=ssh-up" >&2
+  echo "       Issue #339: the keepalive is required for every session that" >&2
+  echo "       touches a Polaris, not just long live gates." >&2
+  echo "       Override with OPENPOLARIS_ALLOW_NO_KEEPALIVE=1 if you accept the" >&2
+  echo "       risk of losing the device mid-deploy." >&2
+  exit 3
+fi
+
 # Device identity: the running FwVer must be a recognisable 6.0.0.54 family string.
 # A blank or foreign version means we are not talking to the Polaris and must
 # not be reflashed.

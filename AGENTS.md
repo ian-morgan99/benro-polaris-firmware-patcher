@@ -238,7 +238,11 @@ Anything we believe is currently working MUST have a coded regression test, and 
 5. **Canary rule (camera on or off at deployment).** The canary is a single bounded capture proving the installed build actually captures:
    - Camera **ON** (attached, powered, SD present): run `./tests/run_prerelease_gate.sh --canary` — probe reads camera state, then one shot must show lifecycle completion (`[1,4,…]`) plus a 773 file event. Add `--two-shot` when the evidence standard is two distinct files (fail-closed; no further shutter after a failed shot).
    - Camera **OFF** at deployment: the live gates SKIP (probe fails to reach a camera-ready state) — that is recorded, not a failure. The canary is owed as soon as the camera is attached; until then the candidate is "installed, canary pending", never "qualified".
-   - Keep the 9090 keepalive running during any multi-minute live gate (see wake/keep-alive below); stop it before rebooting.
+   - Arm the 9090 keepalive for **every** session that touches the device, not
+     just long live gates (see "Wake and keep-alive" below); stop it before
+     rebooting. The wording here used to scope it to long gates only, which is
+     what let the v107 deploy lose the radio mid-session (issue #339): a deploy
+     is many short SSH commands, none individually long.
 
 ## Wake and keep-alive (Polaris) — exact commands
 
