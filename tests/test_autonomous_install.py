@@ -30,6 +30,9 @@ DEVICE_FILES = {
     "lib/stage2/libgphoto2/2.5.34/ptp2.so": b"FAKE-PTP2",
     "lib/stage2/libgphoto2/2.5.34/pentax.so": b"FAKE-PENTAX",
     "lib/stage2/libgphoto2_port/0.12.2/usb1.so": b"FAKE-USB1",
+    # Issue #349: v110's whole purpose is this file, and it was absent from the
+    # mandatory set, so post-install verification never checked it.
+    "lib/stage2/camera_usb_supervisor.sh": b"#!/bin/sh\nFAKE-USB-SUPERVISOR\n",
     "openpolaris-libgphoto2-provenance.txt": b"build_id=o-v17a-shutter-fallback-off-20261012\n",
 }
 

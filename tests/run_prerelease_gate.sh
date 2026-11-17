@@ -325,6 +325,8 @@ PY_TESTS=(
     tests/test_canary_file_check.py
     tests/test_pull_mlog_clog.py
     tests/test_camera_layer_report.py
+    tests/test_camera_death_watch_detects_pentax.py
+    tests/test_manifest_covers_usb_supervisor.py
     tests/test_autonomous_install.py
     tests/test_assert_orphan_wrote.py
     tests/test_capture_outcomes.py

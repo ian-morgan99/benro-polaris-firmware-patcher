@@ -23,7 +23,13 @@ the running firmware depends on:
   /app/lib/stage2/libgphoto2/2.5.34/pentax.so
   /app/lib/stage2/libgphoto2_port/0.12.2/usb1.so
   /app/lib/stage2/libgphoto2_port/0.12.2/usbscsi.so (K-5 II profile only)
+  /app/lib/stage2/camera_usb_supervisor.sh
   /app/openpolaris-libgphoto2-provenance.txt
+
+/app/bin/pgphoto is intentionally excluded (issue #349): appfs holds the stock
+ELF there, but install_stage2.sh overwrites that path at runtime with a generated
+shell wrapper, so an appfs-vs-device hash comparison can never match. The payload
+that matters -- lib/stage2/pgphoto.stage2ondisk -- is verified instead.
 
 The stage2ondisk predicate (issue #199 review finding 4): the manifest records
 whether appfs contains a lib/stage2 tree at all. If it does, every file listed
@@ -59,8 +65,24 @@ MANDATORY_FILES = [
     ("lib/stage2/libgphoto2/2.5.34/ptp2.so", "lib/stage2/libgphoto2/2.5.34/ptp2.so"),
     ("lib/stage2/libgphoto2/2.5.34/pentax.so", "lib/stage2/libgphoto2/2.5.34/pentax.so"),
     ("lib/stage2/libgphoto2_port/0.12.2/usb1.so", "lib/stage2/libgphoto2_port/0.12.2/usb1.so"),
+    # Issue #349: v110 exists to deliver this file, and it was not in the
+    # mandatory set, so step 6 of release-fwpkt.sh never verified it. A build
+    # that silently shipped the previous supervisor would still have reported
+    # `installed-verified`. It is baked into appfs by install_stage2.sh and is
+    # byte-identical to container/ondisk/camera_usb_supervisor.sh, so the
+    # read-back hash matches without any runtime substitution.
+    ("lib/stage2/camera_usb_supervisor.sh", "lib/stage2/camera_usb_supervisor.sh"),
     ("openpolaris-libgphoto2-provenance.txt", "openpolaris-libgphoto2-provenance.txt"),
 ]
+# Deliberately NOT mandatory: /app/bin/pgphoto.
+#
+# Issue #349 asks whether it should be added. It must not be. appfs carries the
+# stock ELF (8922 bytes, mode 644), but install_stage2.sh replaces that path at
+# runtime with the generated pgphoto.wrapper -- confirmed on device as a
+# 10794-byte `#!/bin/sh` script. Comparing an appfs hash against that path would
+# therefore always mismatch and fail a good install. The stage2 payload it
+# actually trampolines into is verified instead, via
+# lib/stage2/pgphoto.stage2ondisk above.
 LEGACY_USB_SCSI_FILE = (
     "lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
     "lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
