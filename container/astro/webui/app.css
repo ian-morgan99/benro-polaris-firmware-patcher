@@ -648,6 +648,28 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
 .derived dd { color: var(--fg); }
 
 .preview { background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+
+/* Raw protocol bytes, collapsed by default.
+ *
+ * Every programme here sends commands whose field layout was reverse-engineered
+ * from the official app, so showing exactly what goes over the wire is genuinely
+ * useful -- it is how a wrong guess gets caught before a whole night's shots are
+ * ruined. But a wall of hex-ish bytes in accent blue, always expanded, dominated
+ * the panel and pushed the actual controls down the page. Collapsing keeps the
+ * information for the person who wants it without making everyone read it. */
+.techdump > summary {
+  cursor: pointer; color: var(--dim); font-size: 12px; padding: 2px 0;
+}
+.techdump[open] > summary { color: var(--fg); }
+.techdump > summary::-webkit-details-marker { display: none; }
+.techdump > summary::before { content: '▸'; margin-right: 8px; color: var(--dim); }
+.techdump[open] > summary::before { content: '▾'; }
+
+/* A caveat the user must not miss. --warn rather than --dim, because grey microcopy
+ * is skimmed by design and "needs the accessory" reads as optional detail when in
+ * fact nothing happens without it. */
+.tiny.warn { color: var(--warn); }
+
 .framebox {
   display: block; margin-top: 6px;
   white-space: pre-wrap; word-break: break-all;

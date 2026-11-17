@@ -229,7 +229,7 @@
             <input id="tl-shots" type="number" min="1" max="100000" step="1" placeholder="∞">
             <button id="tl-inf" class="ghost sm" type="button">∞ unlimited</button>
           </div>
-          <p class="tiny dim">Blank or ∞ runs until you stop it or the card fills — the app's own default.</p>
+          <p class="tiny dim">Leave blank for no limit — it runs until you stop it or the card fills.</p>
         </div>
         <div class="field">
           <label for="tl-bulb">Bulb exposure <span class="dim">(0 = camera's own shutter)</span></label>
@@ -299,7 +299,7 @@
             <div class="fieldrow"><input id="pa-interval" type="number" min="0" max="20" step="1" value="0"><span class="unit">s</span></div>
           </div>
         </div>
-        <label class="switch"><input id="pa-isp" type="checkbox" checked><span>Stitch in the head (auto-synthesis)</span></label>
+        <label class="switch"><input id="pa-isp" type="checkbox" checked><span>Combine into one panorama on the head</span></label>
         <dl class="kv derived">
           <dt>Coverage</dt><dd id="pa-coverage">—</dd>
           <dt>Total frames</dt><dd id="pa-total">—</dd>
@@ -307,13 +307,20 @@
         <!-- The planned shot layout: cols × rows positions, the start corner
              marked, so you see the coverage shape before committing. -->
         <div id="pa-grid" class="panogrid" hidden></div>
-        <p id="pa-grid-note" class="tiny dim" hidden><span class="pc plan start"></span> start corner · the sweep serpentines from here</p>
+        <p id="pa-grid-note" class="tiny dim" hidden><span class="pc plan start"></span> where the sweep begins — it zig-zags from here</p>
         <div id="pa-preview" class="preview" hidden>
-          <p class="tiny dim">This is the exact command that will be sent. Its field
-            layout is confirmed from the app; the binding of the stitch/limit
-            flags is <b>inferred</b> and not yet verified on hardware — watch the
-            first run.</p>
-          <code id="pa-frame" class="framebox"></code>
+          <!-- Kept, but not in the user's way. The honest caveat matters — the
+               stitch/limit flags are reverse-engineered, not documented — yet as
+               a paragraph of grey microcopy above a wall of protocol bytes it
+               reads as noise and is skipped. A collapsed line keeps it findable
+               for whoever needs it without front-loading every panorama with
+               engineering history. -->
+          <details class="techdump">
+            <summary>Exact command being sent</summary>
+            <p class="tiny dim">The stitch and limit flags are worked out from the
+              official app rather than a published spec, so check the first run.</p>
+            <code id="pa-frame" class="framebox"></code>
+          </details>
         </div>
         <button id="pa-start" class="startbtn" type="button">Preview panorama</button>
       </div>
@@ -357,7 +364,7 @@
             <button class="ghost sm rack" data-adj="1"  type="button">far ►</button>
             <button class="ghost sm rack" data-adj="4"  type="button">far ►►</button>
           </div>
-          <p class="tiny dim">Hold-repeats while pressed. The head relays focus to the camera over its own tether.</p>
+          <p class="tiny dim">Hold to keep it moving. The head drives the camera's focus directly over the USB cable.</p>
         </div>
         <div class="markrow">
           <button id="fs-mark-near" class="ghost" type="button">Set near limit</button>
@@ -414,8 +421,10 @@
           </div>
         </div>
         <div id="plc-preview" class="preview" hidden>
-          <p class="tiny dim">The timeline that will be uploaded to the head:</p>
-          <code id="plc-frame" class="framebox"></code>
+          <details class="techdump">
+            <summary>Exact timeline being sent to the head</summary>
+            <code id="plc-frame" class="framebox"></code>
+          </details>
         </div>
         <button id="plc-start" class="startbtn" type="button" disabled>Add at least two keyframes</button>
       </div>
@@ -453,8 +462,10 @@
           <dt>Shooting time</dt><dd id="pl-time">—</dd>
         </dl>
         <div id="pl-preview" class="preview" hidden>
-          <p class="tiny dim">The waypoint timeline that will be uploaded to the head:</p>
-          <code id="pl-frame" class="framebox"></code>
+          <details class="techdump">
+            <summary>Exact timeline being sent to the head</summary>
+            <code id="pl-frame" class="framebox"></code>
+          </details>
         </div>
         <button id="pl-start" class="startbtn" type="button" disabled>Add at least two waypoints</button>
       </div>
@@ -496,23 +507,34 @@
           <dt>Frames</dt><dd id="sun-frames">—</dd>
         </dl>
         <div id="sun-preview" class="preview" hidden>
-          <p class="tiny dim">The exact command that will be sent to the head:</p>
-          <code id="sun-frame" class="framebox"></code>
+          <details class="techdump">
+            <summary>Exact command being sent to the head</summary>
+            <code id="sun-frame" class="framebox"></code>
+          </details>
         </div>
         <button id="sun-start-btn" class="startbtn" type="button">Preview sun lapse</button>
       </div>
 
       <!-- HOLY GRAIL: the day->night exposure ramp (configuration, not a run) -->
       <div class="card progpanel" data-prog="grail" hidden>
+        <!-- Rewritten for someone standing at the tripod at dusk. The original
+             opened with how it is implemented ("uploads a target-brightness
+             curve", "encodings are inferred") before saying what it does, so you
+             had to decode the mechanism to learn whether the feature was even
+             relevant. Lead with what it's for and what you must do; keep every
+             caveat, but put the accessory requirement where it can't be missed
+             because without it nothing happens, and move the protocol detail
+             behind a line only an engineer would open. -->
         <p class="tiny dim">
-          <b>Day-to-night exposure ramp.</b> This doesn't shoot on its own — it
-          uploads a target-brightness curve the head follows <b>while a Timelapse
-          or Path-lapse runs</b>, ramping exposure from daylight into night. The
-          head meters the light with the external <b>Optical Matrix Sensor
-          Module</b> accessory; without it, it can't ramp. The exposure-limit and
-          priority encodings are inferred, so the exact commands are shown for you
-          to read before they're sent.
+          <b>Brightens your shots automatically as night falls.</b> Turn it on and
+          start a Timelapse or Path-lapse — exposure ramps from daylight to night
+          on its own. You don't run this by itself.
         </p>
+        <p class="tiny warn">
+          <b>Needs the Optical Matrix Sensor Module</b> fitted to the head. Without
+          it the head can't measure the light, so the ramp does nothing.
+        </p>
+
 
         <label class="switch"><input id="hg-enable" type="checkbox"><span>Enable the ramp</span></label>
 
@@ -562,7 +584,7 @@
               <label class="mini"><span>High</span><select id="hg-f-hi"></select></label>
             </div>
           </div>
-          <label class="switch"><input id="hg-prio-en" type="checkbox"><span>Send axis priority — Shutter → ISO → Aperture <span class="dim">(the app's default; codes inferred)</span></span></label>
+          <label class="switch"><input id="hg-prio-en" type="checkbox"><span>Choose which setting changes first <span class="dim">(shutter, then ISO, then aperture)</span></span></label>
         </details>
 
         <dl class="kv derived">
@@ -570,8 +592,12 @@
         </dl>
 
         <div id="hg-preview" class="preview" hidden>
-          <p class="tiny dim">The exact 305 batch that will be uploaded — encodings inferred, read before sending:</p>
-          <code id="hg-frame" class="framebox"></code>
+          <details class="techdump">
+            <summary>Exact settings being sent to the head</summary>
+            <p class="tiny dim">Worked out from the official app rather than a published
+              spec, so check these before a long run.</p>
+            <code id="hg-frame" class="framebox"></code>
+          </details>
         </div>
         <div class="markrow">
           <button id="hg-off" class="ghost" type="button">Turn ramp off</button>
@@ -779,7 +805,7 @@
       <!-- The always-on diagnostics and machine bridges, folded away so the
            guided flow above stays short. The details' open state persists. -->
       <details class="astro-tools" id="astro-tools">
-        <summary>Diagnostics &amp; bridges <span class="dim">— solver, guiding, mount status, protocols</span></summary>
+        <summary>Advanced &amp; connections <span class="dim">— solver, guiding, mount status, other apps</span></summary>
 
       <!-- Plate solving — the /legacy solver, folded in natively. -->
       <div class="card">
@@ -896,7 +922,7 @@
       </div>
       <div class="fieldrow" style="flex-wrap:wrap;gap:8px;margin-top:8px">
         <label class="tiny dim">SD image <select id="gal-test-image"><option value="">No JPEG selected</option></select></label>
-        <label class="tiny dim">Solver <select id="gal-test-solver"><option value="reference">Astrometry.net</option><option value="native">Native indexed (research)</option></select></label>
+        <label class="tiny dim">Solver <select id="gal-test-solver"><option value="reference">Astrometry.net</option><option value="native">Built-in catalogue (experimental)</option></select></label>
         <label class="tiny dim">Focal mm <input id="gal-test-focal" type="number" min="1" max="100000" step="0.1" placeholder="Auto / EXIF"></label>
         <label class="tiny dim">Sensor width mm <input id="gal-test-sensor" type="number" min="1" max="100" step="0.1" placeholder="Auto / profile"></label>
       </div>
@@ -935,9 +961,9 @@
     <div class="card">
       <h3>Observing site</h3>
       <p class="tiny dim">
-        Your latitude and longitude — the plate solver's search hint, the Alpaca
-        site, and every go-to alt/az conversion use them. Saved on the head, so it
-        survives a reboot.
+        Where you're observing from. The head needs this to work out where stars
+        are tonight — it narrows the search when identifying a photo, and every
+        "go to this object" uses it. Saved on the head, so it survives a reboot.
       </p>
       <div class="siterow">
         <div class="field">
