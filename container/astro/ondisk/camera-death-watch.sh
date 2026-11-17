@@ -42,12 +42,28 @@ usb_snapshot() {
     done
 }
 
-# Canon EOS bodies enumerate as 04a9:xxxx. Presence of ANY 04a9 device is our
-# "the camera is attached" signal -- more reliable than parsing log text.
+# "The camera is attached" signal -- more reliable than parsing log text.
+#
+# This was `= "04a9"`, Canon only, which silently disabled the whole flight
+# recorder for every non-Canon body. That is exactly the class of bug this script
+# exists to investigate: on a Pentax it reported "no camera" from boot, so it
+# never armed and wrote no dossier for any drop -- including the K-3 III loss in
+# #347 and the K-1 II drops seen on v110/v111. The evidence we needed was being
+# discarded by the tool that was built to capture it.
+#
+# The vendor list is deliberately identical to camera_usb_supervisor.sh's
+# camera_vendor(), which already carries the supported bodies. Two lists that can
+# drift are how a camera ends up invisible to one watcher and visible to the
+# other. Override with OPENPOLARIS_USB_CAMERA_VENDORS if a new body needs adding.
+CAMERA_VENDORS=${OPENPOLARIS_USB_CAMERA_VENDORS:-04a9 04b0 04cb 04da 054c 07b4 25fb}
+
 camera_present() {
     for d in /sys/bus/usb/devices/*/idVendor; do
         [ -r "$d" ] || continue
-        [ "$(cat "$d" 2>/dev/null)" = "04a9" ] && return 0
+        v=$(cat "$d" 2>/dev/null | tr 'A-F' 'a-f')
+        for want in $CAMERA_VENDORS; do
+            [ "$v" = "$want" ] && return 0
+        done
     done
     return 1
 }
@@ -55,7 +71,29 @@ camera_present() {
 PREV_DMESG=$(dmesg 2>/dev/null | wc -l)
 WAS=0
 camera_present && WAS=1
-echo "$(date '+%m-%d %H:%M:%S') camera-death-watch started (camera present=$WAS)" >> "$DIR/camera-watch.log"
+# Name the body we armed for. "camera present=0" on a Pentax used to be
+# indistinguishable from "this camera is unsupported", which is how the Canon-only
+# match hid for so long: the log looked like a healthy watcher with no camera.
+camera_identity() {
+    for d in /sys/bus/usb/devices/*/idVendor; do
+        [ -r "$d" ] || continue
+        v=$(cat "$d" 2>/dev/null | tr 'A-F' 'a-f')
+        for want in $CAMERA_VENDORS; do
+            if [ "$v" = "$want" ]; then
+                # $d is the idVendor *file*, so strip the filename to get the
+                # device directory. ${d%/} would only remove a trailing slash and
+                # leave ".../idVendor/idProduct", which never exists -- that made
+                # the identity line print "25fb: " with no product or name.
+                dev="${d%/idVendor}"
+                printf '%s:%s %s' "$v" "$(cat "$dev/idProduct" 2>/dev/null)" \
+                    "$(cat "$dev/product" 2>/dev/null)"
+                return 0
+            fi
+        done
+    done
+    return 1
+}
+echo "$(date '+%m-%d %H:%M:%S') camera-death-watch started (camera present=$WAS; vendors: $CAMERA_VENDORS; seen: $(camera_identity || echo none))" >> "$DIR/camera-watch.log"
 
 while :; do
     NOW=0
