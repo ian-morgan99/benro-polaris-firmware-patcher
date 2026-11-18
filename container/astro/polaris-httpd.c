@@ -1589,10 +1589,9 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             return 1;
         }
         if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
-            char status[32] = "", started_buf[32] = "", token_buf[64] = "";
+            char status[32] = "", token_buf[64] = "";
             char result[4096] = "", escaped[8192], payload[8700];
             char payload_escaped[17400], *value;
-            long started;
             unsigned long long requested = 0, current = 0;
             if (parameters[0]) {
                 char tail;
@@ -1601,8 +1600,6 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                     alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
                 }
             }
-            read_file(JOB_START, started_buf, sizeof started_buf);
-            started = atol(started_buf);
             read_file(JOB_ALPACA_ID, token_buf, sizeof token_buf);
             if (sscanf(token_buf, "%llu", &current) != 1) current = 0;
             if (parameters[0] && (current == 0 || requested != current)) {
