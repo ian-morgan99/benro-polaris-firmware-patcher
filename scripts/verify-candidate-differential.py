@@ -52,6 +52,40 @@ OPTIONAL_FILE_SET = {
     "/app/lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
 }
 
+
+def declared_mandatory_paths() -> set[str]:
+    """The mandatory file set as the PACKAGING SPEC currently declares it.
+
+    Why this is consulted instead of comparing two candidates' sets directly: a
+    deliberate expansion of the mandatory set makes every later release fail the
+    differential against every earlier candidate, forever. That happened for real
+    at 6.0.0.54.111 -> .112, where issue #349 added
+    /app/lib/stage2/camera_usb_supervisor.sh to MANDATORY_FILES because v110 exists
+    to deliver it and the manifest never verified it. Every release built afterwards
+    legitimately ships a file that astro-v110's manifest does not list, so the check
+    reported "the mandatory file set differs" -- indistinguishable from an accidental
+    drop-in -- and blocked the build.
+
+    Reading the spec rather than hard-coding a second allowlist means there is one
+    source of truth: adding a mandatory file in generate-fwpkt-manifest.py is enough,
+    and forgetting to do so still fails. Removals are never treated as intentional.
+    """
+    import importlib.util
+
+    spec_path = os.path.join(HERE, "generate-fwpkt-manifest.py")
+    try:
+        spec = importlib.util.spec_from_file_location("_fwpkt_manifest_spec", spec_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    except Exception as exc:                                    # noqa: BLE001
+        print(f"WARN: cannot read the packaging mandatory-file spec ({exc}); "
+              "treating any file-set change as a failure")
+        return set()
+    return {"/app/" + dev for dev, _ in module.MANDATORY_FILES}
+
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
 FWVER_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)\.(\d+)\.(\d+)")
 
 
@@ -142,17 +176,29 @@ def main() -> int:
 
     only_cur = sorted(set(cur_files) - set(prev_files))
     only_prev = sorted(set(prev_files) - set(cur_files))
-    file_set_delta = set(only_cur) | set(only_prev)
+
+    # An addition is acceptable only if the packaging spec declares that path
+    # mandatory today. A removal is never acceptable: the previous candidate shipped
+    # it, so dropping it is a regression regardless of what the spec now says.
+    declared = declared_mandatory_paths()
+    sanctioned_adds = [p for p in only_cur if p in declared]
+    unsanctioned_adds = [p for p in only_cur if p not in declared]
+
+    file_set_delta = set(unsanctioned_adds) | set(only_prev)
+    if sanctioned_adds:
+        print("WARN: the mandatory file set grew since the previous candidate")
+        for p in sanctioned_adds:
+            print(f"  added mandatory file (declared by the packaging spec): {p}")
     if file_set_delta:
         if file_set_delta <= OPTIONAL_FILE_SET:
             print("WARN: optional legacy transport file set changed")
-            for p in only_cur:
+            for p in unsanctioned_adds:
                 print(f"  added optional file: {p}")
             for p in only_prev:
                 print(f"  removed optional file: {p}")
         else:
             print("FAIL: the mandatory file set differs between candidates")
-            for p in only_cur:
+            for p in unsanctioned_adds:
                 print(f"  only in current: {p}")
             for p in only_prev:
                 print(f"  only in previous: {p}")
@@ -160,7 +206,7 @@ def main() -> int:
 
     changed = [p for p in sorted(set(cur_files) & set(prev_files))
                if cur_files[p] != prev_files[p]]
-    changed.extend(file_set_delta)
+    changed.extend(file_set_delta | set(sanctioned_adds))
 
     # Failure mode A: a new version number describing identical shipped bytes.
     if not changed:

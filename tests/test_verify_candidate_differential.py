@@ -119,6 +119,61 @@ def test_missing_mandatory_file_fails(tmp_path):
     assert "mandatory file set differs" in proc.stdout
 
 
+def test_adding_a_spec_declared_mandatory_file_is_allowed(tmp_path):
+    """A deliberate expansion of the mandatory set must not block every later release.
+
+    Issue #349 added /app/lib/stage2/camera_usb_supervisor.sh to MANDATORY_FILES because
+    astro-v110 exists to deliver it and install-manifest.json never verified it -- a build
+    that silently shipped the previous supervisor still reported `installed-verified`. Every
+    release built afterwards legitimately ships a file that astro-v110's manifest does not
+    list, so comparing two candidates' sets directly reported "the mandatory file set
+    differs" forever, indistinguishable from an accidental drop-in. At 6.0.0.54.111 -> .112
+    that blocked the build outright.
+
+    The fix consults generate-fwpkt-manifest.py as the single source of truth, so declaring
+    a file mandatory there is sufficient and no second allowlist can drift from it.
+    """
+    supervisor = "/app/lib/stage2/camera_usb_supervisor.sh"
+    prev = make_candidate(tmp_path, "astro-v110", "6.0.0.54.110", BASE)
+    cur_digests = dict(BASE)
+    cur_digests[supervisor] = "7" * 64
+    cur = make_candidate(tmp_path, "astro-v113", "6.0.0.54.111", cur_digests)
+    proc = run("--previous", str(prev), "--current", str(cur))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "mandatory file set grew" in proc.stdout, (
+        "the addition must be announced, not silently accepted"
+    )
+    assert supervisor in proc.stdout
+
+
+def test_adding_an_undeclared_file_still_fails(tmp_path):
+    """The allowance is bounded by the spec. A path nobody declared mandatory is package
+    drift and has to stay a hard failure -- otherwise the fix would be a bypass."""
+    stray = "/app/lib/stage2/some_untracked_binary.so"
+    prev = make_candidate(tmp_path, "astro-v110", "6.0.0.54.110", BASE)
+    cur_digests = dict(BASE)
+    cur_digests[stray] = "8" * 64
+    cur = make_candidate(tmp_path, "astro-v113", "6.0.0.54.111", cur_digests)
+    proc = run("--previous", str(prev), "--current", str(cur))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "mandatory file set differs" in proc.stdout
+    assert stray in proc.stdout
+
+
+def test_removing_a_spec_declared_file_still_fails(tmp_path):
+    """Being declared mandatory today does not license dropping it. The previous
+    candidate shipped it, so a removal is a regression whatever the spec now says."""
+    supervisor = "/app/lib/stage2/camera_usb_supervisor.sh"
+    with_sup = dict(BASE)
+    with_sup[supervisor] = "7" * 64
+    prev = make_candidate(tmp_path, "astro-v113", "6.0.0.54.111", with_sup)
+    cur = make_candidate(tmp_path, "astro-v114", "6.0.0.54.112", BASE)
+    proc = run("--previous", str(prev), "--current", str(cur))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "only in previous" in proc.stdout
+    assert supervisor in proc.stdout
+
+
 def test_optional_legacy_usbscsi_addition_is_reported_and_allowed(tmp_path):
     """K-5 II support adds one explicitly optional transport to the package."""
     usbscsi = "/app/lib/stage2/libgphoto2_port/0.12.2/usbscsi.so"
