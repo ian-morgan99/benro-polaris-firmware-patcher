@@ -52,3 +52,10 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 3. Confirm PA orientation against real image/ASTAP WCS and mirrored FITS-to-screen transformations.
 4. Review network exposure, command authentication assumptions and source-image admission; do not publish or deploy this draft.
 5. Native Polaris command namespace and external Alpaca-driver/NINA integration remain separate tasks.
+
+## Next checkpoint — job token and bounded result (PR #367)
+- `Start.V1` now returns a **string token** derived from the existing `JOB_START` timestamp. This is **not** a globally unique job ID: two starts within the same second can collide. Do not use for production correlation until fixed.
+- `Status.V1` accepts an optional numeric token in `Parameters`, rejects a mismatch against the current job and returns the full solver-result line (up to 4095 bytes), or an explicit Alpaca error if the file is larger. `Value` remains a JSON string containing `schema_version`, `job_id`, `state` and `result` (result itself is a JSON-escaped string, not a typed nested object).
+- The previous 1 KiB Alpaca response helper is bypassed with a dynamically allocated response, avoiding silent response truncation.
+- **Still unverified:** complete firmware compilation, Alpaca HTTP integration, hardware, security, resource usage and external-driver behaviour. The job token is provisional, and the result file must be checked for freshness relative to the job start before release.
+- **Known race:** the existing double-fork job runner records its PID asynchronously; a Status call immediately after Start can see `running` before the PID file is created. The current handler may prematurely report `failed`. Resolve this race and timestamp collision before accepting the protocol.
