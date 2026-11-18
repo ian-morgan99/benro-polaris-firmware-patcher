@@ -1625,12 +1625,8 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
             }
             read_file(JOB_ALPACA_ID, token_buf, sizeof token_buf);
-            /* JOB_ALPACA_ID is written with a trailing newline. Strip only
-             * the file terminator; user-supplied IDs stay strict. */
-            { size_t len = strlen(token_buf);
-              if (len && token_buf[len - 1] == '\n') token_buf[len - 1] = 0;
-            }
-            if (!polaris_parse_job_token(token_buf, &current)) current = 0;
+            if (!polaris_parse_persisted_job_token(token_buf, &current))
+                current = 0;
             if (parameters[0] && (current == 0 || requested != current)) {
                 alpaca_error(fd, qs, 1025, "job ID does not match current solve"); return 1;
             }
