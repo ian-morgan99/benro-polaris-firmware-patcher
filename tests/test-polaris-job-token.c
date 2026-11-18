@@ -20,6 +20,23 @@ int main(void) {
     assert(c > a);
     assert(polaris_next_job_token(UINT64_MAX, &last) == UINT64_MAX);
     assert(polaris_next_job_token(UINT64_MAX, &last) == 0);
-    puts("Alpaca job token arithmetic tests passed");
+    {
+        uint64_t parsed = 0;
+        assert(polaris_parse_job_token("1794960000000000", &parsed));
+        assert(parsed == now_us);
+        assert(polaris_parse_job_token("18446744073709551615", &parsed));
+        assert(parsed == UINT64_MAX);
+        assert(!polaris_parse_job_token("18446744073709551616", &parsed));
+        assert(!polaris_parse_job_token("0", &parsed));
+        assert(!polaris_parse_job_token("", &parsed));
+        assert(!polaris_parse_job_token("-1", &parsed));
+        assert(!polaris_parse_job_token("+1", &parsed));
+        assert(!polaris_parse_job_token(" 1", &parsed));
+        assert(!polaris_parse_job_token("1x", &parsed));
+        assert(!polaris_parse_job_token("1\\n", &parsed));
+        assert(!polaris_parse_job_token(NULL, &parsed));
+        assert(!polaris_parse_job_token("1", NULL));
+    }
+    puts("Alpaca job token arithmetic and parser tests passed");
     return 0;
 }
