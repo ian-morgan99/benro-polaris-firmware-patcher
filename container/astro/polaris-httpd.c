@@ -1050,9 +1050,60 @@ static int alpaca_cam_capture(double dur) {
  * cached to whole-second granularity so an overlay polling at a couple of fps
  * opens at most one upstream connection per second and never starves the jog
  * loop. */
-static time_t g_snap_t = 0;
+static time_t g_snap_t = 0;       /* second of the last SUCCESSFUL grab */
+static time_t g_snap_fail_t = 0;  /* second of the last FAILED attempt */
+
+/* How old a frame may be and still be served without re-grabbing, and how long
+ * to wait after a failure before trying again. Both are derived from one
+ * measured fact: pgphoto Stage-2 emits one preview frame every ~10.3 s (measured
+ * on 192.168.68.25 with a K-1 II attached -- first frame ~5.25 s after the
+ * stream opens, then gaps of 10.69/10.30/10.05/10.28 s). The overlay in app.js
+ * polls /api/snapshot once a second, so it asks for frames ten times faster than
+ * the source can produce them.
+ *
+ * That mismatch is #370. polaris-httpd is a single-threaded select() server and
+ * liveview_grab() blocks that one thread for its whole timeout, so with a 6000 ms
+ * budget against a 10.3 s cadence the grab usually expires without a frame and
+ * every other request queues behind it: /api/state measured 22 ms alone and 5.74 s
+ * while a snapshot was in flight -- a 260x degradation.
+ *
+ * Serving a frame that is already fresh enough costs one stat() and one read
+ * instead of a blocking recv(), so the accept thread stays free. The window has
+ * to be at least one full cadence or it defeats itself; 12 s covers 10.3 s with
+ * margin. The failure backoff matters just as much: without it, a head with no
+ * camera attached re-grabs on every poll and the thread is never free (#368's
+ * original symptom was a 6.3 s response to *every* request). */
+static int g_snap_fresh_sec = 12;
+static int g_snap_retry_sec = 5;
+
+static void snap_limits(void) {
+    static int done = 0;
+    if (done) return;
+    done = 1;
+    { const char *e = getenv("POLARIS_SNAP_FRESH_SEC");
+      if (e && *e) { int v = atoi(e); if (v > 0) g_snap_fresh_sec = v; } }
+    { const char *e = getenv("POLARIS_SNAP_RETRY_SEC");
+      if (e && *e) { int v = atoi(e); if (v >= 0) g_snap_retry_sec = v; } }
+}
+
+/* mtime of the cached frame, or 0 if there is no usable one. */
+static time_t snap_frame_age(time_t now) {
+    struct stat st;
+    if (stat(g_snap_jpg, &st) != 0) return -1;
+    if (st.st_size <= 0) return -1;
+    return now - st.st_mtime;
+}
+
 static void serve_snapshot(int fd) {
     FILE *f; long sz; char *buf; time_t now = time(NULL);
+    /* time_t, not long: on 32-bit ARM with _TIME_BITS=64 time_t is 64-bit while
+     * long is 32, so a long here would silently truncate the age. e5b5d61 was
+     * exactly this class of bug -- unsigned long long vs uint64_t, which differ
+     * on x86-64 and coincide on ARM -- and it shipped because nothing built the
+     * host target. Keep the type of the value being held equal to the type the
+     * API returns. */
+    time_t age;
+    snap_limits();
 
     /* g_snap_t is the second in which SNAP_JPG was last SUCCESSFULLY written,
      * not the second we last tried. liveview_grab() only writes the file when it
@@ -1063,19 +1114,32 @@ static void serve_snapshot(int fd) {
      * dead or absent camera answered 200 image/jpeg with a frame from hours ago.
      * Measured on 192.168.68.25 with no camera attached: /tmp/polaris-snap.jpg
      * was 7h06m old, byte-identical across requests, and every response was
-     * 200 after ~6.3 s. The overlay in app.js polls this once a second, so the
-     * user watched a frozen image that looked like a stalled camera rather than
-     * a missing one. polaris-httpd.c:890 already documents the intended
+     * 200 after ~6.3 s. polaris-httpd.c:890 already documents the intended
      * behaviour -- "on timeout we return 0 and the caller serves its usual 'no
      * frame' response" -- this is the caller not honouring it. */
-    if (now != g_snap_t) {
+    age = snap_frame_age(now);
+
+    if (age >= 0 && age <= g_snap_fresh_sec) {
+        /* Fresh enough: hand it over without touching the network. This is the
+         * whole point -- the source cannot produce a newer frame than this yet,
+         * so blocking to ask for one buys nothing and starves every other
+         * endpoint for the duration. */
+    } else if (g_snap_fail_t != 0 && (now - g_snap_fail_t) < g_snap_retry_sec) {
+        /* Recently failed and the cached frame is too old to serve: answer
+         * immediately rather than re-blocking the accept thread on every poll. */
+        respond(fd, 502, "text/plain", "no live-view frame", 18);
+        return;
+    } else {
         if (liveview_grab(g_snap_jpg, 6000) <= 0) {
-            /* Do not advance g_snap_t: there is no fresh frame to cache, and
-             * doing so would let the rest of this second serve the stale file. */
+            /* Do not advance g_snap_t: there is no fresh frame to cache. Record
+             * the failure so the next few polls answer instantly instead of each
+             * paying the full timeout again. */
+            g_snap_fail_t = now;
             respond(fd, 502, "text/plain", "no live-view frame", 18);
             return;
         }
         g_snap_t = now;
+        g_snap_fail_t = 0;
     }
     f = fopen(g_snap_jpg, "rb");
     if (!f) { respond(fd, 502, "text/plain", "no live-view frame", 18); return; }
@@ -1085,7 +1149,32 @@ static void serve_snapshot(int fd) {
     if (!buf) { fclose(f); respond(fd, 500, "text/plain", "oom", 3); return; }
     if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) { free(buf); fclose(f); respond(fd, 502, "text/plain", "read", 4); return; }
     fclose(f);
-    respond(fd, 200, "image/jpeg", buf, (size_t)sz);
+
+    /* Tell the client how old the frame actually is. Without this a served frame
+     * is indistinguishable from a live one over HTTP -- no Last-Modified, no age
+     * field -- which is exactly what made #368 invisible: the overlay showed a
+     * seven-hour-old image and nothing in the response said so. The overlay polls
+     * once a second against a source that produces one frame every ~10.3 s, so
+     * most responses legitimately carry a frame a few seconds old; the client
+     * needs to be able to show that rather than silently display a freeze. */
+    {
+        char hdr[512];
+        time_t a = snap_frame_age(time(NULL));
+        /* long long + %lld rather than long + %ld: same 32-bit-ARM truncation
+         * concern as above, and the format must match the promoted type. */
+        long long age_s = (long long)(a < 0 ? 0 : a);
+        int n = snprintf(hdr, sizeof hdr,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: image/jpeg\r\n"
+            "Content-Length: %ld\r\n"
+            "X-Polaris-Frame-Age-Sec: %lld\r\n"
+            "Cache-Control: no-store\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Connection: close\r\n\r\n",
+            sz, age_s);
+        send_all(fd, hdr, (size_t)n);
+        send_all(fd, buf, (size_t)sz);
+    }
     free(buf);
 }
 

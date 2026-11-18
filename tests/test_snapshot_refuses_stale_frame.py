@@ -46,6 +46,7 @@ REPO = Path(__file__).resolve().parents[1]
 ASTRO = REPO / "container" / "astro"
 EMBED = ASTRO / "embed_webui.py"
 WEBUI = ASTRO / "webui"
+HTTPD = ASTRO / "polaris-httpd.c"
 SOURCES = [
     ASTRO / "polaris-httpd.c",
     ASTRO / "polaris-link.c",
@@ -200,3 +201,122 @@ def test_default_snap_path_is_unchanged():
         "reading /tmp/polaris-snap.jpg would silently stop working"
     )
     assert "static const char *g_snap_jpg = SNAP_JPG_DEFAULT;" in src
+
+
+# ---------------------------------------------------------------------------
+# #370: the accept thread must not block on every poll.
+#
+# app.js setPeak() polls /api/snapshot once a second. The head's MJPEG source
+# (pgphoto Stage-2, measured on 192.168.68.25 with a K-1 II attached) emits one
+# frame every ~10.3 s -- first frame ~5.25 s after the stream opens, then gaps of
+# 10.69/10.30/10.05/10.28 s. So the poll rate is ten times the source rate, and
+# every poll that misses a frame blocks the single-threaded select() server for
+# the full SO_RCVTIMEO. Measured on the device: /api/state was 22 ms alone and
+# 5.74 s while a snapshot was in flight -- a 260x degradation of every other
+# endpoint, caused by one overlay image.
+#
+# The fix serves a frame that is already fresh enough without touching the
+# network, and backs off after a failure instead of re-paying the timeout on
+# every poll. Verified against the real head stream: over 15 polls at 1 s
+# intervals, 12 were served from cache in ~0.2 ms, 1 blocked (cold cache), 2 were
+# refused -- matching the 10.3 s cadence rather than blocking 15 times.
+# ---------------------------------------------------------------------------
+
+def _get_headers(port: int, path: str, timeout: float = 12.0):
+    req = urllib.request.Request(f"http://127.0.0.1:{port}{path}")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, dict(r.headers), r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, dict(e.headers), e.read()
+
+
+def test_recent_frame_is_served_without_a_fresh_grab(server):
+    """A frame younger than the freshness window is served even though no camera
+    is reachable here.
+
+    Pre-fix this returned 502: serve_snapshot() always called liveview_grab()
+    first and failed the request when it returned 0, regardless of what was
+    already on disk. That is correct for staleness but wrong for latency -- the
+    file is as recent as the source can make it, so blocking to ask again buys
+    nothing and starves every other endpoint for the duration.
+    """
+    port, snap = server
+    snap.write_bytes(FAKE_JPEG)          # mtime == now, so age ~0 s
+
+    status, hdrs, body = _get_headers(port, "/api/snapshot")
+
+    assert status == 200, (
+        f"a frame written moments ago was refused ({status}) even though the "
+        f"source cannot produce anything newer; the poll should be answered from "
+        f"the existing frame instead of blocking on a grab that will time out"
+    )
+    assert body == FAKE_JPEG, "served something other than the cached frame"
+
+
+def test_response_declares_frame_age(server):
+    """A served frame must say how old it is.
+
+    This is what made #368 invisible: a seven-hour-old image was returned as
+    200 image/jpeg with nothing in the response to distinguish it from a live
+    one. The overlay polls faster than the source produces frames, so most
+    responses legitimately carry a frame a few seconds old -- the client needs
+    to be able to show that rather than silently display a freeze.
+    """
+    port, snap = server
+    snap.write_bytes(FAKE_JPEG)
+    old = time.time() - 3
+    os.utime(snap, (old, old))
+
+    status, hdrs, _ = _get_headers(port, "/api/snapshot")
+    assert status == 200, f"expected the cached frame to be served, got {status}"
+
+    age_hdr = hdrs.get("X-Polaris-Frame-Age-Sec")
+    assert age_hdr is not None, (
+        "no frame-age header: a client cannot tell a live frame from an old one, "
+        "which is the failure mode #368 shipped with"
+    )
+    assert 3 <= int(age_hdr) <= 60, (
+        f"frame age reported as {age_hdr}s for a file backdated 3s -- the value "
+        f"must reflect the file's real mtime or it is worse than no header"
+    )
+
+
+def test_no_store_on_live_frames(server):
+    """Live-view frames must not be cached by intermediaries."""
+    port, snap = server
+    snap.write_bytes(FAKE_JPEG)
+    status, hdrs, _ = _get_headers(port, "/api/snapshot")
+    assert status == 200
+    cc = (hdrs.get("Cache-Control") or "").lower()
+    assert "no-store" in cc, (
+        f"Cache-Control is {cc!r}; a cached snapshot would be replayed as if it "
+        f"were current, reintroducing #368 from the client side"
+    )
+
+
+def test_stale_frame_is_still_refused(server):
+    """The freshness window must not become a way to serve hour-old frames."""
+    port, snap = server
+    snap.write_bytes(FAKE_JPEG)
+    os.utime(snap, (time.time() - 7200, time.time() - 7200))
+
+    status, _, _ = _get_headers(port, "/api/snapshot")
+    assert status == 502, (
+        f"a two-hour-old frame was served with {status}: the freshness window is "
+        f"meant to avoid redundant grabs, not to resurrect #368"
+    )
+
+
+def test_freshness_window_is_configurable(server):
+    """The window has to be tunable: it must exceed one source cadence (10.3 s)
+    or it defeats itself, and a different camera may need a different value."""
+    src = HTTPD.read_text()
+    assert "POLARIS_SNAP_FRESH_SEC" in src, (
+        "no knob for the freshness window; it must be at least one full frame "
+        "interval of the source or every poll still blocks on a grab"
+    )
+    assert "POLARIS_SNAP_RETRY_SEC" in src, (
+        "no knob for failure backoff; without it a head with no camera re-grabs "
+        "on every poll and the accept thread is never free"
+    )
