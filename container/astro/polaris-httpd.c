@@ -1565,7 +1565,8 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             alpaca_value(fd, qs, "\"started\""); return 1;
         }
         if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
-            char status[32] = "", result[384] = "", escaped[768], value[900];
+            char status[32] = "", result[240] = "", escaped[500];
+            char payload[600], payload_escaped[800], value[820];
             if (parameters[0]) {
                 alpaca_error(fd, qs, 1025, "Status takes no Parameters"); return 1;
             }
@@ -1579,8 +1580,11 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             }
             json_escape(result, escaped, sizeof escaped);
             /* Alpaca Action Value is a JSON-encoded string. */
-            snprintf(value, sizeof value, "\"{\\\"schema_version\\\":1,\\\"state\\\":\\\"%s\\\",\\\"result\\\":\\\"%s\\\"}\"",
+            snprintf(payload, sizeof payload,
+                     "{\"schema_version\":1,\"state\":\"%s\",\"result\":\"%s\"}",
                      status, escaped);
+            json_escape(payload, payload_escaped, sizeof payload_escaped);
+            snprintf(value, sizeof value, "\"%s\"", payload_escaped);
             alpaca_value(fd, qs, value); return 1;
         }
         alpaca_error(fd, qs, 1024, "unsupported Action"); return 1;
