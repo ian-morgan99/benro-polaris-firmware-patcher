@@ -388,8 +388,12 @@ static int solve_job_alive(void) {
     age = started > 0 ? (long)time(NULL) - started : 999999;
     read_file(JOB_PID, pb, sizeof pb);
     jp = atol(pb);
+    /* Do not treat a missing PID as failure until startup grace has passed.
+     * A running PID is NOT proof of progress: a hard execution deadline is
+     * enforced separately below, but this checker must not kill an unknown
+     * process (PID reuse). */
+    if (age >= 0 && age <= 10) return 1;
     if (jp > 1 && kill((pid_t)jp, 0) == 0) return 1;
-    if (age >= 0 && age <= 10) return 1; /* detached worker startup grace */
     set_status("failed");
     unlink(JOB_PID);
     return 0;
