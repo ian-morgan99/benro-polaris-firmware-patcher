@@ -33,13 +33,13 @@ int main(void) {
         assert(!polaris_parse_job_token("+1", &parsed));
         assert(!polaris_parse_job_token(" 1", &parsed));
         assert(!polaris_parse_job_token("1x", &parsed));
-        assert(!polaris_parse_job_token("1\\n", &parsed));
+        assert(!polaris_parse_job_token("1\n", &parsed));
         assert(!polaris_parse_job_token(NULL, &parsed));
         assert(!polaris_parse_job_token("1", NULL));
     }
     {
-        char persisted[] = "1794960000000000\\n";
-        char bad[] = "1794960000000000\\nX";
+        char persisted[] = "1794960000000000\n";
+        char bad[] = "1794960000000000\nX";
         uint64_t parsed = 0;
         assert(polaris_parse_persisted_job_token(persisted, &parsed));
         assert(parsed == now_us);
