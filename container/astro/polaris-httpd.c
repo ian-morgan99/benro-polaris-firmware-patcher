@@ -1600,8 +1600,8 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
         }
         if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
             char status[32] = "", token_buf[64] = "";
-            char result[4096] = "", escaped[8192], payload[8700];
-            char payload_escaped[17400], *value;
+            char result[4096] = "";
+            char *escaped = NULL, *payload = NULL, *payload_escaped = NULL, *value = NULL;
             unsigned long long requested = 0, current = 0;
             if (parameters[0]) {
                 char tail;
@@ -1631,25 +1631,37 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 read_file(JOB_RESULT, result, sizeof result);
                 { char *nl = strchr(result, '\n'); if (nl) *nl = 0; }
             }
-            json_escape(result, escaped, sizeof escaped);
-            snprintf(payload, sizeof payload,
-                     "{\"schema_version\":1,\"job_id\":\"%llu\",\"state\":\"%s\","
-                     "\"result\":\"%s\"}", current, status, escaped);
-            json_escape(payload, payload_escaped, sizeof payload_escaped);
-            value = malloc(strlen(payload_escaped) + 3);
-            if (!value) {
-                alpaca_error(fd, qs, 1025, "out of memory"); return 1;
+            /* Bound allocations by actual input size, not a 35 KiB stack
+             * reservation on a memory-constrained embedded device. */
+            {
+                size_t n = strlen(result), cap;
+                if (n > (SIZE_MAX - 128) / 6) {
+                    alpaca_error(fd, qs, 1025, "result too large"); return 1;
+                }
+                escaped = malloc(n * 6 + 1);
+                if (!escaped) goto solve_status_oom;
+                json_escape(result, escaped, n * 6 + 1);
+                cap = strlen(escaped) + 160;
+                payload = malloc(cap);
+                if (!payload) goto solve_status_oom;
+                snprintf(payload, cap,
+                         "{\"schema_version\":1,\"job_id\":\"%llu\",\"state\":\"%s\","
+                         "\"result\":\"%s\"}", current, status, escaped);
+                n = strlen(payload);
+                if (n > (SIZE_MAX - 3) / 6) goto solve_status_oom;
+                payload_escaped = malloc(n * 6 + 1);
+                if (!payload_escaped) goto solve_status_oom;
+                json_escape(payload, payload_escaped, n * 6 + 1);
+                value = malloc(strlen(payload_escaped) + 3);
+                if (!value) goto solve_status_oom;
+                sprintf(value, "\"%s\"", payload_escaped);
             }
-            sprintf(value, "\"%s\"", payload_escaped);
             /* Alpaca Value needs a larger envelope than the normal 1 KiB
              * alpaca_value helper. Never truncate a JSON string mid-escape. */
             {
                 size_t cap = strlen(value) + 256;
                 char *response = malloc(cap);
-                if (!response) {
-                    free(value);
-                    alpaca_error(fd, qs, 1025, "out of memory"); return 1;
-                }
+                if (!response) goto solve_status_oom;
                 snprintf(response, cap,
                          "{\"Value\":%s,\"ClientTransactionID\":%ld,"
                          "\"ServerTransactionID\":%lu,\"ErrorNumber\":0,"
@@ -1658,7 +1670,11 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 respond_json(fd, response);
                 free(response);
             }
-            free(value);
+            free(value); free(payload_escaped); free(payload); free(escaped);
+            return 1;
+solve_status_oom:
+            free(value); free(payload_escaped); free(payload); free(escaped);
+            alpaca_error(fd, qs, 1025, "insufficient memory for solve status");
             return 1;
         }
         alpaca_error(fd, qs, 1024, "unsupported Action"); return 1;
