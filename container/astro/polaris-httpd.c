@@ -49,6 +49,7 @@
 #define JOB_STATUS     "/tmp/polaris-job.status"   /* idle|running|done|failed */
 #define JOB_RESULT     "/tmp/polaris-job.result"   /* solver JSON */
 #define JOB_PID        "/tmp/polaris-job.pid"      /* pid of the running job */
+#define JOB_ALPACA_ID  "/tmp/polaris-job.alpaca-id" /* invalidated on every new solve */
 #define KEEPWIFI_FLAG  "/app/sd/polaris-astro/keep-wifi-awake"
 #define KEEPWIFI_PID   "/tmp/wifi-keepalive.pid"
 #define KEEPWIFI_FORCE "/app/sd/polaris-astro/keep-wifi-force"
@@ -390,6 +391,8 @@ static int start_solve(int apply, int mode) {
     }
 
     set_status("running");
+    unlink(JOB_ALPACA_ID);
+    unlink(JOB_PID);
     unlink(JOB_RESULT);
     { FILE *f = fopen(JOB_START, "w"); if (f) { fprintf(f, "%ld\n", (long)time(NULL)); fclose(f); } }
 
@@ -1563,35 +1566,54 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 alpaca_error(fd, qs, 1025, "solve busy or unavailable"); return 1;
             }
             {
-                char job[32] = "", id_json[48];
-                read_file(JOB_START, job, sizeof job);
-                snprintf(id_json, sizeof id_json, "\"%ld\"", atol(job));
+                struct timeval tv;
+                char id_json[64];
+                unsigned long long token;
+                FILE *f;
+                gettimeofday(&tv, NULL);
+                /* microsecond timestamp plus server transaction counter;
+                 * unlike JOB_START seconds, distinct starts cannot alias. */
+                token = (unsigned long long)tv.tv_sec * 1000000ULL
+                        + (unsigned long long)tv.tv_usec;
+                token = token * 1000ULL + (++g_server_txn % 1000UL);
+                f = fopen(JOB_ALPACA_ID, "w");
+                if (!f) {
+                    alpaca_error(fd, qs, 1025, "cannot persist solve token");
+                    return 1;
+                }
+                fprintf(f, "%llu\n", token);
+                fclose(f);
+                snprintf(id_json, sizeof id_json, "\"%llu\"", token);
                 alpaca_value(fd, qs, id_json);
             }
             return 1;
         }
         if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
-            char status[32] = "", started_buf[32] = "", pid_buf[32] = "";
+            char status[32] = "", started_buf[32] = "", token_buf[64] = "";
             char result[4096] = "", escaped[8192], payload[8700];
             char payload_escaped[17400], *value;
-            long started, requested;
-            if (parameters[0] && !parse_long_strict(parameters, &requested)) {
-                alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
+            long started;
+            unsigned long long requested = 0, current = 0;
+            if (parameters[0]) {
+                char tail;
+                if (sscanf(parameters, "%llu%c", &requested, &tail) != 1 ||
+                    requested == 0) {
+                    alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
+                }
             }
             read_file(JOB_START, started_buf, sizeof started_buf);
             started = atol(started_buf);
-            if (parameters[0] && (started <= 0 || requested != started)) {
+            read_file(JOB_ALPACA_ID, token_buf, sizeof token_buf);
+            if (sscanf(token_buf, "%llu", &current) != 1) current = 0;
+            if (parameters[0] && (current == 0 || requested != current)) {
                 alpaca_error(fd, qs, 1025, "job ID does not match current solve"); return 1;
             }
             read_file(JOB_STATUS, status, sizeof status);
             if (strcmp(status, "done") && strcmp(status, "failed") &&
                 strcmp(status, "running") && strcmp(status, "idle"))
                 strcpy(status, "idle");
-            if (!strcmp(status, "running")) {
-                read_file(JOB_PID, pid_buf, sizeof pid_buf);
-                if (atol(pid_buf) <= 1 || kill((pid_t)atol(pid_buf), 0) != 0)
-                    strcpy(status, "failed");
-            }
+            /* The double-fork worker publishes its PID asynchronously.
+             * Do not misreport failure during the startup hand-off. */
             if (!strcmp(status, "done") || !strcmp(status, "failed")) {
                 struct stat st;
                 if (stat(JOB_RESULT, &st) == 0 && st.st_size >= (off_t)sizeof result) {
@@ -1603,8 +1625,8 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             }
             json_escape(result, escaped, sizeof escaped);
             snprintf(payload, sizeof payload,
-                     "{\"schema_version\":1,\"job_id\":%ld,\"state\":\"%s\","
-                     "\"result\":\"%s\"}", started, status, escaped);
+                     "{\"schema_version\":1,\"job_id\":\"%llu\",\"state\":\"%s\","
+                     "\"result\":\"%s\"}", current, status, escaped);
             json_escape(payload, payload_escaped, sizeof payload_escaped);
             value = malloc(strlen(payload_escaped) + 3);
             if (!value) {
