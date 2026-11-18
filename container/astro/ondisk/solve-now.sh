@@ -74,7 +74,23 @@ elif [ "$FRAME" = "WAIT" ]; then
 elif [ -z "$FRAME" ]; then
     before=$(newest_frame)
     echo "[solve-now] firing one frame..." >&2
-    "$ASTRO/polaris-mount" --host 127.0.0.1 send --msg '1&264&2&state:1;bulb:0;c:-1#' >/dev/null 2>&1
+    # --listen is NOT optional here. polaris-mount's listen_s defaults to 0, so
+    # without it send writes the command and exits without reading a single
+    # reply -- the head's answer is never seen. Combined with >/dev/null 2>&1
+    # this meant every rejection looked identical to a slow camera: measured on
+    # 192.168.68.25 the head answered opcode 264 with state:-1005 while the log
+    # said only "no frame appeared in 25s", which sent everyone looking for a
+    # timing bug instead of an error code. -1005 is intermittent (the same
+    # command succeeded minutes later and produced SP_0041.jpg), so it can only
+    # be diagnosed if the reply is recorded when it happens.
+    reply=$(mktemp 2>/dev/null || echo /tmp/polaris-264-reply.$$)
+    "$ASTRO/polaris-mount" --host 127.0.0.1 send \
+        --msg '1&264&2&state:1;bulb:0;c:-1#' --listen 3 >"$reply" 2>&1
+    # Only the 264 answer matters; 778/775 battery-and-storage telemetry streams
+    # in between and would otherwise be reported as if it were the verdict.
+    verdict=$(grep '^264@' "$reply" 2>/dev/null | head -1)
+    rm -f "$reply"
+    echo "[solve-now] head replied: ${verdict:-<nothing within 3s>}" >&2
     i=0
     while [ $i -lt "$WAIT" ]; do
         sleep 1; i=$((i+1))
@@ -82,7 +98,16 @@ elif [ -z "$FRAME" ]; then
         [ -n "$FRAME" ] && [ "$FRAME" != "$before" ] && break
         FRAME=""
     done
-    [ -n "$FRAME" ] || { echo "[solve-now] no frame appeared in ${WAIT}s" >&2; exit 1; }
+    if [ -z "$FRAME" ]; then
+        # Distinguish "the head refused" from "the head accepted but nothing
+        # arrived": they need completely different fixes and previously printed
+        # the same line.
+        case "$verdict" in
+            *state:-*) echo "[solve-now] head REJECTED the capture: $verdict" >&2 ;;
+            *)         echo "[solve-now] no frame appeared in ${WAIT}s (reply: ${verdict:-none})" >&2 ;;
+        esac
+        exit 1
+    fi
     sleep 1     # let the write finish
     echo "[solve-now] frame: $FRAME" >&2
 fi

@@ -499,6 +499,12 @@ PY_TESTS=(
     # only test that would have caught polaris-httpd failing to build on x86-64,
     # which silently skipped both suites while the gate still said GREEN.
     tests/test_snapshot_refuses_stale_frame.py
+    # solve-now.sh discarded polaris-mount's reply (send defaults to listen_s=0,
+    # so it never even read one) and printed "no frame appeared" for every
+    # failure. The head was answering opcode 264 with state:-1005 while the log
+    # pointed at capture timing. This drives the real script against a stub mount
+    # and asserts the diagnosis, not just the exit code.
+    tests/test_solve_now_reports_capture_verdict.py
     # Keep all offline-safe camera/astro helper contracts under the same gate;
     # the drift guard must not report these as unrun after they are added.
     tests/test_extract_threshold_hoist.py
