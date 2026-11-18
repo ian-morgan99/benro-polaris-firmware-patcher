@@ -39,6 +39,7 @@
 #include <limits.h>
 #include <stdint.h>
 
+#include "polaris-job-token.h"
 #include "polaris-link.h"
 #include "polaris-jog.h"
 #include "polaris-prog.h"
@@ -1590,10 +1591,13 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                  * for repeated starts in this server process. */
                 {
                     static unsigned long long last_token = 0;
-                    token = (unsigned long long)tv.tv_sec * 1000000ULL
-                            + (unsigned long long)tv.tv_usec;
-                    if (token <= last_token) token = last_token + 1;
-                    last_token = token;
+                    token = polaris_next_job_token(
+                        (uint64_t)tv.tv_sec * 1000000ULL + (uint64_t)tv.tv_usec,
+                        &last_token);
+                    if (!token) {
+                        alpaca_error(fd, qs, 1025, "job token exhausted");
+                        return 1;
+                    }
                 }
                 f = fopen(JOB_ALPACA_ID, "w");
                 if (!f) {
