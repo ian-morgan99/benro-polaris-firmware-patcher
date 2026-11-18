@@ -1562,7 +1562,13 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             if (start_solve(0, 1) != 1) {
                 alpaca_error(fd, qs, 1025, "solve busy or unavailable"); return 1;
             }
-            alpaca_value(fd, qs, "\"started\""); return 1;
+            {
+                char job[32] = "", id_json[48];
+                read_file(JOB_START, job, sizeof job);
+                snprintf(id_json, sizeof id_json, "\"%ld\"", atol(job));
+                alpaca_value(fd, qs, id_json);
+            }
+            return 1;
         }
         if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
             char status[32] = "", started_buf[32] = "", pid_buf[32] = "";
@@ -1587,6 +1593,11 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                     strcpy(status, "failed");
             }
             if (!strcmp(status, "done") || !strcmp(status, "failed")) {
+                struct stat st;
+                if (stat(JOB_RESULT, &st) == 0 && st.st_size >= (off_t)sizeof result) {
+                    alpaca_error(fd, qs, 1025, "solver result exceeds protocol limit");
+                    return 1;
+                }
                 read_file(JOB_RESULT, result, sizeof result);
                 { char *nl = strchr(result, '\n'); if (nl) *nl = 0; }
             }
