@@ -1611,7 +1611,11 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             long age_sec = 0, start_sec = 0;
             if (parameters[0]) {
                 char tail;
-                if (sscanf(parameters, "%llu%c", &requested, &tail) != 1 ||
+                size_t i;
+                for (i = 0; parameters[i]; i++)
+                    if (parameters[i] < '0' || parameters[i] > '9') break;
+                if (i == 0 || parameters[i] ||
+                    sscanf(parameters, "%llu%c", &requested, &tail) != 1 ||
                     requested == 0) {
                     alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
                 }
@@ -1634,6 +1638,12 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 strcpy(status, "failed");
             if (!strcmp(status, "done") || !strcmp(status, "failed")) {
                 struct stat st;
+                /* A result from an earlier job must never be returned as the
+                 * current solve, even if a previous crash left it on disk. */
+                if (stat(JOB_RESULT, &st) == 0 && start_sec > 0 &&
+                    st.st_mtime < (time_t)start_sec) {
+                    alpaca_error(fd, qs, 1025, "stale solver result"); return 1;
+                }
                 if (stat(JOB_RESULT, &st) == 0 && st.st_size >= (off_t)sizeof result) {
                     alpaca_error(fd, qs, 1025, "solver result exceeds protocol limit");
                     return 1;
