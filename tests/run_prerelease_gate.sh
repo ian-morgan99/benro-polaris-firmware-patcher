@@ -509,6 +509,15 @@ PY_TESTS=(
     # and "aligned" computed wrong is worse than no stamp at all -- it would certify
     # a kit and firmware that were never built as a pair.
     tests/test_version_endpoint_reports_kit_identity.py
+    # build-release-candidate.sh advertises "<stock-FwPkt.zip|dir>" but its acceptance
+    # check grepped `unzip -l`, whose member names are padded with leading spaces -- so an
+    # anchored (^|/)FwPkt/firmwareInfo$ pattern can never match and every zip packet on
+    # disk was refused with "stock input must contain FwPkt/firmwareInfo". The packet was
+    # fine; the check was broken, and it blocks firmware releases outright. These drive the
+    # real script (not a duplicated regex) with a clean git tree so execution actually
+    # reaches the stock check -- an earlier version used a non-git source, died on the
+    # libgphoto2 check that runs first, and passed vacuously.
+    tests/test_release_candidate_accepts_zip_stock.py
     # solve-now.sh discarded polaris-mount's reply (send defaults to listen_s=0,
     # so it never even read one) and printed "no frame appeared" for every
     # failure. The head was answering opcode 264 with state:-1005 while the log

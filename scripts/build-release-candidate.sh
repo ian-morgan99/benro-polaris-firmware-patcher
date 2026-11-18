@@ -132,8 +132,18 @@ case "$ID" in (*[!a-zA-Z0-9._-]*) echo "ERROR: invalid candidate id" >&2; exit 2
 [ -e "$BASE" ] || { echo "ERROR: stock FwPkt not found: $BASE" >&2; exit 2; }
 [ -e "$SRC/.git" ] || { echo "ERROR: libgphoto2 input must have a real git worktree" >&2; exit 2; }
 [ -f "$BASE/firmwareInfo" ] || [ -f "$BASE/FwPkt/firmwareInfo" ] || {
-  if [ "${BASE##*.}" = zip ] && unzip -l "$BASE" 2>/dev/null | grep -qE '(^|/)FwPkt/firmwareInfo$'; then :; else
+  # Zip input is accepted -- the packaging step below reads it with zipfile and
+  # strips the FwPkt/ prefix -- but the acceptance check has to list members the
+  # right way. `unzip -l` prints "  Length Date Time   Name" with the name padded
+  # by leading spaces, so an anchored pattern like (^|/)FwPkt/firmwareInfo$ can
+  # never match: the line starts with a space, and "FwPkt/" is not at position 0.
+  # The result was that a perfectly good FwPkt.zip was rejected with "stock input
+  # must contain FwPkt/firmwareInfo", pointing at the packet rather than at this
+  # check. `unzip -Z1` prints bare member names, which is what the pattern needs.
+  if [ "${BASE##*.}" = zip ] && unzip -Z1 "$BASE" 2>/dev/null | grep -qE '(^|/)FwPkt/firmwareInfo$'; then :; else
     echo "ERROR: stock input must contain FwPkt/firmwareInfo" >&2
+    [ "${BASE##*.}" = zip ] && \
+      echo "       (zip member listing found no FwPkt/firmwareInfo in $BASE)" >&2
     exit 2
   fi
 }
