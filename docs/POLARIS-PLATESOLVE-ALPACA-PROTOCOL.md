@@ -59,3 +59,11 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - The previous 1 KiB Alpaca response helper is bypassed with a dynamically allocated response, avoiding silent response truncation.
 - **Still unverified:** complete firmware compilation, Alpaca HTTP integration, hardware, security, resource usage and external-driver behaviour. The job token is provisional, and the result file must be checked for freshness relative to the job start before release.
 - **Known race:** the existing double-fork job runner records its PID asynchronously; a Status call immediately after Start can see `running` before the PID file is created. The current handler may prematurely report `failed`. Resolve this race and timestamp collision before accepting the protocol.
+
+## Job-correlation update (2026-11-18)
+- Start now writes a microsecond-resolution, transaction-salted decimal token to `/tmp/polaris-job.alpaca-id`; every `start_solve` invalidates the previous token, including starts from the WebUI.
+- Status compares an optional supplied token with the current persisted token. Its response now reports that token as a **string**. This avoids the earlier whole-second collision; it is not a cryptographic identifier.
+- Removed the immediate PID check from Status because the double-fork worker publishes its PID after Start can return. This prevents a false failed state on the first poll.
+- **Remaining important work:** a worker that crashes without updating `JOB_STATUS` may now leave `running` visible indefinitely until another start. Implement a bounded, race-safe liveness check with startup grace and hard timeout.
+- The Status implementation currently allocates several large fixed buffers on the request stack. Measure actual device stack/RAM usage and move to bounded heap or streaming before any deployment, especially given Polaris resource constraints.
+- Still no complete firmware build or hardware qualification for this PR.
