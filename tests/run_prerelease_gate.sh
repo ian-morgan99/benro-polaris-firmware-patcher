@@ -328,6 +328,7 @@ PY_TESTS=(
     tests/test_camera_death_watch_detects_pentax.py
     tests/test_manifest_covers_usb_supervisor.py
     tests/test_skills_reference_real_tooling.py
+    tests/test_install_astro_boot_hook_failclosed.py
     tests/test_autonomous_install.py
     tests/test_assert_orphan_wrote.py
     tests/test_capture_outcomes.py

@@ -10,6 +10,9 @@
 #     SRC        bundle dir (default: this script's dir)
 #     DEST       install dir (default /app/astro)
 #     INDEXES    where index files live (default /app/sd/astrometry)
+#     HOOK       boot hook path (default /app/network_telnetd.sh)
+#     CONF       site.conf path (default /app/sd/polaris-astro/site.conf)
+#     PROFILE_DIR camera profile dir (default /app/sd/polaris-astro)
 #     NO_BOOT=1  install the files but NOT the boot hook
 # ============================================================================
 set -e
@@ -17,8 +20,20 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=${SRC:-$HERE}
 DEST=${DEST:-/app/astro}
 INDEXES=${INDEXES:-/app/sd/astrometry}
-HOOK=/app/network_telnetd.sh
-CONF=/app/sd/polaris-astro/site.conf
+# HOOK and CONF were hardcoded while SRC/DEST/INDEXES were overridable, which made
+# the boot-hook path untestable: a test could exercise $DEST but never the hook, so
+# the "hook installed" claim was never actually executed off-device. Defaults are
+# unchanged; overriding them exists so the fail-closed hook check can be tested.
+HOOK=${HOOK:-/app/network_telnetd.sh}
+CONF=${CONF:-/app/sd/polaris-astro/site.conf}
+# Same reason as HOOK/CONF: this was hardcoded, so no test could run the script
+# without it trying to write the real /app. Default is unchanged.
+PROFILE_DIR=${PROFILE_DIR:-/app/sd/polaris-astro}
+# Derived rather than hardcoded so that overriding HOOK also redirects the
+# backup. On-device the name is unchanged: /app/network_telnetd.sh becomes
+# /app/network_telnetd.pre-astro.sh, which is what uninstall_astro.sh and the
+# manual recovery note in this header both refer to.
+HOOK_BACKUP=${HOOK%.sh}.pre-astro.sh
 
 mkdir -p "$DEST" "$INDEXES"
 
@@ -42,7 +57,6 @@ fi
 
 # Camera geometry is an extensible data file, not a camera allow-list. Preserve
 # a user's edited profile and seed the bundled compatibility rows only once.
-PROFILE_DIR=/app/sd/polaris-astro
 mkdir -p "$PROFILE_DIR"
 if [ ! -f "$PROFILE_DIR/camera-sensors.tsv" ] && [ -f "$SRC/camera-sensors.tsv" ]; then
     cp "$SRC/camera-sensors.tsv" "$PROFILE_DIR/camera-sensors.tsv"
@@ -133,17 +147,48 @@ if [ "${NO_BOOT:-0}" = "1" ]; then
     echo "[astro] NO_BOOT=1 -- boot hook not installed; start things by hand"
 elif [ -f "$SRC/polaris-astro-boot.sh" ]; then
     if [ -f "$HOOK" ] && ! grep -q "polaris-astro boot hook" "$HOOK" 2>/dev/null; then
-        cp "$HOOK" /app/network_telnetd.pre-astro.sh
-        chmod +x /app/network_telnetd.pre-astro.sh
-        echo "[astro] existing $HOOK preserved as /app/network_telnetd.pre-astro.sh"
+        cp "$HOOK" "$HOOK_BACKUP"
+        chmod +x "$HOOK_BACKUP"
+        echo "[astro] existing $HOOK preserved as $HOOK_BACKUP"
         echo "[astro]   (it will be run first at every boot, so ssh keeps working)"
     fi
     cp "$SRC/polaris-astro-boot.sh" "$HOOK"
     chmod 755 "$HOOK"
-    echo "[astro] boot hook installed -> $HOOK"
+    # Verify the hook landed byte-for-byte. The manifest check above only covers
+    # $DEST, and $HOOK is outside it, so a truncated or ENOSPC-short write used to
+    # pass silently: the installer printed "boot hook installed", exited 0, and the
+    # device booted with /app/astro populated and nothing starting it. That is the
+    # v104 symptom (#312) recurring through a different path -- the reordering above
+    # reduces the odds of running out of space here, but only this check proves the
+    # file is actually the one we meant to install.
+    if [ ! -s "$HOOK" ]; then
+        echo "[astro] FATAL: $HOOK is missing or empty after install." >&2
+        echo "[astro]        Nothing will start at boot. Free space where it goes:" >&2
+        df -k "$(dirname "$HOOK")" 2>/dev/null \
+            | awk 'NR==2 {print "[astro]          " $4 " KB free on " $6}' >&2
+        exit 1
+    fi
+    if command -v sha256sum >/dev/null 2>&1; then
+        want=$(sha256sum "$SRC/polaris-astro-boot.sh" | cut -d' ' -f1)
+        got=$(sha256sum "$HOOK" | cut -d' ' -f1)
+        if [ "$want" != "$got" ]; then
+            echo "[astro] FATAL: boot hook does not match the bundle after install." >&2
+            echo "[astro]        expected $want" >&2
+            echo "[astro]        actual   $got" >&2
+            echo "[astro]        Nothing will start at boot. Free space where it goes:" >&2
+            df -k "$(dirname "$HOOK")" 2>/dev/null \
+                | awk 'NR==2 {print "[astro]          " $4 " KB free on " $6}' >&2
+            exit 1
+        fi
+    fi
+    echo "[astro] boot hook installed and verified -> $HOOK"
 else
-    echo "[astro] WARNING: no polaris-astro-boot.sh in the bundle; nothing will"
-    echo "[astro]          start at boot."
+    # Not a warning any more. Every other route to autostart has already been
+    # removed, so a bundle without this file cannot start Astro at boot at all,
+    # and reporting success would be the same "looks installed, is not" outcome
+    # as a truncated hook.
+    echo "[astro] FATAL: no polaris-astro-boot.sh in $SRC; nothing will start at boot." >&2
+    exit 1
 fi
 
 # ---- catalogue data: deliberately NOT copied -------------------------------
