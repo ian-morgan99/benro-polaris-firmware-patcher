@@ -1540,7 +1540,52 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
     if (!strcmp(m, "description")) { alpaca_value(fd, qs, "\"Benro Polaris via on-device plate solver\""); return 1; }
     if (!strcmp(m, "driverinfo"))  { alpaca_value(fd, qs, "\"polaris-httpd\""); return 1; }
     if (!strcmp(m, "driverversion")) { alpaca_value(fd, qs, "\"1.0\""); return 1; }
-    if (!strcmp(m, "supportedactions")) { alpaca_value(fd, qs, "[]"); return 1; }
+    if (!strcmp(m, "supportedactions")) {
+        alpaca_value(fd, qs, "[\"Polaris.PlateSolve.Start.V1\",\"Polaris.PlateSolve.Status.V1\"]");
+        return 1;
+    }
+    /* Extension actions are opt-in and never alter Telescope Sync. */
+    if (!strcmp(m, "action")) {
+        char action[96] = "", parameters[64] = "";
+        const char *src = (body && *body) ? body : qs;
+        if (strcmp(method, "PUT")) { respond_400(fd, "Action requires PUT"); return 1; }
+        if (!(body && *body ? param_body(src, "Action", action, sizeof action)
+                            : param(src, "Action", action, sizeof action))) {
+            respond_400(fd, "Action required"); return 1;
+        }
+        if (body && *body) param_body(src, "Parameters", parameters, sizeof parameters);
+        else param(src, "Parameters", parameters, sizeof parameters);
+        if (!strcmp(action, "Polaris.PlateSolve.Start.V1")) {
+            if (parameters[0] && strcmp(parameters, "latest")) {
+                alpaca_error(fd, qs, 1025, "only latest image supported"); return 1;
+            }
+            if (start_solve(0, 1) != 0) {
+                alpaca_error(fd, qs, 1025, "solve busy or unavailable"); return 1;
+            }
+            alpaca_value(fd, qs, "\"started\""); return 1;
+        }
+        if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
+            char status[32] = "", result[384] = "", escaped[768], value[900];
+            if (parameters[0]) {
+                alpaca_error(fd, qs, 1025, "Status takes no Parameters"); return 1;
+            }
+            read_file(JOB_STATUS, status, sizeof status);
+            if (strcmp(status, "done") && strcmp(status, "failed") &&
+                strcmp(status, "running") && strcmp(status, "idle"))
+                strcpy(status, "idle");
+            if (!strcmp(status, "done") || !strcmp(status, "failed")) {
+                read_file(JOB_RESULT, result, sizeof result);
+                { char *nl = strchr(result, '\n'); if (nl) *nl = 0; }
+            }
+            json_escape(result, escaped, sizeof escaped);
+            /* Alpaca Action Value is a JSON-encoded string. */
+            snprintf(value, sizeof value, "\"{\\\"schema_version\\\":1,\\\"state\\\":\\\"%s\\\",\\\"result\\\":\\\"%s\\\"}\"",
+                     status, escaped);
+            alpaca_value(fd, qs, value); return 1;
+        }
+        alpaca_error(fd, qs, 1024, "unsupported Action"); return 1;
+    }
+
     if (!strcmp(m, "alignmentmode"))    { alpaca_value(fd, qs, "1"); return 1; } /* altaz */
     if (!strcmp(m, "equatorialsystem")) { alpaca_value(fd, qs, "2"); return 1; } /* J2000 */
     if (!strcmp(m, "cansetpark") || !strcmp(m, "canpark") ||
