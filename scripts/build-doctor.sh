@@ -540,9 +540,13 @@ if [ -f "$INSTALL_SH" ]; then
     # the script before the boot hook was written -- polaris-httpd on disk, port
     # closed, nothing at boot, and no error anyone would notice. The hook must be
     # installed while there is still guaranteed space.
-    HOOK_LN=$(grep -n 'boot hook installed ->' "$INSTALL_SH" | head -1 | cut -d: -f1)
+    # Match the marker, not the whole sentence: install_astro.sh's success line
+    # became "boot hook installed and verified ->" when it gained a sha256 check
+    # of the installed hook, and grepping the old exact wording made this check
+    # FAIL against a perfectly good installer.
+    HOOK_LN=$(grep -n 'boot hook installed' "$INSTALL_SH" | head -1 | cut -d: -f1)
     if [ -z "$HOOK_LN" ]; then
-        bad "install_astro.sh: cannot locate the boot-hook step ('boot hook installed ->')"
+        bad "install_astro.sh: cannot locate the boot-hook step ('boot hook installed')"
         hint "Section 9 asserts it runs before any optional copy. Update this check"
         hint "if the message is renamed."
     else

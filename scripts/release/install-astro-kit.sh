@@ -200,10 +200,28 @@ fi
 echo "--- [4/5] Running install_astro.sh on the device ---"
 INSTALL_CMD="/app/sd/polaris-astro/install_astro.sh"
 [ "$NO_BOOT" = "1" ] && INSTALL_CMD="NO_BOOT=1 $INSTALL_CMD"
-INSTALL_OUT="$(ssh "${SSH_ARGS[@]}" "$SSH" "sh -c '$INSTALL_CMD' 2>&1")"
+# Capture the exit status. install_astro.sh exits 1 on every FATAL boot-hook path
+# (missing hook, hash mismatch, no polaris-astro-boot.sh), and this script runs
+# under set -e, so the || rc=$? is what keeps the run alive long enough to report
+# it rather than dying inside the substitution with no output at all.
+INSTALL_RC=0
+INSTALL_OUT="$(ssh "${SSH_ARGS[@]}" "$SSH" "sh -c '$INSTALL_CMD' 2>&1")" || INSTALL_RC=$?
 echo "$INSTALL_OUT" | sed 's/^/    /'
-if [ "$NO_BOOT" != "1" ] && ! printf '%s\n' "$INSTALL_OUT" | grep -q 'boot hook installed ->'; then
-  echo "ERROR: install_astro.sh did not report the boot hook being installed." >&2
+if [ "$INSTALL_RC" != "0" ]; then
+  echo "ERROR: install_astro.sh exited $INSTALL_RC on the device." >&2
+  echo "       Its own output is above; it exits non-zero when the boot hook is" >&2
+  echo "       missing, empty, or does not match the bundle -- in every one of" >&2
+  echo "       those cases nothing starts at boot and port 8090 stays closed." >&2
+  exit 5
+fi
+# Match on the marker only, never the full sentence. install_astro.sh's success
+# line was extended to "boot hook installed and verified ->" when it gained a
+# sha256 check of the installed hook; grepping the old exact wording made this
+# gate reject a successful install (exit 5) while the device was in fact fully
+# installed. The marker survives wording changes; the exit status above is the
+# real authority and this line only confirms the positive path announced itself.
+if [ "$NO_BOOT" != "1" ] && ! printf '%s\n' "$INSTALL_OUT" | grep -q 'boot hook installed'; then
+  echo "ERROR: install_astro.sh exited 0 but never reported installing the boot hook." >&2
   echo "       Without it nothing starts at boot and port 8090 stays closed." >&2
   exit 5
 fi

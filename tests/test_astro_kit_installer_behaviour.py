@@ -21,6 +21,29 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 KIT_SCRIPT = ROOT / "scripts/release/install-astro-kit.sh"
+INSTALLER = ROOT / "container/astro/ondisk/install_astro.sh"
+
+
+def real_hook_success_line() -> str:
+    """The boot-hook success line install_astro.sh ACTUALLY prints.
+
+    The stub used to hardcode "[astro] boot hook installed -> ...". When the
+    installer gained a sha256 check of the installed hook it began printing
+    "boot hook installed and verified ->", and because the fixture still emitted
+    the old wording the wrapper's gate started rejecting successful installs
+    (exit 5) on real hardware while this file stayed green. A fixture that
+    restates a producer's output cannot catch the producer changing; deriving it
+    means the rename fails here instead of during a deploy.
+    """
+    for line in INSTALLER.read_text().splitlines():
+        s = line.strip()
+        if s.startswith("echo ") and "boot hook installed" in s:
+            # echo "[astro] boot hook installed and verified -> $HOOK"
+            return s[5:].strip().strip('"').replace("$HOOK", "/app/network_telnetd.sh")
+    raise AssertionError(
+        f"{INSTALLER} prints no 'boot hook installed' success line; the installer "
+        f"changed shape and install-astro-kit.sh's gate needs re-checking"
+    )
 
 
 def sha256_of(path):
@@ -78,17 +101,41 @@ case "$cmd" in
     eval "$rewritten"
     exit 0;;
   *install_astro.sh*)
-    echo "[astro] boot hook installed -> /app/network_telnetd.sh"
+    echo "@@HOOKLINE@@"
     exit 0;;
   *'sh -s'*) echo "httpd=$FAKE_HTTPD hook=$FAKE_HOOK port8090=$FAKE_PORT"; exit 0;;
 esac
 exit 0
 """
 
+# The success line is substituted from install_astro.sh itself (see
+# real_hook_success_line) so this fixture cannot drift from the installer again.
+STUB = STUB.replace('@@HOOKLINE@@', real_hook_success_line())
+
+# The real installer prints this to stderr and exits 1 (see the FATAL paths in
+# install_astro.sh), so the stub does both. That exercises install-astro-kit.sh's
+# exit-status check, which is now the primary gate; the success-line grep is only
+# a confirmation that the positive path announced itself.
 NO_HOOK_STUB = STUB.replace(
-    'echo "[astro] boot hook installed -> /app/network_telnetd.sh"',
-    'echo "[astro] WARNING: no polaris-astro-boot.sh in the bundle; nothing will start at boot."',
+    f'echo "{real_hook_success_line()}"\n    exit 0;',
+    'echo "[astro] FATAL: no polaris-astro-boot.sh in $SRC; nothing will start at boot." >&2\n    exit 1;',
 )
+
+
+def test_no_hook_stub_is_faithful():
+    """The failure stub must mirror the real installer: stderr AND exit 1.
+
+    Guards the fixture itself. If install_astro.sh's FATAL paths stop exiting
+    non-zero, or the success line disappears, this fails before the behaviour
+    tests can pass on a fixture that no longer resembles the device.
+    """
+    src = INSTALLER.read_text()
+    assert "exit 1" in src, "install_astro.sh no longer exits non-zero on FATAL"
+    assert "nothing will start at boot" in src
+    assert NO_HOOK_STUB != STUB, (
+        "the no-hook stub did not substitute: install_astro.sh's success line "
+        "shape changed and this fixture needs updating"
+    )
 
 
 def stub_bin(tmp_path, *, no_hook=False):

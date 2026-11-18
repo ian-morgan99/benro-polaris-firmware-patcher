@@ -68,7 +68,15 @@ def test_kit_installer_is_bash_clean_and_posix_remote():
 def test_kit_installer_fails_closed_on_the_three_known_faults():
     text = KIT_SCRIPT.read_text(encoding="utf-8")
     # 1. A kit that installed nothing but looked fine (#312 / the .104 report).
-    assert "boot hook installed ->" in text, "must require install_astro.sh to confirm the hook"
+    # Assert the marker and the exit-status check, not the installer's full
+    # sentence: install_astro.sh renamed its success line to "boot hook installed
+    # and verified ->" when it gained a sha256 check, and grepping the old exact
+    # wording here is what let the wrapper reject a good deploy on real hardware.
+    assert "boot hook installed" in text, "must require install_astro.sh to confirm the hook"
+    assert re.search(r"INSTALL_RC=\$\?", text), (
+        "must capture install_astro.sh's exit status -- it exits 1 on every FATAL "
+        "boot-hook path, and under set -e that is the only reliable authority"
+    )
     assert "port8090=1" in text, "must require port 8090 to be listening"
     assert "/app/astro/polaris-httpd" in text, "must require polaris-httpd on disk"
     # 2. A truncated transfer read as a successful install.
