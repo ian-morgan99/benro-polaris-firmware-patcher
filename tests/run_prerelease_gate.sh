@@ -492,6 +492,13 @@ PY_TESTS=(
     # that produces no output is worse than one that fails.
     tests/test_gate_no_self_recursion.py
     tests/test_webui_serves_and_stays_serving.py
+    # /api/snapshot used to answer 200 image/jpeg with a frame from hours ago
+    # whenever liveview_grab() failed, because the grab's return value was
+    # discarded and SNAP_JPG was opened regardless. Runs the real binary, so it
+    # needs the same host-gcc path as the serving suite above -- and it is the
+    # only test that would have caught polaris-httpd failing to build on x86-64,
+    # which silently skipped both suites while the gate still said GREEN.
+    tests/test_snapshot_refuses_stale_frame.py
     # Keep all offline-safe camera/astro helper contracts under the same gate;
     # the drift guard must not report these as unrun after they are added.
     tests/test_extract_threshold_hoist.py

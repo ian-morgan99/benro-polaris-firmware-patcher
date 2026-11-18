@@ -802,7 +802,13 @@ static double g_site_elev = 0.0;
 static int    g_cam_ready = 0, g_cam_w = 0, g_cam_h = 0;
 static double g_cam_lastdur = 0;
 #define ALPACA_CAM_PGM "/tmp/alpaca-cam.pgm"
-#define SNAP_JPG       "/tmp/polaris-snap.jpg"   /* same-origin live-view frame */
+#define SNAP_JPG_DEFAULT "/tmp/polaris-snap.jpg"  /* same-origin live-view frame */
+
+/* Overridable so a test can point it at a scratch file. Without this the path is
+ * /tmp/polaris-snap.jpg, which no host test can create and remove without
+ * racing anything else on the machine -- and the stale-frame defect below is
+ * only observable when a previous frame is already sitting there. */
+static const char *g_snap_jpg = SNAP_JPG_DEFAULT;
 
 /* THE DEVICE CLOCK IS NOT UTC. It runs local time while reporting itself as
  * UTC; ConformU caught this as "Scope and ASCOM sidereal times are more than 1
@@ -1047,11 +1053,31 @@ static int alpaca_cam_capture(double dur) {
 static time_t g_snap_t = 0;
 static void serve_snapshot(int fd) {
     FILE *f; long sz; char *buf; time_t now = time(NULL);
+
+    /* g_snap_t is the second in which SNAP_JPG was last SUCCESSFULLY written,
+     * not the second we last tried. liveview_grab() only writes the file when it
+     * has a complete SOI..EOI frame (see :1004-1012) and returns 0 otherwise, so
+     * on failure the path still holds whatever an earlier success left there.
+     *
+     * The old code ignored the return value and opened the file regardless, so a
+     * dead or absent camera answered 200 image/jpeg with a frame from hours ago.
+     * Measured on 192.168.68.25 with no camera attached: /tmp/polaris-snap.jpg
+     * was 7h06m old, byte-identical across requests, and every response was
+     * 200 after ~6.3 s. The overlay in app.js polls this once a second, so the
+     * user watched a frozen image that looked like a stalled camera rather than
+     * a missing one. polaris-httpd.c:890 already documents the intended
+     * behaviour -- "on timeout we return 0 and the caller serves its usual 'no
+     * frame' response" -- this is the caller not honouring it. */
     if (now != g_snap_t) {
-        liveview_grab(SNAP_JPG, 6000);
+        if (liveview_grab(g_snap_jpg, 6000) <= 0) {
+            /* Do not advance g_snap_t: there is no fresh frame to cache, and
+             * doing so would let the rest of this second serve the stale file. */
+            respond(fd, 502, "text/plain", "no live-view frame", 18);
+            return;
+        }
         g_snap_t = now;
     }
-    f = fopen(SNAP_JPG, "rb");
+    f = fopen(g_snap_jpg, "rb");
     if (!f) { respond(fd, 502, "text/plain", "no live-view frame", 18); return; }
     fseek(f, 0, SEEK_END); sz = ftell(f); fseek(f, 0, SEEK_SET);
     if (sz <= 0) { fclose(f); respond(fd, 502, "text/plain", "no live-view frame", 18); return; }
@@ -5270,6 +5296,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--site-conf") && i+1 < argc) g_site_conf = argv[++i];
         else if (!strcmp(argv[i], "--mount-host") && i+1 < argc) g_mount_host = argv[++i];
         else if (!strcmp(argv[i], "--mount-port") && i+1 < argc) g_mount_port = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "--snap-jpg") && i+1 < argc) g_snap_jpg = argv[++i];
         else {
             fprintf(stderr,
                 "usage: %s [--port N] --lat DEG --lon DEG [--focal MM] [--astro DIR]\n", argv[0]);
