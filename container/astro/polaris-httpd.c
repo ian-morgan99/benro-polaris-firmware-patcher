@@ -1585,11 +1585,16 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 unsigned long long token;
                 FILE *f;
                 gettimeofday(&tv, NULL);
-                /* microsecond timestamp plus server transaction counter;
-                 * unlike JOB_START seconds, distinct starts cannot alias. */
-                token = (unsigned long long)tv.tv_sec * 1000000ULL
-                        + (unsigned long long)tv.tv_usec;
-                token = token * 1000ULL + (++g_server_txn % 1000UL);
+                /* Epoch microseconds fit uint64_t; multiplying by 1000
+                 * would overflow on modern dates. Enforce strict monotonicity
+                 * for repeated starts in this server process. */
+                {
+                    static unsigned long long last_token = 0;
+                    token = (unsigned long long)tv.tv_sec * 1000000ULL
+                            + (unsigned long long)tv.tv_usec;
+                    if (token <= last_token) token = last_token + 1;
+                    last_token = token;
+                }
                 f = fopen(JOB_ALPACA_ID, "w");
                 if (!f) {
                     alpaca_error(fd, qs, 1025, "cannot persist solve token");
