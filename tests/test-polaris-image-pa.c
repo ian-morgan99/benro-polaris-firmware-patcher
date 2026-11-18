@@ -22,9 +22,9 @@ int main(void) {
     const double bad[2][2] = {{NAN,0},{0,1}};
     double pa=123; int parity=123;
     check(north,1,0,0);
-    check(east,1,90,1);
+    check(east,1,90,0);
     check(south,1,180,0);
-    check(west,1,270,1);
+    check(west,1,270,0);
     check(mirror,1,0,1);
     check(north,-1,180,0);
     assert(!polaris_image_pa_from_cd(singular,1,&pa,&parity));
