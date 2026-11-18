@@ -1583,14 +1583,14 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             {
                 struct timeval tv;
                 char id_json[64];
-                unsigned long long token;
+                uint64_t token;
                 FILE *f;
                 gettimeofday(&tv, NULL);
                 /* Epoch microseconds fit uint64_t; multiplying by 1000
                  * would overflow on modern dates. Enforce strict monotonicity
                  * for repeated starts in this server process. */
                 {
-                    static unsigned long long last_token = 0;
+                    static uint64_t last_token = 0;
                     token = polaris_next_job_token(
                         (uint64_t)tv.tv_sec * 1000000ULL + (uint64_t)tv.tv_usec,
                         &last_token);
@@ -1604,9 +1604,9 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                     alpaca_error(fd, qs, 1025, "cannot persist solve token");
                     return 1;
                 }
-                fprintf(f, "%llu\n", token);
+                fprintf(f, "%llu\n", (unsigned long long)token);
                 fclose(f);
-                snprintf(id_json, sizeof id_json, "\"%llu\"", token);
+                snprintf(id_json, sizeof id_json, "\"%llu\"", (unsigned long long)token);
                 alpaca_value(fd, qs, id_json);
             }
             return 1;
