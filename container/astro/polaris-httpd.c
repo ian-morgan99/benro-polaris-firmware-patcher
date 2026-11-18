@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "polaris-link.h"
 #include "polaris-jog.h"
@@ -1638,9 +1639,9 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 if (n > (SIZE_MAX - 128) / 6) {
                     alpaca_error(fd, qs, 1025, "result too large"); return 1;
                 }
-                escaped = malloc(n * 6 + 1);
+                escaped = malloc(n * 6 + 8);
                 if (!escaped) goto solve_status_oom;
-                json_escape(result, escaped, n * 6 + 1);
+                json_escape(result, escaped, n * 6 + 8);
                 cap = strlen(escaped) + 160;
                 payload = malloc(cap);
                 if (!payload) goto solve_status_oom;
@@ -1649,9 +1650,9 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                          "\"result\":\"%s\"}", current, status, escaped);
                 n = strlen(payload);
                 if (n > (SIZE_MAX - 3) / 6) goto solve_status_oom;
-                payload_escaped = malloc(n * 6 + 1);
+                payload_escaped = malloc(n * 6 + 8);
                 if (!payload_escaped) goto solve_status_oom;
-                json_escape(payload, payload_escaped, n * 6 + 1);
+                json_escape(payload, payload_escaped, n * 6 + 8);
                 value = malloc(strlen(payload_escaped) + 3);
                 if (!value) goto solve_status_oom;
                 sprintf(value, "\"%s\"", payload_escaped);
