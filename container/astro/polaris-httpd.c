@@ -1620,19 +1620,12 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             char *escaped = NULL, *payload = NULL, *payload_escaped = NULL, *value = NULL;
             unsigned long long requested = 0, current = 0;
             long age_sec = 0, start_sec = 0;
-            if (parameters[0]) {
-                char tail;
-                size_t i;
-                for (i = 0; parameters[i]; i++)
-                    if (parameters[i] < '0' || parameters[i] > '9') break;
-                if (i == 0 || parameters[i] ||
-                    sscanf(parameters, "%llu%c", &requested, &tail) != 1 ||
-                    requested == 0) {
-                    alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
-                }
+            if (parameters[0] &&
+                !polaris_parse_job_token(parameters, &requested)) {
+                alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
             }
             read_file(JOB_ALPACA_ID, token_buf, sizeof token_buf);
-            if (sscanf(token_buf, "%llu", &current) != 1) current = 0;
+            if (!polaris_parse_job_token(token_buf, &current)) current = 0;
             if (parameters[0] && (current == 0 || requested != current)) {
                 alpaca_error(fd, qs, 1025, "job ID does not match current solve"); return 1;
             }
