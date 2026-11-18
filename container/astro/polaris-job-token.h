@@ -39,7 +39,7 @@ static inline int polaris_parse_persisted_job_token(char *s, uint64_t *out) {
     size_t n;
     if (!s) return 0;
     n = strlen(s);
-    if (n && s[n - 1] == '\\n') s[--n] = 0;
+    if (n && s[n - 1] == '\n') s[--n] = 0;
     return polaris_parse_job_token(s, out);
 }
 #endif
