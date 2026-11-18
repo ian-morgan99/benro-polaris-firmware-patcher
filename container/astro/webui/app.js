@@ -493,10 +493,20 @@ function wireJog() {
 
 /* ────────────────────────────── live view ──────────────────────────────── */
 
-/* The stream is mjpg-streamer on the head's port 8080, not this server. It is
+/* The stream is served on the head's port 8080, not by this server. It is
    referenced directly rather than proxied: proxying it through a
    single-threaded server would block every other request for as long as the
-   stream is open, which is forever. */
+   stream is open, which is forever.
+
+   It used to say "mjpg-streamer" here. There is no mjpg-streamer on the head --
+   no such binary exists in /app/astro, /app/bin or /usr/bin, and nothing named
+   mjpg or streamer runs. netstat shows 8080 owned by pgphoto.stage:
+
+     tcp 0 0 0.0.0.0:8080 0.0.0.0:* LISTEN 21370/pgphoto.stage
+
+   The name mattered because it sent people looking for a process to restart.
+   #376 inherited that framing and concluded the streamer was "never told to
+   start", when in fact 8080 is listening and serving zero frames. */
 function streamURL() {
   return 'http://' + location.hostname + ':8080/?action=stream';
 }
