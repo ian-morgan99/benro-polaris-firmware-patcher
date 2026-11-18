@@ -96,3 +96,9 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - Added `tests/run-polaris-host-regressions.sh` to compile and run both the job-token test and the existing WCS image-PA test on a host with a C99 compiler.
 - Run from the repository root: `sh tests/run-polaris-host-regressions.sh`.
 - **Not yet executed in a checked-out branch in this session.** Passing these unit tests would not prove the embedded firmware compiles or the Alpaca HTTP contract works. Those remain release blockers.
+
+## Local host test execution (2026-11-18)
+- Reconstructed the current production token header and test from GitHub contents in a local test directory. GCC 14.2, `-std=c99 -Wall -Wextra -Werror -pedantic`: **passed** (`Alpaca job token arithmetic tests passed`).
+- Reconstructed the current image-PA header and test from GitHub contents in the same directory. GCC 14.2 with the same strict flags and `-lm`: **passed** (`image PA regression tests passed`).
+- These are host-only tests of the two small helper paths. They do **not** constitute a checked-out repository build, an embedded-toolchain build, an HTTP integration test, or hardware qualification.
+- The server now checks `gettimeofday` failure explicitly before generating a token.
