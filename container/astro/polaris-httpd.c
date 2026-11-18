@@ -1604,10 +1604,11 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             return 1;
         }
         if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
-            char status[32] = "", token_buf[64] = "";
+            char status[32] = "", token_buf[64] = "", start_buf[32] = "";
             char result[4096] = "";
             char *escaped = NULL, *payload = NULL, *payload_escaped = NULL, *value = NULL;
             unsigned long long requested = 0, current = 0;
+            long age_sec = 0, start_sec = 0;
             if (parameters[0]) {
                 char tail;
                 if (sscanf(parameters, "%llu%c", &requested, &tail) != 1 ||
@@ -1621,6 +1622,10 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 alpaca_error(fd, qs, 1025, "job ID does not match current solve"); return 1;
             }
             read_file(JOB_STATUS, status, sizeof status);
+            read_file(JOB_START, start_buf, sizeof start_buf);
+            start_sec = atol(start_buf);
+            if (start_sec > 0 && (long)time(NULL) >= start_sec)
+                age_sec = (long)time(NULL) - start_sec;
             if (strcmp(status, "done") && strcmp(status, "failed") &&
                 strcmp(status, "running") && strcmp(status, "idle"))
                 strcpy(status, "idle");
@@ -1651,7 +1656,8 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 if (!payload) goto solve_status_oom;
                 snprintf(payload, cap,
                          "{\"schema_version\":1,\"job_id\":\"%llu\",\"state\":\"%s\","
-                         "\"result\":\"%s\"}", current, status, escaped);
+                         "\"elapsed_sec\":%ld,\"result\":\"%s\"}",
+                         current, status, age_sec, escaped);
                 n = strlen(payload);
                 if (n > (SIZE_MAX - 3) / 6) goto solve_status_oom;
                 payload_escaped = malloc(n * 6 + 8);
