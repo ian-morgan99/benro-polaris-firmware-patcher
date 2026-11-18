@@ -1,0 +1,23 @@
+name: Polaris host regressions
+on:
+  pull_request:
+    paths:
+      - 'container/astro/polaris-job-token.h'
+      - 'container/astro/polaris-image-pa.h'
+      - 'tests/test-polaris-job-token.c'
+      - 'tests/test-polaris-image-pa.c'
+      - 'tests/run-polaris-host-regressions.sh'
+      - '.github/workflows/polaris-host-regressions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run C99 host regressions
+        run: sh tests/run-polaris-host-regressions.sh
