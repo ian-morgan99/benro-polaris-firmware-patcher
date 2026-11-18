@@ -67,3 +67,9 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - **Remaining important work:** a worker that crashes without updating `JOB_STATUS` may now leave `running` visible indefinitely until another start. Implement a bounded, race-safe liveness check with startup grace and hard timeout.
 - The Status implementation currently allocates several large fixed buffers on the request stack. Measure actual device stack/RAM usage and move to bounded heap or streaming before any deployment, especially given Polaris resource constraints.
 - Still no complete firmware build or hardware qualification for this PR.
+
+## Liveness and memory follow-up (draft)
+- Added shared `solve_job_alive()` for the existing WebUI start path and Alpaca Status. If the detached worker PID has not yet been written, it allows up to ten seconds from `JOB_START` before marking the job failed. This is a startup grace, **not** a hard execution timeout.
+- Replaced the large temporary Status JSON escaping arrays with size-checked heap allocations and explicit frees. `json_escape()` requires additional trailing headroom, which the allocation now provides.
+- **Unresolved:** PID reuse can make a stale job appear alive; a hung but alive solver remains running; wall-clock jumps can distort the grace interval. Use a monotonic clock/process identity or a durable bounded worker watchdog before production.
+- **Unresolved:** the full firmware has not been compiled or smoke-tested in this session. Treat all C changes as unqualified until a real build and HTTP test are performed.
