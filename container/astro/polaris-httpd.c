@@ -1585,7 +1585,10 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 char id_json[64];
                 uint64_t token;
                 FILE *f;
-                gettimeofday(&tv, NULL);
+                if (gettimeofday(&tv, NULL) != 0) {
+                    alpaca_error(fd, qs, 1025, "cannot read job clock");
+                    return 1;
+                }
                 /* Epoch microseconds fit uint64_t; multiplying by 1000
                  * would overflow on modern dates. Enforce strict monotonicity
                  * for repeated starts in this server process. */
