@@ -95,6 +95,81 @@ appfs.ubifs}`. The reboot alone is the trigger; no marker file or command is nee
 The card mounts `vfat` with `fmask=0022`, so extracted files land `755` and binaries
 execute straight off the card — no helper on the user's computer is required.
 
+### Reboot consequences nobody warns about before the reboot
+
+Step 3 says "reboot" as if it were free. It is not, and the effects below are both
+invisible from the PC until the device is already gone.
+
+**The address can change, and there is an unreachable window even when nothing is
+broken.** If `/app/sd/polaris-wifi/autojoin` exists, the boot hook runs
+`polaris-autojoin.sh`, which joins the home network *and moves the AP onto that
+network's channel*, restarting `hostapd`. Between the reboot and the completed join
+the head answers on neither its AP nor its station address, so probes return "No route
+to host". It may also come back on a different DHCP lease. A short wait therefore looks
+identical to a bricked install.
+
+Measured on 2026-11-18: after a reboot the head was unreachable for several minutes and
+then came back normally — `/app/sd/polaris-wifi/autojoin.log` recorded
+`JOINED: wlan1 = 192.168.68.25 (AP still 192.168.0.1)` with the same lease as before.
+Nothing was lost; the boot simply takes longer than a naive wait loop assumes. Before
+rebooting a device you manage over SSH:
+
+- record that `autojoin` is present and which SSID `wpa.conf` names;
+- know the recovery route in advance: join the AP `polaris_d13e86` and reach the head
+  at `root@192.168.0.1`;
+- wait for the join, not just for the boot — `autojoin.log` is on the SD card and
+  survives the reboot, so it is readable after the fact from either address;
+- treat "unreachable" as *unknown*, never as failed, and never re-run the installer
+  blind in that state.
+
+`install-astro-kit.sh --reboot` prints this before issuing the reboot, and now fails
+with exit 6 if the device does not come back on the address it was given. It must not
+report success using the pre-reboot probe: that is how a lost device reads as a
+finished install.
+
+**Push the whole bundle anyway.** Both kit archives are "repeat every release" — only
+`astrometry-indexes.zip` is a one-time copy — so a run that stages fewer than both is
+off the supported route regardless of whether it happens to work. `install-astro-kit.sh`
+refuses `--no-wifi` unless `--allow-partial` is passed, and records the omission in
+`install-receipt.txt` as `kit_omitted=` so an incomplete install cannot look complete
+afterwards.
+
+**Extracting `polaris-wifi.zip` on a running, joined device fails part-way.** The
+station-mode supplicant executes *off the card*: after a successful join the process is
+`/app/sd/polaris-wifi/wpa_supplicant -B -i wlan1 ...`. busybox `unzip` cannot overwrite a
+file that is being executed and reports
+
+```
+unzip: can't open 'polaris-wifi/wpa_supplicant': Text file busy
+```
+
+and exits non-zero, having written everything else. So the card ends up with new wifi
+scripts beside an old `wpa_supplicant`, which is exactly the mixed state the "push both
+kits" rule exists to prevent — and a user extracting by double-click in Windows sees no
+error at all. Extract kit archives on the card **before** the reboot that starts the
+stack, or while the head is on its AP with no station join running. If the message does
+appear, re-extract after a reboot; it is recoverable, and in practice the binary often
+already matches the release so nothing is actually stale — verify by hashing rather than
+assuming:
+
+```sh
+sha256sum /app/sd/polaris-wifi/wpa_supplicant    # compare with the release SHA256SUMS
+```
+
+This is one concrete place where the systematic route is strictly better than the manual
+one. `install-astro-kit.sh` stages with `tar` and then runs `sha256sum -c` against
+`ASTRO-MANIFEST.sha256` on the device, so a file that could not be overwritten fails the
+run with exit 4 instead of being silently skipped. Double-clicking the archive in Windows
+reports nothing at all.
+
+Worth being precise about why, because the obvious story is wrong: credentials are not
+at risk from a partial astro push. `wpa.conf` lives at `/app/sd/polaris-wifi/wpa.conf`
+on the SD card and `polaris-astro.zip` contains no `wpa.conf`, so extracting one archive
+over the card cannot remove the other's configuration. The reason to push both is that
+the boot hook executes `/app/sd/polaris-wifi/polaris-autojoin.sh` and its binaries, and
+shipping a stale copy of those alongside new astro code is an untested combination —
+not that omitting them wipes anything.
+
 Check the release directory before writing instructions for a specific candidate:
 `astro-v99-wifi-20261108` ships its catalogue as `polaris-astro/catalogue-tiles.ptri`
 *inside* `polaris-astro.zip` and publishes no `astrometry-indexes.zip`, whereas earlier

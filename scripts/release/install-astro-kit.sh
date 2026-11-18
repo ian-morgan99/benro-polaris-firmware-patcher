@@ -9,7 +9,8 @@
 #   --host IP          Polaris IP (default 192.168.0.1)
 #   --ssh-user USER    SSH user (default root)
 #   --no-indexes       skip astrometry/ (indexes already on the card)
-#   --no-wifi          skip polaris-wifi/
+#   --no-wifi          skip polaris-wifi/  (refused unless --allow-partial)
+#   --allow-partial    permit an incomplete kit; the omission is recorded
 #   --no-boot          pass NO_BOOT=1 to install_astro.sh (files only, no hook)
 #   --reboot           reboot and wait for 8090 instead of just reporting it
 #   --skip-verify      stage + install, do not verify hashes or the port
@@ -58,6 +59,7 @@ NO_BOOT=0
 DO_REBOOT=0
 SKIP_VERIFY=0
 MAX_WAIT=600
+ALLOW_PARTIAL="${ALLOW_PARTIAL:-0}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -65,6 +67,7 @@ while [ $# -gt 0 ]; do
     --ssh-user) SSH_USER="$2"; shift 2;;
     --no-indexes) WITH_INDEXES=0; shift;;
     --no-wifi) WITH_WIFI=0; shift;;
+    --allow-partial) ALLOW_PARTIAL=1; shift;;
     --no-boot) NO_BOOT=1; shift;;
     --reboot) DO_REBOOT=1; shift;;
     --skip-verify) SKIP_VERIFY=1; shift;;
@@ -100,6 +103,23 @@ echo "httpd=$HTTPD hook=$HOOK port8090=$PORT"
 PROBE_EOF
 }
 
+# Station-mode join state, read before a reboot is issued. Kept as a function in
+# the same shape as probe_device: a heredoc written inline inside "$( ... )"
+# swallows the lines that follow it, which turned STATE into an unbound variable
+# and made every verification step report "polaris-httpd is missing" on a device
+# that was fine.
+probe_wifi() {
+  ssh "${SSH_ARGS[@]}" "$SSH" 'sh -s' <<'WIFI_EOF'
+AJ=0; WC=0; SSID=-
+[ -f /app/sd/polaris-wifi/autojoin ] && AJ=1
+[ -f /app/sd/polaris-wifi/wpa.conf ] && WC=1
+if [ "$WC" = "1" ]; then
+    SSID=$(sed -n 's/^[[:space:]]*ssid="\(.*\)"/\1/p' /app/sd/polaris-wifi/wpa.conf | head -1)
+fi
+echo "autojoin=$AJ wpaconf=$WC ssid=$SSID"
+WIFI_EOF
+}
+
 # --- 1. Gate -----------------------------------------------------------------
 echo "--- [1/5] Gate: candidate kit, device, free space ---"
 [ -d "$SD_ROOT/polaris-astro" ] || {
@@ -119,6 +139,57 @@ echo "--- [1/5] Gate: candidate kit, device, free space ---"
 grep -q 'polaris-httpd$' "$KIT_MANIFEST" || {
   echo "ERROR: $KIT_MANIFEST does not cover polaris-httpd" >&2; exit 2
 }
+
+# Which kit directories travel this run, decided BEFORE touching the device: an
+# incomplete kit should be refused in milliseconds, not after a connection attempt.
+#
+# astrometry/ is ~1 GB of indexes and is usually already on the card, so
+# --no-indexes is the common case after a flash and stays freely omissible.
+#
+# polaris-wifi/ is different, and refusing to omit it is deliberate. Both kit
+# archives are "repeat every release" per docs/FIRMWARE-INSTALL-PROCESS.md; only
+# astrometry-indexes.zip is documented as a one-time copy that never changes.
+#
+# The reason is NOT credential loss -- wpa.conf lives on the card at
+# /app/sd/polaris-wifi/wpa.conf and polaris-astro.zip carries no wpa.conf, so
+# extracting one archive cannot remove the other's configuration. The real hazard
+# is that the boot hook executes /app/sd/polaris-wifi/polaris-autojoin.sh and its
+# binaries: omitting the kit leaves a stale wifi stack running against new astro
+# code, an untested combination that only gets exercised on the next reboot.
+# Omitting it used to be silent -- the run still ended "installed-verified" -- so
+# it fails closed here rather than relying on the operator remembering. This is the
+# hazard the script's own header describes ("hand staging usually copies
+# polaris-astro/ only, leaving polaris-wifi/ stale").
+DIRS=(polaris-astro)
+SKIPPED=""
+if [ "$WITH_WIFI" = "1" ]; then
+  DIRS+=(polaris-wifi)
+elif [ "${ALLOW_PARTIAL:-0}" != "1" ]; then
+  echo "ERROR: refusing to stage a kit without polaris-wifi/ (--no-wifi)." >&2
+  echo "       The supported route pushes the whole bundle every release:" >&2
+  echo "       docs/FIRMWARE-INSTALL-PROCESS.md says extract BOTH archives on" >&2
+  echo "       every release; only astrometry-indexes.zip is a one-time copy." >&2
+  echo "       polaris-wifi/ carries the station-mode join that runs at boot, so" >&2
+  echo "       omitting it leaves a stale wifi stack executing against new astro" >&2
+  echo "       code -- exercised only on the next reboot, which is the worst time" >&2
+  echo "       to find it." >&2
+  echo "       Re-run without --no-wifi, or add --allow-partial if this card" >&2
+  echo "       genuinely cannot take it (the omission is recorded in the receipt)." >&2
+  exit 2
+else
+  SKIPPED=" polaris-wifi"
+fi
+[ "$WITH_INDEXES" = "1" ] && DIRS+=(astrometry)
+for d in "${DIRS[@]}"; do
+  [ -d "$SD_ROOT/$d" ] || { echo "ERROR: $SD_ROOT/$d not found" >&2; exit 2; }
+done
+echo "  staging: ${DIRS[*]}"
+# Explicit if, not `[ -n "$SKIPPED" ] && echo`: under set -e a short-circuit that
+# evaluates false returns 1 and aborts the script, which is how this gate managed
+# to fail every normal (complete-kit) run.
+if [ -n "$SKIPPED" ]; then
+  echo "  WARNING: deliberately NOT staged:$SKIPPED (--allow-partial)"
+fi
 
 EXPECTED_BUILD_ID=""
 [ -f "$BUILD_DIR/build-source-provenance.txt" ] && \
@@ -141,16 +212,6 @@ if [ "$APP_FREE_KB" -lt 3072 ]; then
   echo "       Free /app or re-flash before installing." >&2
   exit 3
 fi
-
-# Which kit directories travel this run. astrometry/ is ~1 GB of indexes and is
-# usually already on the card, so --no-indexes is the common case after a flash.
-DIRS=(polaris-astro)
-[ "$WITH_WIFI" = "1" ] && DIRS+=(polaris-wifi)
-[ "$WITH_INDEXES" = "1" ] && DIRS+=(astrometry)
-for d in "${DIRS[@]}"; do
-  [ -d "$SD_ROOT/$d" ] || { echo "ERROR: $SD_ROOT/$d not found" >&2; exit 2; }
-done
-echo "  staging: ${DIRS[*]}"
 
 # --- 2. Stage ----------------------------------------------------------------
 echo "--- [2/5] Staging kit to /app/sd as one tar stream over ssh ---"
@@ -231,6 +292,29 @@ if [ "$SKIP_VERIFY" = "1" ]; then
   echo "--- [5/5] SKIPPED (--skip-verify) ---"
 else
   echo "--- [5/5] Confirming the kit is installed and serving ---"
+
+  # A reboot can move or drop the address this script is talking to. If station-
+  # mode autojoin is configured, the head joins the home network at boot and may
+  # come back on a different lease -- or not at all if the join fails while the
+  # AP has been moved onto the home channel. Say so BEFORE rebooting, and name
+  # the recovery address, rather than letting the operator discover it by finding
+  # the device gone. This is the check that would have caught today's outage.
+  if [ "$DO_REBOOT" = "1" ]; then
+    WIFI_STATE="$(probe_wifi)" || WIFI_STATE="autojoin=? wpaconf=? ssid=?"
+    echo "  wifi: $WIFI_STATE"
+    if printf '%s\n' "$WIFI_STATE" | grep -q 'autojoin=1'; then
+      if printf '%s\n' "$WIFI_STATE" | grep -q 'wpaconf=0'; then
+        echo "  WARNING: autojoin is enabled but wpa.conf is absent -- the join will"
+        echo "           fail at boot. The head should still be reachable on its AP."
+      else
+        printf '%s\n' "$WIFI_STATE" | grep -q 'ssid=' && \
+          echo "  autojoin is ON: after reboot expect a new DHCP lease, not necessarily $HOST."
+        echo "  Recovery if it does not answer: join the AP polaris_d13e86 -> root@192.168.0.1"
+        echo "  Join failure reason, if any: /app/sd/polaris-wifi/autojoin.log on the card."
+      fi
+    fi
+  fi
+
   STATE="$(probe_device)"
   echo "  $STATE"
 
@@ -239,15 +323,34 @@ else
     ssh "${SSH_ARGS[@]}" "$SSH" 'sync; /sbin/reboot' >/dev/null 2>&1 || true
     WAITED=30
     sleep 30
+    BACK=0
     while [ "$WAITED" -lt "$MAX_WAIT" ]; do
       if curl -fsS -m 5 -o /dev/null "http://${HOST}:8090/" 2>/dev/null; then
         echo "  8090 answering after ${WAITED}s."
         STATE="$(probe_device)"
         echo "  $STATE"
+        BACK=1
         break
       fi
       sleep 15; WAITED=$((WAITED + 15))
     done
+    # STATE currently holds the PRE-reboot probe. If the device did not come back
+    # on this address, reporting those stale values would claim "httpd=1 hook=1
+    # port8090=1" for a head that is unreachable -- which is precisely how a
+    # station-mode join failure reads as a successful install. The only honest
+    # answer after a reboot that did not return is a hard failure naming the
+    # likely cause, because the address itself may have moved.
+    if [ "$BACK" != "1" ]; then
+      echo "ERROR: device did not come back on $HOST within ${MAX_WAIT}s." >&2
+      echo "       The reboot was issued; nothing here can say whether it booted." >&2
+      echo "       Most likely the station-mode join moved or dropped the address:" >&2
+      echo "         - join the AP (polaris_d13e86) and reach it at 192.168.0.1, or" >&2
+      echo "         - check your router's DHCP table for a new lease." >&2
+      echo "       /app/sd/polaris-wifi/autojoin.log on the card records why a join" >&2
+      echo "       failed. Do NOT re-run this script blind: it cannot verify anything" >&2
+      echo "       it cannot reach, and the kit may already be installed correctly." >&2
+      exit 6
+    fi
   fi
 
   printf '%s\n' "$STATE" | grep -q 'httpd=1' || {
@@ -271,6 +374,9 @@ VERIFIED_AT="$(date -u +%FT%TZ)"
   [ -n "$EXPECTED_BUILD_ID" ] && echo "build_id=$EXPECTED_BUILD_ID"
   echo "kit_target=$SSH"
   echo "kit_dirs=${DIRS[*]}"
+  if [ -n "$SKIPPED" ]; then
+    echo "kit_omitted=${SKIPPED# } (allow-partial)"
+  fi
   echo "no_boot=$NO_BOOT"
   echo "kit_status=installed-verified"
   echo "verified_at=$VERIFIED_AT"

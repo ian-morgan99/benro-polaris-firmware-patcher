@@ -162,6 +162,60 @@ def run_kit(candidate, bin_dir, tmp_path, *args, **overrides):
     )
 
 
+def test_no_wifi_is_refused_unless_declared_partial(tmp_path):
+    """--no-wifi must not silently produce a "verified" partial install.
+
+    docs/FIRMWARE-INSTALL-PROCESS.md says BOTH kit archives are extracted on every
+    release -- only astrometry-indexes.zip is a one-time copy -- so omitting
+    polaris-wifi/ is a deviation from the supported route and has to be stated
+    explicitly, not implied by a flag that still ends "installed-verified". The
+    boot hook runs /app/sd/polaris-wifi/polaris-autojoin.sh, so skipping the kit
+    leaves a stale wifi stack paired with new astro code and only tests it on the
+    next reboot.
+    """
+    candidate = make_candidate(tmp_path)
+    result = run_kit(candidate, stub_bin(tmp_path), tmp_path, "--no-indexes", "--no-wifi")
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "polaris-wifi" in result.stderr
+    assert "--allow-partial" in result.stderr, "must name the escape hatch"
+    # Nothing was staged and no receipt exists: a refused run leaves no trace of success.
+    assert not (tmp_path / "device" / "app" / "sd" / "polaris-astro").exists()
+    assert not (candidate / "install-receipt.txt").exists()
+
+
+def test_allow_partial_stages_astro_only_and_records_the_omission(tmp_path):
+    """The escape hatch works and is auditable in the receipt."""
+    candidate = make_candidate(tmp_path)
+    result = run_kit(
+        candidate, stub_bin(tmp_path), tmp_path, "--no-indexes", "--no-wifi", "--allow-partial"
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "deliberately NOT staged: polaris-wifi" in result.stdout
+
+    device_sd = tmp_path / "device" / "app" / "sd"
+    assert (device_sd / "polaris-astro" / "polaris-httpd").is_file()
+    assert not (device_sd / "polaris-wifi").exists()
+
+    receipt = (candidate / "install-receipt.txt").read_text()
+    assert "kit_dirs=polaris-astro" in receipt
+    assert "kit_omitted=polaris-wifi" in receipt, (
+        "an incomplete install must be visible in the receipt, not just on stdout"
+    )
+
+
+def test_indexes_may_still_be_omitted_without_a_flag(tmp_path):
+    """astrometry/ stays freely omissible -- it is a documented one-time copy.
+
+    Guards against the gate being widened later: indexes are ~1 GB and never
+    change between releases, so refusing to skip them would block the common
+    post-flash path rather than protect anything.
+    """
+    candidate = make_candidate(tmp_path)
+    result = run_kit(candidate, stub_bin(tmp_path), tmp_path, "--no-indexes")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "staging: polaris-astro polaris-wifi" in result.stdout
+
+
 def test_happy_path_stages_verifies_installs_and_confirms(tmp_path):
     candidate = make_candidate(tmp_path)
     result = run_kit(candidate, stub_bin(tmp_path), tmp_path, "--no-indexes")

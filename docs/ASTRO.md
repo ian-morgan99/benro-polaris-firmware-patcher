@@ -96,6 +96,26 @@ Then run `install_astro.sh` on the device once (over SSH), or — with no SSH at
 all — patch the firmware with `--astro-autostart` (below) so it self-installs.
 A `site.conf` is optional now: the location can be set from the web app.
 
+**Copy every kit, every time.** The tree above lists `polaris-astro/` because that
+is the part people remember, but `polaris-wifi/` belongs on the card too and must be
+re-copied on each release — see "End-user release" below. Only
+`astrometry-indexes.zip` is a one-time copy; both kit archives are per-release.
+
+Be clear about the risk, because the intuitive version of it is wrong. Omitting
+`polaris-wifi/` does **not** delete anyone's credentials: `wpa.conf` lives at
+`/app/sd/polaris-wifi/wpa.conf` on the card and `polaris-astro.zip` carries no
+`wpa.conf`, so extracting one archive over the card cannot remove the other's config.
+The real reason is that the boot hook executes `/app/sd/polaris-wifi/polaris-autojoin.sh`
+and its binaries, so an astro-only push leaves a stale wifi kit running against new
+astro code — an untested combination that only gets exercised on the next reboot, which
+is the worst possible time to discover it. `scripts/release/install-astro-kit.sh`
+refuses `--no-wifi` unless `--allow-partial` is also given, and records the omission in
+`install-receipt.txt`, so a partial install cannot quietly look like a complete one.
+
+Separately: after any reboot where `autojoin` is configured, expect the head to be
+unreachable for a few minutes while it joins, and expect the AP to have moved channel.
+That is normal, not a failed install — see `docs/FIRMWARE-INSTALL-PROCESS.md`.
+
 ## End-user release: two zips, unzipped at the SD root
 
 End users have no PC-side tooling and no SSH. They do what the Benro process
