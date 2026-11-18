@@ -1,0 +1,37 @@
+# Polaris plate-solve protocol extension — issue #366
+
+Status: **design checkpoint, not implemented or hardware-qualified**.
+
+## Verified source baseline
+- `container/astro/polaris-solve.c` already emits `ra_deg`, `dec_deg`, `roll_deg`, `pixscale_arcsec`, `field_w_deg`, `field_h_deg`, `parity`, and a four-element `cd` array from the astrometry.net WCS.
+- `container/astro/polaris-httpd.c` already implements an Alpaca Telescope device and a Camera device, but both Telescope and Camera `supportedactions` currently return `[]`.
+- `GET /api/astro/solve` is **read-only**, returning `target.json` and `last-frame-solution.json`. It does not start a solve.
+- The existing `/api/solve` and `/api/test/solve` paths already provide job infrastructure. Reuse and validate them before adding a second job runner.
+- Do not assume `roll_deg` is the required image PA without checking the astrometry.net orientation convention against reference WCS and parity.
+
+## Proposed protocol surface (subject to compatibility review)
+The first client-facing interface should be an **ASCOM Alpaca Telescope Action**, avoiding invention of an undocumented raw Polaris command number. Once the firmware protocol dispatcher and command ownership are understood, an optional new Polaris extension command may be added separately. These are distinct interfaces.
+
+- `GET /api/v1/telescope/0/supportedactions`: advertise `Polaris.PlateSolve.V1` only when the implementation is available.
+- `PUT /api/v1/telescope/0/action` with `Action=Polaris.PlateSolve.V1`, `Parameters=<versioned request>`: initiate an existing-image solve or return an active job reference. Exact URL-encoding and Alpaca response envelope must follow existing helpers.
+- Follow-up status/result retrieval must be bounded and idempotent. Avoid waiting synchronously for a potentially minutes-long solve.
+- Response schema: `schema_version`, `job_id`, `state`, `solved`, `ra_deg`, `dec_deg`, `coordinate_epoch`, `image_pa_deg`, `pa_convention`, `parity`, `cd`, `pixscale_arcsec`, `field_w_deg`, `field_h_deg`, `solver`, `elapsed_ms`, `error`.
+- Failure and unknown PA are explicit nulls; never invent 0 degrees. PA is **camera image orientation**, not a rotator setting or Polaris motor angle.
+- Solve must never move the mount, sync the telescope, modify camera originals, or write EXIF as an implicit side effect.
+- Avoid arbitrary filesystem paths in client input. Prefer already-admitted JPEG IDs and existing validated path rules.
+
+## Implementation order
+1. Audit the `/api/solve`, `/api/test/solve`, `/api/astro/solve` handlers and their shell-backed job ownership, cancellation and result lifetime.
+2. Add a pure, testable WCS-to-image-PA normalisation helper; establish convention from independently solved reference images, including flips and sensor axes.
+3. Add a capability-gated Alpaca Action using existing request parsing, transaction IDs, error handling and job lifecycle. Preserve `supportedactions=[]` on builds without it.
+4. Add the **raw Polaris protocol extension only after** identifying an unoccupied command namespace and documenting negotiation, ownership, safety and backwards compatibility. Do not route arbitrary new commands into stock mount control.
+5. Add a client example and tests for success, timeout, cancellation, stale result, malformed input, unsupported firmware, concurrency and mount non-movement.
+6. Investigate the external Alpaca driver and NINA separately: Telescope Sync carries coordinates, **not camera PA**. Document a concrete supported PA consumer before promising NINA integration.
+
+## Release and review gates
+Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a draft PR. No automatic merge, release, installation or firmware packaging. Before a candidate build, follow `AGENTS.md`, the repository's documented skills, build-doctor and regression-preservation checks. Hardware validation is a separate explicit gate.
+
+## Open questions
+- Which exact source image should an external client solve: last completed JPEG, supplied admitted image ID, or a fresh capture?
+- Should the new command be in the *native Polaris wire protocol*, the existing Astro HTTP server's Alpaca interface, or both? This design stages Alpaca first and requires a separate raw-command compatibility audit.
+- Which PA convention does NINA/ASTAP require, and what integration mechanism will actually consume it?
