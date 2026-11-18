@@ -35,3 +35,20 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - Which exact source image should an external client solve: last completed JPEG, supplied admitted image ID, or a fresh capture?
 - Should the new command be in the *native Polaris wire protocol*, the existing Astro HTTP server's Alpaca interface, or both? This design stages Alpaca first and requires a separate raw-command compatibility audit.
 - Which PA convention does NINA/ASTAP require, and what integration mechanism will actually consume it?
+
+
+## Implementation checkpoint (draft PR #367)
+- \`polaris-solve.c\` now emits \`image_pa_deg\` (numeric or null) and \`image_pa_convention\` alongside the existing roll and WCS fields. FITS +Y PA is computed from CD, not inferred from NINA Sync.
+- Telescope \`supportedactions\` now advertises \`Polaris.PlateSolve.Start.V1\` and \`Polaris.PlateSolve.Status.V1\`. Both use HTTP PUT \`/api/v1/telescope/0/action\` with Alpaca form parameters \`Action\` and \`Parameters\`.
+- \`Start.V1\` accepts \`Parameters=latest\` or empty and calls the **existing** \`start_solve(apply=0,mode=latest)\`. It does not apply alignment or issue a GOTO.
+- \`Status.V1\` takes empty \`Parameters\` and returns an Alpaca string Value containing a JSON document with \`schema_version\`, \`state\` and \`result\`. The result field is a **bounded text excerpt** of the existing solver JSON; it is not yet a guaranteed complete typed result schema. Clients must treat it as diagnostic until a full bounded-result design is implemented.
+- This is a first experimental API and **not a native Polaris wire-protocol command**. It is not yet qualified with a real Alpaca driver, NINA or hardware.
+- A local host test of the PA helper's axis/parity cases passed on 2026-11-18 using \`cc -std=c99 -Wall -Wextra -pedantic ... -lm\`; a full firmware compile, cross-build and hardware test have **not** been run.
+- The provided historical WCS example \`[-0.00285160406,-0.00139008603;-0.001397934,0.0028408417]\` gives FITS +Y PA approximately **333.9265°**; this is a calculation check, **not** independent ASTAP/NINA convention validation.
+
+### Remaining blockers
+1. Replace bounded diagnostic \`result\` excerpt with a structured, complete and explicitly versioned result contract, including job identity, timestamps, expiry, stale-result prevention and errors.
+2. Check exact Astro build and compiler warnings, test real HTTP Alpaca envelopes, malformed actions and concurrency; the source edits have not yet been built.
+3. Confirm PA orientation against real image/ASTAP WCS and mirrored FITS-to-screen transformations.
+4. Review network exposure, command authentication assumptions and source-image admission; do not publish or deploy this draft.
+5. Native Polaris command namespace and external Alpaca-driver/NINA integration remain separate tasks.
