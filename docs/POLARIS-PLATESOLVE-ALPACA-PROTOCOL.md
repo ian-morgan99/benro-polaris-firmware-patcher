@@ -90,3 +90,9 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - Fixed a critical integer overflow in the previous token calculation: epoch microseconds multiplied by 1,000 exceeds 64-bit range at current dates. Tokens now use epoch microseconds directly, with a per-process monotonic increment for same-microsecond starts.
 - **Remaining edge case:** restarting the HTTP daemon can reset the monotonic counter, and a wall-clock rollback may allow token reuse across restarts. For production-grade uniqueness, persist a generation counter or use a checked random identifier and an atomic state record.
 - **Important:** this is a code correction, not proof of build success. Add a regression test for token overflow, same-microsecond starts and restart behaviour.
+
+## Host regression harness
+- Added `container/astro/polaris-job-token.h` as the shared token arithmetic used by the real HTTP handler and `tests/test-polaris-job-token.c`. The test checks current-era values, repeated timestamps, clock rollback and `UINT64_MAX` exhaustion.
+- Added `tests/run-polaris-host-regressions.sh` to compile and run both the job-token test and the existing WCS image-PA test on a host with a C99 compiler.
+- Run from the repository root: `sh tests/run-polaris-host-regressions.sh`.
+- **Not yet executed in a checked-out branch in this session.** Passing these unit tests would not prove the embedded firmware compiles or the Alpaca HTTP contract works. Those remain release blockers.
