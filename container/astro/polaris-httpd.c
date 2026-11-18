@@ -1618,7 +1618,17 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             char status[32] = "", token_buf[64] = "", start_buf[32] = "";
             char result[4096] = "";
             char *escaped = NULL, *payload = NULL, *payload_escaped = NULL, *value = NULL;
-            unsigned long long requested = 0, current = 0;
+            /* uint64_t, not unsigned long long: polaris_parse_job_token() and
+             * polaris_parse_persisted_job_token() take uint64_t *, and on
+             * x86-64 Linux those are distinct types (unsigned long vs unsigned
+             * long long). Declaring these as unsigned long long made
+             * polaris-httpd fail to compile on the host, which silently skipped
+             * every test that builds and executes the server -- the fixture
+             * skips rather than fails when gcc errors, so the gate reported
+             * GREEN while the #348 serving regressions were not being run at
+             * all. The ARM cross build accepted it because there uint64_t is
+             * unsigned long long, so nothing caught this before merge. */
+            uint64_t requested = 0, current = 0;
             long age_sec = 0, start_sec = 0;
             if (parameters[0] &&
                 !polaris_parse_job_token(parameters, &requested)) {
@@ -1672,7 +1682,7 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
                 snprintf(payload, cap,
                          "{\"schema_version\":1,\"job_id\":\"%llu\",\"state\":\"%s\","
                          "\"elapsed_sec\":%ld,\"result\":\"%s\"}",
-                         current, status, age_sec, escaped);
+                         (unsigned long long)current, status, age_sec, escaped);
                 n = strlen(payload);
                 if (n > (SIZE_MAX - 3) / 6) goto solve_status_oom;
                 payload_escaped = malloc(n * 6 + 8);
