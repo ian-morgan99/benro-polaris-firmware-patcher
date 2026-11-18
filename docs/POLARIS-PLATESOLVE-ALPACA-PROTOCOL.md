@@ -73,3 +73,9 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - Replaced the large temporary Status JSON escaping arrays with size-checked heap allocations and explicit frees. `json_escape()` requires additional trailing headroom, which the allocation now provides.
 - **Unresolved:** PID reuse can make a stale job appear alive; a hung but alive solver remains running; wall-clock jumps can distort the grace interval. Use a monotonic clock/process identity or a durable bounded worker watchdog before production.
 - **Unresolved:** the full firmware has not been compiled or smoke-tested in this session. Treat all C changes as unqualified until a real build and HTTP test are performed.
+
+## Watchdog checkpoint
+- Corrected the order of startup-grace and PID checks so a newly detached worker is not misclassified before its PID file appears.
+- `Status.V1` now reports `elapsed_sec` for monitoring and timeout diagnosis. This does **not** terminate hung jobs or enforce a hard timeout.
+- A safe hard watchdog needs process-group ownership, process identity and an explicit maximum duration for capture/wait/range-solving. Do not send SIGKILL using a PID read from an unverified stale file.
+- Outstanding build validation remains a blocker. In particular, check C compiler availability of `SIZE_MAX`, `struct timeval`, and `gettimeofday` in the embedded toolchain and execute HTTP regression tests before release.
