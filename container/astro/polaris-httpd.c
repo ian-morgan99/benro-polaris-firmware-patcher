@@ -1565,27 +1565,60 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             alpaca_value(fd, qs, "\"started\""); return 1;
         }
         if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
-            char status[32] = "", result[240] = "", escaped[500];
-            char payload[600], payload_escaped[800], value[820];
-            if (parameters[0]) {
-                alpaca_error(fd, qs, 1025, "Status takes no Parameters"); return 1;
+            char status[32] = "", started_buf[32] = "", pid_buf[32] = "";
+            char result[4096] = "", escaped[8192], payload[8700];
+            char payload_escaped[17400], *value;
+            long started, requested;
+            if (parameters[0] && !parse_long_strict(parameters, &requested)) {
+                alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
+            }
+            read_file(JOB_START, started_buf, sizeof started_buf);
+            started = atol(started_buf);
+            if (parameters[0] && (started <= 0 || requested != started)) {
+                alpaca_error(fd, qs, 1025, "job ID does not match current solve"); return 1;
             }
             read_file(JOB_STATUS, status, sizeof status);
             if (strcmp(status, "done") && strcmp(status, "failed") &&
                 strcmp(status, "running") && strcmp(status, "idle"))
                 strcpy(status, "idle");
+            if (!strcmp(status, "running")) {
+                read_file(JOB_PID, pid_buf, sizeof pid_buf);
+                if (atol(pid_buf) <= 1 || kill((pid_t)atol(pid_buf), 0) != 0)
+                    strcpy(status, "failed");
+            }
             if (!strcmp(status, "done") || !strcmp(status, "failed")) {
                 read_file(JOB_RESULT, result, sizeof result);
                 { char *nl = strchr(result, '\n'); if (nl) *nl = 0; }
             }
             json_escape(result, escaped, sizeof escaped);
-            /* Alpaca Action Value is a JSON-encoded string. */
             snprintf(payload, sizeof payload,
-                     "{\"schema_version\":1,\"state\":\"%s\",\"result\":\"%s\"}",
-                     status, escaped);
+                     "{\"schema_version\":1,\"job_id\":%ld,\"state\":\"%s\","
+                     "\"result\":\"%s\"}", started, status, escaped);
             json_escape(payload, payload_escaped, sizeof payload_escaped);
-            snprintf(value, sizeof value, "\"%s\"", payload_escaped);
-            alpaca_value(fd, qs, value); return 1;
+            value = malloc(strlen(payload_escaped) + 3);
+            if (!value) {
+                alpaca_error(fd, qs, 1025, "out of memory"); return 1;
+            }
+            sprintf(value, "\"%s\"", payload_escaped);
+            /* Alpaca Value needs a larger envelope than the normal 1 KiB
+             * alpaca_value helper. Never truncate a JSON string mid-escape. */
+            {
+                size_t cap = strlen(value) + 256;
+                char *response = malloc(cap);
+                if (!response) {
+                    free(value);
+                    alpaca_error(fd, qs, 1025, "out of memory"); return 1;
+                }
+                snprintf(response, cap,
+                         "{\"Value\":%s,\"ClientTransactionID\":%ld,"
+                         "\"ServerTransactionID\":%lu,\"ErrorNumber\":0,"
+                         "\"ErrorMessage\":\"\"}",
+                         value, client_txn(qs), ++g_server_txn);
+                respond_json(fd, response);
+                free(response);
+            }
+            free(value);
+            return 1;
         }
         alpaca_error(fd, qs, 1024, "unsupported Action"); return 1;
     }
