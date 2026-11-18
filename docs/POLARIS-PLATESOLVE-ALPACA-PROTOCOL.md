@@ -85,3 +85,8 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - When a completed result file predates `JOB_START`, the Alpaca endpoint returns an error rather than presenting the previous job's solution as current. This is a coarse seconds-resolution safeguard; same-second collisions and races still need tests.
 - The liveness code's comment now explicitly acknowledges **no hard watchdog is implemented**. A live but hung solver may still block subsequent jobs.
 - GitHub reported **no pull-request-triggered workflow runs** for commit `5e58c6d`. This is not evidence of a passing build. Compile and HTTP integration tests remain required.
+
+## Job token overflow review
+- Fixed a critical integer overflow in the previous token calculation: epoch microseconds multiplied by 1,000 exceeds 64-bit range at current dates. Tokens now use epoch microseconds directly, with a per-process monotonic increment for same-microsecond starts.
+- **Remaining edge case:** restarting the HTTP daemon can reset the monotonic counter, and a wall-clock rollback may allow token reuse across restarts. For production-grade uniqueness, persist a generation counter or use a checked random identifier and an atomic state record.
+- **Important:** this is a code correction, not proof of build success. Add a regression test for token overflow, same-microsecond starts and restart behaviour.
