@@ -373,22 +373,32 @@ static int mount_pose(double *alt, double *az, char *raw, size_t rawcap) {
  * Modes 1/2 exist because astro mode refuses externally-initiated captures --
  * opcode 264 is ignored and the 272 lapse sequence is refused while tracking.
  * In astro mode the user triggers the shot in the Benro app and we follow. */
+/* Shared bounded liveness assessment. The detached worker can publish its PID
+ * after the HTTP parent has returned. A grace period avoids false failures.
+ * Do not kill an apparently timed-out process here: the solver's own timeout
+ * and the existing job lifecycle own process termination. */
+static int solve_job_alive(void) {
+    char status[32] = "", pb[32] = "", sb[32] = "";
+    long started, age, jp;
+    read_file(JOB_STATUS, status, sizeof status);
+    if (strcmp(status, "running")) return 0;
+    read_file(JOB_START, sb, sizeof sb);
+    started = atol(sb);
+    age = started > 0 ? (long)time(NULL) - started : 999999;
+    read_file(JOB_PID, pb, sizeof pb);
+    jp = atol(pb);
+    if (jp > 1 && kill((pid_t)jp, 0) == 0) return 1;
+    if (age >= 0 && age <= 10) return 1; /* detached worker startup grace */
+    set_status("failed");
+    unlink(JOB_PID);
+    return 0;
+}
+
 static int start_solve(int apply, int mode) {
     pid_t pid;
     char status[32];
     read_file(JOB_STATUS, status, sizeof status);
-    if (strncmp(status, "running", 7) == 0) {
-        /* RUNNING, or ONLY LOOKS LIKE IT. A job that died without setting a
-         * final status used to hold this lock forever, and every later solve
-         * was refused silently -- the page just did nothing, which reads as
-         * "the solver is broken". Trust the pid, not the string. */
-        char pb[32]; long jp = 0;
-        read_file(JOB_PID, pb, sizeof pb);
-        jp = atol(pb);
-        if (jp > 0 && kill((pid_t)jp, 0) == 0) return 0;  /* genuinely running */
-        set_status("failed");                              /* stale -- clear it */
-        unlink(JOB_PID);
-    }
+    if (!strcmp(status, "running") && solve_job_alive()) return 0;
 
     set_status("running");
     unlink(JOB_ALPACA_ID);
@@ -1609,8 +1619,9 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             if (strcmp(status, "done") && strcmp(status, "failed") &&
                 strcmp(status, "running") && strcmp(status, "idle"))
                 strcpy(status, "idle");
-            /* The double-fork worker publishes its PID asynchronously.
-             * Do not misreport failure during the startup hand-off. */
+            /* Use the same startup-grace liveness check as start_solve. */
+            if (!strcmp(status, "running") && !solve_job_alive())
+                strcpy(status, "failed");
             if (!strcmp(status, "done") || !strcmp(status, "failed")) {
                 struct stat st;
                 if (stat(JOB_RESULT, &st) == 0 && st.st_size >= (off_t)sizeof result) {
