@@ -1559,7 +1559,7 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
             if (parameters[0] && strcmp(parameters, "latest")) {
                 alpaca_error(fd, qs, 1025, "only latest image supported"); return 1;
             }
-            if (start_solve(0, 1) != 0) {
+            if (start_solve(0, 1) != 1) {
                 alpaca_error(fd, qs, 1025, "solve busy or unavailable"); return 1;
             }
             alpaca_value(fd, qs, "\"started\""); return 1;
