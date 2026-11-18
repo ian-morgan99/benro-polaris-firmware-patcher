@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 static inline uint64_t polaris_next_job_token(uint64_t epoch_us, uint64_t *last) {
     uint64_t token = epoch_us;
     if (!last) return 0;
@@ -31,5 +32,14 @@ static inline int polaris_parse_job_token(const char *s, uint64_t *out) {
     if (errno == ERANGE || !end || *end || parsed == 0) return 0;
     *out = (uint64_t)parsed;
     return (unsigned long long)*out == parsed;
+}
+/* Read-only file representation may end in one newline written by fprintf.
+ * Never use this for client input, which must remain strictly decimal. */
+static inline int polaris_parse_persisted_job_token(char *s, uint64_t *out) {
+    size_t n;
+    if (!s) return 0;
+    n = strlen(s);
+    if (n && s[n - 1] == '\\n') s[--n] = 0;
+    return polaris_parse_job_token(s, out);
 }
 #endif
