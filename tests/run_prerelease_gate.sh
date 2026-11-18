@@ -499,6 +499,16 @@ PY_TESTS=(
     # only test that would have caught polaris-httpd failing to build on x86-64,
     # which silently skipped both suites while the gate still said GREEN.
     tests/test_snapshot_refuses_stale_frame.py
+    # /api/version is the only way to tell, from the device, which astro kit is
+    # installed and which firmware it was built against. Before it existed the sole
+    # version on a Polaris was /app/FwVer -- the appfs version -- which an SD-kit-only
+    # release never changes, so after astro-v112 the head still read .110 and a
+    # correct install looked identical to a failed one. These tests run the real
+    # binary (same host-gcc path as the two suites above) and assert the
+    # aligned/mismatch comparison picks the right branch: a grep cannot show that,
+    # and "aligned" computed wrong is worse than no stamp at all -- it would certify
+    # a kit and firmware that were never built as a pair.
+    tests/test_version_endpoint_reports_kit_identity.py
     # solve-now.sh discarded polaris-mount's reply (send defaults to listen_s=0,
     # so it never even read one) and printed "no frame appeared" for every
     # failure. The head was answering opcode 264 with state:-1005 while the log

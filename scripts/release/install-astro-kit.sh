@@ -11,6 +11,7 @@
 #   --no-indexes       skip astrometry/ (indexes already on the card)
 #   --no-wifi          skip polaris-wifi/  (refused unless --allow-partial)
 #   --allow-partial    permit an incomplete kit; the omission is recorded
+#   --allow-fwver-mismatch  install a kit stamped for a different firmware version
 #   --no-boot          pass NO_BOOT=1 to install_astro.sh (files only, no hook)
 #   --reboot           reboot and wait for 8090 instead of just reporting it
 #   --skip-verify      stage + install, do not verify hashes or the port
@@ -60,6 +61,7 @@ DO_REBOOT=0
 SKIP_VERIFY=0
 MAX_WAIT=600
 ALLOW_PARTIAL="${ALLOW_PARTIAL:-0}"
+ALLOW_FWVER_MISMATCH="${ALLOW_FWVER_MISMATCH:-0}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -68,6 +70,7 @@ while [ $# -gt 0 ]; do
     --no-indexes) WITH_INDEXES=0; shift;;
     --no-wifi) WITH_WIFI=0; shift;;
     --allow-partial) ALLOW_PARTIAL=1; shift;;
+    --allow-fwver-mismatch) ALLOW_FWVER_MISMATCH=1; shift;;
     --no-boot) NO_BOOT=1; shift;;
     --reboot) DO_REBOOT=1; shift;;
     --skip-verify) SKIP_VERIFY=1; shift;;
@@ -199,6 +202,48 @@ if ! ssh "${SSH_ARGS[@]}" "$SSH" 'echo ok' >/dev/null 2>&1; then
   echo "ERROR: cannot reach $SSH over ssh." >&2; exit 3
 fi
 echo "  device reachable: $SSH"
+
+# --- kit / firmware alignment -------------------------------------------------
+# The kit is stamped at build time with the firmware version it was built against
+# (polaris-astro/VERSION, written by scripts/build-astro-bundle.sh --fwver). Read
+# that and compare it with what the head actually runs before staging anything.
+#
+# WHY THIS IS A GATE AND NOT A NOTE. Kit and firmware are built separately and
+# deployed together, so a mismatch is entirely possible and was previously
+# invisible: astro-v112 shipped as an SD-kit-only release while the head still ran
+# .110, and nothing on the device could express which kit was installed. The
+# reverse case -- flashing a new appfs under an old kit -- is worse, because the
+# boot hook then runs kit code that was never built for that appfs.
+#
+# An unstamped kit (built before --fwver existed) is allowed with a warning: it is
+# the common case for older out/ directories and refusing it would block every
+# historical candidate. A stamp that DISAGREES is a hard failure, because that is
+# a positive statement that these two artefacts were not built as a pair.
+KIT_FWVER=""
+[ -f "$SD_ROOT/polaris-astro/VERSION" ] && \
+  KIT_FWVER="$(sed -n 's/^firmware_version=//p' "$SD_ROOT/polaris-astro/VERSION")"
+DEVICE_FWVER="$(ssh "${SSH_ARGS[@]}" "$SSH" \
+  'sed -n "s/^FwVer:\([^;]*\).*/\1/p" /app/FwVer 2>/dev/null | head -1' || true)"
+DEVICE_FWVER="${DEVICE_FWVER%$'\r'}"
+
+if [ -z "$KIT_FWVER" ] || [ "$KIT_FWVER" = "unknown" ]; then
+  echo "  kit firmware stamp: none (built without --fwver; alignment not checkable)"
+elif [ -z "$DEVICE_FWVER" ]; then
+  echo "  WARNING: head reports no /app/FwVer; cannot verify alignment."
+  echo "           Kit expects firmware $KIT_FWVER."
+elif [ "$KIT_FWVER" != "$DEVICE_FWVER" ]; then
+  echo "ERROR: kit and firmware are not a matched pair." >&2
+  echo "         kit built for : $KIT_FWVER" >&2
+  echo "         head runs     : $DEVICE_FWVER" >&2
+  echo "       Deploy them together, or build the kit against the running firmware" >&2
+  echo "       with scripts/build-astro-bundle.sh --fwver $DEVICE_FWVER." >&2
+  echo "       Override with --allow-fwver-mismatch only if you have checked that" >&2
+  echo "       this kit genuinely works on $DEVICE_FWVER." >&2
+  [ "${ALLOW_FWVER_MISMATCH:-0}" = "1" ] || exit 2
+  echo "  WARNING: proceeding despite the mismatch (--allow-fwver-mismatch)."
+else
+  echo "  kit/firmware aligned: $KIT_FWVER"
+fi
 
 # /app is a 68 MB ubifs and a flash leaves it nearly full. install_astro.sh
 # copies binaries into it before writing the boot hook, so a short write there
@@ -374,6 +419,8 @@ VERIFIED_AT="$(date -u +%FT%TZ)"
   [ -n "$EXPECTED_BUILD_ID" ] && echo "build_id=$EXPECTED_BUILD_ID"
   echo "kit_target=$SSH"
   echo "kit_dirs=${DIRS[*]}"
+  echo "kit_firmware_expected=${KIT_FWVER:-unstamped}"
+  echo "head_firmware_actual=${DEVICE_FWVER:-unknown}"
   if [ -n "$SKIPPED" ]; then
     echo "kit_omitted=${SKIPPED# } (allow-partial)"
   fi

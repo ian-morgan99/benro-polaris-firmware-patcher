@@ -3018,6 +3018,22 @@ function deviceRefresh() {
     el.innerHTML = '<dd class="dim">The control link is down — align the mount, then Refresh.</dd>'; return;
   }
   send(780); send(781);
+
+  /* Two independent sources feed one panel: the mount's Alpaca replies (through
+   * /api/link) and the astro kit's own identity (/api/version). They resolve in
+   * either order, so each writes into a slot and a single render() paints.
+   * Appending with innerHTML.replace() while the other callback assigns
+   * el.innerHTML is a race -- whichever finished last discarded the first, so the
+   * kit rows disappeared at random. That is precisely the silent "looks right,
+   * isn't" this panel exists to remove. */
+  var mountRows = null, kitRows = null;
+
+  function render() {
+    if (mountRows === null && kitRows === null) return;
+    var rows = (mountRows || '') + (kitRows || '');
+    el.innerHTML = rows || '<dd class="dim">No reply yet — try Refresh.</dd>';
+  }
+
   setTimeout(function () {
     fetch('/api/link', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       var ops = (d && d.opcodes) || {};
@@ -3033,9 +3049,40 @@ function deviceRefresh() {
         var tstr = (tk.date && tk.time) ? (tk.date + ' ' + tk.time) : t.replace(/;+$/, '');
         rows += '<dt>Device time</dt><dd class="mono">' + htmlesc(tstr) + '</dd>';
       }
-      el.innerHTML = rows || '<dd class="dim">No reply yet — try Refresh.</dd>';
-    }).catch(function () {});
+      mountRows = rows;
+      render();
+    }).catch(function () { mountRows = ''; render(); });
   }, 600);
+
+  /* Astro kit identity and whether it matches the firmware it is running beside.
+   * Separate request because /api/link only carries mount replies, and the kit
+   * version comes from a file the builder stamps into the SD bundle.
+   *
+   * This exists because the only version on the device used to be the appfs
+   * FwVer, which an SD-kit-only release never changes -- so after astro-v112
+   * shipped the head still read .110 and a correct install looked like a failed
+   * one. Confirming it meant SSH plus a manual sha256 of polaris-httpd. */
+  fetch('/api/version', { cache: 'no-store' }).then(function (r) { return r.json(); })
+    .then(function (d) {
+      var rows = '';
+      if (d && d.ok) {
+        if (d.build_id && d.build_id !== 'unknown')
+          rows += '<dt>Astro build</dt><dd class="mono">' + htmlesc(d.build_id) + '</dd>';
+        if (d.firmware_version_actual && d.firmware_version_actual !== 'unknown')
+          rows += '<dt>Head firmware</dt><dd class="mono">' + htmlesc(d.firmware_version_actual) + '</dd>';
+        var exp = d.firmware_version_expected, act = d.firmware_version_actual;
+        if (d.aligned === true) {
+          rows += '<dt>Kit / firmware</dt><dd class="mono">aligned (' + htmlesc(exp) + ')</dd>';
+        } else if (exp !== 'unknown' && act !== 'unknown') {
+          /* Deliberately loud: a kit deployed against a different appfs than the
+           * one running is otherwise invisible until it misbehaves. */
+          rows += '<dt>Kit / firmware</dt><dd class="mono err">MISMATCH — kit built for ' +
+                  htmlesc(exp) + ', head runs ' + htmlesc(act) + '</dd>';
+        }
+      }
+      kitRows = rows;
+      render();
+    }).catch(function () { kitRows = ''; render(); });
 }
 function wireDevice() { $('#dev-refresh').addEventListener('click', deviceRefresh); }
 

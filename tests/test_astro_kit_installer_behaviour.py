@@ -50,11 +50,17 @@ def sha256_of(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def make_candidate(tmp_path, *, corrupt=None):
+def make_candidate(tmp_path, *, corrupt=None, fwver=None):
     """A candidate tree with a realistic ASTRO-MANIFEST.sha256.
 
     Lines are sha256sum's own format, "<hash>  ./<path>" with TWO spaces, and the
     hashes are real so `sha256sum -c` genuinely passes or fails.
+
+    fwver writes polaris-astro/VERSION exactly as build-astro-bundle.sh --fwver
+    does. It is written BEFORE the manifest is built so the manifest covers it,
+    which mirrors the real build order: a stamp added after hashing would not be
+    verified on staging, and the whole point of the stamp is that it travels with
+    the bytes it describes.
     """
     root = tmp_path / "candidate"
     sd_root = root / "astro-bundle" / "COPY-TO-SD-CARD-ROOT"
@@ -62,6 +68,13 @@ def make_candidate(tmp_path, *, corrupt=None):
     kit.mkdir(parents=True)
     (kit / "install_astro.sh").write_text("#!/bin/sh\nexit 0\n")
     (kit / "polaris-httpd").write_text("httpd-bytes\n")
+    if fwver is not None:
+        (kit / "VERSION").write_text(
+            f"build_id=astro-v99-test\n"
+            f"firmware_version={fwver}\n"
+            f"firmware_version_source=explicit\n"
+            f"patcher_commit={'a' * 40}\n"
+        )
     (sd_root / "polaris-wifi").mkdir()
     (sd_root / "polaris-wifi" / "setup-wifi.sh").write_text("#!/bin/sh\nexit 0\n")
     (sd_root / "astrometry").mkdir()
@@ -93,6 +106,16 @@ rewritten=${cmd//\/app\/sd/$FAKE_ROOT/app/sd}
 case "$cmd" in
   *'echo ok'*) echo ok; exit 0;;
   *'df -k /app'*) echo "$FAKE_APP_FREE_KB"; exit 0;;
+  # The installer reads the head's firmware version out of /app/FwVer before
+  # staging, to check it against the kit's stamp. Materialise a real file and run
+  # the installer's OWN command against it, rather than echoing a canned answer:
+  # that exercises the sed which strips "FwVer:" and the ";date:..." tail. An
+  # empty FAKE_FWVER stands in for a head that reports nothing.
+  *'FwVer'*)
+    mkdir -p "$FAKE_ROOT/app"
+    printf '%s\n' "$FAKE_FWVER" > "$FAKE_ROOT/app/FwVer"
+    eval "${cmd//\/app\/FwVer/$FAKE_ROOT/app/FwVer}"
+    exit 0;;
   *'tar xzf - -C /app/sd'*)
     mkdir -p "$FAKE_ROOT/app/sd"
     eval "${rewritten/&& sync/}"
@@ -155,6 +178,7 @@ def run_kit(candidate, bin_dir, tmp_path, *args, **overrides):
     env["FAKE_HTTPD"] = str(overrides.pop("httpd", 1))
     env["FAKE_HOOK"] = str(overrides.pop("hook", 1))
     env["FAKE_PORT"] = str(overrides.pop("port", 1))
+    env["FAKE_FWVER"] = overrides.pop("fwver", "")
     env["SSH_TRACE"] = str(tmp_path / "ssh-calls.log")
     return subprocess.run(
         ["bash", str(KIT_SCRIPT), str(candidate), *args],
@@ -214,6 +238,86 @@ def test_indexes_may_still_be_omitted_without_a_flag(tmp_path):
     result = run_kit(candidate, stub_bin(tmp_path), tmp_path, "--no-indexes")
     assert result.returncode == 0, result.stdout + result.stderr
     assert "staging: polaris-astro polaris-wifi" in result.stdout
+
+
+def test_kit_stamped_for_other_firmware_is_refused(tmp_path):
+    """A kit built against a different appfs than the head runs must not install.
+
+    Kit and firmware are built separately and deployed together, so a mismatch is
+    easy to create and was previously invisible: astro-v112 shipped as an SD-kit-only
+    release while the head still ran .110, and nothing on the device could say which
+    kit was installed. The reverse case -- new appfs under an old kit -- is worse,
+    because the boot hook then runs kit code never built for that appfs.
+
+    A stamp that DISAGREES is a positive statement that these two artefacts were not
+    built as a pair, so this fails closed rather than warning.
+    """
+    candidate = make_candidate(tmp_path, fwver="6.0.0.54.111")
+    result = run_kit(
+        candidate, stub_bin(tmp_path), tmp_path, "--no-indexes",
+        fwver="FwVer:6.0.0.54.110;date:2026.11.17;",
+    )
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "not a matched pair" in result.stderr
+    assert "kit built for : 6.0.0.54.111" in result.stderr
+    assert "head runs     : 6.0.0.54.110" in result.stderr
+    # Nothing staged, no receipt: a refused install leaves no trace of success.
+    assert not (tmp_path / "device" / "app" / "sd" / "polaris-astro").exists()
+    assert not (candidate / "install-receipt.txt").exists()
+
+
+def test_aligned_kit_installs_and_records_both_versions(tmp_path):
+    """The happy path must also leave the pairing in the receipt, so a release
+    record states which firmware the deployed kit was built for."""
+    candidate = make_candidate(tmp_path, fwver="6.0.0.54.111")
+    result = run_kit(
+        candidate, stub_bin(tmp_path), tmp_path, "--no-indexes",
+        fwver="FwVer:6.0.0.54.111;date:2026.11.18;",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "kit/firmware aligned: 6.0.0.54.111" in result.stdout
+
+    receipt = (candidate / "install-receipt.txt").read_text()
+    assert "kit_firmware_expected=6.0.0.54.111" in receipt
+    assert "head_firmware_actual=6.0.0.54.111" in receipt
+
+
+def test_unstamped_kit_warns_but_installs(tmp_path):
+    """Candidates built before --fwver existed carry no stamp. Refusing them would
+    block every historical out/ directory, so this warns and proceeds -- but says so
+    plainly rather than implying alignment was checked."""
+    candidate = make_candidate(tmp_path)
+    result = run_kit(
+        candidate, stub_bin(tmp_path), tmp_path, "--no-indexes",
+        fwver="FwVer:6.0.0.54.110;date:2026.11.17;",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "alignment not checkable" in result.stdout
+
+
+def test_fwver_mismatch_override_is_recorded(tmp_path):
+    """The escape hatch works and is auditable -- an override that leaves no trace
+    is how a mismatched pair ends up looking like a clean install."""
+    candidate = make_candidate(tmp_path, fwver="6.0.0.54.111")
+    result = run_kit(
+        candidate, stub_bin(tmp_path), tmp_path, "--no-indexes",
+        "--allow-fwver-mismatch", fwver="FwVer:6.0.0.54.110;date:2026.11.17;",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    # stdout, matching the script's other advisory warnings; ERROR paths use stderr.
+    assert "proceeding despite the mismatch" in result.stdout
+    receipt = (candidate / "install-receipt.txt").read_text()
+    assert "kit_firmware_expected=6.0.0.54.111" in receipt
+    assert "head_firmware_actual=6.0.0.54.110" in receipt
+
+
+def test_head_without_fwver_warns_and_installs(tmp_path):
+    """No /app/FwVer means alignment cannot be verified. That is not a mismatch, so
+    it must not block -- but it must not claim alignment either."""
+    candidate = make_candidate(tmp_path, fwver="6.0.0.54.111")
+    result = run_kit(candidate, stub_bin(tmp_path), tmp_path, "--no-indexes", fwver="")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "cannot verify alignment" in result.stdout
 
 
 def test_happy_path_stages_verifies_installs_and_confirms(tmp_path):

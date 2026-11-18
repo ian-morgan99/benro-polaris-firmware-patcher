@@ -18,6 +18,11 @@ WANT_INDEXES=1
 WANT_WIFI=1
 FORCE=0
 ALLOW_MAIN=0
+# The firmware version this kit is built to run against. Stamped into the kit as
+# polaris-astro/VERSION so the device can report what it is actually running.
+# Empty means "unknown", which is recorded explicitly rather than guessed -- see
+# the stamp block near the manifest.
+FWVER="${POLARIS_FWVER:-}"
 ALLOW_DIRTY=0
 RUN_TESTS=1
 WANT_ZIP=0
@@ -41,6 +46,13 @@ options:
   --src-cache DIR            persistent upstream-source cache
   --force                    remove the selected existing output directory first
   --allow-main               permit a development build from main
+  --fwver VERSION            firmware version this kit is built to run against, e.g.
+                             6.0.0.54.111. Stamped into polaris-astro/VERSION and read
+                             back by /api/version and install-astro-kit.sh, so a kit and
+                             an appfs that were not built as a pair are caught at deploy
+                             instead of after the next reboot. Omitting it records
+                             firmware_version=unknown -- which is truthful, but leaves
+                             alignment unverifiable.
   --allow-dirty              permit uncommitted source (recorded in provenance)
   --no-tests                 skip the focused Astro test and syntax gates
   --zip                      also emit SD-rooted zips for end users
@@ -112,6 +124,10 @@ while [ $# -gt 0 ]; do
     --allow-main)
       ALLOW_MAIN=1
       shift
+      ;;
+    --fwver)
+      FWVER="$2"
+      shift 2
       ;;
     --allow-dirty)
       ALLOW_DIRTY=1
@@ -394,6 +410,44 @@ EOF
   done
 fi
 
+# ---------------------------------------------------------------------------
+# Stamp the kit with the firmware version it was built against.
+#
+# WHY. The only version a human can read on the device is /app/FwVer, which is
+# the appfs/firmware version. An SD-kit-only release never changes it, so after
+# shipping astro-v112 the head still displayed .110 and there was no way -- short
+# of SSH and hashing polaris-httpd by hand -- to tell whether a release had
+# actually landed. That is the same blindness that produced the false "installed"
+# reports in #312 and #58, just pointing the other way: here a *successful*
+# install looked like a failed one.
+#
+# It also makes alignment checkable. A kit and a firmware are built separately and
+# deployed together; without a stamp nothing on the device says which firmware a
+# kit expects, so a mismatched pair is invisible until it misbehaves.
+#
+# Written BEFORE the manifests are generated so both ASTRO-MANIFEST.sha256 and the
+# on-device polaris-astro.manifest cover it. The sync script copies whatever the
+# manifest lists, so VERSION reaches /app/astro without any boot-code change.
+# ---------------------------------------------------------------------------
+KIT_VERSION_FILE="$SD_ASTRO/VERSION"
+if [ -n "$FWVER" ]; then
+  FWVER_SOURCE="explicit"
+else
+  # Do not guess. "unknown" is a truthful value; a wrong one is worse than none,
+  # because an alignment check would then pass against a firmware the kit was
+  # never built for.
+  FWVER="unknown"
+  FWVER_SOURCE="not-supplied"
+fi
+{
+  printf 'build_id=%s\n' "$ID"
+  printf 'firmware_version=%s\n' "$FWVER"
+  printf 'firmware_version_source=%s\n' "$FWVER_SOURCE"
+  printf 'patcher_commit=%s\n' "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+  printf 'built_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} > "$KIT_VERSION_FILE"
+[ -s "$KIT_VERSION_FILE" ] || die "could not write $KIT_VERSION_FILE"
+
 MANIFEST="$OUT/ASTRO-MANIFEST.sha256"
 (
   cd "$SD_ROOT"
@@ -423,6 +477,11 @@ ASTRO_MANIFEST="$SD_ASTRO/polaris-astro.manifest"
       [ -f "$b" ] && printf '%s\n' "$b"
     done
     for s in *.sh; do [ -f "$s" ] && printf '%s\n' "$s"; done
+    # VERSION is neither a binary nor a script, so the two loops above miss it.
+    # Without this line the stamp is built but never copied to /app/astro, and
+    # the device still cannot report what it is running -- which is the whole
+    # point of writing it.
+    [ -f VERSION ] && printf '%s\n' VERSION
   } | sort -u |
     while IFS= read -r f; do sha256sum "$f"; done
 ) > "$ASTRO_MANIFEST"

@@ -116,6 +116,46 @@ Separately: after any reboot where `autojoin` is configured, expect the head to 
 unreachable for a few minutes while it joins, and expect the AP to have moved channel.
 That is normal, not a failed install — see `docs/FIRMWARE-INSTALL-PROCESS.md`.
 
+## Which build is actually on the head?
+
+The only version the Polaris itself displays is `/app/FwVer` — the **appfs/firmware**
+version. An SD-kit-only release never changes it, so after `astro-v112` shipped the head
+still read `6.0.0.54.110` and there was no way to confirm the deploy short of SSH plus a
+manual `sha256sum /app/astro/polaris-httpd`. A successful install looked identical to a
+failed one.
+
+Every kit now carries its own identity. `scripts/build-astro-bundle.sh --fwver X` writes
+`polaris-astro/VERSION`:
+
+```
+build_id=astro-v113-kit-identity-20261118
+firmware_version=6.0.0.54.111
+firmware_version_source=explicit
+patcher_commit=<sha>
+built_utc=2026-11-18T17:56:50Z
+```
+
+`VERSION` is listed in `polaris-astro.manifest`, so the boot sync copies it into
+`/app/astro` like any other payload file. Read it back without SSH:
+
+```sh
+curl -s http://<head>:8090/api/version
+{"ok":true,"build_id":"astro-v113-kit-identity-20261118",
+ "firmware_version_expected":"6.0.0.54.111","firmware_version_actual":"6.0.0.54.111",
+ "aligned":true,"firmware_version_source":"explicit","patcher_commit":"<sha>"}
+```
+
+It reports the stamped expectation beside the live `/app/FwVer`, so a kit and an appfs
+that were not built as a pair are visible in one request. The Device tab shows the same
+three rows, with `MISMATCH` in red when they disagree.
+
+**Always pass `--fwver`.** A kit built without it records `firmware_version=unknown`
+rather than guessing — a wrong stamp would pass an alignment check against a firmware the
+kit was never built for, which is worse than no stamp at all. `install-astro-kit.sh`
+refuses to stage a kit whose stamp disagrees with the head's `/app/FwVer` (exit 2), warns
+on an unstamped kit, and records both values in `install-receipt.txt`. Override with
+`--allow-fwver-mismatch` only after checking the pairing by hand.
+
 ## End-user release: two zips, unzipped at the SD root
 
 End users have no PC-side tooling and no SSH. They do what the Benro process

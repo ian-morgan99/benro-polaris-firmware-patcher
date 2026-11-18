@@ -108,6 +108,10 @@ static pid_t find_proc(const char *needle) {
 #define ASTRO_DIR      "/app/astro"
 
 static const char *g_astro = ASTRO_DIR;
+/* Where the head's own firmware version is read from for /api/version. Overridable
+ * via --fwver-file so the alignment comparison can be exercised off-device; on the
+ * Polaris it is the appfs file the stock updater writes. */
+static const char *g_fwver_file = "/app/FwVer";
 /* Which mount to talk to. Defaults to the real one on this device; point it at
  * polaris-sim to run a conformance suite without commanding real motors --
  * ConformU fires dozens of slews and syncs and wedged polestar_app when aimed
@@ -155,6 +159,28 @@ static void read_file(const char *path, char *buf, size_t cap) {
     n = read(fd, buf, cap - 1);
     close(fd);
     if (n > 0) buf[n] = 0;
+}
+
+/* Pull "key=value" out of a KEY=VALUE text file into out. Returns 1 on hit.
+ * Used for /app/astro/VERSION, which the bundle builder stamps with the build id
+ * and the firmware version the kit was built against. Values are copied verbatim
+ * up to end of line, so no quoting rules to honour. */
+static int kv_get(const char *buf, const char *key, char *out, size_t cap) {
+    size_t klen = strlen(key);
+    const char *p = buf;
+    out[0] = 0;
+    while (*p) {
+        if (!strncmp(p, key, klen) && p[klen] == '=') {
+            p += klen + 1;
+            size_t i = 0;
+            while (*p && *p != '\n' && i < cap - 1) out[i++] = *p++;
+            out[i] = 0;
+            return 1;
+        }
+        while (*p && *p != '\n') p++;
+        if (*p == '\n') p++;
+    }
+    return 0;
 }
 
 /* tail of a file, at most cap-1 bytes */
@@ -3719,6 +3745,64 @@ static void handle(int fd) {
     /* One live-view frame, same-origin, so the overlays can read its pixels. */
     if (!strcmp(path, "/api/snapshot")) { serve_snapshot(fd); return; }
 
+    /* Kit identity, and the firmware it is running beside.
+     *
+     * WHY. The only version visible on the device was /app/FwVer -- the appfs
+     * version -- which an SD-kit-only release never changes. After astro-v112
+     * shipped, the head still displayed .110 and nothing on the device could say
+     * which kit was installed; confirming it meant SSH plus a manual sha256 of
+     * polaris-httpd. That made a successful install indistinguishable from a
+     * failed one, which is the #312/#58 class of blindness pointed the other way.
+     *
+     * Reporting both halves together is what makes alignment checkable: kit and
+     * firmware are built separately and deployed together, and a mismatch used to
+     * be invisible until it misbehaved. fwver_expected comes from the build-time
+     * stamp; fwver_actual is read live from /app/FwVer. When they differ the
+     * caller knows immediately that the kit and the appfs are not a matched pair.
+     */
+    if (!strcmp(path, "/api/version")) {
+        char raw[1024], fwraw[256];
+        char bid[128] = "", fwexp[64] = "", fwsrc[32] = "", commit[64] = "";
+        char fwact[64] = "";
+        char out[1024];
+        char vpath[512];
+        /* g_astro, not ASTRO_DIR: the binary honours --astro, and hardcoding the
+         * compile-time path would make this endpoint report nothing whenever the
+         * kit is installed anywhere else -- and be untestable off-device. */
+        snprintf(vpath, sizeof vpath, "%s/VERSION", g_astro);
+        read_file(vpath, raw, sizeof raw);
+        if (raw[0]) {
+            kv_get(raw, "build_id", bid, sizeof bid);
+            kv_get(raw, "firmware_version", fwexp, sizeof fwexp);
+            kv_get(raw, "firmware_version_source", fwsrc, sizeof fwsrc);
+            kv_get(raw, "patcher_commit", commit, sizeof commit);
+        }
+        /* /app/FwVer is "FwVer:6.0.0.54.110;date:2026.11.17;" -- take what sits
+         * between the colon and the first semicolon. */
+        read_file(g_fwver_file, fwraw, sizeof fwraw);
+        {
+            const char *c = strstr(fwraw, "FwVer:");
+            if (c) {
+                c += 6;
+                size_t i = 0;
+                while (*c && *c != ';' && *c != '\n' && i < sizeof fwact - 1)
+                    fwact[i++] = *c++;
+                fwact[i] = 0;
+            }
+        }
+        snprintf(out, sizeof out,
+            "{\"ok\":true,\"build_id\":\"%s\",\"firmware_version_expected\":\"%s\","
+            "\"firmware_version_actual\":\"%s\",\"aligned\":%s,"
+            "\"firmware_version_source\":\"%s\",\"patcher_commit\":\"%s\"}",
+            bid[0] ? bid : "unknown",
+            fwexp[0] ? fwexp : "unknown",
+            fwact[0] ? fwact : "unknown",
+            (fwexp[0] && fwact[0] && !strcmp(fwexp, fwact)) ? "true" : "false",
+            fwsrc[0] ? fwsrc : "unknown",
+            commit[0] ? commit : "unknown");
+        respond_json(fd, out); return;
+    }
+
     /* Observing site (lat/lon). The solver hint, Alpaca's site, and every
      * alt/az conversion read g_lat/g_lon; GET reports them, POST sets them at
      * runtime and persists to site.conf so a reboot keeps them. */
@@ -5378,6 +5462,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--lon") && i+1 < argc) { g_lon = atof(argv[++i]); g_have_pos = 1; }
         else if (!strcmp(argv[i], "--focal") && i+1 < argc) g_focal = atof(argv[++i]);
         else if (!strcmp(argv[i], "--astro") && i+1 < argc) g_astro = argv[++i];
+        else if (!strcmp(argv[i], "--fwver-file") && i+1 < argc) g_fwver_file = argv[++i];
         else if (!strcmp(argv[i], "--lx200-port") && i+1 < argc) lx_port = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--indi-port") && i+1 < argc) indi_port = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--no-discovery")) discovery = 0;
