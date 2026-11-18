@@ -79,3 +79,9 @@ Keep this work in `feature/366-polaris-platesolve-alpaca-pa`, delivered as a dra
 - `Status.V1` now reports `elapsed_sec` for monitoring and timeout diagnosis. This does **not** terminate hung jobs or enforce a hard timeout.
 - A safe hard watchdog needs process-group ownership, process identity and an explicit maximum duration for capture/wait/range-solving. Do not send SIGKILL using a PID read from an unverified stale file.
 - Outstanding build validation remains a blocker. In particular, check C compiler availability of `SIZE_MAX`, `struct timeval`, and `gettimeofday` in the embedded toolchain and execute HTTP regression tests before release.
+
+## Validation checkpoint: stale results and input parsing
+- `Status.V1` now rejects non-decimal job-token input instead of relying on `sscanf`'s permissive parsing.
+- When a completed result file predates `JOB_START`, the Alpaca endpoint returns an error rather than presenting the previous job's solution as current. This is a coarse seconds-resolution safeguard; same-second collisions and races still need tests.
+- The liveness code's comment now explicitly acknowledges **no hard watchdog is implemented**. A live but hung solver may still block subsequent jobs.
+- GitHub reported **no pull-request-triggered workflow runs** for commit `5e58c6d`. This is not evidence of a passing build. Compile and HTTP integration tests remain required.
