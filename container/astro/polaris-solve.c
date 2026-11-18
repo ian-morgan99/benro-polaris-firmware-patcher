@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "polaris-image-pa.h"
 #include "os-features.h"
 #include "solver.h"
 #include "index.h"
@@ -353,7 +354,9 @@ int main(int argc, char** argv) {
 
     if (solver->best_match_solves) {
         tan_t* wcs = &(solver->best_match.wcstan);
-        double cra, cdec, pscale, orient, det;
+        double cra, cdec, pscale, orient, det, image_pa;
+        int image_flipped, image_pa_valid;
+        char image_pa_json[48];
         tan_pixelxy2radec(wcs, W / 2.0, H / 2.0, &cra, &cdec);
         pscale = tan_pixel_scale(wcs);
         orient = tan_get_orientation(wcs);
@@ -361,13 +364,21 @@ int main(int argc, char** argv) {
          * needs this to turn `roll` into a real camera orientation: a mirrored
          * field rolls the opposite way. */
         det = wcs->cd[0][0] * wcs->cd[1][1] - wcs->cd[0][1] * wcs->cd[1][0];
+        image_pa_valid = polaris_image_pa_from_cd((const double (*)[2])wcs->cd,
+                                                     1, &image_pa, &image_flipped);
+        (void)image_flipped;
+        if (image_pa_valid)
+            snprintf(image_pa_json, sizeof image_pa_json, "%.6f", image_pa);
+        else
+            strcpy(image_pa_json, "null");
         printf("{\"solved\":true,"
                "\"ra_deg\":%.6f,\"dec_deg\":%.6f,\"roll_deg\":%.4f,"
+               "\"image_pa_deg\":%s,\"image_pa_convention\":\"FITS+Y east-of-north\","
                "\"pixscale_arcsec\":%.6f,\"field_w_deg\":%.4f,\"field_h_deg\":%.4f,"
                "\"parity\":\"%s\",\"cd\":[%.9g,%.9g,%.9g,%.9g],"
                "\"index\":\"%s\",\"logodds\":%.3f,\"nmatch\":%i,\"nfield\":%i,"
                "\"solve_seconds\":%.3f%s}\n",
-               cra, cdec, orient, pscale,
+               cra, cdec, orient, image_pa_json, pscale,
                arcsec2deg(pscale * W), arcsec2deg(pscale * H),
                (det < 0) ? "normal" : "flipped",
                wcs->cd[0][0], wcs->cd[0][1], wcs->cd[1][0], wcs->cd[1][1],

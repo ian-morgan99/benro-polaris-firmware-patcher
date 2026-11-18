@@ -37,7 +37,9 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <stdint.h>
 
+#include "polaris-job-token.h"
 #include "polaris-link.h"
 #include "polaris-jog.h"
 #include "polaris-prog.h"
@@ -49,6 +51,7 @@
 #define JOB_STATUS     "/tmp/polaris-job.status"   /* idle|running|done|failed */
 #define JOB_RESULT     "/tmp/polaris-job.result"   /* solver JSON */
 #define JOB_PID        "/tmp/polaris-job.pid"      /* pid of the running job */
+#define JOB_ALPACA_ID  "/tmp/polaris-job.alpaca-id" /* invalidated on every new solve */
 #define KEEPWIFI_FLAG  "/app/sd/polaris-astro/keep-wifi-awake"
 #define KEEPWIFI_PID   "/tmp/wifi-keepalive.pid"
 #define KEEPWIFI_FORCE "/app/sd/polaris-astro/keep-wifi-force"
@@ -372,24 +375,39 @@ static int mount_pose(double *alt, double *az, char *raw, size_t rawcap) {
  * Modes 1/2 exist because astro mode refuses externally-initiated captures --
  * opcode 264 is ignored and the 272 lapse sequence is refused while tracking.
  * In astro mode the user triggers the shot in the Benro app and we follow. */
+/* Shared bounded liveness assessment. The detached worker can publish its PID
+ * after the HTTP parent has returned. A grace period avoids false failures.
+ * Do not kill an apparently timed-out process here: the solver's own timeout
+ * and the existing job lifecycle own process termination. */
+static int solve_job_alive(void) {
+    char status[32] = "", pb[32] = "", sb[32] = "";
+    long started, age, jp;
+    read_file(JOB_STATUS, status, sizeof status);
+    if (strcmp(status, "running")) return 0;
+    read_file(JOB_START, sb, sizeof sb);
+    started = atol(sb);
+    age = started > 0 ? (long)time(NULL) - started : 999999;
+    read_file(JOB_PID, pb, sizeof pb);
+    jp = atol(pb);
+    /* Do not treat a missing PID as failure until startup grace has passed.
+     * A running PID is NOT proof of progress. There is no hard watchdog yet;
+     * this checker must not kill an unknown process (PID reuse). */
+    if (age >= 0 && age <= 10) return 1;
+    if (jp > 1 && kill((pid_t)jp, 0) == 0) return 1;
+    set_status("failed");
+    unlink(JOB_PID);
+    return 0;
+}
+
 static int start_solve(int apply, int mode) {
     pid_t pid;
     char status[32];
     read_file(JOB_STATUS, status, sizeof status);
-    if (strncmp(status, "running", 7) == 0) {
-        /* RUNNING, or ONLY LOOKS LIKE IT. A job that died without setting a
-         * final status used to hold this lock forever, and every later solve
-         * was refused silently -- the page just did nothing, which reads as
-         * "the solver is broken". Trust the pid, not the string. */
-        char pb[32]; long jp = 0;
-        read_file(JOB_PID, pb, sizeof pb);
-        jp = atol(pb);
-        if (jp > 0 && kill((pid_t)jp, 0) == 0) return 0;  /* genuinely running */
-        set_status("failed");                              /* stale -- clear it */
-        unlink(JOB_PID);
-    }
+    if (!strcmp(status, "running") && solve_job_alive()) return 0;
 
     set_status("running");
+    unlink(JOB_ALPACA_ID);
+    unlink(JOB_PID);
     unlink(JOB_RESULT);
     { FILE *f = fopen(JOB_START, "w"); if (f) { fprintf(f, "%ld\n", (long)time(NULL)); fclose(f); } }
 
@@ -1540,7 +1558,154 @@ static int handle_alpaca(int fd, const char *method, const char *path, const cha
     if (!strcmp(m, "description")) { alpaca_value(fd, qs, "\"Benro Polaris via on-device plate solver\""); return 1; }
     if (!strcmp(m, "driverinfo"))  { alpaca_value(fd, qs, "\"polaris-httpd\""); return 1; }
     if (!strcmp(m, "driverversion")) { alpaca_value(fd, qs, "\"1.0\""); return 1; }
-    if (!strcmp(m, "supportedactions")) { alpaca_value(fd, qs, "[]"); return 1; }
+    if (!strcmp(m, "supportedactions")) {
+        alpaca_value(fd, qs, "[\"Polaris.PlateSolve.Start.V1\",\"Polaris.PlateSolve.Status.V1\"]");
+        return 1;
+    }
+    /* Extension actions are opt-in and never alter Telescope Sync. */
+    if (!strcmp(m, "action")) {
+        char action[96] = "", parameters[64] = "";
+        const char *src = (body && *body) ? body : qs;
+        if (strcmp(method, "PUT")) { respond_400(fd, "Action requires PUT"); return 1; }
+        if (!(body && *body ? param_body(src, "Action", action, sizeof action)
+                            : param(src, "Action", action, sizeof action))) {
+            respond_400(fd, "Action required"); return 1;
+        }
+        if (body && *body) param_body(src, "Parameters", parameters, sizeof parameters);
+        else param(src, "Parameters", parameters, sizeof parameters);
+        if (!strcmp(action, "Polaris.PlateSolve.Start.V1")) {
+            if (parameters[0] && strcmp(parameters, "latest")) {
+                alpaca_error(fd, qs, 1025, "only latest image supported"); return 1;
+            }
+            if (start_solve(0, 1) != 1) {
+                alpaca_error(fd, qs, 1025, "solve busy or unavailable"); return 1;
+            }
+            {
+                struct timeval tv;
+                char id_json[64];
+                uint64_t token;
+                FILE *f;
+                if (gettimeofday(&tv, NULL) != 0) {
+                    alpaca_error(fd, qs, 1025, "cannot read job clock");
+                    return 1;
+                }
+                /* Epoch microseconds fit uint64_t; multiplying by 1000
+                 * would overflow on modern dates. Enforce strict monotonicity
+                 * for repeated starts in this server process. */
+                {
+                    static uint64_t last_token = 0;
+                    token = polaris_next_job_token(
+                        (uint64_t)tv.tv_sec * 1000000ULL + (uint64_t)tv.tv_usec,
+                        &last_token);
+                    if (!token) {
+                        alpaca_error(fd, qs, 1025, "job token exhausted");
+                        return 1;
+                    }
+                }
+                f = fopen(JOB_ALPACA_ID, "w");
+                if (!f) {
+                    alpaca_error(fd, qs, 1025, "cannot persist solve token");
+                    return 1;
+                }
+                fprintf(f, "%llu\n", (unsigned long long)token);
+                fclose(f);
+                snprintf(id_json, sizeof id_json, "\"%llu\"", (unsigned long long)token);
+                alpaca_value(fd, qs, id_json);
+            }
+            return 1;
+        }
+        if (!strcmp(action, "Polaris.PlateSolve.Status.V1")) {
+            char status[32] = "", token_buf[64] = "", start_buf[32] = "";
+            char result[4096] = "";
+            char *escaped = NULL, *payload = NULL, *payload_escaped = NULL, *value = NULL;
+            unsigned long long requested = 0, current = 0;
+            long age_sec = 0, start_sec = 0;
+            if (parameters[0] &&
+                !polaris_parse_job_token(parameters, &requested)) {
+                alpaca_error(fd, qs, 1025, "invalid job ID"); return 1;
+            }
+            read_file(JOB_ALPACA_ID, token_buf, sizeof token_buf);
+            if (!polaris_parse_persisted_job_token(token_buf, &current))
+                current = 0;
+            if (parameters[0] && (current == 0 || requested != current)) {
+                alpaca_error(fd, qs, 1025, "job ID does not match current solve"); return 1;
+            }
+            read_file(JOB_STATUS, status, sizeof status);
+            read_file(JOB_START, start_buf, sizeof start_buf);
+            start_sec = atol(start_buf);
+            if (start_sec > 0 && (long)time(NULL) >= start_sec)
+                age_sec = (long)time(NULL) - start_sec;
+            if (strcmp(status, "done") && strcmp(status, "failed") &&
+                strcmp(status, "running") && strcmp(status, "idle"))
+                strcpy(status, "idle");
+            /* Use the same startup-grace liveness check as start_solve. */
+            if (!strcmp(status, "running") && !solve_job_alive())
+                strcpy(status, "failed");
+            if (!strcmp(status, "done") || !strcmp(status, "failed")) {
+                struct stat st;
+                /* A result from an earlier job must never be returned as the
+                 * current solve, even if a previous crash left it on disk. */
+                if (stat(JOB_RESULT, &st) == 0 && start_sec > 0 &&
+                    st.st_mtime < (time_t)start_sec) {
+                    alpaca_error(fd, qs, 1025, "stale solver result"); return 1;
+                }
+                if (stat(JOB_RESULT, &st) == 0 && st.st_size >= (off_t)sizeof result) {
+                    alpaca_error(fd, qs, 1025, "solver result exceeds protocol limit");
+                    return 1;
+                }
+                read_file(JOB_RESULT, result, sizeof result);
+                { char *nl = strchr(result, '\n'); if (nl) *nl = 0; }
+            }
+            /* Bound allocations by actual input size, not a 35 KiB stack
+             * reservation on a memory-constrained embedded device. */
+            {
+                size_t n = strlen(result), cap;
+                if (n > (SIZE_MAX - 128) / 6) {
+                    alpaca_error(fd, qs, 1025, "result too large"); return 1;
+                }
+                escaped = malloc(n * 6 + 8);
+                if (!escaped) goto solve_status_oom;
+                json_escape(result, escaped, n * 6 + 8);
+                cap = strlen(escaped) + 160;
+                payload = malloc(cap);
+                if (!payload) goto solve_status_oom;
+                snprintf(payload, cap,
+                         "{\"schema_version\":1,\"job_id\":\"%llu\",\"state\":\"%s\","
+                         "\"elapsed_sec\":%ld,\"result\":\"%s\"}",
+                         current, status, age_sec, escaped);
+                n = strlen(payload);
+                if (n > (SIZE_MAX - 3) / 6) goto solve_status_oom;
+                payload_escaped = malloc(n * 6 + 8);
+                if (!payload_escaped) goto solve_status_oom;
+                json_escape(payload, payload_escaped, n * 6 + 8);
+                value = malloc(strlen(payload_escaped) + 3);
+                if (!value) goto solve_status_oom;
+                sprintf(value, "\"%s\"", payload_escaped);
+            }
+            /* Alpaca Value needs a larger envelope than the normal 1 KiB
+             * alpaca_value helper. Never truncate a JSON string mid-escape. */
+            {
+                size_t cap = strlen(value) + 256;
+                char *response = malloc(cap);
+                if (!response) goto solve_status_oom;
+                snprintf(response, cap,
+                         "{\"Value\":%s,\"ClientTransactionID\":%ld,"
+                         "\"ServerTransactionID\":%lu,\"ErrorNumber\":0,"
+                         "\"ErrorMessage\":\"\"}",
+                         value, client_txn(qs), ++g_server_txn);
+                respond_json(fd, response);
+                free(response);
+            }
+            free(value); free(payload_escaped); free(payload); free(escaped);
+            return 1;
+solve_status_oom:
+            free(value); free(payload_escaped); free(payload); free(escaped);
+            alpaca_error(fd, qs, 1025, "insufficient memory for solve status");
+            return 1;
+        }
+        alpaca_error(fd, qs, 1024, "unsupported Action"); return 1;
+    }
+
     if (!strcmp(m, "alignmentmode"))    { alpaca_value(fd, qs, "1"); return 1; } /* altaz */
     if (!strcmp(m, "equatorialsystem")) { alpaca_value(fd, qs, "2"); return 1; } /* J2000 */
     if (!strcmp(m, "cansetpark") || !strcmp(m, "canpark") ||
