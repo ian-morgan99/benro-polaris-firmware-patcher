@@ -236,10 +236,13 @@ A correct version with no page means the install was skipped or stopped partway.
 ### What the SD card should look like once everything is unzipped
 
 **Use `polaris-sd-package.zip` if your release has it.** It is one file that unpacks to
-all four folders at once, with no extra folder wrapped around them. Copy it to the card's
-top level, extract it there, and you are done — nothing else to copy and nothing to
-rearrange. The four separate `.zip` files below still work exactly as before; the combined
-one just removes three chances to get the layout wrong.
+the three folders that change with each release -- the firmware, the astro kit and the
+Wi-Fi kit -- with no extra folder wrapped around them. Copy it to the card's top level and
+extract it there.
+
+The first time only, also copy and extract `astrometry-indexes.zip`, which gives you
+`astrometry/`. Those index files never change between releases, so that is a one-off; every
+update after the first is just the one package.
 
 When staging is done correctly, the card's top level holds exactly these four folders —
 nothing nested inside each other, and no `.zip` files left behind:

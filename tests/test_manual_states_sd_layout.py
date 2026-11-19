@@ -254,11 +254,29 @@ class TestSingleCardArchive(unittest.TestCase):
         # Not just the filename: it appears in error strings too, so a loose check
         # passes even when nothing builds the archive. Pin the invocation.
         self.assertIn('SD_PACKAGE="$OUT/polaris-sd-package.zip"', text)
-        self.assertIn('zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi astrometry',
-                      text)
+        self.assertIn('zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi', text)
         # Built from symlinks, not a copy: the trees total ~157 MB and out/ holds
         # several candidates.
         self.assertIn('ln -s "$OUT/FwPkt" "$stage/FwPkt"', text)
+
+    def test_astrometry_is_excluded_from_the_combined_archive(self):
+        # Two independent reasons: the index files never change between releases, so
+        # they are a one-time copy that does not belong in an archive rebuilt per
+        # release -- and including them makes the file 112 MiB, which GitHub rejects
+        # outright. Pinned so nobody "helpfully" adds it back.
+        text = BUILD_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn(
+            'zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi )', text)
+        self.assertNotIn('zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi astrometry',
+                         text, "astrometry was added back to the combined archive")
+
+    def test_build_checks_the_github_file_size_limit(self):
+        # GitHub rejects blobs over 100 MiB in a pre-receive hook, AFTER the publisher
+        # has committed locally -- leaving an unpushable commit and a checkout that has
+        # to be discarded. Catch it at build time instead.
+        text = BUILD_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("GITHUB_FILE_LIMIT=104857600", text)
+        self.assertIn('"$pkg_size" -lt "$GITHUB_FILE_LIMIT"', text)
 
     def test_combined_archive_is_verified_against_its_sources(self):
         # A silently dropped folder -- astrometry/ is optional in the tree, so a bare
@@ -274,10 +292,14 @@ class TestSingleCardArchive(unittest.TestCase):
         self.assertIn(
             "refusing to replace published polaris-sd-package.zip bytes", text)
 
-    def test_readme_recommends_the_single_archive(self):
+    def test_readme_recommends_the_single_archive_and_explains_the_indexes(self):
         text = PUBLISHER.read_text(encoding="utf-8")
         block = text[text.index("## Route A"):]
         self.assertIn("USE polaris-sd-package.zip", block)
+        # If the README says "extract one file and you're done" while the package omits
+        # astrometry/, a first-time install silently has no solver.
+        self.assertIn("astrometry-indexes.zip", block)
+        self.assertIn("first-time install", block.lower())
 
     def test_user_manual_also_points_at_the_single_archive_and_fat32(self):
         # The user manual is what end users actually read, and it lists the four-folder

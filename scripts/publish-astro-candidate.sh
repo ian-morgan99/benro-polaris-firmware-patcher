@@ -184,11 +184,16 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
 
 ## Route A -- SD card plus one ssh command (no repo, no build)
 
-USE polaris-sd-package.zip. It is one file that expands to all four folders the head
-needs -- FwPkt/, polaris-astro/, polaris-wifi/ and astrometry/ -- directly at the card
-root, with no wrapper folder around them. Copy it to the card root, extract it there, and
-you are done staging. The separate archives below still work and are published unchanged;
-use this one unless you have a reason not to.
+USE polaris-sd-package.zip. It is one file that expands to FwPkt/, polaris-astro/ and
+polaris-wifi/ directly at the card root, with no wrapper folder around them. Copy it to the
+card root and extract it there -- that is the whole staging step for a normal update.
+
+A first-time install needs one more file: astrometry-indexes.zip, which expands to
+astrometry/. It is not inside polaris-sd-package.zip because the index files never change
+between releases, so they are copied once and never again -- and because including them puts
+the combined archive over GitHub's 100 MB per-file limit. So: two downloads the first time,
+one download every time after that. The separate FwPkt.zip, polaris-astro.zip and
+polaris-wifi.zip archives below are still published unchanged; use them if you prefer.
 
 USE FAT32 ON THE CARD, NOT exFAT. The head runs Linux 4.9.37 and the only card mount ever
 captured from it is vfat:

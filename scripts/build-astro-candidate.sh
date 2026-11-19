@@ -440,7 +440,7 @@ SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
   fi
 ) || die "could not produce the SD kit archives -- see the ERROR lines above"
 
-# One archive that expands to every folder the card needs, at the card root.
+# One archive that expands to every folder this release needs, at the card root.
 #
 # The four-folder layout is the single most common failure mode in this install:
 # Windows "Extract All" wraps each archive in a folder named after it, and the
@@ -450,8 +450,16 @@ SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
 # one archive with no wrapper folder removes three of the four chances to get it
 # wrong, and removes the "did I extract all of them?" question entirely.
 #
-# Deliberately NOT folded into FwPkt.zip. That archive's SHA-256 is recorded in
-# the cross-repo provenance registry and its tree is what firmwareInfo's MD5s are
+# astrometry/ is deliberately NOT in here. Two reasons, and the second is binding:
+# the index files do not change between releases so they are a one-time copy that
+# does not belong in an archive rebuilt per release, and including them makes the
+# archive 112 MiB -- which GitHub rejects outright (hard 100 MiB per-file limit,
+# pre-receive hook GH001). Without them it is ~83 MiB. A fresh install is therefore
+# this archive plus astrometry-indexes.zip once, and every later release is one
+# download instead of four.
+#
+# Deliberately NOT folded into FwPkt.zip either. That archive's SHA-256 is recorded
+# in the cross-repo provenance registry and its tree is what firmwareInfo's MD5s are
 # checked against; changing its bytes would invalidate every published row for it
 # and break the refuse-to-replace guard on candidates already public. So this is
 # a separate artifact that carries the same bytes.
@@ -461,6 +469,7 @@ SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
 # dereferences symlinked directories and stores their contents (verified: a
 # symlinked tree yields FwPkt/camera/uImage as a real member, not a link entry).
 SD_PACKAGE="$OUT/polaris-sd-package.zip"
+GITHUB_FILE_LIMIT=104857600   # 100 MiB, enforced server-side by GitHub
 (
   command -v zip >/dev/null 2>&1 || { echo "ERROR: 'zip' is not installed -- cannot produce polaris-sd-package.zip" >&2; exit 1; }
   # FwPkt is staged at the candidate root, not inside COPY-TO-SD-CARD-ROOT: it is
@@ -472,18 +481,26 @@ SD_PACKAGE="$OUT/polaris-sd-package.zip"
   stage=$(mktemp -d) || exit 1
   trap 'rm -rf "$stage"' EXIT
   ln -s "$OUT/FwPkt" "$stage/FwPkt"
-  for d in polaris-astro polaris-wifi astrometry; do
+  for d in polaris-astro polaris-wifi; do
     [ -d "$SD_ROOT/$d" ] && ln -s "$SD_ROOT/$d" "$stage/$d"
   done
-  ( cd "$stage" && zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi astrometry ) \
+  ( cd "$stage" && zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi ) \
     || { echo "ERROR: failed to build polaris-sd-package.zip" >&2; exit 1; }
 ) || die "could not produce the combined card archive -- see the ERROR lines above"
 
-# The combined archive must contain exactly what the separate archives contain.
-# If a folder were silently dropped -- astrometry/ is optional in the tree, so a
-# plain [ -d ] guard would skip it without saying so -- the user would extract one
-# tidy archive and get a kit that solves nothing, which is the failure mode this
-# archive exists to prevent. Compare member sets against the per-folder archives.
+# Fail here rather than at git push. GitHub rejects any blob over 100 MiB with a
+# pre-receive hook (GH001), and it does that AFTER the publisher has already
+# committed locally -- leaving a commit that cannot be pushed and a publication
+# checkout that has to be discarded. The astrometry indexes are what crossed this
+# line in practice; this check keeps a future addition from doing it quietly.
+pkg_size=$(stat -c%s "$SD_PACKAGE" 2>/dev/null || echo 0)
+[ "$pkg_size" -lt "$GITHUB_FILE_LIMIT" ] \
+  || die "polaris-sd-package.zip is $pkg_size bytes, over GitHub's ${GITHUB_FILE_LIMIT}-byte per-file limit -- the push would be rejected (GH001). Do not add large trees to it; ship them as their own archive."
+
+# The combined archive must contain exactly what the separate archives it claims to
+# carry contain. If a folder were silently dropped the user would extract one tidy
+# archive and get a kit that does not work -- the failure mode this archive exists
+# to prevent. astrometry is excluded by design (see above) so it is not compared.
 combined_members=$(unzip -Z1 "$SD_PACKAGE" 2>/dev/null | grep -v '/$' | sort) || die "cannot list $SD_PACKAGE"
 [ -n "$combined_members" ] || die "polaris-sd-package.zip is empty"
 
@@ -497,8 +514,8 @@ if ! diff -q /tmp/sdpkg-expected-fw.$$ /tmp/sdpkg-got-fw.$$ >/dev/null 2>&1; the
 fi
 rm -f /tmp/sdpkg-expected-fw.$$ /tmp/sdpkg-got-fw.$$
 
-# Every member of each per-folder kit archive must be present too.
-for z in polaris-astro.zip polaris-wifi.zip astrometry-indexes.zip; do
+# Every member of each kit archive it claims to carry must be present too.
+for z in polaris-astro.zip polaris-wifi.zip; do
   [ -f "$SD_ROOT/$z" ] || continue
   unzip -Z1 "$SD_ROOT/$z" 2>/dev/null | grep -v '/$' | sort > /tmp/sdpkg-expected.$$
   printf '%s\n' "$combined_members" | sort > /tmp/sdpkg-got.$$
