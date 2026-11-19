@@ -256,6 +256,34 @@ bash "$ROOT/build-astro.sh" "${ASTRO_ARGS[@]}"
 # install_astro.sh and polaris-astro-sync.sh hash against.
 SD_ASTRO="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro"
 
+# Stamp which firmware this kit expects to be deployed beside, on the path
+# production actually runs.
+#
+# The same stamp has always been written by scripts/build-astro-bundle.sh -- a
+# script nothing in production calls, so no candidate built through this wrapper
+# ever carried it. polaris-httpd's /api/version reads /app/astro/VERSION, so
+# without it the endpoint answers "unknown" for build_id and
+# firmware_version_expected, its alignment check can never fire, and the header
+# chip added in 88e33a1 stays hidden: the device still cannot say which build it
+# is running, which is the exact complaint this release exists to fix.
+#
+# Written BEFORE the manifests are generated so both polaris-astro.manifest and
+# ASTRO-MANIFEST.sha256 cover it; the sync script copies whatever the manifest
+# lists, so VERSION reaches /app/astro without any boot-code change.
+KIT_VERSION_FILE="$SD_ASTRO/VERSION"
+{
+  printf 'build_id=%s\n' "$BUILD_ID"
+  printf 'firmware_version=%s\n' "$DISPLAY_FWVER"
+  printf 'firmware_version_source=explicit\n'
+  printf 'patcher_commit=%s\n' "$PATCHER_SHA"
+  printf 'built_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} > "$KIT_VERSION_FILE"
+[ -s "$KIT_VERSION_FILE" ] || die "could not write $KIT_VERSION_FILE"
+# The stamp must agree with the packet it is published beside, or the alignment
+# check it feeds would certify a mismatched pair.
+grep -q "^firmware_version=$DISPLAY_FWVER$" "$KIT_VERSION_FILE" \
+  || die "kit VERSION stamp does not carry display version $DISPLAY_FWVER"
+
 # Issue #331, on the path production actually runs.
 #
 # The same fix was first written into scripts/build-astro-bundle.sh, which the
@@ -338,12 +366,22 @@ ASTRO_MANIFEST="$SD_ASTRO/polaris-astro.manifest"
       [ -f "$b" ] && printf '%s\n' "$b"
     done
     for s in *.sh; do [ -f "$s" ] && printf '%s\n' "$s"; done
+    # VERSION is neither a binary nor a script, so the two loops above miss it.
+    # Without this line the stamp is built but never copied to /app/astro, and
+    # the device still cannot report what it is running -- which is the whole
+    # point of writing it.
+    [ -f VERSION ] && printf '%s\n' VERSION
   } | sort -u |
     while IFS= read -r f; do sha256sum "$f"; done
 ) > "$ASTRO_MANIFEST"
 [ -s "$ASTRO_MANIFEST" ] || die "generated $ASTRO_MANIFEST is empty"
 grep -q 'polaris-httpd$' "$ASTRO_MANIFEST" \
   || die "$ASTRO_MANIFEST does not cover polaris-httpd (the web UI lives inside it)"
+# Assert coverage rather than relying on the loop above: a future edit to the
+# member list that drops VERSION would otherwise ship a kit whose stamp never
+# reaches the device, and /api/version would silently answer "unknown".
+grep -q 'VERSION$' "$ASTRO_MANIFEST" \
+  || die "$ASTRO_MANIFEST does not cover VERSION -- the kit could not report its own build"
 
 (
   cd "$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
