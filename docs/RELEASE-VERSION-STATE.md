@@ -5,6 +5,38 @@ The release builder treats the value below as the last accepted display version
 and refuses to build a candidate that is unchanged, lower, from another
 version family, or missing the fifth build component.
 
+## The v-number and the display version are the same number
+
+For the Astro series `astro-vNNN-...` must ship as `6.0.0.54.NNN`. They are one
+release carrying two names, not two counters: the v-number is what folders,
+receipts and issues call it, and the fifth component is what `/app/FwVer` and
+Benro Connect show. If they differ, the device cannot tell you which build is on
+it, which defeats the purpose of printing a version at all.
+
+**astro-v113 shipped as 6.0.0.54.111.** Cause: kit-only releases (astro-v111,
+astro-v112) publish SD archives only, so they consume a v-number without ever
+claiming a display version, and the two counters fell out of step. `build-astro-candidate.sh`
+takes `--display-fwver` and `--build-id` as independent arguments and never
+compared them; `build-release-candidate.sh` derives one from the other and so was
+unaffected. 13 of 16 published Astro packets were already aligned.
+
+Enforced fail-closed by `verify_display_fwver_monotonic.py --build-id`, wired
+into `build-astro-candidate.sh`. A candidate id with no parseable v-number is
+refused rather than skipped, because unreadable and drifted look identical to the
+caller. Pinned by `tests/test_release_number_matches_display_fwver.py`.
+
+Kit-only releases must therefore either claim a display version too, or not take
+a v-number. Do not let the counters drift again to avoid a version bump.
+
+`o-vNNN` with letter suffixes (`o-v12c`, `o-v12d`) is the **retired** naming
+convention that predates the Astro flow. Registry rows using it are historical
+records and must not be used as precedent: no new release may take that form.
+The current convention is
+
+    astro-vNNN-<slug>-<YYYYMMDD>   published as   6.0.0.54.NNN
+
+one number, two renderings.
+
 ```text
 last_display_fwver=6.0.0.54.111
 ```

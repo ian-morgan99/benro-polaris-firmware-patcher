@@ -74,9 +74,17 @@ PATCHER_SHA="$(git -C "$ROOT" rev-parse HEAD)"
 VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
 # Use the same append-only version/commit contract as camera-only releases.
 # Check before building; claim only after every candidate gate has passed.
-python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" \
-  --candidate "$DISPLAY_FWVER" --state "$VERSION_STATE" \
-  --libgphoto2-commit "$LIB_BASELINE" --patcher-commit "$PATCHER_SHA"
+# --build-id is passed so the validator can require the v-number in the id to
+# equal the last component of the display version. astro-v113 shipped as
+# 6.0.0.54.111 because kit-only releases (v111, v112) consumed v-numbers without
+# consuming a display version, so the info screen no longer identified the build.
+# The flag is only added when BUILD_ID is set: line 53 already requires it in a
+# real build, and test_astro_candidate_wrapper.py extracts this fragment and runs
+# it under `set -u` with BUILD_ID unset.
+VERSION_ARGS=(--candidate "$DISPLAY_FWVER" --state "$VERSION_STATE"
+              --libgphoto2-commit "$LIB_BASELINE" --patcher-commit "$PATCHER_SHA")
+[ -n "${BUILD_ID:-}" ] && VERSION_ARGS+=(--build-id "$BUILD_ID")
+python3 "$ROOT/scripts/verify_display_fwver_monotonic.py" "${VERSION_ARGS[@]}"
 TREE_STATUS="$(git -C "$ROOT" status --porcelain=v1 --untracked-files=all)"
 [ -z "$TREE_STATUS" ] || die "Astro source tree is dirty; use a clean clone"
 git -C "$ROOT" diff --check || die "Astro source whitespace errors"

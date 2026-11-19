@@ -289,6 +289,54 @@ def record_display_fwver(state_path: Path, value: str) -> tuple[int, ...]:
     return current
 
 
+# Candidate ids are `astro-vNNN-slug-YYYYMMDD` (or the short `vNNN`). The NNN is
+# the release number the operator sees in folder names, receipts and issue
+# threads; the fifth component of the display version is what Benro Connect and
+# /app/FwVer show. They are the same release and MUST be the same number.
+#
+# They drifted because kit-only releases (astro-v111, astro-v112) publish SD
+# archives and therefore consume a v-number without consuming a display version,
+# while build-astro-candidate.sh derives the display version independently from
+# the consumed registry. astro-v113 then shipped as 6.0.0.54.111, so the info
+# screen says .111 for a build every document calls v113 -- an operator cannot
+# tell which build is on the device from the device itself.
+BUILD_ID_VNUM_RE = re.compile(r"(?:^|-)v(\d+)")
+
+
+def extract_release_number(build_id: str) -> int | None:
+    """Return the v-number from a candidate id, or None if it carries none."""
+    match = BUILD_ID_VNUM_RE.search(build_id)
+    return int(match.group(1)) if match else None
+
+
+def validate_release_number_alignment(
+    candidate: str, build_id: str
+) -> tuple[int, int]:
+    """Require the v-number in build_id to equal the display version's last part.
+
+    Fails closed. A candidate id with no v-number is refused rather than waved
+    through, because an unparseable id is indistinguishable from a drifted one.
+    """
+    display = parse_display_fwver(candidate)
+    release_number = extract_release_number(build_id)
+    if release_number is None:
+        raise ValueError(
+            f"candidate id {build_id!r} carries no v-number (expected e.g. "
+            f"astro-v{display[4]}-...); the release number cannot be checked "
+            "against the display version"
+        )
+    if release_number != display[4]:
+        raise ValueError(
+            f"release number and display firmware version disagree: "
+            f"build_id says v{release_number} but {candidate} says "
+            f".{display[4]}. They must be the same number, otherwise the "
+            "version shown on the device does not identify the build. Kit-only "
+            "releases must not consume a v-number without also claiming a "
+            "display version."
+        )
+    return release_number, display[4]
+
+
 def validate_monotonic(
     candidate: str,
     last: tuple[int, ...],
@@ -339,6 +387,11 @@ def main() -> int:
         "--patcher-commit",
         help="exact patcher commit the candidate was built from",
     )
+    parser.add_argument(
+        "--build-id",
+        help="candidate/build id; when given, its v-number must equal the last "
+        "component of --candidate",
+    )
     args = parser.parse_args()
     try:
         last = read_last_display_fwver(args.state)
@@ -350,6 +403,8 @@ def main() -> int:
         if not args.candidate:
             parser.error("--candidate is required unless --next is given")
         current = validate_monotonic(args.candidate, last, consumed)
+        if args.build_id:
+            validate_release_number_alignment(args.candidate, args.build_id)
         commit_set: CommitSet | None = None
         if args.libgphoto2_commit or args.patcher_commit:
             if not (args.libgphoto2_commit and args.patcher_commit):
