@@ -182,6 +182,57 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
    card payload. It is NOT inside polaris-astro.zip: without those index files
    install_astro.sh prints "NO index files ... NOTHING WILL SOLVE" and the solver
    never resolves a frame while everything else looks healthy.
+
+   What the card should look like when all four are extracted. The SD card mounts
+   on the device at /app/sd, so the SD card root below is /app/sd on the device:
+
+       (SD card root)
+       |-- FwPkt/
+       |   |-- firmwareInfo
+       |   |-- FwVer
+       |   |-- camera/
+       |   |   |-- config
+       |   |   |-- uImage
+       |   |   |-- rootfs.ubifs
+       |   |   '-- appfs.ubifs
+       |   '-- gimbal/
+       |       |-- polaris403_2.0.0.22.bin
+       |       '-- polaris413_2.0.0.22.bin
+       |-- polaris-astro/
+       |   |-- install_astro.sh
+       |   |-- VERSION                 <- build_id and firmware_version live here
+       |   |-- polaris-httpd           <- the web UI is inside this binary
+       |   |-- polaris-astro.manifest
+       |   |-- site.conf               <- yours; created on the card by step 4, not in the zip
+       |   |-- catalogue-tiles/        (649 .pcat tiles)
+       |   '-- licenses/               (3 licence texts)
+       |-- polaris-wifi/               (14 files: wpa_supplicant, iw, setup-wifi.sh)
+       '-- astrometry/                 (10 index-41xx.fits + indexes.sha256)
+
+   Every one of those four folders sits directly on the SD card root. Nothing goes
+   inside anything else, and no .zip file needs to remain on the card.
+
+   WINDOWS: "Extract All" creates a folder named after the zip and puts the
+   archive's own folder inside it, so you get FwPkt\FwPkt\camera\ instead of
+   FwPkt\camera\. The same happens for the other three. The device does not search
+   for these folders -- it looks for the exact paths above and ignores anything
+   deeper -- so a doubled folder fails silently:
+
+     - FwPkt\FwPkt\            the firmware is never seen, so nothing flashes and
+                               the version in the app stays whatever it was before.
+     - polaris-astro\polaris-astro  (i.e. the folder nested inside itself)
+                               install_astro.sh is not at /app/sd/polaris-astro/,
+                               so the ssh command in step 4 reports "No such file".
+
+   Either move the inner folder up one level, or extract with a tool that does not
+   add its own folder -- 7-Zip (right-click, "Extract here"), unzip on macOS/Linux,
+   or:
+
+       unzip FwPkt.zip -d /Volumes/<SD card name>
+
+   Check before rebooting: the SD card root must list FwPkt, polaris-astro,
+   polaris-wifi and astrometry as four folders, and opening FwPkt must show
+   firmwareInfo and camera immediately -- not another FwPkt.
 4. Run the installer over ssh:
 
        ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh

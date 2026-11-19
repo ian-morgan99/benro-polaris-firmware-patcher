@@ -233,6 +233,38 @@ These two checks are independent and one passing tells you nothing about the oth
 
 A correct version with no page means the install was skipped or stopped partway.
 
+### What the SD card should look like once everything is unzipped
+
+Reinstalling means copying four `.zip` files onto the card and extracting them there.
+When that is done correctly, the card's top level holds exactly these four folders —
+nothing nested inside each other, and no `.zip` files left behind:
+
+    (SD card root)
+    |-- FwPkt/            the firmware update itself
+    |-- polaris-astro/    the astro kit
+    |-- polaris-wifi/     the Wi-Fi kit
+    '-- astrometry/       the index files (only needed once, ever)
+
+The head looks for these four folders by name at the top of the card. It does not
+search, so a folder one level too deep is simply not seen — and nothing tells you.
+
+**On Windows this goes wrong by default.** Right-click → *Extract All* makes its own
+folder named after the zip, and the zip already contains a folder of that name, so you
+end up with `FwPkt\FwPkt\` instead of `FwPkt\`. The other three do the same thing.
+
+What each mistake looks like afterwards:
+
+- `FwPkt\FwPkt\` — the firmware is never noticed, so nothing updates. The version number
+  in the app stays whatever it was before, and the reboot looks unremarkable.
+- `polaris-astro\polaris-astro\` — the installer isn't where the command expects it, so
+  it reports *No such file*.
+
+Either move each inner folder up one level, or extract with something that doesn't add a
+folder of its own — 7-Zip's *Extract here*, or `unzip FwPkt.zip` on macOS/Linux.
+
+Before rebooting, open the card and check: four folders at the top, and opening `FwPkt`
+shows `firmwareInfo` and a `camera` folder straight away — not another `FwPkt`.
+
 ---
 
 ## 9. If something goes wrong
