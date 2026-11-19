@@ -115,7 +115,7 @@ class TestPublisherTemplateStatesLayout(unittest.TestCase):
         # be swallowed as a continuation -- both corrupt the diagram silently.
         text = PUBLISHER.read_text(encoding="utf-8")
         block = text[text.index("(SD card root)"):]
-        block = block[:block.index("4. Run the installer")]
+        block = block[:block.index("6. Run the installer")]
         self.assertNotIn("```", block)
         for line in block.splitlines():
             self.assertFalse(line.rstrip().endswith("\\"),
@@ -157,6 +157,66 @@ class TestLayoutMatchesBuiltArchives(unittest.TestCase):
             names = set(z.namelist())
         for required in ("FwPkt/firmwareInfo", "FwPkt/FwVer", "FwPkt/camera/uImage"):
             self.assertIn(required, names)
+
+
+class TestRouteAOrderingIsCapacitySafe(unittest.TestCase):
+    """Extracting all four archives at once overflows the card and the watcher then
+    declines to flash.
+
+    The head mounts roughly 118 MB of vfat with errors=continue, so an oversized write
+    reports success and truncates. appfs.ubifs is 64 MB, which is exactly the member that
+    gets shortened while the smaller ones still verify clean. On boot the watcher compares
+    every payload against firmwareInfo, finds appfs does not match, and refuses -- with
+    nothing on the card saying so. The published Route A told users to extract all four
+    before rebooting, which is ~162 MB (175 MB after FAT32 cluster rounding) onto a 118 MB
+    card.
+
+    Phasing is the fix: the watcher deletes /app/sd/FwPkt after a successful flash, so the
+    firmware's ~86 MB is returned before the kit needs the card.
+    """
+
+    def test_firmware_is_extracted_before_the_kit(self):
+        text = PUBLISHER.read_text(encoding="utf-8")
+        fwver = text.index("2. Copy FwPkt.zip")
+        reboot = text.index("3. Reboot.")
+        kit = text.index("4. Now copy polaris-astro.zip")
+        self.assertLess(fwver, reboot)
+        self.assertLess(reboot, kit,
+                        "the kit must be staged after the flash reclaims space, not before")
+
+    def test_capacity_limit_is_stated(self):
+        text = PUBLISHER.read_text(encoding="utf-8")
+        self.assertIn("118 MB", text)
+        self.assertIn("errors=continue", text)
+        # The truncation consequence, not just the number: without it a reader cannot
+        # connect a full card to a declined flash.
+        self.assertIn("truncat", text)
+
+    def test_free_space_is_checked_before_copying(self):
+        text = PUBLISHER.read_text(encoding="utf-8")
+        self.assertLess(text.index("1. Check there is room"), text.index("2. Copy FwPkt.zip"))
+
+    def test_flash_confirmation_includes_the_deleted_tree(self):
+        # /app/sd/FwPkt disappearing is both proof of a real flash and the signal that
+        # space has been reclaimed, so it belongs in the confirmation step.
+        text = PUBLISHER.read_text(encoding="utf-8")
+        self.assertIn("SP_DelUpgradeFiles", text)
+
+    def test_step_numbers_are_unique_and_sequential(self):
+        import re
+        text = PUBLISHER.read_text(encoding="utf-8")
+        block = text[text.index("## Route A"):]
+        nums = [int(m.group(1)) for m in re.finditer(r"^(\d+)\. ", block, re.M)]
+        self.assertEqual(nums, sorted(set(nums)), "duplicate step number: %s" % nums)
+        self.assertEqual(nums, list(range(1, len(nums) + 1)), "step numbering gap: %s" % nums)
+
+    def test_cross_references_point_at_existing_steps(self):
+        import re
+        text = PUBLISHER.read_text(encoding="utf-8")
+        block = text[text.index("## Route A"):]
+        defined = {m.group(1) for m in re.finditer(r"^(\d+)\. ", block, re.M)}
+        for ref in re.findall(r"\bsteps? (\d+)", block):
+            self.assertIn(ref, defined, "reference to undefined step %s" % ref)
 
 
 if __name__ == "__main__":

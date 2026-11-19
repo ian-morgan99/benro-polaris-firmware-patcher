@@ -119,7 +119,7 @@ ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""; INDEX_ZIP_SHA=""
 SD_ROWS=""
 [ -n "$ASTRO_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-astro.zip SHA-256 | \`$ASTRO_ZIP_SHA\` |"$'\n'
 [ -n "$WIFI_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-wifi.zip SHA-256 | \`$WIFI_ZIP_SHA\` |"$'\n'
-# Route A step 3 tells the user to copy this archive, so it needs a digest to check
+# Route A step 5 tells the user to copy this archive, so it needs a digest to check
 # against like the other two. Without one they cannot tell a truncated download from a
 # good one, and a missing astrometry/ folder solves nothing while looking healthy.
 [ -n "$INDEX_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| astrometry-indexes.zip SHA-256 | \`$INDEX_ZIP_SHA\` |"$'\n'
@@ -166,14 +166,43 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
 
 ## Route A -- SD card plus one ssh command (no repo, no build)
 
-1. Copy FwPkt.zip to the SD card root and EXTRACT it there, so the card ends up with a
+READ THE ORDER FIRST. Extract the firmware ALONE, flash it, and only then extract the
+kit. Do not put all four on the card at once. All four together need 162 MB (175 MB with
+FAT32 cluster rounding) and the card the head mounts is about 118 MB. The card is vfat
+mounted errors=continue, which means a write that cannot be satisfied reports success and
+truncates the file -- so appfs.ubifs, at 64 MB, silently ends up short. On boot the
+watcher compares every payload against firmwareInfo, finds appfs does not match, and
+declines to flash. Nothing on the card says this happened; the head boots the old
+firmware and looks normal.
+
+1. Check there is room for the firmware tree before copying anything: about 94 MB free is
+   needed for FwPkt/ alone (87.8 MB of files plus FAT32 rounding and the watcher's log).
+   On a PC, look at the card's free space. If it is below that, delete the astrometry/,
+   polaris-astro/ and polaris-wifi/ folders from the card first -- they are reinstalled in
+   steps 4 and 5 -- or use a card of 200 MB or more.
+
+2. Copy FwPkt.zip to the SD card root and EXTRACT it there, so the card ends up with a
    FwPkt/ folder containing camera/config, camera/uImage, camera/rootfs.ubifs and
    camera/appfs.ubifs. Do not leave it as a zip: the on-boot watcher reads the extracted
-   tree and silently ignores an archive sitting beside it (issue #58).
-2. Copy polaris-astro.zip and polaris-wifi.zip to the SD card root and extract each.
+   tree and silently ignores an archive sitting beside it (issue #58). Extract nothing
+   else yet.
+
+3. Reboot. The reboot alone is the trigger; no marker file or command is needed. Then
+   confirm the flash actually happened, rather than assuming it:
+     - read the firmware version in the app -- it must be $DISPLAY_FWVER;
+     - /app/sd/FwPkt must be GONE afterwards. The watcher deletes it on success
+       (SP_DelUpgradeFiles), so its removal is both proof of a real flash and the signal
+       that the ~86 MB it used has been given back to the card.
+   If FwPkt/ is still sitting on the card after a reboot, nothing was flashed. The usual
+   cause is the capacity case above: re-check free space, remove the other folders, and
+   extract FwPkt again.
+
+4. Now copy polaris-astro.zip and polaris-wifi.zip to the SD card root and extract each.
    Both are rooted at their own directory with no wrapper, so they expand to
-   polaris-astro/ and polaris-wifi/ directly on the card. Repeat every release.
-3. Copy astrometry-indexes.zip to the SD card root and extract it. It is rooted at
+   polaris-astro/ and polaris-wifi/ directly on the card. Repeat every release. They fit
+   comfortably once step 3 has reclaimed the firmware's space.
+
+5. Copy astrometry-indexes.zip to the SD card root and extract it. It is rooted at
    astrometry/, so it expands to <SD root>/astrometry/index-41xx.fits. This is a
    one-time copy -- the index files themselves do not change between releases, so skip
    it if the folder is already on the card. Note that the archive's SHA-256 below does
@@ -182,6 +211,10 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
    card payload. It is NOT inside polaris-astro.zip: without those index files
    install_astro.sh prints "NO index files ... NOTHING WILL SOLVE" and the solver
    never resolves a frame while everything else looks healthy.
+
+   If the card cannot hold astrometry/ alongside the kit, leave it off: the kit installs
+   and the web UI runs, but plate solving will not resolve a frame. A 200 MB card holds
+   all four at once with room to spare.
 
    What the card should look like when all four are extracted. The SD card mounts
    on the device at /app/sd, so the SD card root below is /app/sd on the device:
@@ -203,7 +236,7 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
        |   |-- VERSION                 <- build_id and firmware_version live here
        |   |-- polaris-httpd           <- the web UI is inside this binary
        |   |-- polaris-astro.manifest
-       |   |-- site.conf               <- yours; created on the card by step 4, not in the zip
+       |   |-- site.conf               <- yours; created on the card by step 6, not in the zip
        |   |-- catalogue-tiles/        (649 .pcat tiles)
        |   '-- licenses/               (3 licence texts)
        |-- polaris-wifi/               (14 files: wpa_supplicant, iw, setup-wifi.sh)
@@ -222,7 +255,7 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
                                the version in the app stays whatever it was before.
      - polaris-astro\polaris-astro  (i.e. the folder nested inside itself)
                                install_astro.sh is not at /app/sd/polaris-astro/,
-                               so the ssh command in step 4 reports "No such file".
+                               so the ssh command in step 6 reports "No such file".
 
    Either move the inner folder up one level, or extract with a tool that does not
    add its own folder -- 7-Zip (right-click, "Extract here"), unzip on macOS/Linux,
@@ -233,13 +266,13 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
    Check before rebooting: the SD card root must list FwPkt, polaris-astro,
    polaris-wifi and astrometry as four folders, and opening FwPkt must show
    firmwareInfo and camera immediately -- not another FwPkt.
-4. Run the installer over ssh:
+6. Run the installer over ssh:
 
        ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
 
    This is what installs the boot hook and copies the kit into /app/astro. Nothing
    runs it for you: no shipped boot path calls install_astro.sh, so a card that has
-   simply been rebooted will flash the firmware from step 1 and then start nothing
+   simply been rebooted will flash the firmware from step 2 and then start nothing
    astro-related. It also chains any pre-existing hook (the patcher's --ssh-key option
    uses the same file), so ssh keeps working.
 
@@ -252,24 +285,24 @@ a flash deletes /app/astro and its boot hook, so both need one ssh command after
    flashed firmware image uses most of it, so "free on /app/astro" is often small. You may
    also see a line saying the solve data stays on the SD card -- that is correct and
    deliberate: every solver reads the catalogue from /app/sd/polaris-astro, which is where
-   step 2 put it, and /app is far too small to hold a copy. What must NOT be missing is the
+   step 4 put it, and /app is far too small to hold a copy. What must NOT be missing is the
    line "boot hook installed".
 
    Also look for "verified every manifest entry against /app/astro". If instead it says
    "installed files are unverified", the polaris-astro folder on your card came from an
    older release -- re-extract polaris-astro.zip from this one and run it again. Without
    that verification an old server can stay in place while the install reports success.
-5. Reboot the camera. Wi-Fi auto-join stays off until you create the file
+7. Reboot the camera. Wi-Fi auto-join stays off until you create the file
    polaris-wifi/autojoin.
-6. Confirm two separate things, because they are independent and one passing does not
+8. Confirm two separate things, because they are independent and one passing does not
    mean the other did:
 
    - Firmware: read the version in the app. It must show $DISPLAY_FWVER. This is the
      only check available without a PC, and a reboot that did not flash looks identical
      to one that did -- so read it, do not assume it.
    - Astro stack: open http://<polaris ip>:8090 in a browser on the same network. The
-     web UI appearing is the proof that the kit installed in step 4 actually started.
-     A correct firmware version with no page on port 8090 means step 4 was skipped or
+     web UI appearing is the proof that the kit installed in step 6 actually started.
+     A correct firmware version with no page on port 8090 means step 6 was skipped or
      did not finish.
 
 astro-bundle.tar.gz contains the same trees plus licences and manifests. It is for

@@ -68,29 +68,39 @@ looking for the version you conclude the install worked.
 the tree the watcher wants — `/app/sd/FwPkt/camera/{config,uImage,rootfs.ubifs,
 appfs.ubifs}`. The reboot alone is the trigger; no marker file or command is needed.
 
-1. Copy `FwPkt.zip` to the SD root and **extract it there**, so the card ends up with
+**Stage the firmware alone first.** All four payloads together are ~162 MB (175 MB after
+FAT32 cluster rounding) and the head mounts roughly 118 MB of vfat with `errors=continue`,
+so an oversized write reports success and truncates. `appfs.ubifs` is 64 MB — the member
+that gets shortened while the smaller ones still verify clean. The watcher compares every
+payload against `firmwareInfo` on boot, finds appfs does not match, and declines to flash,
+with nothing on the card saying so. See "Card capacity and phased staging".
+
+1. Check free space on the card first: ~94 MB is needed for `FwPkt/` alone (87.8 MB of
+   files plus cluster rounding and the watcher's log). If it is short, remove any existing
+   `astrometry/`, `polaris-astro/` and `polaris-wifi/` folders before copying.
+2. Copy `FwPkt.zip` to the SD root and **extract it there**, so the card ends up with
    a `FwPkt/` folder, not a zip. On Windows/macOS double-click works; the device also
-   has `/usr/bin/unzip` (busybox) if they can reach it.
-2. Copy `polaris-astro.zip` and `polaris-wifi.zip` to the SD root and extract each.
-   Both are rooted at their own directory, so they expand to `polaris-astro/` and
-   `polaris-wifi/`. Repeat every release. If the release also carries
-   `astrometry-indexes.zip`, extract that once — it is ~44 MB and never changes.
-3. Reboot. Only the firmware watcher runs at this boot — **nothing installs the astro
-   stack for you.** The boot hook that starts the web UI lives at
-   `/app/network_telnetd.sh`, which the flash just deleted, and it is created by
-   `install_astro.sh`; a script cannot install the hook that is supposed to run it.
-   So after this reboot the web UI is down until step 4.
-4. Run the installer once, over ssh (the device's AP is `polaris_d13e86`; join it and
-   the device is `root@192.168.0.1`):
+   has `/usr/bin/unzip` (busybox) if they can reach it. Extract nothing else yet.
+3. Reboot, then confirm the flash before going on: read the version in the app, and check
+   that `/app/sd/FwPkt` is **gone** — `SP_DelUpgradeFiles` removes it on success, so its
+   absence is both proof of a real flash and the signal that ~86 MB has been returned to
+   the card. If `FwPkt/` is still there, nothing was flashed; re-check free space.
+4. Copy `polaris-astro.zip` and `polaris-wifi.zip` to the SD root and extract each, plus
+   `astrometry-indexes.zip` once if the release carries it and the card has room. Both kit
+   archives are rooted at their own directory, so they expand to `polaris-astro/` and
+   `polaris-wifi/`. Repeat the kit every release.
 
-   ```sh
-   ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
-   ```
+Only the firmware watcher runs at the reboot in step 3 — **nothing installs the astro
+stack for you.** The boot hook that starts the web UI lives at `/app/network_telnetd.sh`,
+which the flash just deleted, and it is created by `install_astro.sh`; a script cannot
+install the hook that is supposed to run it. So after that reboot the web UI is down until
+the installer runs:
 
-   Expect both `verified every manifest entry` and `boot hook installed`. Then reboot
-   again, or open `http://<polaris ip>:8090` once the script has started it.
-   Wi-Fi auto-join stays off until the user creates
-   `/app/sd/polaris-wifi/autojoin`.
+    ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
+
+Expect both `verified every manifest entry` and `boot hook installed`. Then reboot again,
+or open `http://<polaris ip>:8090` once the script has started it. Wi-Fi auto-join stays
+off until the user creates `/app/sd/polaris-wifi/autojoin`.
 
 The card mounts `vfat` with `fmask=0022`, so extracted files land `755` and binaries
 execute straight off the card — no helper on the user's computer is required.
@@ -331,7 +341,7 @@ script will say so. To run the step on its own:
 ./scripts/release/install-astro-kit.sh out/<candidate> --no-indexes --reboot
 ```
 
-Route A step 4 and Route B still need `install_astro.sh` re-run after the flash,
+Route A's installer step and Route B still need `install_astro.sh` re-run after the flash,
 on every release, not just the first. Confirm it took by opening
 `http://<polaris ip>:8090` — a correct firmware version in the app is not evidence
 that the kit came back.
