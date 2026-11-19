@@ -317,6 +317,7 @@ PY_TESTS=(
     tests/test_display_fwver_monotonic.py
     tests/test_release_number_matches_display_fwver.py
     tests/test_webui_shows_running_build.py
+    tests/test_fwpkt_private_upload.py
     tests/test_build_and_install_entrypoint.py
     tests/test_build_tooling.py
     tests/test_polaris_bulb_dispatch_arm.py
