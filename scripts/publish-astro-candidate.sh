@@ -132,7 +132,7 @@ ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""; INDEX_ZIP_SHA=""
 SD_ROWS=""
 [ -n "$ASTRO_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-astro.zip SHA-256 | \`$ASTRO_ZIP_SHA\` |"$'\n'
 [ -n "$WIFI_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-wifi.zip SHA-256 | \`$WIFI_ZIP_SHA\` |"$'\n'
-# Route A step 3 tells the user to copy this archive, so it needs a digest to check
+# Route A step 2 tells the user to copy this archive, so it needs a digest to check
 # against like the other two. Without one they cannot tell a truncated download from a
 # good one, and a missing astrometry/ folder solves nothing while looking healthy.
 [ -n "$INDEX_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| astrometry-indexes.zip SHA-256 | \`$INDEX_ZIP_SHA\` |"$'\n'
@@ -221,24 +221,27 @@ The head expects vfat mounted with fmask=0022, which gives extracted files mode 
 binaries run straight off the card. A filesystem the head mounts read-only, or cannot mount
 at all, produces the same silent no-flash as a doubled folder.
 
-1. Copy FwPkt.zip to the SD card root and EXTRACT it there, so the card ends up with a
-   FwPkt/ folder containing camera/config, camera/uImage, camera/rootfs.ubifs and
-   camera/appfs.ubifs. Do not leave it as a zip: the on-boot watcher reads the extracted
-   tree and silently ignores an archive sitting beside it (issue #58).
-2. Copy polaris-astro.zip and polaris-wifi.zip to the SD card root and extract each.
-   Both are rooted at their own directory with no wrapper, so they expand to
-   polaris-astro/ and polaris-wifi/ directly on the card. Repeat every release.
-3. Copy astrometry-indexes.zip to the SD card root and extract it. It is rooted at
-   astrometry/, so it expands to <SD root>/astrometry/index-41xx.fits. This is a
-   one-time copy -- the index files themselves do not change between releases, so skip
-   it if the folder is already on the card. Note that the archive's SHA-256 below does
-   change from release to release even when the index files are identical: zip embeds
-   each file's build timestamp, so a different hash here is not evidence of a different
-   card payload. It is NOT inside polaris-astro.zip: without those index files
-   install_astro.sh prints "NO index files ... NOTHING WILL SOLVE" and the solver
-   never resolves a frame while everything else looks healthy.
+1. Copy polaris-sd-package.zip to the SD card root and EXTRACT it there. It expands
+   straight to FwPkt/, polaris-astro/ and polaris-wifi/ at the card root -- no wrapper
+   folder, nothing to rearrange. Do not leave it as a zip: the on-boot watcher reads the
+   extracted tree and silently ignores an archive sitting beside it (issue #58).
+2. First time only: copy astrometry-indexes.zip to the SD card root and extract it. It is
+   rooted at astrometry/, so it expands to <SD root>/astrometry/index-41xx.fits. The index
+   files themselves do not change between releases, so skip this step if the folder is
+   already on the card. Note that the archive's SHA-256 below changes from release to
+   release even when the index files are identical: zip embeds each file's build timestamp,
+   so a different hash here is not evidence of a different card payload. It is NOT inside
+   polaris-sd-package.zip or polaris-astro.zip: without those index files install_astro.sh
+   prints "NO index files ... NOTHING WILL SOLVE" and the solver never resolves a frame
+   while everything else looks healthy.
 
-   What the card should look like when all four are extracted. The SD card mounts
+   Alternative, if you would rather take the archives individually: copy FwPkt.zip,
+   polaris-astro.zip, polaris-wifi.zip and astrometry-indexes.zip to the card root and
+   extract each there. All four are rooted at their own directory with no wrapper, so they
+   expand to FwPkt/, polaris-astro/, polaris-wifi/ and astrometry/ directly on the card.
+   Same end state as steps 1 and 2 -- just three more chances to get the layout wrong.
+
+   What the card should look like when everything is extracted. The SD card mounts
    on the device at /app/sd, so the SD card root below is /app/sd on the device:
 
        (SD card root)
@@ -258,7 +261,7 @@ at all, produces the same silent no-flash as a doubled folder.
        |   |-- VERSION                 <- build_id and firmware_version live here
        |   |-- polaris-httpd           <- the web UI is inside this binary
        |   |-- polaris-astro.manifest
-       |   |-- site.conf               <- yours; created on the card by step 4, not in the zip
+       |   |-- site.conf               <- yours; created on the card by step 3, not in the zip
        |   |-- catalogue-tiles/        (649 .pcat tiles)
        |   '-- licenses/               (3 licence texts)
        |-- polaris-wifi/               (14 files: wpa_supplicant, iw, setup-wifi.sh)
@@ -277,7 +280,7 @@ at all, produces the same silent no-flash as a doubled folder.
                                the version in the app stays whatever it was before.
      - polaris-astro\polaris-astro  (i.e. the folder nested inside itself)
                                install_astro.sh is not at /app/sd/polaris-astro/,
-                               so the ssh command in step 4 reports "No such file".
+                               so the ssh command in step 3 reports "No such file".
 
    Either move the inner folder up one level, or extract with a tool that does not
    add its own folder -- 7-Zip (right-click, "Extract here"), unzip on macOS/Linux,
@@ -288,7 +291,7 @@ at all, produces the same silent no-flash as a doubled folder.
    Check before rebooting: the SD card root must list FwPkt, polaris-astro,
    polaris-wifi and astrometry as four folders, and opening FwPkt must show
    firmwareInfo and camera immediately -- not another FwPkt.
-4. Run the installer over ssh:
+3. Run the installer over ssh:
 
        ssh root@<polaris ip> /app/sd/polaris-astro/install_astro.sh
 
@@ -307,24 +310,24 @@ at all, produces the same silent no-flash as a doubled folder.
    flashed firmware image uses most of it, so "free on /app/astro" is often small. You may
    also see a line saying the solve data stays on the SD card -- that is correct and
    deliberate: every solver reads the catalogue from /app/sd/polaris-astro, which is where
-   step 2 put it, and /app is far too small to hold a copy. What must NOT be missing is the
+   step 1 put it, and /app is far too small to hold a copy. What must NOT be missing is the
    line "boot hook installed".
 
    Also look for "verified every manifest entry against /app/astro". If instead it says
    "installed files are unverified", the polaris-astro folder on your card came from an
    older release -- re-extract polaris-astro.zip from this one and run it again. Without
    that verification an old server can stay in place while the install reports success.
-5. Reboot the camera. Wi-Fi auto-join stays off until you create the file
+4. Reboot the camera. Wi-Fi auto-join stays off until you create the file
    polaris-wifi/autojoin.
-6. Confirm two separate things, because they are independent and one passing does not
+5. Confirm two separate things, because they are independent and one passing does not
    mean the other did:
 
    - Firmware: read the version in the app. It must show $DISPLAY_FWVER. This is the
      only check available without a PC, and a reboot that did not flash looks identical
      to one that did -- so read it, do not assume it.
    - Astro stack: open http://<polaris ip>:8090 in a browser on the same network. The
-     web UI appearing is the proof that the kit installed in step 4 actually started.
-     A correct firmware version with no page on port 8090 means step 4 was skipped or
+     web UI appearing is the proof that the kit installed in step 3 actually started.
+     A correct firmware version with no page on port 8090 means step 3 was skipped or
      did not finish.
 
 astro-bundle.tar.gz contains the same trees plus licences and manifests. It is for

@@ -117,8 +117,14 @@ class TestPublisherTemplateStatesLayout(unittest.TestCase):
         # backticks would be command-substituted, and a line ending in backslash would
         # be swallowed as a continuation -- both corrupt the diagram silently.
         text = PUBLISHER.read_text(encoding="utf-8")
+        import re
         block = text[text.index("(SD card root)"):]
-        block = block[:block.index("4. Run the installer")]
+        # Do not hardcode the installer's step number: Route A was renumbered when
+        # polaris-sd-package.zip became step 1, and a literal "4. Run the installer"
+        # here would raise ValueError and mask whatever this test is meant to catch.
+        nxt = re.search(r"^\d+\. ", block[1:], re.M)
+        self.assertIsNotNone(nxt, "no numbered step follows the card layout diagram")
+        block = block[:nxt.start() + 1]
         self.assertNotIn("```", block)
         for line in block.splitlines():
             self.assertFalse(line.rstrip().endswith("\\"),
@@ -211,17 +217,35 @@ class TestCardCapacityAssumption(unittest.TestCase):
             self.assertNotIn(phrase, text,
                              "the user manual repeats the card-limit claim: %s" % phrase)
 
-    def test_route_a_extracts_all_four_before_rebooting(self):
-        # With a 1 GB card assumed this is the correct order. Pinned so a future
-        # "capacity" rework cannot silently reintroduce phased staging.
+    def test_route_a_stages_everything_before_rebooting(self):
+        # With a 1 GB card assumed, every payload is staged at the card root before the
+        # reboot -- nothing is flashed in phases. Pinned so a future "capacity" rework
+        # cannot silently reintroduce phased staging (the false 118 MB diagnosis in
+        # f5a5cf3 did exactly that). Numbering was reworked when polaris-sd-package.zip
+        # became step 1, so the assertions pin content and ordering rather than fixed
+        # numbers: firmware + kit arrive together, indexes are a first-time-only copy,
+        # and the installer runs before any reboot.
         import re
         text = PUBLISHER.read_text(encoding="utf-8")
         block = text[text.index("## Route A"):]
         nums = [int(m.group(1)) for m in re.finditer(r"^(\d+)\. ", block, re.M)]
         self.assertEqual(nums, list(range(1, len(nums) + 1)), "step numbering: %s" % nums)
-        self.assertIn("2. Copy polaris-astro.zip", block)
-        self.assertIn("3. Copy astrometry-indexes.zip", block)
-        self.assertIn("4. Run the installer", block)
+
+        def step_of(needle):
+            hits = [int(m.group(1)) for m in re.finditer(r"^(\d+)\. (.*)$", block, re.M)
+                    if needle in m.group(2)]
+            self.assertTrue(hits, "no numbered step mentions %r" % needle)
+            return hits[0]
+
+        pkg = step_of("polaris-sd-package.zip")
+        idx = step_of("astrometry-indexes.zip")
+        installer = step_of("Run the installer")
+        reboot = step_of("Reboot the camera")
+        self.assertLess(pkg, installer, "the card package must be staged before installing")
+        self.assertLess(idx, installer, "indexes must be on the card before installing")
+        self.assertLess(installer, reboot, "install runs before the reboot, not after")
+        # The indexes are a one-time copy, not a per-release step.
+        self.assertIn("First time only", block)
 
     def test_step_numbers_are_unique_and_cross_references_resolve(self):
         import re
