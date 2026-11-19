@@ -3086,6 +3086,56 @@ function deviceRefresh() {
 }
 function wireDevice() { $('#dev-refresh').addEventListener('click', deviceRefresh); }
 
+/* The header chip: which build is this, at a glance, with nothing to click.
+ *
+ * /api/version is answered by polaris-httpd reading two files on the head, so it
+ * works whether or not the control link is up -- which is exactly when the answer
+ * matters most. Right after a flash the mount link is often down while the kit is
+ * already serving :8090, and "did my firmware actually change" was previously only
+ * answerable over SSH.
+ *
+ * It shows both names of the same release (astro-v113 and 6.0.0.54.113) because
+ * they are two renderings of one number and reading only one has repeatedly caused
+ * the wrong packet to be flashed or a good install to be called a failure.
+ */
+function fwverRefresh() {
+  var el = $('#fwver');
+  if (!el) return;
+  fetch('/api/version', { cache: 'no-store' }).then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d || !d.ok) { el.hidden = true; return; }
+      var act = d.firmware_version_actual, exp = d.firmware_version_expected;
+      var bid = d.build_id;
+      var m = bid ? /^astro-v(\d+)/.exec(bid) : null;
+      var vnum = m ? m[1] : null;
+      var parts = [];
+      if (vnum) parts.push('v' + vnum);
+      if (act && act !== 'unknown') parts.push(act);
+      if (!parts.length) { el.hidden = true; return; }
+      el.textContent = parts.join(' · ');
+      el.hidden = false;
+      el.className = 'chip';
+      var mismatch = d.aligned === false && exp !== 'unknown' && act !== 'unknown';
+      if (mismatch) {
+        /* Loud on purpose: a kit deployed against an appfs it was not built for
+         * is invisible until it misbehaves. */
+        el.className = 'chip err';
+        el.title = 'MISMATCH — kit built for ' + exp + ', head runs ' + act;
+      } else if (vnum && act && act !== 'unknown' &&
+                 '.' + vnum !== act.slice(act.lastIndexOf('.'))) {
+        /* The release number and the display version disagree. They are meant to
+         * be the same number; when they are not, which build is running is
+         * genuinely ambiguous, so say so instead of printing one of them as if it
+         * were authoritative. */
+        el.className = 'chip warn';
+        el.title = 'release number v' + vnum + ' does not match display version ' + act;
+      } else {
+        el.title = 'build ' + (bid || 'unknown') + ' · firmware ' + (act || 'unknown');
+      }
+    })
+    .catch(function () { el.hidden = true; });
+}
+
 /* ──────────────────────────────── boot ─────────────────────────────────── */
 
 wireTabs();
@@ -3096,6 +3146,7 @@ wireOverlays();
 wireGallery();
 wireSite();
 wireDevice();
+fwverRefresh();
 wireExposure();
 wireFocusMode();
 wireShutter();

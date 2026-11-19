@@ -19,6 +19,13 @@
 <header id="bar">
   <span id="linkdot" class="dot" title="control link"></span>
   <strong id="linktext">connecting…</strong>
+  <!-- Which build this is, without opening a panel or pressing Refresh. The
+       release number and the display firmware version are shown together because
+       they are the same release under two names (astro-v113 == 6.0.0.54.113),
+       and reading only one of them has repeatedly led to flashing the wrong
+       thing or believing a good install failed. Turns red when the kit and the
+       appfs it is running beside were not built for each other. -->
+  <span id="fwver" class="chip" hidden title="build and firmware version"></span>
   <span class="grow"></span>
   <span id="battery" class="chip" hidden></span>
   <span id="card" class="chip" hidden></span>
