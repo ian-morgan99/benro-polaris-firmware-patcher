@@ -339,6 +339,14 @@ identity checks, on-device pgphoto/gphoto2 testing, log reading/download,
 Bluetooth wake + wireless connect incl. sandbox, repo routing). Read it before
 touching the live device. Load-bearing rules, restated:
 
+- **SD card is 1 GB or larger — standing assumption.** Assume this for every install,
+  instruction and test from now on; do not design around smaller cards. All four SD
+  payloads together are ~162 MB (~175 MB after FAT32 cluster rounding), so they fit a
+  1 GB card at once and the manual route should say "extract all four, then reboot".
+  Never quote `docs/FIRMWARE-INSTALL-PROCESS.md`'s "118 MB filesystem" as the head's
+  capacity — that figure is one small test card observed while demonstrating the
+  truncation failure mode, not a property of the device. Where capacity genuinely
+  matters, read `df -k /app/sd`.
 - **Identity first.** `192.168.0.1` is shared with the home cable router. Never
   trust a session until you have (a) a real `polaris_*` AP association
   (`nmcli … | grep 48:E7:DA`), (b) `ip route get 192.168.0.1` via the wifi dev,

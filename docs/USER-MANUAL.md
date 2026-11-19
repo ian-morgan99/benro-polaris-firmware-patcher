@@ -265,25 +265,6 @@ folder of its own — 7-Zip's *Extract here*, or `unzip FwPkt.zip` on macOS/Linu
 Before rebooting, open the card and check: four folders at the top, and opening `FwPkt`
 shows `firmwareInfo` and a `camera` folder straight away — not another `FwPkt`.
 
-### Don't put all four on the card at once
-
-The card the head mounts is only about 118 MB, and the four folders together need roughly
-162 MB. Copying everything first and rebooting once is therefore the one arrangement that
-fails: the firmware's largest file (`appfs.ubifs`, 64 MB) gets cut short when the card runs
-out, and the head compares it against its own checksum list on boot, finds it doesn't match,
-and declines to update. It boots normally on the old firmware and says nothing about why.
-
-So do it in two passes:
-
-1. `FwPkt` on its own, then reboot. Read the version in the app to confirm it changed, and
-   check that the `FwPkt` folder has **disappeared** from the card — the head deletes it
-   after a successful update, which is both the proof and the moment that space comes back.
-2. Then `polaris-astro`, `polaris-wifi` and `astrometry`.
-
-If the card still won't hold `astrometry` alongside the kit, leave it off for now:
-everything else works, but plate solving won't resolve a frame. A card of 200 MB or more
-holds all four at once with room to spare.
-
 ---
 
 ## 9. If something goes wrong

@@ -32,6 +32,8 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 USER_MANUAL = ROOT / "docs" / "USER-MANUAL.md"
+INSTALL_PROCESS = ROOT / "docs" / "FIRMWARE-INSTALL-PROCESS.md"
+AGENTS = ROOT / "AGENTS.md"
 PUBLISHER = ROOT / "scripts" / "publish-astro-candidate.sh"
 
 # The four folders the head looks for, by exact name, at the SD card root.
@@ -115,7 +117,7 @@ class TestPublisherTemplateStatesLayout(unittest.TestCase):
         # be swallowed as a continuation -- both corrupt the diagram silently.
         text = PUBLISHER.read_text(encoding="utf-8")
         block = text[text.index("(SD card root)"):]
-        block = block[:block.index("6. Run the installer")]
+        block = block[:block.index("4. Run the installer")]
         self.assertNotIn("```", block)
         for line in block.splitlines():
             self.assertFalse(line.rstrip().endswith("\\"),
@@ -159,62 +161,74 @@ class TestLayoutMatchesBuiltArchives(unittest.TestCase):
             self.assertIn(required, names)
 
 
-class TestRouteAOrderingIsCapacitySafe(unittest.TestCase):
-    """Extracting all four archives at once overflows the card and the watcher then
-    declines to flash.
+class TestCardCapacityAssumption(unittest.TestCase):
+    """The SD card is assumed to be 1 GB or larger, and no document may present the
+    small test card's size as a limit of the head.
 
-    The head mounts roughly 118 MB of vfat with errors=continue, so an oversized write
-    reports success and truncates. appfs.ubifs is 64 MB, which is exactly the member that
-    gets shortened while the smaller ones still verify clean. On boot the watcher compares
-    every payload against firmwareInfo, finds appfs does not match, and refuses -- with
-    nothing on the card saying so. The published Route A told users to extract all four
-    before rebooting, which is ~162 MB (175 MB after FAT32 cluster rounding) onto a 118 MB
-    card.
+    This exists because a previous revision of this file asserted exactly that: it read
+    "on a 118 MB filesystem with 115 MB free" in FIRMWARE-INSTALL-PROCESS.md, took the
+    118 MB for the device's capacity, and rewrote Route A to forbid extracting all four
+    archives together -- claiming they overflow the card and that the watcher therefore
+    declines to flash. The figure is one deliberately small test card used to demonstrate
+    the errors=continue truncation failure mode; the same section says to read
+    `df -k /app/sd` rather than assume. A 1 GB card holds all four payloads (~162 MB, or
+    ~175 MB after FAT32 cluster rounding) with room to spare, so the original Route A
+    order was correct and has been restored.
 
-    Phasing is the fix: the watcher deletes /app/sd/FwPkt after a successful flash, so the
-    firmware's ~86 MB is returned before the kit needs the card.
+    These tests pin the corrected state: the assumption is recorded, the misleading figure
+    is qualified where it appears, and neither user-facing document repeats the claim.
     """
 
-    def test_firmware_is_extracted_before_the_kit(self):
-        text = PUBLISHER.read_text(encoding="utf-8")
-        fwver = text.index("2. Copy FwPkt.zip")
-        reboot = text.index("3. Reboot.")
-        kit = text.index("4. Now copy polaris-astro.zip")
-        self.assertLess(fwver, reboot)
-        self.assertLess(reboot, kit,
-                        "the kit must be staged after the flash reclaims space, not before")
+    def test_assumption_is_recorded_in_agent_instructions(self):
+        # Assert the heading phrase, not the bare string "1 GB": the figure also occurs
+        # in the explanatory prose, so a loose check passes even when the standing
+        # assumption itself has been removed.
+        text = AGENTS.read_text(encoding="utf-8")
+        self.assertIn("SD card is 1 GB or larger", text)
+        self.assertIn("df -k /app/sd", text)
 
-    def test_capacity_limit_is_stated(self):
-        text = PUBLISHER.read_text(encoding="utf-8")
-        self.assertIn("118 MB", text)
-        self.assertIn("errors=continue", text)
-        # The truncation consequence, not just the number: without it a reader cannot
-        # connect a full card to a declined flash.
-        self.assertIn("truncat", text)
+    def test_install_process_qualifies_the_small_card_figure(self):
+        # The figure may appear -- it documents a real failure mode -- but only alongside
+        # the statement that it is one test card, not the head's capacity.
+        text = INSTALL_PROCESS.read_text(encoding="utf-8")
+        self.assertIn("1 GB", text)
+        i = text.index("118 MB filesystem")
+        nearby = text[max(0, i - 2500):i + 2500]
+        self.assertTrue(
+            "not a property of the device" in nearby or "one such small test card" in nearby,
+            "the 118 MB figure is presented without qualifying its provenance")
 
-    def test_free_space_is_checked_before_copying(self):
+    def test_published_readme_does_not_claim_a_card_limit(self):
         text = PUBLISHER.read_text(encoding="utf-8")
-        self.assertLess(text.index("1. Check there is room"), text.index("2. Copy FwPkt.zip"))
+        for phrase in ("118 MB", "about 118", "card the head mounts is"):
+            self.assertNotIn(phrase, text,
+                             "the per-release README repeats the card-limit claim: %s" % phrase)
 
-    def test_flash_confirmation_includes_the_deleted_tree(self):
-        # /app/sd/FwPkt disappearing is both proof of a real flash and the signal that
-        # space has been reclaimed, so it belongs in the confirmation step.
+    def test_user_manual_does_not_claim_a_card_limit(self):
+        text = USER_MANUAL.read_text(encoding="utf-8")
+        for phrase in ("118 MB", "only about 118", "two passes"):
+            self.assertNotIn(phrase, text,
+                             "the user manual repeats the card-limit claim: %s" % phrase)
+
+    def test_route_a_extracts_all_four_before_rebooting(self):
+        # With a 1 GB card assumed this is the correct order. Pinned so a future
+        # "capacity" rework cannot silently reintroduce phased staging.
+        import re
         text = PUBLISHER.read_text(encoding="utf-8")
-        self.assertIn("SP_DelUpgradeFiles", text)
+        block = text[text.index("## Route A"):]
+        nums = [int(m.group(1)) for m in re.finditer(r"^(\d+)\. ", block, re.M)]
+        self.assertEqual(nums, list(range(1, len(nums) + 1)), "step numbering: %s" % nums)
+        self.assertIn("2. Copy polaris-astro.zip", block)
+        self.assertIn("3. Copy astrometry-indexes.zip", block)
+        self.assertIn("4. Run the installer", block)
 
-    def test_step_numbers_are_unique_and_sequential(self):
+    def test_step_numbers_are_unique_and_cross_references_resolve(self):
         import re
         text = PUBLISHER.read_text(encoding="utf-8")
         block = text[text.index("## Route A"):]
         nums = [int(m.group(1)) for m in re.finditer(r"^(\d+)\. ", block, re.M)]
         self.assertEqual(nums, sorted(set(nums)), "duplicate step number: %s" % nums)
-        self.assertEqual(nums, list(range(1, len(nums) + 1)), "step numbering gap: %s" % nums)
-
-    def test_cross_references_point_at_existing_steps(self):
-        import re
-        text = PUBLISHER.read_text(encoding="utf-8")
-        block = text[text.index("## Route A"):]
-        defined = {m.group(1) for m in re.finditer(r"^(\d+)\. ", block, re.M)}
+        defined = {str(n) for n in nums}
         for ref in re.findall(r"\bsteps? (\d+)", block):
             self.assertIn(ref, defined, "reference to undefined step %s" % ref)
 
