@@ -35,6 +35,7 @@ USER_MANUAL = ROOT / "docs" / "USER-MANUAL.md"
 INSTALL_PROCESS = ROOT / "docs" / "FIRMWARE-INSTALL-PROCESS.md"
 AGENTS = ROOT / "AGENTS.md"
 PUBLISHER = ROOT / "scripts" / "publish-astro-candidate.sh"
+BUILD_SCRIPT = ROOT / "scripts" / "build-astro-candidate.sh"
 
 # The four folders the head looks for, by exact name, at the SD card root.
 SD_ROOT_FOLDERS = ("FwPkt", "polaris-astro", "polaris-wifi", "astrometry")
@@ -231,6 +232,95 @@ class TestCardCapacityAssumption(unittest.TestCase):
         defined = {str(n) for n in nums}
         for ref in re.findall(r"\bsteps? (\d+)", block):
             self.assertIn(ref, defined, "reference to undefined step %s" % ref)
+
+
+class TestSingleCardArchive(unittest.TestCase):
+    """One archive that expands to all four card folders, and the FAT32 requirement.
+
+    Four separate archives means four chances to get the extraction wrong, and the
+    failure is silent: Windows "Extract All" wraps each in a folder named after it,
+    and the head only looks for /app/sd/FwPkt, /app/sd/polaris-astro etc. by exact
+    path. polaris-sd-package.zip carries the same bytes as one archive with no wrapper,
+    so extracting it once is the whole staging step.
+
+    It is deliberately a separate artifact rather than extra members inside FwPkt.zip:
+    that archive's SHA-256 is in the cross-repo provenance registry and its tree is what
+    firmwareInfo's MD5s are verified against, so changing its bytes would invalidate every
+    published row and break the refuse-to-replace guard on candidates already public.
+    """
+
+    def test_build_produces_the_combined_archive(self):
+        text = BUILD_SCRIPT.read_text(encoding="utf-8")
+        # Not just the filename: it appears in error strings too, so a loose check
+        # passes even when nothing builds the archive. Pin the invocation.
+        self.assertIn('SD_PACKAGE="$OUT/polaris-sd-package.zip"', text)
+        self.assertIn('zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi astrometry',
+                      text)
+        # Built from symlinks, not a copy: the trees total ~157 MB and out/ holds
+        # several candidates.
+        self.assertIn('ln -s "$OUT/FwPkt" "$stage/FwPkt"', text)
+
+    def test_combined_archive_is_verified_against_its_sources(self):
+        # A silently dropped folder -- astrometry/ is optional in the tree, so a bare
+        # [ -d ] guard skips it without saying so -- would ship a kit that solves
+        # nothing, which is the exact failure this archive exists to prevent.
+        text = BUILD_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("is missing FwPkt files", text)
+        self.assertIn("is missing members from", text)
+
+    def test_publisher_ships_it_under_the_refuse_to_replace_guard(self):
+        text = PUBLISHER.read_text(encoding="utf-8")
+        self.assertIn("polaris-sd-package.zip", text)
+        self.assertIn(
+            "refusing to replace published polaris-sd-package.zip bytes", text)
+
+    def test_readme_recommends_the_single_archive(self):
+        text = PUBLISHER.read_text(encoding="utf-8")
+        block = text[text.index("## Route A"):]
+        self.assertIn("USE polaris-sd-package.zip", block)
+
+    def test_user_manual_also_points_at_the_single_archive_and_fat32(self):
+        # The user manual is what end users actually read, and it lists the four-folder
+        # layout independently of the release README. If only the README recommends the
+        # combined archive and the FAT32 requirement, the two documents disagree and the
+        # reader follows whichever they opened first.
+        text = USER_MANUAL.read_text(encoding="utf-8")
+        self.assertIn("polaris-sd-package.zip", text)
+        self.assertIn("FAT32", text)
+        self.assertIn("exFAT", text)
+
+    def test_fat32_is_required_and_exfat_flagged_as_unverified(self):
+        # The head runs Linux 4.9.37 and the only captured card mount is vfat. Mainline
+        # gained exFAT in 5.4, so support depends on a vendor backport that has NOT been
+        # checked -- the README must not claim exFAT is unsupported, only that FAT32 is
+        # known good and that an unmountable card fails silently.
+        text = PUBLISHER.read_text(encoding="utf-8")
+        block = text[text.index("## Route A"):]
+        self.assertIn("FAT32", block)
+        self.assertIn("exFAT", block)
+        self.assertIn("/proc/filesystems", block)
+        self.assertIn("4.9.37", block)
+        self.assertNotIn("cannot be mounted at all", block,
+                         "overstates exFAT support as a proven fact")
+
+
+class TestKernelIsNeverReplaced(unittest.TestCase):
+    """A flash cannot add filesystem support, because we never ship a new kernel.
+
+    This matters for the exFAT question: the kernel is uImage, and every packet we
+    build carries stock uImage bytes. Only appfs changes. So no release of ours can
+    make the head understand a filesystem it could not already mount -- and no release
+    can fix that by loading a driver either, because the card has to be readable
+    before anything on it can run.
+    """
+
+    def test_documentation_states_the_kernel_is_untouched(self):
+        text = INSTALL_PROCESS.read_text(encoding="utf-8")
+        # The substantive claim, not the bare version number -- "4.9.37" appears twice
+        # in that section, so checking it alone passes even if the reasoning is deleted.
+        self.assertIn("We never ship a new kernel", text)
+        self.assertIn("only `appfs` differs", text)
+        self.assertIn("The card must be readable before anything on it runs", text)
 
 
 if __name__ == "__main__":

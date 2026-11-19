@@ -109,6 +109,19 @@ for sdzip in polaris-astro.zip polaris-wifi.zip astrometry-indexes.zip; do
     cp "$SD_ROOT/$sdzip" "$PR_CHECKOUT/$DEST/"
   fi
 done
+
+# The one-archive option: everything the card needs, expanding straight to the card
+# root. Published beside the per-folder archives rather than replacing them, so an
+# existing candidate's bytes stay untouched and either route still works.
+SD_PACKAGE_SHA=""
+if [ -f "$BUILD/polaris-sd-package.zip" ]; then
+  if [ "$EXISTING" = 1 ] && [ -f "$PR_CHECKOUT/$DEST/polaris-sd-package.zip" ]; then
+    cmp -s "$BUILD/polaris-sd-package.zip" "$PR_CHECKOUT/$DEST/polaris-sd-package.zip" \
+      || die "refusing to replace published polaris-sd-package.zip bytes for existing candidate: $DEST"
+  else
+    cp "$BUILD/polaris-sd-package.zip" "$PR_CHECKOUT/$DEST/"
+  fi
+fi
 ASTRO_ZIP_SHA=""; WIFI_ZIP_SHA=""; INDEX_ZIP_SHA=""
 [ -f "$PR_CHECKOUT/$DEST/polaris-astro.zip" ] && \
   ASTRO_ZIP_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-astro.zip" | awk '{print $1}')
@@ -123,6 +136,11 @@ SD_ROWS=""
 # against like the other two. Without one they cannot tell a truncated download from a
 # good one, and a missing astrometry/ folder solves nothing while looking healthy.
 [ -n "$INDEX_ZIP_SHA" ] && SD_ROWS="${SD_ROWS}| astrometry-indexes.zip SHA-256 | \`$INDEX_ZIP_SHA\` |"$'\n'
+[ -f "$PR_CHECKOUT/$DEST/polaris-sd-package.zip" ] && \
+  SD_PACKAGE_SHA=$(sha256sum "$PR_CHECKOUT/$DEST/polaris-sd-package.zip" | awk '{print $1}')
+# The combined archive is the recommended path, so its digest matters most: it is
+# the one file a user is told to download and extract in a single step.
+[ -n "$SD_PACKAGE_SHA" ] && SD_ROWS="${SD_ROWS}| polaris-sd-package.zip SHA-256 | \`$SD_PACKAGE_SHA\` |"$'\n'
 
 cp "$MANIFEST" "$PR_CHECKOUT/$DEST/"
 for file in install-manifest.json build-source-provenance.txt release-change-manifest.json \
@@ -165,6 +183,38 @@ an issue, qualifying a build); use Route A for end users. Neither route is zero-
 a flash deletes /app/astro and its boot hook, so both need one ssh command afterwards.
 
 ## Route A -- SD card plus one ssh command (no repo, no build)
+
+USE polaris-sd-package.zip. It is one file that expands to all four folders the head
+needs -- FwPkt/, polaris-astro/, polaris-wifi/ and astrometry/ -- directly at the card
+root, with no wrapper folder around them. Copy it to the card root, extract it there, and
+you are done staging. The separate archives below still work and are published unchanged;
+use this one unless you have a reason not to.
+
+USE FAT32 ON THE CARD, NOT exFAT. The head runs Linux 4.9.37 and the only card mount ever
+captured from it is vfat:
+
+    /dev/mmcblk0p1 on /app/sd type vfat (rw,relatime,...,errors=continue)
+
+Mainline Linux gained an exFAT driver in 5.4, so a 4.9 kernel supports exFAT only if the
+vendor backported it -- and whether this one did has not been checked. FAT32 is known to
+work, so use it and do not gamble on it: if the head cannot mount your card, /app/sd is
+empty, the firmware watcher finds nothing, and nothing flashes -- with no error anywhere.
+
+Check what the head can actually mount, over ssh:
+
+    cat /proc/filesystems | grep -iE "fat|exfat"
+    ls -la /app/sd
+
+If /app/sd lists your folders, the card is fine whatever its format. If it is empty while
+the folders are clearly on the card in Windows or macOS, the head cannot read that
+filesystem -- reformat as FAT32 and copy again. On Windows, exFAT is what it offers by
+default above 32 GB, so a large card usually needs reformatting:
+
+    format X: /FS:FAT32
+
+The head expects vfat mounted with fmask=0022, which gives extracted files mode 755 so
+binaries run straight off the card. A filesystem the head mounts read-only, or cannot mount
+at all, produces the same silent no-flash as a doubled folder.
 
 1. Copy FwPkt.zip to the SD card root and EXTRACT it there, so the card ends up with a
    FwPkt/ folder containing camera/config, camera/uImage, camera/rootfs.ubifs and

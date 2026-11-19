@@ -440,6 +440,78 @@ SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
   fi
 ) || die "could not produce the SD kit archives -- see the ERROR lines above"
 
+# One archive that expands to every folder the card needs, at the card root.
+#
+# The four-folder layout is the single most common failure mode in this install:
+# Windows "Extract All" wraps each archive in a folder named after it, and the
+# head only ever looks for /app/sd/FwPkt, /app/sd/polaris-astro, etc. -- it does
+# not search, so FwPkt\FwPkt\camera flashes nothing and reports no error. Asking
+# the user to get four separate archives individually right multiplies that risk;
+# one archive with no wrapper folder removes three of the four chances to get it
+# wrong, and removes the "did I extract all of them?" question entirely.
+#
+# Deliberately NOT folded into FwPkt.zip. That archive's SHA-256 is recorded in
+# the cross-repo provenance registry and its tree is what firmwareInfo's MD5s are
+# checked against; changing its bytes would invalidate every published row for it
+# and break the refuse-to-replace guard on candidates already public. So this is
+# a separate artifact that carries the same bytes.
+#
+# Built from symlinks rather than a copy: the trees total ~157 MB and out/ holds
+# several candidates, so a cp would double that per build for no benefit -- zip
+# dereferences symlinked directories and stores their contents (verified: a
+# symlinked tree yields FwPkt/camera/uImage as a real member, not a link entry).
+SD_PACKAGE="$OUT/polaris-sd-package.zip"
+(
+  command -v zip >/dev/null 2>&1 || { echo "ERROR: 'zip' is not installed -- cannot produce polaris-sd-package.zip" >&2; exit 1; }
+  # FwPkt is staged at the candidate root, not inside COPY-TO-SD-CARD-ROOT: it is
+  # the tree FwPkt.zip is built from and what firmwareInfo's MD5s are verified
+  # against. The kit folders are under SD_ROOT. Both belong at the card root.
+  [ -d "$OUT/FwPkt" ] || { echo "ERROR: no FwPkt tree at $OUT/FwPkt -- the combined card archive would ship without firmware" >&2; exit 1; }
+  [ -d "$SD_ROOT/polaris-astro" ] || { echo "ERROR: no polaris-astro tree at $SD_ROOT -- the combined card archive would ship without the kit" >&2; exit 1; }
+  rm -f "$SD_PACKAGE"
+  stage=$(mktemp -d) || exit 1
+  trap 'rm -rf "$stage"' EXIT
+  ln -s "$OUT/FwPkt" "$stage/FwPkt"
+  for d in polaris-astro polaris-wifi astrometry; do
+    [ -d "$SD_ROOT/$d" ] && ln -s "$SD_ROOT/$d" "$stage/$d"
+  done
+  ( cd "$stage" && zip -qrX "$SD_PACKAGE" FwPkt polaris-astro polaris-wifi astrometry ) \
+    || { echo "ERROR: failed to build polaris-sd-package.zip" >&2; exit 1; }
+) || die "could not produce the combined card archive -- see the ERROR lines above"
+
+# The combined archive must contain exactly what the separate archives contain.
+# If a folder were silently dropped -- astrometry/ is optional in the tree, so a
+# plain [ -d ] guard would skip it without saying so -- the user would extract one
+# tidy archive and get a kit that solves nothing, which is the failure mode this
+# archive exists to prevent. Compare member sets against the per-folder archives.
+combined_members=$(unzip -Z1 "$SD_PACKAGE" 2>/dev/null | grep -v '/$' | sort) || die "cannot list $SD_PACKAGE"
+[ -n "$combined_members" ] || die "polaris-sd-package.zip is empty"
+
+# Every file under the staged FwPkt tree must be present.
+( cd "$OUT" && find FwPkt -type f | sort ) > /tmp/sdpkg-expected-fw.$$
+printf '%s\n' "$combined_members" | grep '^FwPkt/' | sort > /tmp/sdpkg-got-fw.$$
+if ! diff -q /tmp/sdpkg-expected-fw.$$ /tmp/sdpkg-got-fw.$$ >/dev/null 2>&1; then
+  missing=$(comm -23 /tmp/sdpkg-expected-fw.$$ /tmp/sdpkg-got-fw.$$ | head -5 | tr '\n' ' ')
+  rm -f /tmp/sdpkg-expected-fw.$$ /tmp/sdpkg-got-fw.$$
+  die "polaris-sd-package.zip is missing FwPkt files: $missing"
+fi
+rm -f /tmp/sdpkg-expected-fw.$$ /tmp/sdpkg-got-fw.$$
+
+# Every member of each per-folder kit archive must be present too.
+for z in polaris-astro.zip polaris-wifi.zip astrometry-indexes.zip; do
+  [ -f "$SD_ROOT/$z" ] || continue
+  unzip -Z1 "$SD_ROOT/$z" 2>/dev/null | grep -v '/$' | sort > /tmp/sdpkg-expected.$$
+  printf '%s\n' "$combined_members" | sort > /tmp/sdpkg-got.$$
+  if ! comm -23 /tmp/sdpkg-expected.$$ /tmp/sdpkg-got.$$ | grep -q .; then
+    : # every expected member is present
+  else
+    missing=$(comm -23 /tmp/sdpkg-expected.$$ /tmp/sdpkg-got.$$ | head -5 | tr '\n' ' ')
+    rm -f /tmp/sdpkg-expected.$$ /tmp/sdpkg-got.$$
+    die "polaris-sd-package.zip is missing members from $z: $missing"
+  fi
+  rm -f /tmp/sdpkg-expected.$$ /tmp/sdpkg-got.$$
+done
+
 # Membership test for a zip member, without a pipeline.
 #
 # `unzip -Z1 archive | grep -qx pattern` is wrong under `set -o pipefail`, and

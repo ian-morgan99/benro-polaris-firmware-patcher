@@ -235,8 +235,13 @@ A correct version with no page means the install was skipped or stopped partway.
 
 ### What the SD card should look like once everything is unzipped
 
-Reinstalling means copying four `.zip` files onto the card and extracting them there.
-When that is done correctly, the card's top level holds exactly these four folders —
+**Use `polaris-sd-package.zip` if your release has it.** It is one file that unpacks to
+all four folders at once, with no extra folder wrapped around them. Copy it to the card's
+top level, extract it there, and you are done — nothing else to copy and nothing to
+rearrange. The four separate `.zip` files below still work exactly as before; the combined
+one just removes three chances to get the layout wrong.
+
+When staging is done correctly, the card's top level holds exactly these four folders —
 nothing nested inside each other, and no `.zip` files left behind:
 
     (SD card root)
@@ -247,6 +252,16 @@ nothing nested inside each other, and no `.zip` files left behind:
 
 The head looks for these four folders by name at the top of the card. It does not
 search, so a folder one level too deep is simply not seen — and nothing tells you.
+
+**Format the card as FAT32, not exFAT.** The head reads cards formatted FAT32; whether it
+can read exFAT has never been confirmed, and Windows offers exFAT by default for cards over
+32 GB, so a new card usually needs reformatting before use. If the head cannot read your
+card, the folders simply aren't there as far as it's concerned — nothing updates, and
+nothing says why. There is no way to fix that from the head itself, because it would need
+to read the card to do so.
+
+On Windows: `format X: /FS:FAT32` (or use the SD Association's free *Formatter* tool, which
+handles larger cards properly).
 
 **On Windows this goes wrong by default.** Right-click → *Extract All* makes its own
 folder named after the zip, and the zip already contains a folder of that name, so you

@@ -413,6 +413,65 @@ Direct copies are acceptable **only** as a temporary diagnostic explicitly
 authorised by the user, and they invalidate qualification evidence for that
 candidate (see `AGENTS.md`). Record it in the candidate's `SUMMARY.md` when done.
 
+## Card filesystem: FAT32, and why a flash cannot fix an unreadable card
+
+The head runs **Linux 4.9.37** (`docs/evidence/usb-compat-off-2026-09-29/dmesg-current-boot.txt`:
+`Linux version 4.9.37 (win@win) ... ARMv7`). The only card mount ever captured from it is
+vfat:
+
+```
+/dev/mmcblk0p1 on /app/sd type vfat (rw,relatime,...,errors=continue)
+```
+
+Mainline Linux gained an exFAT driver in **5.4**, so a 4.9 kernel supports exFAT only if
+the vendor backported it. **Whether this one did has not been checked** — no
+`/proc/filesystems`, `lsmod` or kernel-config capture exists in the evidence base. FAT32 is
+known good, so use it rather than gambling on the backport question.
+
+**A flash cannot add filesystem support.** Two independent reasons:
+
+1. **We never ship a new kernel.** The kernel is `uImage`, and every packet this project
+   builds carries stock `uImage` bytes — verified by comparing `firmwareInfo` MD5s against
+   `firmware/FwPkt.zip`: `uImage`, `rootfs`, `config`, `polaris403` and `polaris413` are all
+   identical to stock, and **only `appfs` differs**. All our changes live in `appfs`. So no
+   release of ours can change which filesystems the head understands.
+2. **The card must be readable before anything on it runs.** The firmware watcher is
+   already-running code reading `/app/sd`; a driver that would let it read the card would
+   have to come from the card. Modules *can* load on this device — `Mlog` records
+   `HI_insmod` inserting `/app/kpmod/*.ko` (e.g. `rfkill.ko`, which fails with `Cannot
+   allocate memory`) — but that is the head loading its own drivers from `/app`, not from
+   the SD card, and it happens after the mount either way.
+
+So an unsupported card format is not recoverable by installing anything: it fails before
+installation begins.
+
+**The failure is silent.** If the head cannot mount the card, `/app/sd` is empty, the
+watcher finds no `FwPkt/`, nothing flashes, and the device boots normally on the old
+firmware — indistinguishable from a successful install unless the version is read. This is
+the same class of failure as a doubled folder (see "Why the tree, not the zip") and the
+same class as a truncated payload.
+
+Check over ssh before concluding an install failed for another reason:
+
+```sh
+cat /proc/filesystems | grep -iE 'fat|exfat'
+ls -la /app/sd
+df -k /app/sd
+```
+
+If `/app/sd` lists the folders, the card is readable whatever its format. If it is empty
+while Windows or macOS clearly shows the folders, the head cannot mount that filesystem —
+reformat as FAT32 and copy again. Windows offers exFAT by default above 32 GB, so a large
+card usually needs reformatting explicitly:
+
+```
+format X: /FS:FAT32
+```
+
+The card is mounted vfat with `fmask=0022`, which gives extracted files mode 755 so
+binaries run straight off the card. A filesystem mounted read-only, or not mounted at all,
+produces the same silent no-flash.
+
 ## Card capacity and phased staging
 
 **Assumption for all future work: the SD card is 1 GB or larger.** Every install, test
