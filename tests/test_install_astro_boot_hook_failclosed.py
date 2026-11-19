@@ -64,8 +64,24 @@ def bundle(tmp_path: Path) -> dict[str, Path]:
         p.write_text("#!/bin/sh\nexit 0\n")
         p.chmod(0o755)
 
-    # Manifest covers $DEST contents only, matching how it is generated.
+    # The manifest must be built the way build-astro-candidate.sh builds it: over
+    # the finished kit tree, not over the installer's hardcoded binary list. The
+    # fixture used to list only the required binaries and claimed that "matched how
+    # it is generated" -- it did not, and that is exactly how the VERSION bug stayed
+    # green. build-astro-candidate.sh writes VERSION into the kit before generating
+    # the manifest, so a real bundle lists VERSION plus every *.sh alongside the
+    # binaries; a fixture listing only binaries lets the installer pass here while
+    # failing on every device, because verification compares each listed entry
+    # against $DEST and nothing copied VERSION there.
     entries = [f"{_sha256(src / n)}  {n}" for n in names]
+    (src / "VERSION").write_text(
+        "build_id=test-build\nfirmware_version=6.0.0.54.114\n"
+        "firmware_version_source=explicit\n")
+    entries.append(f"{_sha256(src / 'VERSION')}  VERSION")
+    for sh in sorted(src.glob("*.sh")):
+        if sh.name == "polaris-astro-boot.sh":
+            continue  # installed as $HOOK, not into $DEST
+        entries.append(f"{_sha256(sh)}  {sh.name}")
     (src / "polaris-astro.manifest").write_text("\n".join(entries) + "\n")
 
     app = tmp_path / "app"
@@ -94,6 +110,74 @@ def _run(bundle: dict[str, Path], extra_env: dict[str, str] | None = None):
     return subprocess.run(
         ["sh", str(INSTALLER)],
         text=True, capture_output=True, timeout=120, env=env, cwd=str(ROOT))
+
+
+def test_manifest_listed_data_file_lands_in_dest(bundle):
+    """Every manifest entry must actually be copied, not just checked.
+
+    This is the v114 field failure. build-astro-candidate.sh writes VERSION into
+    the kit and generates polaris-astro.manifest from the finished tree, so the
+    manifest lists VERSION -- but install_astro.sh copied a hardcoded list of
+    binaries plus *.sh and never copied VERSION. Verification then compared
+    /app/astro/VERSION against a hash of a file that was never placed there,
+    printed "VERIFY FAILED: VERSION", and exited 1.
+
+    The exit is what made it catastrophic rather than merely noisy: the boot hook
+    is installed further down the script, so the early exit meant no hook was
+    written. The device came back with firmware flashed and /app/astro populated
+    but nothing starting at boot -- "the astro module is not recognised" -- while
+    the installer's output blamed the copy step instead of naming the missing hook.
+
+    polaris-astro-sync.sh already derives its file list from the manifest so a
+    bundle can add a file without editing it; install_astro.sh was the exception,
+    and that asymmetry is how VERSION slipped through.
+    """
+    r = _run(bundle)
+    assert r.returncode == 0, (
+        "install must not fail on a manifest-listed data file:\n"
+        f"{r.stdout}\n{r.stderr}")
+    assert "VERIFY FAILED" not in r.stderr, (
+        f"a manifest entry was verified but never copied: {r.stderr}")
+
+    landed = bundle["dest"] / "VERSION"
+    assert landed.is_file(), (
+        "VERSION is listed in polaris-astro.manifest but did not reach $DEST -- "
+        "/api/version would answer 'unknown' and the header chip stays hidden")
+    assert _sha256(landed) == _sha256(bundle["src"] / "VERSION"), (
+        "VERSION in $DEST does not match the bundle")
+
+    # A data file must not be made executable just because it was installed.
+    assert not landed.stat().st_mode & 0o111, "VERSION should not be executable"
+
+
+def test_manifest_entry_missing_from_bundle_is_not_silently_ignored(bundle):
+    """A manifest that promises a file the bundle lacks must still fail closed.
+
+    The copy-by-manifest loop skips entries it cannot find in $SRC. If that skip
+    also silenced verification, an incomplete bundle would install and report
+    success -- the same silent no-op class this whole path exists to prevent.
+    """
+    (bundle["src"] / "VERSION").write_text("build_id=other\n")  # hash now stale
+    r = _run(bundle)
+    assert r.returncode != 0, (
+        "a bundle whose VERSION does not match its manifest must not report success")
+    assert "VERIFY FAILED" in r.stderr
+
+
+def test_hook_is_installed_even_when_a_copy_is_skipped(bundle):
+    """Ordering guard: the hook step must be reachable after the copy loops.
+
+    The v114 failure was an early exit *before* the hook block. If a future edit
+    moves verification after the hook, or makes a copy failure non-fatal, this
+    catches the drift: both outcomes are asserted together, so a script that
+    installs files but not the hook cannot pass.
+    """
+    r = _run(bundle)
+    assert r.returncode == 0, f"installer failed:\n{r.stdout}\n{r.stderr}"
+    assert "verified every manifest entry" in r.stdout, (
+        f"verification did not complete: {r.stdout}")
+    assert "boot hook installed and verified" in r.stdout, (
+        f"hook step never ran: {r.stdout}")
 
 
 def test_boot_hook_is_written_and_matches_bundle(bundle):

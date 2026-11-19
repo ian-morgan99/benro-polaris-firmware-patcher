@@ -98,6 +98,60 @@ for s in "$SRC"/*.sh; do
     cp "$s" "$DEST/"; chmod +x "$DEST/$(basename "$s")"
 done
 
+# ---- everything else the manifest declares ---------------------------------
+# The two loops above copy a hardcoded list of binaries plus *.sh. The manifest
+# is not limited to those: build-astro-candidate.sh writes VERSION into the kit
+# and generates polaris-astro.manifest from the finished tree, so VERSION is
+# listed -- but nothing copied it. Verification then compared /app/astro/VERSION
+# against a hash of a file that was never placed there, reported
+# "VERIFY FAILED: VERSION", and exited 1.
+#
+# The exit is what made this so damaging rather than merely noisy. The boot hook
+# is installed further down this script, so the early exit meant the hook was
+# never written: the kit's files were on the device but nothing started them at
+# boot. A device came back from a flash with the firmware updated, /app/astro
+# populated, and no astro stack running -- while the installer's own output said
+# the install was "NOT verified" rather than "not installed", which points at the
+# copy step instead of at the missing hook.
+#
+# Copying by manifest rather than by name is deliberate: polaris-astro-sync.sh
+# already derives its file list from the manifest so "a bundle can add a file
+# without editing this script". install_astro.sh was the odd one out, and that
+# asymmetry is exactly how VERSION slipped through -- the build script's comment
+# claims the sync path delivers manifest entries to /app/astro, which was true of
+# the sync script and false of the installer.
+if [ -f "$SRC/polaris-astro.manifest" ]; then
+    while IFS= read -r line; do
+        set -- $line
+        name=$2
+        if [ -z "$name" ]; then
+            continue
+        fi
+        if [ ! -f "$SRC/$name" ]; then
+            # The manifest promises a file the bundle does not carry. Leave it for
+            # the verification block below to report: silently skipping would put
+            # us back to claiming success over an incomplete install.
+            continue
+        fi
+        if [ -e "$DEST/$name" ]; then
+            # Already copied by the binary or script loops above. Re-copying is
+            # harmless but pointless, and skipping keeps the executable bits those
+            # loops set.
+            continue
+        fi
+        d=$(dirname "$name")
+        if [ "$d" != "." ] && [ ! -d "$DEST/$d" ]; then
+            mkdir -p "$DEST/$d"
+        fi
+        cp "$SRC/$name" "$DEST/$name"
+        # Preserve executability only where the source has it. VERSION and other
+        # data files must not be made executable.
+        if [ -x "$SRC/$name" ]; then
+            chmod +x "$DEST/$name"
+        fi
+    done < "$SRC/polaris-astro.manifest"
+fi
+
 # ---- verify what actually landed ------------------------------------------
 # Existence checks alone are not enough: they pass against a stale binary. This
 # installer was previously "cp and hope", so re-running it over an existing
