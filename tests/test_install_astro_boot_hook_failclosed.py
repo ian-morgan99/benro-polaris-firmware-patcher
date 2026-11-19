@@ -180,6 +180,81 @@ def test_hook_is_installed_even_when_a_copy_is_skipped(bundle):
         f"hook step never ran: {r.stdout}")
 
 
+def test_truncated_manifest_does_not_claim_full_verification(bundle):
+    """A damaged manifest must not report that everything was checked.
+
+    Reproduced against the shipped v114 kit: with polaris-astro.manifest cut to
+    5 of its 39 lines -- what bad sectors or a partial copy produce -- the loop
+    parsed the surviving lines, found nothing wrong with them, printed "verified
+    every manifest entry", installed the boot hook and exited 0. Thirty-four
+    load-bearing files went unchecked, polaris-httpd among them. The word "every"
+    made a partial check indistinguishable from a complete one, which is exactly
+    the class of silent no-op this block exists to prevent.
+
+    The manifest is read as a stream, so truncation is invisible without counting:
+    the file is still valid text up to the point where it stops.
+    """
+    manifest = bundle["src"] / "polaris-astro.manifest"
+    lines = manifest.read_text().splitlines()
+    assert len(lines) > 5, "fixture manifest too short to test truncation"
+    manifest.write_text("\n".join(lines[:5]) + "\n")
+
+    r = _run(bundle)
+    assert r.returncode != 0, (
+        "a truncated manifest must not pass silently:\n"
+        f"rc={r.returncode}\n{r.stdout}\n{r.stderr}")
+    assert "not listed" in r.stderr and "never compared" in r.stderr, (
+        f"the failure must name the manifest as the fault: {r.stderr}")
+    assert not bundle["hook"].is_file(), (
+        "a truncated manifest must fail before the boot hook is installed")
+
+
+def test_empty_manifest_fails_closed(bundle):
+    """A zero-length manifest is a damaged bundle, not "nothing to verify".
+
+    Without the guard this reports success and installs the boot hook while
+    comparing nothing, reintroducing the #292 silent no-op by packaging rather
+    than by code.
+    """
+    (bundle["src"] / "polaris-astro.manifest").write_text("")
+    r = _run(bundle)
+    assert r.returncode != 0, (
+        f"an empty manifest must not report success:\n{r.stdout}\n{r.stderr}")
+
+
+def test_malformed_hash_is_reported_as_manifest_damage(bundle):
+    """A corrupt hash must say the manifest is damaged, not that a file differs.
+
+    "VERIFY FAILED: x" sends the operator to re-copy the payload; the real fault
+    is the manifest itself, so re-extracting the wrong thing wastes the attempt.
+    Bad sectors mid-file and CRLF text from Windows both land here.
+    """
+    manifest = bundle["src"] / "polaris-astro.manifest"
+    lines = manifest.read_text().splitlines()
+    name = lines[3].split()[1]
+    manifest.write_text("\n".join(
+        [("z" * 64) + "  " + name if i == 3 else l for i, l in enumerate(lines)
+    ]) + "\n")
+
+    r = _run(bundle)
+    assert r.returncode != 0, "a malformed hash must fail the install"
+    assert "MANIFEST CORRUPT" in r.stderr, (
+        f"a non-hex hash should be attributed to the manifest: {r.stderr}")
+
+
+def test_success_line_reports_the_count_it_actually_checked(bundle):
+    """The count must match the fixture's entry count, not merely be present.
+
+    Guards the falsifiability itself: if the counter were wired to the wrong
+    variable the line would still print a number and still read as success.
+    """
+    r = _run(bundle)
+    assert r.returncode == 0, f"installer failed:\n{r.stdout}\n{r.stderr}"
+    n = len((bundle["src"] / "polaris-astro.manifest").read_text().splitlines())
+    assert f"({n} of {n})" in r.stdout, (
+        f"expected a verified count of {n}: {r.stdout}")
+
+
 def test_boot_hook_is_written_and_matches_bundle(bundle):
     """The hook must exist and be byte-identical to the bundle's copy."""
     r = _run(bundle)

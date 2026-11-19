@@ -161,6 +161,8 @@ fi
 # bytes and fail loudly on any mismatch.
 if [ -f "$SRC/polaris-astro.manifest" ] && command -v sha256sum >/dev/null 2>&1; then
     drift=0
+    checked=0
+    expected=0
     while IFS= read -r line; do
         # sha256sum writes "<hash>  <name>" with TWO spaces, so ${line#* } leaves
         # a leading space on the name and every comparison fails. Word-split
@@ -168,17 +170,75 @@ if [ -f "$SRC/polaris-astro.manifest" ] && command -v sha256sum >/dev/null 2>&1;
         set -- $line
         exp=$1; name=$2
         [ -n "$name" ] || continue
+        expected=$((expected + 1))
+        # A hash that is not 64 hex characters means the manifest itself is
+        # damaged -- a partial line from bad sectors, or CRLF text written by
+        # Windows. Comparing it would "pass" only by accident, and a silently
+        # skipped line shrinks coverage without saying so.
+        case "$exp" in
+            *[!0-9a-fA-F]*|'')
+                echo "[astro] MANIFEST CORRUPT: malformed hash for $name" >&2
+                drift=$((drift + 1))
+                continue ;;
+        esac
+        if [ "${#exp}" -ne 64 ]; then
+            echo "[astro] MANIFEST CORRUPT: hash for $name is ${#exp} chars, expected 64" >&2
+            drift=$((drift + 1))
+            continue
+        fi
         cur=$(sha256sum "$DEST/$name" 2>/dev/null | cut -d' ' -f1)
         if [ "$cur" != "$exp" ]; then
             echo "[astro] VERIFY FAILED: $name (installed hash does not match the bundle)" >&2
             drift=$((drift + 1))
         fi
+        checked=$((checked + 1))
     done < "$SRC/polaris-astro.manifest"
+    # The count is appended rather than replacing the sentence, because six
+    # tracked consumers grep for "verified every manifest entry" (docs, the
+    # published README template, two test suites). The phrase stays so those keep
+    # working; the number makes the claim falsifiable. A manifest truncated by bad
+    # sectors parses fine up to the point where it stops, so the loop simply checks
+    # fewer files and reported success: reproduced with a 5-line manifest out of
+    # 39, which exited 0 and installed the boot hook while 34 load-bearing files
+    # went unchecked -- including polaris-httpd. An operator reading "5" where 39
+    # is expected can notice; an operator reading only the word "every" cannot.
+    if [ "$expected" -eq 0 ]; then
+        # A zero-length or wholly unparseable manifest is not "nothing to check",
+        # it is a damaged bundle. Treating it as success would put the #292 silent
+        # no-op straight back: install reports fine, nothing was ever compared.
+        echo "[astro] install NOT verified: $SRC/polaris-astro.manifest has no usable entries" >&2
+        echo "[astro]       empty, truncated or unreadable -- re-extract the release zip" >&2
+        exit 1
+    fi
     if [ "$drift" -ne 0 ]; then
         echo "[astro] install NOT verified: $drift file(s) differ -- refusing to claim success" >&2
         exit 1
     fi
-    echo "[astro] verified every manifest entry against $DEST"
+    # Counting parsed lines cannot detect truncation: a manifest cut short by bad
+    # sectors simply has fewer lines, and every surviving line verifies fine. The
+    # only way to see it is to ask the bundle what it contains and check the
+    # manifest covers that. Reproduced against the shipped v114 kit with the
+    # manifest cut to 5 of 39 lines: all five matched, so the loop reported
+    # "verified every manifest entry", installed the boot hook and exited 0 while
+    # 34 load-bearing files went unchecked -- polaris-httpd among them.
+    uncovered=0
+    for f in "$SRC"/*.sh; do
+        [ -f "$f" ] || continue
+        b=$(basename "$f")
+        [ "$b" = "polaris-astro-boot.sh" ] && continue   # installed as $HOOK, not $DEST
+        grep -qE "(^| )$b( |$)" "$SRC/polaris-astro.manifest" || uncovered=$((uncovered + 1))
+    done
+    for b in polaris-solve polaris-httpd polaris-mount polaris-extract VERSION; do
+        [ -f "$SRC/$b" ] || continue
+        grep -qE "(^| )$b( |$)" "$SRC/polaris-astro.manifest" || uncovered=$((uncovered + 1))
+    done
+    if [ "$uncovered" -ne 0 ]; then
+        echo "[astro] install NOT verified: $uncovered file(s) in the bundle are not listed" >&2
+        echo "[astro]       in polaris-astro.manifest, so they were never compared." >&2
+        echo "[astro]       The manifest is truncated or damaged -- re-extract the release zip." >&2
+        exit 1
+    fi
+    echo "[astro] verified every manifest entry against $DEST ($checked of $expected)"
 else
     echo "[astro] NOTE: no polaris-astro.manifest in $SRC; installed files are unverified."
     echo "[astro]       Re-extract the current release zip to get update-safe installs."
