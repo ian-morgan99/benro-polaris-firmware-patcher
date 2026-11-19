@@ -37,13 +37,20 @@ C: OpenPolaris end to end with the same packaged stack and camera
 Route ownership by the first divergence:
 
 ```text
-A fails                         -> libgphoto2
+A fails before valid ownership, session or trace -> setup/session diagnosis
+A reproduces the same failing lower-layer operation -> candidate libgphoto2 defect
 A passes, B fails               -> patcher / pgphoto / Stage-2 / loader
 A and B pass, C fails           -> OpenPolaris
 ```
 
 Do not change libgphoto2 for a Polaris-only symptom. Compare the first PTP
-operation or state transition, not only the final error number.
+operation or state transition and prove which library, camlib and port module were loaded. Use the libgphoto2 AGENTS.md, IMAGE Transmitter 2 matrix and settings path as the source gates.
+
+For setting writes, single-thread the client, choose one advertised value and use the
+body-specific IT2 conditions path. An acknowledgement, app slider or descriptor
+snapshot can lag or misreport application. Require a changed live readback, exact
+restoration and a fresh-session check. Record preserved baseline separately from
+restoration after a change. Treat preview-off and preview-on as paired trials.
 
 ## Physical moves and evidence
 
@@ -86,10 +93,11 @@ For repeated or Astro capture, also follow
 
 Before camera claims, prove the installed provenance, wrapper, active process,
 listeners, environment, `/proc/<pid>/maps`, matched Stage-2/core/port hashes,
-and absence of loader/symbol/iolib errors. Then rerun every previously claimed
-camera: at minimum Canon EOS R5 Mark II, Pentax K-3 III, and Pentax K-1 II.
-Unavailable hardware remains unqualified; never silently convert an earlier
-PASS to untested.
+and absence of loader/symbol/iolib errors. For the current Pentax programme,
+qualify K-3 III and K-1 II on the exact build. Carry forward the applicable
+previous camera matrix and representative non-Pentax coverage for shared paths.
+Keep earlier results bound to the build that produced them. Mark absent hardware
+unverified on this candidate.
 
 Report `PASS`, `FAIL`, or `OUTCOME UNKNOWN` per layer and camera. Include exact
 commits/artifact hashes, commands, UTC times, raw evidence paths, first

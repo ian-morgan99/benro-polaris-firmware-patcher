@@ -28,6 +28,20 @@ description: For each PR affecting camera, firmware, Astro, Wi-Fi or installatio
   release for the same component
 - Promoting "offline GREEN" to "device qualified" without hardware evidence (#203/#216)
 
+## Compare the exact behavior that changed
+
+Use the newest matching physical evidence first. Treat older runs, including
+pre-#304 observations, as historical leads unless the released bytes, camera
+mode, format, client and operation are matched. Preserve earlier successful
+transactions in the evidence ledger with their exact limits.
+
+Cover each changed layer with a fixture that fails against the known bad case.
+For settings, distinguish ACK and applied value. For capture, distinguish
+shutter, terminal state, publication and returned control. For packaging,
+compare shipped and loaded bytes. Record the first failing layer, inherited
+behavior, previous evidence still applicable, and the smallest remaining gate.
+Review the exact merge SHA and rerun its gate if the tested tree changes.
+
 ## Existing gates that remain authoritative
 
 - `#293` — MASTER WBS: v99 install, diagnostics, Astro services and real Pentax/stock camera qualification

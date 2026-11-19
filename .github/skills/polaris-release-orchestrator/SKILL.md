@@ -1,100 +1,31 @@
 ---
 name: polaris-release-orchestrator
-description: One front door for every build type. Explicit phase state machine BUILT → ARCHIVES_VERIFIED → DOCS_GENERATED → PRIVATE_PUBLISHED → REMOTE_VERIFIED; distinguish DEVICE_INSTALLED and HARDWARE_QUALIFIED. Delegate to scripts, do not substitute prose. Include stop/resume/retry, canonical command, candidate identity and machine-readable receipts. Make build success distinct from release success. Incorporates #356.
+description: Plan Polaris builds and track the evidence for archives, documentation, private publication, device installation and hardware qualification.
 ---
 
-# Polaris release orchestrator — HARD RULE
+# Polaris release workflow
 
-> **HARD RULE.** Every release candidate passes through exactly one executable
-> lifecycle, driven by scripts — never by prose, never by ad-hoc `ssh`/`scp`/`cp`
-> against a device. Build success (`BUILT`) is **not** release success. A
-> candidate is not released until it reaches `REMOTE_VERIFIED` on PrivateResearch
-> with complete artifacts, `INSTALL.md`, and `CHANGELOG.md`.
+Read [release entry points](../../../docs/RELEASE-ENTRYPOINTS.md), [version state](../../../docs/RELEASE-VERSION-STATE.md) and the [active WBS](../../../docs/ISSUE-WBS-2026-11-14.md). Use these instructions from a checkout with any terminal or GitHub client. Record the intended release type, exact clean source pair, stock hash, previous qualified reference, version and declared changes before choosing a command.
 
-## Phase state machine
+| Intent | Entry point | Side effects |
+|---|---|---|
+| Local Astro candidate | `scripts/build-astro.sh --version N --summary FILE` | Builds and gates archives and records the version claim. |
+| Camera firmware candidate with private packet upload | `scripts/build-release-candidate.sh ID STOCK LIB_CHECKOUT auto auto --change-summary FILE` | Builds, gates, records the version claim and publishes the camera packet. Supply the exact clean driver checkout. |
+| Publish an Astro candidate | `scripts/publish-astro-candidate.sh --build out/ID` | Commits and pushes to PrivateResearch. |
+| Stage firmware | `scripts/release/release-fwpkt.sh out/ID --skip-trigger` | Writes the extracted tree to the SD card and verifies it. |
+| Install firmware | `scripts/release/release-fwpkt.sh out/ID` | Stages, verifies, reboots and confirms installed files. |
+| Install a matched kit | [Firmware vs kit instructions](../polaris-release-documentation/SKILL.md) | Updates the SD kit using its firmware compatibility contract. |
 
-| Phase | Meaning | Script that performs it | Exit condition |
-|-------|---------|------------------------|----------------|
-| `BUILT` | Candidate built, artifacts present, offline gate green | `scripts/build-astro.sh` / `scripts/release/build-and-install.sh` | `out/<candidate>/` complete |
-| `ARCHIVES_VERIFIED` | All archives verified byte-for-byte against manifest | `scripts/verify-published-astro-candidate.py` | Remote hashes match local |
-| `DOCS_GENERATED` | `INSTALL.md`, `CHANGELOG.md`, README generated from manifests | **NOT YET IMPLEMENTED** — no script emits these | Human-readable docs present |
-| `PRIVATE_PUBLISHED` | All artifacts uploaded to PrivateResearch | `scripts/publish-astro-candidate.sh` | Remote listing shows all files |
-| `REMOTE_VERIFIED` | Independent verifier proves remote entry is complete | `polaris-release-artifact-auditor` skill | Exact remote hashes, layout, docs |
-| `DEVICE_INSTALLED` | Flashed to device via `fwpkt-update-flow` | `scripts/release/release-fwpkt.sh` | `build_id` + uptime reset + hashes |
-| `HARDWARE_QUALIFIED` | Physical camera matrix passed | `scripts/canary-probe.py` / `--two-shot` | Live capture evidence |
+The convenience wrapper `scripts/release/build-and-install.sh` uses the camera build and publication path. Its `--install` option also wakes, flashes and reboots the device. Use the explicit-checkout builder when testing an exact driver commit.
 
-## Canonical command
+Record each milestone with its own evidence:
 
-```sh
-# 1. Build (BUILT)
-./scripts/build-astro.sh --version N --pin FULL_DRIVER_SHA --slug NAME \
-  --summary docs/release-change-summary-vN-astro.json
+1. **BUILT** — exact source and artifact manifests, release gate transcript, explicit skips.
+2. **ARCHIVES_VERIFIED** — inspect required files for the release type and perform the local checks in the [artifact auditor](../polaris-release-artifact-auditor/SKILL.md). Exit zero from the local verifier alone is insufficient.
+3. **DOCS_GENERATED** — use the [documentation procedure](../polaris-release-documentation/SKILL.md). The change manifest utility writes JSON and RELEASE-IDENTITY.md. A general INSTALL/CHANGELOG generator is **NOT YET IMPLEMENTED**.
+4. **PRIVATE_PUBLISHED** — record the PrivateResearch commit and immutable artifact paths. The camera packet builder uploads during its run. Complete and check the companion records before advertising the candidate.
+5. **REMOTE_VERIFIED** — fetch the exact published files and compare them with the reviewed artifacts per the [artifact auditor](../polaris-release-artifact-auditor/SKILL.md).
+6. **DEVICE_INSTALLED** — record card verification and reboot receipt, app version, build ID and installed hashes. Run the [installation skill](../fwpkt-update-flow/SKILL.md) on the identified target.
+7. **HARDWARE_QUALIFIED** — bind each result to the installed and loaded runtime and the tested body, client, mode and format. Use the [Pentax stability](../pentax-hardware-stability/SKILL.md) and [repeated capture](../astro-multishot-qualification/SKILL.md) procedures. `tests/run_prerelease_gate.sh --canary --two-shot` is a live canary path when its prerequisites are met. Report its tested coverage and skips.
 
-# 2. Verify archives (ARCHIVES_VERIFIED)
-python3 scripts/verify-published-astro-candidate.py out/<candidate>
-
-# 3. Generate docs (DOCS_GENERATED)
-# NOT YET IMPLEMENTED. scripts/create-release-change-manifest.py writes
-# release-change-manifest.json and RELEASE-IDENTITY.md only; no script in the repo
-# emits INSTALL.md or CHANGELOG.md. Until a generator exists this phase is done by
-# hand -- do not mark DOCS_GENERATED complete on the strength of the command below
-# succeeding, because it produces neither document.
-python3 scripts/create-release-change-manifest.py out/<candidate>
-
-# 4. Publish to PrivateResearch (PRIVATE_PUBLISHED)
-./scripts/publish-astro-candidate.sh --build out/<candidate>
-
-# 5. Verify remote (REMOTE_VERIFIED)
-# Run polaris-release-artifact-auditor against the PrivateResearch remote listing
-```
-
-## Stop/resume/retry
-
-- A failed network/auth/size/disk upload is **recoverable state** — persist it,
-  do not report a false release success.
-- Resume from the last completed phase; never re-run an earlier phase that
-  already produced immutable bytes.
-- Published bytes are **immutable** — never overwrite an existing folder's zip.
-  A new build gets a new registry id.
-
-## Build success ≠ release success
-
-- `scripts/build-astro.sh:422-430` prints `BUILD SUCCEEDED` and `Nothing was
-  ... uploaded` — that is `BUILT` only, not released.
-- `scripts/build-astro-candidate.sh:630-635` finishes `candidate complete
-  (build-only)` and explicitly `No ... upload was performed` — that is `BUILT`
-  only, not released.
-- A candidate that stops at `BUILT` is **not published** and must not be
-  treated as a release.
-
-## Incorporates #356
-
-Mandatory automatic PrivateResearch publication for every built version, with
-complete artifacts, INSTALL, and CHANGELOG. No supported build route can report
-`release complete` before full PrivateResearch remote verification.
-
-## Delegation rule
-
-This skill delegates to scripts. It does not substitute prose for script
-execution. If a script is missing for an operation, write it, add it to
-`docs/RELEASE-ENTRYPOINTS.md`, and add a test in
-`tests/test_release_entrypoints.py`.
-
-## Receipts
-
-Every phase produces a machine-readable receipt:
-- `out/<candidate>/install-receipt.txt` (install status)
-- `out/<candidate>/RELEASE-IDENTITY.md` (source SHAs, version binding)
-- `out/<candidate>/astro-candidate-manifest.json` (candidate identity)
-- `docs/FWPKT-PROVENANCE-CONTRACT.md` (registry row for published zip)
-
-## Related skills
-
-- `polaris-release-artifact-auditor` — verifies actual published bytes on the
-  PrivateResearch remote.
-- `polaris-release-documentation` — generates mandatory INSTALL.md and CHANGELOG.md.
-- `polaris-release-reconciliation` — audits built candidates vs PrivateResearch index.
-- `polaris-release` — legacy; now delegates to this orchestrator.
-- `fwpkt-private-upload` — legacy; now delegates to this orchestrator's publish phase.
-- `fwpkt-update-flow` — device installation only (`DEVICE_INSTALLED`), not publication.
-- `polaris-debugging` and camera qualification — separate, not part of this lifecycle.
+For a retry, confirm whether the previous command already claimed a version, published bytes or changed the device. Reuse verified intermediate output and keep prior artifact bytes immutable. Resume from the first missing milestone.

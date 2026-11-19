@@ -1,9 +1,11 @@
 ---
 name: fwpkt-update-flow
-description: Enforce the only sanctioned way to install firmware on the Benro Polaris gimbal — via the pre-extracted FwPkt/ tree on the SD card (the on-boot watcher path). USE FOR: any agent or human planning to flash, recover, or modify firmware on the device; staging a FwPkt.zip; reasoning about on-boot upgrades. DO NOT USE FOR: building/patching FwPkt.zip locally on the PC (use container/ instead), debugging polestar_app binary internals, or anything unrelated to firmware installation.
+description: Stage verified firmware for the Polaris boot watcher, or recover and confirm the installed build on an identified device.
 ---
 
-# Polaris firmware update flow — HARD RULE
+# Polaris firmware installation
+
+Start with [the maintained install runbook](../../../docs/FIRMWARE-INSTALL-PROCESS.md). Use its installer for supported remote staging and reboot. The transport and recovery examples below explain how to diagnose that path.
 
 > **HARD RULE.** The Polaris gimbal accepts firmware only via the **pre-extracted
 > `FwPkt/` directory tree at the root of the SD card**. There is no sanctioned
@@ -120,7 +122,7 @@ tar czf - -C /absolute/path/to/registered-build FwPkt |
 
 Recompute every camera/gimbal payload MD5 on `/app/sd/FwPkt` and compare it to
 the on-card `firmwareInfo` before rebooting. Do not merge with or overwrite an
-unknown partial tree. Stop keepalives, then trigger the normal boot watcher.
+unknown partial tree. Coordinate the wake owner before triggering the normal boot watcher. Stop only an agent-owned polling loop if it would interfere with the reboot receipt. Keep the operator’s established wake path unless the operator explicitly changes it.
 
 **Reboot trigger — use `/sbin/reboot`, treat 812 as best-effort:**
 
@@ -345,8 +347,10 @@ The OpenPolaris project ships a script that does wake + AP wait + nmcli
 join + SSH poll + first-look probe in one shot:
 
 ```bash
-sudo /home/ian/Documents/VSCodeProjects/OpenPolaris/docs/evidence/gimbal-ssh-2026-08-31/wake-and-probe.sh
+sudo "$OPENPOLARIS_ROOT/docs/evidence/gimbal-ssh-2026-08-31/wake-and-probe.sh"
 ```
+
+Set OPENPOLARIS_ROOT to the local OpenPolaris checkout. Confirm the target identifiers and host adapters using the script’s preflight.
 
 Tunables:
 
@@ -367,8 +371,7 @@ pulled files (`/proc/version`, `/proc/mtd`, the latest Mlog).
 The gimbal re-sleeps when its BT-paired host (the phone or, in our case,
 this PC) leaves range, OR when polestar_app's own idle timer expires
 (the default idle is short — measured at ~5 minutes of no TCP traffic on
-9090). For any operation longer than a few minutes, run a keepalive
-loop on the PC.
+9090). Reuse the existing wake owner. For a long operation without one, start a bounded agent-owned keepalive only after verifying the route and target. For exclusive capture, coordinate a wake path that makes no competing camera requests.
 
 Two keepalive mechanisms, pick one:
 
@@ -489,8 +492,7 @@ mitigating this, but it's not a guarantee).
   pingability); copy that logic into any custom monitoring you write.
 - **Re-flashing while a long-running 9090-keepalive is active.** The
   keepalive will re-trigger a fresh session with polestar_app every
-  boot. Either kill the keepalive before staging the SD card, or
-  expect noisy Mlog `SP_EVENT_APP_CONNECT` entries during the install.
+  boot. Pause a redundant loop you started if it would interfere with the receipt. Preserve the established operator wake path. Expect noisy Mlog `SP_EVENT_APP_CONNECT` entries during the install.
 
 ### Cross-references
 
@@ -529,14 +531,7 @@ mitigating this, but it's not a guarantee).
 
 ## See also
 
-- `docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md` — the silent-reject
-  root-cause analysis that established why this layout is the only one the
-  on-boot watcher reads.
-- `docs/silent-fwpkt-reject-postmortem.md` — the original 2026-08-27 silent
-  reject, traced to a stale `firmwareInfo` after a layered repack. The same
-  failure mode applies to any zip whose MD5 entries don't match the bytes.
-- `docs/fwpkt-zip-layout-and-smb-delivery.md` — the zip-prefix contract and
-  the per-file MD5 validation rules.
+- [Firmware install process](../../../docs/FIRMWARE-INSTALL-PROCESS.md) — supported staging, verification and recovery.
 - `docs/FWPKT-PROVENANCE-CONTRACT.md` — cross-repo/cross-agent registry: which
   FwPkt bytes are which, by commit links + hashes; the handoff rule that binds
   every repo and agent session.

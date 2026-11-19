@@ -42,7 +42,8 @@ Rules that keep the two from standing on each other's toes:
 ## Documented skills are the source of truth — do not improvise
 
 Before doing any operation that a skill under `.github/skills/` covers, **read
-that skill first and follow it exactly**. Do not invent an alternative approach
+that skill first and follow it exactly**. Open the corresponding SKILL.md
+directly from the checkout in clients without native skill discovery. Do not invent an alternative approach
 "as you go along" (e.g. hand-rolled chunked transfers, ad-hoc HTTP servers,
 custom retry loops) when a documented, proven process exists.
 
@@ -50,13 +51,11 @@ custom retry loops) when a documented, proven process exists.
   state machine `BUILT → ARCHIVES_VERIFIED → DOCS_GENERATED → PRIVATE_PUBLISHED →
   REMOTE_VERIFIED`, plus `DEVICE_INSTALLED` and `HARDWARE_QUALIFIED`. Delegates
   to scripts; build success is not release success. Incorporates #356.
-- `polaris-release-artifact-auditor` — verifies actual published bytes on the
-  PrivateResearch remote listing (not local staging): all companion packages,
-  archive roots, modes, manifests, licences, hashes, index coverage, downloadability.
-  Implements #292/#350.
-- `polaris-release-documentation` — generates mandatory `INSTALL.md`,
-  `CHANGELOG.md`, README, compatibility matrix, recovery/rollback and install
-  verification from exact manifests and commit diffs.
+- `polaris-release-artifact-auditor` — checks required companion packages and
+  digests from the exact PrivateResearch commit. Pair the local archive checker
+  with the documented remote readback while #292/#350 are open.
+- `polaris-release-documentation` — write and review the install, changelog,
+  compatibility and recovery instructions against the exact build records.
 - `polaris-release-reconciliation` — audits built candidates vs PrivateResearch
   index; detects missing/incomplete/mislabelled versions; produces version-by-version
   exception ledger. Backfills v110/v111.

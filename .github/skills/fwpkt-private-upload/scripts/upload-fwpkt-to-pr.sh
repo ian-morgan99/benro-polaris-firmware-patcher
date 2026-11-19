@@ -28,10 +28,10 @@
 #
 # Env:
 #   GH_TOKEN      GitHub token with write access to ian-morgan99/PrivateResearch.
-#                 Without it the script relies on whatever git credential
-#                 helper is configured (works if you are already logged in).
+#                 Used via the GitHub CLI credential helper when available.
+#                 Otherwise configure Git credentials for the private remote.
 #   PR_REPO       Override the private repo URL (default below).
-#   PR_CHECKOUT   Override the local checkout path (default below).
+#   PR_CHECKOUT   Optional dedicated clean clone on main. The default is temporary.
 #
 # The script:
 #   1. recomputes zip MD5 + SHA-256 from the actual file (never copied forward),
@@ -44,8 +44,14 @@
 set -euo pipefail
 
 PR_REPO="${PR_REPO:-https://github.com/ian-morgan99/PrivateResearch.git}"
-PR_CHECKOUT="${PR_CHECKOUT:-$HOME/Documents/VSCodeProjects/PrivateResearch}"
+PR_CHECKOUT="${PR_CHECKOUT:-}"
 BUILD="" ID="" STATUS="candidate" NOTE="" DRY=0 DISPLAY_FWVER_ARG=""
+die() { echo "FATAL: $*" >&2; exit 1; }
+PUBLISH_GIT=(git)
+if [ -n "${GH_TOKEN:-}" ] && command -v gh >/dev/null 2>&1; then
+  PUBLISH_GIT+=(-c 'credential.https://github.com.helper='
+                -c 'credential.https://github.com.helper=!gh auth git-credential')
+fi
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -64,6 +70,7 @@ done
   exit 2; }
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+[[ "$ID" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || die "invalid candidate id"
 ZIP="$BUILD/FwPkt.zip"
 [ -f "$ZIP" ] || { echo "FATAL: $ZIP not found (build dir must contain FwPkt.zip)" >&2; exit 1; }
 [ -f "$BUILD/release-change-manifest.json" ] || {
@@ -136,32 +143,28 @@ APPFS_MD5="$(grep -oE '^appfs size:[0-9]+;appfs MD5:[0-9a-fA-F]+' "$TMP/FwPkt/fi
 [ -n "$APPFS_MD5" ] || { echo "FATAL: could not find appfs MD5 in firmwareInfo" >&2; exit 1; }
 echo "appfs MD5:  $APPFS_MD5"
 
-# libgphoto2 commit, if the build recorded it
-LIBG_SHA="?"
-if [ -f "$BUILD/build-source-provenance.txt" ]; then
-  LIBG_SHA="$(grep -m1 '^git_commit=' "$BUILD/build-source-provenance.txt" | cut -d= -f2 || true)"
-  [ -n "$LIBG_SHA" ] || LIBG_SHA="?"
-fi
-PATCHER_REF="$(cd "$REPO_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo '?')/$(cd "$REPO_ROOT" && git branch --show-current 2>/dev/null || echo detached)"
+# Use the build's exact identities, even if the source checkout has since moved.
+IDENTITY="$(python3 - "$BUILD/release-change-manifest.json" "$ID" "$DISPLAY_FWVER_ARG" <<'IDENTITY_PY'
+import json
+import re
+import sys
 
-# The five-component version the Benro Connect app displays. This is what the
-# published folder is prefixed with, so it must come from the build itself and
-# must never be guessed or copied forward from a previous packet.
-DISPLAY_FWVER="${DISPLAY_FWVER_ARG:-}"
-if [ -z "$DISPLAY_FWVER" ] && [ -f "$BUILD/build-source-provenance.txt" ]; then
-  DISPLAY_FWVER="$(grep -m1 '^display_fwver=' "$BUILD/build-source-provenance.txt" | cut -d= -f2 | tr -d ' \r' || true)"
-fi
-if [ -z "$DISPLAY_FWVER" ]; then
-  echo "FATAL: no display_fwver= in $BUILD/build-source-provenance.txt." >&2
-  echo "       The published folder is named after the app-visible version, so it" >&2
-  echo "       cannot be guessed. Rebuild with the version recorded, or pass" >&2
-  echo "       --display-fwver <6.0.0.54.N> if this build predates that field." >&2
-  exit 1
-fi
-case "$DISPLAY_FWVER" in
-  [0-9]*.[0-9]*.[0-9]*.[0-9]*.[0-9]*) ;;
-  *) echo "FATAL: display_fwver '$DISPLAY_FWVER' is not the five-component form the app shows (expected 6.0.0.54.N)" >&2; exit 1;;
-esac
+path, candidate, requested = sys.argv[1:]
+with open(path, encoding="utf-8") as stream:
+    manifest = json.load(stream)
+version = manifest["display_fwver"]
+driver = manifest["source"]["head_commit"]
+patcher = manifest["patcher"]["head_commit"]
+if manifest["candidate_id"] != candidate:
+    sys.exit("candidate id differs from release-change-manifest.json")
+if not re.fullmatch(r"(?:[0-9]+[.]){4}[0-9]+", version) or (requested and requested != version):
+    sys.exit("display firmware version differs from the build identity")
+if not all(re.fullmatch(r"[0-9a-f]{40}", commit) for commit in (driver, patcher)):
+    sys.exit("release manifest lacks complete source commits")
+print(version, driver, patcher)
+IDENTITY_PY
+)"
+read -r DISPLAY_FWVER LIBG_SHA PATCHER_REF <<< "$IDENTITY"
 DIR_ID="$DISPLAY_FWVER--$ID"
 echo "display version (app-visible): $DISPLAY_FWVER  ->  folder $DIR_ID"
 
@@ -171,27 +174,46 @@ if [ "$DRY" = 1 ]; then
   STAGE_ROOT="$TMP/pr-stage"
   STAGE_DIR="$STAGE_ROOT/firmware-packets/$DIR_ID"
 else
-  if [ -d "$PR_CHECKOUT/.git" ]; then
-    git -C "$PR_CHECKOUT" fetch origin
-    git -C "$PR_CHECKOUT" checkout main 2>/dev/null || git -C "$PR_CHECKOUT" checkout -b main origin/main
-    git -C "$PR_CHECKOUT" reset --hard origin/main
+  if [ -z "$PR_CHECKOUT" ]; then
+    PR_CHECKOUT="$TMP/publication"
+    "${PUBLISH_GIT[@]}" clone --branch main --depth 1 "$PR_REPO" "$PR_CHECKOUT"
   else
-    mkdir -p "$(dirname "$PR_CHECKOUT")"
-    git clone --depth 1 "$PR_REPO" "$PR_CHECKOUT"
+    [ -d "$PR_CHECKOUT/.git" ] || die "PR_CHECKOUT must be an existing dedicated clone"
+    [ "$(git -C "$PR_CHECKOUT" branch --show-current)" = main ] ||
+      die "PR_CHECKOUT must already be on main"
+    [ -z "$(git -C "$PR_CHECKOUT" status --porcelain --untracked-files=all)" ] ||
+      die "PR_CHECKOUT contains local changes"
+    origin="$(git -C "$PR_CHECKOUT" remote get-url origin)"
+    [ "${origin%.git}" = "${PR_REPO%.git}" ] || die "PR_CHECKOUT origin does not match PR_REPO"
+    "${PUBLISH_GIT[@]}" -C "$PR_CHECKOUT" fetch origin main
+    git -C "$PR_CHECKOUT" merge-base --is-ancestor HEAD origin/main ||
+      die "PR_CHECKOUT has unpublished commits or diverged from origin/main"
+    git -C "$PR_CHECKOUT" merge --ff-only origin/main
   fi
   STAGE_DIR="$PR_CHECKOUT/firmware-packets/$DIR_ID"
 fi
-mkdir -p "$STAGE_DIR"
-cp "$ZIP" "$STAGE_DIR/FwPkt.zip"
-[ -f "$BUILD/build-source-provenance.txt" ] && cp "$BUILD/build-source-provenance.txt" "$STAGE_DIR/"
-[ -f "$BUILD/release-change-manifest.json" ] && cp "$BUILD/release-change-manifest.json" "$STAGE_DIR/"
-[ -f "$BUILD/RELEASE-IDENTITY.md" ] && cp "$BUILD/RELEASE-IDENTITY.md" "$STAGE_DIR/"
-[ -f "$BUILD/install-manifest.json" ] && cp "$BUILD/install-manifest.json" "$STAGE_DIR/"
-[ -f "$BUILD/install-receipt.txt" ] && cp "$BUILD/install-receipt.txt" "$STAGE_DIR/"
-[ -f "$BUILD/build-release-candidate.log" ] && cp "$BUILD/build-release-candidate.log" "$STAGE_DIR/"
-[ -f "$BUILD/install.log" ] && cp "$BUILD/install.log" "$STAGE_DIR/"
+REUSE=0
+if [ -e "$STAGE_DIR" ] || [ -L "$STAGE_DIR" ]; then
+  [ ! -L "$STAGE_DIR" ] &&
+    cmp -s "$ZIP" "$STAGE_DIR/FwPkt.zip" &&
+    cmp -s "$BUILD/release-change-manifest.json" "$STAGE_DIR/release-change-manifest.json" &&
+    cmp -s "$BUILD/RELEASE-IDENTITY.md" "$STAGE_DIR/RELEASE-IDENTITY.md" ||
+    die "refusing to replace published bytes or identity for $DIR_ID"
+  REUSE=1
+  echo "Exact packet and identity already published at $DIR_ID"
+else
+  mkdir -p "$(dirname "$STAGE_DIR")"
+  mkdir "$STAGE_DIR"
+  cp "$ZIP" "$STAGE_DIR/FwPkt.zip"
+  [ -f "$BUILD/build-source-provenance.txt" ] && cp "$BUILD/build-source-provenance.txt" "$STAGE_DIR/"
+  [ -f "$BUILD/release-change-manifest.json" ] && cp "$BUILD/release-change-manifest.json" "$STAGE_DIR/"
+  [ -f "$BUILD/RELEASE-IDENTITY.md" ] && cp "$BUILD/RELEASE-IDENTITY.md" "$STAGE_DIR/"
+  [ -f "$BUILD/install-manifest.json" ] && cp "$BUILD/install-manifest.json" "$STAGE_DIR/"
+  [ -f "$BUILD/install-receipt.txt" ] && cp "$BUILD/install-receipt.txt" "$STAGE_DIR/"
+  [ -f "$BUILD/build-release-candidate.log" ] && cp "$BUILD/build-release-candidate.log" "$STAGE_DIR/"
+  [ -f "$BUILD/install.log" ] && cp "$BUILD/install.log" "$STAGE_DIR/"
 
-cat > "$STAGE_DIR/README.md" <<EOF
+  cat > "$STAGE_DIR/README.md" <<EOF
 # FwPkt $DISPLAY_FWVER — $ID
 
 | field | value |
@@ -221,19 +243,18 @@ unzip -p FwPkt.zip FwPkt/firmwareInfo | grep '^appfs'   # appfs MD5 must match
 Registry row: \`docs/FWPKT-PROVENANCE-CONTRACT.md\` in
 ian-morgan99/benro-polaris-firmware-patcher.
 EOF
+fi
 
 echo "== 4. commit + push =="
 if [ "$DRY" = 1 ]; then
   echo "(dry-run) would commit firmware-packets/$DIR_ID and push to $PR_REPO"
-else
-  git -C "$PR_CHECKOUT" add "firmware-packets/$DIR_ID"
+elif [ "$REUSE" = 0 ]; then
+  git -C "$PR_CHECKOUT" add -- "firmware-packets/$DIR_ID"
   git -C "$PR_CHECKOUT" commit -m "firmware-packets: add $DIR_ID (zip md5 $ZIP_MD5)"
-  if [ -n "${GH_TOKEN:-}" ]; then
-    # push via a token-embedded URL so the token never lands in .git/config
-    git -C "$PR_CHECKOUT" push "https://x-access-token:${GH_TOKEN}@github.com/ian-morgan99/PrivateResearch.git" HEAD:main
-  else
-    git -C "$PR_CHECKOUT" push origin main
-  fi
+  "${PUBLISH_GIT[@]}" -C "$PR_CHECKOUT" push origin HEAD:main
+fi
+if [ "$DRY" = 0 ]; then
+  printf 'PrivateResearch commit: %s\n' "$(git -C "$PR_CHECKOUT" rev-parse HEAD)"
 fi
 
 echo "== 5. paste-ready registry row (docs/FWPKT-PROVENANCE-CONTRACT.md) =="

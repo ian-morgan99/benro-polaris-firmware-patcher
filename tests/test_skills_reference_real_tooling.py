@@ -16,22 +16,9 @@ Scope is deliberately narrow and mechanical:
 - AGENTS.md must mention every skill, or it will not be discovered
 - issue references are resolved only when gh is available (SKIP, never green)
 
-Two things are intentionally tolerated:
-
-1. Skill-local scripts (.github/skills/<name>/scripts/*.sh). These are real and
-   are invoked by full path; a bare "scripts/x.sh" match inside such a path is
-   not a repo-root reference. The regexes anchor on a preceding non-path
-   character to avoid that false positive -- without it this suite reported a
-   phantom missing script for fwpkt-private-upload, whose upload-fwpkt-to-pr.sh
-   does exist under its own skill directory.
-
-2. Stale doc references in the older skills, listed in KNOWN_STALE_DOCS. Those
-   files were deleted by db1dce9 ("docs: enact issue 116 research archive") and
-   the skills were never updated. That is pre-existing debt, not something this
-   round introduced, so it is pinned rather than silently allowed: the allowlist
-   shrinks as they are fixed, any *new* stale reference fails, and an entry whose
-   file reappears also fails so the list cannot rot. The five new release skills
-   are held to the strict standard with no allowlist at all.
+Skill-local scripts are invoked by full path. The reference regexes anchor on a
+preceding non-path character so skill-local scripts do not look like repo-root
+references.
 """
 from __future__ import annotations
 
@@ -44,30 +31,6 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 SKILLS = REPO / ".github" / "skills"
-
-# Added in the current round. Held to the strict standard: no allowlist, because
-# a brand-new documented process that points at a dead path is a defect on arrival.
-NEW_SKILLS = {
-    "polaris-release-orchestrator",
-    "polaris-release-artifact-auditor",
-    "polaris-release-documentation",
-    "polaris-release-reconciliation",
-    "polaris-regression-preservation-review",
-}
-
-# Deleted by db1dce9 (issue 116 research archive); the skills still cite them.
-# Pre-existing debt, pinned so it cannot grow and stays visible until repaired.
-KNOWN_STALE_DOCS = {
-    "fwpkt-private-upload": {"docs/fwpkt-zip-layout-and-smb-delivery.md"},
-    "fwpkt-update-flow": {
-        "docs/evidence/fwpkt-install/ROOT-CAUSE-2026-09-01.md",
-        "docs/silent-fwpkt-reject-postmortem.md",
-        "docs/fwpkt-zip-layout-and-smb-delivery.md",
-    },
-    "polaris-debugging": {
-        "docs/ISSUE-38-39-FIXES-2026-09-07.md",
-    },
-}
 
 # A path must not be preceded by '/', '.', or a word character, so that
 # ".github/skills/x/scripts/foo.sh" is not mistaken for "scripts/foo.sh".
@@ -104,37 +67,9 @@ def test_referenced_scripts_exist(skill: Path):
 
 @pytest.mark.parametrize("skill", _skill_files(), ids=lambda p: p.parent.name)
 def test_referenced_docs_exist(skill: Path):
-    name = skill.parent.name
     refs = _refs(_text(skill), "docs", "md")
     missing = sorted(r for r in refs if not (REPO / r).is_file())
-
-    if name in NEW_SKILLS:
-        assert not missing, f"new skill {name} cites non-existent docs: {missing}"
-        return
-
-    allowed = KNOWN_STALE_DOCS.get(name, set())
-    new_stale = sorted(set(missing) - allowed)
-    assert not new_stale, (
-        f"{name} gained stale doc references: {new_stale}. Fix the citation or, "
-        f"if the file was deliberately archived, add it to KNOWN_STALE_DOCS with "
-        f"the commit that removed it.")
-
-
-@pytest.mark.parametrize("skill", _skill_files(), ids=lambda p: p.parent.name)
-def test_known_stale_debt_not_silently_resolved(skill: Path):
-    """If a pinned stale doc reappears, drop it from the allowlist.
-
-    An allowlist entry that no longer describes reality is worse than none: it
-    would mask a genuine new breakage of the same name.
-    """
-    name = skill.parent.name
-    pinned = KNOWN_STALE_DOCS.get(name)
-    if not pinned:
-        pytest.skip("no pinned stale docs for this skill")
-    restored = sorted(p for p in pinned if (REPO / p).is_file())
-    assert not restored, (
-        f"{name}: {restored} now exist -- remove them from KNOWN_STALE_DOCS so "
-        f"the guard keeps checking them")
+    assert not missing, f"{skill.parent.name} cites non-existent docs: {missing}"
 
 
 @pytest.mark.parametrize("skill", _skill_files(), ids=lambda p: p.parent.name)

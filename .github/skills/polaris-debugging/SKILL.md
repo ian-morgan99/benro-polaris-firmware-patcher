@@ -344,17 +344,14 @@ means you are talking to the cable router, not the gimbal.
 `-5`/`0` gone), `code[284]` = mode/state heartbeat, `code[279]` = SD event,
 `val[-100]` on 266/284/286 = keepalive/no-data. A clean camera death shows a
 kernel uevent (`NetlinkUeventTask … remove@…usb1/1-1.x`) + `usb_disconnect`
-followed by 286 flipping to `manufacturer:none;model:none` — that is a physical
-unplug/battery-flat, not a protocol fault.
+followed by 286 flipping to `manufacturer:none;model:none`. That ordering proves the USB removal preceded the application state change. Cable, power, firmware and motion-related causes require separate evidence.
 
 ## §3b. Direct-on-PC baseline test (the decisive ownership experiment)
 
-Before routing any camera defect, AGENTS.md requires the **direct exact-SHA +
-directly-attached-camera** result. Do it on the host PC with the fork's own
-harness — no gphoto2 CLI build needed:
+Before changing the driver for a Polaris symptom, follow the driver repository’s AGENTS.md and its camera-window operative cards. Use an isolated exact-SHA build, verify its loaded libraries and start with the read-only initialization card. The example below shows the in-tree preview harness once that gate passes:
 
 ```bash
-cd /home/ian/Documents/VSCodeProjects/LibGphoto2/libgphoto2
+cd "${LIBGPHOTO2_ROOT:?set the path to the libgphoto2 source checkout}"
 git log --oneline -1          # MUST equal the device's git_commit (provenance file)
 ninja -C _build examples/pentax-safe-preview   # builds in seconds if libs are current
 
@@ -395,7 +392,8 @@ Interpretation (this is what decides repo ownership):
 
 | Result | Ownership |
 |---|---|
-| Harness FAILS (init / no frames) with camera attached to PC | candidate **libgphoto2** defect → file in `ian-morgan99/libgphoto2` |
+| Harness fails before a proven PTP transaction | Check USB ownership, mode, permissions and exact loaded modules first |
+| Exact direct driver reproduces the same lower-layer failure independently | Candidate **libgphoto2** defect. Capture the first failing PTP transition |
 | Harness PASSES but Polaris fails | **Polaris-local** (pgphoto/Stage-2/session/loader) → this repo |
 | Both pass, app still misbehaves | **OpenPolaris** client/protocol issue |
 
@@ -494,13 +492,11 @@ reflash use `WAIT_AP_SECS=300`.
 One-shot wake + AP wait + join + SSH poll + first-look probe:
 
 ```bash
-sudo /home/ian/Documents/VSCodeProjects/OpenPolaris/docs/evidence/gimbal-ssh-2026-08-31/wake-and-probe.sh
+sudo "${OPENPOLARIS_ROOT:?set the path to OpenPolaris}/docs/evidence/gimbal-ssh-2026-08-31/wake-and-probe.sh"
 # tunables: WAIT_AP_SECS=300, POST_UPDATE=1 (chains post-fw-update-probe.sh)
 ```
 
-**Keeping it awake during long jobs** (log pulls, big SCPs, firmware install):
-the idle timer is ~5 min of no TCP traffic on 9090. Preferred keepalive is the
-protocol ping:
+**Keepalive ownership.** Record the established phone or PC wake owner before a test. Reuse it and leave operator apps connected when needed. Ask connected clients to leave camera controls untouched during a single-writer test. For a read-only job with no owner, a route-verified 9090 pulse can keep the mount awake. This pulse opens another session. Keep it outside measured capture windows and stop only your own loop.
 
 ```bash
 while :; do printf '1&266&0&#' | timeout 4 nc -q1 192.168.0.1 9090 >/dev/null 2>&1; sleep 30; done &
@@ -520,9 +516,7 @@ physical bench except the camera USB cable. Inside the sandbox:
 2. `nmcli device wifi connect polaris_d13e86 --ask`.
 3. Verify identity with §2 checks (a router on the same L2 will fool you).
 4. `ssh root@192.168.0.1` and proceed with §3/§4.
-5. Background the 9090 keepalive for any job longer than a few minutes; kill it
-   before staging an SD-card reflash (it otherwise re-triggers polestar_app
-   sessions every boot and makes Mlog noisy).
+5. Keep the established wake path. Identify any agent-owned poller in the transcript and pause it before a timed test or reboot receipt if it changes the session under test.
 
 ## 6. No direct code changes on the device — everything via GitHub issues + firmware
 
@@ -575,7 +569,7 @@ Use it only when all of these preconditions pass:
    just been recomputed.
 3. `find /app/sd -maxdepth 3 -type f` proves there is no old/partial `FwPkt`
    tree. Never merge two packages.
-4. The gimbal has stable power. Stop any 9090 keepalive before rebooting.
+4. The gimbal has stable power. Use the install skill to coordinate the wake owner and pause any redundant agent-owned poller.
 
 Stage the whole extracted tree and verify the bytes on the card:
 
@@ -689,8 +683,7 @@ unprovenanced and must not be staged.
 
 ### The #38 dual-path issue — what it was and how to avoid it
 
-Issue #38 (`docs/ISSUE-38-39-FIXES-2026-09-07.md`, design doc in
-`OpenPolaris/docs/evidence/2026-09-07/patcher-38-fix-design/`) was the
+Patcher issue #38 was the
 **two-libgphoto2-paths** defect:
 
 - **Path a (trampolined):** `pgphoto.stage2ondisk` loads
@@ -844,7 +837,7 @@ within 30 s or fall back.
 - `.github/skills/fwpkt-update-flow/SKILL.md` — the only sanctioned firmware
   install path + BT wake/keepalive detail.
 - `AGENTS.md` — ownership rules, no-runtime-mutation rule, provenance contract.
-- `docs/ISSUE-38-39-FIXES-2026-09-07.md` — the dual-path fix and post-repack assertion.
+- `scripts/diagnostic/camera-layer-report.sh` and `scripts/pull-mlog-clog.sh` — current identity observations and complete log collection.
 - `OpenPolaris/docs/evidence/2026-09-07/patcher-36-investigation/FINDINGS.md` —
   the 12-step direct-CLI-vs-runtime reproduction method used here in §3.
 - `OpenPolaris/docs/evidence/gimbal-ssh-2026-08-31/wake-and-probe.sh` — one-shot

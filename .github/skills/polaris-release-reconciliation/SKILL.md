@@ -1,51 +1,12 @@
 ---
 name: polaris-release-reconciliation
-description: Audit built candidates vs PrivateResearch index; detect missing/incomplete/mislabelled versions, recover/retry safely, preserve immutable published binaries, produce version-by-version exception ledger. Backfill v110/v111 and audit older candidates.
+description: Reconcile Polaris candidate records against immutable PrivateResearch files and record exceptions by release type and exact build.
 ---
 
-# Polaris release reconciliation — HARD RULE
+# Reconcile Polaris releases
 
-> **HARD RULE.** Published bytes are immutable. A reconciliation never modifies,
-> overwrites, or deletes an existing published artifact. It detects exceptions
-> and produces a ledger; recovery creates new rows with new ids, never replaces.
+Start from the [provenance register](../../../docs/FWPKT-PROVENANCE-CONTRACT.md), [version state](../../../docs/RELEASE-VERSION-STATE.md) and the actual PrivateResearch tree. Use the [artifact auditor](../polaris-release-artifact-auditor/SKILL.md) for presence and content. For each row record the candidate ID, app-reported firmware version, kit identity, exact source pair and downloaded content hashes, followed by completed and missing milestones.
 
-## What is audited
+Compare the declared release type and archive requirements before classifying completeness. Check firmware and kit identity separately. The historical v110 firmware row is `6.0.0.54.110`; the v111 WebUI-open kit has its own ID and compatibility requirement. Historical version/label disagreements belong in the exception ledger with their actual artifact identity. For new Astro firmware candidates, follow the current version binding in the register.
 
-| Audit | Compared against | Exception recorded |
-|-------|-----------------|-------------------|
-| Built candidates vs PrivateResearch index | `docs/FWPKT-PROVENANCE-CONTRACT.md` registry | Missing row, hash mismatch, mislabelled version |
-| PrivateResearch index vs remote listing | `ian-morgan99/PrivateResearch/firmware-packets/` | Folder present locally but absent remotely, or vice versa |
-| Version uniqueness | Display version + registry id | Duplicate version with different id (#169 class) |
-| Companion package completeness | FwPkt + astro + wifi + indexes + docs | Missing companion package for a kit candidate |
-| Docs completeness | INSTALL.md + CHANGELOG.md + README.md | Missing human-readable docs |
-
-## Backfill targets
-
-- **v110** (`6.0.0.54.109`): firmware ZIP and docs present, but no Astro/Wi-Fi
-  companion ZIPs; lacks dedicated INSTALL/CHANGELOG.
-- **v111** (`astro-v111--webui-opens-20261117`): kit-only, lacks dedicated
-  INSTALL/CHANGELOG.
-- All older candidates: audit publication records, link to #350/#356.
-
-## Recovery/retry
-
-- A missing or incomplete publication is recovered by **re-publishing** with a
-  new registry id — never by overwriting existing bytes.
-- An interrupted upload is resumed from the last completed phase (see
-  `polaris-release-orchestrator`).
-- A mislabelled version gets a new row; the old row is annotated as superseded.
-
-## Exception ledger
-
-Produces a version-by-version exception ledger recording:
-- Candidate id, display version, patcher SHA, libgphoto2 SHA
-- Which phases completed (BUILT, ARCHIVES_VERIFIED, DOCS_GENERATED, PRIVATE_PUBLISHED, REMOTE_VERIFIED)
-- Which phases are missing or failed
-- Whether the candidate is installable or NOT_HARDWARE_QUALIFIED
-
-## Related skills
-
-- `polaris-release-orchestrator` — defines the phases this reconciliation audits.
-- `polaris-release-artifact-auditor` — verifies individual remote entries.
-- `polaris-release-documentation` — generates docs that reconciliation checks for completeness.
-- `fwpkt-private-upload` — uploads artifacts that reconciliation tracks.
+If a push failed, inspect the remote ref and target path before retrying. Keep previously published binary bytes immutable. Use an explicit superseding candidate for changed bytes and preserve the older row and evidence. Link reconciliation exceptions to #350/#356 when applicable.

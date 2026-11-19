@@ -24,17 +24,17 @@ new firmware install, also read and follow `.github/skills/fwpkt-update-flow/SKI
 
 ## Run
 
-Create an evidence directory outside the source tree or under
-`docs/evidence/`. Run one ordinary shot before a sequence:
+Create an evidence directory and set EVIDENCE_DIR and POLARIS_WIFI_IP to its path and the verified local interface address. Set EXPECTED_FILES to the proven count for the current format (1 for a single file, 2 for a verified RAW+JPEG path). Run one ordinary shot before a sequence. The commands redirect to a log and preserve the script’s exit status.
 
 ```bash
 python3 scripts/test-astro-multishot.py \
   --host 192.168.0.1 \
-  --bind <polaris-wifi-ip> \
+  --bind "$POLARIS_WIFI_IP" \
   --shots 1 \
   --interval 10 \
   --shot-timeout 180 \
-  --execute | tee <evidence>/ordinary-shot.log
+  --expected-files "$EXPECTED_FILES" \
+  --execute >"$EVIDENCE_DIR/ordinary-shot.log" 2>&1
 ```
 
 Only after that passes, simulate Astro repeated shooting:
@@ -42,11 +42,12 @@ Only after that passes, simulate Astro repeated shooting:
 ```bash
 python3 scripts/test-astro-multishot.py \
   --host 192.168.0.1 \
-  --bind <polaris-wifi-ip> \
+  --bind "$POLARIS_WIFI_IP" \
   --shots 5 \
   --interval 30 \
   --shot-timeout 600 \
-  --execute | tee <evidence>/astro-five-shot.log
+  --expected-files "$EXPECTED_FILES" \
+  --execute >"$EVIDENCE_DIR/astro-five-shot.log" 2>&1
 ```
 
 The script authenticates, records the initial preview state, obtains exclusive
@@ -57,7 +58,7 @@ ambiguous completion, missing correlation, or timeout.
 
 While it runs, preserve—not filter away—the full 9090 transcript, `/app/Clog.txt`,
 `dmesg`, process/listener ownership, and Wi-Fi counters. Do not run a second
-9090 controller during the qualification.
+9090 controller during the qualification. Preserve the established wake owner and record any traffic it contributes. An isolated run should have a single camera command writer.
 
 ## Pass criteria
 
