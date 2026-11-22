@@ -83,6 +83,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 #include "stage2_policy.h"
 
@@ -251,6 +252,61 @@ static void stage2_abort_stub(void)
 }
 #endif
 
+#ifdef STAGE2_NATIVE_CAMERA_WORD
+static struct stage2_camera_gate native_gate;
+static _Thread_local int native_setting;
+
+static void native_poll_pause(void)
+{
+    usleep(2000);
+}
+
+static int native_claim_from(unsigned site, int budget)
+{
+    enum stage2_camera_operation op = STAGE2_CAMERA_CONTROL;
+    if (site == STAGE2_PREVIEW_WAIT_RETURN)
+        op = STAGE2_CAMERA_PREVIEW;
+    else if (site == STAGE2_CONFIG_WAIT_RETURN)
+        op = native_setting ? STAGE2_CAMERA_SET : STAGE2_CAMERA_CONFIG;
+    int ret = stage2_camera_claim(&native_gate, (uintptr_t *)STAGE2_NATIVE_CAMERA_WORD,
+                                  (unsigned *)STAGE2_NATIVE_BUSY_WORD, syscall(SYS_gettid),
+                                  site, op, budget, native_poll_pause);
+    if (ret < 0 && op != STAGE2_CAMERA_PREVIEW)
+        fprintf(stderr, "[stage2] camera admission refused: site=%x kind=%u owner_site=%x "
+                "last_owner_kind=%u generation=%u camera_present=%u budget=%d\n", site, (unsigned)op,
+                atomic_load(&native_gate.owner_site), atomic_load(&native_gate.owner_kind),
+                atomic_load(&native_gate.generation),
+                __atomic_load_n((uintptr_t *)STAGE2_NATIVE_CAMERA_WORD, __ATOMIC_ACQUIRE) != 0,
+                budget);
+    return ret;
+}
+
+static int native_wait_camera_idle(int budget)
+{
+    return native_claim_from((uintptr_t)__builtin_return_address(0), budget);
+}
+
+static void native_set_camera_status(int busy)
+{
+    /* The stock BUSY call confirms an already acquired claim. Only the
+     * acquiring thread may publish IDLE, even if the session reinitializes. */
+    if (!busy)
+        stage2_camera_release(&native_gate, (unsigned *)STAGE2_NATIVE_BUSY_WORD,
+                              syscall(SYS_gettid));
+}
+
+static int native_set_camera_config(int key, char *value)
+{
+    /* Stock calls this exact operation with command 31. Arbitration now
+     * suppresses competing previews without modifying client preview demand. */
+    typedef int (*config_fn)(int, char *, int);
+    native_setting++;
+    int ret = ((config_fn)(uintptr_t)STAGE2_CONFIG_COMMAND)(key, value, 31);
+    native_setting--;
+    return ret;
+}
+#endif
+
 static void slot_store(uintptr_t slot_vaddr, void *val)
 {
     *(volatile uintptr_t *)slot_vaddr = (uintptr_t)val;   /* plain RW data store */
@@ -371,10 +427,7 @@ static int stage2_camera_uses_pentax_keep_lv(void *camera)
     return stage2_model_uses_pentax_keep_lv((const char *)abilities.bytes);
 }
 
-/* K-1 Mark II predicate: the body whose PC live view is measurably slow
- * (~1 frame / 7-8 s, docs/evidence/k1ii-live-test-2026-09-15).  Used to pick a
- * model-specific on-demand preview minimum interval so the gate does not return
- * "busy" for most of each inter-frame gap.  Reuses the same abilities read. */
+/* Select the model-specific preview governor using the reported camera model. */
 static int stage2_camera_is_k1_mark_ii(void *camera)
 {
     union {
@@ -415,12 +468,17 @@ static int stage2_camera_is_k1_mark_ii(void *camera)
  * intended (or extend a cooldown), while a forwards correction would expire a
  * safety window immediately.  clock_gettime(CLOCK_MONOTONIC) is immune to both.
  * Wall clock is kept only for human-readable timestamps. */
-static long long stage2_monotonic_secs(void)
+static long long stage2_monotonic_ms(void)
 {
     struct timespec ts;
     if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
         return 0;
-    return (long long)ts.tv_sec;
+    return (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+static long long stage2_monotonic_secs(void)
+{
+    return stage2_monotonic_ms() / 1000;
 }
 
 static int     g_pentax_session_was_open = 0;
@@ -583,6 +641,10 @@ static void stage2_reset_empty_choice_state(void);
  * return GP_ERROR_CAMERA_BUSY (-110, "camera busy" -- a non-terminal state the
  * app already renders as pending) instead of hitting PTP.  Set =0 to disable. */
 static long long g_pentax_preview_last_fetch = 0;
+/* Only a successful, prompt fetch in this session earns the standard Pentax
+ * interval. The slower K-1 II retry cadence still applies after a failure or
+ * slow fetch. The v114 camera log measured two 31 KB frames at 4 ms each. */
+static int g_k1ii_preview_prompt;
 
 /* Issue #121: bounded per-session preview-settle window. When the camera is
  * already powered ON at app launch, the PTP session is in "SessionAlreadyOpened"
@@ -602,11 +664,7 @@ static long long g_pentax_preview_last_fetch = 0;
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_MAX_DEFAULT   3
 #define STAGE2_PENTAX_PREVIEW_BACKOFF_SECS_DEFAULT  30
 #define STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT 2
-/* K-1 II specific: its PC live view yields ~1 frame / 7-8 s (live probe,
- * docs/evidence/k1ii-live-test-2026-09-15/stream-probe-8080.md).  A gate
- * interval aligned to that cadence stops the app from cycling between a frame
- * and "stalled" for most of each inter-frame gap.  Only used when no explicit
- * STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS override is set. */
+/* Conservative retry interval following slow or failed K-1 II fetches. */
 #define STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS 8
 
 /* GP result codes in this libgphoto2 (port-result.h / gphoto2-result.h). */
@@ -733,30 +791,44 @@ static int stage2_shim_gp_camera_capture_preview(void *camera, void *file,
      * not on every internal tick/poll.  STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS=0
      * disables the gate (legacy behavior).
      *
-     * Model-specific default: the K-1 II's PC live view is measurably slow
-     * (~1 frame / 7-8 s, docs/evidence/k1ii-live-test-2026-09-15), so the
-     * generic 2 s gate returns "busy" for most of each inter-frame gap and the
-     * app cycles between a frame and "stalled".  For a K-1 II with no explicit
-     * override, default to an interval aligned to its own cadence (8 s) so the
-     * gate stops churning.  Other bodies keep the generic 2 s default. */
+     * End-to-end frame intervals include this gate and network delivery.
+     * Use the duration of the actual camera call to select the K-1 II cadence.
+     * A slow or unsuccessful call restores the conservative interval. */
+    int automatic_k1ii = 0;
+    long long fetch_started = stage2_monotonic_ms();
     {
         const char *mins = getenv("STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS");
         int min_interval_s;
         if (mins && atoi(mins) >= 0)
             min_interval_s = atoi(mins);
-        else if (stage2_camera_is_k1_mark_ii(camera))
-            min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS;
-        else
+        else if (stage2_camera_is_k1_mark_ii(camera)) {
+            automatic_k1ii = 1;
+            min_interval_s = g_k1ii_preview_prompt
+                ? STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT
+                : STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS;
+        } else
             min_interval_s = STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT;
-        long long now = stage2_monotonic_secs();
         if ((min_interval_s > 0) && g_pentax_preview_last_fetch &&
-            (now - g_pentax_preview_last_fetch < min_interval_s)) {
+            (fetch_started - g_pentax_preview_last_fetch < 1000LL * min_interval_s)) {
             return STAGE2_GP_ERROR_CAMERA_BUSY;
         }
-        g_pentax_preview_last_fetch = now;
+        g_pentax_preview_last_fetch = fetch_started;
     }
 
     int ret = g_real_gp_camera_capture_preview(camera, file, context);
+    if (automatic_k1ii) {
+        long long completed = stage2_monotonic_ms();
+        int prompt = ret == 0 && fetch_started > 0 &&
+            completed >= fetch_started &&
+            completed - fetch_started < 1000LL * STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT;
+        if (prompt != g_k1ii_preview_prompt)
+            fprintf(stderr, "[stage2] K-1 II preview ret=%d elapsed_ms=%lld next_interval_s=%d\n",
+                    ret, completed - fetch_started, prompt ? STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS_DEFAULT :
+                    STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS);
+        g_k1ii_preview_prompt = prompt;
+        if (!prompt && completed > fetch_started)
+            g_pentax_preview_last_fetch = completed;
+    }
     if (ret != 0) {
         /* Issue #127: classify the result BEFORE applying policy.  Collapsing
          * every non-zero result into one transient backoff is unsafe: a permanent
@@ -969,6 +1041,9 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
      * a GP_ERROR_* value is visible without libgphoto2 logging (which our build lacks). */
     stage2_trace_init_entry(STAGE2_TR_CORE, "gp_camera_init -> real core", 0);
 
+#ifdef STAGE2_NATIVE_CAMERA_WORD
+    atomic_fetch_add(&native_gate.generation, 1);
+#endif
     int ret = g_real_gp_camera_init(camera, context);
     stage2_trace_init_entry(STAGE2_TR_RESULT, "gp_camera_init returned %d", ret);
     if (ret != 0)                                    /* GP_OK == 0 */
@@ -985,6 +1060,12 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     g_pentax_preview_backoff_until = 0;
     g_pentax_preview_session_unhealthy = 0;
     g_pentax_preview_last_terminal = 0;
+    g_pentax_preview_last_fetch = 0;
+    g_k1ii_preview_prompt = 0;
+    g_pentax_session_was_open = 0;
+    g_pentax_preview_settle_until = 0;
+    g_pentax_preview_cooldown_logged_until = 0;
+    g_pentax_preview_cooldown_suppressed = 0;
 
     /* Issue #269: a fresh session re-arms every control's empty-choice state, so
      * a previous generation's terminal NOT_SUPPORTED disable (e.g. a body that
@@ -2080,6 +2161,17 @@ static void stage2_ondisk_init(void)
     unsigned filled = 0, unresolved = 0;
     for (size_t i = 0; i < STAGE2_SLOTS_LEN; i++) {
         const char *name = STAGE2_SLOTS[i].name;
+#ifdef STAGE2_NATIVE_CAMERA_WORD
+        void *native = NULL;
+        if (!strcmp(name, "waitCameraIdle")) native = native_wait_camera_idle;
+        else if (!strcmp(name, "setCameraStatus")) native = native_set_camera_status;
+        else if (!strcmp(name, "setCameraConfig")) native = native_set_camera_config;
+        if (native) {
+            slot_store(STAGE2_SLOTS[i].slot, native);
+            filled++;
+            continue;
+        }
+#endif
         void *t = dlsym(core, name);
         if (!t) t = dlsym(port, name);
         if (!t) {

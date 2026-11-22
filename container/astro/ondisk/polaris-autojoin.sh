@@ -27,8 +27,26 @@ WDIR=${WIFI_DIR:-/app/sd/polaris-wifi}
 CONF=${WPA_CONF:-$WDIR/wpa.conf}
 IFACE=${STA_IFACE:-wlan1}
 LOG=${AUTOJOIN_LOG:-$WDIR/autojoin.log}
-HAPCONF=/app/wifi/hostapd.conf
+HAPCONF=${HOSTAPD_CONF:-/app/wifi/hostapd.conf}
 STAMP=$(date '+%m-%d %H:%M:%S')
+
+# BOOT-LOOP GUARD. Moving the AP off its own channel and associating a station on
+# a different one crashes this radio (see header), and a crash reboots the device
+# into the SAME boot path that crashed it: the autojoin flag is still on the card,
+# so boot runs this script again, which moves the AP again, which crashes again.
+# Nothing in the tree counted those attempts, so a single bad credential set
+# produced an endless loop with no way back in -- the AP never came up long enough
+# to reach the dashboard, and the only recovery was pulling the card by hand.
+#
+# The counter lives on the microSD because that is the only writable storage that
+# survives both a reboot AND a crash: /tmp is tmpfs and is wiped by the reboot the
+# crash causes, which would reset the count to zero every cycle and defeat the
+# whole point. appfs is 83% full and holds the payload we are trying to protect.
+#
+# Counted at START and cleared on success, not counted on failure: a hard crash
+# never reaches a failure branch, so only a start-time increment can see it.
+CNT=${AUTOJOIN_BOOTCOUNT:-$WDIR/autojoin-bootcount}
+MAXBOOTS=${AUTOJOIN_MAX_BOOTS:-3}
 
 say() { echo "$(date '+%m-%d %H:%M:%S') $*" >> "$LOG"; }
 
@@ -61,7 +79,38 @@ say "=== autojoin starting ==="
 SSID=$(sed -n 's/^[[:space:]]*ssid="\(.*\)"/\1/p' "$CONF" | head -1)
 [ -n "$SSID" ] || { say "no ssid in $CONF"; exit 2; }
 say "target network: $SSID"
+# ---- boot-loop guard: counted BEFORE anything touches the radio -------------
+# Increment first, then decide. If this run crashes the firmware the count is
+# already persisted, which is exactly what we need -- a post-hoc increment would
+# be lost with the process.
+BOOTS=0
+[ -f "$CNT" ] && BOOTS=$(sed -n '1p' "$CNT" 2>/dev/null | tr -dc '0-9')
+[ -n "$BOOTS" ] || BOOTS=0
+BOOTS=$((BOOTS + 1))
+echo "$BOOTS" > "$CNT" 2>/dev/null && say "boot attempt $BOOTS of $MAXBOOTS"
 
+if [ "$BOOTS" -gt "$MAXBOOTS" ]; then
+    # Disarm, then restore the AP. Order matters: removing the flag means the
+    # NEXT boot never runs this script again, so the restore below cannot be
+    # undone by another join attempt.
+    say "giving up after $MAXBOOTS failed boots -- disabling auto-join"
+    # The flag is what makes boot run this script at all, so removing it alone
+    # breaks the loop. The credentials are removed as well, deliberately: the
+    # file is the thing that got the device into an unrecoverable state, and
+    # leaving it means a later "autojoin on" -- or any other path that reads
+    # wpa.conf -- replays the exact crash. They are re-typed from the dashboard
+    # in seconds once the AP is reachable again, which is the state this branch
+    # exists to restore.
+    rm -f "$WDIR/autojoin" 2>/dev/null && say "  removed $WDIR/autojoin -- AP will start normally next boot"
+    if [ -f "$CONF" ]; then
+        rm -f "$CONF" 2>/dev/null && say "  removed $CONF -- stored credentials cleared"
+    fi
+    rm -f "$WDIR/.autojoin.conf" 2>/dev/null
+    rm -f "$CNT" 2>/dev/null
+    restore_ap
+    purge
+    exit 8
+fi
 purge
 
 # ---- find the home network's channel, on OUR radio ------------------------
@@ -163,10 +212,21 @@ if [ "$OK" != "1" ]; then
     say "  the key is right. Common causes: the router has temporarily shunned this client"
     say "  after repeated reconnects, band steering, or a device limit. Check your router for"
     say "  a blocked/paused device with MAC $(cat /sys/class/net/$IFACE/address 2>/dev/null)."
+    # Put the AP back. We moved it onto the home network's channel to make the
+    # association possible; if the association is abandoned, that move was paid
+    # for nothing and the operator is left on a channel they never chose. The
+    # original config is still on disk in $HAPCONF.autojoin-bak, so this is a
+    # restore, not a guess.
+    restore_ap
     purge
     exit 7
 fi
 say "associated on attempt $try"
+
+# The join worked, so the boot-loop counter is no longer evidence of anything.
+# Leaving it set would mean a later, unrelated reboot that happens to fail for
+# some other reason could trip the guard and silently disable a working auto-join.
+rm -f "$CNT" 2>/dev/null && say "cleared boot counter (join succeeded)"
 
 # ---- lease. -s is NOT optional: busybox udhcpc configures nothing itself,
 # it obtains the lease and silently discards it.
@@ -178,6 +238,11 @@ if [ -n "$IP" ]; then
     say "JOINED: $IFACE = $IP   (AP still $(ifconfig wlan0 | sed -n 's/.*inet addr:\([0-9.]*\).*/\1/p'))"
     say "reach this device at http://$IP:8090/"
     printf '%s\n' "$IP" > /tmp/autojoin-ip
+    # The counter was already cleared above, as soon as the association landed.
+    # That is the right moment: the guard exists for the off-channel firmware
+    # crash, and once we are associated that hazard has passed. A DHCP failure
+    # from here on leaves the AP running and the device reachable, so it must
+    # not count toward the limit.
 else
     say "associated but no address -- leaving the station up, DHCP may retry"
 fi

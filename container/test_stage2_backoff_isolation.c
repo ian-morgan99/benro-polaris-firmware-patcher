@@ -1,10 +1,22 @@
 #define STAGE2_NO_CONSTRUCTOR 1
+#include <time.h>
+static long long clock_ms = 60000;
+static int fixture_clock(clockid_t id, struct timespec *ts)
+{
+    if (id != CLOCK_MONOTONIC)
+        return clock_gettime(id, ts);
+    ts->tv_sec = clock_ms / 1000;
+    ts->tv_nsec = (clock_ms % 1000) * 1000000;
+    return 0;
+}
+#define clock_gettime fixture_clock
 #include "stage2_loader.c"
 
 #include <assert.h>
 
 static int fake_preview_result;
 static int fake_preview_calls;
+static int fake_preview_ms;
 
 static const char *fake_model_string = "Pentax K-3 Mark III (PTP mode)";
 
@@ -46,6 +58,7 @@ static int fake_capture_preview(void *camera, void *file, void *context)
     (void)file;
     (void)context;
     fake_preview_calls++;
+    clock_ms += fake_preview_ms;
     return fake_preview_result;
 }
 
@@ -60,6 +73,8 @@ static void reset_fixture(void)
     g_pentax_preview_timeouts = 0;
     g_pentax_preview_backoff_until = 0;
     g_pentax_preview_last_fetch = 0;
+    g_k1ii_preview_prompt = 0;
+    fake_preview_ms = 0;
     fake_preview_result = 0;
     fake_preview_calls = 0;
     fake_model_string = "Pentax K-3 Mark III (PTP mode)";
@@ -174,23 +189,48 @@ int main(void)
     assert(g_pentax_preview_backoff_until > stage2_monotonic_secs());
     assert(g_pentax_preview_backoff_until > stage2_monotonic_secs());
 
-    /* K-1 II model-specific on-demand gate: with no explicit
-     * STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS override, a K-1 II defaults to an
-     * 8 s interval (aligned to its ~1 frame / 7-8 s live-view cadence) instead
-     * of the generic 2 s.  A fetch 3 s ago is therefore still inside the window
-     * for a K-1 II (returns busy, no real call) but outside it for any other
-     * body (real call proceeds). */
+    /* A K-1 II with no evidence of a prompt frame retains the 8 s floor. */
     reset_fixture();
     unsetenv("STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS");
     fake_model_string = "Pentax K-1 Mark II (PTP mode)";
-    g_pentax_preview_last_fetch = stage2_monotonic_secs() - 3;
+    g_pentax_preview_last_fetch = clock_ms - 3000;
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) ==
            STAGE2_GP_ERROR_CAMERA_BUSY);
     assert(fake_preview_calls == 0); /* gated: no real fetch */
+    clock_ms += 5000;
+    fake_preview_ms = 4; /* 21 November v114 camera-side get-frame timing */
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
+    clock_ms += 1995;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == STAGE2_GP_ERROR_CAMERA_BUSY);
+    assert(fake_preview_calls == 1);
+    clock_ms++;
+    fake_preview_ms = 2000;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
+    clock_ms += 7999;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == STAGE2_GP_ERROR_CAMERA_BUSY);
+    clock_ms++;
+    fake_preview_ms = 4;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
+    clock_ms += 2000;
+    fake_preview_result = STAGE2_GP_ERROR_TIMEOUT;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == STAGE2_GP_ERROR_TIMEOUT);
+    assert(!g_k1ii_preview_prompt);
+    fake_preview_result = 0;
+    clock_ms += 2000;
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == STAGE2_GP_ERROR_CAMERA_BUSY);
+    assert(fake_preview_calls == 4);
+
+    /* A new camera session must not inherit the last interval/settle timer. */
+    g_pentax_session_was_open = 1;
+    g_pentax_preview_settle_until = stage2_monotonic_secs() + 5;
+    assert(stage2_shim_gp_camera_init(&camera, NULL) == 0);
+    assert(!g_pentax_preview_settle_until && !g_pentax_preview_last_fetch);
+    assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
+    assert(fake_preview_calls == 5);
 
     reset_fixture();
     fake_model_string = "Pentax K-3 Mark III (PTP mode)";
-    g_pentax_preview_last_fetch = stage2_monotonic_secs() - 3;
+    g_pentax_preview_last_fetch = clock_ms - 3000;
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
     assert(fake_preview_calls == 1); /* 3 s > generic 2 s default: real fetch */
 

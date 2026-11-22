@@ -224,6 +224,16 @@ def main():
         die("input md5 %s != expected %s (use --allow-md5 to override)"
             % (in_md5, a.expect_md5))
 
+    # The native ownership contract was audited on this exact pre-Stage-2
+    # input, including the existing Bulb/cancel changes. Unknown inputs need
+    # a new call-site and lifecycle audit before these three entries can move.
+    in_sha256 = hashlib.sha256(raw).hexdigest()
+    native_entries = ()
+    if in_sha256 == "45913ef2d2b930aa22d6bc7ab2d5d13949612e9ac845b90f4dc88fb561bd6c40":
+        native_entries = ("waitCameraIdle", "setCameraStatus", "setCameraConfig")
+    else:
+        print("native camera admission: retaining stock scheduling on unaudited base %s" % in_sha256)
+    symbols = BOUNDARY + list(native_entries)
     e = Elf32(raw)
     if e.e_type != 2:
         die("pgphoto must be ET_EXEC (non-PIE) for fixed slot/entry vaddrs; "
@@ -231,7 +241,7 @@ def main():
 
     # --- fixed slot region at SLOT_BASE (NO .bss/segment size changes). ---------
     slot_base = SLOT_BASE
-    n = len(BOUNDARY)
+    n = len(symbols)
     slot_region = n * SLOT_SZ
     slot_end = slot_base + slot_region
     for i, _, p in e.phdrs():
@@ -260,7 +270,7 @@ def main():
     port_exp = dynsyms(a.readelf, a.port)
 
     entries, blockers = [], []
-    for idx, name in enumerate(BOUNDARY):
+    for idx, name in enumerate(symbols):
         rec = {"symbol": name, "slot_index": idx,
                "slot_vaddr": "0x%08x" % (slot_base + idx * SLOT_SZ)}
         if name not in ft:
@@ -282,6 +292,8 @@ def main():
         soname = os.path.basename(a.core)
         if not exp and name in port_exp:
             exp = True; soname = os.path.basename(a.port)
+        if name in native_entries:
+            exp, soname = True, "libpolaris_stage2.so"
         rec["target_lib"] = soname if exp else None
         if size < TRAMP_BYTES:
             rec["status"] = "ENTRY_TOO_SMALL"; blockers.append(rec)
@@ -345,6 +357,16 @@ def main():
                 " * STAGE2_SLOT_BASE as its first action -- a guaranteed-writable RW\n"
                 " * page.  The loader then writes each slot with plain stores: still\n"
                 " * NO mprotect, NO .text write, NO /proc/self/mem at runtime. */\n")
+        # These native fields and the return address belong only to the
+        # audited input hash above. The preview call sits at symbol + 0x40.
+        if native_entries:
+            f.write("#define STAGE2_NATIVE_CAMERA_WORD 0x3787f8u\n")
+            f.write("#define STAGE2_NATIVE_BUSY_WORD 0x3792a8u\n")
+            f.write("#define STAGE2_PREVIEW_WAIT_RETURN 0x%xu\n" %
+                    (ft["updateLivePreView"][0] + 0x44))
+            f.write("#define STAGE2_CONFIG_WAIT_RETURN 0x%xu\n" %
+                    (ft["deal_camera_control_handler"][0] + 0x60))
+            f.write("#define STAGE2_CONFIG_COMMAND 0x%xu\n" % ft["setCameraConfigWithCommand"][0])
         f.write("#define STAGE2_SLOT_BASE 0x%08xu\n" % slot_base)
         f.write("static const struct { const char *name; uintptr_t slot; } "
                 "STAGE2_SLOTS[] = {\n")
@@ -354,7 +376,8 @@ def main():
                 "(sizeof(STAGE2_SLOTS)/sizeof(STAGE2_SLOTS[0]))\n")
 
     manifest = {
-        "input": a.pgphoto, "in_md5": in_md5,
+        "input": a.pgphoto, "in_md5": in_md5, "in_sha256": in_sha256,
+        "native_camera_admission": bool(native_entries),
         "output": out_bin, "out_md5": out_md5,
         "ok": True, "boundary": n, "blockers": 0,
         "entry_point": "0x%08x" % e.e_entry,          # unchanged

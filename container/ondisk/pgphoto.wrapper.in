@@ -70,9 +70,8 @@ if [ -r "$STAGE2_ENV_FILE" ]; then
 fi
 # On-demand preview gate interval (seconds). Pin it ONLY when the operator
 # explicitly set it; otherwise leave it unset so the Stage-2 loader applies its
-# model-specific default (8 s for the slow K-1 II live view, 2 s otherwise --
-# see stage2_loader.c STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_K1II_SECS). Hard-coding
-# 2 here would mask that per-body default in shipped images.
+# model-specific pacing. A K-1 II slows to 8 s after a slow or failed frame
+# and uses the standard 2 s interval after a prompt success.
 if [ -n "${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS:-}" ]; then
     export STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS="${STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS}"
 fi

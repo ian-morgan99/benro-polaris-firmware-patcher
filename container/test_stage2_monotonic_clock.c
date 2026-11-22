@@ -65,7 +65,7 @@ int main(void)
     /* The gate compares (now - last_fetch < min_interval).  now is the live
      * monotonic clock; to prove the gate keys off the field, set last_fetch far
      * enough in the past that (now - last_fetch) >= 2 s. */
-    g_pentax_preview_last_fetch = stage2_monotonic_secs() - 3;
+    g_pentax_preview_last_fetch = stage2_monotonic_ms() - 3000;
     assert(stage2_shim_gp_camera_capture_preview(&camera, NULL, NULL) == 0);
     printf("  PASS: advancing the monotonic clock past the interval re-arms the fetch\n");
 
