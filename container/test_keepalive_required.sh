@@ -48,7 +48,20 @@ detect() {
 }
 
 # A live keepalive process is accepted.
-( exec -a "bash $ROOT/scripts/polaris-bt-keepalive.sh" sleep 60 ) &
+# This file is #!/bin/sh and tests/run_deterministic.sh runs it through its own
+# shebang, so the stand-in has to be POSIX. "( exec -a ... )" is a bashism: under
+# dash it aborts with "exec: -a: not found", which turned the whole deterministic
+# gate RED and blocked the v115 build. A script named polaris-bt-keepalive.sh puts
+# the same string into /proc/<pid>/cmdline that
+# "bash .../scripts/polaris-bt-keepalive.sh" does, so detect() is still exercised
+# against the exact shape it sees in production -- and no longer silently passes
+# only on hosts where /bin/sh happens to be bash.
+cat > "$TMP/polaris-bt-keepalive.sh" <<'WRAP'
+#!/bin/sh
+sleep 60
+WRAP
+chmod +x "$TMP/polaris-bt-keepalive.sh"
+"$TMP/polaris-bt-keepalive.sh" &
 live=$!
 echo "$live" > "$TMP/ka.pid"
 sleep 1
