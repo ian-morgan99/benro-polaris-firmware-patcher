@@ -38,7 +38,7 @@ The current convention is
 one number, two renderings.
 
 ```text
-last_display_fwver=6.0.0.54.114
+last_display_fwver=6.0.0.54.115
 ```
 
 `.108` was claimed and published 2026-11-13 by the Astro candidate flow by hand.
@@ -67,6 +67,7 @@ entry, only add one when a candidate is claimed.
 
 ```text
 consumed_display_fwver=6.0.0.54.108
+consumed_display_fwver=6.0.0.54.115
 consumed_display_fwver=6.0.0.54.114
 consumed_display_fwver=6.0.0.54.113
 consumed_display_fwver=6.0.0.54.111
@@ -152,6 +153,7 @@ version_commit_binding=6.0.0.54.110|libgphoto2=4ef07e9209e827a3ab0013edd5ac1f874
 version_commit_binding=6.0.0.54.111|libgphoto2=4ef07e9209e827a3ab0013edd5ac1f874892c423|patcher=ae6aa3d970adfaffdca0a47a6aa3f804283d22a4
 version_commit_binding=6.0.0.54.113|libgphoto2=4ef07e9209e827a3ab0013edd5ac1f874892c423|patcher=57dc1c6335f22eae494f2c11e87335c687914376
 version_commit_binding=6.0.0.54.114|libgphoto2=4ef07e9209e827a3ab0013edd5ac1f874892c423|patcher=87032af4e2dd376274c5435857c07bd76c76ab72
+version_commit_binding=6.0.0.54.115|libgphoto2=0f2f34e0004011136fa75bf43e215acc0c8b9fdb|patcher=f67c6baf5f572073c3fb0890f4e68b1d631de0fa
 ```
 
 ## Version-to-commit binding (one version, one set of commits)
