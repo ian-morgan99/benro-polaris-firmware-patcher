@@ -335,6 +335,7 @@ PY_TESTS=(
     tests/test_install_astro_boot_hook_failclosed.py
     tests/test_autonomous_install.py
     tests/test_assert_orphan_wrote.py
+    tests/test_autojoin_boot_loop_self_heal.py
     tests/test_capture_outcomes.py
     tests/test_control_liveness.py
     tests/test_qualification_verdict.py
