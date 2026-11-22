@@ -1,5 +1,17 @@
 # K-1 II shutter settings and latency
 
+## Combined K-01 and K-1 II build, 22 November 2026
+
+The v115 driver pin is `0f2f34e0004011136fa75bf43e215acc0c8b9fdb`.
+It contains the direct K-1 II setting fix and the K-01 MSC routing fix.
+The reviewed Patcher camera changes are in `fbfa133` and the autojoin gate
+registration in `0932370`. The physical PC validator passed K-01
+autodetection and shutter, aperture and ISO reads. On both driver builds
+the body kept ISO 800 when asked for 400. Independent reopen verified 800.
+The raw comparisons are in `out/k01-378-reviewed-20261122` in the canonical
+Patcher checkout. Device installation and end-to-end qualification need their
+own receipts. Start with the v115 change summary and the release entrypoints.
+
 ## Current handover, 22 November 2026
 
 Use libgphoto2 source commit `ed958942f4452ffa8e7554ece32acd75804198fd` for the next candidate dependency upgrade. Driver main at `620c16ff6eddc16ed37cb88435bcf03c14794368` adds the test record. The K-1 II on the PC applied and immediately reported shutter, aperture, ISO, WB and EV. All five original settings survived an independent reconnect after each transaction. Signed EV also passed. On v114 the shutter, aperture, ISO and WB widgets returned their previous selection after the camera had applied the new value. The driver now expires each written descriptor. WB still took 1.467 s on the final clean build. [Direct evidence and module hashes](https://github.com/ian-morgan99/libgphoto2/blob/620c16ff6eddc16ed37cb88435bcf03c14794368/docs/pentax/evidence/2026-11-21/k1ii-usb-settings/transactions.txt)
