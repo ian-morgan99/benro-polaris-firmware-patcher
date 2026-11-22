@@ -4,14 +4,14 @@
     "libgphoto2_commit": "4ef07e9209e827a3ab0013edd5ac1f874892c423",
     "patcher_commit": "87032af4e2dd376274c5435857c07bd76c76ab72"
   },
-  "purpose": "Qualify K-1 II shutter admission and preview pacing together with the K-01 MSC discovery fix. Driver main 0f2f34e0004011136fa75bf43e215acc0c8b9fdb contains both PRs 168 and 169.",
+  "purpose": "Qualify K-1 II native shutter admission together with the K-01 MSC discovery fix. Driver main 0f2f34e0004011136fa75bf43e215acc0c8b9fdb contains both PRs 168 and 169.",
   "changes": [
     {"component":"libgphoto2","summary":"Refresh verified Pentax setting widgets after writes and read EV through camera conditions. On the direct K-1 II, shutter, aperture, ISO, WB and EV changed and restored.","issues":["ian-morgan99/libgphoto2#169","#235"]},
     {"component":"libgphoto2","summary":"For the shared 25fb:0130 identity, leave the single 08/06/50 MSC interface to usbscsi. Preserve the 645D PTP ability. The direct K-01 now enumerates only once and the separate K-1 II remains visible.","issues":["ian-morgan99/libgphoto2#168","#378","#379"]},
-    {"component":"patcher","summary":"Make native pgphoto admission atomic, give a waiting setting write priority and yield background work. Pace K-1 II real preview fetches from completion with a shorter interval after a fast successful fetch.","issues":["#235","#147"]},
+    {"component":"patcher","summary":"Make native pgphoto admission atomic through the stage2_camera_claim gate, with site-aware operation kind so a waiting setting write is admitted ahead of preview work. Preview fetch pacing is NOT changed by this build; it remains open under #147.","issues":["#235","#147"]},
     {"component":"patcher","summary":"Carry the reviewed autojoin boot-loop recovery and its regression tests. The associated editor settings affect the development checkout only.","issues":["#375"]},
     {"component":"packaging","summary":"Include mainline SD archive layout and Astro installer fixes since v114, including VERSION installation and completeness checking of the staged manifest.","issues":[]}
   ],
-  "validation_focus":["Verify the selected ARM camlibs, USB-SCSI module, native admission paths, installed identity and kit. Recheck the K-01 SCSI port inside pgphoto on Polaris. On the K-1 II verify changed shutter, exact restoration and live preview cadence on the device."],
-  "known_limits":["The K-01 on the PC refused ISO 800 to 400 on both the original and fixed builds. A fresh session verified ISO 800 after each trial. MSC discovery and reads are qualified only on the PC. No new K-01 vendor commands are enabled.","No physical 645D was available. Native K-1 II shutter admission and the preview improvement require post-install camera evidence."]
+  "validation_focus":["Verify the selected ARM camlibs, USB-SCSI module, native admission paths, installed identity and kit. Recheck the K-01 SCSI port inside pgphoto on Polaris. On the K-1 II verify changed shutter and exact restoration on the device. Live preview cadence is unchanged by this build and is recorded as a baseline observation only."],
+  "known_limits":["The K-01 on the PC refused ISO 800 to 400 on both the original and fixed builds. A fresh session verified ISO 800 after each trial. MSC discovery and reads are qualified only on the PC. No new K-01 vendor commands are enabled.","No physical 645D was available. Native K-1 II shutter admission requires post-install camera evidence. Preview fetch pacing was never implemented, so no pacing behaviour may be claimed or asserted from this build."]
 }
