@@ -1,0 +1,48 @@
+=== Polaris pre-release gate (2026-11-22T22:21:59Z) ===
+PASS: container deterministic harness (34 passed)
+PASS: python regression suite (986 passed)
+PASS: python test-list drift guard (78 suites, all listed)
+PASS: agent host check: scripts/check-agent-sandbox.py (VERDICT=SANDBOX_OK sandbox=enabled prerequisites=present)
+PASS: agent host check: scripts/check-agent-host-config.py (VERDICT=CONFIG_OK pins=present settings=/home/ian/.config/Code - Insiders/User/settings.json,/home/ian/.config/VSCodium/User/settings.json,.vscode/settings.json)
+PASS: code-780 version patch (exact copy, memset length preserved)
+PASS: pgphoto machine-code patch: test_polaris_bulb_dispatch_patch
+PASS: pgphoto machine-code patch: test_polaris_bulb_poll_budget_patch
+PASS: pgphoto machine-code patch: test_polaris_cancel_writer_patch
+PASS: pgphoto restart helper lock handling: test_restart_gphoto_launch_lock
+PASS: pgphoto restart helper lock handling: test_restart_gphoto_restart_lock
+PASS: stage2 init-trace one-shot logic (#297)
+PASS: no stray bare command lines in tracked shell scripts
+PASS: FwPkt structural validation (/home/ian/polaris-v101/out/astro-v115-k01-camera-admission-20261122/FwPkt)
+SKIP: firmwareInfo manifest gate (no stock firmware/FwPkt.zip in repo) (prerequisite unavailable)
+PASS: install manifest present and current (zip sha256 matches /home/ian/polaris-v101/out/astro-v115-k01-camera-admission-20261122)
+PASS: shipped-artifact differential (WARN: multi-component version, see /tmp/prerelease-differential.log)
+      WARN: the mandatory file set grew since the previous candidate
+        added mandatory file (declared by the packaging spec): /app/lib/stage2/camera_usb_supervisor.sh
+      7 of 12 shipped files changed:
+        /app/FwVer
+        /app/lib/stage2/libgphoto2/2.5.34/ptp2.so  <- libgphoto2 PTP driver (camera protocol behaviour)
+        /app/lib/stage2/libgphoto2_port/0.12.2/usb1.so
+        /app/lib/stage2/libpolaris_stage2.so  <- Stage-2 loader (shim/preload layer)
+        /app/lib/stage2/pgphoto.stage2ondisk  <- pgphoto wrapper
+        /app/openpolaris-libgphoto2-provenance.txt
+        /app/lib/stage2/camera_usb_supervisor.sh
+      WARN: this single display version moves 3 shipped components:
+        - libpolaris_stage2.so: Stage-2 loader (shim/preload layer)
+        - pgphoto.stage2ondisk: pgphoto wrapper
+        - ptp2.so: libgphoto2 PTP driver (camera protocol behaviour)
+        The registry entry must describe every one of them, or a later diagnosis/rollback will reason from an incomplete description.
+PASS: polestar_app original Bulb branch intact in repacked appfs
+PASS: pgphoto timed Bulb dispatch present in repacked appfs
+INFO: no --device-libs given; using the built-in allowlist derived from a captured loader trace. Capture `ls -1 /app/lib` on the target for an authoritative reading.
+PASS: shipped .so dependencies and version pins
+PASS: shipped camlib serves K-1 II and K-3 III
+PASS: provenance registry hash check (3 artifact(s) verified against the registry)
+PASS: rig tooling self-test (wait-for-rig.py argv well-formed)
+PASS: rig tooling self-test (capture-shutter-list.py argv well-formed)
+SKIP: libgphoto2 capture contract (no --libgphoto2-src supplied) (prerequisite unavailable)
+PASS: Bulb cancellation-return diagnostic (cancellation survives cleanup and publication; a failed stop still outranks it)
+PASS: ARM emulation of Stage-2 (loads, relocates and executes the candidate binary; see /tmp/prerelease-arm-emulation.json)
+=== Pre-release gate summary: 25 passed, 0 failed, 2 skipped ===
+Skipped: firmwareInfo manifest gate (no stock firmware/FwPkt.zip in repo) libgphoto2 capture contract (no --libgphoto2-src supplied)
+GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence).
+GATE_EXIT=0

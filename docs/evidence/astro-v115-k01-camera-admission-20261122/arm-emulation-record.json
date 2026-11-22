@@ -1,0 +1,32 @@
+{
+  "assertions_failed": [],
+  "binary_path": "/home/ian/polaris-v101/out/astro-v115-k01-camera-admission-20261122/stage2-ondisk/ondisk/pgphoto.stage2ondisk",
+  "binary_sha256": "fcce947ff5525629f23552fd7ff3feb3e377512dd957522fc95191689bcc1bfb",
+  "binary_size": 7801576,
+  "check": "arm-emulation-stage2",
+  "duration_ms": 0,
+  "elf_segment_defects": [],
+  "entry_address": "0x15ed8",
+  "error_message": null,
+  "exclusions": [
+    "shutter closure (gp_camera_exit/gp_port_close is libgphoto2 teardown, not the Bulb stop; stopCaptureImageForMessage is that path)",
+    "PTP protocol and physical camera behaviour (not a Pentax/PTP emulator)",
+    "on-boot firmware upgrade watcher (SP_UpgradeCheckFw) and reboot behaviour",
+    "appfs/rootfs image contents and UBIFS layout",
+    "Wi-Fi/AP behaviour, auto-join, and the 60s wifi-auto-off timer",
+    "astro kit install, boot hook, and plate solver"
+  ],
+  "harness_revision": "3ad419710cf28b14ef3a0563bdd1881959a7f8c1",
+  "instruction_budget": 100000,
+  "instructions_executed": 100000,
+  "manifest_expected_sha256": "fcce947ff5525629f23552fd7ff3feb3e377512dd957522fc95191689bcc1bfb",
+  "manifest_expected_size": 7801576,
+  "missing_library": null,
+  "patcher_commit": "34e28bbfdc0bee166d6e9a8772c5d60c651a5ae7",
+  "relocations_resolved": 265,
+  "relocations_unresolved": 0,
+  "result": "pass",
+  "stub_calls": 0,
+  "unresolved_symbol": null,
+  "unsupported_relocation_offset": null
+}
