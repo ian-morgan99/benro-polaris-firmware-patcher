@@ -1,5 +1,30 @@
 # Current repository state
 
+## 2026-11-22 — v115 build attempt blocked by a RED gate; nothing installed
+
+Candidate `astro-v115-k01-camera-admission-20261122` (`6.0.0.54.115`) is prepared on
+`main` at `466c17a15dbd57b1c0e165d961be8abcc1a7ed0a` with driver pin
+`0f2f34e0004011136fa75bf43e215acc0c8b9fdb` (PRs #168 and #169 merged). The build ran
+as `polaris-v115-build-nov22.service` from `/home/ian/polaris-v101` and exited 1 at
+20:26:40Z: the container deterministic harness was RED, so staging and install never
+started. Polaris still reports `FwVer:6.0.0.54.114;date:2026.11.19;` — **v114 is the
+installed identity** and no v115 camera evidence exists.
+
+The single RED check was a test bug, not a product regression:
+`container/test_keepalive_required.sh` used the bashism `exec -a` under a `#!/bin/sh`
+shebang, and `tests/run_deterministic.sh` runs each test through its own shebang, so
+dash aborted it. It now uses a POSIX wrapper and the full harness reports
+34 passed, 0 failed, 2 skipped (exit 0). That fix is **uncommitted** and exists only
+in `/home/ian/Documents/VSCodeProjects/BenroPolarisPatcher`; `/home/ian/polaris-v101`
+still carries the bashism. A partial `FwPkt.zip` from the failed run exists and must
+not be used — hashes are recorded in the evidence summary.
+
+See [the v115 handoff](V115-HANDOFF-20261122.md) for tree/worktree inventory, the
+do-not-use artifact hashes and the resume checklist, and
+[evidence](evidence/astro-v115-k01-camera-admission-20261122/SUMMARY.md) for the
+preserved gate transcripts. The v109 entry below remains the last completed deploy;
+#251, setting restoration, RAW+JPEG and non-Pentax qualification remain open.
+
 ## 2026-11-15 — v109 deployed; camera qualification pending
 
 Candidate `astro-v109-camera-mainline-20261115` (`6.0.0.54.109`) uses clean
