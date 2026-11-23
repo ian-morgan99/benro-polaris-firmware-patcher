@@ -121,3 +121,34 @@ unverified change to the packaged driver, which the release-integrity rules
 forbid. Requires: responsive body -> build in the registered worktree
 (exp/k1ii-driver-perf) -> measure ops+wall-clock before/after -> confirm choice
 lists still track mode changes.
+
+## R5 — "Unresponsive camera" was actually PTP_RC_DeviceBusy (0x02fa), not sleep
+Earlier I described the bodies as "asleep or powered off". That was wrong. With a
+long-enough timeout the K-1 II answers, and the driver reports:
+
+    Pentax init stage OpenSession attempt 1, session 1, returned 0x02fa.
+    Pentax state is busy or unknown; refusing session close and USB reset.
+
+`0x02fa` is `PTP_RC_DeviceBusy`. The body is powered and on the bus; it is
+declining a new session. Per docs/pentax-mode-aware-liveness.md, busy is a
+legitimate post-capture state (dark-frame NR, pixel-shift processing, RAW/JPEG
+production, Bulb/astro) and must not be treated as a failure. The driver's
+refusal to force-close the session or reset USB is deliberate safety behaviour,
+so polling within an expected envelope is the correct response — not a reset.
+
+### Consequence for my earlier measurements
+The runs I misread as "fast" (low op count, high wall clock) were sessions that
+never completed because OpenSession was refused/timed out. That is exactly why
+op counts looked small. Recorded here so the reasoning error is not repeated:
+**a low PTP op count alongside a high wall clock means the session failed, not
+that the driver was efficient.** Always check gphoto2's own exit code and look
+for `returned 0x02fa` / `Timeout` before interpreting timing.
+
+### Also corrected: my perf attribution
+The raw Pentax descriptor fetch is a *fallback* (only when the generic call
+fails), so it is not the source of the 30 descriptor ops. The source-confirmed
+mechanism is `params->cachetime` defaulting to 2 s (library.c:12086) while one
+full widget walk spans ~7.95 s, so cached descriptors expire mid-walk and are
+refetched. Not every refetch is explained by TTL expiry — gaps as short as
++1.409 s occur inside the window, implicating the `timestamp = 0` invalidation
+sites (ptp.c:3744, 5032, 6111), which I have not yet traced.
