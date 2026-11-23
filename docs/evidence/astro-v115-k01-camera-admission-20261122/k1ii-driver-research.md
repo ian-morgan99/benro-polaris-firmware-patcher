@@ -228,3 +228,39 @@ This independently reproduces codex's result (8.26->6.62 s single, 58.5->30.3 s 
 - **Route A is the answer** (docs/FIRMWARE-INSTALL-PROCESS.md:202): place `FwPkt/` on the SD
   card and reboot - the watcher consumes it with zero network transfer. Requires one physical
   action; no marker file needed, the reboot alone is the trigger.
+
+## R9 - "Did we change the upload and cause these failures?" - NO (git-proven)
+Question raised by the owner after 12 failed staging attempts. Answered from history, not guess:
+
+- `scripts/release/release-fwpkt.sh` staging block is **byte-identical** to the version that
+  installed v109 successfully on 2026-11-15 (`docs/evidence/astro-v109-camera-mainline-20261115/
+  LIVE-SESSION.md:66` - "started 11:56:31 and exited 0"):
+      tar czf - -C "$BUILD_DIR" FwPkt | ssh -o BatchMode=yes \
+        -o ServerAliveInterval=10 -o ServerAliveCountMax=60 "$SSH" 'tar xzf - -C /app/sd && sync'
+  Compared `git show 53e624d5:...` against current HEAD: same command, same keepalive flags.
+- There is no chunked/resumable staging path in any version of the installer - it has always
+  been one stream. So "the original process streamed in chunks" is not what the script does.
+- Later commits touched only *budgets and guards* (85800c79 raise SSH budget, b1cc438e keepalive
+  gate, 53e624d5 ServerAliveCountMax + staged-size verify). None changed the transfer itself.
+
+### Actual cause: known open device defect, issue #171
+"Polaris AP-mode WiFi driver permanently exhausts dhd tdata_psh_info pool (~230 errors/min while
+associated)" - OPEN, labels bug/area:network-wifi. Evidence on that issue:
+- 2026-11-21 camera-off bulk transfer grew DHD failures 83 -> 115 with **no camera enumerated**,
+  sender showing TCP retransmissions and >100 KB send queue. So it is not camera workload.
+- "permanently exhausts ... while associated" implies the pool does not recover without a
+  re-association/reboot - consistent with every attempt tonight failing at the same point.
+
+### My own transfer experiments tonight (all failed, recorded so nobody retries them)
+| method | result |
+|---|---|
+| installer's single 86 MB tar stream | 12 x INSTALL_EXIT=255 mid-staging |
+| 20 MB to /dev/null (no disk write) | 1041 s then `send disconnect: Connection timed out` |
+| 4 x 1 MB chunks, fresh SSH each | all 4 hit timeout; one took 990 s |
+| paced ~0.5 MB/s bursts | 1095 s, rc=124, disconnected |
+Throttling and chunking do not help, which rules out "too fast" and points at pool exhaustion.
+
+### Conclusion and route forward
+Not a regression. Route A (SD card + reboot, docs/FIRMWARE-INSTALL-PROCESS.md:202) needs no
+network at all and is the reliable path. Secondary option worth one test: reboot the device to
+reset the DHD pool, then stage immediately in the fresh window before exhaustion re-accumulates.
