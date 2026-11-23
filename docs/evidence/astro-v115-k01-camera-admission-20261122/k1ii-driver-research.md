@@ -185,3 +185,46 @@ be used as primary despite being the requested choice. The coding model's top
 hypothesis (cache invalidation during walk) was REFUTED by my own source reading
 above; its secondary point (deep-copy semantics) was confirmed. Model output is used
 only to generate candidates - nothing is published without independent verification.
+
+## R7 - Perf A/B: VALIDATED, and my earlier A/B was invalid (corrected)
+My first cachetime A/B was worthless for two independent reasons, both mine:
+1. I edited `~/.gphoto/settings`, but libgphoto2 prefers `$XDG_CONFIG_HOME/gphoto/settings`
+   and only falls back to the legacy path if the XDG file does not exist.
+2. I wrote INI syntax `[ptp2]\ncachetime=30`. `verify_settings()` (gphoto2-setting.c:245)
+   requires **two** `=` per line (`section=key=value`) and *unlinks* the file when format
+   is wrong - which is why the file disappeared mid-session.
+Correct form is a single flat line: `ptp2=cachetime=30`.
+
+### Valid A/B (isolated XDG_CONFIG_HOME=/tmp/gpconf, live K-1 II fw 2.51, pin 0f2f34e00040)
+| cachetime | 10 widgets, one process | 0x1014 fetches | driver confirmed read |
+|---|---:|---:|---|
+| 2 (default) | 49.66 s | 263 | `read cachetime 2` |
+| 30          | 27.12 s |  72 | `read cachetime 30` |
+
+Descriptor expiry accounts for **22.5 s of 49.7 s** (~45%) and 191 of 263 fetches.
+This independently reproduces codex's result (8.26->6.62 s single, 58.5->30.3 s ten,
+278->74 fetches). Codex's numbers stand; my invalid A/B is retracted.
+
+### Right approach for K-1 II performance (ordered, evidence-based)
+1. **Session reuse first.** Every cost above is paid per process. A persistent pgphoto-style
+   daemon pays vendor-enable + one descriptor walk once, then ~0 s per control. This is the
+   single largest win and needs no libgphoto2 change.
+2. **Raise cachetime for read-only enumeration**, but NOT globally: descriptors carry
+   `CurrentValue` (duplicate_DevicePropDesc copies it) and Pentax enums are mode-dependent
+   (Bulb shutter enum has zero fractional values). A blanket long TTL serves stale choice
+   lists - the #316 failure class. Correct fix is a **mode-keyed cache**: invalidate on
+   shooting/drive/exposure-mode change, not on wall clock.
+3. **Then** trace the residual 72 fetches / 222 non-descriptor requests that remain at
+   cachetime=30 - that is the next target codex identified and I agree with it.
+
+## R8 - v115 install: radio cannot sustain bulk transfer (measured tonight)
+- Control plane healthy: `ssh 'echo ok'` and `df` return in <2 s; polestar answers 9090.
+- Bulk writes fail at every scale: 20 MB to `/dev/null` = 1041 s then `send disconnect:
+  Connection timed out`; 1 MB chunks each hit a 90 s timeout (~0.01 MB/s).
+- Chunking does NOT help - this is bcmdhd TCP bookkeeping exhaustion under sustained load
+  (see memory summary k1ii-wireless-clog-bcmdhd-pool-exhaustion), not tar/vfat/ssh keepalive.
+- Therefore the installer's single 86 MB `tar czf - | ssh 'tar xzf'` stream cannot succeed
+  while the K-01 starves the radio. 12 attempts, all INSTALL_EXIT=255 at staging.
+- **Route A is the answer** (docs/FIRMWARE-INSTALL-PROCESS.md:202): place `FwPkt/` on the SD
+  card and reboot - the watcher consumes it with zero network transfer. Requires one physical
+  action; no marker file needed, the reboot alone is the trigger.
