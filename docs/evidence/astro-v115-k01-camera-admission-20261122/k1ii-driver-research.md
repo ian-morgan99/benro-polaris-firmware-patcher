@@ -89,3 +89,35 @@ must be qualified on the Polaris lane via wire code 264 after v115 installs.
 - Measure live-view frame fetch cost and whether pclvkeep reduces per-frame setup.
 - Enumerate advertised-but-unpublished properties (missing widgets).
 - Test pentaxdrivemode 23-choice writes for silent no-ops like K-3 III peaking.
+
+## R4 — Exact perf fix site (located in source; NOT yet implemented or tested)
+Per-widget cost comes from `_get_Pentax_DirectProperty` (config.c ~9615). For each
+property it issues:
+  1. `ptp_generic_getdevicepropdesc()` — **cached** via `params->dpd_cache` with
+     `params->cachetime` TTL (ptp.c:4901).
+  2. `ptp_pentax_get_device_prop_desc_raw()` — **uncached**, a fresh
+     `PTP_OC_GetDevicePropDesc` transaction every call (ptp.c:1980).
+  3. `ptp_pentax_get_device_prop_raw()` — **uncached**, a fresh
+     `PTP_OC_GetDevicePropValue` every call (ptp.c:1966).
+
+Steps 2 and 3 bypass the cache entirely, which is why ops scale linearly with
+widget count (63 -> 489 for 1 -> 10 widgets) instead of being paid once.
+
+### Why a naive cache would be WRONG here (do not "optimise" this blindly)
+Pentax descriptor *contents* are mode-dependent, proven by this same round: in
+Bulb the shutter enum contains only `mm:ss` values (00:01..20:00) and **zero**
+fractional entries, while other modes expose fractions. Caching a raw descriptor
+across a mode change would hand clients a stale choice list — the exact class of
+"slider shows values the body rejects" bug this project already tracks (#316).
+
+Therefore any caching must be keyed on, or invalidated by, shooting mode /
+drive state. Step 3 (the *value*) must never be cached: it is live body state.
+
+### Status
+Located and reasoned only. No patch applied, no measurement of improvement,
+because both bodies went unresponsive (every PTP op times out) before a build
+could be validated. Implementing without a responsive camera would ship an
+unverified change to the packaged driver, which the release-integrity rules
+forbid. Requires: responsive body -> build in the registered worktree
+(exp/k1ii-driver-perf) -> measure ops+wall-clock before/after -> confirm choice
+lists still track mode changes.
