@@ -1,0 +1,51 @@
+Observing Pentax camera state.	type=	readonly=	choices=0	ranges=0	current=
+Pentax init stage vendor enable succeeded; function flags 0x00000003.	type=	readonly=	choices=0	ranges=0	current=
+manualfocusdrivenear	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+manualfocusdrivefar	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+oldfocusdrivenear	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+oldfocusdrivefar	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+manualfocusdrive	type=RANGE	readonly=0	choices=0	ranges=0	current=0
+opcode	type=TEXT	readonly=0	choices=0	ranges=0	current=0x1001,0xparam1,0xparam2
+datetime	type=DATE	readonly=0	choices=0	ranges=0	current=1795429793
+capturetarget	type=RADIO	readonly=0	choices=2	ranges=0	current=Internal RAM
+autofocus	type=RADIO	readonly=0	choices=2	ranges=0	current=On
+serialnumber	type=TEXT	readonly=1	choices=0	ranges=0	current=7371227
+manufacturer	type=TEXT	readonly=1	choices=0	ranges=0	current=RICOH IMAGING COMPANY, LTD.
+cameramodel	type=TEXT	readonly=1	choices=0	ranges=0	current=PENTAX K-1 Mark II
+deviceversion	type=TEXT	readonly=1	choices=0	ranges=0	current=2.51
+vendorextension	type=TEXT	readonly=1	choices=0	ranges=0	current=????????????????
+pentaxconditions	type=TEXT	readonly=1	choices=0	ranges=0	current=state=0; astro-phase=inactive/other; exp
+pentaxliveviewcontrols	type=TEXT	readonly=1	choices=0	ranges=0	current=area=720x480; active=720x480; caf-active
+pentaxpropd00f	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd00f; datatype=0x0008; getset=1; 
+pentaxprop5007	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0x5007; datatype=0x0004; getset=1; 
+pentaxpropd01e	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd01e; datatype=0x0006; getset=1; 
+pentaxprop5010	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0x5010; datatype=0x0003; getset=1; 
+pentaxprop5008	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0x5008; datatype=0x0006; getset=0; 
+pentaxprop5005	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0x5005; datatype=0x0004; getset=1; 
+pentaxpropd013	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd013; datatype=0x0006; getset=1; 
+pentaxpropd02b	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd02b; descriptor-parse=header; de
+pentaxpropd035	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd035; descriptor-parse=header; de
+pentaxcimode	type=RADIO	readonly=0	choices=14	ranges=0	current=autoselect
+pentaxpclvkeep	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+pentaxcardwritingmode	type=RADIO	readonly=0	choices=4	ranges=0	current=off
+imageformat	type=RADIO	readonly=0	choices=3	ranges=0	current=JPEG
+imagequality	type=RADIO	readonly=0	choices=3	ranges=0	current=fine
+pentaxdirectshutter	type=RADIO	readonly=0	choices=56	ranges=0	current=00:20
+pentaxdirectiso	type=RADIO	readonly=0	choices=12	ranges=0	current=6400
+pentaxdirectaperture	type=RADIO	readonly=0	choices=22	ranges=0	current=f/1.6
+pentaxdirectev	type=RADIO	readonly=0	choices=31	ranges=0	current=0.3
+pentaxliveviewafposition	type=TEXT	readonly=0	choices=0	ranges=0	current=360,240
+pentaxliveviewzoom	type=RADIO	readonly=0	choices=6	ranges=0	current=off
+pentaxdrivemode	type=RADIO	readonly=0	choices=23	ranges=0	current=single
+pentaxdirectwb	type=RADIO	readonly=0	choices=18	ranges=0	current=auto
+batterylevel	type=TEXT	readonly=1	choices=0	ranges=0	current=100%
+iso	type=RADIO	readonly=0	choices=12	ranges=0	current=6400
+whitebalance	type=RADIO	readonly=0	choices=18	ranges=0	current=auto
+aperture	type=RADIO	readonly=0	choices=22	ranges=0	current=f/1.6
+exposurecompensation	type=RADIO	readonly=0	choices=31	ranges=0	current=0.3
+shutterspeed	type=RADIO	readonly=0	choices=56	ranges=0	current=00:20
+5001	type=MENU	readonly=1	choices=101	ranges=0	current=100
+5011	type=TEXT	readonly=0	choices=0	ranges=0	current=20261123T103521
+d406	type=TEXT	readonly=0	choices=0	ranges=0	current=
+d407	type=TEXT	readonly=1	choices=0	ranges=0	current=1
+d303	type=TEXT	readonly=1	choices=0	ranges=0	current=1
