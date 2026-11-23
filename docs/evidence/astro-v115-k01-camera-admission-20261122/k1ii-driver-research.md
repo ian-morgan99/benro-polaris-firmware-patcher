@@ -152,3 +152,36 @@ full widget walk spans ~7.95 s, so cached descriptors expire mid-walk and are
 refetched. Not every refetch is explained by TTL expiry — gaps as short as
 +1.409 s occur inside the window, implicating the `timestamp = 0` invalidation
 sites (ptp.c:3744, 5032, 6111), which I have not yet traced.
+
+## R5 - Perf root cause: RESOLVED as far as source allows (no patch applied)
+Mechanism confirmed from source + retained healthy logs:
+- `params->cachetime` defaults to 2 s (library.c:12086); cache test is
+  `timestamp + cachetime > now` (ptp.c:4901). One full widget walk spans ~7.95 s,
+  so descriptors expire *during* the walk and are refetched. Propcode 0xd01e in one
+  process: 2.603 / 4.958 / 6.367 s (gaps +2.355, +1.409).
+- All three `timestamp = 0` invalidation sites are event/set-driven and do NOT fire
+  on a read-only walk: handle_event_internal (PTP_EC_DevicePropChanged),
+  ptp_generic_setdevicepropvalue, ptp_fuji_getevents. `ptp_check_event` is only
+  called from camera_canon_capture / camera_sony_capture - never the get_config path.
+- `duplicate_DevicePropDesc` (ptp-pack.c:965) is a DEEP copy, so the cache is not
+  corrupted by callers freeing their copy. It also copies CurrentValue, which means
+  cached descriptors carry live values - another reason naive caching is unsafe here.
+
+### Still unexplained (recorded, not guessed)
+One refetch in the 10-widget run (t=6.508 after t=5.257, gap 1.251 s < TTL) should
+have been a cache HIT. I could not identify the cause from source and have NOT
+invented one. Needs a responsive body plus a `cachetime` A/B to characterise.
+
+### Cheapest experiment when hardware is available (no code change)
+`cachetime` is read from the gphoto2 settings file (`ptp2/cachetime`). Set it to 30
+and compare `0x1014` counts + wall clock for 1 vs 10 widgets. If ops drop, TTL expiry
+is the dominant cost and a mode-keyed cache is the real fix; if not, the unexplained
+invalidation matters more.
+
+## R6 - Multi-model review outcome (LM Studio)
+Roster: `qwen3-coder-next` and `qwen3.8_4b_distilled_gguf` load and respond. Every
+`qwen3.8-flash-next` variant SIGABRTs on model load in this install, so it could not
+be used as primary despite being the requested choice. The coding model's top
+hypothesis (cache invalidation during walk) was REFUTED by my own source reading
+above; its secondary point (deep-copy semantics) was confirmed. Model output is used
+only to generate candidates - nothing is published without independent verification.
