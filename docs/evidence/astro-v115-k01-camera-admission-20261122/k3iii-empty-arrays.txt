@@ -1,0 +1,5 @@
+5010	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d024	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d025	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d026	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d02c	type=MENU	readonly=0	choices=0	ranges=0	current=0

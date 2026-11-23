@@ -1,0 +1,95 @@
+Observing Pentax camera state.	type=	readonly=	choices=0	ranges=0	current=
+Pentax init stage vendor enable succeeded; function flags 0x00000000.	type=	readonly=	choices=0	ranges=0	current=
+manualfocusdrivenear	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+manualfocusdrivefar	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+manualfocusdrive	type=RANGE	readonly=0	choices=0	ranges=0	current=0
+autofocusdrive	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+opcode	type=TEXT	readonly=0	choices=0	ranges=0	current=0x1001,0xparam1,0xparam2
+datetime	type=DATE	readonly=0	choices=0	ranges=0	current=1795430376
+capturetarget	type=RADIO	readonly=0	choices=2	ranges=0	current=Internal RAM
+autofocus	type=RADIO	readonly=0	choices=2	ranges=0	current=On
+serialnumber	type=TEXT	readonly=1	choices=0	ranges=0	current=8093033
+manufacturer	type=TEXT	readonly=1	choices=0	ranges=0	current=RICOH IMAGING COMPANY, LTD.
+cameramodel	type=TEXT	readonly=1	choices=0	ranges=0	current=PENTAX K-3 Mark III
+deviceversion	type=TEXT	readonly=1	choices=0	ranges=0	current=2.20
+vendorextension	type=TEXT	readonly=1	choices=0	ranges=0	current=microsoft.com/DeviceServices: 1.0; 
+pentaxconditions	type=TEXT	readonly=1	choices=0	ranges=0	current=state=0; astro-phase=inactive/other; exp
+pentaxliveviewcontrols	type=TEXT	readonly=1	choices=0	ranges=0	current=area=1080x720; active=1080x720; caf-acti
+pentaxpropd00f	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd00f; datatype=0x0008; getset=1; 
+pentaxprop5007	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0x5007; datatype=0x0004; getset=1; 
+pentaxpropd01e	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd01e; datatype=0x0006; getset=1; 
+pentaxprop5010	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0x5010; datatype=0x0003; getset=1; 
+pentaxprop5005	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0x5005; datatype=0x0004; getset=1; 
+pentaxpropd013	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd013; datatype=0x0002; getset=1; 
+pentaxpropd02b	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd02b; datatype=0x0002; getset=1; 
+pentaxpropd035	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd035; datatype=0x0002; getset=1; 
+pentaxfocuspeaking	type=RADIO	readonly=0	choices=3	ranges=0	current=off
+pentaxpclvmode	type=RADIO	readonly=0	choices=2	ranges=0	current=off
+pentaxbracketmode	type=RADIO	readonly=0	choices=5	ranges=0	current=off
+pentaxbracketstep	type=RADIO	readonly=0	choices=15	ranges=0	current=2.0
+pentaxcimode	type=RADIO	readonly=0	choices=14	ranges=0	current=natural
+pentaxcompositionadjust	type=RADIO	readonly=0	choices=2	ranges=0	current=on
+pentaxcrossprocess	type=RADIO	readonly=0	choices=5	ranges=0	current=255
+pentaxcisaturation	type=RADIO	readonly=0	choices=9	ranges=0	current=0
+pentaxcihue	type=RADIO	readonly=0	choices=9	ranges=0	current=0
+pentaxcikey	type=RADIO	readonly=0	choices=9	ranges=0	current=0
+pentaxcifinesharpness	type=RADIO	readonly=0	choices=2	ranges=0	current=0
+pentaxcihighlightcontrast	type=RADIO	readonly=0	choices=9	ranges=0	current=0
+pentaxcishadowcontrast	type=RADIO	readonly=0	choices=9	ranges=0	current=0
+pentaxpropd02d	type=TEXT	readonly=1	choices=0	ranges=0	current=code=0xd02d; datatype=0x4002; getset=1; 
+pentaxmoviemode	type=RADIO	readonly=0	choices=2	ranges=0	current=off
+pentaxpclvkeep	type=TOGGLE	readonly=0	choices=0	ranges=0	current=0
+pentaxcardwritingmode	type=RADIO	readonly=0	choices=4	ranges=0	current=off
+imageformat	type=RADIO	readonly=0	choices=3	ranges=0	current=RAW
+imagequality	type=RADIO	readonly=0	choices=3	ranges=0	current=fine
+pentaxdirectshutter	type=RADIO	readonly=0	choices=56	ranges=0	current=00:01
+pentaxdirectiso	type=RADIO	readonly=0	choices=15	ranges=0	current=100
+pentaxdirectaperture	type=RADIO	readonly=0	choices=19	ranges=0	current=f/3.2
+pentaxdirectev	type=TEXT	readonly=1	choices=0	ranges=0	current=0
+pentaxliveviewafposition	type=TEXT	readonly=0	choices=0	ranges=0	current=540,360
+pentaxliveviewzoom	type=RADIO	readonly=0	choices=6	ranges=0	current=off
+pentaxdrivemode	type=RADIO	readonly=0	choices=3	ranges=0	current=single
+pentaxdirectwb	type=RADIO	readonly=0	choices=18	ranges=0	current=auto
+batterylevel	type=TEXT	readonly=1	choices=0	ranges=0	current=100%
+iso	type=RADIO	readonly=0	choices=15	ranges=0	current=100
+whitebalance	type=RADIO	readonly=0	choices=18	ranges=0	current=auto
+f-number	type=RADIO	readonly=0	choices=19	ranges=0	current=f/3.2
+aperture	type=RADIO	readonly=0	choices=19	ranges=0	current=f/3.2
+exposurecompensation	type=TEXT	readonly=1	choices=0	ranges=0	current=0
+sharpness	type=RADIO	readonly=0	choices=9	ranges=0	current=50%
+shutterspeed	type=RADIO	readonly=0	choices=56	ranges=0	current=00:01
+5001	type=MENU	readonly=1	choices=101	ranges=0	current=100
+5005	type=MENU	readonly=0	choices=17	ranges=0	current=2
+5007	type=MENU	readonly=0	choices=19	ranges=0	current=320
+5010	type=MENU	readonly=0	choices=0	ranges=0	current=0
+5011	type=TEXT	readonly=0	choices=0	ranges=0	current=20261123T104117
+5014	type=MENU	readonly=0	choices=9	ranges=0	current=4
+5015	type=MENU	readonly=0	choices=9	ranges=0	current=4
+d406	type=TEXT	readonly=0	choices=0	ranges=0	current=
+d407	type=TEXT	readonly=1	choices=0	ranges=0	current=1
+d303	type=TEXT	readonly=1	choices=0	ranges=0	current=1
+d009	type=TEXT	readonly=0	choices=0	ranges=0	current=(null)
+d00f	type=MENU	readonly=0	choices=56	ranges=0	current=4294967297
+d013	type=MENU	readonly=0	choices=3	ranges=0	current=0
+d014	type=MENU	readonly=0	choices=1	ranges=0	current=0
+d015	type=MENU	readonly=0	choices=15	ranges=0	current=20
+d01b	type=TEXT	readonly=0	choices=0	ranges=0	current=(null)
+d01e	type=MENU	readonly=0	choices=15	ranges=0	current=100
+d020	type=MENU	readonly=0	choices=15	ranges=0	current=0
+d021	type=MENU	readonly=0	choices=9	ranges=0	current=0
+d022	type=MENU	readonly=0	choices=9	ranges=0	current=0
+d023	type=MENU	readonly=0	choices=9	ranges=0	current=0
+d024	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d025	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d026	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d027	type=MENU	readonly=0	choices=2	ranges=0	current=0
+d028	type=MENU	readonly=0	choices=9	ranges=0	current=0
+d029	type=MENU	readonly=0	choices=9	ranges=0	current=0
+d02a	type=MENU	readonly=0	choices=2	ranges=0	current=1
+d02b	type=MENU	readonly=0	choices=3	ranges=0	current=0
+d02c	type=MENU	readonly=0	choices=0	ranges=0	current=0
+d02d	type=TEXT	readonly=0	choices=0	ranges=0	current=(null)
+d035	type=MENU	readonly=0	choices=2	ranges=0	current=0
+d036	type=TEXT	readonly=0	choices=0	ranges=0	current=(null)
+d037	type=TEXT	readonly=0	choices=0	ranges=0	current=(null)
+d039	type=MENU	readonly=0	choices=2	ranges=0	current=0
