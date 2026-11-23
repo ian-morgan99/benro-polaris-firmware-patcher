@@ -18,6 +18,13 @@
 #   --skip-trigger     stage + verify only, do not reboot
 #   --skip-verify      skip the post-reboot verification (fire-and-forget)
 #   --max-wait SECS    max seconds to wait for device to return (default 900)
+#   --ssh-timeout SECS per-probe SSH ConnectTimeout (default 25). The AP flaps:
+#                      probes have returned in 3.2 s and hung past 30 s on the
+#                      same device minutes apart, so a tight budget produces
+#                      false "SSH failed" on a reachable rig.
+#   --preflight-attempts N  preflight / post-reboot proof probes (default 6,
+#                      10 s apart). Retries only; never turns unreachable into
+#                      a pass.
 #   --allow-busy       proceed even if a camera is present/busy (code 286 state:1)
 #   --no-kit           do not install the astro kit afterwards (default: install
 #                      it whenever the candidate carries one)
@@ -54,6 +61,14 @@ INSTALL_KIT=1
 GIMBAL_PORT=9090
 UPTIME_BEFORE=""
 UPTIME_AFTER=""
+# SSH budget. Measured on the rig on 2026-11-23: probes to 192.168.0.1 returned
+# in 3.2 s, timed out at exactly 5.0 s twice, and once hung past 30 s. The old
+# hard-coded 5 s therefore failed the preflight on a device that was reachable,
+# which is a false negative, not an unreachable device. The budget is now
+# configurable so a flapping AP can be waited out without weakening any gate.
+SSH_CONNECT_TIMEOUT=25
+PREFLIGHT_ATTEMPTS=6
+PREFLIGHT_SLEEP=10
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -62,6 +77,8 @@ while [ $# -gt 0 ]; do
     --skip-trigger) SKIP_TRIGGER=1; shift;;
     --skip-verify) SKIP_VERIFY=1; shift;;
     --max-wait) MAX_WAIT="$2"; shift 2;;
+    --ssh-timeout) SSH_CONNECT_TIMEOUT="$2"; shift 2;;
+    --preflight-attempts) PREFLIGHT_ATTEMPTS="$2"; shift 2;;
     --allow-busy) ALLOW_BUSY=1; shift;;
     --no-kit) INSTALL_KIT=0; shift;;
     -h|--help) sed -n '2,42p' "$0"; exit 0;;
@@ -115,8 +132,29 @@ echo
 
 # --- 1. Pre-flight -----------------------------------------------------------
 echo "--- [1/6] Pre-flight ---"
-if ! timeout 5 ssh -o BatchMode=yes -o ConnectTimeout=5 "$SSH" 'true' 2>/dev/null; then
-  echo "ERROR: SSH to $SSH failed." >&2; exit 3
+# ssh_probe <attempts> [sleep]: true if SSH answers within the budget.
+# Retries are for flapping only; a device that never answers still fails closed
+# after the attempts are exhausted, so this cannot turn an unreachable rig into
+# a pass.
+ssh_probe() {
+  local attempts="$1" pause="${2:-$PREFLIGHT_SLEEP}" i=1
+  while [ "$i" -le "$attempts" ]; do
+    if timeout "$((SSH_CONNECT_TIMEOUT + 5))" ssh -o BatchMode=yes \
+         -o ConnectTimeout="$SSH_CONNECT_TIMEOUT" \
+         -o ServerAliveInterval=10 -o ServerAliveCountMax=3 \
+         "$SSH" 'true' 2>/dev/null; then
+      return 0
+    fi
+    [ "$i" -lt "$attempts" ] && echo "  SSH probe $i/$attempts failed; retrying in ${pause}s"
+    sleep "$pause"
+    i=$(( i + 1 ))
+  done
+  return 1
+}
+if ! ssh_probe "$PREFLIGHT_ATTEMPTS"; then
+  echo "ERROR: SSH to $SSH failed after $PREFLIGHT_ATTEMPTS attempts"
+  echo "       (${SSH_CONNECT_TIMEOUT}s connect timeout each)." >&2
+  exit 3
 fi
 echo "SSH: OK"
 
@@ -365,7 +403,8 @@ else
   # Record uptime so we can prove the device actually booted fresh. An AP-link
   # flap makes SSH disappear for minutes while the box keeps running; treating
   # that as a reboot is how a .67 install was reported as done when it never ran.
-  UPTIME_BEFORE="$(ssh -o BatchMode=yes "$SSH" 'awk "{print int(\$1)}" /proc/uptime' 2>/dev/null || echo "")"
+  UPTIME_BEFORE="$(timeout "$((SSH_CONNECT_TIMEOUT + 5))" ssh -o BatchMode=yes \
+      -o ConnectTimeout="$SSH_CONNECT_TIMEOUT" "$SSH" 'awk "{print int(\$1)}" /proc/uptime' 2>/dev/null || echo "")"
   echo "Uptime before reboot: ${UPTIME_BEFORE:-<unknown>}s"
   ssh -o BatchMode=yes "$SSH" 'sync; /sbin/reboot' 2>/dev/null || true
   echo "Reboot sent. Device will be dark for 5-10 min (NAND reflash)."
@@ -380,9 +419,12 @@ else
   # Without this, a fast first probe can succeed before the reboot takes
   # effect and we'd "confirm" against a half-rebooted box.
   echo "  Phase A: waiting for device to go dark..."
+  # Deliberately a single SHORT probe, not ssh_probe: here a fast negative is the
+  # evidence we want (the box is dark because it is reflashing). Retrying would
+  # make "dark" indistinguishable from "flapping" and blow the 60 s budget.
   down=0
   while [ $down -lt 60 ]; do
-    if ! timeout 5 ssh -o BatchMode=yes -o ConnectTimeout=5 "$SSH" 'true' 2>/dev/null; then
+    if ! timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=8 "$SSH" 'true' 2>/dev/null; then
       down=999; break
     fi
     sleep 5
@@ -396,7 +438,8 @@ else
   # Phase B: wait for SSH to return (NAND reflash + boot, 5-10 min).
   elapsed=0
   while [ $elapsed -lt $MAX_WAIT ]; do
-    if timeout 5 ssh -o BatchMode=yes -o ConnectTimeout=5 "$SSH" 'true' 2>/dev/null; then
+    if timeout "$((SSH_CONNECT_TIMEOUT + 5))" ssh -o BatchMode=yes \
+         -o ConnectTimeout="$SSH_CONNECT_TIMEOUT" "$SSH" 'true' 2>/dev/null; then
       echo "Device back after ~${elapsed}s."
       break
     fi
@@ -411,7 +454,17 @@ else
   # an AP-link flap leaves it climbing. Fail closed rather than confirm against a
   # device that never reflashed.
   if [ -n "$UPTIME_BEFORE" ]; then
-    UPTIME_AFTER="$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$SSH" 'awk "{print int(\$1)}" /proc/uptime' 2>/dev/null || echo "")"
+    # This read is the proof that a flash actually ran. Losing it to one transient
+    # flap would discard a successful reflash, so it gets the same retry budget as
+    # the preflight. It still fails closed (exit 5) if never obtained.
+    UPTIME_AFTER=""
+    for _ua in $(seq 1 "$PREFLIGHT_ATTEMPTS"); do
+      UPTIME_AFTER="$(timeout "$((SSH_CONNECT_TIMEOUT + 5))" ssh -o BatchMode=yes \
+        -o ConnectTimeout="$SSH_CONNECT_TIMEOUT" "$SSH" \
+        'awk "{print int(\$1)}" /proc/uptime' 2>/dev/null || echo "")"
+      [ -n "$UPTIME_AFTER" ] && break
+      sleep "$PREFLIGHT_SLEEP"
+    done
     if [ -z "$UPTIME_AFTER" ]; then
       echo "ERROR: cannot read uptime after reboot — cannot prove the flash ran." >&2
       exit 5

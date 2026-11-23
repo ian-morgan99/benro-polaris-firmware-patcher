@@ -240,7 +240,18 @@ record that as a host wake limitation, not as evidence that the firmware is
 dead or that the rig is asleep.
 
 Options: `--skip-trigger` (stage + verify, no reboot), `--allow-busy` (only after
-confirming no exposure is in flight), `--max-wait SECS`, `--host IP`.
+confirming no exposure is in flight), `--max-wait SECS`, `--host IP`,
+`--ssh-timeout SECS` (per-probe `ConnectTimeout`, default 25) and
+`--preflight-attempts N` (default 6, 10 s apart).
+
+The SSH budget was raised from a hard-coded 5 s because 5 s produced false
+negatives on a reachable rig. Measured on the same device minutes apart: one
+probe answered in 3.2 s, two timed out at exactly 5.0 s, and one hung past 30 s.
+Retries only widen the window; they never turn an unreachable device into a pass,
+and the post-reboot uptime proof still fails closed with `exit 5` if it cannot be
+obtained. Phase A ("wait for the device to go dark") deliberately keeps a single
+short probe — there a fast negative is the evidence we want, and retrying would
+make "dark because reflashing" indistinguishable from "flapping".
 
 It performs six phases and fails closed at each:
 

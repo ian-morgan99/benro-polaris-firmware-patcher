@@ -198,8 +198,17 @@ EXPECTED_BUILD_ID=""
 [ -f "$BUILD_DIR/build-source-provenance.txt" ] && \
   EXPECTED_BUILD_ID="$(sed -n 's/^build_id=//p' "$BUILD_DIR/build-source-provenance.txt")"
 
-if ! ssh "${SSH_ARGS[@]}" "$SSH" 'echo ok' >/dev/null 2>&1; then
-  echo "ERROR: cannot reach $SSH over ssh." >&2; exit 3
+# A single probe makes this gate fail on an AP-link flap rather than on a device
+# that is genuinely unreachable (measured 2026-11-23: probes returned in 3.2 s,
+# timed out at 5 s twice, and once hung past 30 s). Retry, but still fail closed.
+reachable=0
+for _rtry in 1 2 3 4 5 6; do
+  if ssh "${SSH_ARGS[@]}" "$SSH" 'echo ok' >/dev/null 2>&1; then reachable=1; break; fi
+  echo "  ssh probe $_rtry/6 to $SSH failed; retrying in 10s"
+  sleep 10
+done
+if [ "$reachable" != "1" ]; then
+  echo "ERROR: cannot reach $SSH over ssh after 6 attempts." >&2; exit 3
 fi
 echo "  device reachable: $SSH"
 
