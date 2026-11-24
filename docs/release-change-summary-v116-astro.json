@@ -1,0 +1,24 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v115-k01-camera-admission-20261122",
+    "libgphoto2_commit": "0f2f34e0004011136fa75bf43e215acc0c8b9fdb",
+    "patcher_commit": "3e671adf"
+  },
+  "purpose": "Make PTP failures diagnosable. v115 reports -1 for a large set of standard PTP error codes, which is why the K-3 III imageformat rejection (#386) and the K-1 II unsupported-property path present as opaque -102/-1 with no cause. This build maps those codes to specific GP errors so the next physical test names the failure instead of guessing at it.",
+  "changes": [
+    {"component":"libgphoto2","summary":"translate_ptp_result() previously fell through to a generic GP_ERROR for standard PTP codes including DevicePropNotSupported (0x200a), InvalidDevicePropValue, InvalidObjectHandle, StoreFull, StoreReadOnly and AccessDenied. A client could not distinguish an unsupported property from a bad value from a full card. Observed live on a K-1 II: GetDevicePropDesc answered 0x200a and the driver logged 'unmapped PTP result code 0x200a reported as generic error'. Only codes with an unambiguous GP equivalent are mapped; SessionNotOpen, SessionAlreadyOpened, InvalidTransactionID and CaptureAlreadyTerminated keep their existing handling because Pentax session recovery depends on those paths. Adds tests/test-ptp-result-mapping.c which extracts the production body so it cannot drift.","issues":["ian-morgan99/libgphoto2#be9da156f","#386"]},
+    {"component":"patcher","summary":"Add tools/bench-widget-enumeration.py, a reproducible widget-read A/B that refuses to score invalid runs, plus 19 offline regression tests now wired into the prerelease gate. It encodes two measurement errors made on the way to the K-1 II numbers: INI-style settings syntax makes libgphoto2 unlink its settings file so cachetime silently stayed at the default (a retracted 45 percent claim), and a refused OpenSession (0x02fa) looks like the fastest run on an ops-per-second chart.","issues":["#389"]}
+  ],
+  "validation_focus": [
+    "Confirm the installed ARM ptp2.so differs from the v115 one and contains the new mapping.",
+    "On the K-3 III, re-run the imageformat write that returned -102 in #386. The expectation is a specific error code instead of -102/-1; that is the whole point of this build.",
+    "On the K-1 II, confirm normal init, settings read and one shutter change still work, since translate_ptp_result is on every failure path.",
+    "Confirm the K-01 still enumerates exactly once and the K-1 II remains visible alongside it."
+  ],
+  "known_limits": [
+    "This build does NOT contain a fix for the reported K-3 III 'not recognised at all' condition. No root cause was found. With the exact v115 driver on a PC, auto-detect finds 25fb:0189 and exact-model init succeeds (vendor enable 0x00000000, firmware 2.20), so the ability table and Pentax model gate are not the cause. The mount-side stage2 library is byte-identical to v115 apart from one log string, so the mount-side model gate did not change either. The failure is therefore most likely environmental or mount-side and must be reproduced on the device before any fix is written.",
+    "This build contains no K-1 II performance change in the shipped driver. The measured 34.8x win (382.31s to 10.97s for a 49-widget sweep) came from requesting widgets by short leaf name and batching them into one camera session, which is a client-side change already merged to the test harness. The driver-side cache patch that was hypothesised first was measured and found redundant: ed958942f already invalidates Pentax widgets after writes and is present in the v115 pin.",
+    "The K-01 MSC discovery fix is NOT new in this build. It shipped in v115 via driver commit dd676defb, which is an ancestor of the v115 pin. This release carries it forward unchanged.",
+    "No physical 645D was available. The shared 25fb:0130 interface routing is unchanged from v115 and untested on that body."
+  ]
+}
