@@ -1,5 +1,39 @@
 # Current repository state
 
+## 2026-11-24 — v116 built, gated GREEN with ARM, published; install still blocked
+
+Candidate `astro-v116-ptp-diagnosability-20261124` (`6.0.0.54.116`) is built, gated and
+published. Driver pin `be9da156f8adc0c1bf520c777636e50a712ea67a` (v115 pin plus one
+commit), patcher `65785529a87323e4ca19ba7d0b2f23410cedd5db`.
+`FwPkt.zip` sha256 `77ed82ccc9086c42ecbca48e81efaecd2ac2354cb656c19c70b08fe8a5e32987`,
+md5 `65c55b198bb3ce5b47b9d59111c91b75`; published to PrivateResearch and the remote
+digest re-read equals the build digest. Registry row added, so it is stageable.
+
+Gate: 23 passed / 0 failed / 4 skipped at build time, then ARM emulation of Stage-2 run
+separately to the v115 standard — pass, 265/0 relocations, 100000/100000 instructions,
+binary `fcce947f…` matching `install-manifest.json`. Evidence in
+`docs/evidence/astro-v116-ptp-diagnosability-20261124/`.
+
+**Polaris still reports `FwVer:6.0.0.54.114;date:2026.11.19;` — v114 remains the
+installed identity.** Neither v115 nor v116 is installed. Install is blocked because
+`wlp8s0` is DOWN with no `polaris_*` SSID in a full rescan; per the identity rule no
+install may proceed until real association is up and `/app/FwVer` reads over it.
+
+**Do not deploy v116 as a K-3 III recognition fix.** No recognition regression was
+found: with the v115 driver on direct PC the K-3 III auto-detects, inits exact-model and
+vendor-enables cleanly; its ability row and `pentax-utils.c` are byte-identical between
+the v114 and v115 pins; only three code files changed v114→v115, none in the recognition
+path. v116 ships PTP result-code diagnosability (32 previously unmapped standard codes),
+not a recognition change. The strongest remaining hypothesis for "not recognised at all"
+on the mount is packaging — v115 ships port modules under `libgphoto2_port/0.12.2/` while
+the base image carries `0.12.0/` — which would break every camera at once and is invisible
+to PC tests. Check that on device first.
+
+Process defect worth fixing: the build ran from throwaway clones under `/tmp` and those
+were deleted during cleanup, destroying the only local copy of the build output. The packet
+was recovered from PrivateResearch with a matching digest, but build output belongs under
+`out/` in the canonical tree.
+
 ## 2026-11-22 — v115 build attempt blocked by a RED gate; nothing installed
 
 Candidate `astro-v115-k01-camera-admission-20261122` (`6.0.0.54.115`) is prepared on

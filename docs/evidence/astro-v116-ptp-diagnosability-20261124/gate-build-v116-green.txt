@@ -1,0 +1,693 @@
+nohup: ignoring input
+display firmware version accepted: 6.0.0.54.116 > 6.0.0.54.115 (bound to libgphoto2=be9da156f8adc0c1bf520c777636e50a712ea67a patcher=65785529a87323e4ca19ba7d0b2f23410cedd5db)
+repo:      /tmp/lpg-v116-clean
+candidate: be9da156f 2026-11-24 ptp2: map unmapped standard PTP result codes to spe
+baseline:  3fb26e536 2026-11-05 ptp2/pentax: fail closed on empty enumeration; guar
+ancestry:  OK -- baseline is an ancestor of candidate (clean superset)
+patch-equiv: 0 already present, 0 genuinely missing
+RESULT: PASS -- candidate carries the baseline
+=== preflight: scripts/build-doctor.sh ===
+build-doctor: GREEN (log: /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/doctor.log)
+[1/7] building shared camera firmware packet
+[*] extracting /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/firmware/FwPkt.zip …
+[*] building docker image 'polaris-patcher' (first run only)…
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  2.604MB
+Step 1/9 : FROM debian:9
+ ---> c5c5200ff1e9
+Step 2/9 : ENV DEBIAN_FRONTEND=noninteractive
+ ---> Using cache
+ ---> 717cc89fdb8e
+Step 3/9 : RUN set -eux;     printf 'deb http://archive.debian.org/debian stretch main\ndeb http://archive.debian.org/debian-security stretch/updates main\n' > /etc/apt/sources.list;     echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/10no-check-valid;     echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90assumeyes;     apt-get update;     apt-get install --no-install-recommends -y         gcc-arm-linux-gnueabi g++-arm-linux-gnueabi binutils-arm-linux-gnueabi         autoconf automake libtool libtool-bin pkg-config make gettext autopoint         gawk bison flex patch file xz-utils wget ca-certificates git         mtd-utils patchelf         libexif-dev libltdl-dev zlib1g-dev libpopt-dev libusb-1.0-0-dev         qemu-user-static         python3 python3-dev python3-pip liblzo2-dev;     rm -rf /var/lib/apt/lists/*
+ ---> Using cache
+ ---> 04e1870baab0
+Step 4/9 : RUN set -eux;     pip3 install --upgrade "pip==20.3.4" "setuptools==44.1.1" wheel;     pip3 install "ubi_reader==0.8.0" python-lzo pyelftools
+ ---> Using cache
+ ---> 543fa20c9ddc
+Step 5/9 : COPY container/ /opt/patcher/
+ ---> Using cache
+ ---> a183697a6faa
+Step 6/9 : RUN set -eux;     find /opt/patcher -type f -exec sed -i 's/\r$//' {} +;     chmod +x /opt/patcher/*.sh /opt/patcher/ondisk/*.sh;     head -1 /opt/patcher/patch.sh | grep -q '^#!/bin/bash$'
+ ---> Using cache
+ ---> 8d7c483977fa
+Step 7/9 : RUN mkdir -p /work && chmod 777 /work
+ ---> Using cache
+ ---> 270a8ff123ae
+Step 8/9 : WORKDIR /work
+ ---> Using cache
+ ---> 2ac0eb66a39b
+Step 9/9 : ENTRYPOINT ["/opt/patcher/patch.sh"]
+ ---> Using cache
+ ---> cd84204dcd3b
+Successfully built cd84204dcd3b
+Successfully tagged polaris-patcher:latest
+[*] running patcher (mode: full)…
+[1;36m[patcher][0m libgphoto2 target : 2.5.34
+[1;36m[patcher][0m selected camlibs  : ptp2,pentax
+[1;36m[patcher][0m legacy usbscsi    : 1
+[1;36m[patcher][0m Pentax capture cap: 268435456 bytes  (override with PENTAX_MAX_CAPTURE_SIZE=…; issue #2)
+[1;36m[patcher][0m stock appfs.ubifs : 64487424 bytes  md5=47f2ae680be3a5f5d69aa20e20a2397b
+[1;33m[warn][0m This FwPkt reports FwVer='unknown'.
+[1;33m[warn][0m This tool has ONLY been tested against FwVer 4.0.0.32.
+[1;33m[warn][0m Continuing, but the patch-site checks below will ABORT on any mismatch.
+[1;36m[patcher][0m extracting stock appfs (permission-preserving)…
+[1;36m[patcher][0m camlib dir        : /app/lib/libgphoto2/2.5.27.1
+[1;36m[patcher][0m iolib dir         : /app/lib/libgphoto2_port/0.12.0
+TRAMPOLINE_ADDR=0x0003fa00
+GATE=0x00026248
+GATE=0x00029d88
+GATE=0x00029db8
+RESETUSB_ADDR=0x00021830
+LISTFILES_BL=0x000fffd0
+FOCUS_IDLE_WAIT_ADDR=0x0010333c
+[1;36m[patcher][0m trampoline target : 0x0003fa00 (pgphoto's own gp_filesystem_set_info_dirty)
+[1;36m[patcher][0m dispatch gates    : 0x00026248 0x00029d88 0x00029db8 
+[1;36m[patcher][0m resetUsb          : 0x00021830 (USBDEVFS_RESET → return 0; stops cold re-enumeration storm)
+[1;36m[patcher][0m list-files gate   : 0x000fffd0  (skip full-card PTP scan at connect → ready in seconds)
+[build] preparing libgphoto2 2.5.34
+[build] using mounted local source (read-only input copied to build workspace)
+[build] generating Autotools files for source checkout
+Copying file ABOUT-NLS
+Creating directory auto-aux
+Copying file auto-aux/config.rpath
+Creating directory auto-m4
+Copying file auto-m4/codeset.m4
+Copying file auto-m4/extern-inline.m4
+Copying file auto-m4/fcntl-o.m4
+Copying file auto-m4/gettext.m4
+Copying file auto-m4/glibc2.m4
+Copying file auto-m4/glibc21.m4
+Copying file auto-m4/iconv.m4
+Copying file auto-m4/intdiv0.m4
+Copying file auto-m4/intl.m4
+Copying file auto-m4/intldir.m4
+Copying file auto-m4/intlmacosx.m4
+Copying file auto-m4/intmax.m4
+Copying file auto-m4/inttypes-pri.m4
+Copying file auto-m4/inttypes_h.m4
+Copying file auto-m4/lcmessage.m4
+Copying file auto-m4/lib-ld.m4
+Copying file auto-m4/lib-link.m4
+Copying file auto-m4/lib-prefix.m4
+Copying file auto-m4/lock.m4
+Copying file auto-m4/longlong.m4
+Copying file auto-m4/nls.m4
+Copying file auto-m4/po.m4
+Copying file auto-m4/printf-posix.m4
+Copying file auto-m4/progtest.m4
+Copying file auto-m4/size_max.m4
+Copying file auto-m4/stdint_h.m4
+Copying file auto-m4/threadlib.m4
+Copying file auto-m4/uintmax_t.m4
+Copying file auto-m4/visibility.m4
+Copying file auto-m4/wchar_t.m4
+Copying file auto-m4/wint_t.m4
+Copying file auto-m4/xsize.m4
+Copying file po/Makefile.in.in
+Copying file po/Makevars.template
+Copying file po/Rules-quot
+Copying file po/boldquot.sed
+Copying file po/en@boldquot.header
+Copying file po/en@quot.header
+Copying file po/insert-header.sin
+Copying file po/quot.sed
+Copying file po/remove-potcdate.sin
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+Copying file ABOUT-NLS
+Creating directory auto-aux
+Copying file auto-aux/config.rpath
+Creating directory auto-m4
+Copying file auto-m4/codeset.m4
+Copying file auto-m4/extern-inline.m4
+Copying file auto-m4/fcntl-o.m4
+Copying file auto-m4/gettext.m4
+Copying file auto-m4/glibc2.m4
+Copying file auto-m4/glibc21.m4
+Copying file auto-m4/iconv.m4
+Copying file auto-m4/intdiv0.m4
+Copying file auto-m4/intl.m4
+Copying file auto-m4/intldir.m4
+Copying file auto-m4/intlmacosx.m4
+Copying file auto-m4/intmax.m4
+Copying file auto-m4/inttypes-pri.m4
+Copying file auto-m4/inttypes_h.m4
+Copying file auto-m4/lcmessage.m4
+Copying file auto-m4/lib-ld.m4
+Copying file auto-m4/lib-link.m4
+Copying file auto-m4/lib-prefix.m4
+Copying file auto-m4/lock.m4
+Copying file auto-m4/longlong.m4
+Copying file auto-m4/nls.m4
+Copying file auto-m4/po.m4
+Copying file auto-m4/printf-posix.m4
+Copying file auto-m4/progtest.m4
+Copying file auto-m4/size_max.m4
+Copying file auto-m4/stdint_h.m4
+Copying file auto-m4/threadlib.m4
+Copying file auto-m4/uintmax_t.m4
+Copying file auto-m4/visibility.m4
+Copying file auto-m4/wchar_t.m4
+Copying file auto-m4/wint_t.m4
+Copying file auto-m4/xsize.m4
+Copying file po/Makefile.in.in
+Copying file po/Makevars.template
+Copying file po/Rules-quot
+Copying file po/boldquot.sed
+Copying file po/en@boldquot.header
+Copying file po/en@quot.header
+Copying file po/insert-header.sin
+Copying file po/quot.sed
+Copying file po/remove-potcdate.sin
+libtoolize: putting auxiliary files in AC_CONFIG_AUX_DIR, 'auto-aux'.
+libtoolize: linking file 'auto-aux/ltmain.sh'
+libtoolize: putting macros in AC_CONFIG_MACRO_DIRS, 'auto-m4'.
+libtoolize: linking file 'auto-m4/libtool.m4'
+libtoolize: linking file 'auto-m4/ltoptions.m4'
+libtoolize: linking file 'auto-m4/ltsugar.m4'
+libtoolize: linking file 'auto-m4/ltversion.m4'
+libtoolize: linking file 'auto-m4/lt~obsolete.m4'
+configure.ac:80: installing 'auto-aux/ar-lib'
+configure.ac:76: installing 'auto-aux/compile'
+configure.ac:88: installing 'auto-aux/config.guess'
+configure.ac:88: installing 'auto-aux/config.sub'
+configure.ac:13: installing 'auto-aux/install-sh'
+configure.ac:13: installing 'auto-aux/missing'
+Makefile.am: installing './INSTALL'
+Makefile.am: installing 'auto-aux/depcomp'
+parallel-tests: installing 'auto-aux/test-driver'
+libtoolize: putting auxiliary files in AC_CONFIG_AUX_DIR, 'auto-aux'.
+libtoolize: linking file 'auto-aux/ltmain.sh'
+libtoolize: putting macros in AC_CONFIG_MACRO_DIRS, 'auto-m4'.
+libtoolize: linking file 'auto-m4/libtool.m4'
+libtoolize: linking file 'auto-m4/ltoptions.m4'
+libtoolize: linking file 'auto-m4/ltsugar.m4'
+libtoolize: linking file 'auto-m4/ltversion.m4'
+libtoolize: linking file 'auto-m4/lt~obsolete.m4'
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:335: warning: AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body
+../../lib/autoconf/lang.m4:193: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:639: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2601: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2617: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:550: AS_CASE is expanded from...
+libgphoto2_port/gphoto-m4/gp-libjpeg.m4:39: GP_LIBJPEG is expanded from...
+configure.ac:335: the top level
+configure.ac:119: installing 'auto-aux/ar-lib'
+configure.ac:114: installing 'auto-aux/compile'
+configure.ac:252: installing 'auto-aux/config.guess'
+configure.ac:252: installing 'auto-aux/config.sub'
+configure.ac:18: installing 'auto-aux/install-sh'
+configure.ac:18: installing 'auto-aux/missing'
+camlibs/Makefile.am: installing 'auto-aux/depcomp'
+parallel-tests: installing 'auto-aux/test-driver'
+[build] POLARIS_DBG=1: applying EOS-init non-fatal patch (dbg_patch.py, no tracing)
+[dbg_patch] config.c: 13 check_eos_events drains made non-fatal (no trace)
+[dbg_patch] library.c: 3 keep_device_on + 1 check_eos_events made non-fatal (no trace)
+[dbg_patch] DONE -- POLARIS_DBG EOS-init non-fatal (production, no tracing) applied
+[build] FULLSTACK: trampoline shim NOT injected (new core exports gp_filesystem_set_info_dirty)
+[build] FULLSTACK: struct _Camera padded with _reserved_tail[4120] (-> sizeof 4140)
+[build] upstream EOS 5Rm2 model-name typo corrected
+configure: WARNING: using cross tools not prefixed with host triplet
+configure: WARNING:
+
+  #=====================================================================#
+  # Caution: You have chosen to build a non-standard set of camlibs.    #
+  #          You may have disabled the camlib required for your camera, #
+  #          or enabled a camlib which does *not* work and overrides    #
+  #          the camlib which *does* work. Consequently,                #
+  #          YOUR CAMERA MAY NOT WORK!                                  #
+  #                                                                     #
+  # Many cameras of several brands are supported by a camlib with a     #
+  # name different from the name of the camera brand or model. If you   #
+  # are unsure, please                                                  #
+  #   * enable at least the 'ptp2' camlib                               #
+  #   * or even better, just build the standard set of camlibs.         #
+  #=====================================================================#
+
+configure: WARNING: using cross tools not prefixed with host triplet
+configure: WARNING:
+
+  #=====================================================================#
+  # Caution: You have chosen to build a non-standard set of camlibs.    #
+  #          You may have disabled the camlib required for your camera, #
+  #          or enabled a camlib which does *not* work and overrides    #
+  #          the camlib which *does* work. Consequently,                #
+  #          YOUR CAMERA MAY NOT WORK!                                  #
+  #                                                                     #
+  # Many cameras of several brands are supported by a camlib with a     #
+  # name different from the name of the camera brand or model. If you   #
+  # are unsure, please                                                  #
+  #   * enable at least the 'ptp2' camlib                               #
+  #   * or even better, just build the standard set of camlibs.         #
+  #=====================================================================#
+
+[build] ptp2.so built: 1341436 bytes
+[build] selected camlibs harvested: ptp2,pentax
+[build] usbscsi.so built: 14216 bytes
+[build] usb1.so built: 41308 bytes
+[build] FULLSTACK: _Camera pad confirmed (gp_camera_new allocates 4140 B)
+[build] FULLSTACK: core libgphoto2.so.6 built (stripped): 199356 bytes
+[build] FULLSTACK: port libgphoto2_port.so.12 built (NOT stripped, retains LIBGPHOTO2_5_0 symbols): 57384 bytes
+pentax.so: OK
+ptp2.so: OK
+[1;36m[patcher][0m local-source Pentax candidate marker: present
+[1;36m[patcher][0m local-source target models: K-1 II and K-3 III present
+[1;36m[patcher][0m local-source legacy target models: K-5 II and K-5 IIs present
+[1;36m[patcher][0m verifying rebuilt ptp2.so…
+[1;36m[patcher][0m   ABI=                             0x5000200, Version5 EABI, soft-float ABI  glibc_ceiling=GLIBC_2.17
+[1;36m[patcher][0m   all core symbols resolve against the freshly-built 2.5.34 core/port ✓
+[1;36m[patcher][0m   no unresolved internal Pentax symbols ✓
+[1;36m[patcher][0m verifying rebuilt usb1.so…
+[1;36m[patcher][0m   ABI=                             0x5000200, Version5 EABI, soft-float ABI  glibc_ceiling=GLIBC_2.4
+[1;36m[patcher][0m   DT_NEEDED ⊆ stock usb1.so (libc.so.6 libgphoto2_port.so.12 libpthread.so.0 libusb-1.0.so.0 ) ✓
+[1;36m[patcher][0m   all core/port + libusb symbols resolve on-device ✓ (29 libusb imports)
+[1;36m[patcher][0m verifying rebuilt usbscsi.so…
+[1;36m[patcher][0m   usbscsi ABI and core/port symbol checks passed ✓
+[1;36m[patcher][0m verifying rebuilt core + port…
+[1;36m[patcher][0m   direct-capture boundary checkpoints present in core + ptp2 ✓
+[1;36m[patcher][0m   core/port soft-float, glibc≤2.24, all 65 boundary symbols exported ✓
+[1;36m[patcher][0m full-libgphoto2: building reliability-patched base…
+[1;36m[patcher][0m   base: 17-byte reliability patch (resetUsb + list-files + 3 gates + focus idle wait) md5=f35bf511189ab03f9589d2e138ecc292
+[polaris_bulb_dispatch] patched /work/pgphoto.base: K-3 III live-mode gate, cancel-to-stop, and timed Bulb route
+[1;36m[patcher][0m   pgphoto Bulb route: live B-mode gate + cancel-to-stop + timed Bulb lifecycle
+[polaris_bulb_poll_budget] patched /work/pgphoto.base: mov r3,#600 -> movw r3,#10000 at 0x102060 (post-release file wait 100s)
+[1;36m[patcher][0m   pgphoto file wait: post-release poll raised from ~6s to 100s for noise-reduction dark frames
+[polaris_cancel_writer] patched in place: cave 0x2dfa04, clear 0x20198, set 0x2033c, 0x203d4, flag 0x375e08, 64 bytes
+[1;36m[patcher][0m   pgphoto now raises a cancel: glob_cancel set by both stop-capture handlers, cleared at capture start
+[1;36m[patcher][0m full-libgphoto2: on-disk trampolining 65 boundary entries…
+[stage2] protected patch sites derived from stock<->base diff: 108 run(s), 653 byte(s)
+[stage2] patch-overlap guard: 68 trampolines vs 108 protected ranges -- 0 collisions
+boundary entries   : 68
+all resolved & >=12: yes (0 blockers)
+slot base vaddr    : 0x30000000  (68 * 4 = 272 bytes -> 0x30000110)
+slot mechanism     : loader mmap MAP_FIXED anon RW page (no .bss ext)
+segment sizes      : UNCHANGED (no p_memsz / .bss sh_size bump)
+entry point        : 0x00015ed8 (unchanged)
+patch overlap guard: 108 protected site-run(s), 0 collisions
+in  md5            : 8e62825cbba34a953dc5fb824fb473eb
+out md5            : 79d4454fe2a674b32127698d0ee7aac1
+wrote /work/s2/pgphoto.stage2ondisk
+wrote /work/s2/stage2_ondisk_table.h and stage2_ondisk_manifest.json
+[1;36m[patcher][0m   trampolined: md5=79d4454fe2a674b32127698d0ee7aac1 (size 7801576 == stock 7801576)
+[1;36m[patcher][0m full-libgphoto2: compiling loader (libpolaris_stage2.so)…
+[1;36m[patcher][0m   loader: md5=daad760aa6676cb3dad4137330570848 ABI=                             0x5000200, Version5 EABI, soft-float ABI (R5-II gate present, issue #27)
+[1;36m[patcher][0m   starshoot adapter: compiles (libusb backend, #158)
+[1;36m[patcher][0m   ipolar adapter: libuvc headers absent (/work/src/libuvc/{include,build/include}) — compile-check pending (#159)
+[1;36m[patcher][0m   ipolar frame store: compiles (immutable leased slots, #159)
+[1;36m[patcher][0m   assembled /app/lib/stage2 (loader + core + port + ptp2 + usb1 + optional usbscsi when enabled + trampolined binary)
+[1;36m[patcher][0m   installed self-driving wrapper -> /app/bin/pgphoto (execs /app/lib/stage2/pgphoto.stage2ondisk)
+[1;36m[patcher][0m   installed single-owner restart helper -> /app/restart_gphoto (issue #33/#34)
+[1;36m[patcher][0m   placed fresh ptp2 at stock camlib path: /app/lib/libgphoto2/2.5.27.1/ptp2.so
+[1;36m[patcher][0m   placed fresh usb1 at stock iolib path: /app/lib/libgphoto2_port/0.12.0/usb1.so
+[1;36m[patcher][0m   placed legacy usbscsi at stock iolib path: /work/app_ext/958962934/ubifs/lib/libgphoto2_port/0.12.0/usbscsi.so
+[1;36m[patcher][0m   replaced stock libgphoto2.so.6 with fresh 2.5.34 core at /app/lib/libgphoto2.so.6
+[1;36m[patcher][0m   replaced stock libgphoto2_port.so.12 with fresh matched port at /app/lib/libgphoto2_port.so.12
+[1;36m[patcher][0m embedded libgphoto2 provenance -> /app/openpolaris-libgphoto2-provenance.txt
+[1;36m[patcher][0m appfs FwVer display override: /app/FwVer='6.0.0.54.116'; build identity remains 'astro-v116-ptp-diagnosability-20261124'
+[polestar_fwver_patch] patched SP_GetDeviceVer at file offset 0x12fb80; code 780 now uses exact raw mFwVer
+[1;36m[patcher][0m polestar_app code-780 version path now reports exact DISPLAY_FWVER='6.0.0.54.116'
+[repack] geometry: min_io=2048 leb=126976 max_leb=660 fanout=8 compr=lzo peb=131072 vid_off=2048 image_seq=958962934
+[repack] wrote /work/out/appfs.ubifs (64487424 bytes; stock was 64487424)
+[1;36m[patcher][0m assembling custom FwPkt in /out…
+[1;36m[patcher][0m FwVer display override: package value='6.0.0.54.116'; build identity remains 'astro-v116-ptp-diagnosability-20261124'
+OK: 6 entries verified, firmwareInfo matches shipped files
+[1;36m[patcher][0m verified firmwareInfo against produced FwPkt (on-board check will pass)
+[1;36m[patcher][0m verifying finished appfs.ubifs contains required runtime files...
+[1;36m[patcher][0m   verified bin/pgphoto exists, is executable, and contains wrapper markers
+[polaris_bulb_dispatch] verified K-3 III live-mode Bulb dispatch and cancel-to-stop
+[1;36m[patcher][0m   verified K-3 III live-mode Bulb dispatch and cancel-to-stop in repacked pgphoto
+[polaris_bulb_poll_budget] verified 10000-iteration (100s) post-release file poll
+[1;36m[patcher][0m   verified 100s post-release file poll in repacked pgphoto
+[polaris_cancel_writer] ok: glob_cancel is set by both stop-capture handlers and cleared at capture start
+[1;36m[patcher][0m   verified pgphoto raises a cancel in repacked pgphoto
+[1;36m[patcher][0m   verified Stage-2 runtime files (lib/stage2/pgphoto.stage2ondisk, lib/stage2/libpolaris_stage2.so, lib/stage2/libgphoto2.so.6, lib/stage2/libgphoto2_port.so.12) exist in appfs.ubifs
+[1;36m[patcher][0m   verified /app/FwVer in appfs.ubifs reports '6.0.0.54.116'
+[1;36m[patcher][0m   verified exact code-780 version patch survived appfs repack
+[1;36m[patcher][0m verifying finished FwPkt package layout…
+=== FwPkt manifest ===
+  FwPkt/
+  FwPkt/firmwareInfo                                  399 B
+  FwPkt/FwVer                                          36 B
+  FwPkt/camera/
+  FwPkt/camera/rootfs.ubifs                      21102592 B
+  FwPkt/camera/uImage                             4188435 B
+  FwPkt/camera/appfs.ubifs                       64487424 B
+  FwPkt/camera/config                                 326 B
+  FwPkt/gimbal/
+  FwPkt/gimbal/polaris413_2.0.0.22.bin              84284 B
+  FwPkt/gimbal/polaris403_2.0.0.22.bin              84328 B
+
+gimbal binaries: 2
+stock components cross-checked: 5
+layout: OK
+duplicates: none
+OK: FwPkt package is structurally sound.
+[1;36m[patcher][0m verified FwPkt.zip structure (on-board check will pass)
+[1;36m[patcher][0m   wrote reversible on-device bundle -> /out/stage2-ondisk (install_stage2.sh / restore_stock.sh)
+[1;36m[patcher][0m creating exact corresponding-source archive (this may take a minute)…
+[1;36m[patcher][0m   wrote exact LGPL corresponding source -> /out/licenses/libgphoto2-2.5.34.tar.xz
+[1;36m[patcher][0m ----------------------------------------------------------------------
+[1;36m[patcher][0m DONE (mode: FULL libgphoto2 — core+port+ptp2+usb1 swap, on-disk trampoline).
+[1;36m[patcher][0m Custom firmware written to /out :
+    FwPkt/FwVer
+    FwPkt/camera/appfs.ubifs
+    FwPkt/camera/config
+    FwPkt/camera/rootfs.ubifs
+    FwPkt/camera/uImage
+    FwPkt/firmwareInfo
+    FwPkt/gimbal/polaris403_2.0.0.22.bin
+    FwPkt/gimbal/polaris413_2.0.0.22.bin
+[1;36m[patcher][0m     FwPkt.zip  md5=65c55b198bb3ce5b47b9d59111c91b75
+[1;36m[patcher][0m custom appfs.ubifs md5=a6b1483fbccc9adf1e646f0b4d06929f
+[1;36m[patcher][0m Before flashing you can TEST reversibly on-device:
+[1;36m[patcher][0m     copy /out/stage2-ondisk to the camera and run ondisk/install_stage2.sh
+[1;36m[patcher][0m     (revert with ondisk/restore_stock.sh). See docs/HOW-IT-WORKS.md.
+[1;36m[patcher][0m ----------------------------------------------------------------------
+[1;33m[warn][0m FLASH AT YOUR OWN RISK. Verify on your own device. Keep your stock FwPkt
+[1;33m[warn][0m as the factory-restore image. See README.md.
+[*] returning candidate ownership to host uid=1000 gid=1000
+
+[✓] Output in: /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124
+    - /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/FwPkt/         (unpacked custom firmware)
+    - /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/FwPkt.zip      (copy this to your SD card)
+    Keep your STOCK FwPkt as the factory-restore image.
+[2/7] building additive native-C Astro bundle
+[*] building docker image 'polaris-patcher' (first run only)…
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+[*] cross-building polaris-solve + polaris-extract for the device…
+[1;36m[solver][0m fetching astrometry.net 0.98 …
+[1;36m[solver][0m compiling (arm) …
+[1;36m[solver][0m   compiled 100 objects (skipped 77)
+[1;36m[solver][0m   linked /work/out/astro/polaris-solve (652376 bytes)
+[1;36m[solver][0m   ABI=                             0x5000200, Version5 EABI, soft-float ABI
+[1;36m[solver][0m   glibc ceiling GLIBC_2.17, DT_NEEDED: libc.so.6 libm.so.6 libpthread.so.0   ✓
+[1;36m[solver][0m   licence guards passed (no gsl-an, no md5/ctmf/simplexy, no catalogs)
+[1;36m[solver][0m fetching libjpeg 9f …
+[1;36m[solver][0m building libjpeg (arm, static) …
+[1;36m[solver][0m   linked /work/out/astro/polaris-extract (232260 bytes, libjpeg static)
+[1;36m[solver][0m   polaris-extract DT_NEEDED: libc.so.6 libm.so.6   ✓
+[1;36m[solver][0m   linked /work/out/astro/polaris-skysim (622240 bytes)
+[1;36m[solver][0m   linked /work/out/astro/polaris-skysim-independent (117300 bytes)
+[1;36m[solver][0m   linked /work/out/astro/polaris-solve-independent (17596 bytes)
+[1;36m[solver][0m   linked /work/out/astro/polaris-solve-independent-search (22860 bytes)
+[1;36m[solver][0m   linked /work/out/astro/polaris-exif-solve (13400 bytes)
+[1;36m[solver][0m   linked /work/out/astro/polaris-mount (35488 bytes)
+[1;36m[solver][0m   polaris-mount DT_NEEDED: libc.so.6 libm.so.6   ✓
+[1;36m[solver][0m DONE -> /work/out/astro/polaris-solve  /work/out/astro/polaris-extract  /work/out/astro/polaris-mount
+embed_webui: 5 asset(s), 253947 -> 76074 bytes (30%) -> /tmp/webui.h
+[*] cross-building the station-mode wifi kit (libnl + iw + wpa_supplicant)…
+[1;36m[wifi][0m fetching libnl 3.7.0
+[1;36m[wifi][0m building libnl (static)
+[1;36m[wifi][0m   libnl ok
+[1;36m[wifi][0m fetching iw 5.19
+[1;36m[wifi][0m building iw
+[1;36m[wifi][0m   iw -> /work/out/wifi/iw (384440 bytes)
+[1;36m[wifi][0m fetching wpa_supplicant 2.10
+[1;36m[wifi][0m building wpa_supplicant (internal crypto, nl80211)
+[1;36m[wifi][0m   wpa_supplicant -> 3077404 bytes
+[1;36m[wifi][0m   wpa_cli -> 294512 bytes
+[1;36m[wifi][0m   wpa_passphrase -> 195768 bytes
+[1;36m[wifi][0m   iw: softfp ok, max glibc GLIBC_2.17
+[1;36m[wifi][0m   wpa_supplicant: softfp ok, max glibc GLIBC_2.7
+[1;36m[wifi][0m   wpa_cli: softfp ok, max glibc GLIBC_2.4
+[1;36m[wifi][0m   wpa_passphrase: softfp ok, max glibc GLIBC_2.4
+[1;36m[wifi][0m DONE -> /work/out/wifi
+[*] wifi kit bundled: iw polaris-apsta.sh polaris-autojoin.sh setup-wifi.sh udhcpc.script wifi-keepalive.sh wifi-watch.sh wpa_cli wpa_passphrase wpa_supplicant 
+[*] selecting + downloading index files for 14-400mm…
+[indexes] 14mm -> 104.2500 deg wide, 400mm -> 5.1531 deg (sensor 36mm)
+[indexes] needed: 4110 4111 4112 4113 4114 4115 4116 4117 4118 4119
+  fetching index-4110.fits …
+  fetching index-4111.fits …
+  fetching index-4112.fits …
+  fetching index-4113.fits …
+  fetching index-4114.fits …
+  fetching index-4115.fits …
+  fetching index-4116.fits …
+  fetching index-4117.fits …
+  fetching index-4118.fits …
+  fetching index-4119.fits …
+[indexes] /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-bundle/COPY-TO-SD-CARD-ROOT/astrometry holds 44.1 MB of index files
+[indexes] sha256 recorded in /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-bundle/COPY-TO-SD-CARD-ROOT/astrometry/indexes.sha256
+[*] bundled native all-sky catalogue package: /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/out/gaia-dr3-g10
+[✓] wrote GPL corresponding source -> /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-bundle/licenses/
+    total 17384
+    drwxrwxr-x 2 ian ian     4096 Nov 24 20:08 .
+    drwxrwxr-x 4 ian ian     4096 Nov 24 20:08 ..
+    -rw-rw-r-- 1 ian ian    18092 Nov 24 20:08 COPYING-GPL-2.txt
+    -rw-r--r-- 1 ian ian    26530 Mar 15  2022 COPYING-LGPL-2.1.txt
+    -rw-rw-r-- 1 ian ian      849 May 27  2022 NOTICE-iw.txt
+    -rw-rw-r-- 1 ian ian      965 Jan 16  2022 NOTICE-wpa_supplicant.txt
+    -rw-rw-r-- 1 ian ian     6913 Nov 24 20:08 README-GPL.txt
+    -rw-r--r-- 1 ian ian 11858563 Nov 24 20:08 astrometry.net-0.98.tar.gz
+    -rw-r--r-- 1 ian ian   194022 Nov 24 20:08 iw-5.19.tar.gz
+    -rw-r--r-- 1 ian ian  1081470 Nov 24 20:08 jpeg-9f.tar.gz
+    -rw-r--r-- 1 ian ian  1000913 Nov 24 20:08 libnl-3.7.0.tar.gz
+    -rw-rw-r-- 1 ian ian    56829 Nov 24 20:08 polaris-build-recipe.tar.gz
+    -rw-rw-r-- 1 ian ian     4519 Nov 24 20:08 polaris-wifi-build-recipe.tar.gz
+    -rw-r--r-- 1 ian ian  3511622 Nov 24 20:08 wpa_supplicant-2.10.tar.gz
+
+[✓] bundle ready: /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-bundle
+    total 24
+    drwxrwxr-x 4 ian ian 4096 Nov 24 20:08 .
+    drwxrwxr-x 6 ian ian 4096 Nov 24 20:07 ..
+    drwxr-xr-x 5 ian ian 4096 Nov 24 20:07 COPY-TO-SD-CARD-ROOT
+    -rw-rw-r-- 1 ian ian 7601 Nov 24 20:08 README.txt
+    drwxrwxr-x 2 ian ian 4096 Nov 24 20:08 licenses
+    next: read /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-bundle/README.txt
+[ok  ] polaris-wifi: archive-readable -- polaris-wifi.zip: CRC ok, 14 members
+[ok  ] polaris-wifi: single-root -- single root 'polaris-wifi'
+[ok  ] polaris-wifi: no-symlinks -- no symlink members
+[ok  ] polaris-wifi: mandatory-member -- LICENCE-wifi.txt present (1791 bytes)
+[ok  ] polaris-wifi: mandatory-member -- COPYING-LGPL-2.1.txt present (26530 bytes)
+[ok  ] polaris-wifi: mandatory-member -- NOTICE-iw.txt present (849 bytes)
+[ok  ] polaris-wifi: mandatory-member -- NOTICE-wpa_supplicant.txt present (965 bytes)
+[ok  ] polaris-wifi: mandatory-member -- udhcpc.script present (4583 bytes)
+[ok  ] polaris-wifi: offer-names-versions -- names every staged upstream version
+[ok  ] polaris-wifi: executable-mode -- all scripts and ELF binaries carry an exec bit
+[ok  ] polaris-astro: archive-readable -- polaris-astro.zip: CRC ok, 700 members
+[ok  ] polaris-astro: single-root -- single root 'polaris-astro'
+[ok  ] polaris-astro: no-symlinks -- no symlink members
+[ok  ] polaris-astro: mandatory-member -- COPYING-GPL-2.txt present (18092 bytes)
+[ok  ] polaris-astro: mandatory-member -- SOURCE-OFFER.txt present (619 bytes)
+[ok  ] polaris-astro: executable-mode -- all scripts and ELF binaries carry an exec bit
+[ok  ] polaris-wifi: consumer-drift -- 3 sibling references resolve
+[ok  ] polaris-astro: consumer-drift -- 3 sibling references resolve
+[ok  ] FwPkt: extracted-tree -- camera/{uImage,rootfs.ubifs,appfs.ubifs}, FwVer, firmwareInfo present
+[ok  ] astro-bundle.tar.gz: archive-readable -- 748 members, no traversal
+[ok  ] astro-bundle.tar.gz: licence-reachability -- 3 licence text(s) plus LICENCE-astro.txt ship inside COPY-TO-SD-CARD-ROOT/polaris-astro, so a user copying the SD tree receives them with the GPL binaries (5 archive-only copies remain outside, covered by the written offer)
+
+VERDICT: ARTIFACTS_INTERNALLY_CONSISTENT  (21 checks, 0 fail, 0 unknown)
+[ok  ] polaris-wifi: archive-readable -- polaris-wifi.zip: CRC ok, 14 members
+[ok  ] polaris-wifi: single-root -- single root 'polaris-wifi'
+[ok  ] polaris-wifi: no-symlinks -- no symlink members
+[ok  ] polaris-wifi: mandatory-member -- LICENCE-wifi.txt present (1791 bytes)
+[ok  ] polaris-wifi: mandatory-member -- COPYING-LGPL-2.1.txt present (26530 bytes)
+[ok  ] polaris-wifi: mandatory-member -- NOTICE-iw.txt present (849 bytes)
+[ok  ] polaris-wifi: mandatory-member -- NOTICE-wpa_supplicant.txt present (965 bytes)
+[ok  ] polaris-wifi: mandatory-member -- udhcpc.script present (4583 bytes)
+[ok  ] polaris-wifi: offer-names-versions -- names every staged upstream version
+[ok  ] polaris-wifi: executable-mode -- all scripts and ELF binaries carry an exec bit
+[ok  ] polaris-astro: archive-readable -- polaris-astro.zip: CRC ok, 700 members
+[ok  ] polaris-astro: single-root -- single root 'polaris-astro'
+[ok  ] polaris-astro: no-symlinks -- no symlink members
+[ok  ] polaris-astro: mandatory-member -- COPYING-GPL-2.txt present (18092 bytes)
+[ok  ] polaris-astro: mandatory-member -- SOURCE-OFFER.txt present (619 bytes)
+[ok  ] polaris-astro: executable-mode -- all scripts and ELF binaries carry an exec bit
+[ok  ] polaris-wifi: consumer-drift -- 3 sibling references resolve
+[ok  ] polaris-astro: consumer-drift -- 3 sibling references resolve
+[ok  ] FwPkt: extracted-tree -- camera/{uImage,rootfs.ubifs,appfs.ubifs}, FwVer, firmwareInfo present
+[ok  ] astro-bundle.tar.gz: archive-readable -- 748 members, no traversal
+[ok  ] astro-bundle.tar.gz: licence-reachability -- 3 licence text(s) plus LICENCE-astro.txt ship inside COPY-TO-SD-CARD-ROOT/polaris-astro, so a user copying the SD tree receives them with the GPL binaries (5 archive-only copies remain outside, covered by the written offer)
+
+VERDICT: ARTIFACTS_INTERNALLY_CONSISTENT  (21 checks, 0 fail, 0 unknown)
+[3/7] generating immutable FwPkt install manifest
+wrote /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/install-manifest.json (12 mandatory files, stage2_mandatory=True)
+[4/7] running focused Astro tests
+...............................................................ssss..... [ 85%]
+ss..........                                                             [100%]
+78 passed, 6 skipped in 1.79s
+[5/7] running shared camera gate against this Astro packet
+=== Polaris pre-release gate (2026-11-24T20:08:16Z) ===
+PASS: container deterministic harness (34 passed)
+PASS: python regression suite (1005 passed)
+PASS: python test-list drift guard (79 suites, all listed)
+PASS: agent host check: scripts/check-agent-sandbox.py (VERDICT=SANDBOX_OK sandbox=enabled prerequisites=present)
+PASS: agent host check: scripts/check-agent-host-config.py (VERDICT=CONFIG_OK pins=present settings=/home/ian/.config/Code - Insiders/User/settings.json,/home/ian/.config/VSCodium/User/settings.json,.vscode/settings.json)
+PASS: code-780 version patch (exact copy, memset length preserved)
+PASS: pgphoto machine-code patch: test_polaris_bulb_dispatch_patch
+PASS: pgphoto machine-code patch: test_polaris_bulb_poll_budget_patch
+PASS: pgphoto machine-code patch: test_polaris_cancel_writer_patch
+PASS: pgphoto restart helper lock handling: test_restart_gphoto_launch_lock
+PASS: pgphoto restart helper lock handling: test_restart_gphoto_restart_lock
+PASS: stage2 init-trace one-shot logic (#297)
+PASS: no stray bare command lines in tracked shell scripts
+PASS: FwPkt structural validation (/tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/FwPkt)
+SKIP: firmwareInfo manifest gate (no stock firmware/FwPkt.zip in repo) (prerequisite unavailable)
+PASS: install manifest present and current (zip sha256 matches /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124)
+SKIP: shipped-artifact differential: no previous candidate with a manifest to compare against (prerequisite unavailable)
+PASS: polestar_app original Bulb branch intact in repacked appfs
+PASS: pgphoto timed Bulb dispatch present in repacked appfs
+INFO: no --device-libs given; using the built-in allowlist derived from a captured loader trace. Capture `ls -1 /app/lib` on the target for an authoritative reading.
+PASS: shipped .so dependencies and version pins
+PASS: shipped camlib serves K-1 II and K-3 III
+SKIP: provenance registry hash check (no built artifacts to compare) (prerequisite unavailable)
+PASS: rig tooling self-test (wait-for-rig.py argv well-formed)
+PASS: rig tooling self-test (capture-shutter-list.py argv well-formed)
+PASS: libgphoto2 capture contract (timed Bulb fallback reaches the capture)
+PASS: Bulb cancellation-return diagnostic (cancellation survives cleanup and publication; a failed stop still outranks it)
+SKIP: ARM emulation of Stage-2 (no harness src given (--harness-src or POLARIS_HARNESS_SRC)) (prerequisite unavailable)
+=== Pre-release gate summary: 23 passed, 0 failed, 4 skipped ===
+Skipped: firmwareInfo manifest gate (no stock firmware/FwPkt.zip in repo) shipped-artifact differential: no previous candidate with a manifest to compare against provenance registry hash check (no built artifacts to compare) ARM emulation of Stage-2 (no harness src given (--harness-src or POLARIS_HARNESS_SRC))
+GATE: GREEN (skips, if any, are prerequisite gaps — record them in the release evidence).
+[6/9] recording source and feature binding
+wrote /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-candidate-manifest.json
+FwPkt SHA-256: 77ed82ccc9086c42ecbca48e81efaecd2ac2354cb656c19c70b08fe8a5e32987
+Astro tree SHA-256: 4828ced76187aecbcfc1eef9e116e71ea734683e6c69d9ab9ef64b8d4bf959b9
+[7/9] generating immutable release identity
+wrote /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/release-change-manifest.json
+wrote /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/RELEASE-IDENTITY.md
+libgphoto2 commits since baseline: 11
+patcher commits since baseline: 31
+[8/9] checking candidate identity
+CANDIDATE IDENTITY: PASS (deployable) /tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124
+Claiming the gated candidate version and exact source commits
+display firmware version accepted: 6.0.0.54.116 > 6.0.0.54.115 (baseline advanced and version claimed in the consumed registry) (bound to libgphoto2=be9da156f8adc0c1bf520c777636e50a712ea67a patcher=65785529a87323e4ca19ba7d0b2f23410cedd5db)
+[9/9] recording initial install status
+candidate complete (build-only)
+candidate=/tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124
+manifest=/tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-candidate-manifest.json
+FwPkt=/tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/FwPkt.zip
+AstroBundle=/tmp/patcher-v116c/out/astro-v116-ptp-diagnosability-20261124/astro-bundle.tar.gz
+No deployment, reboot, flash, or upload was performed.
