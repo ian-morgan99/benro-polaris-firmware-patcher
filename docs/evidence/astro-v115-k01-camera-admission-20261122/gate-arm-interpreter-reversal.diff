@@ -1,0 +1,38 @@
+diff --git a/tests/run_prerelease_gate.sh b/tests/run_prerelease_gate.sh
+index 66a9106..f3d9bc6 100755
+--- a/tests/run_prerelease_gate.sh
++++ b/tests/run_prerelease_gate.sh
+@@ -1120,32 +1120,7 @@ check_arm_emulation() {
+     local args=(--build "$emu_dir" --output "$out")
+     [ -n "$ARM_HARNESS_SRC" ] && args+=(--harness-src "$ARM_HARNESS_SRC")
+ 
+-    # The harness package __init__ imports its whole surface, including the
+-    # Flask-based Astro webui server. Importing polaris_harness.arm_emulator
+-    # therefore needs Flask + unicorn in whatever interpreter runs the check.
+-    # The system python3 has neither, so calling it directly made the ARM gate
+-    # die on "No module named 'flask'" -- a hard FAIL that reads like a defect
+-    # in the candidate when it is really an interpreter mismatch. Pick the first
+-    # interpreter that can actually import the loader: the harness's own venv
+-    # (which declares Flask/unicorn in pyproject.toml) if present, else any
+-    # python3 that satisfies the import. If none does, fall through to python3
+-    # and let the script's own PREREQ/exit-5 path report an honest SKIP.
+-    local emu_py="python3"
+-    _harness_root=""
+-    [ -n "$ARM_HARNESS_SRC" ] && _harness_root="$(dirname "$ARM_HARNESS_SRC")"
+-    for cand in "${_harness_root}/.venv/bin/python" "python3"; do
+-        [ "$cand" = "python3" ] && ! command -v python3 >/dev/null 2>&1 && continue
+-        [ -x "$cand" ] || [ "$cand" = "python3" ] || continue
+-        if POLARIS_HARNESS_SRC_PROBE="${ARM_HARNESS_SRC:-}" \
+-           "$cand" -c 'import os,sys; s=os.environ.get("POLARIS_HARNESS_SRC_PROBE");
+-sys.path.insert(0,s) if s else None; import flask, unicorn;
+-from polaris_harness.arm_emulator.dynamic_loader import DynamicLoader' >/dev/null 2>&1; then
+-            emu_py="$cand"
+-            break
+-        fi
+-    done
+-
+-    "$emu_py" "$ROOT/scripts/release/check-arm-emulation.py" "${args[@]}" >"$log" 2>&1
++    python3 "$ROOT/scripts/release/check-arm-emulation.py" "${args[@]}" >"$log" 2>&1
+     local rc=$?
+     case "$rc" in
+         0)

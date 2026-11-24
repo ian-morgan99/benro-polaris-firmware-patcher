@@ -1,0 +1,19 @@
+diff --git a/camlibs/ptp2/config.c b/camlibs/ptp2/config.c
+index b533f771d..d06238318 100644
+--- a/camlibs/ptp2/config.c
++++ b/camlibs/ptp2/config.c
+@@ -11351,6 +11351,14 @@ _pentax_wff_read_payload (PTPParams *params,
+ 		free (data);
+ 		return translate_ptp_result (ret);
+ 	}
++	/* DIAGNOSTIC (temporary): dump exactly what the guard sees. */
++	{
++		size_t di; char buf[256]; int off = 0;
++		off += snprintf(buf+off, sizeof(buf)-off, "0xd01b size=%u bytes:", size);
++		for (di = 0; di < size && off < (int)sizeof(buf)-8; di++)
++			off += snprintf(buf+off, sizeof(buf)-off, " %02x", data[di]);
++		GP_LOG_D("%s valid=%d", buf, pentax_wff_payload_is_valid(data, size));
++	}
+ 	/* Fail closed: the 0xd01b payload is a compound property whose unrelated
+ 	 * bytes (image size, RAW kind, card slot, length marker) must be preserved.
+ 	 * Preserve the exact 10- or 11-byte form.  A short, long, or malformed

@@ -264,3 +264,25 @@ Throttling and chunking do not help, which rules out "too fast" and points at po
 Not a regression. Route A (SD card + reboot, docs/FIRMWARE-INSTALL-PROCESS.md:202) needs no
 network at all and is the reliable path. Secondary option worth one test: reboot the device to
 reset the DHD pool, then stage immediately in the fresh window before exhaustion re-accumulates.
+
+## R10 - Drive-mode cache invalidation: WIP patch, NOT validated (recorded honestly)
+While preparing to ship the cachetime=30 win I found an asymmetry in source:
+`_put_Pentax_DirectDriveMode` calls `ptp_setdevicepropvalue` (no cache invalidation),
+whereas `_put_Pentax_DirectShutter` / `_put_Pentax_DirectISO` call
+`ptp_generic_setdevicepropvalue`, which does reset the entry. So a drive-mode change
+can leave mode-dependent descriptors cached.
+
+I wrote a 15-line patch invalidating `PTP_DPC_PENTAX_ShutterSpeed` on a successful
+drive-mode SET (mirrors `handle_event_internal`'s `PTP_EC_DevicePropChanged` path).
+It builds clean (`ninja`, rc=0). Preserved at
+`k1ii-drive-mode-cache-invalidation-WIP.patch` (sha256 9a04e55bd1e56db4...).
+
+### Why it is NOT claimed as a fix, and was reverted from the worktree
+The staleness test never ran. `--set-config /main/status/pentaxdrivemode=bulb` failed
+with gphoto2's "sufficient quoting" error, so drive mode never changed: conditions read
+`drive-mode-raw=0` before and after, exposure-mode Manual throughout. My earlier
+"both reads identical -> bug reproduced" observation therefore proves nothing - there was
+no state change to invalidate. Camera left untouched; nothing to restore.
+To validate properly the write must be quoted and confirmed by a `drive-mode-raw` change,
+then the shutter enum compared before/after. Until then this is a hypothesis with a
+compiling patch, not a fix.

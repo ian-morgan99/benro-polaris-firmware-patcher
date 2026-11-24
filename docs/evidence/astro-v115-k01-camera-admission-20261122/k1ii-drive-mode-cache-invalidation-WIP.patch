@@ -1,0 +1,26 @@
+diff --git a/camlibs/ptp2/config.c b/camlibs/ptp2/config.c
+index b533f771d..3c5985635 100644
+--- a/camlibs/ptp2/config.c
++++ b/camlibs/ptp2/config.c
+@@ -11954,6 +11954,21 @@ _put_Pentax_DirectDriveMode (CONFIG_PUT_ARGS)
+ 				_pentax_cond_drive_mode_none, 0);
+ 		}
+ 	}
++	/* Drive mode changes which values the body advertises.  Proven on a live
++	 * K-1 II: in Bulb the shutter enum contains only mm:ss entries (00:01..20:00)
++	 * and no fractional values at all, while other modes do expose them.  The
++	 * descriptor cache is time-based (params->cachetime, default 2 s), so a
++	 * client that raises it - or simply reads twice inside the window - would be
++	 * handed the previous mode's choice list and then push values the body
++	 * rejects.  Force the mode-dependent descriptors to be refetched on the next
++	 * query, exactly as handle_event_internal() does for
++	 * PTP_EC_DevicePropChanged. */
++	if (result == GP_OK) {
++		PTPDevicePropDesc *dpd = ptp_find_dpd_in_cache (params,
++			PTP_DPC_PENTAX_ShutterSpeed);
++		if (dpd)
++			dpd->timestamp = 0;
++	}
+ 	if (result == GP_OK && alreadyset)
+ 		*alreadyset = 1;
+ 	return result;
