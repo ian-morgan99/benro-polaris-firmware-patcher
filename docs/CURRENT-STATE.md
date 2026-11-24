@@ -24,10 +24,24 @@ found: with the v115 driver on direct PC the K-3 III auto-detects, inits exact-m
 vendor-enables cleanly; its ability row and `pentax-utils.c` are byte-identical between
 the v114 and v115 pins; only three code files changed v114→v115, none in the recognition
 path. v116 ships PTP result-code diagnosability (32 previously unmapped standard codes),
-not a recognition change. The strongest remaining hypothesis for "not recognised at all"
-on the mount is packaging — v115 ships port modules under `libgphoto2_port/0.12.2/` while
-the base image carries `0.12.0/` — which would break every camera at once and is invisible
-to PC tests. Check that on device first.
+not a recognition change.
+
+A packaging hypothesis was raised and is now **disproven**, recorded here so nobody
+re-tests it: v115/v116 ship port modules under `lib/stage2/libgphoto2_port/0.12.2/`
+(`usb1.so`, `usbscsi.so`) alongside a separate `lib/libgphoto2_port/0.12.0/`. Direct
+comparison against the v114-era image — identified by its driver carrying the v114 log
+string and not the v115 one — shows that layout is **byte-for-byte the same shape** in
+both. Since K-3 III recognition worked on the mount under v114-era builds (o-v9d), an
+unchanged port layout cannot explain the regression.
+
+Root cause of mount-side non-recognition is therefore still **unidentified**. What is
+ruled out: driver ability table, `pentax-utils.c` model/PID gate, `library.c` init path
+(log strings only), stage2 binary (identical hash across v115/v116), and port-module
+packaging. What has not been checked because the mount is unreachable: whether pgphoto
+on the device resolves its CAMLIBS/IOLIBS at all on `.114`, and what `lsusb -d 25fb:`
+shows there with the K-3 III attached. The first command to run when the mount returns is
+that USB presence check — if the body does not enumerate on the mount's USB host, this is
+a hardware/USB-path problem and no firmware release will fix it.
 
 Process defect worth fixing: the build ran from throwaway clones under `/tmp` and those
 were deleted during cleanup, destroying the only local copy of the build output. The packet

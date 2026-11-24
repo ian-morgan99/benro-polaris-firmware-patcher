@@ -57,11 +57,28 @@ No K-3 III recognition fix is present, because no recognition regression was fou
 - o-v9d (September) recorded K-3 III live control working on the mount, so recognition
   is not newly broken at the driver level.
 
-Strongest remaining hypothesis for "not recognised at all" on the mount is packaging,
-not code: v115 ships port modules under `libgphoto2_port/0.12.2/` (only `usb1.so`,
-`usbscsi.so`) while the base image carries a separate `0.12.0/` set. A version-directory
-mismatch would break every camera at once and is invisible to PC tests. Check this on
-device before treating v116 as the fix.
+### Packaging hypothesis: raised, then DISPROVEN
+I suspected the port-module layout: v115/v116 ship `lib/stage2/libgphoto2_port/0.12.2/`
+(`usb1.so`, `usbscsi.so`) plus a separate `lib/libgphoto2_port/0.12.0/`. Extracting the
+v116 appfs (`ubireader_extract_files`) and comparing with the v114-era image — identified
+positively by its driver containing the v114 log string "already open from a previous
+connection" and not the v115 replacement — shows the layout is identical in both. K-3 III
+recognition worked on the mount under v114-era builds, so an unchanged layout cannot be
+the cause. Do not re-test this.
+
+### Ruled out so far
+| candidate | evidence |
+|---|---|
+| ability table row for `0x0189` | identical between v114 and v115 pins |
+| `pentax-utils.c` model/PID gate | not among the files changed v114->v115 |
+| `library.c` init path | differs by log strings only |
+| stage2 binary | same sha256 (`fcce947f…`) in v115 and v116 |
+| port-module packaging | layout identical to the v114-era image |
+| driver recognising the body at all | works on direct PC with the v115 driver |
+
+**Root cause is still unidentified.** The first thing to run when the mount is reachable
+is `lsusb -d 25fb:` with the K-3 III attached: if the body does not enumerate on the
+mount's USB host, this is a USB-path/hardware problem and no firmware release fixes it.
 
 ## Install status: BLOCKED (verified, not assumed)
 `wlp8s0` is DOWN and a full rescan finds no `polaris_*` SSID. Per the identity rule no
