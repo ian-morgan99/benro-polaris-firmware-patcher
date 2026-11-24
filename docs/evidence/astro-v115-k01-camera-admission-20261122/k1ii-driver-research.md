@@ -329,3 +329,44 @@ Checked every repo with `git status --porcelain` + `git log -1` rather than trus
    is reverted and unproven - it must not be shipped on current evidence.
 3. **MF drive (#381)** remains state-dependent: cold -> 0xa00c, primed -> 0x2001 on K-3 III. Cause
    not established.
+
+## R11 - Drive-mode cache-invalidation patch: PREMISE DISPROVED, patch abandoned
+The patch assumed a drive-mode change alters the advertised shutter enum. Tested properly on a
+live K-1 II (fw 2.51) with a valid value this time (`continuous-hi`; my earlier `continuous` is
+not a choice, which is why that write silently failed):
+
+| step | drive mode | shutter choices |
+|---|---|---|
+| before | single | 56 |
+| after `--set-config pentaxdrivemode=continuous-hi` (verified applied) | continuous-hi | **56** |
+
+The list is unchanged, and it already contains both families at once - `00:30 .. 00:00` **and**
+`1/8000` in the same 56-entry enum. So drive mode does not gate shutter value shape on this body.
+The earlier "Bulb exposes only mm:ss, no fractions" observation is a different condition (Bulb
+action, not drive mode) and was never reproduced here.
+
+**Disposition: patch NOT shipped.** It is reverted in the worktree; the diff is preserved as
+`k1ii-drive-mode-cache-invalidation-WIP.patch` (sha256 9a04e55bd1e56db4...) purely so the reasoning
+is not lost. Shipping it would add invalidation traffic for no correctness benefit.
+
+## R12 - Real staleness risk found while testing that patch (source-derived, NOT reproduced live)
+`_get_Pentax_DirectShutter` (config.c:9711) issues **only** `ptp_generic_getdevicepropdesc()` and
+then reports `desc.CurrentValue` (line ~9763). There is no separate uncached GetDevicePropValue.
+Because `duplicate_DevicePropDesc` copies `CurrentValue`, the value a client sees is governed by
+`params->cachetime`.
+
+Consequence: raising cachetime to 30 for the 45% enumeration win also makes the **reported current
+value** up to 30 s stale within one session. That matters specifically for the persistent-daemon
+architecture recommended in R7 - a value changed on the body would be reported stale. So the two
+recommendations interact and must not both be adopted naively:
+- Safe today: keep cachetime=2 (default) and rely on session reuse for the win.
+- If raising cachetime, first split descriptor caching from current-value freshness (cache the
+  FORM/enum list, always fetch CurrentValue fresh). That is the correct fix and is still TODO.
+
+## R13 - Session close-out: what is done vs genuinely open
+Done and verified: perf root cause + valid A/B; #389 corrected twice then confirmed original;
+#381 state-dependence recorded; harness gate landed and run on both bodies; staging regression
+question answered from git; repo audit with two foreign WIPs preserved; user gphoto config restored;
+cameras left as found (K-1 II drive mode restored to `single`).
+Open, not finished: v115 install (issue #171, needs physical action); descriptor/value cache split
+(R12); MF-drive precondition cause (#381); K-3 III ISO left at 400 with no recorded baseline.
