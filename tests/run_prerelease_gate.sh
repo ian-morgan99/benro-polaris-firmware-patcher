@@ -316,6 +316,13 @@ PY_TESTS=(
     tests/test_astro_multishot.py
     tests/test_display_fwver_monotonic.py
     tests/test_release_number_matches_display_fwver.py
+    # Added for #389: the widget-enumeration A/B was run twice badly before it was
+    # run once well. INI settings syntax made libgphoto2's verify_settings() unlink
+    # the file, so cachetime=30 silently measured the default and a 45% "improvement"
+    # was retracted; separately a refused OpenSession (0x02fa) looked like the fastest
+    # run because op counts were tiny and wall clock huge. Both traps are asserted here
+    # so a future A/B cannot repeat them. Offline-safe: no camera, no network, 0.1 s.
+    tests/test_bench_widget_enumeration.py
     tests/test_webui_shows_running_build.py
     tests/test_fwpkt_private_upload.py
     tests/test_manual_states_sd_layout.py
