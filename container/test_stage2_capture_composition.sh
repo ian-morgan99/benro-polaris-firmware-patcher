@@ -15,3 +15,4 @@ cc ${COMPOSITION_CFLAGS:--O0} -std=gnu11 -Wall -Wextra -Werror \
 [ "$(grep -c 'capture-enter' "$work/trace")" -eq 72 ]
 [ "$(grep -c 'capture-return' "$work/trace")" -eq 72 ]
 [ "$(grep -c 'capture-return.*ret=-10' "$work/trace")" -eq 12 ]
+[ "$(grep -c 'wait-event.*requested_ms=3000' "$work/trace")" -eq 2 ]

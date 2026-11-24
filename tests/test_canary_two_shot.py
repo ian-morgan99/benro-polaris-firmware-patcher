@@ -173,3 +173,24 @@ def test_a_repeated_path_is_a_stale_candidate_not_a_new_output():
     assert not ok
     assert records[1]["stale_candidate"] == first
     assert len(paths) == 1
+
+
+def test_slow_companion_after_idle_uses_full_hardware_budget(monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr(MOD.time, "monotonic", lambda: now[0])
+
+    class SlowPolaris(FakePolaris):
+        def frame(self, deadline):
+            now[0] += 30
+            if now[0] > deadline:
+                raise TimeoutError("synthetic hardware budget expired")
+            return super().frame(deadline)
+
+    prefix = "/app/sd/normal/SP_"
+    frames = [(264, "state:1;"), (264, "state:4;"),
+              (773, "path:" + prefix + "1.dng;"), (264, "state:0;"),
+              (773, "path:" + prefix + "1.jpg;")]
+    rec = MOD.run_shot(SlowPolaris(frames), 1, [], 180, 2, prefix, "slow")
+    assert rec["terminal_failure"] is None
+    assert MOD.shot_satisfied(rec, [], 2, prefix)
+    assert now[0] == 1150

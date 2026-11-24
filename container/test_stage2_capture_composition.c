@@ -29,6 +29,16 @@ static int fake_capture(void *camera, int type, void *path, void *context)
     return core_result;
 }
 
+static int fake_wait(void *camera, int timeout, void *type, void **data, void *context)
+{
+    assert(camera == expected_camera && context == expected_context);
+    assert(timeout == 3000);
+    *(int *)type = 2;
+    *data = &core_path;
+    errno = EAGAIN;
+    return core_result;
+}
+
 int main(void)
 {
     int camera, context;
@@ -100,6 +110,20 @@ int main(void)
     g_real_gp_camera_capture = NULL;
     assert(stage2_guarded_gp_camera_capture(&camera, 0, NULL, &context) == -1);
     assert(atomic_load(&g_capture_in_flight) == 0);
+    assert(stage2_capture_slot_target("gp_camera_wait_for_event", (void *)fake_wait)
+           == (void *)fake_wait);
+    setenv("STAGE2_CAPTURE_TRACE", "1", 1);
+    assert(!stage2_capture_slot_target("gp_camera_wait_for_event", NULL));
+    stage2_wait_event_fn wait = (stage2_wait_event_fn)stage2_capture_slot_target(
+        "gp_camera_wait_for_event", (void *)fake_wait);
+    assert(wait == stage2_trace_wait_event);
+    for (int i = 0; i < 2; i++) {
+        int type = -1;
+        void *data = NULL;
+        core_result = i ? -10 : 0;
+        assert(wait(&camera, 3000, &type, &data, &context) == core_result);
+        assert(errno == EAGAIN && type == 2 && data == &core_path);
+    }
     puts("PASS: capture composition (8 combinations x 3 shots x 6 scenarios)");
     return 0;
 }

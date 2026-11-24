@@ -2043,8 +2043,8 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
             g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)
                 dlsym(g_stage2_core, "gp_camera_capture");
         seq = atomic_fetch_add(&g_capture_trace_seq, 1) + 1;
-        fprintf(stderr, "[stage2-trace] capture-enter seq=%lu pid=%ld type=%d\n",
-                seq, (long)getpid(), type);
+        fprintf(stderr, "[stage2-trace] capture-enter seq=%lu pid=%ld type=%d camera=%p mono_ms=%lld\n",
+                seq, (long)getpid(), type, camera, stage2_monotonic_ms());
     }
     if (!g_real_gp_camera_capture)
         return -1;                                   /* GP_ERROR */
@@ -2056,7 +2056,8 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
     /* Keep the trace's return marker the raw core result; any conversion
      * below logs its own outcome and returns the validated result. */
     if (trace)
-        fprintf(stderr, "[stage2-trace] capture-return seq=%lu ret=%d\n", seq, ret);
+        fprintf(stderr, "[stage2-trace] capture-return seq=%lu ret=%d pid=%ld camera=%p mono_ms=%lld\n",
+                seq, ret, (long)getpid(), camera, stage2_monotonic_ms());
     if (ret == 0 && type == STAGE2_GP_CAPTURE_IMAGE && path &&
         stage2_capture_empty_path_check_enabled()) {
         /* CameraFilePath layout (gphoto2-camera.h): char name[128];
@@ -2076,8 +2077,33 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
     return ret;
 }
 
+/* Preserve caller-owned event storage and timeout. Suppress routine short
+ * polls: pgphoto can request an event every 10 ms while awaiting companions. */
+typedef int (*stage2_wait_event_fn)(void *, int, void *, void **, void *);
+static stage2_wait_event_fn g_real_wait_event;
+
+static int stage2_trace_wait_event(void *camera, int timeout_ms, void *event_type,
+                                   void **event_data, void *context)
+{
+    long long start = stage2_monotonic_ms();
+    int rc = g_real_wait_event(camera, timeout_ms, event_type, event_data, context);
+    int saved_errno = errno;
+    long long end = stage2_monotonic_ms();
+    if (timeout_ms >= 250 || end - start >= 250)
+        fprintf(stderr, "[stage2-trace] wait-event pid=%ld camera=%p start_ms=%lld "
+                        "end_ms=%lld requested_ms=%d ret=%d\n",
+                (long)getpid(), camera, start, end, timeout_ms, rc);
+    errno = saved_errno;
+    return rc;
+}
+
 static void *stage2_capture_slot_target(const char *name, void *resolved)
 {
+    if (resolved && name && strcmp(name, "gp_camera_wait_for_event") == 0 &&
+        stage2_capture_trace_enabled()) {
+        g_real_wait_event = (stage2_wait_event_fn)resolved;
+        return (void *)&stage2_trace_wait_event;
+    }
     if (name && strcmp(name, "gp_camera_capture") == 0) {
         /* All enabled capture modes compose at the same call boundary.
          * With every mode off, preserve the exact resolved core target. */
