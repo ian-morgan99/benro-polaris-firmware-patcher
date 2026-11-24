@@ -286,3 +286,46 @@ no state change to invalidate. Camera left untouched; nothing to restore.
 To validate properly the write must be quoted and confirmed by a `drive-mode-raw` change,
 then the shutter enum compared before/after. Until then this is a hypothesis with a
 compiling patch, not a fix.
+
+## R10 - Repository cleanliness audit (verified, not assumed)
+Checked every repo with `git status --porcelain` + `git log -1` rather than trusting memory.
+
+| repo | branch | HEAD | dirty | disposition |
+|---|---|---|---|---|
+| BenroPolarisPatcher | main | 9aea6118, == origin/main | 0 | clean, pushed |
+| .libgphoto2-v115 (v115 pin) | detached | 0f2f34e00040 | 0 | pristine as required |
+| .lpg-experiment-k1ii | exp/k1ii-driver-perf | 0f2f34e00 | 0 (build-exp ignored) | patch reverted, WIP preserved as hashed file |
+| benro-polaris-test-harness | exp/pentax-ptp-pc-gate | 64db8e8, == origin | 0 | clean, pushed; main untouched at 3ad4197 |
+| LibGphoto2/libgphoto2 | test/k01-ability-pid-shadowing-gate | 232ac8c99 | **2** | **NOT MINE - preserved** |
+| OpenPolaris | main | a4847ebc, == origin | **2** | **NOT MINE - preserved** |
+
+### Why the two dirty repos were left alone (AGENTS.md: preserve others' WIP)
+- `LibGphoto2/libgphoto2`: modified `DEVELOPMENT_PLAN.md` and
+  `docs/pentax/REAL_HARDWARE_TEST_LOG.md`. These are the hardware-ledger edits another agent
+  reported making; reverting them would destroy recorded evidence. Not touched.
+- `OpenPolaris`: `gradle/wrapper/gradle-wrapper.properties` (8.10.2 -> 9.7.1) carries a
+  `#Wed Nov 18 11:35:14 GMT 2026` stamp and matching mtime - **five days before this session
+  started**, so it is pre-existing, not session output. Plus an untracked 377 MB `.codex-next-21/`
+  tool directory. Three older stashes also exist here, confirming ongoing work by others.
+  Not touched, not deleted.
+
+### Documentation completeness (this round)
+- `k1ii-driver-research.md` R1-R10: root causes, corrected perf numbers, invalid-test retraction,
+  MF-drive state-dependence, install blocker, regression question, cleanliness audit.
+- Preserved artifacts with recorded hashes: `wff-diagnostic.patch` (d1b46ca6...),
+  `k1ii-drive-mode-cache-invalidation-WIP.patch` (9a04e55bd1e56db4...).
+- `docs/IT2-2625-FEATURE-REVIEW.md` is tracked and contains **zero** code fences - no proprietary
+  source copied.
+- Handoff disambiguates the two same-named `FwPkt.zip` files: the on-disk candidate matches
+  `RELEASE-IDENTITY.md` (68409600 B, sha256 7c621152...) and is the gated artifact; the flagged
+  do-not-use one is 68409670 B / a9bc2a83...
+
+### Still open, stated plainly (nothing here is done-but-claimed)
+1. **v115 not installed.** Device still `FwVer:6.0.0.54.114`. Blocked by issue #171; needs Route A
+   (SD card) or a pool-reset reboot, both requiring one physical action.
+2. **Drive-mode cache-invalidation patch is UNVALIDATED.** My staleness reproduction was invalid:
+   the `--set-config pentaxdrivemode=continuous` write never took effect (drive-mode-raw stayed 0),
+   so no mode change occurred and the identical choice lists proved nothing. The patch compiles but
+   is reverted and unproven - it must not be shipped on current evidence.
+3. **MF drive (#381)** remains state-dependent: cold -> 0xa00c, primed -> 0x2001 on K-3 III. Cause
+   not established.
