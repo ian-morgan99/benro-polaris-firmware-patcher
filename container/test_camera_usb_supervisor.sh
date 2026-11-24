@@ -530,3 +530,40 @@ echo 'PASS: camera USB supervisor absorbs startup re-enumeration without restart
 echo 'PASS: camera USB supervisor bounds the restart budget under a re-enumeration flap (issue #119 churn guard)'
 echo 'PASS: camera USB supervisor quarantines post-budget identity changes and requires revalidation before resuming (issue #119 TA follow-up)'
 echo 'PASS: camera USB supervisor stays degraded when the quarantine-exit rebind fails, then resumes on a successful rebind (issue #119 TA follow-up)'
+
+# Replay the late arrival on ports 003 and 004. The USB node and marker
+# must belong to the same current process and current device inode.
+for scenario in healthy3 healthy4 failed stale_generation reused_address; do
+    rm -rf "$TMP/sys" "$TMP/proc" "$TMP/dev" "$TMP/run" "$RESTART_LOG"
+    mkdir -p "$TMP/sys" "$TMP/proc/123/fd" "$TMP/dev/001" "$TMP/run"
+    dev=3
+    [ "$scenario" != healthy4 ] || dev=4
+    node=$(printf '%s/dev/001/%03d' "$TMP" "$dev")
+    touch "$node"
+    inode=$(stat -c %i "$node")
+    ln -s /app/lib/stage2/pgphoto.stage2ondisk "$TMP/proc/123/exe"
+    ln -s "$node" "$TMP/proc/123/fd/7"
+    marker_dir=$TMP/proc/123/fd
+    if [ "$scenario" = stale_generation ]; then
+        marker_dir=$TMP/proc/122/fd
+        mkdir -p "$marker_dir"
+    fi
+    [ "$scenario" != reused_address ] || inode=0
+    if [ "$scenario" != failed ]; then
+        ln -s "$TMP/run/pgphoto-bound-1-$dev-$inode-ABCDEF (deleted)" "$marker_dir/8"
+    fi
+    OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_USB_SYSFS=$TMP/sys \
+    OPENPOLARIS_USB_DEVFS=$TMP/dev OPENPOLARIS_PROC_ROOT=$TMP/proc \
+    OPENPOLARIS_RESTART_GPHOTO=$TMP/restart OPENPOLARIS_USB_POLL_SECS=0.05 \
+    OPENPOLARIS_USB_STARTUP_GRACE_POLLS=1 OPENPOLARIS_USB_MAX_POLLS=15 \
+    sh "$SUPERVISOR" > "$TMP/arrival.out" &
+    pid=$!
+    sleep 0.2
+    make_usb 1-1.4 25fb 0189 1 "$dev"
+    wait "$pid"
+    case "$scenario" in
+        healthy*) grep -q 'adopting active pgphoto binding' "$TMP/arrival.out"
+                  test ! -e "$RESTART_LOG" ;;
+        *) test "$(wc -l < "$RESTART_LOG")" -eq 1 ;;
+    esac
+done

@@ -83,6 +83,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 
 #include "stage2_policy.h"
@@ -996,6 +997,62 @@ static void stage2_trace_init_entry(int site, const char *fmt, int arg)
     fflush(stderr);
 }
 
+/* A deleted, open marker is visible only through its owning process's fds.
+ * The supervisor additionally verifies that this process holds the current
+ * usbfs node. A PID file alone would survive exit or PID reuse. */
+static atomic_int binding_fd = -1;
+static int (*binding_real_exit)(void *, void *);
+
+static void clear_usb_binding(void)
+{
+    int fd = atomic_exchange(&binding_fd, -1);
+    if (fd >= 0)
+        close(fd);
+}
+
+static int binding_camera_exit(void *camera, void *context)
+{
+    clear_usb_binding();
+    return binding_real_exit(camera, context);
+}
+
+static void publish_usb_binding(void *camera)
+{
+    const char *run_dir = getenv("STAGE2_USB_BINDING_DIR");
+    if (!run_dir || !g_stage2_core)
+        return;
+
+    int (*get_info)(void *, void **) = dlsym(g_stage2_core, "gp_camera_get_port_info");
+    int (*get_path)(void *, char **) = dlsym(g_stage2_core, "gp_port_info_get_path");
+    void *info = NULL;
+    char *path = NULL;
+    unsigned bus, device;
+    char extra;
+    if (!get_info || !get_path || get_info(camera, &info) || get_path(info, &path) ||
+        !path || sscanf(path, "usb:%3u,%3u%c", &bus, &device, &extra) != 2)
+        return;
+
+    char node[64], marker[512];
+    struct stat identity;
+    snprintf(node, sizeof(node), "/dev/bus/usb/%03u/%03u", bus, device);
+    if (stat(node, &identity))
+        return;
+    int length = snprintf(marker, sizeof(marker), "%s/pgphoto-bound-%u-%u-%llu-XXXXXX",
+                          run_dir, bus, device, (unsigned long long)identity.st_ino);
+    if (length < 0 || (size_t)length >= sizeof(marker))
+        return;
+    int fd = mkstemp(marker);
+    if (fd < 0)
+        return;
+    if (unlink(marker) || fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
+        close(fd);
+        return;
+    }
+    int previous = atomic_exchange(&binding_fd, fd);
+    if (previous >= 0)
+        close(previous);
+}
+
 static int stage2_shim_gp_camera_init(void *camera, void *context)
 {
     /* Issue #297: recorded before anything else can return early -- the capture guard below and
@@ -1044,10 +1101,13 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
 #ifdef STAGE2_NATIVE_CAMERA_WORD
     atomic_fetch_add(&native_gate.generation, 1);
 #endif
+    clear_usb_binding();
     int ret = g_real_gp_camera_init(camera, context);
     stage2_trace_init_entry(STAGE2_TR_RESULT, "gp_camera_init returned %d", ret);
     if (ret != 0)                                    /* GP_OK == 0 */
         return ret;                                  /* init failed: pass through */
+
+    publish_usb_binding(camera);
 
     /* Issue #127: a fresh session re-arms the preview capability.  A previous
      * session's NOT_SUPPORTED disable must not leak into this one, so clear it
@@ -2205,6 +2265,12 @@ static void stage2_ondisk_init(void)
                             "stub\n", name, (unsigned long)STAGE2_SLOTS[i].slot);
             unresolved++;
             continue;                                  /* slot stays = abort stub */
+        }
+        if (!strcmp(name, "gp_camera_exit") && getenv("STAGE2_USB_BINDING_DIR")) {
+            binding_real_exit = t;
+            slot_store(STAGE2_SLOTS[i].slot, (void *)binding_camera_exit);
+            filled++;
+            continue;
         }
         /* SHIM #1: gp_camera_init is the ONE slot redirected to a loader-internal
          * wrapper (stage2_shim_gp_camera_init), which then calls the real core

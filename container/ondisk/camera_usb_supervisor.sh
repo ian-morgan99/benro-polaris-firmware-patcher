@@ -138,6 +138,36 @@ fingerprint() {
     done | sort
 }
 
+# Only the observed single K-3 III late-arrival case can bypass a restart.
+# Require both successful init and a live usbfs fd in the same executable.
+already_bound_k3iii() {
+    case "$1" in
+        *'
+'*) return 1 ;;
+        *'|25fb:0189|'*) ;;
+        *) return 1 ;;
+    esac
+    address=${1##*|}
+    bus=${address%:*}
+    dev=${address#*:}
+    node=$(printf '%s/%03d/%03d' "${OPENPOLARIS_USB_DEVFS:-/dev/bus/usb}" "$bus" "$dev") || return 1
+    marker_dir=$(readlink -f "$RUN_DIR") || return 1
+    inode=$(stat -c %i "$node" 2>/dev/null) || return 1
+    for proc in "$PROC_ROOT"/[0-9]*; do
+        [ "$(readlink "$proc/exe")" = "${OPENPOLARIS_STAGE2_DIR:-/app/lib/stage2}/pgphoto.stage2ondisk" ] || continue
+        marker=
+        usbfd=
+        for fd in "$proc"/fd/*; do
+            case "$(readlink "$fd")" in
+                "$marker_dir/pgphoto-bound-$bus-$dev-$inode-"??????" (deleted)") marker=$fd ;;
+            esac
+            [ "$fd" -ef "$node" ] && usbfd=$fd
+        done
+        [ -n "$usbfd" ] && [ -n "$marker" ] && [ -L "$marker" ] && [ "$usbfd" -ef "$node" ] && return 0
+    done
+    return 1
+}
+
 # Issue #347 follow-up: capture the kernel's view of the bus at the instant the
 # camera is lost. Every post-mortem to date had to be rebuilt from Clog/Mlog
 # alone, and dmesg on this device holds only a few hundred lines -- by the time
@@ -359,7 +389,12 @@ while :; do
         fi
 
         if [ "$stable" -ge "$COOLDOWN" ] && [ "$polls" -ge "$retry_after_poll" ]; then
-            if [ "$MAX_RESTARTS" -gt 0 ] && [ "$restarts" -ge "$MAX_RESTARTS" ]; then
+            if [ -z "$baseline" ] && already_bound_k3iii "$candidate"; then
+                echo "[camera-usb] adopting active pgphoto binding: $candidate"
+                baseline=$candidate
+                stable=0
+                retry_after_poll=0
+            elif [ "$MAX_RESTARTS" -gt 0 ] && [ "$restarts" -ge "$MAX_RESTARTS" ]; then
                 # Issue #119 (TA release-safety follow-up): restart budget
                 # exhausted. Enter the explicit degraded/quarantine state instead
                 # of adopting the new identity as healthy: churn is suppressed,
