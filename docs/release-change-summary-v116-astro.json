@@ -2,7 +2,7 @@
   "baseline": {
     "candidate_id": "astro-v115-k01-camera-admission-20261122",
     "libgphoto2_commit": "0f2f34e0004011136fa75bf43e215acc0c8b9fdb",
-    "patcher_commit": "3e671adf"
+    "patcher_commit": "f67c6baf5f572073c3fb0890f4e68b1d631de0fa"
   },
   "purpose": "Make PTP failures diagnosable. v115 reports -1 for a large set of standard PTP error codes, which is why the K-3 III imageformat rejection (#386) and the K-1 II unsupported-property path present as opaque -102/-1 with no cause. This build maps those codes to specific GP errors so the next physical test names the failure instead of guessing at it.",
   "changes": [
