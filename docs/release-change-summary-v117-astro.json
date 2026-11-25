@@ -7,7 +7,7 @@
   "purpose": "Ship the K-3 III late-USB-arrival fix. v115 and v116 both predate it: the fix is patcher a49e252, which is not an ancestor of either build's patcher pin. On the mount, a K-3 III that enumerates after pgphoto has already started was treated as a restart-worthy identity change; the supervisor killed and restarted the process holding the live camera binding, so the body never became usable and presented as 'not recognised at all'. v117 is the first candidate containing the fix.",
   "changes": [
     {
-      "component": "patcher stage2",
+      "component": "patcher",
       "summary": "camera_usb_supervisor.sh gained already_bound_k3iii(), which adopts an existing pgphoto binding instead of restarting when a single 25fb:0189 candidate appears with no baseline. Adoption requires two independent proofs in the same process: an open deleted binding marker under the run directory and a live fd on the actual /dev/bus/usb node, both resolved through the owning process's fds and matched by bus, device and inode. Anything else falls through to the existing restart budget unchanged. stage2_loader.c publishes that marker (STAGE2_USB_BINDING_DIR) and pgphoto.wrapper.in exports it. container/test_camera_usb_supervisor.sh covers the late-arrival path plus the pre-existing supervisor behaviours."
     },
     {
