@@ -36,12 +36,22 @@ unchanged port layout cannot explain the regression.
 
 Root cause of mount-side non-recognition is therefore still **unidentified**. What is
 ruled out: driver ability table, `pentax-utils.c` model/PID gate, `library.c` init path
-(log strings only), stage2 binary (identical hash across v115/v116), and port-module
-packaging. What has not been checked because the mount is unreachable: whether pgphoto
-on the device resolves its CAMLIBS/IOLIBS at all on `.114`, and what `lsusb -d 25fb:`
-shows there with the K-3 III attached. The first command to run when the mount returns is
-that USB presence check — if the body does not enumerate on the mount's USB host, this is
-a hardware/USB-path problem and no firmware release will fix it.
+(log strings only), and port-module packaging.
+
+**Correction (2026-11-25): the "stage2 unchanged" line above was true but misleading and
+must not be relied on.** `pgphoto.stage2ondisk` is identical between v115 and v116, but it
+**changed across the regression window**: v114-era `f167e66864479060af82…` -> v115/v116
+`fcce947ff5525629f235…`. Stage-2 is compiled from this repository's `container/` tree, not
+from libgphoto2, so a change there is exactly the kind of thing that breaks camera handling
+while leaving the driver byte-comparable. My earlier conclusion that "root cause is
+unidentified" was reached by diffing only the driver repository and therefore excluded the
+one component that actually changed.
+
+The fix for the observed K-3 III failure is `a49e252` in this repository
+(`container/ondisk/camera_usb_supervisor.sh`, `container/stage2_loader.c`,
+`container/ondisk/pgphoto.wrapper.in`, plus its supervisor test). It is **not** contained
+in v116: v116 is bound to patcher `65785529`, and `a49e252` is not an ancestor of it. v116
+cannot fix the K-3 III regression; it predates the fix.
 
 Process defect worth fixing: the build ran from throwaway clones under `/tmp` and those
 were deleted during cleanup, destroying the only local copy of the build output. The packet

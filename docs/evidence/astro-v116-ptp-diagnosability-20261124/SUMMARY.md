@@ -72,7 +72,7 @@ the cause. Do not re-test this.
 | ability table row for `0x0189` | identical between v114 and v115 pins |
 | `pentax-utils.c` model/PID gate | not among the files changed v114->v115 |
 | `library.c` init path | differs by log strings only |
-| stage2 binary | same sha256 (`fcce947f…`) in v115 and v116 |
+| stage2 binary | same sha256 (`fcce947f…`) in v115 and v116 — **but it changed v114->v115** (`f167e668…` -> `fcce947f…`), so this row does NOT rule stage2 out of the regression window. See the 2026-11-25 correction in CURRENT-STATE.md. |
 | port-module packaging | layout identical to the v114-era image |
 | driver recognising the body at all | works on direct PC with the v115 driver |
 
