@@ -1,0 +1,26 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v116-ptp-diagnosability-20261124",
+    "libgphoto2_commit": "be9da156f8adc0c1bf520c777636e50a712ea67a",
+    "patcher_commit": "65785529a87323e4ca19ba7d0b2f23410cedd5db"
+  },
+  "purpose": "Ship the K-3 III late-USB-arrival fix. v115 and v116 both predate it: the fix is patcher a49e252, which is not an ancestor of either build's patcher pin. On the mount, a K-3 III that enumerates after pgphoto has already started was treated as a restart-worthy identity change; the supervisor killed and restarted the process holding the live camera binding, so the body never became usable and presented as 'not recognised at all'. v117 is the first candidate containing the fix.",
+  "changes": [
+    {
+      "component": "patcher stage2",
+      "summary": "camera_usb_supervisor.sh gained already_bound_k3iii(), which adopts an existing pgphoto binding instead of restarting when a single 25fb:0189 candidate appears with no baseline. Adoption requires two independent proofs in the same process: an open deleted binding marker under the run directory and a live fd on the actual /dev/bus/usb node, both resolved through the owning process's fds and matched by bus, device and inode. Anything else falls through to the existing restart budget unchanged. stage2_loader.c publishes that marker (STAGE2_USB_BINDING_DIR) and pgphoto.wrapper.in exports it. container/test_camera_usb_supervisor.sh covers the late-arrival path plus the pre-existing supervisor behaviours."
+    },
+    {
+      "component": "libgphoto2",
+      "summary": "No functional change over v116. The driver delta since the v116 pin is documentation and evidence only, plus removal of build stamps and a compiled test binary that had been committed into the source tree despite being listed in .gitignore. Those artifacts made 'what changed' unreadable and are the reason an earlier analysis wrongly concluded no code had changed for this release."
+    }
+  ],
+  "known_limits": [
+    "The late-arrival fix is qualified on a direct PC only. A host executable exercising the binding code held the real K-3 III, the production supervisor adopted 1-4|25fb:0189|1:6 without restarting, camera exit returned 0 and the binding fd cleared. Polaris hotplug qualification has not been performed and requires the mount.",
+    "Shutter speed selection on the K-3 III is NOT fixed by this build. The last direct-PC result on current main was a shutter target of 1/16000 from a 00:30 baseline returning -1 with conditions still reporting 30/1, and the SET-versus-verification boundary is unknown. v117 changes no shutter write path.",
+    "The K-3 III Bulb wheel is NOT fixed by this build. The recorded failure is an empty shutter enumeration (enum-count=0) in B mode with no JPEG offered; no code in this release changes that enumeration.",
+    "K-01 carries the MSC/645D PID-collision fix already present since v115; nothing new ships for it here. K-01 MSC discovery and reads remain qualified on PC only, and the body refused ISO 800 to 400 on both the original and fixed builds.",
+    "K-1 II ships no firmware-side change. The 34.8x widget-read optimisation lives in the test harness, not in the packet; v116 shipped the reproducible A/B tooling for it.",
+    "Stage-2 changed across the regression window (v114-era f167e66864479060af82 to v115/v116 fcce947ff5525629). v117 changes it again via stage2_loader.c, so the shipped stage2 hash will differ from v116 and must be recorded rather than assumed."
+  ]
+}
