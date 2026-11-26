@@ -98,3 +98,39 @@ pgphoto/Stage-2/session path, not libgphoto2.
   once so rollback can always restore the shipped binary.
 * `scripts/gate-ab.sh` — install a loader, reboot, wait for a bound camera, then
   stress. This is the only trustworthy way to A/B the gate.
+
+## Third defect: parameter SET is rejected on the K-1 II (`ret:-2110`)
+
+Found while trying to put the body on B for a bulb test. The supported path
+(`canary-probe.py --shot --bulb-seconds 5`) reads the shutter list correctly, then
+fails to select a slot:
+
+```
+SHUTTER_OPTIONS current=15 options=[... '1/8000', '00-00']   # 56 slots, bulb = 55
+FAIL RuntimeError: shutter selection lacked explicit ret:0: s:8;ret:-2110;
+SHUTTER restore_failed secondary=... s:15;ret:-112;
+```
+
+Reads work (the list is complete and current), but the write is refused. This is
+**not** the gate and **not** new: `-2110` is documented in
+`docs/K1II-SHUTTER-HANDOVER.md`, last touched 2026-11-23, before the gate existed,
+and it is not a code our loader or patches emit (only the admission unit test uses
+it as a stand-in native return). The handover already records shutter changes,
+ISO restores and EV writes all returning `-2110` on this body, with the original
+value persisting afterwards.
+
+Consequence for the bulb report: the app's bulb request cannot work while the body
+is not on B, and the head cannot put it on B. So "bulb fails" has at least two
+independent causes -- the rejected SET, plus the bulb path never producing the
+expected file even when the exposure is held for the full duration.
+
+This also explains the `RD:0;V:;R:;` empty answers seen under load: the handover
+records exactly that response for code 267 alongside a `-2110` write, so it is a
+pre-existing K-1 II session-state issue rather than saturation caused by the gate.
+
+## Net position
+
+Resolved on real hardware by the gate fix: parameter reads at app load, plain
+capture, and the `updateViewFinder ret:-1` refusal. Still open, each needing its
+own investigation: live-view frame delivery, bulb file production, and K-1 II
+parameter SET (`-2110`).
