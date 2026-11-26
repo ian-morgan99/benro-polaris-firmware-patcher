@@ -20,9 +20,12 @@ READER = os.path.join(HERE, "dng-exposure.py")
 TAG_MODEL = 272
 TAG_SOFTWARE = 305
 TAG_EXIF_IFD = 34665
-TAG_EXPOSURE_TIME = 33421
+# Must match the reader. These were wrong in lockstep with dng-exposure.py, which
+# is why the bug survived: the fixture was built to the buggy constants rather than
+# to a real Pentax file. 33434 = ExposureTime, 34855 = ISOSpeedRatings.
+TAG_EXPOSURE_TIME = 33434
 TAG_SHUTTER_SPEED_VALUE = 37385
-TAG_ISO = 34662
+TAG_ISO = 34855
 
 
 def build_tiff(endian, exposure, apex, iso, model="PENTAX K-3 MARK III"):

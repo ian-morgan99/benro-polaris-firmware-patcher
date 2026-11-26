@@ -9,9 +9,18 @@ sensor was actually exposed. Independent confirmation needs EXIF.
 
 DNG is TIFF-based, so the ExifIFD can be parsed directly:
 
-  ExposureTime       33421  RATIONAL  the exposure duration the camera recorded
-  ShutterSpeedValue  37385  SRATIONAL APEX; exposure time = 2 ** -value
-  ISOSpeedRatings    34662  SHORT     cross-check against the requested ISO
+  ExposureTime       33434 (0x829a)  RATIONAL   the exposure duration recorded
+  ShutterSpeedValue  37385 (0x9209)  SRATIONAL  APEX; exposure = 2 ** -value
+  ISOSpeedRatings    34855 (0x8827)  SHORT      cross-check the requested ISO
+
+The tag numbers were wrong in the original version of this tool: 33421 is
+FocalLengthIn35mmFilm and 34662 is SensingMethod, neither of which is exposure or
+ISO. Verified against a real K-3 III capture (IMGP4113.DNG, 32,649,897 bytes):
+its ExifIFD holds ExposureTime=25/1 at tag 33434, ISOSpeedRatings=400 at tag
+34855, and ShutterSpeedValue as an unsigned SHORT of 16 -- not an SRATIONAL.
+Because APEX is signed (Tv = -log2 seconds), an unsigned SHORT cannot represent
+any exposure longer than one second, so that 16 is meaningless for a 25 s shot
+and must never be converted into a duration.
 
 Usage:  dng-exposure.py FILE...
 Exit 0 if every file yielded an ExposureTime, 1 otherwise.
@@ -24,9 +33,9 @@ reported rather than guessed at.
 import struct
 import sys
 
-TAG_EXPOSURE_TIME = 33421
-TAG_SHUTTER_SPEED_VALUE = 37385
-TAG_ISO = 34662
+TAG_EXPOSURE_TIME = 33434        # 0x829a -- NOT 33421 (FocalLengthIn35mmFilm)
+TAG_SHUTTER_SPEED_VALUE = 37385  # 0x9209
+TAG_ISO = 34855                  # 0x8827 -- NOT 34662 (SensingMethod)
 TAG_EXIF_IFD = 34665
 TAG_MAKE = 271
 TAG_MODEL = 272
@@ -146,16 +155,27 @@ def read_exposure(path):
         raise TiffError("no ExifIFD pointer (tag 34665) in IFD0")
 
     for tag, typ, count, val in _walk_ifd(buf, exif_off, endian):
-        if tag == TAG_EXPOSURE_TIME and isinstance(val, tuple):
-            num, den = val
-            out["exposure_time_s"] = (num / den) if den else None
-            out["exposure_time_raw"] = f"{num}/{den}"
-        elif tag == TAG_SHUTTER_SPEED_VALUE and isinstance(val, tuple):
-            num, den = val
-            if den:
-                apex = num / den
-                out["shutter_apex"] = apex
-                out["exposure_from_apex_s"] = 2.0 ** (-apex)
+        if tag == TAG_EXPOSURE_TIME:
+            if isinstance(val, tuple):
+                num, den = val
+                out["exposure_time_s"] = (num / den) if den else None
+                out["exposure_time_raw"] = f"{num}/{den}"
+            else:
+                out["exposure_time_unexpected"] = f"type={typ} value={val!r}"
+        elif tag == TAG_SHUTTER_SPEED_VALUE:
+            # Derive a duration only from a signed value. Pentax writes this tag
+            # as an unsigned SHORT, which cannot encode APEX < 0 and therefore
+            # cannot express any exposure longer than 1 s; on the real K-3 III
+            # file it reads 16 for a 25 s shot. Record it, never convert it.
+            if isinstance(val, tuple):
+                num, den = val
+                if den:
+                    apex = num / den
+                    out["shutter_apex"] = apex
+                    out["exposure_from_apex_s"] = 2.0 ** (-apex)
+            else:
+                out["shutter_apex_unsigned_type"] = typ
+                out["shutter_apex_raw"] = val
         elif tag == TAG_ISO:
             out["iso"] = val
     return out
@@ -176,7 +196,9 @@ def main(argv):
         et = info.get("exposure_time_s")
         apex = info.get("exposure_from_apex_s")
         if et is None:
-            print(f"{path}: no ExposureTime tag", end="")
+            note = info.get("exposure_time_unexpected")
+            print(f"{path}: no usable ExposureTime tag (tag {TAG_EXPOSURE_TIME})"
+                  + (f" -- found {note}" if note else ""), end="")
         else:
             print(f"{path}: exposure_time={info.get('exposure_time_raw')} "
                   f"({et:.3f} s)", end="")
