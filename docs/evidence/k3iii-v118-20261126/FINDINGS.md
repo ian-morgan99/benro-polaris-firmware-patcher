@@ -94,15 +94,86 @@ still-image interface regardless of host.
 
 Do not re-open the cable, driver, autosuspend, or supervisor-latch theories; all four are now closed.
 
+## Port ruled out too — there is only one camera socket
+
+The operator confirms the cable is in **the exact same socket** the K-1 II used, and the Polaris has only one
+camera port. So "wrong physical port" — my top-ranked cause — is eliminated. `authorized_default=1` on both
+buses and `authorized=1` on the hub rule out a policy refusal. No TypeC role sysfs exists on this kernel, so
+a host/peripheral role flip cannot be confirmed or excluded from sysfs.
+
+## The Benro Connect toasts are NOT a flapping connection
+
+Sampled all three layers simultaneously for 60 s while the app was visibly toasting:
+
+```text
+t=5s..t=60s  pgphoto_pid=250  usb_pentax=0  dmesg_lines=545  284=[EMPTY]
+```
+
+Constant on every sample. pgphoto is **not restarting** (same PID throughout, and no `restart` markers in
+Mlog), the kernel sees **no** attach/disconnect churn (`dmesg_lines` never moves from 545), and USB presence
+never flickers. Nothing is actually reconnecting or disconnecting.
+
+What *is* periodic is the app's own camera poll, every ~30 s:
+
+```text
+[18:39:48] code[286],val[manufacturer:none;model:none;state:-5;stor...
+[18:40:18] code[286],val[manufacturer:none;model:none;state:-5;stor...
+[18:40:48] code[286],val[manufacturer:none;model:none;state:-5;stor...
+[18:41:18] code[286],val[manufacturer:none;model:none;state:-5;stor...
+[18:41:49] code[286],val[manufacturer:none;model:none;state:-5;stor...
+```
+
+Exactly 30 s apart, always `model:none; state:-5`. So the toasts are the app re-evaluating a steady-state
+"no camera" answer on each poll and surfacing it as connect/disconnect churn. The toast cadence matches the
+poll cadence. This is a **reporting artefact of an absent camera**, not evidence of an unstable link — and
+it should not be chased as a Stage-2, socket, or preview bug.
+
+Caveat: the toast logic itself lives in the mobile app, which is not in these logs, so this is inferred from
+the poll cadence matching the observed toast frequency rather than directly observed.
+
+## Correction: the `SP_ClientCtxDel` churn was largely my own probing
+
+I previously proposed this as a new vendor socket-lifecycle race and called it "the best device-side candidate
+for the client dropouts". Wrong. The pairs are from **192.168.0.4 — this workstation**, i.e. my own `nc`
+probes:
+
+```text
+SOCKET_ACCEPT(201) [id=96 192.168.0.4:39950] s_u32ClientNum[4]
+SOCKET_CLOSE(201)  [id=96] s_u32ClientNum[3]
+ERROR SP_ClientCtxDel[392]: not find this is id[96]
+```
+
+Open and close in the same millisecond is exactly what a one-shot `printf | nc -q1` does. The 307 occurrences
+in the K-1 II bundle accumulated during a session in which I was probing heavily, so that count is mostly
+self-inflicted. Before filing anything on it, re-count with no probes running and see whether it still occurs
+from genuine clients (phone/tablet IPs).
+
+## Remaining causes for the absent camera
+
+1. **Wedged USB stack** after the K-1 II's removal — no logged errors, but nothing else is left standing and a
+   reboot is cheap. *Do this next.*
+2. **Bus-powered hub power budget** for the K-3 III — still unconfirmed; `lsusb -v` on busybox does not print
+   the power/ports fields, so it cannot be checked from the rig. Would normally log an error, and none is
+   logged.
+
+Closed and not to be re-opened: cable, driver support, USB mode, autosuspend, supervisor latch, wrong port,
+authorization policy.
+
 ## Next actions
 
 ```bash
-# rig watcher is live; plug into the port the K-1 II used, then:
-grep -av nohup /tmp/rig-watch2.log | tail
+# 1. reboot the rig (clears cause 1), then re-verify identity before trusting anything
+ssh root@192.168.0.1 'reboot'
+python3 scripts/wait-for-rig.py --wifi-iface wlp8s0 --timeout 420
+./scripts/verify-installed-build.sh out/astro-v118-stage2-gate-wedge-fix-20261126
+
+# 2. with the camera plugged in, watch for enumeration
 ssh root@192.168.0.1 'lsusb | grep -ai pentax; ls /sys/bus/usb/devices/ | grep -av "^usb"'
 ```
 
-If the known-good port yields nothing, reboot the rig and retest before anything else.
+If a reboot does not bring the body up, this is hardware-level on the Polaris port and no software change in
+this repo will fix it — the K-3 III should then be tested on a different Polaris to preserve the cross-model
+qualification goal.
 
 ## Evidence
 

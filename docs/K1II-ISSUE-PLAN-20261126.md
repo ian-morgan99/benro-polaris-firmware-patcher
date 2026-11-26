@@ -85,18 +85,28 @@ look. Track it privately until the files are redacted.
 Related but distinct: **#290** covers a Wi-Fi password in *process arguments*. This is credential material in
 *persisted logs*, which is a wider exposure.
 
-### N2. `SP_ClientCtxDel:not find this is id[N]` — vendor socket lifecycle race
-307 occurrences across Mlogs. Pattern:
+### N2. `SP_ClientCtxDel:not find this is id[N]` — **withdrawn as filed; my own probing**
+
+I originally proposed this as a vendor socket-lifecycle race and called it the best device-side candidate for
+the client dropouts. That was wrong. The pairs in the K-3 III bundle come from **192.168.0.4 — this
+workstation**, i.e. my own one-shot `printf | nc -q1` probes:
 
 ```text
-SOCKET_ACCEPT(201) [id=38 192.168.0.4:55860] s_u32ClientNum[2]
-SOCKET_OPEN(201)   [id=38] start
-SOCKET_CLOSE(201)  [id=38] s_u32ClientNum[1]
-ERROR SP_ClientCtxDel[392]: not find this is id[38]
+SOCKET_ACCEPT(201) [id=96 192.168.0.4:39950] s_u32ClientNum[4]
+SOCKET_CLOSE(201)  [id=96] s_u32ClientNum[3]
+ERROR SP_ClientCtxDel[392]: not find this is id[96]
 ```
 
-Open and close land in the same millisecond and the context is already gone. Best device-side candidate for
-the "clients dropping out" report. Vendor `polestar_app`; scope is to characterise and correlate, not patch.
+Open and close within the same millisecond is exactly what a one-shot probe does, so the 307 occurrences in
+the K-1 II bundle are largely self-inflicted — that session involved heavy probing. Do not file this until it
+is re-counted with no probes running and confirmed from genuine client IPs (phone/tablet). See
+`k3iii-v118-20261126/FINDINGS.md`.
+
+Separately, the "clients dropping out" report is **not** explained by this. When the K-3 III was attached-but-
+invisible, Benro Connect toasted as if reconnecting every ~30 s while pgphoto's PID stayed constant, `dmesg`
+line count never moved, and USB presence never flickered — nothing was actually flapping. The toasts tracked
+the app's own 30 s `code:286` poll returning `model:none;state:-5`. Absence reported on a timer looks like
+churn; it is not instability.
 
 ### N3. Shutter state ordering differs between K-1 II and K-3 III — **comment on #315, do not file**
 Red → *image processing* → actuation on K-1 II; previously red → actuate → processing. #315 already covers
@@ -132,7 +142,7 @@ order follows its queue and puts the highest-leverage fix first.
 | 7 | LV frame corruption: characterise peaking repro | #363/#359 (task 08) | Needs live capture; cannot be diagnosed from logs. | **yes** |
 | 8 | AF: prove/disprove our opcode-311 kit path works independently of vendor AF | #359/#146 | Determines whether this is upstream-report-only or ours to route. | **yes** |
 | 9 | Capture-duration arithmetic + ordering comparison | #315 | Fix the negative durations (every capture, not one case), then re-test ordering on both bodies and post the K-1 II/K-3 III difference as a comment on #315. | **yes** |
-| 10 | N2 socket race characterisation | new/#360 | Correlate with dropouts; vendor-side, diagnostic only. | no |
+| 10 | Re-count `SP_ClientCtxDel` with no probes running; only file if genuine clients trigger it | N2 (withdrawn) | My own `nc` probes produced most of the 307. Verify before filing. | no |
 | 11 | `release-fwpkt.sh`: run kit install even after a lost connection | N4 | Prevents a repeat of the stale-kit install. | no |
 
 Steps 2, 5–9 need the rig. Steps 1, 4(partial), 10, 11 are offline — do those if the rig goes dark.
