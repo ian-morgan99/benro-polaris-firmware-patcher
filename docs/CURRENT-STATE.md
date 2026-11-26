@@ -1,5 +1,51 @@
 # Current repository state
 
+## 2026-11-26 — component identity is now verifiable; a hot-swap had made "v117" meaningless
+
+**A hot-swap left the head running unregistered bytes while it still reported `FwVer:6.0.0.54.117`.**
+`libpolaris_stage2.so` is `LD_PRELOAD`ed by `/app/bin/pgphoto`; replacing it changes behaviour but
+never changes the reported FwVer, which comes from the flashed package. `docs/release-change-summary-v117-astro.json`
+records purpose/changes/known_limits and **no component hashes at all**, so nothing in the repo stated
+what bytes `.117` was supposed to run. Consequence: results taken against a replaced loader read as
+results for the shipped build, and vice versa.
+
+Fixed deterministically rather than by discipline:
+
+- `docs/component-identity.json` — registry of every known loader/pgphoto build by md5, with source
+  commit and status (`RELEASED`, `QUALIFIED-NOT-PACKAGED`, `DIAGNOSTIC-NEVER-SHIP`), plus the shipped
+  launcher env baseline. The `.117` expectation was reconstructed from the on-device `pre-hotswap`
+  backup, so it documents what was observed, not what was published — recorded as a gap.
+- `scripts/device-identity.py` — read-only fail-closed check. Exit 0 verified, 1 unregistered bytes,
+  2 wrong build for the release, 3 launcher drift, 4 unreachable (never reported as healthy).
+- `scripts/stage2-hotswap.sh push` now refuses any artifact not in the registry **before** touching
+  the device, and appends every install to `docs/component-deploys.jsonl`.
+
+Both guards were tested against the failure that motivated them: with the diagnostic loader deployed
+the checker returned exit 2 naming it, and after restore it returns exit 0. The first version of the
+gate printed the identity but installed anyway — the `case` pattern was unanchored and the label is
+`name [STATUS]`, so `DIAGNOSTIC-NEVER-SHIP*` never matched. Caught by testing the guard, not by review.
+
+**Retracted: "a second `-2110` rejection path exists for non-empty values."** A SET sweep with the
+traced loader on a fresh boot (`268` valid first try, `V:15`, 56 options) gave
+`s:15 ret:0`, `s:0 ret:-1`, `s:8 ret:-1`, `s:20 ret:-6`, `s:55 ret:-6`. Only the value already set was
+accepted. That is not a new fault — `ret:-6` on shutter writes is **already documented as mode-dependent,
+not a firmware fault** (issue #186 corrected, `CURRENT-STATE.md` `.62` section: "Bulb works with the dial
+on B"). The dial was not on B during the sweep. The hypothesis was invented from three log lines without
+first checking whether the mode precondition had been met; the trace confirmed pgphoto passed the values
+verbatim (`key=3 value="20" ret=-6`), so nothing is being mangled in transit.
+
+**Still open, unchanged:** the intermittent empty config read. Reproduced once on this boot
+(`268@RD:0;V:;R:;`) and not on the next attempt with zero retries, so it is neither deterministic nor
+understood. `getCameraConfig` is **not** shimmed — only `setCameraConfig` and `setCameraStatus` are slots
+— so tracing the read path needs a new trampoline, not a one-line edit.
+
+**Operational correction:** `scp` does not work against this head; it has never worked. Transfers go
+through `cat <file> | ssh … "cat > path"` (already implemented in `stage2-hotswap.sh`). Two attempts to
+use `scp` today were wasted effort. Also avoid recursive grep under `/app` — `/app/sd` hangs it.
+
+Battery was at 12–40 % and discharging across this session; a power loss mid-write can leave a truncated
+loader, so every copy is now verified by md5 before it is moved into place.
+
 ## 2026-11-25 — v117 INSTALLED and verified; parameters/shutter/liveview broken by the stage2 admission gate
 
 **Installed identity is now `FwVer:6.0.0.54.117;date:2026.11.25;`.** Candidate

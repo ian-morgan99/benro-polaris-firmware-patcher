@@ -1,0 +1,89 @@
+{
+  "_comment": [
+    "Machine-readable identity registry for Polaris Stage-2 components.",
+    "",
+    "Why this exists: docs/release-change-summary-v117-astro.json records purpose, changes and",
+    "known_limits but NO component hashes. Nothing in the repo therefore stated what bytes",
+    "6.0.0.54.117 was supposed to run. On 2026-11-26 a hot-swap replaced the deployed loader with",
+    "locally built bytes while the device still reported FwVer .117, and no check could detect it.",
+    "This file makes 'what is running' comparable to 'what should be running', fail-closed.",
+    "",
+    "Rules:",
+    "  * An artifact is REGISTERED only if its md5 appears here.",
+    "  * Anything else is UNREGISTERED and scripts/device-identity.py exits non-zero.",
+    "  * Add an entry only with the git commit that produces it, verified by rebuild.",
+    "  * Never edit an entry in place; a rebuilt artifact is a new entry."
+  ],
+  "components": {
+    "libpolaris_stage2.so": {
+      "path": "/app/lib/stage2/libpolaris_stage2.so",
+      "artifacts": [
+        {
+          "md5": "765e9528b8d2dddaeb0d25f6ed54e977",
+          "label": "shipped-astro-v117",
+          "status": "RELEASED",
+          "source_commit": null,
+          "note": "Bytes as installed by the 6.0.0.54.117 package. Preserved on device at libpolaris_stage2.so.pre-hotswap. Byte-identical to a container rebuild of container/stage2_loader.c at commit 43147f1^ (the pre-gate-fix source), which proves the build recipe and slot table reproduce the shipped binary exactly.",
+          "build": "arm-linux-gnueabi-gcc -shared -fPIC -O2 -std=gnu11 -mfloat-abi=soft -Wall -Wextra -Werror -Wl,-soname,libpolaris_stage2.so stage2_ondisk_loader.c stage2_policy.c -ldl"
+        },
+        {
+          "md5": "44fb2150ab04c164859c65ec932a8a58",
+          "label": "gate-fix-qualified",
+          "status": "QUALIFIED-NOT-PACKAGED",
+          "source_commit": "a129f89",
+          "note": "Camera-gate fix plus the held_ms diagnostic correction. Reproduced byte-for-byte from a129f89 with the canonical filename stage2_ondisk_loader.c (the source name is embedded in the binary, so any other filename yields a different hash). Qualified on a live K-1 II: 150/150 parameter reads at app load, plain capture PASS.",
+          "build": "same as shipped-astro-v117"
+        },
+        {
+          "md5": "222a09f049a80b69b6d015d3df0f8f3f",
+          "label": "set-trace-diagnostic",
+          "status": "DIAGNOSTIC-NEVER-SHIP",
+          "source_commit": "4043db6",
+          "note": "Adds STAGE2_SET_TRACE=1 logging of setCameraConfig key/value/ret at the pgphoto-to-core boundary. Off unless the env var is set. Diagnostic only; must never reach a release package.",
+          "build": "same as shipped-astro-v117"
+        }
+      ]
+    },
+    "pgphoto.stage2ondisk": {
+      "path": "/app/lib/stage2/pgphoto.stage2ondisk",
+      "artifacts": [
+        {
+          "md5": "79d4454fe2a674b32127698d0ee7aac1",
+          "label": "shipped-astro-v117",
+          "status": "RELEASED",
+          "source_commit": null,
+          "note": "Benro's proprietary Stage-2 head. Not built by this repo; read-only for analysis. Carries the issue #230 bulb poll budget (movw r3,#10000 at capture_image_with_Bulb+0x594) and defines -2110 internally in getLocalCameraParamInfo."
+        }
+      ]
+    }
+  },
+  "_launcher_note": [
+    "Env vars the SHIPPED /app/bin/pgphoto declares. A diagnostic flag left in the launcher",
+    "changes what an otherwise-registered binary does, so it is part of identity. STAGE2_SET_TRACE",
+    "was added by hand on 2026-11-26 and is deliberately absent from this list: its presence must",
+    "fail the check rather than be normalised."
+  ],
+  "launcher_env_declared": [
+    "export STAGE2_CAPTURE_EMPTY_PATH_CHECK",
+    "export STAGE2_CAPTURE_TRACE",
+    "export STAGE2_PENTAX_KEEP_LV",
+    "export STAGE2_PENTAX_PREVIEW_BACKOFF",
+    "export STAGE2_PENTAX_PREVIEW_MIN_INTERVAL_SECS",
+    "export STAGE2_SHUTTER_FALLBACK",
+    "export STAGE2_STORAGE_SHIM",
+    "export STAGE2_TETHER_CAPTURE",
+    "export STAGE2_USB_BINDING_DIR"
+  ],
+  "deploy_ledger": "docs/component-deploys.jsonl",
+  "releases": {
+    "6.0.0.54.117": {
+      "expected": {
+        "libpolaris_stage2.so": "765e9528b8d2dddaeb0d25f6ed54e977",
+        "pgphoto.stage2ondisk": "79d4454fe2a674b32127698d0ee7aac1"
+      },
+      "release_record": "docs/release-change-summary-v117-astro.json",
+      "release_record_has_hashes": false,
+      "gap": "The release record contains no component hashes. This expected{} block was reconstructed on 2026-11-26 from the on-device pre-hotswap backup, not from the package, so it documents what was observed rather than what was published."
+    }
+  }
+}
