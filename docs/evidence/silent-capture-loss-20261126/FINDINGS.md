@@ -122,6 +122,18 @@ true, the condition above holds, and **`stage2_guarded_gp_camera_capture` was in
 
 That makes the localization firm rather than inferred: the wrapper only rewrites a result when
 `ret == 0 && (name empty || folder empty)`. The core returned `-8`, so the wrapper returned `-8` unchanged.
+
+That passthrough is not just read off the source — it is asserted by an existing test, which passes:
+
+```text
+$ bash container/test_stage2_capture_empty_path.sh
+PASS: issue #183 empty-path capture conversion (7 cases)
+```
+
+Case 6 is the relevant one: *"a real error keeps its own class; the conversion never masks it"* — with
+`fake_capture_ret = STAGE2_GP_ERROR_TIMEOUT` and an empty path, it asserts the result stays
+`STAGE2_GP_ERROR_TIMEOUT` rather than being rewritten to `CAMERA_ERROR`. So a core failure provably survives
+the wrapper intact.
 **The conversion from `-8` to `captureImage ret 0` therefore happens above our shim** — in pgphoto's own
 capture handling or polestar_app's use of it. Our camlib and our shim are both exonerated by evidence, not
 assumption.
