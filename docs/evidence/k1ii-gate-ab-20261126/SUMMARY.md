@@ -175,3 +175,37 @@ range test. Confirming which requires runtime tracing of the SET arguments, whic
 the next step: the loader already shims `setCameraConfig`
 (`native_set_camera_config`, container/stage2_loader.c:308), so logging key, value and
 return there answers "does the request reach libgphoto2 at all" in one build and reboot.
+
+## Retraction: the empty reads are NOT load saturation
+
+Earlier in this file the `RD:0;V:;R:;` answers were characterised as "pre-existing
+saturation under 8-way hammering". That was based on two runs (240 reads -> 8 empty,
+240 reads -> 11 empty) and is retracted. Repeated testing does not reproduce it:
+
+| condition | reads | empty |
+|---|---|---|
+| 1 client x 20 rounds | 100 | 0 |
+| 2 clients x 20 rounds | 200 | 0 |
+| 4 clients x 20 rounds | 400 | 0 |
+| 8 clients x 20 rounds | 800 | 0 |
+| idle, sequential, clean boot | 50 | 0 |
+| boot race, +14s to +41s after ssh returns | 55 | 0 |
+
+861 further reads produced no empty answer at all. So there is no load threshold: the
+empties are rare and intermittent, and neither concurrency nor boot timing explains
+them. The two runs that showed them were the first stress pass after a fresh reboot, but
+the boot-race test above read from +14 s onward with state=1 already reported and saw
+none, so "state:1 precedes table population" is not established either.
+
+What remains solid, because it was proven directly rather than inferred:
+
+* An empty config value produces `-2110`. `setCameraConfig key=3 value="" ret=-2110`
+  versus `key=3 value="15" ret=0`, same boot, same thread. The request reaches the core
+  and succeeds when non-empty; pgphoto rejects the empty string itself.
+* Therefore "parameters do not stick" reduces to one upstream defect -- an intermittent
+  empty config read -- not a broken write path.
+
+What is genuinely unresolved: what makes a read answer `RD:0;V:;R:;`. It is rare enough
+that it did not appear in 861 reads, so reproducing it needs either a much longer soak or
+instrumentation at the read boundary rather than more load. Recording it as open rather
+than dressing up a guess.
