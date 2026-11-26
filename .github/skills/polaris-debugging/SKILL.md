@@ -253,7 +253,44 @@ or expect to repeat. The ~30 s cadence is also what users see as the camera
 subsystem). Prefer a single tar-stream:
 `ssh … 'cd dir && tar czf - files' | tar xzf -`. For many files,
 stream them with `===FILE:name===` markers in one connection and split locally —
-faster than N separate SSH sessions.
+faster than N separate SSH sessions. This has never worked here; do not retry it.
+Pushing a file is `cat file | ssh … 'cat > path.new && sync && md5sum path.new'`,
+which is what `scripts/stage2-hotswap.sh` already implements — use that script.
+
+**A hot-swapped loader does NOT change the reported FwVer, so "v117" can mean any
+bytes you like (cost a misattributed session, 2026-11-26).** `libpolaris_stage2.so`
+is `LD_PRELOAD`ed by `/app/bin/pgphoto`; replacing it changes behaviour while the
+device keeps reporting the flashed package's version. Release records carry no
+component hashes, so nothing in the repo stated what `.117` should run. Before
+attributing any result to a build:
+
+```bash
+python3 scripts/device-identity.py --expect-release 6.0.0.54.117   # exit 0 or stop
+```
+
+Exit 1 = unregistered bytes, 2 = wrong build for that release, 3 = an env var was
+added to `/app/bin/pgphoto` outside any release, 4 = unreachable (never treat as
+healthy). `stage2-hotswap.sh push` refuses unregistered artifacts and appends every
+install to `docs/component-deploys.jsonl`, so "what was running when this evidence
+was collected" is answerable after the fact. Diagnostic builds must be removed the
+same session — a leftover `export STAGE2_*` in the launcher changes behaviour of an
+otherwise-registered binary.
+
+**Never infer camera mode from the shape of the command-268 shutter list (#206).**
+With the dial physically on `B` the body can report a full 56-entry *timed* list, so
+the collapsed-list heuristic says "not B", a timed index gets written, and the write
+is refused (`ret:-1`, or `-6` on the bulb path). I did exactly this on 2026-11-26 and
+wrote off a real failure as "dial not on B" — the operator then confirmed it was on B.
+The direct reading is unavailable on a live rig: `camera_exposure_mode` opens a second
+gphoto2 session and loses to pgphoto holding interface 0 (`-53 usb-busy`). So mode must
+come from the operator or be stated as unknown — never derived from list shape, in
+either direction.
+
+**Do not grep `/app/Clog.txt` alone for an event you just caused.** It rotates; line 1
+may *be* your event with nothing before it. The camlib markers for a bulb attempt were
+only recoverable from the archived `Clog_000027.log`. Use `scripts/pull-mlog-clog.sh`,
+which collects every archived log, or pick today's file by mtime (`ls -1t`). Also avoid
+recursive grep under `/app` — `/app/sd` hangs it.
 
 **A hand-compiled `libpolaris_stage2.so` segfaults on-device and that is not a
 code bug (cost a full day, 2026-10-06).** A loader built by invoking
