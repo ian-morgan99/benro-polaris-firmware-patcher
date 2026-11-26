@@ -1,5 +1,32 @@
 # Current repository state
 
+## 2026-11-26 (later) — live view: no usable frame counter exists on this build; NOT verified
+
+`scripts/k1ii-liveview-check.py` added. **Live view remains unverified**, and the reason matters:
+
+- The qualification harness counts frames by grepping `Pentax preview stage get-frame`. That string
+  does not exist in the deployed loader (`grep -c` = 0), so using it reports **0 fps regardless of
+  whether frames flow** — a false negative that would read as a live-view regression.
+- The only preview log this build emits is `[stage2] K-1 II preview ret=%d elapsed_ms=%lld
+  next_interval_s=%d`, and reading `container/stage2_loader.c:850` shows it prints **only when the
+  cadence state changes** (`if (prompt != g_k1ii_preview_prompt)`). So zero lines means "cadence did
+  not change", **not** "no frames". My first run concluded 0 fps from that line; that conclusion was
+  wrong and is retracted.
+- Two further traps found while measuring: the loader writes to the SD-rotated
+  `/app/sd/system/log/Clog_*` (24 k `[stage2]` lines), not `/app/Clog.txt` (0 lines) — counting the
+  wrong file also yields a false zero. And code 525 is temperature, not frames; port 8080 is a stock
+  libgphoto2 HTTP server answering `501: no www-folder configured`, so it is not the frame channel.
+- No JPEG-sized payload (>512 B) ever arrives on the 9090 control socket during preview, so frames
+  are delivered somewhere else that I have not identified.
+
+**What is confirmed:** preview start/stop is healthy — `state:1;ret:0` and `state:0;ret:0`, state
+query returns 0 after stop, and `[stage2] keep-lv: pentaxpclvkeep ON` plus the
+`preview-backoff: gp_camera_capture_preview slot -> shim` install line are present. So the plumbing
+is wired; frame delivery is simply not observable with any counter I have.
+
+**To verify properly** either add a per-frame counter log to the loader (one line, unconditional,
+behind an env flag) or get operator-visible ground truth: does the app's live view actually show
+images on this K-1 II right now?
 ## 2026-11-26 (later) — dial on M: overhead is a constant ~9.9 s, exposure is honoured exactly
 
 Operator moved the dial to M. `scripts/k1ii-exposure-matrix.py` added; two bugs fixed in it before
