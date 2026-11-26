@@ -1,5 +1,19 @@
 # Current repository state
 
+## Evidence policy for this session (operator directive)
+
+**No images or raw JSON artifacts are committed.** Descriptions and test confirmations in these notes
+are the record. `out/` is gitignored by design, so the JSON written by `k1ii-latency.py`,
+`k1ii-exposure-matrix.py` and `canary-probe.py --result-json` lives only on the workstation under
+`out/latency-20261126/` and `out/bulb-dialB-20261126/`.
+
+**Correction to several of my own commit messages this session:** they stated that artifacts such as
+`out/latency-20261126/M-matrix.json` were committed. They were not — `git add out/...` was silently
+refused by `.gitignore`, and I did not check. `git ls-files out/` is empty. Every number quoted in
+these notes is real and reproducible by re-running the named script, but the JSON files themselves
+are not in the repository, and paths in earlier notes point at the workstation rather than at git.
+Two JPEGs from 2026-11-10 (`docs/evidence/v104-*`) predate this session and were left untouched.
+
 ## 2026-11-26 (later) — live view: no usable frame counter exists on this build; NOT verified
 
 `scripts/k1ii-liveview-check.py` added. **Live view remains unverified**, and the reason matters:

@@ -204,6 +204,13 @@ def main() -> int:
         phases: dict[str, float] = {}
         states: list[int] = []
         files: list[str] = []
+        # Terminal failure codes, all documented: -1 generic, -6 mode gate (the #205
+        # bulb-on-a-timed-dial refusal), -110/-112 camera busy or a transfer candidate
+        # still pending (#148), -1005 the app-side mapping of a pending candidate. The
+        # first version only stopped on 0/-1/-6, so a run that failed in 2.2 s with
+        # state:-112 sat and reported total_ms=180001 -- a fabricated latency number for
+        # a capture that had already ended. Failures are timed like successes.
+        terminal = {0, -1, -6, -110, -112, -1005}
         deadline = time.monotonic() + 180
         while time.monotonic() < deadline:
             try:
@@ -219,7 +226,11 @@ def main() -> int:
                 if iv not in states:
                     states.append(iv)
                     phases[f"state_{iv}"] = round((time.monotonic() - t) * 1000.0, 1)
-                if iv in (0, -1, -6):
+                if iv in terminal:
+                    if iv != 0:
+                        print(f"  TERMINAL state={iv} at "
+                              f"{phases[f'state_{iv}']}ms -- not a latency measurement",
+                              flush=True)
                     break
             elif c == FILE_NOTIFY:
                 path = cp.field(b, "path")
