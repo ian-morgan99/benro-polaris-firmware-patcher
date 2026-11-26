@@ -16,12 +16,12 @@ Bus 001 Device 003: ID 25fb:0189
 [12:15:42:418 INFO-]:SP_UserParamInit[260]:s32AutoLevelEn[1];
 [12:15:42:418 INFO-]:SP_UserParamInit[266]:s32TimeIntervalType[0];
 [12:15:42:419 INFO-]:SP_GetFactoryParam[56]:factoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [12:15:42:435 INFO-]:SP_GetFactoryParam[63]:hw:1.1
 [12:15:42:435 INFO-]:SP_GetFactoryParam[67]:date:2021.11.29
 [12:15:42:435 INFO-]:SP_GetFactoryParam[71]:pcb:1.20
 [12:15:42:435 WARN-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [12:15:42:435 INFO-]:SP_GetFactoryParam[75]:CellHwVer:0
 [12:15:42:435 INFO-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
 [12:15:42:437 INFO-]:SP_GetFwVer[286]:fwVerinfo[FwVer:6.0.0.54.94;date:2026.11.03;
@@ -162,7 +162,7 @@ SP_CreateCheckPhotoTimeOutTask success
 [12:15:45:702 INFO-]:SP_GetWarningToneState[971]:SP_GetWarningToneState
 [12:15:45:703 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[824],val[state:0;]
 [12:15:45:703 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[3],code[524],val[state:1;]
-[12:15:45:704 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[12:15:45:704 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [12:15:45:704 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[296],val[mode:0;]
 [12:15:45:704 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[303],val[state:0;]
 [12:15:45:704 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
@@ -189,7 +189,7 @@ SP_CreateCheckPhotoTimeOutTask success
 [12:15:45:768 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[2]:type:2;code:823;val:-1
 [12:15:45:769 INFO-]:SP_PushModeState[1911]:SP_PushModeState
 [12:15:45:769 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
-[12:15:45:769 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[12:15:45:769 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [12:15:45:769 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[775],val[status:0;totalspace:0;freespace:0;usespace:0;]
 [12:15:45:769 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[778],val[capacity:23;charge:1;]
 [12:15:45:769 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[775],val[status:0;totalspace:0;freespace:0;usespace:0;]
@@ -1160,7 +1160,7 @@ Advertising object registered
 [12:16:19:746 INFO-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:3
 [12:16:20:547 INFO-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:2
 [12:16:21:347 INFO-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:1
-[12:16:21:347 WARN-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿªUZ¥
+[12:16:21:347 WARN-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UZï¿½
 [12:16:23:956 INFO-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/100e0000.xhci_0/usb1/1-1/1-1.2/1-1.2:1.0
 [12:16:23:956 INFO-]:NetlinkUeventTask[93]:
 usb_disconnect ------------------
@@ -1491,14 +1491,16 @@ usb_disconnect ------------------
 [13:15:20:366 INFO-]:SP_SetWifiState[125]:SP_SetWifiState[1]
 [13:15:20:397 INFO-]:proxy_added[553]:interface[org.bluez.Device1]
 [NEW] Device 3C:38:24:3C:EA:1B Redmi Note 14 Pro 5G
-[13:15:22:265 INFO-]:proxy_added[553]:interface[org.bluez.Network1]
+
+[13:15:22:265 INFO-]:proxy_added[553]:interface[org.bluez.Network1]
 [13:15:22:266 INFO-]:proxy_added[553]:interface[org.bluez.MediaControl1]
 [13:15:23:366 INFO-]:SP_BtDisconnet[269]:remove bt conneted
 [13:15:26:111 INFO-]:SP_GetProxyDeviceInfo[2921]:name[Redmi Note 14 Pro 5G] address[3C:38:24:3C:EA:1B]
 [13:15:26:111 INFO-]:property_changed[735]:disconnect 
 [13:15:26:112 INFO-]:proxy_removed[638]:interface[org.bluez.Device1]
 [DEL] Device 3C:38:24:3C:EA:1B Redmi Note 14 Pro 5G
-[13:15:26:114 INFO-]:proxy_removed[638]:interface[org.bluez.MediaControl1]
+
+[13:15:26:114 INFO-]:proxy_removed[638]:interface[org.bluez.MediaControl1]
 [13:15:26:115 INFO-]:proxy_removed[638]:interface[org.bluez.Network1]
 [13:15:26:197 INFO-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:11
 [13:15:26:908 INFO-]:GimbalUartRxMsgProcTask[398]:Tempa509ca361c0000255a ;
@@ -1511,7 +1513,8 @@ usb_disconnect ------------------
 [13:15:28:785 INFO-]:SP_SetWifiState[125]:SP_SetWifiState[1]
 [13:15:28:789 INFO-]:proxy_added[553]:interface[org.bluez.Device1]
 [NEW] Device 73:F8:B4:66:BD:F0 73-F8-B4-66-BD-F0
-[13:15:29:554 INFO-]:proxy_added[553]:interface[org.bluez.GattService1]
+
+[13:15:29:554 INFO-]:proxy_added[553]:interface[org.bluez.GattService1]
 [NEW] Primary Service
 	/org/bluez/hci0/dev_73_F8_B4_66_BD_F0/service0001
 	00001801-0000-1000-8000-00805f9b34fb
@@ -1594,7 +1597,7 @@ usb_disconnect ------------------
 [13:15:30:277 INFO-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
 [13:15:30:277 INFO-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=3] start
 [13:15:30:322 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:790;val:step:1;
-[13:15:30:323 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[13:15:30:323 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [13:15:30:331 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:799;val:-100
 [13:15:30:332 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[799],val[ret:-1;]
 [13:15:30:332 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:296;val:-100
@@ -1604,7 +1607,7 @@ usb_disconnect ------------------
 [13:15:30:332 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
 [13:15:30:332 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:790;val:step:1;
 [13:15:30:332 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[298],val[ExTime:100;]
-[13:15:30:332 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[13:15:30:332 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [13:15:30:641 INFO-]:SP_GetProxyDeviceInfo[2921]:name[Redmi Note 14 Pro 5G] address[73:F8:B4:66:BD:F0]
 [13:15:30:641 INFO-]:property_changed[735]:disconnect 
 [13:15:30:642 INFO-]:proxy_removed[638]:interface[org.bluez.GattCharacteristic1]
@@ -1679,7 +1682,8 @@ usb_disconnect ------------------
 	Unknown
 [13:15:30:672 INFO-]:proxy_removed[638]:interface[org.bluez.Device1]
 [DEL] Device 73:F8:B4:66:BD:F0 Redmi Note 14 Pro 5G
-[13:15:30:717 INFO-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+
+[13:15:30:717 INFO-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
 [13:15:31:130 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:520;val:state:0;
 [13:15:31:130 INFO-]:SP_MsgGimbalCmdFromAppProc[136]:App use Ahrs:0
 [13:15:31:130 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[520],val[ret:0;]
@@ -1721,7 +1725,7 @@ usb_disconnect ------------------
 [13:15:31:223 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[3],code[545],val[dir:0;]
 [13:15:31:228 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:790;val:step:1;
 [13:15:31:228 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:799;val:-100
-[13:15:31:229 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[13:15:31:229 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [13:15:31:229 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[799],val[ret:-1;]
 [13:15:31:229 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[3]:type:2;code:296;val:-100
 [13:15:31:230 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[296],val[mode:0;]
@@ -2062,7 +2066,7 @@ SP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespa
 [13:33:57:889 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[2]:type:2;code:823;val:-1
 [13:33:57:889 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[778],val[capacity:31;charge:1;]
 [13:33:59:171 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[2]:type:2;code:790;val:step:1;
-[13:33:59:171 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[13:33:59:171 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [13:33:59:257 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[2]:type:3;code:524;val:-1
 [13:33:59:258 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[3],code[524],val[state:1;]
 [13:33:59:260 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[2]:type:2;code:304;val:-1
@@ -2071,7 +2075,7 @@ SP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespa
 SP_SendMsgToApp success;type[2],code[304],val[state:0;]
 [13:33:59:260 INFO-]:SP_PushModeState[1911]:SP_PushModeState
 [13:33:59:261 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
-[13:33:59:261 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[13:33:59:261 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [13:33:59:269 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[2]:type:2;code:545;val:-1
 [13:33:59:269 INFO-]:SP_GetCameraDir[1003]:SP_GetCameraDir
 [13:33:59:271 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[3],code[545],val[dir:0;]
@@ -2428,7 +2432,7 @@ rcv msg from App[2]:type:1;code:266;val:-1
 [13:39:08:248 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[4]:type:2;code:296;val:-100
 [13:39:08:248 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[4]:type:2;code:300;val:-100
 [13:39:08:248 INFO-]:msg_rcv_from_app_process[69]:rcv msg from App[4]:type:2;code:298;val:-100
-[13:39:08:248 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[13:39:08:248 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [13:39:08:248 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[799],val[ret:-1;]
 [13:39:08:248 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[296],val[mode:0;]
 [13:39:08:248 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
@@ -2483,7 +2487,7 @@ SP_SendMsgToApp success;type[3],code[524],val[state:1;]
 [13:39:11:978 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[520],val[ret:0;]
 [13:39:11:978 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[305],val[step:2;state:0;]
 [13:39:11:978 INFO-]:SP_GetCameraDir[1003]:SP_GetCameraDir
-[13:39:11:978 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[13:39:11:978 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [13:39:11:978 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[799],val[ret:-1;]
 [13:39:11:978 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[296],val[mode:0;]
 [13:39:11:978 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]

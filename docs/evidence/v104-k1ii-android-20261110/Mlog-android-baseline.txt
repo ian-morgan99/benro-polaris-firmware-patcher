@@ -21,7 +21,7 @@
 [m[09:51:42:325 [1;31mERROR[m-sp_msgComm]:SP_sendMsg[81]:[0;32;31mSP_sendMsg Fail; key[1001],type[2],code[305],val[step:2;]
 [m[m[09:51:42:325 [1;31mERROR[m-]:msg_rcv_from_app_process[65]:[0;32;31mrcv msg from App[5]:type:0;code:0;val:
 [m[09:51:42:325 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
-[m[09:51:42:325 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[09:51:42:325 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[09:51:42:325 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[799],val[ret:-1;]
 [m[m[09:51:42:326 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
 [m[m[09:51:42:326 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]

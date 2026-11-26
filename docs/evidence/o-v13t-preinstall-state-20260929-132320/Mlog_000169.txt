@@ -16,16 +16,16 @@ Bus 001 Device 003: ID 25fb:0189
 [m[11:02:54:449 [1;32mINFO[m-]:SP_UserParamInit[225]:s32TimeIntervalType[1];
 [m[11:02:54:451 [1;32mINFO[m-]:CameraGpioTask[116]:camera gpio value = 1
 [m[11:02:54:455 [1;32mINFO[m-]:SP_GetFactoryParam[56]:[0;32;34mfactoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [m[11:02:54:455 [1;32mINFO[m-]:SP_GetFactoryParam[63]:hw:1.1
 [m[11:02:54:455 [1;32mINFO[m-]:SP_GetFactoryParam[67]:date:2021.11.29
 [m[11:02:54:455 [1;32mINFO[m-]:SP_GetFactoryParam[71]:pcb:1.20
 [m[11:02:54:455 [1;33mWARN[m-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [m[11:02:54:455 [1;32mINFO[m-]:SP_GetFactoryParam[75]:CellHwVer:0
 [m[11:02:54:455 [1;32mINFO[m-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
 [m[11:02:54:457 [1;32mINFO[m-]:SP_GetFwVer[286]:fwVerinfo[FwVer:6.0.0.54.34-o-v13j-crash-boundary;date:2026.09.27;
-ÿ];len:[57];
+ï¿½];len:[57];
 [m[11:02:54:457 [1;32mINFO[m-]:SP_GetFwVer[293]:FwVer[6.0.0.54.34-o-v13j-crash-boundary];
 [m[11:02:54:540 [1;32mINFO[m-]:SP_SetSysInitTime[134]:RTC DateTime: 2026/09/29-11:02:54
 [m[11:02:54:540 [1;32mINFO[m-]:SP_SetSysInitTime[142]:[0;35mBuild DateTime: 2025/05/09-14:37:27
@@ -471,7 +471,8 @@ Advertising object registered
 [m[m[11:02:59:147 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
 [m[11:02:59:156 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
 [[0;92mNEW[0m] Device 43:30:B6:17:F8:84 43-30-B6-17-F8-84
-[m[11:02:59:531 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:42
+
+[m[11:02:59:531 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:42
 [m[11:02:59:582 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[378]:Voltage:12.04;capacity:94;ChargeState:1;
 [m[11:02:59:582 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[778],val[capacity:94;charge:1;]
 [m[m[11:03:00:332 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:41
@@ -920,7 +921,8 @@ Advertising object registered
 	Vendor specific
 [m[11:03:04:242 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
 [[0;91mDEL[0m] Device 43:30:B6:17:F8:84 iPad
-[m[11:03:04:333 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:36
+
+[m[11:03:04:333 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:36
 [m[11:03:05:133 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:35
 [m[11:03:05:933 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:34
 [m[11:03:06:733 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:33
@@ -933,7 +935,8 @@ Advertising object registered
 [m[m[11:03:07:443 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
 [m[11:03:07:448 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
 [[0;92mNEW[0m] Device 76:49:FB:01:F1:2A 76-49-FB-01-F1-2A
-[m[11:03:07:534 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:32
+
+[m[11:03:07:534 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:32
 [m[11:03:08:334 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:31
 [m[11:03:09:134 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:30
 [m[11:03:09:934 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:29
@@ -1373,7 +1376,8 @@ Advertising object registered
 	Vendor specific
 [m[11:03:13:215 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
 [[0;91mDEL[0m] Device 76:49:FB:01:F1:2A iPhone
-[m[11:03:13:429 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
+
+[m[11:03:13:429 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
 [m[11:03:13:632 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
 [m[11:03:13:632 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
 [m[m[11:03:13:935 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:24
@@ -1395,7 +1399,8 @@ Advertising object registered
 [m[m[11:03:20:897 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
 [m[11:03:20:903 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
 [[0;92mNEW[0m] Device 76:49:FB:01:F1:2A 76-49-FB-01-F1-2A
-[m[11:03:21:137 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:15
+
+[m[11:03:21:137 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:15
 [m[11:03:21:886 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=3 192.168.0.2:52141] from [1] s_u32ClientNum[2]
 [m[11:03:21:886 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
 [m[m[11:03:21:886 [1;32mINFO[m-]:SocketServerTask[124]:SOCKET_OPEN(201) [id=3] start
@@ -1438,7 +1443,7 @@ Advertising object registered
 [m[11:03:21:946 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:780;val:-1
 [m[11:03:21:946 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:818;val:-1
 [m[11:03:21:946 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:284;val:-1
-[m[11:03:21:946 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[11:03:21:946 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[11:03:21:946 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
 [m[m[11:03:21:946 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[303],val[state:0;]
 [m[m[11:03:21:947 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
@@ -1449,7 +1454,7 @@ Advertising object registered
 [m[m[11:03:21:947 [1;32mINFO[m-]:SP_GetWarningToneState[971]:SP_GetWarningToneState
 [m[11:03:21:947 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[824],val[state:0;]
 [m[m[11:03:21:947 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:1;]
-[m[m[11:03:21:947 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[m[11:03:21:947 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[11:03:21:947 [1;32mINFO[m-]:SP_GetDeviceVer[309]:gimbal HwVer[1.2]
 [m[11:03:21:947 [1;32mINFO[m-]:SP_GetDeviceVer[316]:gimbal FwVer[2.0.0.22]
 [m[11:03:21:947 [1;32mINFO[m-]:SP_GetDeviceVer[322]:stFatoryInfo HwVer[1.1]
@@ -1470,7 +1475,7 @@ Advertising object registered
 [m[11:03:22:003 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
 [m[m[11:03:22:004 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:778;val:-1
 [m[11:03:22:004 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:823;val:-1
-[m[11:03:22:004 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[11:03:22:004 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[11:03:22:004 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:775;val:-1
 [m[11:03:22:004 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespace:117449;usespace:4416;]
 [m[m[11:03:22:004 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:778;val:-1
@@ -2148,7 +2153,8 @@ Advertising object registered
 	Vendor specific
 [m[11:03:26:235 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
 [[0;91mDEL[0m] Device 76:49:FB:01:F1:2A iPhone
-[m[11:03:26:739 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:8
+
+[m[11:03:26:739 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:8
 [m[11:03:27:539 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:7
 [m[11:03:28:339 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:6
 [m[11:03:29:140 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:5
@@ -2168,7 +2174,7 @@ Advertising object registered
 [m[11:03:31:298 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[1],code[261],val[s:22;]
 [m[m[11:03:31:540 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:2
 [m[11:03:32:341 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:1
-[m[11:03:32:341 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿªUZ¥
+[m[11:03:32:341 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UZï¿½
 [m[11:03:32:472 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[262],val[mod:0;f:0;ret:0;]
 [m[m[11:03:32:472 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[1],code[262],val[mod:0;f:0;ret:0;]
 [m[m[11:03:32:487 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:0;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]

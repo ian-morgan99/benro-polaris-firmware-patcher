@@ -17,12 +17,12 @@ umount: can't unmount /app/sd: Invalid argument
 [m[12:37:15:163 [1;32mINFO[m-]:SP_UserParamInit[260]:s32AutoLevelEn[1];
 [m[12:37:15:163 [1;32mINFO[m-]:SP_UserParamInit[266]:s32TimeIntervalType[1];
 [m[12:37:15:165 [1;32mINFO[m-]:SP_GetFactoryParam[56]:[0;32;34mfactoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [m[12:37:15:165 [1;32mINFO[m-]:SP_GetFactoryParam[63]:hw:1.1
 [m[12:37:15:165 [1;32mINFO[m-]:SP_GetFactoryParam[67]:date:2021.11.29
 [m[12:37:15:165 [1;32mINFO[m-]:SP_GetFactoryParam[71]:pcb:1.20
 [m[12:37:15:165 [1;33mWARN[m-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [m[12:37:15:165 [1;32mINFO[m-]:SP_GetFactoryParam[75]:CellHwVer:0
 [m[12:37:15:165 [1;32mINFO[m-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
 [m[12:37:15:167 [1;32mINFO[m-]:SP_GetFwVer[286]:fwVerinfo[FwVer:6.0.0.54.35-o-v13s-preserve-pending;date:2026.09.29;
@@ -489,7 +489,8 @@ Advertising object registered
 [m[m[12:37:21:573 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
 [m[12:37:21:577 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
 [[0;92mNEW[0m] Device 7B:20:C8:97:46:24 7B-20-C8-97-46-24
-[m[12:37:22:145 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
+
+[m[12:37:22:145 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
 [m[m[12:37:22:145 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[282],val[urer:ricoh imaging company, ltd.;model:pentax k-3 mark iii;state:1;storage:2;photoFormat:2;]
 [m[m[12:37:22:154 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[282],val[format:3;]
 [m[m[12:37:22:154 [1;32mINFO[m-]:SP_MsgFromCameraProc[1461]:camera img format:3
@@ -2276,7 +2277,8 @@ Advertising object registered
 [m[12:37:26:585 [1;32mINFO[m-]:GimbalUpgradeStatusProc[132]:[0;32;34mSendPackNum:1385
 [m[12:37:26:586 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
 [[0;91mDEL[0m] Device 7B:20:C8:97:46:24 iPad
-[m[12:37:26:587 [1;32mINFO[m-]:GimbalUpgradeStatusProc[132]:[0;32;34mSendPackNum:1386
+
+[m[12:37:26:587 [1;32mINFO[m-]:GimbalUpgradeStatusProc[132]:[0;32;34mSendPackNum:1386
 [m[12:37:26:589 [1;32mINFO[m-]:GimbalUpgradeStatusProc[132]:[0;32;34mSendPackNum:1387
 [m[12:37:26:592 [1;32mINFO[m-]:GimbalUpgradeStatusProc[132]:[0;32;34mSendPackNum:1388
 [m[12:37:26:594 [1;32mINFO[m-]:GimbalUpgradeStatusProc[132]:[0;32;34mSendPackNum:1389
@@ -2703,12 +2705,14 @@ Advertising object registered
 [m[m[12:37:32:426 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
 [m[12:37:32:430 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
 [[0;92mNEW[0m] Device 7B:20:C8:97:46:24 7B-20-C8-97-46-24
-[m[12:37:32:562 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:27
+
+[m[12:37:32:562 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:27
 [m[12:37:32:607 [1;32mINFO[m-]:SP_GetProxyDeviceInfo[2921]:[0;35mname[7B-20-C8-97-46-24] address[7B:20:C8:97:46:24]
 [m[12:37:32:607 [1;32mINFO[m-]:property_changed[735]:[0;35mdisconnect 
 [m[12:37:32:607 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
 [[0;91mDEL[0m] Device 7B:20:C8:97:46:24 7B-20-C8-97-46-24
-[m[12:37:32:639 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
+
+[m[12:37:32:639 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:remove@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
 [m[12:37:33:362 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:26
 [m[12:37:33:529 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:add@/devices/platform/soc/soc:amba/120a1000.uart/tty/ttyAMA1/hci0/hci0:64
 [m[12:37:33:530 [1;32mINFO[m-]:NetlinkUeventTask[109]:bt conneted
@@ -2718,7 +2722,8 @@ Advertising object registered
 [m[m[12:37:33:530 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
 [m[12:37:33:535 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
 [[0;92mNEW[0m] Device 7B:20:C8:97:46:24 7B-20-C8-97-46-24
-[m[12:37:34:162 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:25
+
+[m[12:37:34:162 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:25
 [m[12:37:34:260 [1;32mINFO[m-]:SP_MsgFromCameraProc[1154]:[0;36mMsgFromCamera-->type[1],code[265],val[RD:0;V:3;R:100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,;]
 [m[m[12:37:34:260 [1;32mINFO[m-]:SP_MsgFromCameraProc[1226]:isoString[100,200,400,800,1600,3200,6400,12800,25600,51200,102400,204800,409600,819200,1600000,]
 [m[12:37:34:260 [1;32mINFO[m-]:SP_MsgFromCameraProc[1231]:iso index 3
@@ -3135,7 +3140,8 @@ Advertising object registered
 	Vendor specific
 [m[12:37:37:642 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
 [[0;91mDEL[0m] Device 7B:20:C8:97:46:24 7B-20-C8-97-46-24
-[m[12:37:38:163 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:20
+
+[m[12:37:38:163 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:20
 [m[12:37:38:239 [1;32mINFO[m-]:NetlinkUeventTask[65]:info:change@/devices/platform/regulatory.0
 [m[12:37:38:964 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:19
 [m[12:37:39:764 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:18
@@ -3158,7 +3164,7 @@ Advertising object registered
 [m[12:37:52:567 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:2
 [m[12:37:52:586 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
 [m[12:37:53:367 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:1
-[m[12:37:53:368 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿªUZ¥
+[m[12:37:53:368 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UZï¿½
 [m[12:38:22:671 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
 [m[12:38:27:361 [1;32mINFO[m-]:SP_SetGimbalSleepState[978]:SP_SetGimbalSleepState,state[1];
 [m[12:38:27:363 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[611]:[0;35mGimbal sleep state[1]
@@ -3185,7 +3191,8 @@ Advertising object registered
 [m[m[12:46:29:762 [1;32mINFO[m-]:SP_SetWifiState[125]:[0;35mSP_SetWifiState[1]
 [m[12:46:29:765 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.Device1]
 [[0;92mNEW[0m] Device 47:AD:FC:25:41:6F 47-AD-FC-25-41-6F
-[m[12:46:32:763 [1;32mINFO[m-]:SP_BtDisconnet[269]:remove bt conneted
+
+[m[12:46:32:763 [1;32mINFO[m-]:SP_BtDisconnet[269]:remove bt conneted
 [m[12:46:33:801 [1;32mINFO[m-]:proxy_added[553]:[0;35minterface[org.bluez.GattService1]
 [[0;92mNEW[0m] Primary Service
 	/org/bluez/hci0/dev_47_AD_FC_25_41_6F/service0006
@@ -3797,7 +3804,8 @@ Advertising object registered
 	Vendor specific
 [m[12:46:35:582 [1;32mINFO[m-]:proxy_removed[638]:[0;35minterface[org.bluez.Device1]
 [[0;91mDEL[0m] Device 47:AD:FC:25:41:6F iPad
-[m[12:46:59:302 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
+
+[m[12:46:59:302 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
 [m[12:46:59:302 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
 [m[m[12:47:08:842 [1;32mINFO[m-]:SocketServerTask[139]:SOCKET_ACCEPT(201) [id=5 192.168.0.4:32812] from [1] s_u32ClientNum[2]
 [m[12:47:08:843 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1004],type[5],code[1034],val[1]
@@ -3807,7 +3815,7 @@ Advertising object registered
 [m[12:47:08:843 [1;31mERROR[m-]:SP_ClientCtxDel[392]:SP_ClientCtxDel:not find this is id[5]
 [m[12:47:08:843 [1;32mINFO[m-]:EventMsgProc[2679]:SP_EVENT_APP_CONNECT
 [m[12:47:28:648 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:790;val:step:1;
-[m[12:47:28:649 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[12:47:28:649 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[12:47:29:387 [1;32mINFO[m-]:GimbalUartRxMsgProcTask[398]:[0;35mTempa509ca361d0000265a ;
 [m[12:47:29:387 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[525],val[Tempa509ca361d0000265a ;]
 [m[m[12:47:29:459 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:3;code:524;val:-1
@@ -3818,7 +3826,7 @@ Advertising object registered
 [m[12:47:29:462 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[304],val[state:0;]
 [m[m[12:47:29:462 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
 [m[12:47:29:462 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
-[m[m[12:47:29:462 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[m[12:47:29:462 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[12:47:29:591 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:775;val:-1
 [m[12:47:29:591 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:1;totalspace:121866;freespace:117488;usespace:4378;]
 [m[m[12:47:29:594 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[4]:type:2;code:778;val:-1

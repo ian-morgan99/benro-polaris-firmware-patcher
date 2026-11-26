@@ -48,7 +48,7 @@
 [m[m[10:41:12:186 [1;32mINFO[m-]:SP_MsgGimbalCmdFromAppProc[136]:[0;35mApp use Ahrs:0
 [m[10:41:12:186 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[520],val[ret:0;]
 [m[m[10:41:12:186 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[305],val[step:2;state:0;]
-[m[m[10:41:12:186 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[m[10:41:12:186 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[10:41:12:187 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[799],val[ret:-1;]
 [m[m[10:41:12:187 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
 [m[m[10:41:12:187 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]

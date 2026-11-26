@@ -16,17 +16,17 @@ umount: can't unmount /app/sd: Invalid argument
 [m[11:04:40:297 [1;32mINFO[m-]:SP_UserParamInit[260]:s32AutoLevelEn[1];
 [m[11:04:40:297 [1;32mINFO[m-]:SP_UserParamInit[266]:s32TimeIntervalType[1];
 [m[11:04:40:298 [1;32mINFO[m-]:SP_GetFactoryParam[56]:[0;32;34mfactoryParam:hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [m[11:04:40:299 [1;32mINFO[m-]:SP_GetFactoryParam[63]:hw:1.1
 [m[11:04:40:299 [1;32mINFO[m-]:SP_GetFactoryParam[67]:date:2021.11.29
 [m[11:04:40:299 [1;32mINFO[m-]:SP_GetFactoryParam[71]:pcb:1.20
 [m[11:04:40:299 [1;33mWARN[m-]:SP_StringPickUpVal[73]:CellHwVer: not found in hw:1.1;date:2021.11.29;pcb:1.20;modif:usb;
-ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [m[11:04:40:299 [1;32mINFO[m-]:SP_GetFactoryParam[75]:CellHwVer:0
 [m[11:04:40:299 [1;32mINFO[m-]:SP_GetWifiBtId[67]:wifiBtId[d13e86]
 [m[11:04:40:300 [1;32mINFO[m-]:CameraGpioTask[116]:camera gpio value = 1
 [m[11:04:40:304 [1;32mINFO[m-]:SP_GetFwVer[286]:fwVerinfo[FwVer:6.0.0.54.34-o-v13j-crash-boundary;date:2026.09.27;
-ÿ];len:[57];
+ï¿½];len:[57];
 [m[11:04:40:305 [1;32mINFO[m-]:SP_GetFwVer[293]:FwVer[6.0.0.54.34-o-v13j-crash-boundary];
 [m[11:04:40:380 [1;32mINFO[m-]:SP_SetSysInitTime[134]:RTC DateTime: 2026/09/29-11:04:39
 [m[11:04:40:380 [1;32mINFO[m-]:SP_SetSysInitTime[142]:[0;35mBuild DateTime: 2025/05/09-14:37:27
@@ -225,7 +225,7 @@ Agent registered
 [m[m[11:04:42:570 [1;32mINFO[m-]:SP_GetWarningToneState[971]:SP_GetWarningToneState
 [m[11:04:42:570 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[824],val[state:0;]
 [m[m[11:04:42:570 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[3],code[524],val[state:1;]
-[m[m[11:04:42:570 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[m[11:04:42:570 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[11:04:42:570 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[296],val[mode:0;]
 [m[m[11:04:42:571 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[303],val[state:0;]
 [m[m[11:04:42:571 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[300],val[hdmi:0;]
@@ -246,7 +246,7 @@ Agent registered
 [m[m[11:04:42:634 [1;32mINFO[m-]:SP_PushModeState[1911]:[0;35mSP_PushModeState
 [m[11:04:42:634 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[284],val[mode:1;state:0;]
 [m[m[11:04:42:634 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:775;val:-1
-[m[11:04:42:634 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:MTIzNA==;securityQ:3;securityA:Q2hyaXN0b3BoZXI=;]
+[m[11:04:42:634 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64];]
 [m[m[11:04:42:634 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:778;val:-1
 [m[11:04:42:634 [1;32mINFO[m-]:SP_SendMsgToApp[181]:[1;34mSP_SendMsgToApp success;type[2],code[775],val[status:0;totalspace:0;freespace:0;usespace:0;]
 [m[m[11:04:42:634 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:823;val:-1
@@ -855,7 +855,7 @@ Agent registered
 [m[m[11:05:15:740 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:3
 [m[11:05:16:540 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:2
 [m[11:05:17:341 [1;32mINFO[m-]:CheckTtyUsbTask[2303]:checking ttyUSB2 state count:1
-[m[11:05:17:341 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿªUZ¥
+[m[11:05:17:341 [1;33mWARN[m-]:CheckTtyUsbTask[2310]:check  ttyUSB failed, cell init stat:-1520806486 imei:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UZï¿½
 [m[11:05:17:982 [1;32mINFO[m-]:msg_rcv_from_app_process[69]:[0;32;32mrcv msg from App[3]:type:2;code:297;val:mode:1;
 [m[11:05:17:983 [1;32mINFO[m-sp_msgComm]:SP_sendMsg[77]:[1;33mSP_sendMsg success; key[1003],type[4],code[274],val[state:0;]
 [m[m[11:05:17:983 [1;32mINFO[m-]:SP_MsgCameraFromAppProc[552]:[0;35mCamera control mode is CableRelease
