@@ -134,9 +134,36 @@ Case 6 is the relevant one: *"a real error keeps its own class; the conversion n
 `fake_capture_ret = STAGE2_GP_ERROR_TIMEOUT` and an empty path, it asserts the result stays
 `STAGE2_GP_ERROR_TIMEOUT` rather than being rewritten to `CAMERA_ERROR`. So a core failure provably survives
 the wrapper intact.
-**The conversion from `-8` to `captureImage ret 0` therefore happens above our shim** — in pgphoto's own
-capture handling or polestar_app's use of it. Our camlib and our shim are both exonerated by evidence, not
-assumption.
+**The conversion from `-8` to `captureImage ret 0` therefore happens above our shim.** It can be pinned further,
+inside pgphoto's own `capture_image()`. SP_0050's window in `Clog_000039.log`, untruncated:
+
+```text
+[20:43:35:707] capture_image[3076]:----capture
+[20:43:35:737] capture_image[3092]:---- will CAPTURE_IMAGE
+[pentax] capture=1 boundary=initiate-return ptp=0x200c
+ERROR: Could not capture image.
+ERROR: Could not capture.
+[20:43:41:856] capture_image[3096]:----ARG_CAPTURE_IMAGE  0
+[20:43:41:956] capture_image[3164]:----capture end   -6249 ms
+[20:43:41:959] capture_image[3171]:----get file to buffer   -2 ms
+[20:43:41:959] capture_image[3176]:----capture out
+[20:43:41:960] captureImage[1579]:----captureImage ret 0  p:   ;
+```
+
+**pgphoto knows the capture failed.** It prints `ERROR: Could not capture image.` and `ERROR: Could not
+capture.` itself, immediately after our camlib returns `0x200c` — and then continues through `capture end`,
+`get file to buffer`, `capture out`, and hands back success. The same lines appear for SP_0051.
+
+For contrast, the successful SP_0049 has no ERROR lines at all between `will CAPTURE_IMAGE` and
+`ARG_CAPTURE_IMAGE 0`. So those two lines are the discriminator, and the loss is between pgphoto logging its
+own failure (around `capture_image` line 3092) and returning to polestar_app (line 3096 onward).
+
+I do not have pgphoto's source, so I cannot name the exact statement that drops the error — but the observable
+sequence is unambiguous: **the error is detected and discarded inside pgphoto**, not in our camlib or our shim.
+
+(A method note: my first pass attributed these ERROR lines to SP_0051 because `awk "/20:43:35/,/20:43:42/"`
+never matched an end pattern and so ran to EOF, sweeping in the next capture. Re-done with a bounded `sed` range
+and `head`, which puts them inside SP_0050's own window.)
 
 The #183 guard is active but structurally cannot catch this: it validates the *success* path for an empty
 path, whereas here the core reported a failure that the caller discarded. A guard for this class has to live
