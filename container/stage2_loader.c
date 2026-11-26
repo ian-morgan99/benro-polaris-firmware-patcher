@@ -697,6 +697,15 @@ static int g_k1ii_preview_prompt;
 #define STAGE2_GP_ERROR_CANCEL (-112)   /* GP_ERROR_CANCEL */
 #define STAGE2_GP_ERROR_CAMERA_BUSY (-110) /* GP_ERROR_CAMERA_BUSY */
 #define STAGE2_GP_ERROR_CAMERA_ERROR (-113) /* GP_ERROR_CAMERA_ERROR */
+/* Issue #181 follow-up: PTP_RC_StoreFull (0x200c) translates to
+ * GP_ERROR_FIXED_LIMIT_EXCEEDED (-8).  pgphoto's capture_generic() propagates
+ * only an explicit allowlist of error codes -- -6, -3, -112, -115, -53, -60,
+ * -110, -114 -- and -8 is not on it, so a full camera card falls through to
+ * the download path and is reported to the client as a successful capture with
+ * no file.  GP_ERROR_NO_SPACE (-115) IS on that list and is the semantically
+ * correct code for a full card, so the wrapper can remap -8 onto it. */
+#define STAGE2_GP_ERROR_FIXED_LIMIT_EXCEEDED (-8)   /* PTP_RC_StoreFull */
+#define STAGE2_GP_ERROR_NO_SPACE (-115)             /* GP_ERROR_NO_SPACE */
 /* CameraCaptureType from gphoto2-camera.h.  Only still-image capture is
  * subject to the shutter failure budget; movie/sound/preview-like extensions
  * must remain exact pass-through calls. */
@@ -2122,6 +2131,12 @@ static int stage2_capture_empty_path_check_enabled(void)
     return !e || strcmp(e, "0") != 0;
 }
 
+static int stage2_capture_storefull_remap_enabled(void)
+{
+    const char *e = getenv("STAGE2_CAPTURE_STOREFULL_REMAP");
+    return !e || strcmp(e, "0") != 0;
+}
+
 static int stage2_guarded_gp_camera_capture(void *camera, int type,
                                            void *path, void *context)
 {
@@ -2149,6 +2164,24 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
     if (trace)
         fprintf(stderr, "[stage2-trace] capture-return seq=%lu ret=%d pid=%ld camera=%p mono_ms=%lld\n",
                 seq, ret, (long)getpid(), camera, stage2_monotonic_ms());
+    /* Issue #181 follow-up: pgphoto's capture_generic() prints "Could not
+     * capture image." for any non-zero result but then returns only for an
+     * explicit allowlist (-6, -3, -112, -115, -53, -60, -110, -114).  Every
+     * other code falls through to the download path and is reported upstream as
+     * a successful capture.  GP_ERROR_FIXED_LIMIT_EXCEEDED (-8), which this
+     * libgphoto2 produces for PTP_RC_StoreFull (0x200c), is not on that list:
+     * two captures on the K-1 II rig returned gp=-8 and both reached the client
+     * as "captureImage ret 0" with no file on the card.  Remap it onto
+     * GP_ERROR_NO_SPACE (-115), which is on the list and is the correct
+     * semantic for a full camera card, so the failure surfaces instead of
+     * silently dropping a frame from an astro stack. */
+    if (ret == STAGE2_GP_ERROR_FIXED_LIMIT_EXCEEDED &&
+        stage2_capture_storefull_remap_enabled()) {
+        fprintf(stderr, "[stage2] capture-outcome=storefull ret=-8 -> -115 "
+                        "(GP_ERROR_NO_SPACE) -- pgphoto drops unmapped error "
+                        "codes and would report success (issue #181)\n");
+        return STAGE2_GP_ERROR_NO_SPACE;
+    }
     if (ret == 0 && type == STAGE2_GP_CAPTURE_IMAGE && path &&
         stage2_capture_empty_path_check_enabled()) {
         /* CameraFilePath layout (gphoto2-camera.h): char name[128];
@@ -2199,7 +2232,8 @@ static void *stage2_capture_slot_target(const char *name, void *resolved)
         /* All enabled capture modes compose at the same call boundary.
          * With every mode off, preserve the exact resolved core target. */
         if (stage2_capture_trace_enabled() || stage2_capture_guard_enabled() ||
-            stage2_capture_empty_path_check_enabled()) {
+            stage2_capture_empty_path_check_enabled() ||
+            stage2_capture_storefull_remap_enabled()) {
             g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
             return (void *)&stage2_guarded_gp_camera_capture;
         }

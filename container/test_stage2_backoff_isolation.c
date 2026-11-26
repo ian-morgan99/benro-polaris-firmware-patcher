@@ -94,6 +94,10 @@ int main(void)
     unsetenv("STAGE2_CAPTURE_TRACE");
     setenv("STAGE2_CAPTURE_GUARD", "0", 1);
     setenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK", "0", 1);
+    /* Issue #181 follow-up: the storefull remap is ON by default like the #183
+     * check, so the legacy escape hatch must name it explicitly to get an
+     * un-wrapped gp_camera_capture. */
+    setenv("STAGE2_CAPTURE_STOREFULL_REMAP", "0", 1);
     assert(stage2_capture_slot_target("gp_camera_capture",
                                       &direct_capture_target) ==
            &direct_capture_target);
@@ -110,6 +114,17 @@ int main(void)
     assert(g_real_gp_camera_capture ==
            (stage2_gp_camera_capture_fn)&direct_capture_target);
     setenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK", "0", 1);
+    /* #181 follow-up: the storefull remap stands on its own merit too -- with
+     * every other mode off and only the remap enabled, the wrapper must still
+     * be installed, otherwise -8 would reach pgphoto unmapped and be reported
+     * as a successful capture. */
+    setenv("STAGE2_CAPTURE_STOREFULL_REMAP", "1", 1);
+    assert(stage2_capture_slot_target("gp_camera_capture",
+                                      &direct_capture_target) !=
+           &direct_capture_target);
+    assert(g_real_gp_camera_capture ==
+           (stage2_gp_camera_capture_fn)&direct_capture_target);
+    setenv("STAGE2_CAPTURE_STOREFULL_REMAP", "0", 1);
     /* The additional call boundary is available only when explicitly selected
      * for boundary diagnostics; it must never be silently enabled by default. */
     setenv("STAGE2_CAPTURE_TRACE", "1", 1);

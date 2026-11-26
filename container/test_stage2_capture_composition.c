@@ -49,18 +49,20 @@ int main(void)
 
     for (int trace = 0; trace < 2; trace++)
     for (int guard = 0; guard < 2; guard++)
-    for (int check = 0; check < 2; check++) {
+    for (int check = 0; check < 2; check++)
+    for (int remap = 0; remap < 2; remap++) {
         setenv("STAGE2_CAPTURE_TRACE", trace ? "1" : "0", 1);
         setenv("STAGE2_CAPTURE_GUARD", guard ? "1" : "0", 1);
         setenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK", check ? "1" : "0", 1);
+        setenv("STAGE2_CAPTURE_STOREFULL_REMAP", remap ? "1" : "0", 1);
         stage2_gp_camera_capture_fn target = (stage2_gp_camera_capture_fn)
             stage2_capture_slot_target("gp_camera_capture", (void *)fake_capture);
-        assert(target == ((trace || guard || check) ?
+        assert(target == ((trace || guard || check || remap) ?
                stage2_guarded_gp_camera_capture : fake_capture));
         assert(stage2_capture_slot_target("gp_camera_exit", (void *)fake_capture)
                == (void *)fake_capture);
         for (int shot = 1; shot <= 3; shot++)
-        for (int scenario = 0; scenario < 6; scenario++) {
+        for (int scenario = 0; scenario < 7; scenario++) {
             fake_path out = {{0}, {0}};
             memset(&core_path, 0, sizeof core_path);
             strcpy(core_path.name, "IMGP0001.DNG");
@@ -81,6 +83,15 @@ int main(void)
                 expected_type = STAGE2_GP_CAPTURE_IMAGE + 1;
             if (scenario == 5)
                 expected_path = NULL;
+            /* Scenario 6: PTP_RC_StoreFull arrives as GP_ERROR_FIXED_LIMIT_EXCEEDED
+             * (-8), which pgphoto's capture_generic() drops because it is not on
+             * its error-code allowlist.  The wrapper must surface it as -115 when
+             * the remap is enabled, and hand back the raw code otherwise. */
+            if (scenario == 6) {
+                expected_result = core_result = STAGE2_GP_ERROR_FIXED_LIMIT_EXCEEDED;
+                if (remap)
+                    expected_result = STAGE2_GP_ERROR_NO_SPACE;
+            }
             atomic_store(&g_capture_in_flight, 0);
             core_calls = init_calls = 0;
             probe_init = shot == 1 && scenario == 0;
@@ -105,6 +116,7 @@ int main(void)
     unsetenv("STAGE2_CAPTURE_TRACE");
     unsetenv("STAGE2_CAPTURE_GUARD");
     unsetenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK");
+    unsetenv("STAGE2_CAPTURE_STOREFULL_REMAP");
     assert(stage2_capture_slot_target("gp_camera_capture", (void *)fake_capture)
            == (void *)stage2_guarded_gp_camera_capture);
     g_real_gp_camera_capture = NULL;
@@ -124,6 +136,6 @@ int main(void)
         assert(wait(&camera, 3000, &type, &data, &context) == core_result);
         assert(errno == EAGAIN && type == 2 && data == &core_path);
     }
-    puts("PASS: capture composition (8 combinations x 3 shots x 6 scenarios)");
+    puts("PASS: capture composition (16 combinations x 3 shots x 7 scenarios)");
     return 0;
 }
