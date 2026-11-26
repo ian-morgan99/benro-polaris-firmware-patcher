@@ -251,10 +251,20 @@ log. Across all logs: `state:-110` ×15, `state:-112` ×3, and `state:-8` **zero
 the return codes. The client-facing `Mlog_000039.log` likewise carries negative states (`state:-1005`,
 `state:-5`), so error states do reach the client.
 
-**Inferred, not observed:** that `-115` specifically produces `val[state:-115;…]`. pgphoto's allowlist includes
--115 (it returns it), and the app's `state:-N` emission looked generic across the two codes actually seen — but
--115 never occurred on this rig, so that final step is an inference from the pattern. It should be confirmed on
-the first real full-card event, or by a device test that fills the camera's card.
+**Inferred, not observed:** that `-115` specifically produces `val[state:-115;…]`. This is now better supported
+than a pattern match: pgphoto's binary contains the generic format strings
+
+```text
+$ strings /app/lib/stage2/pgphoto.stage2ondisk | grep -aE "state:%d"
+state:%d;
+state:%d;%s
+state:%d;ret:%d;
+```
+
+so the state number is formatted from an `int`, not selected by a per-code switch — and neither binary contains
+a literal `val[state` string at all, confirming frames are built from these. With `state:-110` ×15 and
+`state:-112` ×3 both observed through the same path, `-115` should behave identically. Still not directly
+observed: `-115` never occurred on this rig. Confirm on the first real full-card event.
 
 ### Still unexplained
 
