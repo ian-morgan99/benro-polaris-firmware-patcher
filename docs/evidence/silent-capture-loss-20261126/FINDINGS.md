@@ -47,9 +47,10 @@ BAD:  state:1 ->                (no state:4) -> ret 0 -> state:2 -> state:5
 `state:4` carries the camera's own filename and is the only frame proving an exposure actually produced an
 object. It is emitted by **all 37** successful captures and by **none** of this one.
 
-**This reproduced twice, and my first count of "exactly one" was wrong.** Re-counting after a later probe gives
-**39 `captureImage ret 0` lines against 37 `state:4` frames — a mismatch of two**. The second is SP_0051 at
-20:50:51, produced by my own frame-dump probe:
+**This reproduced twice.** The authoritative count comes from `capture-outcomes.py` run over fresh rig logs:
+**37 PASS and 2 FAIL**, naming SP_0050 and SP_0051. Do not derive this by comparing global line counts — see
+"Why a global counter is the wrong method" below. The second occurrence, SP_0051 at 20:50:51, was produced by
+my own frame-dump probe:
 
 ```text
 val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0051.jpg;c:-1]
@@ -177,10 +178,28 @@ and notes that a naive sign-based analysis once produced "34 capture timeouts" a
 did not exist. The counter pair in this file is therefore a cross-check on the tool, not a replacement for it
 -- and the tool agrees with it.
 
-The two counts quoted above (38 `ret 0` vs 37 `state:4`) and here are point-in-time snapshots of a live log
-corpus, not a contradiction: this run predates SP_0051. After that second phantom success the same pair reads
-**39 vs 37**, i.e. the mismatch grew from one to two. Both numbers are correct for their own snapshot, and the
-mismatch count is what matters rather than either absolute total.
+### Why a global counter is the wrong method
+
+I earlier wrote "38 `ret 0` vs 37 `state:4`, exactly one mismatch" and then "39 vs 37, two". **That arithmetic
+is unsound and I am withdrawing it.** `state:4` is not emitted once per capture. In the overnight corpus
+(`docs/evidence/k1ii-overnight-20261126/sanitized`) 33 captures produced:
+
+```text
+empty-payload state:4 lines   : 33     (val[state:4;])
+named state:4 lines           : 66     (e.g. K1II8794.JPG appears twice)
+distinct filenames            : 33
+ret 0 lines                   : 33
+```
+
+So roughly three `state:4` lines per capture, of which some carry no filename at all. Comparing that total
+against a count of `ret 0` lines compares unlike things; the overnight corpus reads 99 vs 33 and would look
+like a huge mismatch when there is none.
+
+The valid method is **per-capture classification** — pair each outcome with the frames of *that* capture and
+ask whether a named `state:4` occurred for it. `capture-outcomes.py` already does exactly that, which is why
+its output above (`PASS 37 / FAIL 2`, naming SP_0050 and SP_0051) is the number to use. My counter pair agreed
+with it by luck on the rig corpus, where the ratio happened to be near one; it would have produced a false
+alarm on the overnight corpus.
 
 The real gap is narrower than I first wrote: this classification exists as an **offline script** and nothing
 runs it at runtime. The supervisor still reports `supervisor ready` throughout (#182), so a phantom success is
