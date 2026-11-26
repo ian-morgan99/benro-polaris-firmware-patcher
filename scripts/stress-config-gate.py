@@ -286,20 +286,33 @@ def main() -> int:
 
     time.sleep(2)  # let the head flush its log
     after = refusal_count(args.ssh_host)
+    # /app/Clog.txt rotates, so "after" can be lower than "before" without any
+    # new refusal. A negative delta means the window was truncated, not that
+    # refusals were repaired; count it as zero and say so rather than reporting
+    # a nonsensical negative number of bad outcomes.
+    delta = after - before
+    rotated = delta < 0
+    if rotated:
+        delta = 0
 
-    print(f"\nwall: {wall:.1f}s  throughput: {len(latents)/wall:.1f} reads/s" if latents else "\nno responses")
+    ordered = sorted(latents)
+
+    def pct(p: float) -> float:
+        return ordered[min(len(ordered) - 1, int(len(ordered) * p))]
+
     if latents:
-        ordered = sorted(latents)
-        def pct(p):
-            return ordered[min(len(ordered) - 1, int(len(ordered) * p))]
+        print(f"\nwall: {wall:.1f}s  throughput: {len(latents)/wall:.1f} reads/s")
         print(f"latency p50={pct(0.50):.2f}s p95={pct(0.95):.2f}s "
               f"max={max(latents):.2f}s mean={statistics.mean(latents):.2f}s")
+    else:
+        print("\nno responses")
     print(f"outcomes: ok={outcomes['ok']} sentinel(-1)={outcomes['sentinel']} "
           f"empty={outcomes['empty']} timeouts={outcomes['timeout']} "
           f"closed={outcomes['closed']}")
     if errors:
         print("connection errors: " + "; ".join(errors))
-    print(f"refusals after: {after} (delta {after - before})")
+    suffix = ", log rotated -- window truncated" if rotated else ""
+    print(f"refusals after: {after} (delta {delta}{suffix})")
     if _sessions:
         print("camera session seen by handshake: " +
               ", ".join(f"{k} x{v}" for k, v in _sessions.items()))
@@ -309,15 +322,16 @@ def main() -> int:
             print(f"    {s}")
 
     bad = (outcomes["sentinel"] + outcomes["empty"] + outcomes["timeout"] +
-           outcomes["closed"] + (after - before))
+           outcomes["closed"] + delta)
     if errors:
         print("\nVERDICT: transport failure -- cannot judge the gate")
         return 2
     if bad:
         print(f"\nVERDICT: GATE DEFECTIVE under load ({bad} bad outcome(s))")
         return 1
+    p95 = f"{pct(0.95):.2f}s" if latents else "n/a"
     print(f"\nVERDICT: clean under load -- {outcomes['ok']} reads, no refusals, "
-          f"no sentinel, p95={pct(0.95):.2f}s")
+          f"no sentinel, p95={p95}")
     return 0
 
 
