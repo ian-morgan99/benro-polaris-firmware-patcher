@@ -252,6 +252,58 @@ static void test_idle_admission_is_immediate(void)
 	stage2_camera_release(&g, &busy, 9);
 }
 
+/* The shipped lease is 120000 ms and the shipped control budget is 500 polls.
+ * test_lease_expires_a_leaked_claim() overrides the lease to 1000 ms, so nothing
+ * previously exercised the two shipped values together. That gap let me conclude
+ * from field logs alone that takeover was unreachable -- every one of 212 logged
+ * refusals reads stolen=0 -- and it is wrong: the lease is evaluated on entry, so
+ * a waiter arriving after expiry recovers on its first poll without polling at
+ * all. The refusals show no waiter arrived inside the window, not that takeover
+ * is broken. Pinned here because the distinction decides where the remaining
+ * wedge lives: this gate self-heals, the camlib output_pending latch does not.
+ */
+static void test_production_lease_recovers_a_leaked_claim(void)
+{
+	struct stage2_camera_gate g = { 0 };
+	uintptr_t cam = 1;
+	unsigned busy = 0;
+
+	assert(stage2_camera_lease_ms == 120000);
+	stage2_camera_set_clock(fake_clock);
+	fake_now_ms = 100000;
+
+	/* Owner takes the gate and its release never arrives. */
+	assert(stage2_camera_claim(&g, &cam, &busy, 5, 0x101b0c,
+	                           STAGE2_CAMERA_CONTROL, 1, unexpected_poll) == 0);
+
+	/* The observed median hold is ~3 s. A waiter with the shipped budget is
+	 * refused and burns all 500 polls -- correct, the lease is still live and a
+	 * genuinely busy camera must not be stolen from. */
+	fake_now_ms = 103000;
+	counted_polls = 0;
+	assert(stage2_camera_claim(&g, &cam, &busy, 6, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 500, count_poll) == -1);
+	assert(counted_polls == 500 && atomic_load(&g.leases_stolen) == 0);
+	assert(atomic_load(&g.owner_tid) == 5);
+
+	/* Past the shipped lease the leaked claim is taken over on entry, with no
+	 * polling, so recovery costs the caller nothing. */
+	fake_now_ms = 221001;
+	counted_polls = 0;
+	assert(stage2_camera_claim(&g, &cam, &busy, 7, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 500, count_poll) == 0);
+	assert(counted_polls == 0 && atomic_load(&g.leases_stolen) == 1);
+	assert(atomic_load(&g.owner_tid) == 7 && atomic_load(&g.owner_depth) == 1);
+
+	/* The dead owner cannot corrupt the new claim. */
+	stage2_camera_release(&g, &busy, 5);
+	assert(busy == 1 && atomic_load(&g.owner_tid) == 7);
+	stage2_camera_release(&g, &busy, 7);
+	assert(!busy && !atomic_load(&g.owner_depth));
+
+	stage2_camera_set_clock(NULL);
+}
+
 int
 main(void)
 {
@@ -259,6 +311,7 @@ main(void)
 	test_reentrancy();
 	test_reset_clears_a_leaked_claim();
 	test_lease_expires_a_leaked_claim();
+	test_production_lease_recovers_a_leaked_claim();
 	test_idle_admission_is_immediate();
 	assert(stage2_model_uses_r5_shims("Canon:EOS R5m2"));
 	assert(stage2_model_uses_r5_shims("Canon:EOS 5Rm2"));
