@@ -1,5 +1,54 @@
 # Current repository state
 
+## 2026-11-26 (later) — bulb failure localised to post-exposure retrieval; gate did not fire at all
+
+Dial confirmed physically on **B** (operator-stated), K-1 II, registered v117 bytes, identity verified exit 0.
+
+**The gate is not involved in this failure.** `admission refused` count for the whole session: **0**.
+A plain timed capture with no shutter write succeeded outright:
+`lifecycle=[1,4,0]`, `773 path:/app/sd/normal/SP_0011.jpg size:108339`, PASS in ~6 s. So on this boot
+v117 recognises the body, captures, and delivers a file. The "parameters/liveview/bulb dead since .115"
+framing is therefore **intermittent and boot-dependent**, not permanent — a leaked gate claim did not
+occur this time.
+
+**Bulb now localised precisely.** `--bulb-seconds 5 --bulb-shutter-index 15` (index equals the current
+index, so the session skips the 261 write entirely — no shutter refusal possible):
+
+```
+TX 1&264&4&state:1;bulb:5;c:-1;#      RX 264@state:1        <- accepted, NOT -6
+capture_image_with_Bulb[3213]: capture with bulb 5000 ms
+[pentax] capture=1 boundary=camlib-enter                    <- reached libgphoto2
+capture_image_with_Bulb[3230]: bulb time start
+capture_image_with_Bulb[3267]: bulb time end                <- 5 s later, exposure correct
+[pentax] capture=2 boundary=camlib-enter                    <- retrieval attempt
+capture_image_with_Bulb[3283]: capture bulb get photo       <- 11:40:19
+capture_image_with_Bulb[3321]: ----blub timeout             <- 11:42:11, 112 s later
+captureBulbImage[1458]: ret -1  p:   ;                      <- empty path, no 773, no file
+```
+
+So the exposure **runs correctly for the requested 5 s**, libgphoto2 is entered twice, and the failure is
+strictly in **retrieving the finished photo**: pgphoto waits ~112 s inside its own `capture_image_with_Bulb`
+poll budget, gives up, returns -1 with an empty path, and emits no file notification. This is distinct from
+#205 (app-side `state:-6` refusal in ~2 s) and from #230 (libgphoto2 dark-frame allowance arithmetic): the
+timeout here is pgphoto's own budget, in Benro's proprietary code, after a successful exposure.
+
+**Caveats kept honest.** `Clog.txt` rotated mid-run — line 1 of it *is* the timeout — so the camlib markers
+above came from the archived `Clog_000027.log`, not the live file. Whether the DNG actually landed on the
+*camera's* card is unmeasured: only the grip's `/app/sd/normal` was inspected, and PTP retrieval is the step
+that failed. Battery could not be re-read after rotation.
+
+**Also corrected today:** my earlier retraction was itself wrong. I inferred "the dial was not on B" from a
+56-entry shutter list; the operator states it was on B. That inference reproduced the documented **#206 false
+negative** — with the dial physically on B the body reports a full timed list, the shape heuristic says
+"not B", and a timed write is refused. `--require-exposure-mode` cannot settle this on a live rig: the query
+opens a second gphoto2 session and loses to pgphoto holding interface 0 (`-53 usb-busy`). Never infer mode
+from list shape; that rule exists in the docs and I broke it twice.
+
+**Shutter writes on this boot:** only the already-applied index is accepted (`s:15 ret:0`); `s:0`/`s:8` give
+`ret:-1`, and after a bulb timeout `s:15` gave `ret:-112` (known family, #148: third bulb request returns
+-112) while `ev:15` on a different key gave `ret:-6`. Reads stayed valid throughout (`V:15`, 56 options).
+Whether `-112` here is the same #148 mechanism or session degradation after the bulb timeout is unmeasured.
+
 ## 2026-11-26 — component identity is now verifiable; a hot-swap had made "v117" meaningless
 
 **A hot-swap left the head running unregistered bytes while it still reported `FwVer:6.0.0.54.117`.**
@@ -25,14 +74,15 @@ the checker returned exit 2 naming it, and after restore it returns exit 0. The 
 gate printed the identity but installed anyway — the `case` pattern was unanchored and the label is
 `name [STATUS]`, so `DIAGNOSTIC-NEVER-SHIP*` never matched. Caught by testing the guard, not by review.
 
-**Retracted: "a second `-2110` rejection path exists for non-empty values."** A SET sweep with the
-traced loader on a fresh boot (`268` valid first try, `V:15`, 56 options) gave
-`s:15 ret:0`, `s:0 ret:-1`, `s:8 ret:-1`, `s:20 ret:-6`, `s:55 ret:-6`. Only the value already set was
-accepted. That is not a new fault — `ret:-6` on shutter writes is **already documented as mode-dependent,
-not a firmware fault** (issue #186 corrected, `CURRENT-STATE.md` `.62` section: "Bulb works with the dial
-on B"). The dial was not on B during the sweep. The hypothesis was invented from three log lines without
-first checking whether the mode precondition had been met; the trace confirmed pgphoto passed the values
-verbatim (`key=3 value="20" ret=-6`), so nothing is being mangled in transit.
+**Retracted (twice — read the later section above before using this).** A SET sweep with the traced loader
+gave `s:15 ret:0`, `s:0 ret:-1`, `s:8 ret:-1`, `s:20 ret:-6`, `s:55 ret:-6`: only the value already set was
+accepted. I first called that "a second `-2110` rejection path", then retracted it as mode-dependent per
+#186 — but justified that retraction by *inferring* the dial was not on B from a 56-entry list. The operator
+states the dial **was** on B, so that inference was itself the documented #206 false negative and the
+retraction's reasoning was invalid. What survives is only what the trace shows directly: pgphoto passed the
+values verbatim (`key=3 value="20" ret=-6`), so nothing is mangled in transit. The cause of the refusals is
+open; do not attribute it to dial position without a direct mode reading, which is unavailable while
+pgphoto holds interface 0.
 
 **Still open, unchanged:** the intermittent empty config read. Reproduced once on this boot
 (`268@RD:0;V:;R:;`) and not on the next attempt with zero retries, so it is neither deterministic nor
