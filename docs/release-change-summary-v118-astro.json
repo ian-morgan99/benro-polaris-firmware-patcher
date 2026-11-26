@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v117-k3iii-late-arrival-20261125",
+    "libgphoto2_commit": "f48a05e08b54d6d433a556c2df512987a51ce742",
+    "patcher_commit": "e0464f394603436424656d2a928f03437621d516"
+  },
+  "purpose": "Ship the Stage-2 camera admission gate wedge fix. This is a regression that exists in the release currently installed on the rig: 6.0.0.54.117 with a Pentax K-1 II repeatedly shows 'connect the camera', live view goes black then reconnects, parameter values do not stick, and a 5 s Bulb shot counts down then fails. The camera is recognised (model:pentax k-1 mark ii;state:1;storage:2), so it was never a detection fault -- everything after recognition is refused. Captured logs show 71 refusals in one window, all reading generation=1: the gate was wound up once and stayed wedged permanently. The regression window is .115..117 (.114 is clean); fbfa133a (2026-11-22) introduced the gate and is an ancestor of every patcher pin from .115 onward, so v117 inherited the defect rather than introducing it. No flashed build contains the fix: 43147f1 records 'Not yet on a device'. The libgphoto2 pin is unchanged from v117 -- there are no driver commits after f48a05e0 -- so this release changes only the patcher-side Stage-2 loader and policy.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "container/stage2_policy.c and container/stage2_policy.h: three independent defects in the camera admission gate, each sufficient on its own to wedge it. (1) Not reentrant -- stage2_camera_claim() admitted only when owner_tid was 0, so a handler that already held a claim and reached a second waitCameraIdle deadlocked against itself forever; claims are now reentrant with owner_depth tracking and only the outermost release frees. (2) Release is tid-gated while pgphoto runs 7 threads, so a claim acquired on one thread and released on another leaked permanently; release ownership is now tracked explicitly. (3) Nothing bounded a claim, so a leaked one was permanent; claims now carry a lease measured against CLOCK_MONOTONIC, honoured only when the clock is actually available rather than guessed at, and disabled when it is not. The clock is injectable so the lease is tested without sleeping. container/stage2_loader.c: refusals now log tid, owner_tid, depth, held_ms and stolen, so a self-deadlock and a contention refusal are distinguishable in one glance. container/test_stage2_policy.c: four tests added, one per defect, each mutation-checked -- removing any single fix makes the suite fail."
+    },
+    {
+      "component": "patcher",
+      "summary": "container/stage2_loader.c diagnostic correctness: held_ms was computed unconditionally, so with no owner present (lease_started_ms == 0) it printed the whole machine uptime -- 24589489 appeared in admission test output -- which reads like a six-hour hold and would send the next investigator hunting for a leak that does not exist. held_ms is now reported only when a claim is actually live."
+    },
+    {
+      "component": "patcher",
+      "summary": "container/stage2_loader.c: opt-in tracing of native setCameraConfig arguments, gated on getenv(\"STAGE2_SET_TRACE\") and therefore OFF by default -- no behaviour change and no extra log volume unless the variable is present in the flashed wrapper's environment. Added because pgphoto rejects parameter writes with an empty response that carries no diagnostic, which is what made the wedge hard to attribute. Note that enabling it requires the variable to be set in the flashed wrapper: nothing is toggled by editing runtime state on the head."
+    }
+  ],
+  "known_limits": [
+    "Offline-qualified only. ./tests/run_prerelease_gate.sh at HEAD reports 17 passed, 0 failed, 2 skipped (libgphoto2 capture contract and ARM emulation of Stage-2 both skipped for missing prerequisites). The mandatory device install hash checks against the immutable install-manifest.json and the physical Benro Connect / Manual / Bulb regression matrix are separate gates that have NOT yet run for this candidate.",
+    "The fix has never executed on a device. It is proven by four mutation-checked unit tests and by log analysis of the wedge, not by on-hardware measurement.",
+    "One earlier measurement is retracted and must not be quoted as support: an A/B run reported the v117 loader failing 240/240 config reads against the fixed loader's 240/240. That was an artifact of measuring an uninitialised head -- pgphoto binds the USB camera during boot-time session setup, and killing and relaunching it by hand leaves the process running but unbound (code 286 answers model:none;state:-2), after which every config read blocks until its deadline. That looks identical to a gate wedge. Any A/B measurement must reboot between loaders.",
+    "Does NOT address issue #362 (RAW+JPEG delivered as a single file). Detection already works -- the camlib computes expected_extra_candidates from a fresh GetAllConditions taken immediately before the shutter and reports companions=1 on dual-format captures -- but gp_camera_get_extra_capture_files has no consumer: pgphoto and libpolaris_stage2.so both contain zero references to it. No fix for that is included here.",
+    "Does NOT address the bulb retrieval hang at the get-photo step, the -1005 poisoning that follows a hung bulb capture, or live view frame delivery.",
+    "The regression affects every model on any build from .115 onward, not only the K-1 II. Cross-model physical qualification (K-1 II and K-3 III at minimum) is required before this is declared release-qualified."
+  ]
+}

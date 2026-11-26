@@ -1,0 +1,9 @@
+# capture trace label=traced-jpgraw
+wall_start=13:54:34 total_ms=150005.0 request=state:1;bulb:0;c:-1;
+shutter=unchanged
+
+== control-socket timeline (what the app saw) ==
+       45.4 ms  code 264  state:-1002;
+
+== device log slices ==
+
