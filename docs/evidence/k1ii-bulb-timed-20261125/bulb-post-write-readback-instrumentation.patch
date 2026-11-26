@@ -1,0 +1,57 @@
+diff --git a/camlibs/ptp2/library.c b/camlibs/ptp2/library.c
+index c64bd3e38..9c2c2e796 100644
+--- a/camlibs/ptp2/library.c
++++ b/camlibs/ptp2/library.c
+@@ -7905,6 +7905,52 @@ ptp2_pentax_bulb_action (Camera *camera, int enabled, GPContext *context)
+ 				  "capturing at the current shutter speed instead."),
+ 				seconds, setres);
+ 		}
++		/* Discriminate "write did not land" from "landed but does not govern the
++		 * exposure" (docs/evidence/k1ii-bulb-timed-20261125/FINDINGS.md).  A 1 s and a
++		 * 5 s request both produced EXIF ExposureTime = 20.000 s on a live K-1 II in B
++		 * with bulb-timer=yes, while this write returned PTP_RC_OK.  Read the property
++		 * back once and take one conditions sample, before InitiateCapture, and log it.
++		 *
++		 * Observation only: no retry loop and no error return.  _pentax_verify_property_value
++		 * in config.c waits up to 1000 ms for an idle camera, which is wrong between the
++		 * start and stop edges of a live shutter action.  Reading a vendor property back is
++		 * unproven on this body (five advertised, only 0x5005 confirmed readable), so
++		 * OperationNotSupported is its own logged outcome, not a failed write. */
++		{
++			PTPPropValue readback;
++			uint16_t getres;
++
++			memset (&readback, 0, sizeof (readback));
++			getres = ptp_getdevicepropvalue (params, PTP_DPC_PENTAX_ShutterSpeed,
++				&readback, PTP_DTC_UINT64);
++			if (getres == PTP_RC_OK)
++				GP_LOG_D ("pentax-bulb: post-write read-back 0xd00f=%llu "
++					"(requested %u s -> wrote %llu)",
++					(unsigned long long)readback.u64, seconds,
++					(unsigned long long)propval.u64);
++			else
++				GP_LOG_D ("pentax-bulb: post-write read-back of 0xd00f not served "
++					"(ptp 0x%04x); requested %u s", getres, seconds);
++		}
++		{
++			unsigned char *cdata = NULL;
++			unsigned int csize = 0;
++			PentaxConditions cond;
++
++			memset (&cond, 0, sizeof (cond));
++			if ((ptp_pentax_get_all_conditions (params, &cdata, &csize) == PTP_RC_OK) &&
++			    (csize >= PENTAX_CONDITIONS_MIN_SIZE) &&
++			    (pentax_parse_conditions (cdata, csize, &cond) == GP_OK))
++				GP_LOG_D ("pentax-bulb: post-write conditions bulb-seconds=%u/%u "
++					"Tv-changeable=%s bulb-timer=%s (requested %u s)",
++					cond.bulb_timer_seconds, cond.bulb_timer_denominator,
++					(cond.capability_flags & PENTAX_CONDITION_CAN_CHANGE_TV) ?
++						"yes" : "no",
++					(cond.capability_flags & PENTAX_CONDITION_BULB_TIMER) ?
++						"yes" : "no",
++					seconds);
++			free (cdata);
++		}
+ 		memset (&path, 0, sizeof (path));
+ 		return camera_pentax_capture_internal (camera, &path, context,
+ 			PENTAX_CAPTURE_TIMED);

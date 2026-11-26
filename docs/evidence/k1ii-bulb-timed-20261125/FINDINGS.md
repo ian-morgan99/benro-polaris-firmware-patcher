@@ -250,6 +250,60 @@ there is nothing there to reclaim.
   `usb:001,013`. Any tooling that hardcodes a port silently targets nothing. Port must be
   discovered by PID (`0x0183` K-1 II, `0x0189` K-3 III) on every run.
 
+## Prepared instrumentation (compile-verified, not yet run)
+
+`bulb-post-write-readback-instrumentation.patch` adds step 1's measurement to
+`ptp2_pentax_bulb_action` in `camlibs/ptp2/library.c`: after the `0xd00f` write and before
+`InitiateCapture`, one `GetDevicePropValue` of `0xd00f` plus one conditions sample, both logged
+with the requested value. Observation only -- no retry loop, no error return, capture proceeds
+as before whatever it reads.
+
+It is a real `git diff` from pin `f48a05e08`, not hand-written. An earlier hand-written version
+of this patch named the function `camera_bulb_action`; the actual enclosing function is
+`ptp2_pentax_bulb_action`. Generating from git caught that.
+
+Compile-verified: configured a meson tree at `/tmp/lpgbuild` from `.host-driver-src/f48a05e08`
+with the canonical flags (`-Dpentax_research_capture=true`, `camlibs=ptp2,directory`,
+`iolibs=libusb1,disk`) and built `camlibs/ptp2/ptp2.so.p/library.c.o`. Object produced, no
+errors, and no warning on any inserted line. The warnings that do appear are pre-existing
+(`snprintf` at 7527, `strncpy` at 3646).
+
+Deliberately not reusing `_pentax_verify_property_value` from `config.c`: it is `static` there,
+and it retries for up to 1000 ms waiting for an idle camera, which is wrong between the start
+and stop edges of a live shutter action. This is one non-blocking observation instead.
+
+Expectation to plan for: reading a vendor property back is **unproven on the K-1 II**. The
+widget path records that this body advertises five properties and only `0x5005` has been read
+successfully, so `PTP_RC_OperationNotSupported` from `0xd00f` is a likely outcome and is logged
+as its own distinct result rather than as a failed write. If that happens the conditions sample
+is still decisive on its own: `bulb-seconds` at offset 272 is the body's timer, and IT2 treats
+it as an index into the same `0xd00f` list (`MtpDevice.cs:5911-5914`).
+
+To run once a body is on the bus:
+
+```sh
+cd /home/ian/polaris-v101/out/.host-driver-src/f48a05e08
+git apply /home/ian/Documents/VSCodeProjects/BenroPolarisPatcher/docs/evidence/\
+k1ii-bulb-timed-20261125/bulb-post-write-readback-instrumentation.patch
+ninja -C /tmp/lpgbuild camlibs/ptp2/ptp2.so
+# point a prefix at the instrumented .so, then:
+python3 docs/evidence/k1ii-bulb-timed-20261125/bulb_ground_truth.py 0183 1.0
+```
+
+Look for `post-write read-back` and `post-write conditions` in the debug log. Wire values are
+`(1<<32)|seconds`: 1 s = `4294967297`, 5 s = `4294967301`, 20 s = `4294967316`.
+
+- Read-back `4294967297` for a 1 s request, while the exposure still runs 20 s -> hypothesis 2:
+  it landed but does not govern the exposure, so the timer is driven from somewhere `0xd00f`
+  does not control.
+- Read-back anything else (`4294967316`, or `0`) -> hypothesis 1: the write did not land. Note
+  that `0` is a real possibility and is not a contradiction: the widget path records that the
+  captured B-mode value of `0xd00f` is `0`, which formats as "Auto". A `0` read-back in B means
+  the property is not carrying a timer value at all in this state, which is itself the answer.
+- `PTP_RC_OperationNotSupported` -> nothing learned from the property; fall back to the
+  conditions line, where `bulb-seconds=20/1` unchanged after a 1 s write points the same way as
+  hypothesis 1.
+
 ## Evidence loss
 
 `/tmp/exif` was wiped mid-session. Lost: the two ground-truth JPEGs, `read_exif.py`,
