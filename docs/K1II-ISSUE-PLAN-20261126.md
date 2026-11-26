@@ -134,11 +134,11 @@ order follows its queue and puts the highest-leverage fix first.
 | 0 | Redact the eight published evidence files at HEAD + CI guard on credential-shaped patterns | N1 (private) | The *logging defect* is the durable problem. The leaked PIN turned out to be a trivial default, so this is no longer an emergency — but close it before more evidence accumulates. | no |
 | 0b | Record baseline: v118 identity, loader MD5 `222a09f0…`, kit stamp, archived packet `d078695cf` | #361/#375 task 00 | Already done this session; paste into #375 checkpoint. | no |
 | 1 | Credential redaction at the vendor write site (never log `password:`/`securityA:`) | N1 (private) | Independent of camera work, no hardware risk. | no |
-| 2 | Instrument config-read cost on v118; confirm #389 still ~62 ops | #389/#369 (task 03) | Must measure before optimising; v118 gate changes may have altered the count. | **yes** |
+| 2 | Instrument config-read cost on v118 **via direct-PC `gp_camera_get_config`** | #389/#369 (task 03) | Protocol-level probe is fast with 0 refusals, but that is a different code path — it does NOT close #389. Needs the PC-to-camera USB link. | **yes** |
 | 3 | Cache `GetDevicePropDesc` per session; build widget tree once | #389 (task 04) | The dominant K-1 II latency source. Expected to collapse LV flicker *and* p95=3.64 s. | partial |
 | 4 | Batch `GetAllConditions` | #369 | Cheap only after step 3, per #389's own note. | partial |
 | 5 | RAW+JPEG: wire a consumer for `gp_camera_get_extra_capture_files` | #362 (task 11) | Detection already proven on v118; the gap is consumption, not discovery. | **yes** |
-| 6 | Bulb end-to-end + cancellation | #145/#251/#317 (task 10) | Never verified on v118 at all. Highest untested risk. | **yes** |
+| 6 | ~~Bulb end-to-end~~ **VERIFIED on v118** — see `k1ii-v118-bulb-verified-20261126/` | #145/#251/#317 | States `1→4→0` twice, two JPEGs delivered, storage accounting correct. Remaining: cancellation, and `duration:0` vs a *timed* bulb (#315). | **yes** |
 | 7 | LV frame corruption: characterise peaking repro | #363/#359 (task 08) | Needs live capture; cannot be diagnosed from logs. | **yes** |
 | 8 | AF: prove/disprove our opcode-311 kit path works independently of vendor AF | #359/#146 | Determines whether this is upstream-report-only or ours to route. | **yes** |
 | 9 | Capture-duration arithmetic + ordering comparison | #315 | Fix the negative durations (every capture, not one case), then re-test ordering on both bodies and post the K-1 II/K-3 III difference as a comment on #315. | **yes** |
