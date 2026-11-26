@@ -4,6 +4,15 @@ Rig `d13e86`, firmware `astro-v118-stage2-gate-wedge-fix-20261126` / display `6.
 patcher `858edfd87be3681d26cbfee4810dff2c25c8696f`, libgphoto2 pin `f48a05e0` (unchanged from v117).
 Camera: Pentax K-1 II. Captured 2026-11-26 before the body was powered off.
 
+**Framing for the next run (operator).** None of these failures are new — they span v104–v117 and are all
+tracked. What is different is that we are materially closer than ever: the gate recovers instead of wedging,
+refusals now name the holding site with `held_ms`, the config-read cost is quantified (#389), and AF has been
+decoupled from contention. This bundle is the first dataset where each symptom is *measurable* rather than
+merely observable, so treat it as the working baseline for the next run. Do not re-litigate whether the
+defects predate v118 — that is settled; spend the run on the narrowed causes.
+
+Full triage and serial execution order: [`../../K1II-ISSUE-PLAN-20261126.md`](../../K1II-ISSUE-PLAN-20261126.md).
+
 ## Contents
 
 - `sanitized/` — 40 log files (`Clog_000016..000035`, `Mlog_000015..000034`) pulled from
@@ -36,12 +45,23 @@ docs/evidence/v104-k1ii-android-20261110/Mlog-android-baseline.txt
 docs/evidence/v104-k1ii-liveview-garbled-20261110/Mlog-post-reboot-camera-not-detected.txt
 ```
 
-Anyone can read these today. Removing the files from HEAD does not fix it — they remain in git history and
-in any clone or fork made since September. Treat the PIN and security answer as **compromised**: rotate them
-on the Benro account, then decide separately whether history rewriting is worth the disruption (it invalidates
-every commit SHA after the rewrite point, including the release/registry references this project depends on).
+Anyone can read these today. Removing the files from HEAD does not fix it — they remain in git history and in
+any clone or fork made since September.
 
-**Do this before any camera work.** It is the only item here with an external blast radius.
+**Severity, corrected after decoding.** The logged PIN is a trivial well-known four-digit default, so there is
+probably nothing to rotate and my first read of this ("rotate immediately, do it before any camera work") was
+over-escalated. Two caveats keep it worth fixing:
+
+- The **security answer** decodes to 16 characters that look like a genuine personal answer, not a default.
+  That field pairs with the PIN to defeat account recovery and is the one actually worth caring about.
+- Whether the logged PIN is this account's live value is knowable only to the operator. If it was never
+  changed there is nothing to rotate; if the real PIN differs, the logged value is stale and harmless.
+
+The durable defect is therefore the **logging behaviour**, not these values: `code:790` writes account
+material into a world-readable rotating log on every session, which will keep happening for any account using
+a non-default PIN. Redact the eight files at HEAD and add a CI guard; a history rewrite is not worth it here,
+because it invalidates every commit SHA after the rewrite point — including the release/registry references
+this project depends on — for a default PIN.
 
 **Standing rule this implies:** any device log bundle must be redacted before it touches git. `code:790` is
 the account flow and it logs credentials on every session. Add a CI guard that fails on credential-shaped

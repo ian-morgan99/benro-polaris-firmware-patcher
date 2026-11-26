@@ -4,6 +4,19 @@ Base: `astro-v118-stage2-gate-wedge-fix-20261126` (`6.0.0.54.118`), rig `d13e86`
 Evidence: `docs/evidence/k1ii-overnight-20261126/` (redacted logs + HANDOFF.md).
 Repo: `ian-morgan99/benro-polaris-firmware-patcher`.
 
+## Framing for the next run (operator, 2026-11-26)
+
+**None of these failures are new, and that is the point.** They have been failing across v104–v117. What is
+different now is that we are materially closer to solving them than we have ever been: for the first time the
+gate recovers instead of wedging, the refusal diagnostics name the holding site with `held_ms`, the config-read
+cost is quantified (#389), and the AF failure has been decoupled from contention. The v118 evidence in
+`docs/evidence/k1ii-overnight-20261126/` is therefore **critical input for the next run** — it is the first
+dataset where each symptom is measurable rather than just observable. Treat it as the working baseline, not
+as another log dump.
+
+Corollary: do not re-litigate whether these defects predate v118. They do, they are tracked, and that is
+settled. Spend the run on the narrowed causes above.
+
 ## Read this first: most of it is already tracked
 
 I checked every symptom against the issue tracker before planning anything. The important result is that
@@ -40,34 +53,37 @@ Two findings genuinely change what should be done first:
 
 ### N1. SECURITY: account password and security answer are logged in base64 — **already published publicly**
 
-Do this before any camera work. `code:790` (the account flow) writes credentials to the rotating camera log
-on **every session**, as plain base64:
+`code:790` (the account flow) writes credentials to the rotating camera log on **every session**, as plain
+base64:
 
 ```text
 msgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64]]
 ```
 
-`password:` decodes to a 4-digit PIN and `securityA:` to a security-question answer — both are plain base64,
-trivially reversible. Present in most Clog files across the whole history on this rig. The logs live on the
-SD card at `/app/sd/system/log/`, readable by anyone with the card or with storage access.
+The logs live on the SD card at `/app/sd/system/log/`, readable by anyone with the card or with storage
+access, and eight credential-bearing evidence files are on `origin/main` of a **PUBLIC** repo dating to at
+least 2026-09-29 (list in HANDOFF.md).
 
-**The exposure is already live.** Eight credential-bearing evidence files are on `origin/main` and the repo
-is **PUBLIC**, dating back to at least 2026-09-29 (full list in HANDOFF.md). Deleting them from HEAD does not
-fix it — they persist in git history, in GitHub's caches, and in any clone or fork made since September.
+**Severity, corrected after decoding the values.** The logged PIN is a trivial well-known four-digit default,
+so there is probably nothing to rotate and this is *not* the "do it before anything else" item I first called
+it. Two caveats keep it worth fixing:
 
-Order of operations:
+- The **security answer** decodes to 16 characters that look like a genuine answer (a personal name), not a
+  default. That field pairs with the PIN to defeat account recovery and is the one actually worth caring about.
+- Whether the logged PIN is this account's live value is knowable only to the operator. If it was never
+  changed there is nothing to rotate; if the real PIN differs, the logged value is stale and harmless.
 
-1. **Rotate the Benro account PIN and security answer now.** Treat both as compromised.
-2. Redact the eight files at HEAD and add a CI guard failing on credential-shaped patterns in evidence.
-3. Decide separately whether a history rewrite is worth it — it invalidates every SHA after the rewrite
-   point, including the release/registry references this project depends on. Probably not worth it for a
-   low-value PIN once rotated.
+So the durable defect is the **logging behaviour**, not these particular values: `code:790` writes account
+material into a world-readable rotating log on every session, which will keep happening for any account that
+uses a non-default PIN. Fix that, redact the eight files at HEAD, and add a CI guard failing on
+credential-shaped patterns in evidence. A history rewrite is not worth it here — it invalidates every SHA
+after the rewrite point, including the release/registry references this project depends on, for a default PIN.
 
 **Do not file this as a public issue.** An issue naming the affected paths would advertise exactly where to
-look. Track it privately until the files and history are dealt with.
+look. Track it privately until the files are redacted.
 
 Related but distinct: **#290** covers a Wi-Fi password in *process arguments*. This is credential material in
-*persisted logs*, which is a wider exposure — and unlike #290 it has already shipped publicly.
+*persisted logs*, which is a wider exposure.
 
 ### N2. `SP_ClientCtxDel:not find this is id[N]` — vendor socket lifecycle race
 307 occurrences across Mlogs. Pattern:
@@ -105,7 +121,7 @@ order follows its queue and puts the highest-leverage fix first.
 
 | # | Task | Issue | Why here | Needs rig? |
 |---|---|---|---|---|
-| 0 | **Rotate Benro account PIN + security answer; redact the eight published evidence files; add CI guard** | N1 (private) | Credentials are already public on a PUBLIC repo since 2026-09-29. Only item with external blast radius — do it before anything else. | no |
+| 0 | Redact the eight published evidence files at HEAD + CI guard on credential-shaped patterns | N1 (private) | The *logging defect* is the durable problem. The leaked PIN turned out to be a trivial default, so this is no longer an emergency — but close it before more evidence accumulates. | no |
 | 0b | Record baseline: v118 identity, loader MD5 `222a09f0…`, kit stamp, archived packet `d078695cf` | #361/#375 task 00 | Already done this session; paste into #375 checkpoint. | no |
 | 1 | Credential redaction at the vendor write site (never log `password:`/`securityA:`) | N1 (private) | Independent of camera work, no hardware risk. | no |
 | 2 | Instrument config-read cost on v118; confirm #389 still ~62 ops | #389/#369 (task 03) | Must measure before optimising; v118 gate changes may have altered the count. | **yes** |
@@ -160,7 +176,7 @@ Then **redact before committing** — same command as HANDOFF.md.
 - **Redact every device log bundle before commit.** No exceptions — credentials are already public precisely
   because this was never enforced (N1).
 - **Never quote credential values**, not in prose, not in issues, not inside a redaction example. Name the
-  field, never the value.
+  field, never the value. (This plan deliberately does not reproduce them, even though they are already public.)
 - **Serial only** per #375: one branch, one task, checkpoint in #375 after each.
 - v118 is archived (`d078695cf`, MD5 `b0e59b08…` verified byte-identical) and v117 remains the fallback
   (`8719db93f`). Rollback is available before any of this starts.
