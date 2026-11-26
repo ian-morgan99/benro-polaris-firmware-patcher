@@ -43,8 +43,22 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 "$SSH" 'test -x /app/bin/polestar_app &
 ssh -o BatchMode=yes "$SSH" 'cat /app/openpolaris-libgphoto2-provenance.txt' > "$TMP_DIR/device-provenance.txt"
 ssh -o BatchMode=yes "$SSH" 'cat /app/FwVer' > "$TMP_DIR/device-fwver.txt"
 
+# The astro kit is not part of appfs, so a correct FwVer says nothing about it.
+# Fetch its stamp when the candidate carries a kit; absence on the device is a
+# real finding, not an error to tolerate -- the Python side fails closed on it.
+CANDIDATE_KIT="$BUILD_DIR/astro-bundle/COPY-TO-SD-CARD-ROOT/polaris-astro/VERSION"
+KIT_ARGS=()
+if [ -f "$CANDIDATE_KIT" ]; then
+  KIT_ARGS+=(--candidate-kit-version "$CANDIDATE_KIT")
+  if ssh -o BatchMode=yes "$SSH" 'test -f /app/sd/polaris-astro/VERSION' 2>/dev/null; then
+    ssh -o BatchMode=yes "$SSH" 'cat /app/sd/polaris-astro/VERSION' > "$TMP_DIR/device-kit-version.txt"
+    KIT_ARGS+=(--device-kit-version "$TMP_DIR/device-kit-version.txt")
+  fi
+fi
+
 python3 "$(dirname "$0")/verify_installed_build.py" \
   --candidate-provenance "$BUILD_DIR/build-source-provenance.txt" \
   --device-provenance "$TMP_DIR/device-provenance.txt" \
   --candidate-fwver "$BUILD_DIR/FwPkt/FwVer" \
-  --device-fwver "$TMP_DIR/device-fwver.txt"
+  --device-fwver "$TMP_DIR/device-fwver.txt" \
+  "${KIT_ARGS[@]+"${KIT_ARGS[@]}"}"
