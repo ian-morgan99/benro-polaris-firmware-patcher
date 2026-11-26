@@ -1,0 +1,171 @@
+# K-1 II issue plan — v118 findings mapped to existing issues, serial execution order
+
+Base: `astro-v118-stage2-gate-wedge-fix-20261126` (`6.0.0.54.118`), rig `d13e86`, K-1 II.
+Evidence: `docs/evidence/k1ii-overnight-20261126/` (redacted logs + HANDOFF.md).
+Repo: `ian-morgan99/benro-polaris-firmware-patcher`.
+
+## Read this first: most of it is already tracked
+
+I checked every symptom against the issue tracker before planning anything. The important result is that
+**the K-1 II symptoms are not new** — they have open issues with prior evidence, and v118 mostly adds
+confirmation rather than new defects. Planning "fix 5 new bugs" would have duplicated work and ignored
+existing acceptance criteria.
+
+Two findings genuinely change what should be done first:
+
+1. **#389 explains the live view flicker.** A single `gp_camera_get_config` for ONE widget on a live K-1 II
+   costs **7.85 s / ~62 PTP round-trips** because devprop caching is flushed and all 30 descriptors are
+   refetched per call. That is almost certainly what holds the gate for seconds — my `held_ms=1276..4557`
+   observations are downstream *symptoms* of #389, not a gate defect. **Do not tune the gate lease/budget
+   to chase the flicker.** Fix the config-read cost and the flicker should collapse with it.
+2. **#359 already covers AF**, including the exact `sp_Gphoto_Init → updateCameraAutoFocus → -1` chain, with
+   v104 evidence. My contribution is that it still fails on v118 with **zero successes ever** across every
+   log on the rig, and that it fails in a file with **zero gate refusals** — which retires the contention
+   hypothesis #359 leaves open.
+
+## Triage: symptom → existing issue → what v118 adds
+
+| Symptom | Issue | Status | What v118 evidence adds |
+|---|---|---|---|
+| LV flickers off/on every 3–4 s | **#389** (+ #369) | open | `held_ms` 1276–4557 ms on `0x100540` = `STAGE2_CONFIG_WAIT_RETURN`. Confirms the 7.85 s config cost is now *bounded and recovering* instead of wedging. Symptom, not cause. |
+| AF "trying but not working" | **#359** (+ #146/#147) | open | Fails on v118 too. `ret:-1` in **every** log file containing an attempt, 0 successes ever. Fails with **0 refusals** in the same file (`Clog_000033`) → contention ruled out. Vendor `polestar_app`, not our code. |
+| Focus peaking garbles lower half | **#363** (+ #383) | open | #363 already records K-1 II **>50%** vs K-3 III ~20 px. Confirms it survives to v118. No device-side log evidence exists — needs live repro. |
+| RAW+JPEG shown as RAW (#362) | **#362** | open | Detection works (`companions=1` on every dual-format capture, fresh boot included). `gp_camera_get_extra_capture_files` still has **no consumer**. |
+| Negative capture durations | **#315** | open | #315 already logs `capture end -14660 ms`. v118 adds scale: **32 negative, 0 positive** across every log ever written on this rig — it is *every* capture, not one instance, and persists to v118. |
+| Shutter says "processing" before actuation | **#315** | open | #315's title is literally "shutter release timing wrong". The K-1 II vs K-3 III **ordering difference** is the only part not captured — comment on #315 rather than filing new. |
+| Old iPad crashes Benro Connect | client app | out of scope | No device-side crash text at all. iPhone/Android fine. Not Stage-2. |
+| Clients dropping out | **#360** (+ new) | partial | `SP_ClientCtxDel:not find this is id[N]` × **307**, open+close in the same millisecond. Vendor socket bookkeeping race — not tracked as its own defect. |
+
+## Genuinely new — but read N1 first
+
+### N1. SECURITY: account password and security answer are logged in base64 — **already published publicly**
+
+Do this before any camera work. `code:790` (the account flow) writes credentials to the rotating camera log
+on **every session**, as plain base64:
+
+```text
+msgToApp success;type[2],code[790],val[step:1;password:[REDACTED-B64];securityQ:3;securityA:[REDACTED-B64]]
+```
+
+`password:` decodes to a 4-digit PIN and `securityA:` to a security-question answer — both are plain base64,
+trivially reversible. Present in most Clog files across the whole history on this rig. The logs live on the
+SD card at `/app/sd/system/log/`, readable by anyone with the card or with storage access.
+
+**The exposure is already live.** Eight credential-bearing evidence files are on `origin/main` and the repo
+is **PUBLIC**, dating back to at least 2026-09-29 (full list in HANDOFF.md). Deleting them from HEAD does not
+fix it — they persist in git history, in GitHub's caches, and in any clone or fork made since September.
+
+Order of operations:
+
+1. **Rotate the Benro account PIN and security answer now.** Treat both as compromised.
+2. Redact the eight files at HEAD and add a CI guard failing on credential-shaped patterns in evidence.
+3. Decide separately whether a history rewrite is worth it — it invalidates every SHA after the rewrite
+   point, including the release/registry references this project depends on. Probably not worth it for a
+   low-value PIN once rotated.
+
+**Do not file this as a public issue.** An issue naming the affected paths would advertise exactly where to
+look. Track it privately until the files and history are dealt with.
+
+Related but distinct: **#290** covers a Wi-Fi password in *process arguments*. This is credential material in
+*persisted logs*, which is a wider exposure — and unlike #290 it has already shipped publicly.
+
+### N2. `SP_ClientCtxDel:not find this is id[N]` — vendor socket lifecycle race
+307 occurrences across Mlogs. Pattern:
+
+```text
+SOCKET_ACCEPT(201) [id=38 192.168.0.4:55860] s_u32ClientNum[2]
+SOCKET_OPEN(201)   [id=38] start
+SOCKET_CLOSE(201)  [id=38] s_u32ClientNum[1]
+ERROR SP_ClientCtxDel[392]: not find this is id[38]
+```
+
+Open and close land in the same millisecond and the context is already gone. Best device-side candidate for
+the "clients dropping out" report. Vendor `polestar_app`; scope is to characterise and correlate, not patch.
+
+### N3. Shutter state ordering differs between K-1 II and K-3 III — **comment on #315, do not file**
+Red → *image processing* → actuation on K-1 II; previously red → actuate → processing. #315 already covers
+"shutter release timing wrong" with the same negative-duration arithmetic, so this is a comment there, not
+a new issue. Hypothesis only: negative durations may let a caller treat a capture as instantly complete.
+`ptp=0x2001` on both preconditions and initiate, so the vendor ops succeeded. **Needs the K-3 III
+comparison before it is called a regression.**
+
+### N4. Release-process gaps found while verifying this install (already fixed here)
+Worth issues so the fixes get reviewed rather than landing silently:
+- Kit identity was never verified: rig ran `.118` with the **v117** kit stamped and `verify-installed-build.sh`
+  returned PASS. Fixed in `791ab779` (fails closed on mismatch/absence, 4 synthetic cases).
+- Both rig tools grepped `/app/Clog.txt`, which does not exist on `.115+`, so they reported **0 refusals**
+  against an actual 61. Fixed in `17d093aa` (unknown now reports UNKNOWN, never 0).
+- `release-fwpkt.sh` exits at `[5/6]` when the AP flaps during the 900 s wait, silently skipping `[7/7]`
+  kit install even though the reflash succeeded. **Not fixed** — this is the one that actually bit us.
+
+## Serial execution order for the overnight run
+
+`#375` mandates strictly serial, single-agent, one branch/PR at a time, checkpoint after each task. This
+order follows its queue and puts the highest-leverage fix first.
+
+| # | Task | Issue | Why here | Needs rig? |
+|---|---|---|---|---|
+| 0 | **Rotate Benro account PIN + security answer; redact the eight published evidence files; add CI guard** | N1 (private) | Credentials are already public on a PUBLIC repo since 2026-09-29. Only item with external blast radius — do it before anything else. | no |
+| 0b | Record baseline: v118 identity, loader MD5 `222a09f0…`, kit stamp, archived packet `d078695cf` | #361/#375 task 00 | Already done this session; paste into #375 checkpoint. | no |
+| 1 | Credential redaction at the vendor write site (never log `password:`/`securityA:`) | N1 (private) | Independent of camera work, no hardware risk. | no |
+| 2 | Instrument config-read cost on v118; confirm #389 still ~62 ops | #389/#369 (task 03) | Must measure before optimising; v118 gate changes may have altered the count. | **yes** |
+| 3 | Cache `GetDevicePropDesc` per session; build widget tree once | #389 (task 04) | The dominant K-1 II latency source. Expected to collapse LV flicker *and* p95=3.64 s. | partial |
+| 4 | Batch `GetAllConditions` | #369 | Cheap only after step 3, per #389's own note. | partial |
+| 5 | RAW+JPEG: wire a consumer for `gp_camera_get_extra_capture_files` | #362 (task 11) | Detection already proven on v118; the gap is consumption, not discovery. | **yes** |
+| 6 | Bulb end-to-end + cancellation | #145/#251/#317 (task 10) | Never verified on v118 at all. Highest untested risk. | **yes** |
+| 7 | LV frame corruption: characterise peaking repro | #363/#359 (task 08) | Needs live capture; cannot be diagnosed from logs. | **yes** |
+| 8 | AF: prove/disprove our opcode-311 kit path works independently of vendor AF | #359/#146 | Determines whether this is upstream-report-only or ours to route. | **yes** |
+| 9 | Capture-duration arithmetic + ordering comparison | #315 | Fix the negative durations (every capture, not one case), then re-test ordering on both bodies and post the K-1 II/K-3 III difference as a comment on #315. | **yes** |
+| 10 | N2 socket race characterisation | new/#360 | Correlate with dropouts; vendor-side, diagnostic only. | no |
+| 11 | `release-fwpkt.sh`: run kit install even after a lost connection | N4 | Prevents a repeat of the stale-kit install. | no |
+
+Steps 2, 5–9 need the rig. Steps 1, 4(partial), 10, 11 are offline — do those if the rig goes dark.
+
+## What the K-3 III session must capture (do this before any code)
+
+The gate regression hit **every** model on `.115`–`.117`; only the K-1 II has been exercised on v118. Until
+the K-3 III passes, v118 is not cross-model qualified — that is the single biggest gap in its status.
+
+```bash
+# 1. identity + kit first, always (kit check now fails closed)
+./scripts/verify-installed-build.sh out/astro-v118-stage2-gate-wedge-fix-20261126
+
+# 2. gate under load — refusal counts are honest now, read them
+python3 scripts/stress-config-gate.py --ssh-host 192.168.0.1 --ipolar-host 192.168.0.1 \
+    --clients 8 --rounds 4
+
+# 3. config-read cost: is #389 still ~62 PTP ops / ~7.85 s on this body?
+ssh root@192.168.0.1 'ls -t /app/sd/system/log/Clog_*.log | head -1 | xargs sed "s/\x1b\[[0-9;]*m//g" \
+  | grep -acE "GetDevicePropDesc|GetAllConditions"'
+
+# 4. AF: does the vendor path fail identically on K-3 III?
+ssh root@192.168.0.1 'ls -t /app/sd/system/log/Clog_*.log | head -1 | xargs sed "s/\x1b\[[0-9;]*m//g" \
+  | grep -aE "updateCameraAutoFocus|change focus mode" | tail -20'
+
+# 5. capture ordering + duration sign (the #315/N3 comparison)
+ssh root@192.168.0.1 'ls -t /app/sd/system/log/Clog_*.log | head -1 | xargs sed "s/\x1b\[[0-9;]*m//g" \
+  | grep -aE "capture=|capture end|get file to buffer" | tail -20'
+
+# 6. peaking corruption extent on this body (compare to K-1 II >50%)
+```
+
+Then **redact before committing** — same command as HANDOFF.md.
+
+## Guardrails
+
+- **Do not tune the gate lease or budget to fix the flicker.** #389 is the cause; the gate is now behaving
+  correctly (recovers, `stolen=0`, depth bounded at 1).
+- **Do not attribute the flicker, peaking corruption, AF failure, or negative durations to v118.** All four
+  predate it in this rig's own logs.
+- **Redact every device log bundle before commit.** No exceptions — credentials are already public precisely
+  because this was never enforced (N1).
+- **Never quote credential values**, not in prose, not in issues, not inside a redaction example. Name the
+  field, never the value.
+- **Serial only** per #375: one branch, one task, checkpoint in #375 after each.
+- v118 is archived (`d078695cf`, MD5 `b0e59b08…` verified byte-identical) and v117 remains the fallback
+  (`8719db93f`). Rollback is available before any of this starts.
+
+## Not verified — do not record as fixed
+
+Bulb end-to-end; RAW+JPEG delivery; LV frame delivery as a measured rate; cross-model qualification;
+whether our kit AF path works at all.
