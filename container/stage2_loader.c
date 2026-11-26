@@ -2168,13 +2168,20 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
      * capture image." for any non-zero result but then returns only for an
      * explicit allowlist (-6, -3, -112, -115, -53, -60, -110, -114).  Every
      * other code falls through to the download path and is reported upstream as
-     * a successful capture.  GP_ERROR_FIXED_LIMIT_EXCEEDED (-8), which this
-     * libgphoto2 produces for PTP_RC_StoreFull (0x200c), is not on that list:
-     * two captures on the K-1 II rig returned gp=-8 and both reached the client
-     * as "captureImage ret 0" with no file on the card.  Remap it onto
-     * GP_ERROR_NO_SPACE (-115), which is on the list and is the correct
-     * semantic for a full camera card, so the failure surfaces instead of
-     * silently dropping a frame from an astro stack. */
+     * a successful capture.  GP_ERROR_FIXED_LIMIT_EXCEEDED (-8) is not on that
+     * list, and this libgphoto2 produces it from six places:
+     *   library.c:126          PTP_RC_StoreFull (0x200c) -- camera card full
+     *   pentax-publication.c:40  publication slot index out of range
+     *   pentax-utils.c:1397/1426 requested size exceeds the capture buffer
+     *   pentax-utils.c:1481      formatted filename longer than the buffer
+     *   pentax-utils.c:1700      runaway command-count guard (>100000)
+     * Two captures on the K-1 II rig returned gp=-8 and both reached the client
+     * as "captureImage ret 0" with no file on the card, while codes on the list
+     * (-110 x14, -112 x3) propagated normally.  Remap it onto
+     * GP_ERROR_NO_SPACE (-115), which is on the list.  That code is exact for
+     * StoreFull and approximate for the other five, but all six are genuine
+     * failures that must never be reported as a successful exposure, and
+     * surfacing them beats silently dropping a frame from an astro stack. */
     if (ret == STAGE2_GP_ERROR_FIXED_LIMIT_EXCEEDED &&
         stage2_capture_storefull_remap_enabled()) {
         fprintf(stderr, "[stage2] capture-outcome=storefull ret=-8 -> -115 "

@@ -244,6 +244,21 @@ still logs the raw `-8`, so a reader can tell what the core did rather than only
 `stage2_capture_slot_target()` now installs the wrapper for this mode too — that silent-install gap is what made
 the #183 guard's deployment unverifiable earlier.
 
+**Scope of the remap is wider than a full card.** This libgphoto2 produces `-8` from six places, all of which
+would have been swallowed:
+
+| site | meaning |
+|---|---|
+| `library.c:126` | `PTP_RC_StoreFull` (0x200c) — camera card full |
+| `pentax-publication.c:40` | publication slot index out of range |
+| `pentax-utils.c:1397` / `:1426` | requested size exceeds the capture buffer |
+| `pentax-utils.c:1481` | formatted filename longer than the buffer |
+| `pentax-utils.c:1700` | runaway command-count guard (>100000) |
+
+`-115` is exact for StoreFull and only approximate for the other five, but all six are genuine failures that must
+never be reported as a successful exposure — surfacing them under an imperfect code beats silently dropping a
+frame from an astro stack.
+
 ### What is verified, and what is inferred
 
 **Verified on the rig:** a negative return from pgphoto becomes a `val[state:-N;…]` frame in the client-facing
