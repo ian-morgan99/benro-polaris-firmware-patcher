@@ -1,0 +1,13 @@
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=f48a05e08b54d6d433a556c2df512987a51ce742
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=e0464f394603436424656d2a928f03437621d516
+patcher_dirty_diff_hash=
+selected_camlibs=ptp2,pentax
+legacy_usbscsi=1
+build_id=astro-v117-k3iii-late-arrival-20261125
+display_fwver=6.0.0.54.117

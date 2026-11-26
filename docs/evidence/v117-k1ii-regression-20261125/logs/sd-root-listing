@@ -1,0 +1,36 @@
+total 19712
+drwxr-xr-x   26 root     root         32768 Nov 25 17:27 .
+drwxr-xr-x   13 root     root          1832 Nov 25 17:27 ..
+drwxr-xr-x    3 root     root         32768 Nov 21 12:27 .FwPkt-incomplete-20261121
+drwxr-xr-x    3 root     root         32768 Nov 21 13:36 .FwPkt-incomplete-after-reboot-20261121
+drwxr-xr-x    4 root     root         32768 Nov 11 17:54 .Trash-1000
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 .disk
+-rwxr-xr-x    1 root     root         27267 Mar 17  2026 DUAL_BOOT_PLAN.md
+drwxr-xr-x    3 root     root         32768 Mar 17  2026 EFI
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 HDR
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 Lapse
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 System Volume Information
+-rwxr-xr-x    1 root     root          6658 Mar 26  2026 WSL2_VLLM_WINDOWS.md
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 [boot]
+drwxr-xr-x    2 root     root         32768 Nov 25 16:03 astrometry
+-rwxr-xr-x    1 root     root         34494 Mar 17  2026 autorun.ico
+-rwxr-xr-x    1 root     root           236 Mar 17  2026 autorun.inf
+drwxr-xr-x    3 root     root         32768 Mar 17  2026 boot
+-rwxr-xr-x    1 root     root          2048 Mar 17  2026 boot.catalog
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 casper
+drwxr-xr-x    3 root     root         32768 Mar 17  2026 dists
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 focusStack
+-rwxr-xr-x    1 root     root      18880016 Oct 24  2025 fwdc240b.bin
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 install
+-rwxr-xr-x    1 root     root         50518 Mar 17  2026 md5sum.txt
+drwxr-xr-x    2 root     root         32768 Nov 21 21:00 normal
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 panorama
+drwxr-xr-x    4 root     root         32768 Nov 25 18:22 polaris-astro
+drwxr-xr-x    2 root     root         32768 Nov 25 17:27 polaris-wifi
+drwxr-xr-x    4 root     root         32768 Mar 17  2026 pool
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 preseed
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 starskyStack
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 sun
+drwxr-xr-x    3 root     root         32768 Nov 21 01:09 system
+-rwxr-xr-x    1 root     root             1 Mar 17  2026 ubuntu
+-rwxr-xr-x    1 root     root        163765 Nov 26 01:08 wifi-watch.log

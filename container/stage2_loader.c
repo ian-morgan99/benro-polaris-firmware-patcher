@@ -274,11 +274,15 @@ static int native_claim_from(unsigned site, int budget)
                                   site, op, budget, native_poll_pause);
     if (ret < 0 && op != STAGE2_CAMERA_PREVIEW)
         fprintf(stderr, "[stage2] camera admission refused: site=%x kind=%u owner_site=%x "
-                "last_owner_kind=%u generation=%u camera_present=%u budget=%d\n", site, (unsigned)op,
+                "last_owner_kind=%u generation=%u camera_present=%u budget=%d "
+                "tid=%d owner_tid=%d depth=%u held_ms=%u stolen=%u\n", site, (unsigned)op,
                 atomic_load(&native_gate.owner_site), atomic_load(&native_gate.owner_kind),
                 atomic_load(&native_gate.generation),
                 __atomic_load_n((uintptr_t *)STAGE2_NATIVE_CAMERA_WORD, __ATOMIC_ACQUIRE) != 0,
-                budget);
+                budget, (int)syscall(SYS_gettid), atomic_load(&native_gate.owner_tid),
+                atomic_load(&native_gate.owner_depth),
+                stage2_camera_now_ms() - atomic_load(&native_gate.lease_started_ms),
+                atomic_load(&native_gate.leases_stolen));
     return ret;
 }
 
@@ -1099,7 +1103,14 @@ static int stage2_shim_gp_camera_init(void *camera, void *context)
     stage2_trace_init_entry(STAGE2_TR_CORE, "gp_camera_init -> real core", 0);
 
 #ifdef STAGE2_NATIVE_CAMERA_WORD
-    atomic_fetch_add(&native_gate.generation, 1);
+    /* A new session ends every operation that could still hold a claim: the
+     * camera the previous one was taken against is gone. Bumping the generation
+     * alone left owner_tid and the busy word in place, so the fresh session
+     * inherited a dead session's claim and refused everything forever -- the
+     * v115..v117 fault, visible in the field as every refusal reading
+     * generation=1. Clear the claim too. */
+    stage2_camera_gate_reset(&native_gate,
+                             (unsigned *)STAGE2_NATIVE_BUSY_WORD);
 #endif
     clear_usb_binding();
     int ret = g_real_gp_camera_init(camera, context);

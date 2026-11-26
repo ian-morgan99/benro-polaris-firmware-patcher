@@ -1,6 +1,7 @@
 #include "stage2_policy.h"
 
 #include <assert.h>
+#include <stddef.h>
 
 static struct stage2_camera_gate gate;
 static uintptr_t camera = 1;
@@ -14,6 +15,15 @@ static int config_polls;
 static void config_poll(void)
 {
     config_polls++;
+}
+
+/* Counts how long the caller had to wait, so a test can assert that an idle gate
+ * admits immediately instead of burning its budget first. */
+static unsigned counted_polls;
+
+static void count_poll(void)
+{
+    counted_polls++;
 }
 
 static void unexpected_poll(void)
@@ -79,10 +89,177 @@ static void test_admission(void)
 	assert(!busy && !atomic_load(&gate.waiting_controls));
 }
 
+/* The K-1 II / K-3 III field failure (v115-v117): one native operation takes the
+ * gate and its release never arrives, so every later request is refused forever.
+ * Three independent defects made that permanent, and each has its own test here.
+ */
+
+/* Defect 1 -- the gate was not reentrant. A native handler that already holds the
+ * claim and then reaches a second waitCameraIdle (deal_camera_control_handler ->
+ * setCameraConfigWithCommand -> wait) was refused by its OWN claim. In the field
+ * log this is unmistakable: owner_site equals the refusing site, 24 times over. */
+static void test_reentrancy(void)
+{
+	struct stage2_camera_gate g = { 0 };
+	uintptr_t cam = 1;
+	unsigned busy = 0;
+
+	assert(stage2_camera_claim(&g, &cam, &busy, 7, 0x100540,
+	                           STAGE2_CAMERA_SET, 1, unexpected_poll) == 0);
+	assert(busy == 1 && atomic_load(&g.owner_tid) == 7);
+
+	/* The nested wait by the same thread must be admitted, not refused. */
+	assert(stage2_camera_claim(&g, &cam, &busy, 7, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 1, unexpected_poll) == 0);
+	assert(atomic_load(&g.owner_depth) == 2);
+	assert(busy == 1 && atomic_load(&g.owner_tid) == 7);
+
+	/* A different thread is still locked out while the outer claim is live. */
+	counted_polls = 0;
+	assert(stage2_camera_claim(&g, &cam, &busy, 8, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 1, count_poll) == -1);
+	assert(counted_polls == 1);
+
+	/* The inner release must not free the gate: the outer claim is still live. */
+	stage2_camera_release(&g, &busy, 7);
+	assert(busy == 1 && atomic_load(&g.owner_tid) == 7);
+	assert(atomic_load(&g.owner_depth) == 1);
+
+	/* Only the outermost release frees it. */
+	stage2_camera_release(&g, &busy, 7);
+	assert(!busy && !atomic_load(&g.owner_tid));
+	assert(!atomic_load(&g.owner_depth));
+
+	/* A release from a thread that never owned it cannot free a nested claim
+	 * either, and must not corrupt the depth. */
+	assert(stage2_camera_claim(&g, &cam, &busy, 7, 0x100540,
+	                           STAGE2_CAMERA_SET, 1, unexpected_poll) == 0);
+	assert(stage2_camera_claim(&g, &cam, &busy, 7, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 1, unexpected_poll) == 0);
+	stage2_camera_release(&g, &busy, 99);
+	assert(busy == 1 && atomic_load(&g.owner_depth) == 2);
+	stage2_camera_release(&g, &busy, 7);
+	stage2_camera_release(&g, &busy, 7);
+	assert(!busy && !atomic_load(&g.owner_depth));
+}
+
+/* Defect 2 -- gp_camera_init bumped the generation but left the owner in place.
+ * A fresh session therefore inherited a claim belonging to a dead one, which is
+ * exactly why every refusal in the field log reads generation=1: the gate was
+ * armed once and never re-armed. */
+static void test_reset_clears_a_leaked_claim(void)
+{
+	struct stage2_camera_gate g = { 0 };
+	uintptr_t cam = 1;
+	unsigned busy = 0;
+
+	assert(stage2_camera_claim(&g, &cam, &busy, 3, 0x102cd4,
+	                           STAGE2_CAMERA_CONTROL, 1, unexpected_poll) == 0);
+	/* Simulate the leak: the owning operation returns without releasing. */
+	assert(stage2_camera_claim(&g, &cam, &busy, 4, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 1, count_poll) == -1);
+
+	/* A session reinitialise must hand the next request a clean gate. */
+	stage2_camera_gate_reset(&g, &busy);
+	assert(!busy && !atomic_load(&g.owner_tid) && !atomic_load(&g.owner_site));
+	assert(!atomic_load(&g.owner_depth) && !atomic_load(&g.waiting_controls));
+	assert(stage2_camera_claim(&g, &cam, &busy, 4, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 1, unexpected_poll) == 0);
+	stage2_camera_release(&g, &busy, 4);
+	assert(!busy);
+}
+
+/* Defect 3 -- nothing bounded a claim. If the release never arrives and no
+ * reinitialise happens, the refusal is permanent: the field log shows one owner
+ * holding for the whole 71-refusal window. A lease bounds it. The clock is
+ * injected so this is deterministic rather than timing-dependent. */
+static unsigned fake_now_ms;
+
+static unsigned fake_clock(void)
+{
+    return fake_now_ms;
+}
+
+static void test_lease_expires_a_leaked_claim(void)
+{
+	struct stage2_camera_gate g = { 0 };
+	uintptr_t cam = 1;
+	unsigned busy = 0;
+	unsigned saved = stage2_camera_lease_ms;
+
+	stage2_camera_set_clock(fake_clock);
+	stage2_camera_lease_ms = 1000;
+	fake_now_ms = 50000;
+
+	assert(stage2_camera_claim(&g, &cam, &busy, 5, 0x101b0c,
+	                           STAGE2_CAMERA_CONTROL, 1, unexpected_poll) == 0);
+	assert(atomic_load(&g.lease_started_ms) == 50000);
+
+	/* Inside the lease a second thread waits its budget and is refused, exactly
+	 * as before: a genuinely busy camera must not be stolen from. */
+	counted_polls = 0;
+	assert(stage2_camera_claim(&g, &cam, &busy, 6, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 3, count_poll) == -1);
+	assert(counted_polls == 3 && atomic_load(&g.leases_stolen) == 0);
+	assert(atomic_load(&g.owner_tid) == 5);
+
+	/* Past the lease the leaked claim is taken over on the first poll, not after
+	 * burning the whole budget, and the takeover is recorded for telemetry. */
+	fake_now_ms = 51001;
+	counted_polls = 0;
+	assert(stage2_camera_claim(&g, &cam, &busy, 6, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 500, count_poll) == 0);
+	assert(counted_polls == 0 && atomic_load(&g.owner_tid) == 6);
+	assert(atomic_load(&g.leases_stolen) == 1);
+	assert(atomic_load(&g.owner_depth) == 1);
+
+	/* The stale owner can no longer free the new claim, and cannot corrupt it. */
+	stage2_camera_release(&g, &busy, 5);
+	assert(busy == 1 && atomic_load(&g.owner_tid) == 6);
+	stage2_camera_release(&g, &busy, 6);
+	assert(!busy && !atomic_load(&g.owner_depth));
+
+	/* A lease of zero disables takeover entirely: the wedge returns to the old
+	 * permanent behaviour, which is the documented escape hatch. */
+	stage2_camera_lease_ms = 0;
+	fake_now_ms = 60000;
+	assert(stage2_camera_claim(&g, &cam, &busy, 7, 0x101b0c,
+	                           STAGE2_CAMERA_CONTROL, 1, unexpected_poll) == 0);
+	fake_now_ms = 999999;
+	counted_polls = 0;
+	assert(stage2_camera_claim(&g, &cam, &busy, 8, 0x100540,
+	                           STAGE2_CAMERA_CONFIG, 2, count_poll) == -1);
+	assert(counted_polls == 2 && atomic_load(&g.owner_tid) == 7);
+	stage2_camera_release(&g, &busy, 7);
+
+	stage2_camera_lease_ms = saved;
+	stage2_camera_set_clock(NULL);
+}
+
+/* A claim must be admitted with no polling at all when the gate is already free.
+ * Every refused control request used to burn its whole budget first, which is
+ * what turned "settings do not stick" into a visible multi-second stall. */
+static void test_idle_admission_is_immediate(void)
+{
+	struct stage2_camera_gate g = { 0 };
+	uintptr_t cam = 1;
+	unsigned busy = 0;
+
+	counted_polls = 0;
+	assert(stage2_camera_claim(&g, &cam, &busy, 9, 0x100540,
+	                           STAGE2_CAMERA_SET, 500, count_poll) == 0);
+	assert(counted_polls == 0);
+	stage2_camera_release(&g, &busy, 9);
+}
+
 int
 main(void)
 {
 	test_admission();
+	test_reentrancy();
+	test_reset_clears_a_leaked_claim();
+	test_lease_expires_a_leaked_claim();
+	test_idle_admission_is_immediate();
 	assert(stage2_model_uses_r5_shims("Canon:EOS R5m2"));
 	assert(stage2_model_uses_r5_shims("Canon:EOS 5Rm2"));
 	assert(!stage2_model_uses_r5_shims("Pentax:K-3 Mark III"));

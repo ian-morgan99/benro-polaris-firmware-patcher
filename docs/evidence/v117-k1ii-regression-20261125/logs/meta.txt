@@ -1,0 +1,79 @@
+== identity ==
+FwVer:6.0.0.54.117;date:2026.11.25;
+Linux (none) 4.9.37 #59 SMP Wed Sep 4 12:29:11 CST 2024 armv7l GNU/Linux
+ 01:09:10 up  7:41,  1 users,  load average: 1.12, 1.22, 1.19
+== provenance ==
+source_kind=git-directory
+requested_version=2.5.34
+actual_version=2.5.34
+git_commit=f48a05e08b54d6d433a556c2df512987a51ce742
+dirty_diff_hash=
+input_sha256=
+vanilla_source_explicit=0
+patcher_commit=e0464f394603436424656d2a928f03437621d516
+patcher_dirty_diff_hash=
+selected_camlibs=ptp2,pentax
+legacy_usbscsi=1
+build_id=astro-v117-k3iii-late-arrival-20261125
+display_fwver=6.0.0.54.117
+== processes ==
+  247 root       0:17 ./polestar_app
+21008 root       7:33 /app/lib/stage2/pgphoto.stage2ondisk
+== mounts (SD card) ==
+/dev/mmcblk0p1 /app/sd vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=continue 0 0
+== USB ==
+Bus 001 Device 001: ID 1d6b:0002
+Bus 001 Device 002: ID 1a40:0101
+Bus 002 Device 001: ID 1d6b:0003
+Bus 001 Device 003: ID 25fb:0183
+== network sockets ==
+  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode                                                     
+   0: 00000000:2382 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 1306 1 ee328b80 100 0 0 10 0                              
+   1: 00000000:1DC8 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 2197 1 edcf8b80 100 0 0 10 0                              
+   2: 00000000:1F90 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 33412 1 ee329cc0 100 0 0 10 0                             
+   3: 00000000:0050 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 1299 1 ee3285c0 100 0 0 10 0                              
+   4: 00000000:2711 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 2196 1 edcf85c0 100 0 0 10 0                              
+   5: 00000000:0016 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 1292 1 ee328000 100 0 0 10 0                              
+   6: 00000000:1F9A 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 2195 1 edcf8000 100 0 0 10 0                              
+   7: 0100A8C0:0016 0400A8C0:BF62 01 00000280:00000000 01:00000004 00000000     0        0 1269573 3 ee32ae00 22 4 1 10 -1                           
+   8: 0100007F:2382 0100007F:E632 01 00000000:00000000 02:00000070 00000000     0        0 1638 2 edcf9700 21 4 1 10 -1                              
+   9: 0100007F:2382 0100007F:E634 01 00000000:00000000 02:00000070 00000000     0        0 1648 2 edcfa280 21 4 27 10 -1                             
+  10: 0100007F:E634 0100007F:2382 01 00000000:00000000 00:00000000 00000000     0        0 2213 1 edcf9cc0 21 4 28 10 -1                             
+  11: 0100007F:E632 0100007F:2382 01 00000000:00000000 00:00000000 00000000     0        0 2206 1 edcf9140 21 4 28 10 -1                             
+== sd root ==
+total 19712
+drwxr-xr-x   26 root     root         32768 Nov 25 17:27 .
+drwxr-xr-x   13 root     root          1832 Nov 25 17:27 ..
+drwxr-xr-x    3 root     root         32768 Nov 21 12:27 .FwPkt-incomplete-20261121
+drwxr-xr-x    3 root     root         32768 Nov 21 13:36 .FwPkt-incomplete-after-reboot-20261121
+drwxr-xr-x    4 root     root         32768 Nov 11 17:54 .Trash-1000
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 .disk
+-rwxr-xr-x    1 root     root         27267 Mar 17  2026 DUAL_BOOT_PLAN.md
+drwxr-xr-x    3 root     root         32768 Mar 17  2026 EFI
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 HDR
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 Lapse
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 System Volume Information
+-rwxr-xr-x    1 root     root          6658 Mar 26  2026 WSL2_VLLM_WINDOWS.md
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 [boot]
+drwxr-xr-x    2 root     root         32768 Nov 25 16:03 astrometry
+-rwxr-xr-x    1 root     root         34494 Mar 17  2026 autorun.ico
+-rwxr-xr-x    1 root     root           236 Mar 17  2026 autorun.inf
+drwxr-xr-x    3 root     root         32768 Mar 17  2026 boot
+-rwxr-xr-x    1 root     root          2048 Mar 17  2026 boot.catalog
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 casper
+drwxr-xr-x    3 root     root         32768 Mar 17  2026 dists
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 focusStack
+-rwxr-xr-x    1 root     root      18880016 Oct 24  2025 fwdc240b.bin
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 install
+-rwxr-xr-x    1 root     root         50518 Mar 17  2026 md5sum.txt
+drwxr-xr-x    2 root     root         32768 Nov 21 21:00 normal
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 panorama
+drwxr-xr-x    4 root     root         32768 Nov 25 18:22 polaris-astro
+drwxr-xr-x    2 root     root         32768 Nov 25 17:27 polaris-wifi
+drwxr-xr-x    4 root     root         32768 Mar 17  2026 pool
+drwxr-xr-x    2 root     root         32768 Mar 17  2026 preseed
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 starskyStack
+drwxr-xr-x    2 root     root         32768 Nov 21 01:09 sun
+drwxr-xr-x    3 root     root         32768 Nov 21 01:09 system
+-rwxr-xr-x    1 root     root             1 Mar 17  2026 ubuntu
+-rwxr-xr-x    1 root     root        163765 Nov 26 01:08 wifi-watch.log

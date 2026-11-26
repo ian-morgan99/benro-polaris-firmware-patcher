@@ -1,13 +1,107 @@
 # Current repository state
 
+## 2026-11-25 — v117 INSTALLED and verified; parameters/shutter/liveview broken by the stage2 admission gate
+
+**Installed identity is now `FwVer:6.0.0.54.117;date:2026.11.25;`.** Candidate
+`astro-v117-k3iii-late-arrival-20261125` was flashed through the supported path
+(`scripts/release/release-fwpkt.sh`). `out/astro-v117-k3iii-late-arrival-20261125/install-receipt.txt`
+records `install_status=installed-verified`, `zip_sha256=2629edf1…`, on-device MD5s
+verified, and `/proc/uptime` reset 167967 -> 28 (a real reflash, not an AP flap).
+The astro kit is `kit_status=installed-verified`. This supersedes every "v114 remains
+the installed identity" line below it.
+
+**The K-3 III late-arrival fix did not fix the rig, and the reason is now known.**
+With a K-1 II attached the body is recognised correctly —
+`model:pentax k-1 mark ii;state:1;storage:2;photoFormat:1` — so this was never a
+recognition fault. Every operation *after* recognition is refused:
+
+```
+[stage2] camera admission refused: site=100540 kind=2 owner_site=102cd4 last_owner_kind=0 generation=1 camera_present=1 budget=500
+```
+
+Root cause: **the stage2 camera gate leaks its claim.** `stage2_camera_release()` is
+tid-gated (`owner_tid == tid`), pgphoto runs 7 threads, and a CONTROL claim acquired
+at `0x102cd4` was never released — `owner_site=102cd4 last_owner_kind=0` persists
+across 7 consecutive refusals from a different site, and `generation=1` on all of them
+means `gp_camera_init` ran once and the gate was never re-armed. `owner_tid` stays
+non-zero forever, so every later config/set/preview CAS fails permanently.
+
+One leaked claim explains all four reported symptoms:
+
+- **parameters do not stick** — config reads answer the sentinel `-1`, then the head
+  serves a compiled-in fallback (`getCameraConfig from local configType N ret 0`);
+  the UI is showing defaults, not camera state, and SET cannot land either;
+- **liveview goes black then reconnecting** — `updateViewFinder enable:1 ret:-1`. Not
+  garbled, consistent with refusal rather than corrupt frames;
+- **5 s bulb shot fails** — the countdown is app-side, the capture dispatch is refused;
+- **K-1 II fails faster than K-3 III** — same gate, heavier control traffic wedges sooner.
+
+pgphoto is **not crashing**: one stable pid, 7 threads, fd 9 open on the camera node,
+supervisor up since boot, no core file. "Connect the camera" is a control-plane refusal.
+
+**Regression window: `.115`..`.117`. `.114` is clean.** `git log -S native_claim_from
+-- container/stage2_loader.c` yields exactly one commit, `fbfa133a` (2026-11-22, "fix
+(stage2): native camera claim via stage2_camera_claim gate"). Testing it against every
+recorded patcher pin: `.114` (`87032af4`) does **not** contain it; `.115`
+(`f67c6baf`), `.116` (`65785529`) and `.117` (`e0464f39`) all do. This is why the
+parameters "were settable some time ago" — `.114` was the last build without the gate.
+**v117 did not introduce this; it inherited it.**
+
+`container/test_stage2_native_admission.c` covers same-thread acquire/release and a
+competing preview but has **no cross-thread release case**, which is how `fbfa133a`
+shipped. Full diagnosis, evidence histograms and the mutation-checked fix are in
+[evidence/v117-k1ii-regression-20261125/FINDINGS.md](evidence/v117-k1ii-regression-20261125/FINDINGS.md).
+
+**Fix implemented, offline-qualified, not yet on a device.** Three defects were found and
+corrected in `container/stage2_policy.{c,h}`: the gate was not reentrant (a thread already
+holding a claim was refused by its own claim — this is the `owner_site == refusing site`
+group, 24 of 71); `gp_camera_init` bumped `generation` but left `owner_tid`/`busy_word` in
+place, so a fresh session inherited a dead session's claim (this is why all 71 read
+`generation=1`); and nothing bounded a claim, so a missed tid-matched release wedged the
+camera forever. The gate is now reentrant with depth tracking, reset clears the claim on
+reinitialise, and claims carry a 120 s lease after which a stale owner is taken over and
+counted in `leases_stolen`. Four new tests cover these and each was mutation-checked — removing
+any one fix makes the suite fail. `./tests/run_prerelease_gate.sh` reports 17 passed, 0 failed,
+2 skipped. **No flashed build contains this yet**; it ships as `.118`.
+
+**Astrometry indexes were missing on the device and have been restored.**
+`/app/sd/astrometry` was an empty directory despite the astro kit being installed. It now
+holds all 10 indexes (44.3 MB) with `sha256sum -c indexes.sha256` returning 10/10 OK.
+Two transfer traps worth remembering: dropbear has no sftp subsystem, so plain `scp`
+dies with `Connection closed` and needs `-O`; and `/tmp` is on the 31 MB ubifs rootfs,
+so a 30 MB archive fails there with `No space left on device` even though `/app/sd` has
+53 GB free — stream it straight in with `tar -cf - astrometry | ssh … 'cd /app/sd && tar -xf -'`.
+
+**Investigation was cut short by connectivity, not by findings.** Mid-session `wlp8s0`
+dropped: full rescan returns no `polaris_*` SSID, `nmcli dev wifi connect polaris_d13e86`
+reports *No network with SSID found*, SSH to `192.168.0.1:22` is refused, and
+`192.168.0.1` still answers ping via a route through `192.168.68.1` — something else holds
+that address now. The local bind address `192.168.0.4` went with the interface, so
+`scripts/probe-config-gate.py` exits `Cannot assign requested address`. The K-1 II is still
+plugged in. Two things remain untested and are deliberately not guessed: which thread pair
+leaks the claim (needs live `/proc/<pid>/task/*` tracing), and the wire subtype for a
+parameter SET — nothing in this repo records it, so `probe-config-gate.py` is read-only by
+construction (see the double-fire warning in `scripts/probe-b-list-and-held-bulb.py`).
+
 ## 2026-11-24 — v116 built, gated GREEN with ARM, published; install still blocked
 
 Candidate `astro-v116-ptp-diagnosability-20261124` (`6.0.0.54.116`) is built, gated and
 published. Driver pin `be9da156f8adc0c1bf520c777636e50a712ea67a` (v115 pin plus one
 commit), patcher `65785529a87323e4ca19ba7d0b2f23410cedd5db`.
 `FwPkt.zip` sha256 `77ed82ccc9086c42ecbca48e81efaecd2ac2354cb656c19c70b08fe8a5e32987`,
-md5 `65c55b198bb3ce5b47b9d59111c91b75`; published to PrivateResearch and the remote
-digest re-read equals the build digest. Registry row added, so it is stageable.
+md5 `65c55b198bb3ce5b47b9d59111c91b75`. Registry row added, so the version is claimed.
+
+**Correction (2026-11-25): "published to PrivateResearch" was wrong and must not be
+relied on.** `PrivateResearch/firmware-packets/` has no `6.0.0.54.116` row — it stops at
+`astro-v111--webui-opens-20261117` / `6.0.0.54.114`. The only `k70_v116.zip` in that repo
+is **Pentax K-70 camera firmware**, unrelated to a Polaris `FwPkt`. What does exist is the
+local build output at `/home/ian/polaris-v101/out/astro-v116-ptp-diagnosability-20261124/`,
+whose `FwPkt.zip` digest matches the registry exactly. So the packet is real and recoverable,
+but it is **not deployable as-is**: that directory has only `FwPkt.zip`, `install-manifest.json`,
+`astro-candidate-manifest.json` and `arm-emulation-record.json`. `verify-candidate-identity.py
+--require-deployable` returns FAIL for the missing extracted `FwPkt/` tree and missing
+`build-source-provenance.txt`, and staging a bare zip is the issue #58 path that silently
+produces false "install succeeded" reports. Treat v116 as built-and-claimed, not published.
 
 Gate: 23 passed / 0 failed / 4 skipped at build time, then ARM emulation of Stage-2 run
 separately to the v115 standard — pass, 265/0 relocations, 100000/100000 instructions,
@@ -54,9 +148,12 @@ in v116: v116 is bound to patcher `65785529`, and `a49e252` is not an ancestor o
 cannot fix the K-3 III regression; it predates the fix.
 
 Process defect worth fixing: the build ran from throwaway clones under `/tmp` and those
-were deleted during cleanup, destroying the only local copy of the build output. The packet
-was recovered from PrivateResearch with a matching digest, but build output belongs under
-`out/` in the canonical tree.
+were deleted during cleanup, destroying the extracted `FwPkt/` tree and
+`build-source-provenance.txt`. Only `FwPkt.zip` survived, in
+`/home/ian/polaris-v101/out/astro-v116-ptp-diagnosability-20261124/`, with a digest matching
+the registry. Build output belongs under `out/` in the canonical tree, and the extracted tree
+plus provenance must be preserved alongside the zip — without them a candidate cannot pass
+`--require-deployable` and therefore cannot be installed by the supported path at all.
 
 ## 2026-11-22 — v115 build attempt blocked by a RED gate; nothing installed
 
