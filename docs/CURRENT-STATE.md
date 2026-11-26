@@ -1,5 +1,47 @@
 # Current repository state
 
+## 2026-11-26 (later) — the ~24 s is a real 20-second exposure: dial on B carries a 20 s Bulb timer
+
+EXIF read from the delivered files (`scripts/jpg-exif.py`, added):
+
+```
+SP_0016.jpg  ExposureTime 20.0   DateTimeOriginal 12:07:47   ISO 200  f/4.5
+SP_0017.jpg  ExposureTime 20.0   DateTimeOriginal 12:08:19
+SP_0018.jpg  ExposureTime 20.0   DateTimeOriginal 12:13:03
+```
+
+All three were requested as `00-01` (command 268 reports `V:15`, label `00-01`) and all three
+**exposed for 20 seconds**. So the ~23.7 s to `state:4` is not a stall, not transmission, and
+not our polling: it is the shutter being open. Timeline matches exactly — `will CAPTURE_IMAGE`
+12:13:02.574, EXIF exposure start 12:13:03, 20 s exposure ends 12:13:23, `state:4` ~12:13:26,
+`capture end` 12:13:30.
+
+**This was already recorded upstream and I missed it.** libgphoto2 `f48a05e0` (the running
+commit) is literally titled *"Record K-1 II Bulb timer versus shutter widget observations"* and
+states: raw mode 9 Bulb, `bulb-timer=yes`, **`bulb-seconds=20/1`**, while `shutterspeed` reports
+`00:01` — "These are different exposed fields; do not assume either widget verifies the active
+Bulb timer." I read that commit's source and never read its message. The 268 option list is a
+timed-shutter widget; it does not describe the B-mode bulb timer at all.
+
+**Consequences, all now consistent:**
+- The "3× regression vs 6.6–9.1 s" comparison was apples-to-oranges: those historical captures
+  were not in B mode with a 20 s bulb timer. In B mode ~24 s to `state:4` is *correct*.
+- The operator's point holds and is confirmed: transmission is exposure-independent — pgphoto's
+  own `get file to buffer` is 1–4 ms, and JPG/DNG cost the same. The variable part is exposure.
+- **Bulb retrieval failure now has a concrete candidate cause.** pgphoto logged `capture with bulb
+  5000 ms` and slept its own 5 s (`bulb time start`/`end`), then waited for a candidate. The camera
+  thinks the bulb timer is 20 s. A 5 s app-side stop against a 20 s camera-side timer is a
+  plausible reason the candidate never arrived inside pgphoto's budget. Not yet proven — testable.
+- `state:-1005` on the first capture correlates with a preceding bulb timeout, not with boot: a
+  clean reboot with no prior bulb attempt gave a **first-capture PASS at 30.1 s**.
+
+**What "fast" actually means here.** With the dial on B and a 20 s bulb timer, every capture is a
+20-second photograph; nothing in the stack can make that faster. To get short, predictable captures
+the dial must leave B — **M or TAv** — where timed indices are accepted (they are currently refused:
+`s:5 ret:-1`) and honoured. Expected then: ~1 s exposure + ~4–7 s processing/transfer, i.e. back to
+the documented 6.6–9.1 s. If B is wanted, the camera's Bulb Timer must be set to the intended length
+rather than trusting the 268 widget.
+
 ## 2026-11-26 (later) — fresh-boot test: no progressive degradation; first capture fails -1005
 
 Rebooted to a clean session (identity verified exit 0, `usb_fds=1`) and ran three captures
@@ -58,9 +100,11 @@ session. Nothing here needs fixing.
 | SP_0013 | — | 23.7 s | 29.9 s | 29.9 s |
 | SP_0014 (live view running) | 17 ms | 23.7 s | 29.8 s | 29.8 s |
 
-Historical K-1 II `capture end` values in `docs/evidence/` are **6.6–9.1 s**, so this is a
-~3× regression, not normal. Live view running changes nothing (23.7 s either way), so the
-preview backoff is not implicated.
+Historical K-1 II `capture end` values in `docs/evidence/` are **6.6–9.1 s**. I called this a
+~3× regression. **That comparison was wrong** — see the section above: those captures were not in
+B mode with a 20 s bulb timer, so they are not comparable to these runs. The numbers are kept
+because the harness and its distributions are still useful; the conclusion drawn from them was not.
+Live view running changes nothing (23.7 s either way), so the preview backoff is not implicated.
 
 **Where the time is.** pgphoto's own markers: `will CAPTURE_IMAGE` → `capture end -27414 ms`,
 then `get file to buffer -1 ms`. So essentially all of it is inside `gp_capture_image`, and
