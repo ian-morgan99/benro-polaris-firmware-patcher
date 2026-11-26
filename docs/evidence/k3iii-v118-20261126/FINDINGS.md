@@ -148,6 +148,40 @@ in the K-1 II bundle accumulated during a session in which I was probing heavily
 self-inflicted. Before filing anything on it, re-count with no probes running and see whether it still occurs
 from genuine clients (phone/tablet IPs).
 
+## Autosuspend: my first refutation was invalid; the second one is sound
+
+My earlier claim that autosuspend was ruled out was based on a **flawed test**. I wrote `on` to
+`usb1/power/control` and `1-1/power/control`, then enumerated — but with `autosuspend=2` in force the hub
+reverted to `control=auto` and re-suspended within ~2 s, before my enumeration ran. Later inspection confirms
+this: `usb1 control=on` persisted while `usb2` and `1-1` were back to `control=auto runtime=suspended`. So I
+was enumerating a hub that had gone back to sleep, and the "still nothing" result proved nothing.
+
+Redone properly. `/sys/module/usbcore/parameters/autosuspend` is writable at runtime (`0644 root`), so:
+
+```text
+echo -1 > /sys/module/usbcore/parameters/autosuspend   -> autosuspend now: -1
+echo on   > usb1/power/control, usb2/power/control, 1-1/power/control
+after 8 s: usb1 control=on runtime=active
+           usb2 control=on runtime=active
+           1-1  control=on runtime=active
+devices:   root hubs + 1a40:0101 only; pentax: 0
+```
+
+All three stayed awake and active for the whole window, and the body still did not enumerate. **Autosuspend
+is now genuinely excluded**, with valid evidence this time. Note `autosuspend=-1` is runtime-only and will not
+survive a reboot.
+
+## Decisive non-destructive test available before rebooting
+
+Plug the **K-1 II** back into that same socket. It enumerated there about an hour ago on `1-1.2`.
+
+- If the K-1 II **also** fails to enumerate now → the fault is rig-wide (port or USB stack), independent of
+  body. Proceed to reboot.
+- If the K-1 II enumerates fine → the fault is specific to this body+cable+port combination, which would be a
+  surprising result worth its own investigation, and a reboot becomes less likely to help.
+
+This costs one cable swap and no downtime, so do it before the reboot.
+
 ## Remaining causes for the absent camera
 
 1. **Wedged USB stack** after the K-1 II's removal — no logged errors, but nothing else is left standing and a
