@@ -5,15 +5,22 @@
 # copies a locally built loader into /app and relaunches pgphoto by hand; that process is not
 # attributable to any registered build, invalidates qualification evidence, and bypasses the wrapper's
 # pidfile/launch-lock/crash-backoff. Use `status` (read-only) freely; use `push` only with explicit
-# operator approval for one specific diagnostic, then reboot to restore the read-only image.
+# operator approval for one specific diagnostic, then restore by re-flashing the verified packet for
+# the release that was running -- rebooting does NOT undo this (see below).
 #
 # Hot-swap the Stage-2 loader on a live Polaris head without reflashing.
 #
 # The camera admission gate lives entirely in libpolaris_stage2.so, which pgphoto
 # loads via LD_PRELOAD. pgphoto itself is untouched, so a loader rebuild can be
 # verified on real hardware in seconds instead of a full flash cycle. This is a
-# development accelerator only: the shipped artifact is still a flashed FwPkt, and
-# a reboot restores whatever is in the read-only image.
+# development accelerator only: the shipped artifact is still a flashed FwPkt.
+#
+# CORRECTION (2026-11-26): this script previously claimed "a reboot restores whatever is in the
+# read-only image". That is false and was dangerous to believe. /app and / are both writable UBIFS
+# (ubi1:ubifs on /app, rw) and persist across reboot -- a loader pushed here stays pushed. There is
+# no read-only image, no A/B slot and no automatic fallback; the only way back is re-flashing the
+# digest-verified packet for the release that was running. See AGENTS.md "Patching must always be
+# reversible".
 #
 #   stage2-hotswap.sh push <loader.so>   -- back up, install, restart pgphoto
 #   stage2-hotswap.sh rollback           -- restore the backup and restart

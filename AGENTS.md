@@ -31,10 +31,40 @@ the *flashed* build already supports via a documented toggle is not permitted ei
 survives a reboot; if a capability needs an env change, it belongs in the flashed wrapper and ships
 in a zip.
 
-If a diagnosis genuinely requires mutating runtime state, say so explicitly, get the operator's
-approval for that specific action, restore the device afterwards (cold reboot restores the read-only
-image), and record in the evidence that any qualification data collected during that window is
-**not attributable to a registered build**.
+### Why this rule exists — there is no read-only image to fall back to
+
+**A reboot does NOT restore the device.** Verified on 2026-11-26:
+
+```
+ubi0:ubifs on /    type ubifs (rw,relatime)
+ubi1:ubifs on /app type ubifs (rw,relatime)
+```
+
+Both are **writable UBIFS** and persist across reboot. Anything written under `/app` or `/` — a
+swapped `.so`, an edited wrapper, a modified config — is still there after a reboot, forever, with no
+marker saying it did not come from a flash. There is no A/B partition, no automatic fallback, and no
+recovery mode that restores `/app`. The only recovery is **re-flashing a known-good packet**, which
+takes 5–10 minutes, requires the device to still boot, and fails outright if the radio or the boot
+path was damaged.
+
+That is why building on device is prohibited: a bad binary written into `/app` can leave the camera
+stack unable to start, and if it also breaks the network path there is no remote way to put it back.
+The failure is not recoverable by rebooting.
+
+### Patching must always be reversible — prove it before you flash
+
+Before flashing anything, confirm a **verified restore packet for the currently installed release**
+exists and is reachable:
+
+1. Read the installed identity (`scripts/device-identity.py`) and the install receipt for that build.
+2. Locate the exact zip that produced it and check its SHA-256 against `zip_sha256` in
+   `install-receipt.txt`. A digest match is the only proof it is the packet that is running.
+3. If no such packet exists, **stop** — flashing now makes the device unrecoverable to that state.
+   Rebuild and archive the installed release first, or accept the loss explicitly with the operator.
+4. Record the restore packet's path and digests in the evidence for the flash you are about to do.
+
+Reversibility is a property of having the right bytes on hand, not of the flash process itself.
+`docs/FIRMWARE-INSTALL-PROCESS.md` "Checklist for every install" carries the matching gate.
 
 ## Read `docs/WHO-DOES-WHAT.md` first
 

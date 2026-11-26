@@ -669,7 +669,14 @@ not reboot a second time until the checks that need the reboot are queued up.
 
 ## Checklist for every install
 
-0. **Keepalive armed and `phase=ssh-up`** (see "Arm the keepalive before touching
+0. **Restore packet for the *currently installed* release is on hand and digest-verified.** `/app`
+   and `/` are writable UBIFS (`ubi1:ubifs on /app`) — there is no read-only image, no A/B slot and
+   no automatic fallback, so a flash cannot be undone by rebooting. Read the installed identity and
+   its `install-receipt.txt`, locate the zip that produced it, and confirm its SHA-256 matches the
+   receipt's `zip_sha256`. If it does not exist, stop: flashing now makes the current state
+   unrecoverable. Record the restore packet path + digests in this flash's evidence. See AGENTS.md
+   "Patching must always be reversible".
+1. **Keepalive armed and `phase=ssh-up`** (see "Arm the keepalive before touching
    the device"). This precedes staging; there is no remote recovery once the radio
    drops.
 1. Candidate has a registry row in `docs/FWPKT-PROVENANCE-CONTRACT.md` (zip MD5 +

@@ -1,5 +1,48 @@
 # Current repository state
 
+## 2026-11-26 (later) — reversibility audit: reboot does NOT restore the device, and a prior claim said it did
+
+Operator's reason for the hard rule is correct and stronger than "build off-device" suggests. Verified
+on the live head:
+
+```
+ubi0:ubifs on /    type ubifs (rw,relatime)
+ubi1:ubifs on /app type ubifs (rw,relatime)
+```
+
+Both writable UBIFS, both persistent. There is **no read-only image, no A/B slot, no automatic
+fallback and no recovery mode that restores `/app`**. Recovery means re-flashing a known-good packet
+(5–10 min, requires the device to still boot and the radio path to still work). A bad `.so` written
+into `/app` survives every reboot indefinitely.
+
+**A pre-existing claim in `scripts/stage2-hotswap.sh` was wrong and dangerous:** it stated "a reboot
+restores whatever is in the read-only image". It does not. Anything pushed by that script stays
+pushed. Corrected in place, with the mount evidence. My own added line repeating the same claim is
+also corrected.
+
+**Restore path for the currently installed release — verified, not assumed.** Installed identity is
+`astro-v117-k3iii-late-arrival-20261125` (`FwVer:6.0.0.54.117;date:2026.11.25;`).
+
+- Packet: `out/astro-v117-k3iii-late-arrival-20261125/FwPkt.zip`
+- SHA-256 on disk: `2629edf1147f2f757d0bd4dace40fe37738b64de1251539697800c40c562feca`
+- `install-receipt.txt` `zip_sha256`: identical — so this is provably the packet that is running.
+
+**Gap found while auditing:** v117 has **no row in `docs/FWPKT-PROVENANCE-CONTRACT.md`** and **no
+upload to `ian-morgan99/PrivateResearch`** (that repo's packets stop at `6.0.0.54.116`). The only
+local copy is under gitignored `out/`. Per the provenance contract this packet is *unprovenanced*,
+and per the new reversibility gate that means the device's current state is one `rm` or one disk
+failure away from being unrecoverable. **Action needed:** register the v117 row and upload the zip to
+PrivateResearch. Not done here — publishing is a separate, user-visible action.
+
+**Correction to my own earlier note in this file:** I wrote that my manual `pgphoto` relaunch was
+"restored by cold reboot". The env change genuinely did revert (the flashed wrapper sets
+`STAGE2_CAPTURE_TRACE=0`, verified in the relaunched process), and no binary was ever modified — but
+the wording implied reboot is a general restore mechanism, which it is not. Re-flashing the packet
+above is the only general restore.
+
+Codified: AGENTS.md now opens with the hard rule plus "Why this rule exists" and "Patching must
+always be reversible"; `docs/FIRMWARE-INSTALL-PROCESS.md` "Checklist for every install" gained step 0
+requiring a digest-verified restore packet for the *currently installed* release before flashing.
 ## 2026-11-26 (later) — HARD RULE recorded: never build on device, deploy by zip and flash only
 
 Operator directive, now codified as the first section of `AGENTS.md` and echoed in the header of
