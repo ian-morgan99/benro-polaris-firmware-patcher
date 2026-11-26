@@ -182,32 +182,120 @@ Plug the **K-1 II** back into that same socket. It enumerated there about an hou
 
 This costs one cable swap and no downtime, so do it before the reboot.
 
-## Remaining causes for the absent camera
+## A/B RESULT — decisive: the fault is specific to this body+cable+port, not rig-wide
 
-1. **Wedged USB stack** after the K-1 II's removal — no logged errors, but nothing else is left standing and a
-   reboot is cheap. *Do this next.*
-2. **Bus-powered hub power budget** for the K-3 III — still unconfirmed; `lsusb -v` on busybox does not print
-   the power/ports fields, so it cannot be checked from the rig. Would normally log an error, and none is
-   logged.
+The K-1 II was plugged into **the same socket** with **the same cable**, in the **same power state** that the
+K-3 III had just failed in (`autosuspend=-1`, `usb1/usb2/1-1` all `control=on runtime=active`). It enumerated
+immediately:
+
+```text
+usb 1-1.2: new high-speed USB device number 4 using xhci-hcd
+usb 1-1.2: New USB device found, idVendor=25fb, idProduct=0183
+usb 1-1.2: Product: PENTAX K-1 Mark II
+```
+
+and came up fully working:
+
+```text
+[camera-usb] camera_returned: 1-1.2|25fb:0183|1:4 after 3579 absent polls (poll 4235)
+[camera-usb] stable identity change: none -> 1-1.2|25fb:0183|1:4; restarting pgphoto
+[restart_gphoto] OK: pgphoto PID 7435 owns the port-8080 listener - restart successful
+[camera-usb] pgphoto restart complete (restart 3/6)
+----- gp_camera_init ret 0
+code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;storage:2;...]
+```
+
+So the port, hub, xHCI controller, power state and Stage-2 supervisor are all healthy. This also independently
+confirms my retraction of the "supervisor latch" claim — a body returning after 3579 absent polls was detected,
+rebound, and pgphoto restarted correctly.
+
+**The K-3 III has never produced a single USB connect event on this rig.** `dmesg` since boot contains exactly
+4 USB connect/disconnect events, all four from the K-1 II (`Product: PENTAX K-1 Mark II` twice). The K-3 III
+appears nowhere.
+
+### Revised cause ranking
+
+| Combination | Result |
+|---|---|
+| K-3 III + this cable + **workstation** | enumerates, `25fb:0189`, 480M, PTP detected |
+| K-1 II + this cable + **rig port** | enumerates, `25fb:0183`, high-speed, fully working |
+| K-3 III + this cable + **rig port** | **no connect event at all** |
+
+Cable is exonerated (works with both bodies on at least one host each). The rig port works. So the failure is
+the specific triple combination. Leading explanation now:
+
+1. **Bus-powered hub current budget.** `dmesg` reports `hub 1-1:1.0: 4 ports detected` and the hub is
+   bus-powered. If the K-3 III asks for more current than the hub can allocate to that port, some hubs simply
+   never report a connect — no error logged, which matches exactly what is seen here. I previously ranked this
+   low because "a shortfall normally logs an error"; that assumption is wrong for bus-powered hubs, and with
+   every other cause now eliminated it is the leading candidate. **Test: a self-powered USB hub.**
+2. **USB-C role negotiation** on this socket with this body. No typec sysfs exists on this kernel so it cannot
+   be inspected; a reboot would re-run negotiation from scratch and is worth trying, though the K-1 II working
+   immediately after makes a wedged stack unlikely.
+
+A reboot is now **low expected value** — the port demonstrably works right now. Try a self-powered hub before
+rebooting.
+
+## Correction: I was monitoring the wrong process
+
+I reported "pgphoto is not restarting (same PID throughout)" while watching `pidof polestar_app`. That is the
+**vendor app**, not the camera server — pgphoto is a separate process. The supervisor log shows it restarted
+correctly (`restart 3/6`, new PID 7435, `gp_camera_init ret 0`). My conclusion that nothing was flapping still
+holds for the *camera link* (dmesg line count frozen at 545 during the toasts), but the pgphoto-restart half of
+that reasoning was based on the wrong PID and should not be relied on.
+
+## Config-read measurement banked while a camera is attached
+
+`probe-config-gate.py --rounds 3` against the live K-1 II on v118:
+
+```text
+265 iso                    real V=0 options=13
+266 white-balance          real V=0 options=19
+267 exposure-compensation  real V=15 options=32
+268 shutter-speed          real V=20 options=57
+275 aperture               real V=2 options=23
+refusals in Clog after probe: 0 (delta 0)
+VERDICT: every parameter code answered with a real value list
+```
+
+All six rounds completed within the same second (`18:51:26` for five codes in round 3) with **zero gate
+refusals**. Important caveat before reading anything into this: these are **Polaris protocol codes**, which may
+be served from Stage-2's cached widget tree, whereas #389 measured a raw `gp_camera_get_config` via the gphoto2
+CLI on direct-PC at 7.85 s / ~62 PTP ops. Fast protocol responses here do **not** prove #389 is fixed — they
+may be measuring a different code path entirely. Closing #389 still needs a direct-PC `gp_camera_get_config`
+timing run, which requires the PC-to-camera USB link rather than this rig.
 
 Closed and not to be re-opened: cable, driver support, USB mode, autosuspend, supervisor latch, wrong port,
 authorization policy.
 
 ## Next actions
 
+Ranked by expected value after the A/B result. Do **not** reboot first — the port demonstrably works right
+now, so a wedged stack is the least likely remaining cause.
+
 ```bash
-# 1. reboot the rig (clears cause 1), then re-verify identity before trusting anything
+# 1. BEST TEST: a SELF-POWERED USB hub between the K-3 III and the Polaris socket.
+#    This isolates the bus-powered current-budget hypothesis directly. If the body
+#    enumerates through a self-powered hub, the cause is confirmed and the fix is
+#    operational (use a powered hub), not a code change.
+
+# 2. If still nothing through a powered hub, try a reboot to re-run USB-C role
+#    negotiation from scratch, then re-verify identity before trusting anything:
 ssh root@192.168.0.1 'reboot'
 python3 scripts/wait-for-rig.py --wifi-iface wlp8s0 --timeout 420
 ./scripts/verify-installed-build.sh out/astro-v118-stage2-gate-wedge-fix-20261126
 
-# 2. with the camera plugged in, watch for enumeration
-ssh root@192.168.0.1 'lsusb | grep -ai pentax; ls /sys/bus/usb/devices/ | grep -av "^usb"'
+# 3. Watch for enumeration with the K-3 III plugged in:
+ssh root@192.168.0.1 'lsusb | grep -ai pentax; dmesg | grep -a "new .*USB device" | tail -3'
 ```
 
-If a reboot does not bring the body up, this is hardware-level on the Polaris port and no software change in
-this repo will fix it — the K-3 III should then be tested on a different Polaris to preserve the cross-model
-qualification goal.
+Note `autosuspend=-1` is runtime-only and will revert to `2` on reboot. That does not affect these tests — the
+K-1 II enumerated fine with the same power settings the K-3 III failed under.
+
+If a self-powered hub and a reboot both fail, this is a hardware-level incompatibility between this Polaris
+socket and the K-3 III, and no change in this repo will fix it. In that case test the K-3 III on a **different
+Polaris** to preserve the cross-model qualification goal — prior evidence shows `25fb:0189` attaching
+successfully on other rigs, so the qualification itself is still achievable elsewhere.
 
 ## Evidence
 
