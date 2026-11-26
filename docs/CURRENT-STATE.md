@@ -1,5 +1,44 @@
 # Current repository state
 
+## 2026-11-26 (later) — fresh-boot test: no progressive degradation; first capture fails -1005
+
+Rebooted to a clean session (identity verified exit 0, `usb_fds=1`) and ran three captures
+back to back:
+
+| # | result | state:4 | file | total |
+|---|---|---|---|---|
+| 1 | **`state:-1005`** at 3.6 s | — | none | failed |
+| 2 | PASS `SP_0016.jpg` | 23.8 s | 29.9 s | 29.9 s |
+| 3 | PASS `SP_0017.jpg` | 23.7 s | 29.8 s | 29.8 s |
+
+**No progressive degradation within a session** — captures 2 and 3 are identical to 100 ms.
+The 9 s → 38 s spread in the archived v117 evidence is therefore *not* session drift.
+
+**The first capture after a reboot fails `-1005`.** That code is already documented: it maps from
+PTP `-110` when a transfer candidate is still pending, and the pre-capture stale-candidate barrier
+refuses to delete it (the guard that avoids deleting a file it cannot prove we own). The pending
+candidate here is almost certainly the output of the timed-out bulb attempt from before the reboot —
+`captureBulbImage ret -1 p:` with an empty path, exposure completed, candidate never consumed. A
+reboot does not clear the camera-side candidate. So: **a failed bulb capture poisons the next
+capture after a reboot**, and only the second one succeeds. Untested as a claim; the mechanism is
+inferred from the documented meaning of -1005 plus the immediately preceding bulb failure.
+
+**Attribution now solid.** The running camlib is libgphoto2 `f48a05e0` with patcher `e0464f39`,
+per `docs/evidence/v117-k1ii-regression-20261125/openpolaris-libgphoto2-provenance.txt`. Cloned
+that exact commit to `/home/ian/lgp-v117-src` so code reading describes what actually executes.
+In that source `needs_idle_wait` is assigned in 8 places and never read — verified against the
+running commit, not a guess.
+
+**Tried and failed to get poll-level detail.** Added `export GP_DEBUG="ptp2:11"` before the `exec`
+line in `/app/bin/pgphoto`; pgphoto relaunched with it in its environment (confirmed via
+`/proc/<pid>/environ`) but emitted no libgphoto2 debug lines. Library logging appears compiled out
+of this build. Launcher restored byte-for-byte and identity re-verified exit 0 — the gate would
+have flagged the undeclared variable, and it did not need to.
+
+**Two operational traps hit and recorded:** `pkill -f pgphoto.stage2ondisk` over SSH matches the
+SSH command line itself and kills the session; and an `export` appended *after* the launcher's
+`exec` line is dead code — it must be inserted before it.
+
 ## 2026-11-26 (later still) — measured baseline: capture is ~29.8 s against a 6.6–9.1 s historical norm
 
 `scripts/k1ii-latency.py` added: per-operation p50/p95/max plus a phase-split capture
