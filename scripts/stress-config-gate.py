@@ -312,7 +312,7 @@ def main() -> int:
     if errors:
         print("connection errors: " + "; ".join(errors))
     suffix = ", log rotated -- window truncated" if rotated else ""
-    print(f"refusals after: {after} (delta {delta}{suffix})")
+    print(f"admission refusals in window: {delta}{suffix}")
     if _sessions:
         print("camera session seen by handshake: " +
               ", ".join(f"{k} x{v}" for k, v in _sessions.items()))
@@ -321,17 +321,26 @@ def main() -> int:
         for s in samples[:8]:
             print(f"    {s}")
 
+    # A refusal is the gate doing its job: under concurrent load a real SET can hold
+    # the camera past a reader's budget, and the reader is correctly turned away. That
+    # is expected behaviour and must not be scored as a defect -- only a read that came
+    # back wrong (sentinel, empty, timeout, closed) is a failure. Refusals are reported
+    # alongside so a rising count is still visible.
     bad = (outcomes["sentinel"] + outcomes["empty"] + outcomes["timeout"] +
-           outcomes["closed"] + delta)
+           outcomes["closed"])
     if errors:
         print("\nVERDICT: transport failure -- cannot judge the gate")
         return 2
     if bad:
-        print(f"\nVERDICT: GATE DEFECTIVE under load ({bad} bad outcome(s))")
+        print(f"\nVERDICT: {bad} bad read outcome(s) under load "
+              f"(sentinel={outcomes['sentinel']} empty={outcomes['empty']} "
+              f"timeout={outcomes['timeout']} closed={outcomes['closed']}); "
+              f"refusals={delta}")
         return 1
     p95 = f"{pct(0.95):.2f}s" if latents else "n/a"
-    print(f"\nVERDICT: clean under load -- {outcomes['ok']} reads, no refusals, "
-          f"no sentinel, p95={p95}")
+    note = f" ({delta} correct contention refusal(s))" if delta else ""
+    print(f"\nVERDICT: clean under load -- {outcomes['ok']} reads all valid, "
+          f"p95={p95}{note}")
     return 0
 
 

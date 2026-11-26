@@ -176,11 +176,54 @@ the next step: the loader already shims `setCameraConfig`
 (`native_set_camera_config`, container/stage2_loader.c:308), so logging key, value and
 return there answers "does the request reach libgphoto2 at all" in one build and reboot.
 
-## Retraction: the empty reads are NOT load saturation
+## The empty reads: first concurrent pass after boot, not load, not one fixed code
 
-Earlier in this file the `RD:0;V:;R:;` answers were characterised as "pre-existing
-saturation under 8-way hammering". That was based on two runs (240 reads -> 8 empty,
-240 reads -> 11 empty) and is retracted. Repeated testing does not reproduce it:
+Three characterisations were attempted here; the first two were wrong and are recorded
+as such so the next reader does not repeat them.
+
+1. "Pre-existing saturation under 8-way hammering" -- wrong. No load threshold exists;
+   see the sweep below.
+2. A retraction claiming they never reproduce -- also wrong. They do reproduce: three
+   fresh boots, first concurrent pass gave 8, 11 and 9 empties. The retraction was based
+   on passes run after the boot had already been exercised, which is exactly when they do
+   not occur.
+3. "Confined to code 265 (ISO)" -- also wrong, and it is corrected here rather than left
+   in place. All 14 recorded non-ok samples happened to be ISO, but that is a sampling
+   artifact: the harness records only the first eight non-ok frames and queries ISO first.
+   A discriminator on a fresh boot, one connection per code, each connection's first read
+   being that code:
+
+   ```
+   FRESH BOOT, one connection per code, first read = that code:
+     iso       ok=0 EMPTY=2
+     wb        ok=2 EMPTY=0
+     ev        ok=2 EMPTY=0
+     shutter   ok=2 EMPTY=0
+     aperture  ok=0 EMPTY=2
+   ```
+
+   Aperture empties too, so it is not ISO-only. But re-running the same concurrent test on
+   a boot that had already been exercised gave `iso=2ok/0empty aperture=2ok/0empty`, and a
+   sequential single-connection pass gave 6 ok for every code. So the codes affected are
+   not fixed either.
+
+What the evidence actually supports, stated at the confidence it warrants:
+
+* The empties occur on the **first concurrent pass after a fresh boot** -- three boots,
+  three reproductions (8, 11, 9 of 240). They do not recur on later passes of the same
+  boot, and they do not appear sequentially on a single connection.
+* Which codes are affected varies between runs (ISO in every recorded sample, aperture in
+  the discriminator). It is therefore a transient window affecting some subset of config
+  reads, not a per-parameter fault.
+* It is not load saturation: 1/2/4/8 clients x 20 rounds on an exercised boot produced
+  100/200/400/800 reads with zero empties.
+
+Combined with the SET trace, the user-visible chain is: a config read answers
+`RD:0;V:;R:;` in that early window -> the head issues `setCameraConfig key=3 value=""`
+-> pgphoto rejects the empty string with -2110 -> Benro Connect shows the parameter as not
+applying. One upstream defect, not a broken write path.
+
+Load sweep that disproved the saturation theory (run on an already-exercised boot):
 
 | condition | reads | empty |
 |---|---|---|
@@ -191,11 +234,11 @@ saturation under 8-way hammering". That was based on two runs (240 reads -> 8 em
 | idle, sequential, clean boot | 50 | 0 |
 | boot race, +14s to +41s after ssh returns | 55 | 0 |
 
-861 further reads produced no empty answer at all. So there is no load threshold: the
-empties are rare and intermittent, and neither concurrency nor boot timing explains
-them. The two runs that showed them were the first stress pass after a fresh reboot, but
-the boot-race test above read from +14 s onward with state=1 already reported and saw
-none, so "state:1 precedes table population" is not established either.
+Those passes were run on a boot that had already been stressed at least once, which is
+why they came back clean; the same 8-client load on a boot's *first* pass produced 8-11
+empties three times out of three. The boot-race test that saw none read sequentially from
++14 s to +41 s with a single connection, so it neither confirms nor rules out a boot window
+-- the reproducing condition is concurrency on a freshly booted head.
 
 What remains solid, because it was proven directly rather than inferred:
 
@@ -205,7 +248,14 @@ What remains solid, because it was proven directly rather than inferred:
 * Therefore "parameters do not stick" reduces to one upstream defect -- an intermittent
   empty config read -- not a broken write path.
 
-What is genuinely unresolved: what makes a read answer `RD:0;V:;R:;`. It is rare enough
-that it did not appear in 861 reads, so reproducing it needs either a much longer soak or
-instrumentation at the read boundary rather than more load. Recording it as open rather
-than dressing up a guess.
+What is genuinely unresolved: what makes config reads answer `RD:0;V:;R:;` during the
+first concurrent pass after boot, and why it clears afterwards. The scope is narrow -- one
+boot window, reproducible on demand by rebooting then issuing concurrent reads -- so the
+next step is read-boundary instrumentation (log the native get/set return per code) rather
+than more load or more sampling. Recording it as open rather than dressing up a guess.
+
+Also corrected here: `stress-config-gate.py` counted admission refusals as bad outcomes,
+so a run with `ok=240 empty=0` still printed "GATE DEFECTIVE (4 bad outcome(s))". A refusal
+under concurrent load is the gate correctly turning a reader away while a real SET holds the
+camera -- expected behaviour, not a defect. Refusals are now reported separately from read
+failures.
