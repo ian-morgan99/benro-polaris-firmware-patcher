@@ -1,5 +1,14 @@
 # Current repository state
 
+
+**Bulb timer-mismatch hypothesis tested and refuted.** Requesting `bulb:20` to match the camera's
+own 20 s bulb timer still fails: pgphoto logs `capture with bulb 20000 ms`, sleeps exactly 20 s
+(`12:21:51.573` -> `12:22:11.572`), then reaches `capture bulb get photo` at `12:22:33` and never
+produces `state:4` or a file; the probe timed out at 180 s with `states=[1]`. So the failure is not
+a duration mismatch between pgphoto's sleep and the camera's timer. The bulb path hangs at the same
+step regardless of whether the requested length matches the camera-side timer, which points at the
+start/stop bulb PTP sequence itself rather than at timing arithmetic.
+
 ## 2026-11-26 (later) — the ~24 s is a real 20-second exposure: dial on B carries a 20 s Bulb timer
 
 EXIF read from the delivered files (`scripts/jpg-exif.py`, added):
