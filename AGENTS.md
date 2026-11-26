@@ -2,6 +2,40 @@
 
 These instructions apply to all automated or human-assisted work in this repository.
 
+## HARD RULE — never build on device; deploy only by zip and flash
+
+**Nothing is ever compiled, assembled, patched or installed on the Polaris head.** All builds happen
+on the workstation. The only sanctioned way to change what runs on the head is:
+
+```text
+workstation build -> immutable zip/FwPkt (registered with hashes + commit links)
+                  -> supported flash/install process
+                  -> cold reboot
+                  -> identity verification (release + component hashes)
+```
+
+Prohibited on the device, with no exceptions for "just a quick test":
+
+- Compiling or assembling anything on the head. It has no `gcc`, `cc`, `clang`, `tcc` or `make`, and
+  that absence is intentional — do not install a toolchain to work around it.
+- Copying a locally built binary into `/app` (including `libpolaris_stage2.so`, any `ptp2.so`, or any
+  `.so`) and restarting a service to pick it up. This includes `scripts/stage2-hotswap.sh push`.
+- Relaunching `pgphoto` by hand with a modified environment (`STAGE2_*`, `LD_PRELOAD`, etc.) to
+  enable a feature for an experiment. A manual relaunch bypasses the wrapper's pidfile, launch lock
+  and crash-backoff, and the resulting process is not attributable to any build.
+- Editing files under `/app` in place, including config/wrapper scripts.
+
+Allowed on the device: **read-only diagnostics** — reading logs, `md5sum`, `strings`, `ls`,
+`/proc/<pid>/environ`, and issuing camera commands over the control socket. Enabling a feature that
+the *flashed* build already supports via a documented toggle is not permitted either unless it
+survives a reboot; if a capability needs an env change, it belongs in the flashed wrapper and ships
+in a zip.
+
+If a diagnosis genuinely requires mutating runtime state, say so explicitly, get the operator's
+approval for that specific action, restore the device afterwards (cold reboot restores the read-only
+image), and record in the evidence that any qualification data collected during that window is
+**not attributable to a registered build**.
+
 ## Read `docs/WHO-DOES-WHAT.md` first
 
 This project spans two repositories and the issue numbers are easy to mix up. If

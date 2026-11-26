@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# HOT-SWAP IS NOT A DEPLOYMENT PATH — see AGENTS.md "HARD RULE — never build on device; deploy only
+# by zip and flash". Nothing is built or installed on the head. The only sanctioned way to change what
+# runs there is a workstation-built zip/FwPkt, flashed, cold-rebooted and identity-verified. `push`
+# copies a locally built loader into /app and relaunches pgphoto by hand; that process is not
+# attributable to any registered build, invalidates qualification evidence, and bypasses the wrapper's
+# pidfile/launch-lock/crash-backoff. Use `status` (read-only) freely; use `push` only with explicit
+# operator approval for one specific diagnostic, then reboot to restore the read-only image.
+#
 # Hot-swap the Stage-2 loader on a live Polaris head without reflashing.
 #
 # The camera admission gate lives entirely in libpolaris_stage2.so, which pgphoto

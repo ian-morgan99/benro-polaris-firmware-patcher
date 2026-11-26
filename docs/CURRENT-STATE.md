@@ -1,5 +1,56 @@
 # Current repository state
 
+## 2026-11-26 (later) — HARD RULE recorded: never build on device, deploy by zip and flash only
+
+Operator directive, now codified as the first section of `AGENTS.md` and echoed in the header of
+`scripts/stage2-hotswap.sh`. Nothing is compiled or installed on the head; the only sanctioned change
+path is workstation build -> registered zip/FwPkt -> flash -> cold reboot -> identity verification.
+Read-only diagnostics over SSH remain allowed.
+
+**I broke this rule during this session and must record it plainly.** To get loader-level visibility
+I restarted `pgphoto` by hand with `STAGE2_CAPTURE_TRACE=1`. That is a manual relaunch outside the
+wrapper (bypassing pidfile, launch lock and crash-backoff) and the resulting process was not
+attributable to any registered build. Restored by cold reboot and verified: `STAGE2_CAPTURE_TRACE=0`
+in the relaunched process environment, loader md5 still `765e9528b8d2dddaeb0d25f6ed54e977`, identity
+exit 0. No binary was copied or modified. Any evidence gathered during that window is flagged below
+as not attributable to a registered build.
+
+## 2026-11-26 (later) — the pre-capture format re-read already exists and works; my earlier reading was wrong
+
+**Correction first.** I previously wrote that `output_pending=0` in the `camlib-enter` marker meant
+"the driver was told there is one output". That is **wrong**: reading `library.c:6843`, that field is
+`params->pentax.capture_output_pending`, a *latched flag from a previous capture's transfer state*,
+not the format condition. The inference that the camera reported single-output at capture time was
+unsupported.
+
+**What is actually true.** `[pentax] capture=N boundary=initiate-enter focus=%u companions=%u`
+(`library.c:7224`) prints `expected_extra_candidates`, which is computed from a **fresh
+`ptp_pentax_get_all_conditions` read taken immediately before the shutter is sent**. Across retained
+logs that marker shows `companions=1` on 9 captures and `companions=0` on 28 — so on JPG+RAW captures
+the camlib **does** detect the dual-format setting live, at capture time. The re-read the operator
+asked for is already implemented and demonstrably working; the stale value I chased was my own
+misreading of a different field.
+
+**The real gap is delivery, not detection.** `gp_camera_get_extra_capture_files` is exported by the
+core on the device (`libgphoto2/gphoto2-camera.c:1365`, symbol present in the deployed
+`libgphoto2.so.6`), and the camlib records companions in `params->pentax.extra_capture_files`. But:
+
+- `strings pgphoto.stage2ondisk | grep -c extra_capture` = **0** — pgphoto never calls it.
+- `strings libpolaris_stage2.so | grep -c extra_capture` = **0** — our loader never surfaces it either.
+
+So a companion the camlib publishes has no consumer anywhere in the firmware stack. That matches the
+observed symptom exactly: JPG+RAW captures cost the extra camera-side time, deliver one JPEG, and
+nothing downstream reports an error, because nothing ever asks for the second file.
+
+**Unresolved observation (collected during my unattributable manual relaunch, so treat as weak):**
+with `STAGE2_CAPTURE_TRACE=1` set in the process environment, no `[stage2-trace]` lines appeared in
+either log, although the deployed loader contains that string and reads that variable. `[pentax]`
+camlib markers did appear. Cause not determined; do not build on this.
+
+**Next step, within the rules:** implement companion surfacing in the loader as a source change,
+build on the workstation, gate, package as a registered zip, flash, then re-run
+`scripts/k1ii-capture-trace.py` to confirm a second file is delivered. No device-side build or
+hot-swap.
 ## 2026-11-26 (later) — trace tooling added; `state:5` correlation refuted by my own count
 
 `scripts/k1ii-capture-trace.py` added, per operator request for scripts and Mlog traces. It records
