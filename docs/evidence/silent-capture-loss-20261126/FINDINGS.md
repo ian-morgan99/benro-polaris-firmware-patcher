@@ -97,9 +97,25 @@ files)") matches the symptom and the trigger exactly — this is the first captu
 evidence: the camlib *explicitly reports* `initiate-not-confirmed ptp=0x200c gp=-8`, so the loss happens
 above the camlib, and the `state:4`-absence test gives a cheap way to detect it.
 
-## Detection that works today
+## Detection already exists -- and already caught this
 
-`captureImage ret 0` with no preceding `val[state:4;...]` for that capture is a reliable signature of a
-phantom success. Counting them against each other over the whole log corpus gives an immediate mismatch
-count (38 vs 37 here). That could be asserted in the supervisor health model, which currently cannot see any
-of this — it reports `supervisor ready` throughout (#182).
+My first draft of this file proposed pairing `captureImage ret 0` against `state:4` as a new detector. That was
+wrong: **`scripts/capture-outcomes.py` already implements exactly this** and classified the event correctly on
+the first run, with no changes:
+
+```text
+classified PASS        : 37
+classified FAIL        : 1
+  rig_all.txt 20:43:41:956 FAIL    logged=-6249ms file=SP_0050.jpg states=[2, 5]
+naive sign-based count : 38 -> over-reports by 2.71x
+```
+
+It reports SP_0050 as **FAIL** despite `ret 0`, precisely because `states=[2, 5]` contains no `4`. Its
+docstring already warns against trusting the sign at all (issue #218: `capture end -23398 ms` is a *success*),
+and notes that a naive sign-based analysis once produced "34 capture timeouts" and several failure modes that
+did not exist. The 38-vs-37 counter pair in this file is therefore a cross-check on the tool, not a
+replacement for it -- and the tool agrees with it.
+
+The real gap is narrower than I first wrote: this classification exists as an **offline script** and nothing
+runs it at runtime. The supervisor still reports `supervisor ready` throughout (#182), so a phantom success is
+only discoverable after the fact by someone who thinks to run the analyzer over the logs.
