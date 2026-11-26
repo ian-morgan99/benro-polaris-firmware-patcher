@@ -281,12 +281,36 @@ a literal `val[state` string at all, confirming frames are built from these. Wit
 `state:-112` ×3 both observed through the same path, `-115` should behave identically. Still not directly
 observed: `-115` never occurred on this rig. Confirm on the first real full-card event.
 
-### Still unexplained
+### Still unexplained: 5 attempts with no completion line
 
-61 `will captureImage` attempts against 56 completion lines — **5 attempts produced no completion line at all**.
-That is a separate gap from the phantom-success bug (those 2 are inside the 39 `ret 0`) and I have not
-determined whether they are truncated log tails, in-flight captures at rotation time, or a third failure mode.
-Not claiming an explanation.
+61 `will captureImage` attempts against 56 completion lines (39 `ret 0` + 14 `-110` + 3 `-112`). This is a
+different symptom from the phantom success — those two events are *inside* the 39 `ret 0`. Identified them with
+the new `scripts/find-unmatched-capture-attempts.py`, which pairs each attempt with the completion line before
+the next attempt:
+
+```text
+unmatched : 5
+  Clog_000025.log  11:39:51:006  SP_0010.jpg   initiate ptp=0x2001, no completion
+  Clog_000025.log  12:21:49:281  SP_0020.jpg   initiate ptp=0x2001, no completion
+  Clog_000036.log  19:58:16:079  SP_0047.jpg   no camlib boundary lines at all
+  Clog_000036.log  20:05:34:135  SP_0050.jpg   preconditions ptp=0x2001, then nothing
+  Clog_000038.log  20:21:54:186  SP_0050.jpg   no completion
+```
+
+**SP_0050 was requested three times** — 20:05:34, 20:21:54 and 20:43:35 — and the first two produced no
+completion line at all. Only the third reached `captureImage ret 0`, which is the phantom success. So the same
+filename was retried repeatedly before finally "succeeding" with nothing behind it.
+
+I tested the obvious explanations rather than assuming them, and both are wrong for most cases:
+
+- **Log rotation truncation** — only 1 of the 5 windows (20:05:34) crosses a `Clog_*` file boundary. The other
+  four sit well inside a single file.
+- **Process restart** — restart markers (`supervisor ready`, `stage2] init:`) appear in only 1 of the 5 windows,
+  the same one that crosses the boundary.
+
+So three attempts (SP_0010, SP_0020, SP_0047/SP_0050 at 20:21) are genuinely unaccounted for: pgphoto logged the
+attempt and never logged a return. Not claiming an explanation — this needs live reproduction with
+`STAGE2_CAPTURE_TRACE=1`, which changes deployed behaviour and I have not done it.
 
 The #183 guard is active but structurally cannot catch this: it validates the *success* path for an empty
 path, whereas here the core reported a failure that the caller discarded. A guard for this class has to live
