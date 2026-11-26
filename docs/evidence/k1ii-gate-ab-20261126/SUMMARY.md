@@ -134,3 +134,44 @@ Resolved on real hardware by the gate fix: parameter reads at app load, plain
 capture, and the `updateViewFinder ret:-1` refusal. Still open, each needing its
 own investigation: live-view frame delivery, bulb file production, and K-1 II
 parameter SET (`-2110`).
+
+## -2110 located: a pgphoto-internal "no local table entry" sentinel
+
+`-2110` is not a libgphoto2 or PTP code. It appears in no gphoto2 header and nowhere
+in the Pentax camlib source (the only matches under `out/.libgphoto2-v109` are the FSF
+postal address, "Boston, MA 02110-1301"). It is defined inside pgphoto itself.
+
+Disassembly of the deployed binary (`pgphoto.stage2ondisk`, md5 `79d4454f…`) finds the
+constant built by `movw/movt` at two sites:
+
+```
+0001e2f8 <getLocalCameraParamInfo>:
+  1e318: cmp r3, #3        ; configType <= 3      -> accepted, index = configType
+  1e324: cmp r3, #7        ; configType == 7      -> accepted
+  1e330: cmp r3, #8        ; configType == 8      -> accepted, index remapped to 4
+  1e338: movw r3, #0xf7c2 / movt r3, #0xffff      ; otherwise -> -2110
+
+0001e470 <getCameraConfig>:
+  1e4d4: movw r3, #0xf7c2 / movt r3, #0xffff
+  1e4dc: cmp r2, r3        ; test whether a callee reported -2110
+  1e4e0: bne  1e538
+```
+
+So pgphoto keeps a **fixed local table of config types** -- indices 0..3, 7 and 8,
+indexed by a stride of 2260 bytes from a base at +0x10c0 -- and returns -2110 when a
+request has no entry. `getCameraConfig` then tests for that sentinel explicitly.
+
+This matches the handover's observation that after a `-2110` the original value always
+persists: the request is refused before any PTP set-property is issued, so the body is
+never asked to change. It also explains why reads succeed while writes fail -- reads
+have a driver path, writes consult the local table first.
+
+What this does **not** yet establish: which configType the shutter SET uses and whether
+its table entry is simply unpopulated for the K-1 II. The handover records
+`configType 3 value:3 ret -2110`, but per the disassembly above configType 3 takes the
+accepted branch of `getLocalCameraParamInfo`, so that particular rejection comes from a
+different check -- most likely an empty or model-mismatched table entry rather than the
+range test. Confirming which requires runtime tracing of the SET arguments, which is
+the next step: the loader already shims `setCameraConfig`
+(`native_set_camera_config`, container/stage2_loader.c:308), so logging key, value and
+return there answers "does the request reach libgphoto2 at all" in one build and reboot.
