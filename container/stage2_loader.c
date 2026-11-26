@@ -272,17 +272,22 @@ static int native_claim_from(unsigned site, int budget)
     int ret = stage2_camera_claim(&native_gate, (uintptr_t *)STAGE2_NATIVE_CAMERA_WORD,
                                   (unsigned *)STAGE2_NATIVE_BUSY_WORD, syscall(SYS_gettid),
                                   site, op, budget, native_poll_pause);
-    if (ret < 0 && op != STAGE2_CAMERA_PREVIEW)
+    if (ret < 0 && op != STAGE2_CAMERA_PREVIEW) {
+        /* held_ms is meaningless with no owner: lease_started_ms is 0, so the
+         * subtraction yields the whole uptime and reads like a 6-hour hold.
+         * Report it only when a claim is actually live. */
+        unsigned owner = atomic_load(&native_gate.owner_tid);
+        unsigned held = owner ? stage2_camera_now_ms() - atomic_load(&native_gate.lease_started_ms) : 0;
         fprintf(stderr, "[stage2] camera admission refused: site=%x kind=%u owner_site=%x "
                 "last_owner_kind=%u generation=%u camera_present=%u budget=%d "
                 "tid=%d owner_tid=%d depth=%u held_ms=%u stolen=%u\n", site, (unsigned)op,
                 atomic_load(&native_gate.owner_site), atomic_load(&native_gate.owner_kind),
                 atomic_load(&native_gate.generation),
                 __atomic_load_n((uintptr_t *)STAGE2_NATIVE_CAMERA_WORD, __ATOMIC_ACQUIRE) != 0,
-                budget, (int)syscall(SYS_gettid), atomic_load(&native_gate.owner_tid),
-                atomic_load(&native_gate.owner_depth),
-                stage2_camera_now_ms() - atomic_load(&native_gate.lease_started_ms),
+                budget, (int)syscall(SYS_gettid), owner,
+                atomic_load(&native_gate.owner_depth), held,
                 atomic_load(&native_gate.leases_stolen));
+    }
     return ret;
 }
 
