@@ -16,9 +16,14 @@ success** path, and it is distinct from the wedge investigated earlier today.
 [20:43:41:960] captureImage ret 0            <-- success
 ```
 
-`PTP 0x200c` is DeviceBusy. Our camlib did the right thing: it refused to replay, kept `output_pending=0`,
-and returned an error (`gp=-8`) via `goto out` — `library.c` ends the capture path with `return ret`, so the
-error is propagated by us.
+**I first wrote that `PTP 0x200c` is DeviceBusy. That is wrong.** `ptp.h:1241` defines
+`PTP_RC_StoreFull = 0x200C`; DeviceBusy is `0x2019`. So the camera reported **storage full**, not busy — which
+is also why the GP code is `-8` and not `-110`: `translate_ptp_result` maps StoreFull to
+`GP_ERROR_FIXED_LIMIT_EXCEEDED` (-8) and DeviceBusy to `GP_ERROR_CAMERA_BUSY` (-110). That distinction turns out
+to be the whole reason this failure is silent rather than reported; see the root cause below.
+
+Our camlib did the right thing: it refused to replay, kept `output_pending=0`, and returned an error (`gp=-8`)
+via `goto out` — `library.c` ends the capture path with `return ret`, so the error is propagated by us.
 
 **polestar_app then logged `captureImage ret 0`.**
 
@@ -62,7 +67,7 @@ val[state:5; ]
 $ ls /app/sd/normal/SP_0051.jpg           -> MISSING
 ```
 
-Identical signature to SP_0050: DeviceBusy, `ret 0`, empty path, no `state:4`, no file. Both were triggered by
+Identical signature to SP_0050: StoreFull (`0x200c`), `ret 0`, empty path, no `state:4`, no file. Both were triggered by
 me, which is how I know they are real losses rather than log artifacts — I asked for two captures and got zero
 files and two successes.
 
@@ -165,6 +170,69 @@ sequence is unambiguous: **the error is detected and discarded inside pgphoto**,
 never matched an end pattern and so ran to EOF, sweeping in the next capture. Re-done with a bounded `sed` range
 and `head`, which puts them inside SP_0050's own window.)
 
+## Root cause: pgphoto propagates only an allowlist of error codes, and `-8` is not on it
+
+Found in the local Ghidra reconstruction at
+`~/Documents/VSCodeProjects/PrivateResearch/pgphoto-re/decompiled/gpManager.decompiled.c`, `capture_generic()`
+(address `0x000fa938`). **Provenance caveat first:** this is Ghidra output from `pgphoto.stock`, not Benro
+source — no Benro `.c` exists; statement text is a reconstruction of ARM machine code and should be read as
+reference for behaviour, never as the upstream file.
+
+```c
+result = gp_camera_capture(...);
+if (result != 0) {
+    cli_error_print("Could not capture image.");        /* the first ERROR line */
+LAB_000fae68:
+    if (result != 0) {
+        cli_error_print("Could not capture.");          /* the second ERROR line */
+        if (result == -6)   return -6;
+        if (result == -3)   return -3;
+        if (result == -0x70) return -0x70;               /* -112 GP_ERROR_CANCEL */
+        if (result == -0x73) return -0x73;               /* -115 GP_ERROR_NO_SPACE */
+        if (result == -0x35) return -0x35;
+        if (result == -0x3c) return -0x3c;
+        if (result == -0x6e) return -0x6e;               /* -110 GP_ERROR_CAMERA_BUSY */
+        if (result == -0x72) return -0x72;               /* -114 GP_ERROR_OS_FAILURE */
+    }
+    goto LAB_000faf04;                                  /* <-- no return: treated as success */
+}
+```
+
+**This is the bug, and it explains why `-110` is reported while `-8` is not.** The list contains `-0x6e` =
+`-110` (`GP_ERROR_CAMERA_BUSY`, i.e. DeviceBusy `0x2019`) but **not `-8`** (`GP_ERROR_FIXED_LIMIT_EXCEEDED`,
+i.e. StoreFull `0x200c`). A busy camera therefore returns an error to polestar_app; a camera whose card is full
+prints two ERROR lines, falls through to `LAB_000faf04`, and continues into the download path as if the
+exposure had happened.
+
+That also resolves the `-110` vs `-8` question that otherwise looks inconsistent: both are "camera refused to
+capture", but only one of them is on pgphoto's list.
+
+The fix is small and local: propagate unmapped failures instead of falling through — either add
+`GP_ERROR_FIXED_LIMIT_EXCEEDED`, or better, invert the logic so any non-zero `result` returns rather than only
+the enumerated ones. The latter cannot regress into silence for codes nobody thought to enumerate.
+
+### Confirmed empirically, without relying on the decompile
+
+The deployed binary is our patched variant — md5 `79d4454f…`, matching none of the four pgphoto builds in
+`PrivateResearch/pgphoto-re/evidence/manifest.md` (`a766aaf9` stock, `295806a8` o-v18m, `4684782f` v94,
+`a83ac7bb` k1ii-k3iii) — so the decompiled `capture_generic` is explanatory, not authoritative for this exact
+binary. The prediction it makes can be tested directly on the logs instead, and it holds:
+
+| GP code | name | on pgphoto's list? | camlib returned it | reached polestar_app |
+|---|---|---|---|---|
+| `-110` | `GP_ERROR_CAMERA_BUSY` | yes (`-0x6e`) | many | **14** as `captureImage ret -110` |
+| `-112` | `GP_ERROR_CANCEL` | yes (`-0x70`) | — | **3** as `captureImage ret -112` |
+| `-8` | `GP_ERROR_FIXED_LIMIT_EXCEEDED` | **no** | **2** | **0** |
+
+Across all logs on the rig the camlib returned `gp=-8` exactly **twice**, and `captureImage ret -8` appears
+**zero** times — while codes that *are* on the list propagate freely. Those two `gp=-8` returns are precisely
+SP_0050 and SP_0051, the two phantom successes. Codes on the list surface as errors; the one code not on the
+list became success both times it occurred.
+
+That is a 2-for-2 match with the predicted asymmetry, derived purely from logs. It also means this class of bug
+is not limited to StoreFull: **any** GP error outside that eight-entry list is silently converted to a successful
+capture, and nobody has enumerated which ones exist in practice.
+
 The #183 guard is active but structurally cannot catch this: it validates the *success* path for an empty
 path, whereas here the core reported a failure that the caller discarded. A guard for this class has to live
 where the return value is consumed — check it before emitting `state:2`/`state:5`, and emit an error frame
@@ -191,8 +259,8 @@ files)") matches the symptom. SP_0050 fits its trigger: first capture after a re
 **SP_0051 does not.** It occurred seven minutes later in the *same* session — grepping 20:43:40 to 20:50:45 for
 `supervisor ready`, `gp_camera_init`, `keep-lv` or usb events returns nothing. So no re-establishment happened
 between the two, and the trigger is not "first capture after a session restart" but **any capture whose
-InitiateCapture comes back DeviceBusy (`0x200c`)**. That makes it more common than #181's title implies: two
-occurrences in one boot, minutes apart, from ordinary repeated capture attempts.
+InitiateCapture is refused with `PTP_RC_StoreFull` (`0x200c`)**. That makes it more common than #181's title
+implies: two occurrences in one boot, minutes apart, from ordinary repeated capture attempts.
 
 What these occurrences add beyond #181 is the mechanism evidence — the camlib *explicitly reports*
 `initiate-not-confirmed ptp=0x200c gp=-8`, so the loss happens above the camlib and above our shim — and a
