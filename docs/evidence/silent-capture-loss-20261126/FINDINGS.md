@@ -73,8 +73,8 @@ Checked and ruled out:
   $ strings /app/lib/stage2/libpolaris_stage2.so | grep -c "capture-outcome=empty-path"   -> 1
   ```
 
-**Whether that guard is actually installed at runtime on v118 is not observable, and I initially overstated
-this.** `stage2_capture_slot_target()` installs the wrapper silently:
+**The wrapper was in fact installed and in the call path — settled read-only, after I first called this
+unobservable.** `stage2_capture_slot_target()` installs it silently:
 
 ```c
 if (name && strcmp(name, "gp_camera_capture") == 0) {
@@ -87,15 +87,32 @@ if (name && strcmp(name, "gp_camera_capture") == 0) {
 ```
 
 Unlike every other slot it has **no `fprintf`** — the boot log prints `storage: gp_camera_init slot -> shim`,
-`capturetarget: gp_camera_set_config slot -> shim`, `shutter-fallback: ... slot -> shim (issue #187)`,
-`preview-backoff: gp_camera_capture_preview slot -> shim`, and nothing for `gp_camera_capture`. So the
-`0 hits` for `capture-outcome=empty-path` cannot distinguish "installed but not triggered" from "never
-installed at all". My earlier wording — that it was skipped because `ret != 0` — is an inference from the
-source, not an observation.
+`capturetarget: gp_camera_set_config slot -> shim`, `shutter-fallback: ... slot -> shim (issue #187)` and
+`preview-backoff: gp_camera_capture_preview slot -> shim`, and nothing for `gp_camera_capture`. So the install
+cannot be confirmed from the boot log, and my first draft inferred it. It can be confirmed from configuration:
 
-Settles in one capture: set `STAGE2_CAPTURE_TRACE=1` and take a shot. `[stage2-trace] capture-enter/return`
-lines prove interception; their absence proves the slot was never wrapped, which would mean the #183 fix is
-compiled in but inert on this build.
+```text
+$ grep -n STAGE2_CAPTURE_EMPTY_PATH_CHECK /app/bin/pgphoto
+30:export STAGE2_CAPTURE_EMPTY_PATH_CHECK=${STAGE2_CAPTURE_EMPTY_PATH_CHECK:-1}
+# ... This check installs the wrapper on its own merit (independent of the opt-in
+# STAGE2_CAPTURE_GUARD in-flight guard). Keep it explicit in release images; "0" is
+# the documented escape hatch for a diagnostic run.
+```
+
+The release launcher sets it to `1`, and the loader's own default is also enabled (`!e || e != "0"`). The
+running process environment contains no disabling value. So `stage2_capture_empty_path_check_enabled()` is
+true, the condition above holds, and **`stage2_guarded_gp_camera_capture` was in the path for SP_0050**.
+
+That makes the localization firm rather than inferred: the wrapper only rewrites a result when
+`ret == 0 && (name empty || folder empty)`. The core returned `-8`, so the wrapper returned `-8` unchanged.
+**The conversion from `-8` to `captureImage ret 0` therefore happens above our shim** — in pgphoto's own
+capture handling or polestar_app's use of it. Our camlib and our shim are both exonerated by evidence, not
+assumption.
+
+The #183 guard is active but structurally cannot catch this: it validates the *success* path for an empty
+path, whereas here the core reported a failure that the caller discarded. A guard for this class has to live
+where the return value is consumed — check it before emitting `state:2`/`state:5`, and emit an error frame
+instead.
 
 **The conversion point is not visible in this capture**: `STAGE2_CAPTURE_TRACE=0` on the deployed rig, so no
 `[stage2-trace] capture-return seq=N ret=-8` line exists to show what the shim handed back. Enabling that
