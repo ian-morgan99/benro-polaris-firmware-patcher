@@ -133,6 +133,10 @@ def main() -> int:
         for r in range(args.repeats):
             t = time.monotonic()
             ph: dict[str | int, float] = {}
+            # Dual-format delivers more than one file per exposure. The first version kept only the
+            # first 773, which is precisely the wrong thing to measure now: whether the RAW sibling
+            # arrives at all is the question, and a missing sibling is what later trips -1005.
+            files: list[dict] = []
             p.send(264, subtype=4, payload="state:1;bulb:0;c:-1;")
             deadline = time.monotonic() + 180
             while time.monotonic() < deadline:
@@ -151,10 +155,14 @@ def main() -> int:
                     if iv in TERMINAL:
                         break
                 elif c == 773:
+                    entry = {"ms": round((time.monotonic() - t) * 1000.0, 1),
+                             "path": cp.field(b, "path"), "size": cp.field(b, "size"),
+                             "type": cp.field(b, "type")}
+                    files.append(entry)
                     if "file" not in ph:
-                        ph["file"] = round((time.monotonic() - t) * 1000.0, 1)
-                        ph["path"] = cp.field(b, "path")
-                        ph["size"] = cp.field(b, "size")
+                        ph["file"] = entry["ms"]
+                        ph["path"] = entry["path"]
+                        ph["size"] = entry["size"]
             total = round((time.monotonic() - t) * 1000.0, 1)
             states = sorted(k for k in ph if isinstance(k, int))
             # Success is "reached state 0 AND a file was notified". The first version asked
@@ -162,19 +170,31 @@ def main() -> int:
             # capture (states [0,1,4]) was reported FAIL and overhead came back None.
             ok = 0 in states and "file" in ph
             overhead = round(total - resolved * 1000.0, 1) if ok else None
+            total_bytes = sum(int(f["size"] or 0) for f in files)
             print(f"  {label} req={resolved}s shot {r + 1}: total={total}ms "
                   f"state4={ph.get(4)} file={ph.get('file')} overhead={overhead}ms "
-                  f"states={states} {'OK' if ok else 'FAIL'}", flush=True)
+                  f"files={len(files)} bytes={total_bytes} states={states} "
+                  f"{'OK' if ok else 'FAIL'}", flush=True)
+            for f in files:
+                print(f"      +{f['ms']}ms type={f['type']} size={f['size']} {f['path']}",
+                      flush=True)
             rows.append({"label": label, "requested_s": resolved, "shot": r + 1,
                          "total_ms": total, "state4_ms": ph.get(4), "file_ms": ph.get("file"),
                          "overhead_ms": overhead, "states": states, "ok": ok,
-                         "path": ph.get("path"), "size": ph.get("size")})
+                         "path": ph.get("path"), "size": ph.get("size"),
+                         "files": files, "total_bytes": total_bytes})
             time.sleep(2)
     out["captures"] = rows
     good = [r["overhead_ms"] for r in rows if r.get("overhead_ms") is not None]
     if good:
         print(f"\n  overhead (total - exposure): n={len(good)} "
               f"min={min(good)}ms median={statistics.median(good)}ms max={max(good)}ms", flush=True)
+    # Bytes-vs-overhead is the whole point of running this in two formats: if overhead tracks
+    # bytes, transfer dominates and reconciliation is innocent; if it stays flat, the constant is
+    # fixed cost on our side.
+    pairs = [(r["total_bytes"], r["overhead_ms"]) for r in rows if r.get("overhead_ms") is not None]
+    if len(pairs) > 1:
+        print(f"  bytes delivered per capture: {sorted(set(p[0] for p in pairs))}", flush=True)
     if args.json:
         Path(args.json).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json).write_text(json.dumps(out, indent=2))
