@@ -313,6 +313,21 @@ static int native_set_camera_config(int key, char *value)
     native_setting++;
     int ret = ((config_fn)(uintptr_t)STAGE2_CONFIG_COMMAND)(key, value, 31);
     native_setting--;
+
+    /* Opt-in SET tracing (STAGE2_SET_TRACE=1). pgphoto rejects parameter writes on
+     * the K-1 II with -2110 before issuing any PTP set-property: disassembly of the
+     * shipped binary shows getLocalCameraParamInfo accepting only configType <= 3, 7
+     * and 8 (movw/movt #0xfffff7c2 at +0x40) and returning -2110 otherwise, and
+     * getCameraConfig testing that sentinel explicitly. So the open question is not
+     * whether the camera refused -- it is which configType pgphoto was asked for and
+     * whether the request ever reached libgphoto2 at all. This shim is the only
+     * boundary between pgphoto and the core, so logging key/value/ret here answers
+     * that directly. Off by default: it prints once per SET, and a SET is a real
+     * camera write. */
+    if (getenv("STAGE2_SET_TRACE"))
+        fprintf(stderr, "[stage2] setCameraConfig key=%d value=\"%s\" ret=%d tid=%d\n",
+                key, value ? value : "(null)", ret, (int)syscall(SYS_gettid));
+
     return ret;
 }
 #endif
