@@ -1,5 +1,40 @@
 # Current repository state
 
+## 2026-11-26 (later) — dial on M: overhead is a constant ~9.9 s, exposure is honoured exactly
+
+Operator moved the dial to M. `scripts/k1ii-exposure-matrix.py` added; two bugs fixed in it before
+use (a mixed-type sort crash, and an inverted success test that marked every good capture FAIL
+because ascending sort puts state 0 first).
+
+| requested | EXIF ExposureTime | total | state:4 | overhead (total − exposure) |
+|---|---|---|---|---|
+| 1 s  | **1.0** | 10.6 / 10.9 s | 4.5 / 4.8 s | 9.6 / 9.9 s |
+| 5 s  | **5.0** | 14.8 / 14.9 s | 8.7 / 8.8 s | 9.8 / 9.9 s |
+| 10 s | **10.0** | 20.0 / 20.2 s | 13.9 / 14.1 s | 10.0 / 10.2 s |
+
+**M mode honours timed indices exactly** — EXIF matches the request, and `s:5 ret:0` succeeds where
+B mode returned `ret:-1`. **Overhead is constant at ~9.9 s regardless of exposure**, which is the
+operator's fixed-cost claim quantified: total = exposure + ~10 s. So the only lever on capture time
+is the exposure itself, and "make it fast" means reducing that ~10 s, not the transfer.
+
+**Cold-read penalty confirmed and is per-parameter, not empty arrays.** First read of each parameter
+in a fresh session costs 150–1200 ms (iso 1048, wb 1189, ev 533 in one run; 1063/1064/1073/1052 in
+another); subsequent reads are 7–240 ms. Lists came back populated every time (n=12/18/31/56/22),
+so the "empty arrays after M↔B" symptom did **not** reproduce here — what reproduces is a cold-fetch
+cost on first access, which is exactly what the app shows when opening a settings screen. The
+every-array-every-time re-read the operator remembers would multiply that penalty by five.
+
+**Where the ~10 s sits.** pgphoto's own markers for a 10 s exposure: `will CAPTURE_IMAGE` 12:46:00.469
+→ `state:4` 12:46:12.072 → `capture end -17740 ms` 12:46:18.178, with `get file to buffer 0 ms`. So
+~6.1 s is spent inside `gp_capture_image` *after* the candidate appears, for a ~128 KB JPEG. The
+prime suspect in our own code is the dual-format reconciliation (`pentax_reconcile_extra_candidates`,
+called unconditionally after every primary with an 8-candidate / 120 s budget and a 200 ms poll on
+transient failure) — it runs on single-shot JPEG-only captures too. **Not proven**: I could not get
+libgphoto2 debug output on-device to time it, so this is a candidate cause, not a finding.
+
+**Still blocked:** the hung bulb attempt poisons subsequent captures with `-1005`/`-112`; a reboot
+clears it. Reproduced three times now.
+
 
 **Bulb timer-mismatch hypothesis tested and refuted.** Requesting `bulb:20` to match the camera's
 own 20 s bulb timer still fails: pgphoto logs `capture with bulb 20000 ms`, sleeps exactly 20 s
