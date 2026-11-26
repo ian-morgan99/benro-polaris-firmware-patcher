@@ -55,6 +55,78 @@
           "note": "Benro's proprietary Stage-2 head. Not built by this repo; read-only for analysis. Carries the issue #230 bulb poll budget (movw r3,#10000 at capture_image_with_Bulb+0x594) and defines -2110 internally in getLocalCameraParamInfo."
         }
       ]
+    },
+    "libgphoto2/2.5.34/ptp2.so": {
+      "path": "/app/lib/stage2/libgphoto2/2.5.34/ptp2.so",
+      "artifacts": [
+        {
+          "md5": "11760dcb595215657b54f455012c70f7",
+          "label": "installed-with-astro-v117",
+          "status": "OBSERVED-NOT-PUBLISHED",
+          "source_commit": null,
+          "note": "Hash read from the live head on 2026-11-26. No local build in out/ matches it, so no source tree can currently be attributed to these bytes: Pentax PTP camlib: capture wait, candidate discovery, transfer"
+        }
+      ]
+    },
+    "libgphoto2/2.5.34/pentax.so": {
+      "path": "/app/lib/stage2/libgphoto2/2.5.34/pentax.so",
+      "artifacts": [
+        {
+          "md5": "88d9c00abdeb48ae5c67733c48487f9c",
+          "label": "installed-with-astro-v117",
+          "status": "OBSERVED-NOT-PUBLISHED",
+          "source_commit": null,
+          "note": "Hash read from the live head on 2026-11-26. No local build in out/ matches it, so no source tree can currently be attributed to these bytes: Legacy Pentax camlib (pslr); not the one serving this body"
+        }
+      ]
+    },
+    "libgphoto2.so.6": {
+      "path": "/app/lib/stage2/libgphoto2.so.6",
+      "artifacts": [
+        {
+          "md5": "e3f295b3124396e00d961e159be4f1ea",
+          "label": "installed-with-astro-v117",
+          "status": "OBSERVED-NOT-PUBLISHED",
+          "source_commit": null,
+          "note": "Hash read from the live head on 2026-11-26. No local build in out/ matches it, so no source tree can currently be attributed to these bytes: libgphoto2 core"
+        }
+      ]
+    },
+    "libgphoto2_port.so.12": {
+      "path": "/app/lib/stage2/libgphoto2_port.so.12",
+      "artifacts": [
+        {
+          "md5": "230b6fbc8cfe9190022c49d93febac45",
+          "label": "installed-with-astro-v117",
+          "status": "OBSERVED-NOT-PUBLISHED",
+          "source_commit": null,
+          "note": "Hash read from the live head on 2026-11-26. No local build in out/ matches it, so no source tree can currently be attributed to these bytes: libgphoto2 port library"
+        }
+      ]
+    },
+    "libgphoto2_port/0.12.2/usb1.so": {
+      "path": "/app/lib/stage2/libgphoto2_port/0.12.2/usb1.so",
+      "artifacts": [
+        {
+          "md5": "18848f0a09841f83fabf296cb52f7173",
+          "label": "installed-with-astro-v117",
+          "status": "OBSERVED-NOT-PUBLISHED",
+          "source_commit": null,
+          "note": "Hash read from the live head on 2026-11-26. No local build in out/ matches it, so no source tree can currently be attributed to these bytes: USB I/O module"
+        }
+      ]
+    },
+    "libgphoto2_port/0.12.2/usbscsi.so": {
+      "path": "/app/lib/stage2/libgphoto2_port/0.12.2/usbscsi.so",
+      "artifacts": [
+        {
+          "md5": "5b1d68cfbdc4253bc0c879eeae728e86",
+          "label": "installed-with-astro-v117",
+          "status": "OBSERVED-NOT-PUBLISHED",
+          "source_commit": null,
+          "note": "Hash read from the live head on 2026-11-26. No local build in out/ matches it, so no source tree can currently be attributed to these bytes: USB SCSI I/O module"
+        }
+      ]
     }
   },
   "_launcher_note": [
@@ -79,11 +151,17 @@
     "6.0.0.54.117": {
       "expected": {
         "libpolaris_stage2.so": "765e9528b8d2dddaeb0d25f6ed54e977",
-        "pgphoto.stage2ondisk": "79d4454fe2a674b32127698d0ee7aac1"
+        "pgphoto.stage2ondisk": "79d4454fe2a674b32127698d0ee7aac1",
+        "libgphoto2/2.5.34/ptp2.so": "11760dcb595215657b54f455012c70f7",
+        "libgphoto2/2.5.34/pentax.so": "88d9c00abdeb48ae5c67733c48487f9c",
+        "libgphoto2.so.6": "e3f295b3124396e00d961e159be4f1ea",
+        "libgphoto2_port.so.12": "230b6fbc8cfe9190022c49d93febac45",
+        "libgphoto2_port/0.12.2/usb1.so": "18848f0a09841f83fabf296cb52f7173",
+        "libgphoto2_port/0.12.2/usbscsi.so": "5b1d68cfbdc4253bc0c879eeae728e86"
       },
       "release_record": "docs/release-change-summary-v117-astro.json",
       "release_record_has_hashes": false,
-      "gap": "The release record contains no component hashes. This expected{} block was reconstructed on 2026-11-26 from the on-device pre-hotswap backup, not from the package, so it documents what was observed rather than what was published."
+      "gap": "The release record contains no component hashes. This expected{} block was reconstructed on 2026-11-26 from the on-device pre-hotswap backup, not from the package, so it documents what was observed rather than what was published. Camera-stack hashes were likewise never published; added 2026-11-26 from the live head. None matches any build under out/, so source attribution for ptp2.so is unresolved."
     }
   }
 }
