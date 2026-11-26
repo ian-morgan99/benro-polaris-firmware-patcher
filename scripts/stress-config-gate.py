@@ -12,7 +12,7 @@ fix needs concurrency and timing, not a polite sequential poll.
 
 What it measures
 ----------------
-  * refusals   -- "admission refused" lines in /app/Clog.txt across the window
+  * refusals   -- "admission refused" lines in /app/sd/system/log/Clog_*.log across the window
   * sentinel   -- parameter reads answering V:-1 instead of a real value list
   * timeouts   -- reads that never answered at all
   * latency    -- per-request wall time, p50/p95/max
@@ -79,9 +79,24 @@ def ssh(host: str, cmd: str) -> str:
 
 
 def refusal_count(host: str) -> int:
-    text = ssh(host, "sed 's/\\x1b\\[[0-9;]*m//g' /app/Clog.txt | grep -c 'admission refused'")
-    digits = text.strip().splitlines()[-1] if text.strip() else "0"
-    return int(digits) if digits.isdigit() else 0
+    # /app/Clog.txt does not exist on .115+ firmware -- the camera daemon writes
+    # rotating logs under /app/sd/system/log/. Reading the old path returned an
+    # empty grep, which every caller took as "no refusals", so a wedged gate and a
+    # healthy gate produced identical output. Fail loudly instead of reporting 0.
+    text = ssh(
+        host,
+        "ls /app/sd/system/log/Clog_*.log 2>/dev/null | tail -1 | "
+        "xargs -r sed 's/\\x1b\\[[0-9;]*m//g' | grep -c 'admission refused'",
+    )
+    digits = text.strip().splitlines()[-1] if text.strip() else ""
+    if not digits.isdigit():
+        print(
+            "WARN: cannot read refusals from /app/sd/system/log/Clog_*.log -- "
+            "refusal counts are unavailable, not zero",
+            file=sys.stderr,
+        )
+        return -1
+    return int(digits)
 
 
 def new_connection(host: str, port: int, bind: str | None, timeout: float):
@@ -286,12 +301,15 @@ def main() -> int:
 
     time.sleep(2)  # let the head flush its log
     after = refusal_count(args.ssh_host)
-    # /app/Clog.txt rotates, so "after" can be lower than "before" without any
-    # new refusal. A negative delta means the window was truncated, not that
-    # refusals were repaired; count it as zero and say so rather than reporting
-    # a nonsensical negative number of bad outcomes.
-    delta = after - before
-    rotated = delta < 0
+    # The rotating logs can advance between the two reads, so "after" can be lower
+    # than "before" without any new refusal. A negative delta means the window was
+    # truncated, not that refusals were repaired; count it as zero and say so rather
+    # than reporting a nonsensical negative number of bad outcomes.
+    # An unreadable count (-1) is NOT zero: an unmeasured gate must never be
+    # reported as a clean one.
+    unknown = before < 0 or after < 0
+    delta = 0 if unknown else after - before
+    rotated = (not unknown) and delta < 0
     if rotated:
         delta = 0
 
@@ -312,7 +330,8 @@ def main() -> int:
     if errors:
         print("connection errors: " + "; ".join(errors))
     suffix = ", log rotated -- window truncated" if rotated else ""
-    print(f"admission refusals in window: {delta}{suffix}")
+    refusal_text = "UNKNOWN (log unreadable)" if unknown else f"{delta}{suffix}"
+    print(f"admission refusals in window: {refusal_text}")
     if _sessions:
         print("camera session seen by handshake: " +
               ", ".join(f"{k} x{v}" for k, v in _sessions.items()))
@@ -339,6 +358,12 @@ def main() -> int:
         return 1
     p95 = f"{pct(0.95):.2f}s" if latents else "n/a"
     note = f" ({delta} correct contention refusal(s))" if delta else ""
+    if unknown:
+        # Reads all came back valid, which is the part that matters for correctness,
+        # but contention was not observable -- say so instead of implying a quiet gate.
+        print(f"\nVERDICT: reads all valid ({outcomes['ok']}) but refusal count "
+              f"unmeasurable -- p95={p95}")
+        return 0
     print(f"\nVERDICT: clean under load -- {outcomes['ok']} reads all valid, "
           f"p95={p95}{note}")
     return 0

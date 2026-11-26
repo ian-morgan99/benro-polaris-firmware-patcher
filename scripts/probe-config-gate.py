@@ -68,7 +68,15 @@ def ssh(ssh_host: str, cmd: str) -> str:
 
 
 def refusal_lines(ssh_host: str) -> list[dict]:
-    raw = ssh(ssh_host, "grep -a 'admission refused' /app/Clog.txt 2>/dev/null | tail -40")
+    # /app/Clog.txt does not exist on .115+ firmware; the camera daemon writes
+    # rotating logs under /app/sd/system/log/. Grepping the old path matched nothing,
+    # so this returned [] and every caller printed "refusals already in Clog: 0"
+    # regardless of what the gate was actually doing.
+    raw = ssh(
+        ssh_host,
+        "ls /app/sd/system/log/Clog_*.log 2>/dev/null | tail -1 | "
+        "xargs -r sed 's/\\x1b\\[[0-9;]*m//g' | grep -a 'admission refused' | tail -40",
+    )
     found = []
     for line in raw.splitlines():
         m = REFUSE_RE.search(line)
@@ -77,13 +85,38 @@ def refusal_lines(ssh_host: str) -> list[dict]:
     return found
 
 
+def local_bind_for(host: str) -> str | None:
+    """Source address the kernel would use to reach ``host``.
+
+    The old default was a hardcoded workstation IP on the rig subnet. After a
+    Wi-Fi re-join hands out a different address, binding to it fails with
+    EADDRNOTAVAIL and the probe reports a transport failure that has nothing to
+    do with the rig.
+    """
+    try:
+        out = subprocess.run(["ip", "-4", "-o", "route", "get", host],
+                             capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    for token in out.stdout.split():
+        if token.startswith("src "):
+            return token[4:]
+        if token.startswith("src") and len(token) > 3:
+            return token[3:]
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="192.168.0.1")
-    ap.add_argument("--bind", default="192.168.0.4")
+    ap.add_argument("--bind", default=None,
+                    help="local source address; derived from the route to --host if unset")
     ap.add_argument("--ssh-host", default="root@192.168.0.1")
     ap.add_argument("--rounds", type=int, default=3)
     args = ap.parse_args()
+
+    if args.bind is None:
+        args.bind = local_bind_for(args.host)
 
     before = refusal_lines(args.ssh_host)
     print(f"refusals already in Clog: {len(before)}", flush=True)
