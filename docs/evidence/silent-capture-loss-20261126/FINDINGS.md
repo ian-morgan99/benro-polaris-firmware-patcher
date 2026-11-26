@@ -233,6 +233,36 @@ That is a 2-for-2 match with the predicted asymmetry, derived purely from logs. 
 is not limited to StoreFull: **any** GP error outside that eight-entry list is silently converted to a successful
 capture, and nobody has enumerated which ones exist in practice.
 
+## Mitigation shipped (commit 3bf5b93a)
+
+pgphoto cannot be patched, but the wrapper we already own sits at the exact call boundary where the code is
+dropped. `stage2_guarded_gp_camera_capture()` now remaps `-8` to `GP_ERROR_NO_SPACE` (**-115**), which *is* on
+pgphoto's allowlist and is the semantically correct code for a full card. Default-on, with
+`STAGE2_CAPTURE_STOREFULL_REMAP=0` as the documented escape hatch, matching the #183 pattern. The trace line
+still logs the raw `-8`, so a reader can tell what the core did rather than only what pgphoto was handed.
+
+`stage2_capture_slot_target()` now installs the wrapper for this mode too — that silent-install gap is what made
+the #183 guard's deployment unverifiable earlier.
+
+### What is verified, and what is inferred
+
+**Verified on the rig:** a negative return from pgphoto becomes a `val[state:-N;…]` frame in the client-facing
+log. Across all logs: `state:-110` ×15, `state:-112` ×3, and `state:-8` **zero times** — the same asymmetry as
+the return codes. The client-facing `Mlog_000039.log` likewise carries negative states (`state:-1005`,
+`state:-5`), so error states do reach the client.
+
+**Inferred, not observed:** that `-115` specifically produces `val[state:-115;…]`. pgphoto's allowlist includes
+-115 (it returns it), and the app's `state:-N` emission looked generic across the two codes actually seen — but
+-115 never occurred on this rig, so that final step is an inference from the pattern. It should be confirmed on
+the first real full-card event, or by a device test that fills the camera's card.
+
+### Still unexplained
+
+61 `will captureImage` attempts against 56 completion lines — **5 attempts produced no completion line at all**.
+That is a separate gap from the phantom-success bug (those 2 are inside the 39 `ret 0`) and I have not
+determined whether they are truncated log tails, in-flight captures at rotation time, or a third failure mode.
+Not claiming an explanation.
+
 The #183 guard is active but structurally cannot catch this: it validates the *success* path for an empty
 path, whereas here the core reported a failure that the caller discarded. A guard for this class has to live
 where the return value is consumed — check it before emitting `state:2`/`state:5`, and emit an error frame
