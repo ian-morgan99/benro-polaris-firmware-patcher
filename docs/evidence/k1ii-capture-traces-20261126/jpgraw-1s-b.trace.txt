@@ -1,0 +1,32 @@
+# capture trace label=jpgraw-1s-b
+wall_start=13:31:50 total_ms=17726.6 request=state:1;bulb:0;c:-1;
+shutter=unchanged
+
+== control-socket timeline (what the app saw) ==
+        6.0 ms  code 264  state:1
+    11601.9 ms  code 264  state:4;
+    17722.5 ms  code 773  type:1;path:/app/sd/normal/SP_0040.jpg;size:132630;cTime:2026-11-26 13:32:06;duration:0;
+    17726.6 ms  code 264  state:0;
+
+== device log slices ==
+
+----- /app/Clog.txt (+14022 bytes, 0 redaction(s)) -----
+[13:31:48:852 INFO-]:recv_ipc_msg[129]:------ recv_ipc_msg success; msg_id [65538] type[4],code[264],val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0040.jpg;c:-1]
+[13:31:48:852 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:1;/app/sd/normal/SP_0040.jpg]
+[stage2] camera admission refused: site=100540 kind=2 owner_site=1013ac last_owner_kind=0 generation=1 camera_present=1 budget=500
+[stage2] camera admission refused: site=100540 kind=2 owner_site=1013ac last_owner_kind=0 generation=1 camera_present=1 budget=500
+[13:31:51:084 INFO-]:capture_image[3092]:---- will CAPTURE_IMAGE  
+[pentax] capture=8 boundary=camlib-enter transfer=0 recovery=1 output_pending=0
+[pentax] capture=8 boundary=preconditions-enter
+[pentax] capture=8 boundary=preconditions-return ptp=0x2001 size=576
+[pentax] capture=8 boundary=initiate-enter focus=2 companions=1
+[pentax] capture=8 boundary=initiate-return ptp=0x2001
+[13:32:00:437 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:4;K1II8827.JPG]
+[13:32:06:542 INFO-]:capture_image[3164]:----capture end   -15488 ms
+[13:32:06:554 INFO-]:capture_image[3171]:----get file to buffer   -11 ms
+[13:32:06:555 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:2;/app/sd/normal/SP_0040.jpg]
+[13:32:06:559 INFO-]:savePhotoToAblum[1276]:----savePhotoToAblum  /app/sd/normal/SP_0040.jpg  ;ret 0 
+[13:32:06:561 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:3;/app/sd/normal/SP_0040.jpg]
+[13:32:06:562 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:5; ]
+
+----- /app/Mlog.txt (+9153 bytes, 0 redaction(s)) -----

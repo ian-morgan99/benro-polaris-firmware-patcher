@@ -1,5 +1,28 @@
 # Current repository state
 
+## 2026-11-26 (later) — trace tooling added; `state:5` correlation refuted by my own count
+
+`scripts/k1ii-capture-trace.py` added, per operator request for scripts and Mlog traces. It records
+byte offsets of every log before a capture, slices only the window it caused, scrubs credential
+shapes (`password:`, `securityA:`, `username:`, `token`) using the v117 evidence patterns, and refuses
+to write if any survive. Two redacted traces plus analysis are in
+`docs/evidence/k1ii-capture-traces-20261126/` (3.6 KB each, text only).
+
+**Mlog is the user-visible record** and I had been ignoring it: `SP_MsgFromCamera` shows what the
+camera sent and `SP_SendMsgToApp` shows what the phone received with payload. It confirms the JPG+RAW
+defect end-to-end — one `773` (`type:1`, JPEG), no second notification, `get file to buffer -11 ms`.
+
+**Two bugs found in my own trace script while using it:** it tracked only the newest SD-rotated Clog,
+so a mid-capture rotation silently produced a trace with no internals at all (now tracks the three
+newest); and `/app/Clog.txt` is not where loader output goes.
+
+**I caught myself on `state:5`.** It appears in the JPG+RAW trace right after publication and we map
+it to `state:0`, so it looked like the camera signalling a still-owed second file — a tidy explanation
+for the missing RAW. Counting all 25 retained rotated logs killed it: `state:5` occurs **30 times,
+once per capture**, matching `state:2` and `state:4` counts, and appears in logs from before JPG+RAW
+was enabled. It is a normal lifecycle state, not a dual-format signal. The README records both the
+wrong reading and the count that refuted it.
+
 ## Evidence policy for this session (operator directive)
 
 **No images or raw JSON artifacts are committed.** Descriptions and test confirmations in these notes

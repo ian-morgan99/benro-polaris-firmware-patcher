@@ -1,0 +1,43 @@
+# capture trace label=jpgraw-1s
+wall_start=13:30:48 total_ms=17017.2 request=state:1;bulb:0;c:-1;
+shutter=8 -> 15 ret=0
+
+== control-socket timeline (what the app saw) ==
+       11.6 ms  code 264  state:1
+    10893.1 ms  code 264  state:4;
+    17012.9 ms  code 773  type:1;path:/app/sd/normal/SP_0039.jpg;size:131483;cTime:2026-11-26 13:31:03;duration:0;
+    17017.2 ms  code 264  state:0;
+
+== device log slices ==
+
+----- /app/Clog.txt (+14787 bytes, 0 redaction(s)) -----
+[13:30:46:245 INFO-]:recv_ipc_msg[129]:------ recv_ipc_msg success; msg_id [65538] type[4],code[264],val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0039.jpg;c:-1]
+[13:30:46:245 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:1;/app/sd/normal/SP_0039.jpg]
+[stage2] camera admission refused: site=100540 kind=2 owner_site=1013ac last_owner_kind=0 generation=1 camera_present=1 budget=500
+[stage2] camera admission refused: site=100540 kind=2 owner_site=1013ac last_owner_kind=0 generation=1 camera_present=1 budget=500
+[13:30:48:472 INFO-]:capture_image[3092]:---- will CAPTURE_IMAGE  
+[pentax] capture=7 boundary=camlib-enter transfer=0 recovery=1 output_pending=0
+[pentax] capture=7 boundary=preconditions-enter
+[pentax] capture=7 boundary=preconditions-return ptp=0x2001 size=576
+[pentax] capture=7 boundary=initiate-enter focus=2 companions=1
+[pentax] capture=7 boundary=initiate-return ptp=0x2001
+[13:30:57:115 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:4;K1II8826.JPG]
+[13:31:03:219 INFO-]:capture_image[3164]:----capture end   -14778 ms
+[13:31:03:231 INFO-]:capture_image[3171]:----get file to buffer   -11 ms
+[13:31:03:232 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:2;/app/sd/normal/SP_0039.jpg]
+[13:31:03:236 INFO-]:savePhotoToAblum[1276]:----savePhotoToAblum  /app/sd/normal/SP_0039.jpg  ;ret 0 
+[13:31:03:238 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:3;/app/sd/normal/SP_0039.jpg]
+[13:31:03:239 INFO-]:send_ipc_msg_retry[80]:------SP_sendMsg success; id[98307] type[1],code[264],val[state:5; ]
+
+----- /app/Mlog.txt (+9902 bytes, 0 redaction(s)) -----
+[13:30:45:221 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[286],val[manufacturer:ricoh imaging company, ltd.;model:pentax k-1 mark ii;state:1;storage:2;photoFormat:1;]
+[13:30:46:244 INFO-sp_msgComm]:SP_sendMsg[77]:SP_sendMsg success; key[1003],type[4],code[264],val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0039.jpg;c:-1]
+[13:30:46:245 INFO-]:SP_MsgFromCameraProc[1154]:MsgFromCamera-->type[1],code[264],val[state:1;/app/sd/normal/SP_0039.jpg]
+[13:30:46:245 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[1],code[264],val[state:1]
+[13:30:57:115 INFO-]:SP_MsgFromCameraProc[1154]:MsgFromCamera-->type[1],code[264],val[state:4;K1II8826.JPG]
+[13:30:57:116 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[1],code[264],val[state:4;]
+[13:31:03:232 INFO-]:SP_MsgFromCameraProc[1154]:MsgFromCamera-->type[1],code[264],val[state:2;/app/sd/normal/SP_0039.jpg]
+[13:31:03:236 INFO-]:SP_MsgFromCameraProc[1154]:MsgFromCamera-->type[1],code[264],val[state:3;/app/sd/normal/SP_0039.jpg]
+[13:31:03:237 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[2],code[773],val[type:1;path:/app/sd/normal/SP_0039.jpg;size:131483;cTime:2026-11-26 13:31:03;duration:0;]
+[13:31:03:239 INFO-]:SP_MsgFromCameraProc[1154]:MsgFromCamera-->type[1],code[264],val[state:5; ]
+[13:31:03:239 INFO-]:SP_SendMsgToApp[181]:SP_SendMsgToApp success;type[1],code[264],val[state:0;]
