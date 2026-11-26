@@ -1,5 +1,58 @@
 # Current repository state
 
+## 2026-11-26 (later still) — measured baseline: capture is ~29.8 s against a 6.6–9.1 s historical norm
+
+`scripts/k1ii-latency.py` added: per-operation p50/p95/max plus a phase-split capture
+lifecycle, reusing canary-probe's protocol client so it measures what the harness sends.
+Identity verified exit 0 before every run.
+
+**Reads are fine.** p50 6–32 ms, p95 ≤216 ms, connect 2.1 ms, handshake 94 ms, and a
+5-command concurrent burst completes in 53.8 ms with 5/5 replies. No empty reads this
+session. Nothing here needs fixing.
+
+**Capture is the problem.** Four runs, dial on B, all resolving to the `00-01` slot:
+
+| run | state:1 | state:4 | file notify | total |
+|---|---|---|---|---|
+| SP_0011 | 9 ms | 23.4 s | 29.5 s | 29.5 s |
+| SP_0012 | 3 ms | 23.7 s | 29.9 s | 29.9 s |
+| SP_0013 | — | 23.7 s | 29.9 s | 29.9 s |
+| SP_0014 (live view running) | 17 ms | 23.7 s | 29.8 s | 29.8 s |
+
+Historical K-1 II `capture end` values in `docs/evidence/` are **6.6–9.1 s**, so this is a
+~3× regression, not normal. Live view running changes nothing (23.7 s either way), so the
+preview backoff is not implicated.
+
+**Where the time is.** pgphoto's own markers: `will CAPTURE_IMAGE` → `capture end -27414 ms`,
+then `get file to buffer -1 ms`. So essentially all of it is inside `gp_capture_image`, and
+the file read itself is 1–4 ms. The delivered JPEG is 108 KB — far too small for 27 s of
+USB transfer, which is why the operator's point matters: *transmission of JPG or RAW costs
+about the same regardless of exposure*, so a fixed ~27 s cannot be explained by bytes moved.
+
+**Two candidate explanations, not yet separated:**
+1. The camera genuinely takes ~20 s to publish a candidate in this state (`state:4` arrives
+   ~20 s after pgphoto enters capture, i.e. before `gp_capture_image` returns).
+2. Our camlib's wait/poll path adds a fixed cost independent of exposure.
+
+**Blocked on one measurement I cannot make in B mode.** To separate them I must vary the
+exposure and see whether the 27 s moves. Timed shutter writes are refused while the dial is
+on B (`s:5 ret:-1` for `00-10`), so **the dial needs to be on M** — that is the single
+change that unblocks the decisive test, and it also unblocks the parameter-SET refusals.
+
+**My own error, caught by the harness.** The first "5 s exposure" run was silently a 1 s
+run: `--exposure-seconds` hand-built a slot label, failed to match the live list, and left
+the shutter at `00-01`. Two identical 27.4 s numbers therefore proved nothing about
+exposure-independence. Fixed in `c042b9ff`: resolve via `resolve_shutter_index`, record both
+requested and resolved durations, and exit loudly on a refused SET instead of timing an
+unknown shot.
+
+**Attribution gap closed.** The running `ptp2.so` (`11760dcb…`) matched no build under
+`out/`, so nothing could say which source produced it — the same class of gap as the loader,
+in the component I was reading code for. Registered with the rest of the camera stack
+(`b40ee9cc`), status `OBSERVED-NOT-PUBLISHED`, source attribution stated as unresolved.
+Also: `needs_idle_wait` is assigned in 8 places and never read in that tree — but that tree
+is *not* proven to be the running bytes, so it is not evidence about the device.
+
 ## 2026-11-26 (later) — bulb failure localised to post-exposure retrieval; gate did not fire at all
 
 Dial confirmed physically on **B** (operator-stated), K-1 II, registered v117 bytes, identity verified exit 0.
