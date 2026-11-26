@@ -45,51 +45,64 @@ is correct behaviour, and there is no latch bug.
 convincing, so I wrote `on` to `usb1/power/control` and `1-1/power/control`. The hub went
 `runtime=suspended → active` and **still enumerated nothing**. Autosuspend was a red herring.
 
-## Why the new cable is the leading explanation
+## CABLE HYPOTHESIS REFUTED — the body and cable are both fine
 
-A data-capable cable plus a powered-on body produces a kernel line — `new high-speed USB device number N` —
-**even if enumeration then fails**. Seeing literally nothing, before and after a replug, means the host never
-detects a data pair at all. That is the signature of a charge-only cable or a bad contact, not a driver or
-firmware problem.
+The same body on the **same new cable** into this workstation enumerates immediately:
 
-Supporting detail: the K-1 II enumerated on `1-1.2` as **high-speed (USB 2.0)** and bus 002 (SuperSpeed) has
-never had a child. So this link negotiates at USB 2.0 regardless of body — a SuperSpeed failure would not by
-itself block enumeration, which points further at the cable's data pair rather than speed negotiation.
+```text
+Bus 001 Device 005: ID 25fb:0189 Pentax Ricoh Imaging Co., Ltd PENTAX K-3 Mark III
+/sys/bus/usb/devices/1-4  ->  480M, interface class 06 (still-image), driver=[none]  (normal for PTP)
+gphoto2 --auto-detect     ->  USB PTP Class Camera   usb:001,005
+```
 
-## Driver support — checked, and I will not over-claim it
+So my "charge-only cable / no data pair" conclusion was **wrong**. The cable carries data, the body presents
+a PTP interface, and it negotiates **480 M high-speed** — exactly the speed the K-1 II used on the rig. That
+also means SuperSpeed negotiation is irrelevant here; bus 002 being empty on the rig is not the cause.
 
-`camlibs/pentax/library.c` (pin `f48a05e08`) ends its abilities list at:
+## Driver support CONFIRMED — my earlier reading was wrong too
+
+I said the driver might not know `0x0189`. It does. I had grepped `camlibs/pentax/library.c`; the PTP table
+is in `camlibs/ptp2/library.c`:
 
 ```c
-strcpy (a.model, "Pentax:K1II");
-a.usb_vendor  = 0x25fb;
-a.usb_product = 0x0182; // in MSC mode, which is used by usbscsi
+{"Pentax:K-3 Mark III (MTP mode)",      0x25fb, 0x0189, 0},
 ```
 
-Neither `0x0183` (what the K-1 II actually reported) nor `0x0189` appears in that file. **This does not mean
-the driver cannot handle the K-3 III** — the K-1 II works while its own reported ID `0x0183` is absent from
-that table, so ID matching there is evidently not the only path (note the comment says `0x0182` is the MSC
--mode ID). I cannot conclude anything about K-3 III driver support from this alone, and it is moot until the
-body enumerates. Re-check once it attaches: if it enumerates but pgphoto refuses to bind, that table becomes
-the first place to look.
+plus explicit handling in `camlibs/ptp2/pentax-utils.c` (`model_no == PENTAX_MODEL_K3_MARK_III && usb_product
+== 0x0189`), and `camlibs/pentax/pslr_model.c:1010` carries `{ 0x13254, "K-3III", ... }`. The K-1 II row at
+`0x0183` is my own earlier note documenting the MSC/PTP PID-pair convention. So nothing about the driver
+explains the failure, and USB mode is not an enumeration blocker either — the body presents `0x0189` with a
+still-image interface regardless of host.
 
-## What to do — isolate cable vs rig in under a minute
+## Rig-side state after the cable was ruled out
 
-A local watcher is running on the workstation (`/tmp/local-usb-watch.log`, 20 min) and a kernel watcher on
-the rig (`/tmp/usb-watch.log`). Either test is decisive:
+- `echo 1-1 > .../usb/unbind` then `bind` **succeeded** (unlike the earlier `reset`, which was permission
+  denied) and still enumerated nothing.
+- `dmesg` since boot: **no xHCI or USB errors at all** — only unrelated `CFG80211` WiFi noise. So the stack is
+  not logging a fault; it simply never sees a connection event on that port.
+- The hub (`1a40:0101`) currently has no children; the K-1 II occupied `1-1.2` about an hour earlier, so the
+  port itself was working recently.
 
-1. **Plug the K-3 III into this workstation with the same new cable.** If nothing appears locally, the cable
-   (or body settings) is the fault — not the Polaris.
-2. **Swap to a cable known to carry data** — ideally the one that worked with the K-1 II — and retest on the
-   rig.
-3. **Check the body**: USB mode must be PTP/Mass-storage-as-configured, not charge-only; some bodies default
-   to charging over USB-C. Also try the other physical port on the rig if it has one.
+## Ranked causes remaining (rig-side)
 
-Then confirm with:
+1. **Different physical port.** The K-1 II worked on hub port `1-1.2`. If the USB-C cable went into another
+   socket, that one may be dead or not routed to this controller. *Test: use the exact port the K-1 II used.*
+2. **Power budget.** Everything hangs off a bus-powered hub; the K-3 III may draw more than that port will
+   supply. Usually this logs an error, and none is logged, so this is lower confidence.
+3. **Wedged USB stack** after the K-1 II's removal — no evidence for it (no errors), but a reboot is cheap and
+   would clear it.
+
+Do not re-open the cable, driver, autosuspend, or supervisor-latch theories; all four are now closed.
+
+## Next actions
 
 ```bash
-ssh root@192.168.0.1 'ls /sys/bus/usb/devices/ | grep -av "^usb"; lsusb | grep -ai pentax'
+# rig watcher is live; plug into the port the K-1 II used, then:
+grep -av nohup /tmp/rig-watch2.log | tail
+ssh root@192.168.0.1 'lsusb | grep -ai pentax; ls /sys/bus/usb/devices/ | grep -av "^usb"'
 ```
+
+If the known-good port yields nothing, reboot the rig and retest before anything else.
 
 ## Evidence
 
