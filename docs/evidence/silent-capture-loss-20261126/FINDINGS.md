@@ -45,9 +45,25 @@ BAD:  state:1 ->                (no state:4) -> ret 0 -> state:2 -> state:5
 ```
 
 `state:4` carries the camera's own filename and is the only frame proving an exposure actually produced an
-object. It is emitted by **all 37** successful captures and by **none** of this one. Across all logs on the
-rig there are **38 `captureImage ret 0` lines and only 37 `state:4` frames** — exactly one mismatch, which is
-this event.
+object. It is emitted by **all 37** successful captures and by **none** of this one.
+
+**This reproduced twice, and my first count of "exactly one" was wrong.** Re-counting after a later probe gives
+**39 `captureImage ret 0` lines against 37 `state:4` frames — a mismatch of two**. The second is SP_0051 at
+20:50:51, produced by my own frame-dump probe:
+
+```text
+val[state:1;focus:-1000;leve:1;b:0;path:/app/sd/normal/SP_0051.jpg;c:-1]
+val[state:1;/app/sd/normal/SP_0051.jpg]
+initiate-return ptp=0x200c
+captureImage ret 0        p:   ;          <- empty path, same signature
+val[state:2;/app/sd/normal/SP_0051.jpg]
+val[state:5; ]
+$ ls /app/sd/normal/SP_0051.jpg           -> MISSING
+```
+
+Identical signature to SP_0050: DeviceBusy, `ret 0`, empty path, no `state:4`, no file. Both were triggered by
+me, which is how I know they are real losses rather than log artifacts — I asked for two captures and got zero
+files and two successes.
 
 ## The file does not exist
 
@@ -126,13 +142,21 @@ silent — one capture vanishes, the app says it succeeded, the client says it f
 photo and no error. For astrophotography sequences that means a missing frame in a stack with nothing to
 indicate it.
 
-## Relationship to #181
+## Relationship to #181 — the stated trigger is too narrow
 
 #181 ("First capture after a session re-establishment can be accepted then silently lost (no shutter, no
-files)") matches the symptom and the trigger exactly — this is the first capture after a reboot, with
-`[camera-usb] supervisor ready; identity=none` preceding it. What this occurrence adds is the mechanism
-evidence: the camlib *explicitly reports* `initiate-not-confirmed ptp=0x200c gp=-8`, so the loss happens
-above the camlib, and the `state:4`-absence test gives a cheap way to detect it.
+files)") matches the symptom. SP_0050 fits its trigger: first capture after a reboot, with
+`[camera-usb] supervisor ready; identity=none` preceding it.
+
+**SP_0051 does not.** It occurred seven minutes later in the *same* session — grepping 20:43:40 to 20:50:45 for
+`supervisor ready`, `gp_camera_init`, `keep-lv` or usb events returns nothing. So no re-establishment happened
+between the two, and the trigger is not "first capture after a session restart" but **any capture whose
+InitiateCapture comes back DeviceBusy (`0x200c`)**. That makes it more common than #181's title implies: two
+occurrences in one boot, minutes apart, from ordinary repeated capture attempts.
+
+What these occurrences add beyond #181 is the mechanism evidence — the camlib *explicitly reports*
+`initiate-not-confirmed ptp=0x200c gp=-8`, so the loss happens above the camlib and above our shim — and a
+detection signature that already works offline.
 
 ## Detection already exists -- and already caught this
 
@@ -150,8 +174,13 @@ naive sign-based count : 38 -> over-reports by 2.71x
 It reports SP_0050 as **FAIL** despite `ret 0`, precisely because `states=[2, 5]` contains no `4`. Its
 docstring already warns against trusting the sign at all (issue #218: `capture end -23398 ms` is a *success*),
 and notes that a naive sign-based analysis once produced "34 capture timeouts" and several failure modes that
-did not exist. The 38-vs-37 counter pair in this file is therefore a cross-check on the tool, not a
-replacement for it -- and the tool agrees with it.
+did not exist. The counter pair in this file is therefore a cross-check on the tool, not a replacement for it
+-- and the tool agrees with it.
+
+The two counts quoted above (38 `ret 0` vs 37 `state:4`) and here are point-in-time snapshots of a live log
+corpus, not a contradiction: this run predates SP_0051. After that second phantom success the same pair reads
+**39 vs 37**, i.e. the mismatch grew from one to two. Both numbers are correct for their own snapshot, and the
+mismatch count is what matters rather than either absolute total.
 
 The real gap is narrower than I first wrote: this classification exists as an **offline script** and nothing
 runs it at runtime. The supervisor still reports `supervisor ready` throughout (#182), so a phantom success is
