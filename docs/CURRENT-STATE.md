@@ -710,6 +710,67 @@ nothing. Evidence and full detail:
 This is a **firmware defect**, not a host or tooling problem. Wake-dependent
 acceptance must be recorded as blocked-on-firmware, not as a regression.
 
+### Second, separate cause — the host-side BlueZ entry was destroyed (2026-11-27)
+
+The section above explains why a *scan* finds nothing. It does **not** explain
+the failure shape actually seen on `beast`, which is an immediate rejection:
+
+```
+$ bluetoothctl connect 48:E7:DA:D4:B5:72
+Device 48:E7:DA:D4:B5:72 not available
+```
+
+`not available` means BlueZ has no Device object for that address and refuses to
+attempt a connection at all — it never gets as far as radio discovery, so the
+rig's advertising behaviour is irrelevant to this particular error. The desktop
+wake path is a bare GATT connect, which requires that object to exist.
+
+It used to exist. The original working setup paired the rig (OpenPolaris
+`docs/KEEPALIVE-WAKE-INVESTIGATION-2026-09-07.md`, step 2 is literally
+`bluetoothctl pair ADDRESS`), and BlueZ persisted it under
+`/var/lib/bluetooth/<adapter>/dev_48_E7_DA_D4_B5_72/`. That is why wake worked
+for months. The diagnostic session that produced the transcript above then ran
+
+```
+$ bluetoothctl remove 48:E7:DA:D4:B5:72
+```
+
+which deleted the object and its bond key. State on 2026-11-27 confirms it never
+came back:
+
+| Check | Result |
+|---|---|
+| `bluetoothctl devices` | no output (Paired/Trusted/Connected all 0) |
+| `busctl tree org.bluez` | `/org/bluez/hci0` only, **0** `dev_` objects |
+| `connect 48:E7:DA:D4:B5:72` | `Device ... not available` |
+
+BlueZ recreates an object only when a device is discovered, and the rig never
+advertises LE — so this removal is **permanent**, not a transient hiccup. The two
+causes compound: the firmware defect prevents discovery, and discovery is the
+only way to undo the `remove`. OpenPolaris still knows the address because its
+own store (`~/.config/openpolaris/known-ble-address`, dated 2026-10-08) holds it,
+which is why the app proceeds to a connect attempt instead of reporting an
+unknown device.
+
+The host radio itself is fine: RX bytes advance during scans, and OpenPolaris
+`BluetoothProbe.kt` records this same adapter receiving an unrelated advertiser
+on 2026-10-08. The Qualcomm rampatch gap in `scripts/polaris-bt-probe.sh` is a
+separate, unproven issue and is **not** the cause here; on the running kernel QCA
+setup is compiled into `btusb`, so `btqca` is irrelevant, and no `rampatch` line
+appears in 8605 boot lines because the generic `e0/01/01` table entry matches
+before the `BTUSB_QCA_WCN6855` row.
+
+Recovery: `scripts/restore-rig-bluez-entry.sh`. It recreates the object via
+classic BR/EDR inquiry first — the rig runs `PSCAN ISCAN`, so it is classically
+reachable even though it never advertises LE — then an LE scan, then an opt-in
+root `--file` path. It requires the rig powered on: BLE cannot wake a hard-off
+SoC, which is the chicken-and-egg this regression created. Run it once the rig is
+awake; do not treat a failed run as a host fault.
+
+Corrected conclusion: wake from Linux is blocked by **both** the rig's firmware
+defect and a self-inflicted host-side deletion. The second is recoverable, the
+first is not.
+
 ### Two silent bugs that made `polaris-preflight.sh` unusable until now
 
 Found on 2026-10-27 while wiring the portal route. Both failed **silently**, so
