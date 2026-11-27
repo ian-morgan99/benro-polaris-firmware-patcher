@@ -28,6 +28,9 @@
 #   --allow-busy       proceed even if a camera is present/busy (code 286 state:1)
 #   --no-kit           do not install the astro kit afterwards (default: install
 #                      it whenever the candidate carries one)
+#   --allow-same-version  flash even when the device already reports the target
+#                      FwVer and source provenance cannot be compared. Without it
+#                      an identical FwVer is only skipped when the commits match.
 #
 # What it does:
 #   0. Gate: candidate zip digest vs install-manifest.json, device identity
@@ -57,6 +60,7 @@ SKIP_TRIGGER=0
 SKIP_VERIFY=0
 MAX_WAIT=900
 ALLOW_BUSY=0
+ALLOW_SAME_VERSION=0
 INSTALL_KIT=1
 GIMBAL_PORT=9090
 UPTIME_BEFORE=""
@@ -80,8 +84,9 @@ while [ $# -gt 0 ]; do
     --ssh-timeout) SSH_CONNECT_TIMEOUT="$2"; shift 2;;
     --preflight-attempts) PREFLIGHT_ATTEMPTS="$2"; shift 2;;
     --allow-busy) ALLOW_BUSY=1; shift;;
+    --allow-same-version) ALLOW_SAME_VERSION=1; shift;;
     --no-kit) INSTALL_KIT=0; shift;;
-    -h|--help) sed -n '2,42p' "$0"; exit 0;;
+    -h|--help) awk 'NR>1 { if ($0 ~ /^#/) { print; next } exit }' "$0"; exit 0;;
     *) BUILD_DIR="$1"; shift;;
   esac
 done
@@ -238,10 +243,44 @@ esac
 
 # No blind reflash: if the device already runs the target version, staging again
 # is pointless and a reboot is pure risk.
+#
+# FwVer alone is not identity. A candidate rebuilt at the same display version --
+# which is exactly what happens after a premature registry row is retracted and the
+# version gate re-admits it -- carries the same FwVer with different bytes. On
+# 2026-11-27 this short-circuit reported "nothing to do" against a device running
+# patcher_commit 4e31f94 while the candidate carried d6b4bd4 and a different appfs
+# (md5 500cfff5 on device vs 2cabc557 in the packet), so the packaging fix never
+# reached the head and the kit install would have been retried against stale bytes.
+# Compare source provenance as well, and only skip when both agree.
 TARGET_FWVER="$(cat "$FWPKT_DIR/FwVer" 2>/dev/null | tr -d '\r\n')"
 if [ -n "$TARGET_FWVER" ] && [ "$CUR_FWVER" = "$TARGET_FWVER" ]; then
-  echo "Device already reports target FwVer ($CUR_FWVER) — nothing to do."
-  exit 0
+  PROV_LOCAL="$BUILD_DIR/build-source-provenance.txt"
+  want_git=$( [ -f "$PROV_LOCAL" ] && grep -m1 '^git_commit=' "$PROV_LOCAL" | cut -d= -f2 )
+  want_patch=$( [ -f "$PROV_LOCAL" ] && grep -m1 '^patcher_commit=' "$PROV_LOCAL" | cut -d= -f2 )
+  dev_prov="$(ssh -o BatchMode=yes -o ConnectTimeout="$SSH_CONNECT_TIMEOUT" "$SSH" 'cat /app/openpolaris-libgphoto2-provenance.txt 2>/dev/null' || true)"
+  have_git=$(printf '%s\n' "$dev_prov" | grep -m1 '^git_commit=' | cut -d= -f2)
+  have_patch=$(printf '%s\n' "$dev_prov" | grep -m1 '^patcher_commit=' | cut -d= -f2)
+
+  if [ -z "$want_git" ] || [ -z "$want_patch" ] || [ -z "$have_git" ] || [ -z "$have_patch" ]; then
+    if [ "$ALLOW_SAME_VERSION" = "1" ]; then
+      echo "  WARN: provenance incomparable (candidate git=${want_git:-<none>} patcher=${want_patch:-<none>}; device git=${have_git:-<none>} patcher=${have_patch:-<none>}) — proceeding because --allow-same-version"
+    else
+      echo "ERROR: device already reports target FwVer ($CUR_FWVER) and source provenance"
+      echo "       could not be compared (candidate git=${want_git:-<none>} patcher=${want_patch:-<none>};"
+      echo "       device git=${have_git:-<none>} patcher=${have_patch:-<none>})."
+      echo "       Refusing to assume the bytes match. Re-run with --allow-same-version only"
+      echo "       if you have independently confirmed the device already carries this build."
+      exit 4
+    fi
+  elif [ "$want_git" != "$have_git" ] || [ "$want_patch" != "$have_patch" ]; then
+    echo "Same FwVer ($CUR_FWVER) but different source provenance — reflashing:"
+    echo "  candidate: git=${want_git:0:9} patcher=${want_patch:0:9}"
+    echo "  device   : git=${have_git:0:9} patcher=${have_patch:0:9}"
+  else
+    echo "Device already reports target FwVer ($CUR_FWVER) and identical provenance"
+    echo "  (git=${want_git:0:9} patcher=${want_patch:0:9}) — nothing to do."
+    exit 0
+  fi
 fi
 echo "Target FwVer: $TARGET_FWVER (current $CUR_FWVER)"
 
