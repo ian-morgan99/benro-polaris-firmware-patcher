@@ -28,48 +28,29 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "build-astro-candidate.sh"
-
-START = '  if [ -d astrometry ]; then'
-END = 'zip -qrX astrometry-indexes.zip astrometry'
+PRUNE = ROOT / "scripts" / "prune-index-manifest.sh"
 
 UPSTREAM_MANIFEST = "".join(
     f"{i:032d} *index-{n}.fits\n" for i, n in enumerate(range(4107, 4120), start=1)
 )
 
 
-def _block() -> str:
-    """The astrometry staging block, from its guard through its closing fi.
-
-    Ends on the `fi` rather than the zip line: the zip invocation spans two lines
-    (continuation plus its error handler), and cutting it at the marker yields a
-    fragment bash refuses to parse.
-    """
-    lines = SCRIPT.read_text(encoding="utf-8").splitlines()
-    starts = [i for i, l in enumerate(lines) if l.rstrip() == START]
-    assert len(starts) == 1, f"expected one {START!r}, found {len(starts)}"
-    ends = [i for i in range(starts[0], len(lines)) if END in lines[i]]
-    assert ends, "no zip invocation after the astrometry guard"
-    close = [i for i in range(ends[0], len(lines)) if lines[i] == "  fi"]
-    assert close, "astrometry block has no closing fi"
-    return "\n".join(lines[starts[0]:close[0] + 1])
-
-
 def _run(tmp_path: Path, present: list):
-    """Run the real block with a fabricated SD_ROOT containing `present` indexes."""
+    """Run the real shared script against a fabricated SD_ROOT containing `present`.
+
+    The build calls this same script (scripts/build-astro-candidate.sh invokes it
+    before ASTRO-MANIFEST.sha256 is generated), so the build and this test exercise
+    one code path. It used to be extracted from the build script by string markers,
+    which silently diverged when the block moved: the test kept passing against a
+    fragment while the shipped tree no longer matched its own manifest.
+    """
     sd = tmp_path / "COPY-TO-SD-CARD-ROOT"
     (sd / "astrometry").mkdir(parents=True)
     (sd / "astrometry" / ".md5sums.txt").write_text(UPSTREAM_MANIFEST, encoding="utf-8")
     for name in present:
         (sd / "astrometry" / name).write_bytes(b"fits-bytes")
 
-    script = tmp_path / "block.sh"
-    script.write_text(
-        "set -euo pipefail\n"
-        f"cd '{sd}'\n" + _block() + "\n",
-        encoding="utf-8",
-    )
-    proc = subprocess.run(["bash", str(script)], capture_output=True, text=True)
+    proc = subprocess.run([str(PRUNE), str(sd)], capture_output=True, text=True)
     manifest = sd / "astrometry" / ".md5sums.txt"
     return proc, manifest
 
@@ -112,9 +93,7 @@ def test_absent_manifest_is_tolerated(tmp_path):
     sd = tmp_path / "COPY-TO-SD-CARD-ROOT"
     (sd / "astrometry").mkdir(parents=True)
     (sd / "astrometry" / "index-4110.fits").write_bytes(b"fits")
-    script = tmp_path / "block.sh"
-    script.write_text("set -euo pipefail\n" f"cd '{sd}'\n" + _block() + "\n", encoding="utf-8")
-    proc = subprocess.run(["bash", str(script)], capture_output=True, text=True)
+    proc = subprocess.run([str(PRUNE), str(sd)], capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr
 
 
@@ -123,3 +102,35 @@ def test_manifest_matching_nothing_is_an_error(tmp_path):
     proc, _ = _run(tmp_path, [])
     assert proc.returncode != 0, "expected failure when no manifest entry matches a shipped file"
     assert "matched no shipped index files" in proc.stderr
+
+
+def test_build_prunes_before_hashing_the_manifest():
+    """The ordering that actually broke v119, asserted directly.
+
+    The pruning tests above exercise the script in isolation. They cannot see the
+    build's call site, which is where the defect lived: the prune ran inside the
+    archive step, after ASTRO-MANIFEST.sha256 had already been hashed, so the digest
+    recorded the unpruned file while the tree shipped the pruned one. install-astro-kit.sh
+    verifies the staged tree against that manifest and refused every v119 candidate with
+    "./astrometry/.md5sums.txt: FAILED ... 1 of 726 computed checksums did NOT match".
+
+    Asserting position rather than behaviour is the only thing that catches a future
+    edit moving the call back below the hash.
+    """
+    build = (ROOT / "scripts" / "build-astro-candidate.sh").read_text(encoding="utf-8")
+    lines = build.splitlines()
+
+    prune_at = [i for i, l in enumerate(lines)
+                if "prune-index-manifest.sh" in l and not l.lstrip().startswith("#")]
+    assert len(prune_at) == 1, (
+        f"expected exactly one call to prune-index-manifest.sh, found {len(prune_at)}")
+
+    hash_at = [i for i, l in enumerate(lines)
+               if l.rstrip().endswith("> \"$OUT/astro-bundle/ASTRO-MANIFEST.sha256\"")]
+    assert len(hash_at) == 1, (
+        f"expected exactly one ASTRO-MANIFEST.sha256 generation, found {len(hash_at)}")
+
+    assert prune_at[0] < hash_at[0], (
+        "prune-index-manifest.sh must run BEFORE ASTRO-MANIFEST.sha256 is generated "
+        f"(prune at line {prune_at[0] + 1}, manifest at line {hash_at[0] + 1}); "
+        "otherwise the manifest records the unpruned digest and kit installs fail")
