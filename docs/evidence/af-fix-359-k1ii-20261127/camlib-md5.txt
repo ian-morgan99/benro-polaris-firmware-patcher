@@ -1,0 +1,2 @@
+9b954cc463e48352ee6d9ac98433c052  /tmp/camlibs-fixed/ptp2.so
+7a80f2dc8ca9cda082c1f4e7c18f5407  /tmp/camlibs-parent/ptp2.so

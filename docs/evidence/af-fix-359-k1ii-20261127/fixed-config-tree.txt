@@ -1,0 +1,745 @@
+Model                          Port            
+----------------------------------------------------------
+Pentax K-1 Mark II (PTP mode)  usb:001,010     
+/main/actions/manualfocusdrivenear
+Label: Drive Pentax focus near (minimum)
+Readonly: 0
+Type: TOGGLE
+Current: 0
+END
+/main/actions/manualfocusdrivefar
+Label: Drive Pentax focus far (minimum)
+Readonly: 0
+Type: TOGGLE
+Current: 0
+END
+/main/actions/oldfocusdrivenear
+Label: Drive Pentax old-focus near (K-1 II)
+Readonly: 0
+Type: TOGGLE
+Current: 0
+END
+/main/actions/oldfocusdrivefar
+Label: Drive Pentax old-focus far (K-1 II)
+Readonly: 0
+Type: TOGGLE
+Current: 0
+END
+/main/actions/manualfocusdrive
+Label: Drive Pentax Manual focus
+Readonly: 0
+Type: RANGE
+Current: 0
+Bottom: -7
+Top: 7
+Step: 1
+END
+/main/actions/autofocusdrive
+Label: Drive Pentax Autofocus
+Readonly: 0
+Type: TOGGLE
+Current: 0
+END
+/main/actions/opcode
+Label: PTP Opcode
+Readonly: 0
+Type: TEXT
+Current: 0x1001,0xparam1,0xparam2
+END
+/main/settings/datetime
+Label: Camera Date and Time
+Readonly: 0
+Type: DATE
+Current: 1795812179
+Printable: Fri 27 Nov 2026 08:42:59 PM GMT
+Help: Use 'now' as the current time when setting.
+
+END
+/main/settings/capturetarget
+Label: Capture Target
+Readonly: 0
+Type: RADIO
+Current: Internal RAM
+Choice: 0 Internal RAM
+Choice: 1 Memory card
+END
+/main/settings/autofocus
+Label: Autofocus
+Readonly: 0
+Type: RADIO
+Current: On
+Choice: 0 On
+Choice: 1 Off
+END
+/main/status/serialnumber
+Label: Serial Number
+Readonly: 1
+Type: TEXT
+Current: 7371227
+END
+/main/status/manufacturer
+Label: Camera Manufacturer
+Readonly: 1
+Type: TEXT
+Current: RICOH IMAGING COMPANY, LTD.
+END
+/main/status/cameramodel
+Label: Camera Model
+Readonly: 1
+Type: TEXT
+Current: PENTAX K-1 Mark II
+END
+/main/status/deviceversion
+Label: Device Version
+Readonly: 1
+Type: TEXT
+Current: 2.51
+END
+/main/status/vendorextension
+Label: Vendor Extension
+Readonly: 1
+Type: TEXT
+Current: 瀀攀渀琀愀砀⸀樀瀀㨀 ㄀⸀　㬀 
+END
+/main/status/pentaxconditions
+Label: Pentax Conditions
+Readonly: 1
+Type: TEXT
+Current: state=0; astro-phase=inactive/other; exposure-mode-raw=9; exposure-mode=Bulb; astro-mode=no; user-mode-raw=0; drive-mode-raw=0; ISO=200; exposure-step=1; open-av-num=14; shooting=no; processing=no; task-changing=no; Tv-changeable=no; bulb-timer=yes; bulb-seconds=20/1; aperture=18/10; exposure-comp=0/10; astrotracer3-capable=no; astro-shift=no; astro-movement-failed=no; astro-time-too-long=no; astro-limit=0; gps-state=3
+END
+/main/status/pentaxliveviewcontrols
+Label: Pentax Live View Controls
+Readonly: 1
+Type: TEXT
+Current: area=720x480; active=720x480; caf-active=576x320; caf-spot=48x48; af-position=360,240; af-response-bytes=8; zoom-raw=1
+END
+/main/status/pentaxpropd00f
+Label: Pentax Shutter/Bulb Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0xd00f; datatype=0x0008; getset=1; form=2; enum-count=56; value-bytes=8; value-hex=1e00000001000000
+END
+/main/status/pentaxprop5007
+Label: Pentax Aperture Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0x5007; datatype=0x0004; getset=1; form=2; enum-count=22; value-bytes=2; value-hex=b400
+END
+/main/status/pentaxpropd01e
+Label: Pentax ISO Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0xd01e; datatype=0x0006; getset=1; form=2; enum-count=12; value-bytes=4; value-hex=c8000000
+END
+/main/status/pentaxprop5010
+Label: Pentax Exposure Compensation Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0x5010; datatype=0x0003; getset=1; form=2; enum-count=31; value-bytes=2; value-hex=0000
+END
+/main/status/pentaxprop5008
+Label: Pentax Focal Length Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0x5008; datatype=0x0006; getset=0; form=0; enum-count=0; value-bytes=4; value-hex=88130000
+END
+/main/status/pentaxprop5005
+Label: Pentax White Balance Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0x5005; datatype=0x0004; getset=1; form=2; enum-count=18; value-bytes=2; value-hex=0200
+END
+/main/status/pentaxpropd013
+Label: Pentax Drive Mode Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0xd013; datatype=0x0006; getset=1; form=2; enum-count=23; value-bytes=4; value-hex=00000000
+END
+/main/status/pentaxpropd02b
+Label: Pentax Focus Peaking Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0xd02b; descriptor-parse=header; descriptor-bytes=16; datatype=0x4004; array=yes; element-type=0x0004; getset=1; form=0; extension-bytes=10; verdict=array-payload; scalar-assumption-invalid; withheld; descriptor-hex=2bd00440010001020200000040024001; value-bytes=4; value-hex=01d00440
+END
+/main/status/pentaxpropd035
+Label: Pentax PC Live View Descriptor
+Readonly: 1
+Type: TEXT
+Current: code=0xd035; descriptor-parse=header; descriptor-bytes=6; datatype=0x0000; array=no; element-type=0x0000; getset=0; form=0; extension-bytes=0; verdict=null-placeholder; not-a-scalar; use-source-defined-path; descriptor-hex=35d000000000; value-bytes=0; value-hex=
+END
+/main/status/pentaxcimode
+Label: Pentax Custom Image Mode
+Readonly: 0
+Type: RADIO
+Current: autoselect
+Choice: 0 autoselect
+Choice: 1 vivid
+Choice: 2 natural
+Choice: 3 portrait
+Choice: 4 landscape
+Choice: 5 miyabi
+Choice: 6 satobi
+Choice: 7 poptune
+Choice: 8 honoka
+Choice: 9 flat
+Choice: 10 bleach bypass
+Choice: 11 reversal film
+Choice: 12 monotone
+Choice: 13 cross process
+END
+/main/status/pentaxpclvkeep
+Label: Pentax Keep Live View
+Readonly: 0
+Type: TOGGLE
+Current: 0
+END
+/main/status/pentaxcardwritingmode
+Label: Pentax Card Writing Mode
+Readonly: 0
+Type: RADIO
+Current: off
+Choice: 0 off
+Choice: 1 SD1
+Choice: 2 SD2
+Choice: 3 both
+END
+/main/status/imageformat
+Label: Image Format
+Readonly: 0
+Type: RADIO
+Current: RAW+JPEG
+Choice: 0 JPEG
+Choice: 1 RAW
+Choice: 2 RAW+JPEG
+END
+/main/status/imagequality
+Label: Image Quality
+Readonly: 0
+Type: RADIO
+Current: fine
+Choice: 0 fine
+Choice: 1 normal
+Choice: 2 basic
+END
+/main/status/pentaxdirectshutter
+Label: Pentax Direct Shutter Speed
+Readonly: 0
+Type: RADIO
+Current: 00:30
+Choice: 0 00:30
+Choice: 1 00:25
+Choice: 2 00:20
+Choice: 3 00:15
+Choice: 4 00:13
+Choice: 5 00:10
+Choice: 6 00:08
+Choice: 7 00:06
+Choice: 8 00:05
+Choice: 9 00:04
+Choice: 10 00:03
+Choice: 11 25/10
+Choice: 12 00:02
+Choice: 13 16/10
+Choice: 14 13/10
+Choice: 15 00:01
+Choice: 16 8/10
+Choice: 17 6/10
+Choice: 18 5/10
+Choice: 19 4/10
+Choice: 20 3/10
+Choice: 21 1/4
+Choice: 22 1/5
+Choice: 23 1/6
+Choice: 24 1/8
+Choice: 25 1/10
+Choice: 26 1/13
+Choice: 27 1/15
+Choice: 28 1/20
+Choice: 29 1/25
+Choice: 30 1/30
+Choice: 31 1/40
+Choice: 32 1/50
+Choice: 33 1/60
+Choice: 34 1/80
+Choice: 35 1/100
+Choice: 36 1/125
+Choice: 37 1/160
+Choice: 38 1/200
+Choice: 39 1/250
+Choice: 40 1/320
+Choice: 41 1/400
+Choice: 42 1/500
+Choice: 43 1/640
+Choice: 44 1/800
+Choice: 45 1/1000
+Choice: 46 1/1250
+Choice: 47 1/1600
+Choice: 48 1/2000
+Choice: 49 1/2500
+Choice: 50 1/3200
+Choice: 51 1/4000
+Choice: 52 1/5000
+Choice: 53 1/6400
+Choice: 54 1/8000
+Choice: 55 00:00
+END
+/main/status/pentaxdirectiso
+Label: Pentax Direct ISO Speed
+Readonly: 0
+Type: RADIO
+Current: 200
+Choice: 0 100
+Choice: 1 200
+Choice: 2 400
+Choice: 3 800
+Choice: 4 1600
+Choice: 5 3200
+Choice: 6 6400
+Choice: 7 12800
+Choice: 8 25600
+Choice: 9 51200
+Choice: 10 102400
+Choice: 11 204800
+END
+/main/status/pentaxdirectaperture
+Label: Pentax Direct Aperture
+Readonly: 0
+Type: RADIO
+Current: f/1.8
+Choice: 0 f/1.4
+Choice: 1 f/1.6
+Choice: 2 f/1.8
+Choice: 3 f/2
+Choice: 4 f/2.2
+Choice: 5 f/2.5
+Choice: 6 f/2.8
+Choice: 7 f/3.2
+Choice: 8 f/3.5
+Choice: 9 f/4
+Choice: 10 f/4.5
+Choice: 11 f/5
+Choice: 12 f/5.6
+Choice: 13 f/6.3
+Choice: 14 f/7.1
+Choice: 15 f/8
+Choice: 16 f/9
+Choice: 17 f/10
+Choice: 18 f/11
+Choice: 19 f/13
+Choice: 20 f/14
+Choice: 21 f/16
+END
+/main/status/pentaxdirectev
+Label: Pentax Direct Exposure Compensation
+Readonly: 0
+Type: RADIO
+Current: 0
+Choice: 0 5
+Choice: 1 4.7
+Choice: 2 4.3
+Choice: 3 4
+Choice: 4 3.7
+Choice: 5 3.3
+Choice: 6 3
+Choice: 7 2.7
+Choice: 8 2.3
+Choice: 9 2
+Choice: 10 1.7
+Choice: 11 1.3
+Choice: 12 1
+Choice: 13 0.7
+Choice: 14 0.3
+Choice: 15 0
+Choice: 16 -0.3
+Choice: 17 -0.7
+Choice: 18 -1
+Choice: 19 -1.3
+Choice: 20 -1.7
+Choice: 21 -2
+Choice: 22 -2.3
+Choice: 23 -2.7
+Choice: 24 -3
+Choice: 25 -3.3
+Choice: 26 -3.7
+Choice: 27 -4
+Choice: 28 -4.3
+Choice: 29 -4.7
+Choice: 30 -5
+END
+/main/status/pentaxliveviewafposition
+Label: Pentax Live View AF Position
+Readonly: 0
+Type: TEXT
+Current: 360,240
+END
+/main/status/pentaxliveviewzoom
+Label: Pentax Live View Zoom
+Readonly: 0
+Type: RADIO
+Current: off
+Choice: 0 off
+Choice: 1 2x
+Choice: 2 4x
+Choice: 3 8x
+Choice: 4 10x
+Choice: 5 16x
+END
+/main/status/pentaxdrivemode
+Label: Pentax Drive Mode
+Readonly: 0
+Type: RADIO
+Current: single
+Choice: 0 single
+Choice: 1 interval
+Choice: 2 interval-movie
+Choice: 3 unknown-3
+Choice: 4 continuous-hi
+Choice: 5 continuous-mid
+Choice: 6 continuous-lo
+Choice: 7 self-timer-12s
+Choice: 8 self-timer-2s
+Choice: 9 remote
+Choice: 10 remote-3s
+Choice: 11 remote-cont
+Choice: 12 mirror-up
+Choice: 13 mirror-up-remote
+Choice: 14 unknown-14
+Choice: 15 multi-exposure
+Choice: 16 unknown-16
+Choice: 17 unknown-17
+Choice: 18 unknown-18
+Choice: 19 unknown-19
+Choice: 20 unknown-20
+Choice: 21 unknown-21
+Choice: 22 self-timer-cont
+END
+/main/status/pentaxdirectwb
+Label: Pentax White Balance
+Readonly: 0
+Type: RADIO
+Current: auto
+Choice: 0 auto
+Choice: 1 multi-auto
+Choice: 2 daylight
+Choice: 3 shade
+Choice: 4 cloudy
+Choice: 5 fluorescent-d
+Choice: 6 fluorescent-n
+Choice: 7 fluorescent-w
+Choice: 8 fluorescent-l
+Choice: 9 tungsten
+Choice: 10 flash
+Choice: 11 cte
+Choice: 12 manual-1
+Choice: 13 manual-2
+Choice: 14 manual-3
+Choice: 15 color-temp-1
+Choice: 16 color-temp-2
+Choice: 17 color-temp-3
+END
+/main/status/batterylevel
+Label: Battery Level
+Readonly: 1
+Type: TEXT
+Current: 100%
+END
+/main/imgsettings/iso
+Label: ISO Speed
+Readonly: 0
+Type: RADIO
+Current: 200
+Choice: 0 100
+Choice: 1 200
+Choice: 2 400
+Choice: 3 800
+Choice: 4 1600
+Choice: 5 3200
+Choice: 6 6400
+Choice: 7 12800
+Choice: 8 25600
+Choice: 9 51200
+Choice: 10 102400
+Choice: 11 204800
+END
+/main/imgsettings/whitebalance
+Label: WhiteBalance
+Readonly: 0
+Type: RADIO
+Current: auto
+Choice: 0 auto
+Choice: 1 multi-auto
+Choice: 2 daylight
+Choice: 3 shade
+Choice: 4 cloudy
+Choice: 5 fluorescent-d
+Choice: 6 fluorescent-n
+Choice: 7 fluorescent-w
+Choice: 8 fluorescent-l
+Choice: 9 tungsten
+Choice: 10 flash
+Choice: 11 cte
+Choice: 12 manual-1
+Choice: 13 manual-2
+Choice: 14 manual-3
+Choice: 15 color-temp-1
+Choice: 16 color-temp-2
+Choice: 17 color-temp-3
+END
+/main/capturesettings/aperture
+Label: Aperture
+Readonly: 0
+Type: RADIO
+Current: f/1.8
+Choice: 0 f/1.4
+Choice: 1 f/1.6
+Choice: 2 f/1.8
+Choice: 3 f/2
+Choice: 4 f/2.2
+Choice: 5 f/2.5
+Choice: 6 f/2.8
+Choice: 7 f/3.2
+Choice: 8 f/3.5
+Choice: 9 f/4
+Choice: 10 f/4.5
+Choice: 11 f/5
+Choice: 12 f/5.6
+Choice: 13 f/6.3
+Choice: 14 f/7.1
+Choice: 15 f/8
+Choice: 16 f/9
+Choice: 17 f/10
+Choice: 18 f/11
+Choice: 19 f/13
+Choice: 20 f/14
+Choice: 21 f/16
+END
+/main/capturesettings/exposurecompensation
+Label: Exposure Compensation
+Readonly: 0
+Type: RADIO
+Current: 0
+Choice: 0 5
+Choice: 1 4.7
+Choice: 2 4.3
+Choice: 3 4
+Choice: 4 3.7
+Choice: 5 3.3
+Choice: 6 3
+Choice: 7 2.7
+Choice: 8 2.3
+Choice: 9 2
+Choice: 10 1.7
+Choice: 11 1.3
+Choice: 12 1
+Choice: 13 0.7
+Choice: 14 0.3
+Choice: 15 0
+Choice: 16 -0.3
+Choice: 17 -0.7
+Choice: 18 -1
+Choice: 19 -1.3
+Choice: 20 -1.7
+Choice: 21 -2
+Choice: 22 -2.3
+Choice: 23 -2.7
+Choice: 24 -3
+Choice: 25 -3.3
+Choice: 26 -3.7
+Choice: 27 -4
+Choice: 28 -4.3
+Choice: 29 -4.7
+Choice: 30 -5
+END
+/main/capturesettings/shutterspeed
+Label: Shutter Speed
+Readonly: 0
+Type: RADIO
+Current: 00:30
+Choice: 0 00:30
+Choice: 1 00:25
+Choice: 2 00:20
+Choice: 3 00:15
+Choice: 4 00:13
+Choice: 5 00:10
+Choice: 6 00:08
+Choice: 7 00:06
+Choice: 8 00:05
+Choice: 9 00:04
+Choice: 10 00:03
+Choice: 11 25/10
+Choice: 12 00:02
+Choice: 13 16/10
+Choice: 14 13/10
+Choice: 15 00:01
+Choice: 16 8/10
+Choice: 17 6/10
+Choice: 18 5/10
+Choice: 19 4/10
+Choice: 20 3/10
+Choice: 21 1/4
+Choice: 22 1/5
+Choice: 23 1/6
+Choice: 24 1/8
+Choice: 25 1/10
+Choice: 26 1/13
+Choice: 27 1/15
+Choice: 28 1/20
+Choice: 29 1/25
+Choice: 30 1/30
+Choice: 31 1/40
+Choice: 32 1/50
+Choice: 33 1/60
+Choice: 34 1/80
+Choice: 35 1/100
+Choice: 36 1/125
+Choice: 37 1/160
+Choice: 38 1/200
+Choice: 39 1/250
+Choice: 40 1/320
+Choice: 41 1/400
+Choice: 42 1/500
+Choice: 43 1/640
+Choice: 44 1/800
+Choice: 45 1/1000
+Choice: 46 1/1250
+Choice: 47 1/1600
+Choice: 48 1/2000
+Choice: 49 1/2500
+Choice: 50 1/3200
+Choice: 51 1/4000
+Choice: 52 1/5000
+Choice: 53 1/6400
+Choice: 54 1/8000
+Choice: 55 00:00
+END
+/main/other/5001
+Label: Battery Level
+Readonly: 1
+Type: MENU
+Current: 100
+Choice: 0 0
+Choice: 1 1
+Choice: 2 2
+Choice: 3 3
+Choice: 4 4
+Choice: 5 5
+Choice: 6 6
+Choice: 7 7
+Choice: 8 8
+Choice: 9 9
+Choice: 10 10
+Choice: 11 11
+Choice: 12 12
+Choice: 13 13
+Choice: 14 14
+Choice: 15 15
+Choice: 16 16
+Choice: 17 17
+Choice: 18 18
+Choice: 19 19
+Choice: 20 20
+Choice: 21 21
+Choice: 22 22
+Choice: 23 23
+Choice: 24 24
+Choice: 25 25
+Choice: 26 26
+Choice: 27 27
+Choice: 28 28
+Choice: 29 29
+Choice: 30 30
+Choice: 31 31
+Choice: 32 32
+Choice: 33 33
+Choice: 34 34
+Choice: 35 35
+Choice: 36 36
+Choice: 37 37
+Choice: 38 38
+Choice: 39 39
+Choice: 40 40
+Choice: 41 41
+Choice: 42 42
+Choice: 43 43
+Choice: 44 44
+Choice: 45 45
+Choice: 46 46
+Choice: 47 47
+Choice: 48 48
+Choice: 49 49
+Choice: 50 50
+Choice: 51 51
+Choice: 52 52
+Choice: 53 53
+Choice: 54 54
+Choice: 55 55
+Choice: 56 56
+Choice: 57 57
+Choice: 58 58
+Choice: 59 59
+Choice: 60 60
+Choice: 61 61
+Choice: 62 62
+Choice: 63 63
+Choice: 64 64
+Choice: 65 65
+Choice: 66 66
+Choice: 67 67
+Choice: 68 68
+Choice: 69 69
+Choice: 70 70
+Choice: 71 71
+Choice: 72 72
+Choice: 73 73
+Choice: 74 74
+Choice: 75 75
+Choice: 76 76
+Choice: 77 77
+Choice: 78 78
+Choice: 79 79
+Choice: 80 80
+Choice: 81 81
+Choice: 82 82
+Choice: 83 83
+Choice: 84 84
+Choice: 85 85
+Choice: 86 86
+Choice: 87 87
+Choice: 88 88
+Choice: 89 89
+Choice: 90 90
+Choice: 91 91
+Choice: 92 92
+Choice: 93 93
+Choice: 94 94
+Choice: 95 95
+Choice: 96 96
+Choice: 97 97
+Choice: 98 98
+Choice: 99 99
+Choice: 100 100
+END
+/main/other/5011
+Label: Date & Time
+Readonly: 0
+Type: TEXT
+Current: 20261127T204303
+END
+/main/other/d406
+Label: PTP Property 0xd406
+Readonly: 0
+Type: TEXT
+Current: 
+END
+/main/other/d407
+Label: PTP Property 0xd407
+Readonly: 1
+Type: TEXT
+Current: 1
+END
+/main/other/d303
+Label: PTP Property 0xd303
+Readonly: 1
+Type: TEXT
+Current: 1
+END
