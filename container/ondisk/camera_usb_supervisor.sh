@@ -88,8 +88,18 @@ ABSENT_EVIDENCE=${OPENPOLARIS_USB_ABSENT_EVIDENCE:-1}
 # governor. It is also NOT proven to help -- motor activity, not suspend timing,
 # is what correlates with recovery so far. Enable it only to test it.
 USB_PIN_POWER=${OPENPOLARIS_USB_PIN_POWER:-0}
+# Issue #358: how often the expensive /proc bind probe runs while nothing has
+# changed. 0 means "only on cheap changes" (identity or restart count), which
+# never scans /proc in steady state.
+CAMERA_STATE_PROBE_POLLS=${OPENPOLARIS_USB_STATE_PROBE_POLLS:-30}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
+# A literal newline for pattern matching. fingerprint() emits one line per camera,
+# so a fingerprint containing a newline means more than one device matched and no
+# single bind can be attributed to it. Written this way because a raw newline
+# embedded in a case pattern is invisible to anyone reading the file.
+nl='
+'
 
 pid_is_supervisor() {
     [ -n "$1" ] && [ -d "$PROC_ROOT/$1" ] || return 1
@@ -138,18 +148,88 @@ fingerprint() {
     done | sort
 }
 
-# Only the observed single K-3 III late-arrival case can bypass a restart.
-# Require both successful init and a live usbfs fd in the same executable.
-already_bound_k3iii() {
-    case "$1" in
-        *'
-'*) return 1 ;;
-        *'|25fb:0189|'*) ;;
-        *) return 1 ;;
+# Issue #358 task 4: distinguish RESTARTED_PROCESS, USB_PRESENT, CAMERA_INIT_OK
+# and PREVIEW_READY.
+#
+# The reason this exists is the misdiagnosis it prevents. In the captured v104
+# session both supervisor restarts were logged as successful -- new PID, :8080
+# listening -- and the second camera initialization had in fact failed. A reader
+# of that log concluded the camera had recovered. "pgphoto running" and "port open"
+# are not camera state: a process restarted while the bus is empty satisfies both
+# and binds nothing. These four flags are reported separately so that combination
+# is visible instead of being inferred as health.
+#
+#   USB_PRESENT      sysfs shows a supported camera at all.
+#   CAMERA_INIT_OK   camera_bound(): a live fd on the device node AND an open
+#                    pgphoto-bound marker in the same process. The only evidence
+#                    here that actually proves a usable session.
+#   RESTARTED_PROCESS  this supervisor has restarted pgphoto at least once.
+#   PREVIEW_READY    NOT MEASURED, deliberately. Frames flow from pgphoto's :8080
+#                    MJPEG stream to polaris-httpd, which is a separate process on
+#                    a port this script does not know. camera-layer-report.sh reads
+#                    opcode 292 from httpd's /api/link for it; duplicating that
+#                    here would mean the supervisor issuing HTTP to a service it
+#                    has no contract with, and guessing the port. Reporting a
+#                    plausible value would be worse than reporting none -- it is
+#                    the same class of error as treating a restart as recovery.
+#
+# Emitted only when the tuple changes, so a steady state costs one line rather
+# than one per poll.
+#
+# Cost: camera_bound() walks /proc/<pid>/fd for every process. The existing
+# already_bound_k3iii did the same, but only when a stable identity change was
+# already pending -- a rare event. Running it on every poll would put that scan in
+# the steady-state path of a supervisor that polls once a second on an embedded
+# head with UBIFS, and I have not measured it on hardware. So the expensive probe
+# is bounded: it runs when something cheap has changed (identity, restart count)
+# or every CAMERA_STATE_PROBE_POLLS polls, whichever comes first. Between those,
+# the last known init_ok is carried forward and the line is not re-emitted anyway.
+report_camera_state() {
+    _cur=$1
+    usb_present=0; [ -n "$_cur" ] && usb_present=1
+    restarted=0; [ "$restarts" -gt 0 ] && restarted=1
+
+    if [ "$usb_present" != "$last_usb_present" ] \
+       || [ "$restarted" != "$last_restarted" ] \
+       || [ "$_cur" != "$last_state_identity" ] \
+       || { [ "$CAMERA_STATE_PROBE_POLLS" -gt 0 ] && [ $((polls % CAMERA_STATE_PROBE_POLLS)) -eq 0 ]; }; then
+        init_ok=0; camera_bound "$_cur" && init_ok=1
+        last_usb_present=$usb_present
+        last_restarted=$restarted
+        last_state_identity=$_cur
+        state="usb_present=$usb_present camera_init_ok=$init_ok restarted_process=$restarted preview_ready=not-measured"
+        if [ "$state" != "$last_reported_state" ]; then
+            echo "[camera-usb] camera-state: $state identity=${_cur:-none} restarts=$restarts (issue #358)"
+            last_reported_state=$state
+        fi
+    fi
+}
+
+# Is pgphoto actually bound to the camera described by this fingerprint?
+#
+# Evidence, all three required: a process whose exe is the stage-2 pgphoto binary,
+# a live fd on the /dev/bus/usb node for that bus/dev, and an open link to the
+# pgphoto-bound-<bus>-<dev>-<inode>-XXXXXX marker that container/stage2_loader.c
+# creates only after a successful bind. The marker is keyed on bus/dev/inode, so
+# it is model-agnostic: nothing about it is specific to any one body.
+#
+# This is the only probe in this script that proves a camera is usable. "pgphoto
+# is running" and ":8080 is listening" prove neither -- a restarted process with
+# no device satisfies both, which is exactly how #358's two restarts were logged
+# as successful while the second camera init had in fact failed.
+camera_bound() {
+    _id=$1
+    [ -n "$_id" ] || return 1
+    case "$_id" in
+        *"$nl"*) return 1 ;;   # more than one camera: cannot attribute a bind
     esac
-    address=${1##*|}
+    address=${_id##*|}
     bus=${address%:*}
     dev=${address#*:}
+    # Must be "<bus>:<dev>" with both halves present. A fingerprint that is not
+    # in that shape cannot be resolved to a device node, so it is not a bind.
+    [ -n "$bus" ] && [ -n "$dev" ] || return 1
+    [ "$address" != "$bus" ] || return 1
     node=$(printf '%s/%03d/%03d' "${OPENPOLARIS_USB_DEVFS:-/dev/bus/usb}" "$bus" "$dev") || return 1
     marker_dir=$(readlink -f "$RUN_DIR") || return 1
     inode=$(stat -c %i "$node" 2>/dev/null) || return 1
@@ -166,6 +246,22 @@ already_bound_k3iii() {
         [ -n "$usbfd" ] && [ -n "$marker" ] && [ -L "$marker" ] && [ "$usbfd" -ef "$node" ] && return 0
     done
     return 1
+}
+
+# Only the observed single K-3 III late-arrival case can bypass a restart.
+# Require both successful init and a live usbfs fd in the same executable.
+#
+# The model gate stays here deliberately. camera_bound() is model-agnostic, but
+# this bypass -- adopting an identity without restarting pgphoto -- was only ever
+# observed and qualified for a late-arriving K-3 III. Widening it would change
+# restart semantics for every other body on evidence from one, so the restriction
+# is kept and reporting uses camera_bound() directly instead.
+already_bound_k3iii() {
+    case "$1" in
+        *'|25fb:0189|'*) ;;
+        *) return 1 ;;
+    esac
+    camera_bound "$1"
 }
 
 # Issue #347 follow-up: capture the kernel's view of the bus at the instant the
@@ -253,6 +349,11 @@ candidate=$baseline
 stable=0
 polls=0
 restarts=0
+# Issue #358: cached camera-state tuple so the line is emitted on change only.
+last_reported_state=""
+last_usb_present=-1
+last_restarted=-1
+last_state_identity="unset"
 # Issue #119 (TA release-safety follow-up): explicit degraded/quarantine state.
 # When the restart budget is exhausted the supervisor must NOT adopt the current
 # identity as healthy and stop restarting forever -- that can leave the existing
@@ -314,6 +415,13 @@ while :; do
             absent_announced=1
         fi
     fi
+
+    # Issue #358: report the four camera states separately. Placed here, before
+    # the startup-grace branch below, for the same reason the #347 block is: that
+    # branch `continue`s, so anything after it never runs during the grace window
+    # -- which is precisely when a boot-time slew can drop a body. A restart that
+    # happened on the previous poll is picked up here on this one.
+    report_camera_state "$current"
 
     # Issue #121: during the startup grace window, absorb identity changes into
     # the baseline without restarting pgphoto. A camera that is already powered

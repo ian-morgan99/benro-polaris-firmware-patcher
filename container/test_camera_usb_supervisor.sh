@@ -649,3 +649,74 @@ kill "$rt_pid" 2>/dev/null || true; wait "$rt_pid" 2>/dev/null || true
 test "$(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0)" = "1"
 
 echo 'PASS: camera USB supervisor does not restart for an absent body, and rebinds once on same-address reconnect (issue #358)'
+
+# Issue #358 task 4: distinguish RESTARTED_PROCESS, USB_PRESENT, CAMERA_INIT_OK
+# and PREVIEW_READY. In the captured v104 session both supervisor restarts were
+# logged as successful -- new PID, :8080 listening -- while the second camera
+# initialization had in fact failed, and the log was read as a recovery. These
+# assertions pin that "restarted" and "bound" are reported as separate facts, so
+# that combination is visible rather than inferred as health.
+#
+# Uses a K-1 II (25fb:0183), not a K-3 III. The bind probe was previously reached
+# only through already_bound_k3iii(), which hard-codes 25fb:0189, so a K-1 II could
+# never be evaluated as bound at all. camera_bound() is model-agnostic -- the
+# pgphoto-bound marker from stage2_loader.c is keyed on bus/dev/inode -- and this
+# is what that generalisation buys.
+
+# (a) A genuinely bound body reports camera_init_ok=1.
+rm -rf "$TMP/sys" "$TMP/proc" "$TMP/dev" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/proc/123/fd" "$TMP/dev/001" "$TMP/run"
+node=$TMP/dev/001/003
+touch "$node"
+inode=$(stat -c %i "$node")
+ln -s /app/lib/stage2/pgphoto.stage2ondisk "$TMP/proc/123/exe"
+ln -s "$node" "$TMP/proc/123/fd/7"
+ln -s "$TMP/run/pgphoto-bound-1-3-$inode-ABCDEF (deleted)" "$TMP/proc/123/fd/8"
+make_usb 1-2 25fb 0183 1 3
+BOUND_LOG=$TMP/bound.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_USB_DEVFS="$TMP/dev" OPENPOLARIS_PROC_ROOT="$TMP/proc" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 OPENPOLARIS_USB_MAX_POLLS=6 \
+    sh "$SUPERVISOR" >"$BOUND_LOG" 2>&1
+grep -q 'camera-state: usb_present=1 camera_init_ok=1 restarted_process=0 preview_ready=not-measured' "$BOUND_LOG" \
+    || { echo "FAIL: bound K-1 II not reported as camera_init_ok=1 (issue #358)"; cat "$BOUND_LOG"; exit 1; }
+
+# (b) A restart with no bind must report restarted_process=1 AND camera_init_ok=0.
+# This is the exact state the v104 log described as success.
+rm -rf "$TMP/sys" "$TMP/proc" "$TMP/dev" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/dev/001" "$TMP/run"
+touch "$TMP/dev/001/003"
+make_usb 1-2 25fb 0183 1 3          # present, but nothing is bound to it
+UNBOUND_LOG=$TMP/unbound.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_USB_DEVFS="$TMP/dev" OPENPOLARIS_PROC_ROOT="$TMP/proc" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 OPENPOLARIS_USB_STABLE_POLLS=1 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=1 OPENPOLARIS_USB_MAX_POLLS=0 \
+    sh "$SUPERVISOR" >"$UNBOUND_LOG" 2>&1 &
+ub_pid=$!
+wait_for_log "$UNBOUND_LOG" 'camera-state: usb_present=1 camera_init_ok=0 restarted_process=0' || {
+    kill "$ub_pid" 2>/dev/null || true; wait "$ub_pid" 2>/dev/null || true
+    echo "FAIL: no camera-state line for an unbound present body (issue #358)"
+    cat "$UNBOUND_LOG"; exit 1
+}
+printf '4\n' > "$TMP/sys/1-2/devnum"     # re-enumeration -> restart
+if ! wait_for_log "$UNBOUND_LOG" 'camera-state: usb_present=1 camera_init_ok=0 restarted_process=1'; then
+    kill "$ub_pid" 2>/dev/null || true; wait "$ub_pid" 2>/dev/null || true
+    echo "FAIL: restart without a bind did not report camera_init_ok=0 (issue #358)"
+    cat "$UNBOUND_LOG"; exit 1
+fi
+kill "$ub_pid" 2>/dev/null || true; wait "$ub_pid" 2>/dev/null || true
+
+# (c) PREVIEW_READY is reported as not-measured, never as a guessed value. Frames
+# go from pgphoto's :8080 stream to polaris-httpd, a separate process on a port
+# this script does not know; camera-layer-report.sh reads opcode 292 from httpd's
+# /api/link for it. Inventing a plausible value here would repeat the error this
+# task exists to fix.
+grep -q 'preview_ready=not-measured' "$BOUND_LOG" || { echo "FAIL: preview_ready not reported as not-measured (issue #358)"; exit 1; }
+if grep -qE 'preview_ready=(1|yes|true)' "$BOUND_LOG" "$UNBOUND_LOG"; then
+    echo "FAIL: preview_ready reported as a measured value (issue #358)"; exit 1
+fi
+
+echo 'PASS: camera USB supervisor reports usb_present/camera_init_ok/restarted_process separately and leaves preview_ready unmeasured (issue #358)'
