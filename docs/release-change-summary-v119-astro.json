@@ -14,17 +14,23 @@
     {
       "component": "libgphoto2",
       "summary": "camlibs/ptp2/config.c: _get_Pentax_AutofocusDrive returned GP_ERROR_NOT_SUPPORTED unless the model was in the PC-live-view table, which removed the widget from the config tree entirely. pgphoto's updateCameraAutoFocus() looks up the widget literally named \"autofocusdrive\" for every non-Sony body -- verified directly in pgphoto.stock, where .rodata 0x29c7ec holds that string on the branch taken when checkCameraVerdor(CAM_VENDOR_SONY) returns 0, which it does for Pentax; the Sony branch at 0x29c7fc holds \"autofocus\". The function then requires the widget to exist, to be writable and to be GP_WIDGET_TOGGLE, and returns -1 otherwise. On the K-1 II and K-1 the missing widget therefore produced exactly the reported symptom with no other diagnostic. The widget is now created for every supported Pentax body in vendor mode.",
-      "issues": [359]
+      "issues": [
+        "359"
+      ]
     },
     {
       "component": "libgphoto2",
       "summary": "camlibs/ptp2/config.c: the set path required PTP_DPC_PENTAX_UsbLiveViewMode == 1 and failed with 'requires active PC live view' otherwise. That requirement is ours, not IT2's. IT2's AFBtn_Click calls CamAutoFocus() unconditionally once connected, and CamAutoFocus() gates only on _AFMode != 0 (conditions offset 196, the field we already parse as conditions.af_mode) and on a shutter not already released; only the touch-AF mouse handler consults PcLiveViewMode. The set path now enforces af_mode != 0 with an error naming the AF/MF switch. The readiness preflight, the strict admission predicate and the candidate barrier are untouched, so autofocusdrive still cannot run over an undelivered image.",
-      "issues": [359]
+      "issues": [
+        "359"
+      ]
     },
     {
       "component": "tests",
       "summary": "tests/test-pentax-aperture-alias.c asserted that autofocusdrive must be ABSENT on the K-1 family, with a comment claiming IT2 does not advertise an AF command for those bodies. That assertion pinned the defect and is what made #359 look unfixable from inside the driver; it is corrected to require GP_WIDGET_TOGGLE rather than deleted, so the requirement stays enforced. The K-3 III assertions already expected a TOGGLE and are unchanged.",
-      "issues": [359]
+      "issues": [
+        "359"
+      ]
     }
   ],
   "known_limits": [
