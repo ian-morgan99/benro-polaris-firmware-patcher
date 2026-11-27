@@ -696,6 +696,27 @@ else
     fi
 fi
 
+# The capture wedge (docs/evidence/capture-wedge-unsafe-activity-20261126) previously
+# needed hardware plus a reboot just to observe. This extracts the real admission logic
+# from the libgphoto2 fork with awk and compiles it standalone, so the recorded state
+# (field32=1 field36=1 field104=0x0e) is reproducible here. Skips 77 when the fork or a
+# compiler is absent, same convention as the init-trace suite above.
+if sh "$ROOT/container/test_pentax_capture_wedge_offline.sh" \
+        > /tmp/prerelease-pentax-capture-wedge.log 2>&1; then
+    echo "PASS: pentax capture wedge reproduced offline (#175 dead end)"
+    pass=$((pass + 1))
+else
+    rc=$?
+    if [ "$rc" -eq 77 ]; then
+        echo "SKIP: pentax capture wedge (no libgphoto2 fork or C compiler)"
+        skip=$((skip + 1))
+    else
+        echo "FAIL: pentax capture wedge -- see /tmp/prerelease-pentax-capture-wedge.log"
+        tail -20 /tmp/prerelease-pentax-capture-wedge.log || true
+        fail=$((fail + 1))
+    fi
+fi
+
 # This gate itself shipped two bare command lines, `s` and `ped`, on 2026-11-09 -- the
 # tail fragments of "as" and "shipped" from a comment pasted in already hard-wrapped at
 # terminal width, so the wrapped remainder landed outside the comment as executable code.

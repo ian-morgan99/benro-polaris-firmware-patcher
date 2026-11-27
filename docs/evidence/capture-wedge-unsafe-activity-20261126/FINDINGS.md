@@ -86,6 +86,45 @@ exposes 260 EV and 261 shutter only), so this cannot be verified remotely: the d
 - `scripts/bulb-timed.py` does not exist. The real scripts are `repro-app-bulb-request.py` (the app's exact
   timed request) and `probe-b-list-and-held-bulb.py` (held bulb).
 
+## Correction on 2026-11-27: the dead end is the #175 orphan path, not just the release path
+
+The analysis above names `pentax_admission_apply_output_obligation()` and is correct as
+far as it goes, but it describes the wedge as if the camera owed nothing. It does owe
+something. Every refusal in Clog_000038 reads:
+
+```text
+capture=4..7 path=recovery-probe reason=unsafe-activity ptp=0x2001 size=576
+    field32=0x00000001 field36=0x00000001 field104=0x0000000e unsafe-mask=0x00109a03
+    output-safe-reason=transfer-candidate-available accepted=0
+```
+
+`field32=1` and `field36=1`: the body reports an active capture **and a concrete candidate
+handle on itself**. That is SP_0047.jpg — written by the failed timed bulb, never
+downloaded. The gate is right to refuse; shooting again would overwrite it.
+
+So the real gap is not "the release condition can never be satisfied". It is that the
+issue #175 orphan-recovery path, which exists precisely for this case, is unreachable:
+
+1. `pentax_admission_block_reason()` (pentax-utils.c:274) tests activity **first**. Because
+   PROCESSING is set it returns `UNSAFE_ACTIVITY` and never reaches the capture/candidate
+   branches — even though `field36=1` is sitting right there. The same frame under the
+   output-safe policy yields `transfer-candidate-available`, which is exactly what Clog
+   prints as `output-safe-reason`. The two policies disagree about one payload.
+2. `pentax_orphan_candidate_claimable()` (pentax-utils.c:370) lists `UNSAFE_ACTIVITY` among
+   the reasons it will **not** claim. So `pentax_recover_orphan_candidates()` is never
+   called, and the shutter is refused again — forever.
+
+The situation #175 was written for (orphan present, none of ours in flight) is defeated
+purely by the strict reason being `UNSAFE_ACTIVITY` rather than a candidate reason. That
+is the narrowest true statement of this bug, and it points at a different fix than "wait
+for idle": waiting cannot help, because the body genuinely still owes an object. The path
+out has to claim the orphan while PROCESSING is set, or surface the wedge by name.
+
+`container/test_pentax_capture_wedge_offline.sh` reproduces all of this offline by
+extracting the four real functions from the fork with awk — including the two-policy
+disagreement and both `orphan_candidate_claimable` verdicts — so a fix can be written
+against a failing test instead of against a reboot.
+
 ## What is needed
 
 The gate is correct to be fail-closed — a double publication is worse than a refusal. But a state that can
