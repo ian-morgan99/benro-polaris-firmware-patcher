@@ -389,7 +389,38 @@ while :; do
         fi
 
         if [ "$stable" -ge "$COOLDOWN" ] && [ "$polls" -ge "$retry_after_poll" ]; then
-            if [ -z "$baseline" ] && already_bound_k3iii "$candidate"; then
+            if [ -z "$candidate" ]; then
+                # Issue #358: the body is gone and has stayed gone. Restarting
+                # pgphoto here cannot help -- there is no device for the new
+                # process to bind, so it comes back with no camera and the
+                # supervisor says so. Reproduced deterministically against a fake
+                # sysfs: unplug a baselined body and the supervisor logs
+                # "stable identity change: <id> -> none; restarting pgphoto" and
+                # burns one of the MAX_RESTARTS slots on a restart that provably
+                # binds nothing. When the body returns, baseline is now "none", so
+                # a SECOND restart fires -- two full dlopen + 64-shim cycles for
+                # one unplug/replug, against a budget of six.
+                #
+                # So do not restart while absent, but DO record absence as the
+                # known state by clearing the baseline. That is the part that
+                # matters: keeping the old identity here would make a same-address
+                # reconnect look unchanged (current == baseline) and skip the
+                # restart entirely, leaving pgphoto holding an fd to a device node
+                # the kernel already invalidated. Clearing the baseline means any
+                # return -- same or different address -- is seen as a change and
+                # gets exactly one restart. Net effect: two restarts per unplug/
+                # replug become one, and the budget is no longer spent on a no-op.
+                #
+                # The operator-visible signal for this state is the #347
+                # camera_absent line above, which fires independently of here.
+                if [ -n "$baseline" ]; then
+                    echo "[camera-usb] body absent; not restarting pgphoto (nothing to bind) -- awaiting reconnection of ${baseline} (issue #358)"
+                fi
+                baseline=""
+                candidate=""
+                stable=0
+                retry_after_poll=0
+            elif [ -z "$baseline" ] && already_bound_k3iii "$candidate"; then
                 echo "[camera-usb] adopting active pgphoto binding: $candidate"
                 baseline=$candidate
                 stable=0

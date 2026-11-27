@@ -680,6 +680,22 @@ for lock_test in container/test_restart_gphoto_launch_lock.sh \
     fi
 done
 
+# The camera USB supervisor, offline against a fake sysfs.
+#
+# container/test_camera_usb_supervisor.sh is the behavioural suite for the process
+# that decides when pgphoto gets restarted on a USB identity change, and it had
+# never been run by any gate -- 569 lines of assertions that only executed if a
+# human thought to run them. That is the same class of gap as the restart-helper
+# locks above and the credential guard: a check that depends on remembering is not
+# a gate. It is fully offline (fake sysfs under mktemp, stub restart helper, no
+# device, no network) and takes ~57 s, which is affordable next to the suites above.
+if sh "$ROOT/container/test_camera_usb_supervisor.sh" \
+        > /tmp/prerelease-camera-usb-supervisor.log 2>&1; then
+    ok "camera USB supervisor behaviour (restart/absence/quarantine)"
+else
+    bad "camera USB supervisor behaviour (log: /tmp/prerelease-camera-usb-supervisor.log)"
+fi
+
 # Behavioural coverage for the issue #297 one-shot init trace (STAGE2_TRACE_INIT_ENTRY).
 #
 # container/test_stage2_loader_compile.sh only proves the loader builds for ARM. The trace logic

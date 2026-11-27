@@ -567,3 +567,85 @@ for scenario in healthy3 healthy4 failed stale_generation reused_address; do
         *) test "$(wc -l < "$RESTART_LOG")" -eq 1 ;;
     esac
 done
+
+# Issue #358 acceptance task 2: "confirm whether restart is triggered while USB
+# absent". It was. Reproduced against a fake sysfs before the fix: unplug a
+# baselined body and the supervisor logged
+#   stable identity change: <id> -> none; restarting pgphoto
+# and spent one of MAX_RESTARTS on a restart that provably binds nothing -- there
+# is no device for the new process to open. When the body came back, baseline was
+# now "none", so a SECOND restart fired: two full dlopen + 64-shim cycles for one
+# unplug/replug, against a budget of six (#119). That is the churn #119 was
+# written to stop, re-opened by the absence path.
+#
+# The fix must NOT simply skip the restart while absent. Keeping the old baseline
+# would make a same-address reconnect look unchanged (current == baseline) and
+# skip the restart entirely, leaving pgphoto holding an fd to a device node the
+# kernel already invalidated. Absence is therefore adopted as a KNOWN state by
+# clearing the baseline, so any return -- same or different address -- is seen as
+# a change and gets exactly one restart.
+
+# (a) A body that vanishes and stays gone must not be restarted for.
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0189 1 3
+NO_RESTART_LOG=$TMP/no-restart.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_PROC_ROOT="$TMP/proc" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 \
+OPENPOLARIS_USB_STABLE_POLLS=1 OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=1 \
+OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=2 OPENPOLARIS_USB_ABSENT_EVIDENCE=0 \
+OPENPOLARIS_USB_MAX_POLLS=0 sh "$SUPERVISOR" >"$NO_RESTART_LOG" 2>&1 &
+nr_pid=$!
+if ! wait_for_baseline "$NO_RESTART_LOG"; then
+    kill "$nr_pid" 2>/dev/null || true; wait "$nr_pid" 2>/dev/null || true
+    echo "FAIL: supervisor never baselined the present camera (issue #358)"; exit 1
+fi
+rm -rf "$TMP/sys/1-1"
+if ! wait_for_log "$NO_RESTART_LOG" 'body absent; not restarting pgphoto'; then
+    kill "$nr_pid" 2>/dev/null || true; wait "$nr_pid" 2>/dev/null || true
+    echo "FAIL: supervisor restarted pgphoto while the bus was empty (issue #358)"
+    cat "$NO_RESTART_LOG"; exit 1
+fi
+# Let further polls run so a later poll cannot sneak a restart in.
+sleep 0.4
+kill "$nr_pid" 2>/dev/null || true; wait "$nr_pid" 2>/dev/null || true
+test ! -e "$RESTART_LOG"
+
+# (b) The same body returning on the SAME bus/devnum must still get exactly one
+# restart. This is the trap the naive fix falls into: if absence left the old
+# baseline in place, current == baseline on return and pgphoto would keep an
+# invalidated fd.
+rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run"
+make_usb 1-1 25fb 0189 1 3
+RETURN_LOG=$TMP/return.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_PROC_ROOT="$TMP/proc" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 \
+OPENPOLARIS_USB_STABLE_POLLS=1 OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=1 \
+OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=2 OPENPOLARIS_USB_ABSENT_EVIDENCE=0 \
+OPENPOLARIS_USB_MAX_POLLS=0 sh "$SUPERVISOR" >"$RETURN_LOG" 2>&1 &
+rt_pid=$!
+if ! wait_for_baseline "$RETURN_LOG"; then
+    kill "$rt_pid" 2>/dev/null || true; wait "$rt_pid" 2>/dev/null || true
+    echo "FAIL: supervisor never baselined the present camera (issue #358)"; exit 1
+fi
+rm -rf "$TMP/sys/1-1"
+wait_for_log "$RETURN_LOG" 'body absent; not restarting pgphoto' || {
+    kill "$rt_pid" 2>/dev/null || true; wait "$rt_pid" 2>/dev/null || true
+    echo "FAIL: no absence notice before reattach (issue #358)"; cat "$RETURN_LOG"; exit 1
+}
+make_usb 1-1 25fb 0189 1 3          # identical identity returns
+if ! wait_for_log "$RETURN_LOG" 'stable identity change: none -> 1-1|25fb:0189|1:3'; then
+    kill "$rt_pid" 2>/dev/null || true; wait "$rt_pid" 2>/dev/null || true
+    echo "FAIL: same-address reconnect did not trigger a rebind (issue #358)"
+    cat "$RETURN_LOG"; exit 1
+fi
+sleep 0.4
+kill "$rt_pid" 2>/dev/null || true; wait "$rt_pid" 2>/dev/null || true
+test "$(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0)" = "1"
+
+echo 'PASS: camera USB supervisor does not restart for an absent body, and rebinds once on same-address reconnect (issue #358)'
