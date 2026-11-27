@@ -278,15 +278,37 @@ static int native_claim_from(unsigned site, int budget)
          * Report it only when a claim is actually live. */
         unsigned owner = atomic_load(&native_gate.owner_tid);
         unsigned held = owner ? stage2_camera_now_ms() - atomic_load(&native_gate.lease_started_ms) : 0;
+        /* Wall clock on the refusal line only, appended at the end. Every timing
+         * decision in this shim is monotonic (#125) and must stay that way -- but
+         * Clog carries no timestamps at all, so a refusal cannot be placed next to
+         * the Mlog camera traffic that caused it. That is what blocks defect A: we
+         * know a config claim was held 4818 ms, not by whom. Mlog stamps with the
+         * device's own clock reading (UTC here), so gmtime_r lines up with it
+         * without a TZ dependency.
+         *
+         * Position matters. scripts/probe-config-gate.py and
+         * scripts/stress-config-gate.py both match the literal
+         * "admission refused: site=... kind=..." prefix. Inserting a field before
+         * site= makes both regexes match nothing, and a gate probe that finds zero
+         * refusals reports a clean pass -- a silent false negative, which is worse
+         * than the missing timestamp it was meant to fix. So the new field goes
+         * last, where neither parser looks. */
+        char stamp[24];
+        struct timespec wall;
+        struct tm tm_utc;
+        if (clock_gettime(CLOCK_REALTIME, &wall) == 0 && gmtime_r(&wall.tv_sec, &tm_utc))
+            strftime(stamp, sizeof stamp, "%H:%M:%S", &tm_utc);
+        else
+            stamp[0] = '\0';
         fprintf(stderr, "[stage2] camera admission refused: site=%x kind=%u owner_site=%x "
                 "last_owner_kind=%u generation=%u camera_present=%u budget=%d "
-                "tid=%d owner_tid=%d depth=%u held_ms=%u stolen=%u\n", site, (unsigned)op,
+                "tid=%d owner_tid=%d depth=%u held_ms=%u stolen=%u t=%s\n", site, (unsigned)op,
                 atomic_load(&native_gate.owner_site), atomic_load(&native_gate.owner_kind),
                 atomic_load(&native_gate.generation),
                 __atomic_load_n((uintptr_t *)STAGE2_NATIVE_CAMERA_WORD, __ATOMIC_ACQUIRE) != 0,
                 budget, (int)syscall(SYS_gettid), owner,
                 atomic_load(&native_gate.owner_depth), held,
-                atomic_load(&native_gate.leases_stolen));
+                atomic_load(&native_gate.leases_stolen), stamp);
     }
     return ret;
 }
