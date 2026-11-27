@@ -248,3 +248,104 @@ per-read refetching.
 ends. Contains the three inconclusive staleness runs and the reproduction run. Final appliance
 state verified after every run: supervisor running, pgphoto running (last observed pid 994),
 `fuser /dev/bus/usb/*/*` returning that pid. Drive mode left at its original value `single`.
+
+---
+
+## 11. Bulb mode tested by hand — the mode-dependent-enum claim is REFUTED, and §4 of this document was wrong
+
+The operator turned the K-1 II dial to **B** at ~09:09, which is the only way to reach this state
+(§8). Two things came out of it, one of which corrects a claim this project has been relying on for
+four days, and one of which corrects **my own §4 above**.
+
+### 11.1 The body really was in Bulb — verified, not assumed
+
+`--get-config /main/status/pentaxconditions` returned a parsed conditions blob:
+
+```
+state=0; astro-phase=inactive/other; exposure-mode-raw=9; exposure-mode=Bulb; astro-mode=no;
+user-mode-raw=0; drive-mode-raw=0; ISO=200; exposure-step=1; open-av-num=14; shooting=no;
+processing=no; task-changing=no; Tv-changeable=no; bulb-timer=yes; bulb-seconds=20/1;
+aperture=18/10; exposure-comp=0/10; astrotracer3-capable=no; ... gps-state=1
+```
+
+`exposure-mode=Bulb`, `bulb-timer=yes`, `bulb-seconds=20/1`. Drive mode stayed `single` throughout,
+as expected — Bulb is an exposure mode (§8). So the precondition for the test was genuinely met.
+
+### 11.2 The shutter enum does NOT change in Bulb — byte-for-byte identical
+
+Baseline captured at 08:40 (`stale3-…/sh_before.txt`, before the dial was turned) vs Bulb at 09:10
+(`bulba-…/sh.out`):
+
+```
+56 choices vs 56 choices
+$ diff base.lst bulb.lst
+IDENTICAL          # no output
+mm:ss values, both: 00:30 00:25 00:20 00:15 00:13 00:10 00:08 00:06 00:05 00:04 00:03 00:02 00:01 00:00   (14)
+fractional, both:   25/10 16/10 13/10 8/10 6/10 5/10 4/10 3/10 1/4 1/5 1/6 1/8 1/10 1/13 1/15 1/20
+                    1/25 1/30 1/40 1/50 1/60 1/80 1/100 1/125 1/160 1/200 1/250 1/320 1/400 1/500
+                    1/640 1/800 1/1000 1/1250 1/1600 1/2000 1/2500 1/3200 1/4000 1/5000 1/6400 1/8000   (42)
+Current: 00:30 in both.
+```
+
+**This refutes the claim at `docs/evidence/astro-v115-k01-camera-admission-20261122/k1ii-driver-research.md`
+~line 108**: *"in Bulb the shutter enum contains only `mm:ss` values (00:01..20:00) and **zero**
+fractional entries, while other modes expose fractions."* On this body, in genuine Bulb, the enum
+contains **both families simultaneously** — 14 `mm:ss` and 42 fractional — exactly as it does in
+Manual. Line ~345 of that same file already half-retracted it for drive mode ("never reproduced
+here"); it is now refuted for exposure mode too, which was the case that claim was actually about.
+
+That claim has been the stated justification for "any caching must be keyed on, or invalidated by,
+shooting mode / drive state" — and I repeated it as the reason not to ship a descriptor cache in my
+own #369 replies. **It does not hold on the K-1 II.** The correct statement: the shutter enum is not
+mode-gated on this body; the Bulb allowance is expressed elsewhere, in conditions
+(`bulb-timer=yes`, `bulb-seconds=20/1`), not by extending the enum ceiling. The operator's
+expectation — that only the allowed duration beyond 00:30 varies — matches the data: the enum
+ceiling stayed at 00:30 and the Bulb allowance appears as a conditions field instead.
+
+**What this does NOT prove.** One body, one mode transition, one property. It does not prove no
+descriptor anywhere is mode-dependent (ISO/aperture/EV could differ on other bodies or in other
+modes), and it does not retire #316 — that bug is about *values* the body rejects, and §11.4 keeps
+the "never cache live values" rule intact. It removes the specific evidence I was using to block
+caching, so the honest disposition changes: mode-keyed invalidation is no longer demonstrably
+required for the shutter enum on this body, and any cache design should be driven by measured
+staleness rather than by that claim.
+
+### 11.3 Correction to my own §4: conditions ARE reachable cheaply, by leaf name
+
+§4 above says *"In the leaf-read path there is exactly one `0x900f` and it is the failing init probe.
+Leaf reads never obtain conditions at all."* That was derived from reading `iso`, and it is **wrong**
+as a general statement. Reading `pentaxconditions` by leaf name (`condleaf-…`):
+
+| Key | rc | ops | 0x1014 | duration | 0x900f fail | 0x900f ok |
+|---|---|---|---|---|---|---|
+| `pentaxconditions` (leaf) | 0 | **13** | **0** | **2.185 s** | 1 | **1** |
+| `/main/status/pentaxconditions` (qualified) | 0 | 63 | 30 | 7.924 s | 1 | 1 |
+
+Op sequence for the leaf read:
+
+```
+0.086632 0x1002 Open session        0.090556 0x1015 GetPropValue
+0.091140 0x900f  -> FAILS 0x2017    0.091588 0x9001 enable
+1.620429 0x1001                     1.625061 0x900f  -> SUCCEEDS
+1.631809 _get_Pentax_Conditions: Pentax conditions response: 576 bytes
+1.634437 0x9001 disable             2.180872 0x1003 Close session
+```
+
+So the init probe still fails pre-enable (that part of §4 stands), but **the same leaf read then
+obtains a valid 576-byte conditions blob, with zero descriptor fetches, in 2.19 s.** Action 3c's
+"one fresh `GetAllConditions` snapshot per logical refresh" is therefore already achievable at 13 ops
+via the leaf path — it does not need the qualified key and does not need a full enumeration. My §4
+disposition ("blocked on ordering") was too pessimistic: ordering is handled inside the call, and the
+snapshot is cheap.
+
+### 11.4 What remains true
+
+- The 2.03 s vendor-mode enable/disable per process is unchanged in Bulb (leaf reads still 13 ops /
+  ~2.2 s; qualified still 63 ops / ~8 s). Session reuse remains the lever.
+- `bulb-seconds=20/1` was stable across three conditions reads 4 s apart, but nothing was shooting,
+  so that is not evidence about value freshness. The rule from the v115 research still applies and
+  is not affected by §11.2: **live values must never be cached** — only descriptor/capability data,
+  and now with less reason to key it on mode than previously believed.
+- Appliance healthy after every run in this section; pgphoto rebound each time (21836, 23433, 29187,
+  369). Drive mode untouched (`single`). The dial is now physically at B — **the operator should
+  return it to their shooting mode**; nothing we did can do that.

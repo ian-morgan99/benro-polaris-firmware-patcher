@@ -104,6 +104,14 @@ Steps 2 and 3 bypass the cache entirely, which is why ops scale linearly with
 widget count (63 -> 489 for 1 -> 10 widgets) instead of being paid once.
 
 ### Why a naive cache would be WRONG here (do not "optimise" this blindly)
+**SUPERSEDED 2026-11-27 — see `docs/evidence/issue369-389-measurements-20261127/FINDINGS.md` §11.
+The mode-dependence asserted below is REFUTED on the K-1 II.** With the dial physically at B
+(verified: `exposure-mode=Bulb`, `bulb-timer=yes`, `bulb-seconds=20/1`) the shutter enum is
+byte-for-byte identical to Manual — 56 choices, the same 14 `mm:ss` and the same 42 fractional
+entries. The Bulb allowance is carried in conditions, not by extending the enum. The paragraph is
+kept verbatim below because it records what was believed at the time and because it was the stated
+reason for blocking descriptor caching; that reason no longer holds.
+
 Pentax descriptor *contents* are mode-dependent, proven by this same round: in
 Bulb the shutter enum contains only `mm:ss` values (00:01..20:00) and **zero**
 fractional entries, while other modes expose fractions. Caching a raw descriptor
