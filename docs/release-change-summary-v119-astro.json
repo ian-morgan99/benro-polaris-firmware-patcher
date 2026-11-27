@@ -3,8 +3,8 @@
     "candidate_id": "astro-v118-stage2-gate-wedge-fix-20261126",
     "libgphoto2_commit": "f48a05e08b54d6d433a556c2df512987a51ce742",
     "libgphoto2_ref": "main; v118 shipped this pin unchanged from v117 because no driver commit existed after it",
-    "patcher_commit": "569044d",
-    "patcher_ref": "main, ahead of the v118 pin 858edfd87be3681d26cbfee4810dff2c25c8696f; carries the v118 Stage-2 gate fix plus subsequent docs/diagnostic work",
+    "patcher_commit": "858edfd87be3681d26cbfee4810dff2c25c8696f",
+    "patcher_ref": "main; this is v118's pinned patcher commit. v119 builds from a later main (4de499d), which carries the v118 Stage-2 gate fix plus subsequent docs/diagnostic work, so the payload is a superset of v118 rather than a rebuild of it.",
     "previous_candidate_pins": {
       "astro-v118-stage2-gate-wedge-fix-20261126": "libgphoto2=f48a05e08b54d6d433a556c2df512987a51ce742 patcher=858edfd87be3681d26cbfee4810dff2c25c8696f"
     }
