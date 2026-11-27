@@ -309,9 +309,25 @@ echo "  staged."
 if [ "${KEEP_STALE:-0}" = "1" ]; then
   echo "--- [2b/5] SKIPPED stale-file prune (--keep-stale) ---"
 else
-  PRESERVE='^(site\.conf|site\.conf\..*|target\.json|keep-wifi-awake|keep-wifi-force|wpa\.conf|last-focal)$|\.log$|^catalogue-tiles/'
+  # Never delete anything the operator created: backups, logs, state, config,
+  # credentials, and bulk data. The prune exists for kit executables whose shape
+  # changed between releases, not for user files. On 2026-11-27 the first run of
+  # this block removed index-4110.fits.truncated.bak from a live card -- a backup
+  # someone deliberately kept of the truncated index found that day. It is absent
+  # from every bundle, so it read as "stale", but a .bak is operator data by
+  # definition and no install should discard it.
+  PRESERVE='^(site\.conf|site\.conf\..*|target\.json|keep-wifi-awake|keep-wifi-force|wpa\.conf|last-focal)$|\.log$|^catalogue-tiles/|\.fits$|\.bak$|\.orig$|~$'
   STALE=""
   for d in "${DIRS[@]}"; do
+    # astrometry/ is never pruned. docs/FIRMWARE-INSTALL-PROCESS.md:131 documents
+    # astrometry-indexes.zip as a one-time copy, and each index is ~24 MB, so the
+    # card legitimately holds files no per-release bundle ships. WITH_INDEXES
+    # defaults to 1, which puts astrometry in DIRS -- without this skip an ordinary
+    # install would delete any index outside the current focal range, silently
+    # breaking solves for other focal lengths and costing a multi-hundred-megabyte
+    # re-download to undo. The prune is for kit executables that changed shape, not
+    # for bulk data the operator chose to copy once.
+    [ "$d" = "astrometry" ] && continue
     dev="$(ssh "${SSH_ARGS[@]}" "$SSH" "cd /app/sd/$d 2>/dev/null && find . -type f | sed 's|^\./||'" || true)"
     [ -n "$dev" ] || continue
     bundle="$( cd "$SD_ROOT/$d" && find . -type f | sed 's|^\./||' )"
