@@ -134,6 +134,12 @@ custom retry loops) when a documented, proven process exists.
   (`PRIVATE_PUBLISHED` phase only). Does NOT treat FwPkt-only upload as a
   sufficient release definition.
 - `polaris-debugging` — SSH access, gimbal-vs-router diagnosis, keepalives.
+- `polaris-evidence-discipline` — who owns a defect and what counts as proof.
+  Requires the authoritative-source lookup (`scripts/find-authoritative-source.py`)
+  before any "not our code" / "vendor limitation" claim, requires the producing
+  code to be cited for every mechanism claim, and pins three verification states
+  (`logic-tested` / `device-installed` / `hardware-qualified`) so a host-side test
+  is never recorded as a hardware fix.
 - `polaris-release` — legacy routing guide; delegates to
   `polaris-release-orchestrator`. Does not define a competing lifecycle.
 - `astro-multishot-qualification` — deterministic repeated Pentax capture

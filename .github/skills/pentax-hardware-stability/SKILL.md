@@ -11,10 +11,35 @@ new state in software. Use `docs/pentax-agent-operative-prompts.md`.
 
 Read these before acting:
 
+- `.github/skills/polaris-evidence-discipline/SKILL.md` — what counts as proof,
+  and the rule that a symbol missing from our repos is **not** evidence of vendor
+  ownership;
 - `.github/skills/polaris-debugging/SKILL.md` for device identity and SSH;
 - `.github/skills/fwpkt-update-flow/SKILL.md` before any install;
 - `docs/pentax-mode-aware-liveness.md` for long-operation semantics;
 - `docs/LIBGPHOTO2-UPGRADE-PROCESS.md` before changing packaged libgphoto2.
+
+## Authoritative sources, and where they actually are
+
+"The vendor does X" must be checked against the vendor code, which is already on
+this workstation. Run the lookup rather than guessing whether it exists:
+
+```bash
+scripts/find-authoritative-source.py <symbol-or-feature>
+scripts/find-authoritative-source.py --opcode <n> --context
+```
+
+| Question | Source |
+|---|---|
+| What does the shipped daemon actually call? | `pr-publish/pgphoto-re/decompiled/gpManager.decompiled.c` (+ `per-function/`, `gpmanager-addrs.txt`) |
+| Which opcodes, and gated on what per model? | `LibGphoto2/ImageTransmitter2/IMAGETransmitter2/MtpDevice.cs` |
+| Which UI actions are gated, and on which capability flag? | `LibGphoto2/ImageTransmitter2/IMAGETransmitter2/MainWindow.xaml.cs` |
+| What does the phone app send? | `PrivateResearch/openpolaris-research/Benro-Connect/benro-connect-decompiled/` |
+| What do we implement? | `LibGphoto2/libgphoto2/camlibs/ptp2/`, `container/astro/` |
+
+Vendor hits are Ghidra/decompiler output: names and signatures come from DWARF,
+statement text is reconstructed. Use them for behaviour, never as "the upstream
+file says".
 
 ## Release integrity
 
@@ -44,7 +69,13 @@ A and B pass, C fails           -> OpenPolaris
 ```
 
 Do not change libgphoto2 for a Polaris-only symptom. Compare the first PTP
-operation or state transition and prove which library, camlib and port module were loaded. Use the libgphoto2 AGENTS.md, IMAGE Transmitter 2 matrix and settings path as the source gates.
+operation or state transition and prove which library, camlib and port module were loaded. Use the libgphoto2 AGENTS.md, IMAGE Transmitter 2 matrix and settings path as the source gates (locations in the table above).
+
+First divergence decides the repo, not the binary that printed the error. A
+failure surfaced by vendor `pgphoto` can still be ours: if the decompiled call
+resolves a libgphoto2 widget by name and calls `gp_camera_set_config`, that
+widget is ours to create and validate. Prove the widget exists on the body at the
+shipped pin before calling any defect upstream.
 
 For setting writes, single-thread the client, choose one advertised value and use the
 body-specific IT2 conditions path. An acknowledgement, app slider or descriptor

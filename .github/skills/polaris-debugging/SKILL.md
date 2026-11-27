@@ -702,6 +702,16 @@ separate gates.
 
 ## 7. Which GitHub repo owns which defect (logging logic)
 
+**Before writing "not our code", "vendor limitation" or "report upstream", run
+`scripts/find-authoritative-source.py <symbol>` and read
+`.github/skills/polaris-evidence-discipline/SKILL.md`.** A symbol being absent
+from our two repos does not mean it is absent from the vendor binary — the
+pgphoto Ghidra decompilation, the Image Transmitter 2 sources and the Benro
+Connect APK are all on this workstation and have repeatedly been assumed
+missing. Issue #359 (K-1 II AF) was routed upstream on exactly that reasoning
+and is wrong: the vendor's `updateCameraAutoFocus()` is a generic libgphoto2
+widget call into a widget our own camlib owns.
+
 Route every issue to the layer that **first diverges** — never to the layer
 where the symptom is most visible:
 
@@ -713,7 +723,10 @@ where the symptom is most visible:
 | `BenroHardwareValidator/benro-polaris-test-harness` | deterministic regression fixtures only | Once a defect is evidenced, it may be modelled here — but the harness never owns the underlying defect and a harness PASS is never proof of physical camera support. |
 
 Evidence discipline: keep direct-libgphoto2 evidence separate from Polaris
-runtime evidence and OpenPolaris E2E evidence. Every FwPkt zip gets a registry
+runtime evidence and OpenPolaris E2E evidence. See
+`polaris-evidence-discipline` for the full rules — in particular that an empty
+grep means *nothing looked at*, not *nothing wrong*, and that a host-side test
+is `logic-tested`, never `hardware-qualified`. Every FwPkt zip gets a registry
 row (zip MD5+SHA-256, appfs MD5, libgphoto2 commit SHA, patcher commit) in
 `docs/FWPKT-PROVENANCE-CONTRACT.md` **before** handoff; a zip without a row is
 unprovenanced and must not be staged.

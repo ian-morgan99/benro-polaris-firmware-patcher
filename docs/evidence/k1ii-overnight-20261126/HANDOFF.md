@@ -133,20 +133,65 @@ Two things narrow the cause sharply:
   in the same file, and that attempt still returned `ret:-1`. Correlation across files is also weak
   (`Clog_000028`: 2 failures / 8 refusals; `Clog_000034`: 25 / 93). The near-match between the ~4.3 s AF
   block and the ~4.5 s gate holds is a coincidence, not a cause — do not chase it.
-- **It is not our code.** `updateCameraAutoFocus`, `camera_autoFocus_enable` and `sp_Gphoto_Init` appear in
-  no source file in this repo. They are vendor `polestar_app`. The sequence `change focus mode ret 0`
-  succeeds immediately before the failure, so the mode change works and the AF enable itself times out at a
-  consistent ~4.3–4.4 s — a timeout signature, most likely a PTP/vendor-PTP reply that never arrives on
-  this body.
+- **Withdrawn: "It is not our code."** That was concluded because
+  `updateCameraAutoFocus`, `camera_autoFocus_enable` and `sp_Gphoto_Init` appear
+  in no source file in this repo, and were therefore assumed to be vendor
+  `polestar_app`. The reasoning is invalid — absence from our repos is not
+  evidence of vendor ownership. pgphoto had already been decompiled and is on
+  this workstation at `pr-publish/pgphoto-re/decompiled/gpManager.decompiled.c`
+  (address `0x102fa0`, listed in `gpmanager-addrs.txt`). Its
+  `updateCameraAutoFocus(int enable)` is a generic libgphoto2 widget call:
+  `_find_widget_by_name(p, name, &child, &rootconfig)`, then
+  `gp_widget_get_readonly`, then a `GP_WIDGET_TOGGLE` check, then
+  `gp_camera_set_config`. The widget it names is one our camlib is responsible
+  for creating, so ownership was never ours to disclaim.
 
-Our kit's own focus path is separate and unaffected by this: `autofocus.sh` drives the focuser
+  Four paths in that function can produce the observed `-1`, and they need
+  different fixes:
+
+  1. `waitCameraIdle(500)` returns `-1` → `ret = -1`.
+  2. `_find_widget_by_name` fails → `ret` carries its error code.
+  3. `gp_widget_get_readonly` reports `ro == 1` → `ret = -1` explicitly, with a
+     `gp_context_error` naming the widget. That error text is the cheapest way to
+     identify which widget pgphoto is asking for.
+  4. The widget exists but is **not** `GP_WIDGET_TOGGLE` → the block is skipped
+     and `ret` keeps the value `0` from `gp_widget_get_type`, so the function
+     returns success having done nothing. That is a silent-success path, the same
+     shape as issue #181.
+
+  Note also that the entry log line prints `enable` and the exit line prints
+  `enable, ret`; the ~4.3–4.4 s gap between them is not explained by
+  `waitCameraIdle(500)` alone, so "AF enable times out waiting for a PTP reply"
+  remains a hypothesis, not a finding.
+
+  What would settle it, in order of cost: read the two string pools selected by
+  `checkCameraVerdor(CAM_VENDOR_SONY)` to get the widget name pgphoto uses for a
+  Pentax body; enumerate that name with `gphoto2 --list-all-config` on a
+  direct-PC K-1 II at the shipped pin (the body advertises five properties in
+  `DeviceInfo.DeviceProps` against the K-3 III's thirty-five, which our own
+  comment in `pentax-utils.c` records as a declaration gap rather than a hardware
+  limit); then one direct-PC run to see which branch fires.
+
+  Until then **#359 ownership is undecided** — do not route it to Benro/Pentax on
+  the strength of this file's earlier wording. Recorded as a withdrawal rather
+  than a silent rewrite so the wrong conclusion stays auditable. See
+  `.github/skills/polaris-evidence-discipline/SKILL.md` §1 and §7.
+
+Our kit's own focus path is separate in mechanism: `autofocus.sh` drives the focuser
 **relatively via opcode 311** through the already-registered control channel, and scores frames by median
 HFR from `polaris-extract --focus-metric`. Tunables `AF_STEPS AF_ADJ AF_SETTLE AF_BACKLASH DOWNSAMPLE`,
 progress in `AF_JSON`.
 
-Overnight: confirm whether the kit path works independently of the vendor path. If opcode 311 works, the
-vendor `updateCameraAutoFocus` failure is a Benro/Pentax issue to report upstream, not something we can
-patch — and the app's AF button should probably route to our path instead.
+**Status of that path: not verified.** "Separate and unaffected" was an inference from reading the
+script, not a measurement. `docs/K1II-ISSUE-PLAN-20261126.md` lists "whether our kit AF path works at
+all" under *Not verified — do not record as fixed*, and there is no opcode-311 traffic in any retained
+Clog/Mlog on this rig (`grep -rh "code\[311\]\|code:311"` over `docs/evidence` returns nothing). So the
+path has never been observed to work on a body.
+
+**Withdrawn:** the suggestion that if opcode 311 works, the `updateCameraAutoFocus` failure is therefore
+"a Benro/Pentax issue to report upstream, not something we can patch". Two defects working does not make
+the other one someone else's — see the withdrawal above. Whether 311 works tells us whether a *workaround*
+exists; it says nothing about who owns the `-1`.
 
 ### 2. Live view flickers off/on every ~3–4 s
 

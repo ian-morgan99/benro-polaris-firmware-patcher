@@ -36,12 +36,20 @@ Two findings genuinely change what should be done first:
    log on the rig, and that it fails in a file with **zero gate refusals** — which retires the contention
    hypothesis #359 leaves open.
 
+   **Correction to my own triage here.** I wrote that AF is "vendor `polestar_app`, not our code" because
+   those symbols are absent from our repos. That inference is invalid and the claim is withdrawn: pgphoto
+   was already decompiled on this workstation, and its `updateCameraAutoFocus` resolves a libgphoto2 widget
+   by name and calls `gp_camera_set_config` — a widget our camlib owns. Four branches in that function can
+   return `-1`, and one of them returns success having done nothing at all. Task 8 below ("prove/disprove
+   our opcode-311 kit path") does **not** settle ownership either way; it only tells us whether a workaround
+   exists. Run `scripts/find-authoritative-source.py updateCameraAutoFocus` before re-triaging #359.
+
 ## Triage: symptom → existing issue → what v118 adds
 
 | Symptom | Issue | Status | What v118 evidence adds |
 |---|---|---|---|
 | LV flickers off/on every 3–4 s | **#389** (+ #369) | open | `held_ms` 1276–4557 ms on `0x100540` = `STAGE2_CONFIG_WAIT_RETURN`. Confirms the 7.85 s config cost is now *bounded and recovering* instead of wedging. Symptom, not cause. |
-| AF "trying but not working" | **#359** (+ #146/#147) | open | Fails on v118 too. `ret:-1` in **every** log file containing an attempt, 0 successes ever. Fails with **0 refusals** in the same file (`Clog_000033`) → contention ruled out. Vendor `polestar_app`, not our code. |
+| AF "trying but not working" | **#359** (+ #146/#147) | open | Fails on v118 too. `ret:-1` in **every** log file containing an attempt, 0 successes ever. Fails with **0 refusals** in the same file (`Clog_000033`) → contention ruled out. ~~Vendor `polestar_app`, not our code~~ **withdrawn**: pgphoto's `updateCameraAutoFocus` is a generic libgphoto2 widget call (see `docs/evidence/k1ii-overnight-20261126/HANDOFF.md`), so ownership is undecided. |
 | Focus peaking garbles lower half | **#363** (+ #383) | open | #363 already records K-1 II **>50%** vs K-3 III ~20 px. Confirms it survives to v118. No device-side log evidence exists — needs live repro. |
 | RAW+JPEG shown as RAW (#362) | **#362** | open | Detection works (`companions=1` on every dual-format capture, fresh boot included). `gp_camera_get_extra_capture_files` still has **no consumer**. |
 | Negative capture durations | **#315** | open | #315 already logs `capture end -14660 ms`. v118 adds scale: **32 negative, 0 positive** across every log ever written on this rig — it is *every* capture, not one instance, and persists to v118. |
