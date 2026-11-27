@@ -99,6 +99,31 @@ to v118 would need two sessions running the same activity on different builds.
 - **Defect A is still open.** The mechanism is now named rather than inferred, which is
   what was missing; the flicker itself is unchanged.
 
+## Defect B (focus peaking garbles lower half) is not our frame store
+
+The v118 findings left defect B as "points at a frame-size or line-stride mismatch when
+peaking overlays the stream... Not investigated further this session." The obvious suspect
+is `container/stage2_ipolar_frames.c`, which does explicit stride arithmetic
+(`row_bytes = width * 2`, rejects `source_stride < row_bytes`, copies row by row). It is
+not the cause:
+
+- That store belongs to the **iPolar adapter** (`stage2_ipolar_adapter.c`), device
+  `1233:1455`, UVC YUYV 1280x960 -- a different camera entirely, not Pentax live view.
+- It is not in the shipped binary: `strings /app/lib/stage2/libpolaris_stage2.so | grep -ci
+  ipolar` returns **0**.
+
+The Pentax preview path (`stage2_shim_gp_camera_capture_preview`) never touches pixel
+bytes. It either calls straight through to
+`g_real_gp_camera_capture_preview(camera, file, context)` or returns an error code
+(`-1` GP_ERROR, `-6` NOT_SUPPORTED, a cached terminal class) without generating PTP
+traffic. No memcpy, no resize, no stride arithmetic on that path.
+
+So half-frame corruption that appears only when focus peaking is enabled and clears when
+it is disabled originates in the camera's own preview encoding or in the client renderer,
+not in Stage-2. The `area=720x480 / caf-active=576x320` nesting noted in the v118 findings
+is a plausible camera-side cause but is not something our code touches. Do not spend time
+in `stage2_ipolar_frames.c` on this.
+
 ## Reproduce
 
 ```bash
