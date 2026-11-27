@@ -1,0 +1,44 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v118-stage2-gate-wedge-fix-20261126",
+    "libgphoto2_commit": "f48a05e08b54d6d433a556c2df512987a51ce742",
+    "libgphoto2_ref": "main; v118 shipped this pin unchanged from v117 because no driver commit existed after it",
+    "patcher_commit": "569044d",
+    "patcher_ref": "main, ahead of the v118 pin 858edfd87be3681d26cbfee4810dff2c25c8696f; carries the v118 Stage-2 gate fix plus subsequent docs/diagnostic work",
+    "previous_candidate_pins": {
+      "astro-v118-stage2-gate-wedge-fix-20261126": "libgphoto2=f48a05e08b54d6d433a556c2df512987a51ce742 patcher=858edfd87be3681d26cbfee4810dff2c25c8696f"
+    }
+  },
+  "purpose": "Ship the first driver-side fix for issue #359, K-1 II autofocus returning -1. For months this was recorded as vendor polestar_app work that could not be patched here, on the reasoning that updateCameraAutoFocus appears in no source file in our repos. That reasoning is invalid and the conclusion was wrong: pgphoto had already been decompiled on this workstation. Its updateCameraAutoFocus() resolves a libgphoto2 widget by name and calls gp_camera_set_config, so the widget belongs to our camlib. This release changes the pin from f48a05e08 to 089ae66c7, which is the first driver commit after it.",
+  "changes": [
+    {
+      "component": "libgphoto2",
+      "summary": "camlibs/ptp2/config.c: _get_Pentax_AutofocusDrive returned GP_ERROR_NOT_SUPPORTED unless the model was in the PC-live-view table, which removed the widget from the config tree entirely. pgphoto's updateCameraAutoFocus() looks up the widget literally named \"autofocusdrive\" for every non-Sony body -- verified directly in pgphoto.stock, where .rodata 0x29c7ec holds that string on the branch taken when checkCameraVerdor(CAM_VENDOR_SONY) returns 0, which it does for Pentax; the Sony branch at 0x29c7fc holds \"autofocus\". The function then requires the widget to exist, to be writable and to be GP_WIDGET_TOGGLE, and returns -1 otherwise. On the K-1 II and K-1 the missing widget therefore produced exactly the reported symptom with no other diagnostic. The widget is now created for every supported Pentax body in vendor mode.",
+      "issues": [359]
+    },
+    {
+      "component": "libgphoto2",
+      "summary": "camlibs/ptp2/config.c: the set path required PTP_DPC_PENTAX_UsbLiveViewMode == 1 and failed with 'requires active PC live view' otherwise. That requirement is ours, not IT2's. IT2's AFBtn_Click calls CamAutoFocus() unconditionally once connected, and CamAutoFocus() gates only on _AFMode != 0 (conditions offset 196, the field we already parse as conditions.af_mode) and on a shutter not already released; only the touch-AF mouse handler consults PcLiveViewMode. The set path now enforces af_mode != 0 with an error naming the AF/MF switch. The readiness preflight, the strict admission predicate and the candidate barrier are untouched, so autofocusdrive still cannot run over an undelivered image.",
+      "issues": [359]
+    },
+    {
+      "component": "tests",
+      "summary": "tests/test-pentax-aperture-alias.c asserted that autofocusdrive must be ABSENT on the K-1 family, with a comment claiming IT2 does not advertise an AF command for those bodies. That assertion pinned the defect and is what made #359 look unfixable from inside the driver; it is corrected to require GP_WIDGET_TOGGLE rather than deleted, so the requirement stays enforced. The K-3 III assertions already expected a TOGGLE and are unchanged.",
+      "issues": [359]
+    }
+  ],
+  "known_limits": [
+    "The AF fix is verified on a physical PENTAX K-1 Mark II (25fb:0183) attached directly to this PC at usb:001,010, which is Layer A. It has NOT been exercised through the Polaris runtime or Benro Connect, and no flashed build contains it until this candidate is installed.",
+    "Layer A evidence, recomputed for this summary: at baseline f48a05e08 'gphoto2 --list-all-config | grep -c autofocusdrive' returns 0 on the K-1 II. With the fix the widget enumerates as /main/actions/autofocusdrive, Label 'Drive Pentax Autofocus', Readonly: 0, Type: TOGGLE. '--set-config autofocusdrive=1' exits 0 and the debug log shows PTP_OC 0x9011 sent, response read, then conditions polled. Driver suite 'meson test --no-suite no-ci' reports Ok: 28, Fail: 0; the same suite reports 28/28 at baseline f48a05e08, so no pre-existing failure is being attributed to this change.",
+    "This changes behaviour on the K-3 III as well, which is the body currently attached to the Polaris. For that model the widget already existed, so the only difference is the set-path gate: AF drive previously required active PC live view and now requires af_mode != 0. That matches IT2, but it means a K-3 III with the lens switch in MF now gets an explicit error where it previously got a live-view complaint, and a K-3 III without live view can now drive AF where it previously could not. K-3 III AF through Benro Connect has not been re-tested on hardware for this candidate.",
+    "updateCameraManualFocus was checked and needs no change: its non-Sony branch reads .rodata 0x29c7cc, which holds 'manualfocusdrive', a widget we already expose as GP_WIDGET_RANGE. The MF half of #359's title is therefore not addressed by this release and remains open.",
+    "Does NOT address issue #362 (RAW+JPEG delivered as a single file), the bulb retrieval hang, -1005 poisoning after a hung bulb capture, or live view frame delivery.",
+    "Carries forward every v118 limitation unchanged: the Stage-2 gate wedge fix has never executed on a device, and the physical Benro Connect / Manual / Bulb regression matrix has not run for this candidate."
+  ],
+  "validation_focus": [
+    "On the Polaris with the K-3 III attached: drive autofocus from Benro Connect and confirm it actually focuses, since the set-path gate changed for that model.",
+    "After this is installed and a K-1 II is attached to the head: confirm pgphoto's AF no longer logs updateCameraAutoFocus ret:-1, and that the app's AF button produces a focus action.",
+    "Confirm a lens switched to MF returns the new explicit error rather than silently succeeding, so the silent-success branch of updateCameraAutoFocus cannot be reached by accident.",
+    "Re-run the v118 gate-wedge checks on this build, since it carries that payload too and the two fixes interact in the same loader."
+  ]
+}
