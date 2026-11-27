@@ -17,9 +17,18 @@ src = open(path, encoding="utf-8", errors="replace").read()
 
 
 def func_body(name):
-    m = re.search(rf"\n{name}\s*\(CONFIG_GET_ARGS\)\s*\{{", src)
-    if not m:
-        m = re.search(rf"\n{name}\s*\(CONFIG_SET_ARGS\)\s*\{{", src)
+    """Brace-matched body of a ptp2 config function, or None if absent.
+
+    Callers MUST treat None as a failure. Silently skipping a missing function's
+    assertions is how this tool first "passed" while checking nothing: it looked
+    for _set_Pentax_AutofocusDrive, which does not exist -- the set path is
+    _put_Pentax_AutofocusDrive (CONFIG_PUT_ARGS).
+    """
+    m = None
+    for suffix in ("CONFIG_GET_ARGS", "CONFIG_PUT_ARGS", "CONFIG_SET_ARGS"):
+        m = re.search(rf"\n{name}\s*\({suffix}\)\s*\{{", src)
+        if m:
+            break
     if not m:
         return None
     i = src.index("{", m.start())
@@ -36,9 +45,12 @@ def func_body(name):
 
 
 get = func_body("_get_Pentax_AutofocusDrive")
-set_ = func_body("_set_Pentax_AutofocusDrive")
+put = func_body("_put_Pentax_AutofocusDrive")
 if get is None:
     print("FAIL: _get_Pentax_AutofocusDrive not found")
+    sys.exit(1)
+if put is None:
+    print("FAIL: _put_Pentax_AutofocusDrive not found -- cannot verify the set path")
     sys.exit(1)
 
 ok = True
@@ -54,12 +66,25 @@ if "supported_model" not in get or "vendor_mode_enabled" not in get:
 else:
     print("OK: getter keeps supported_model + vendor_mode preflight")
 
-if set_ is not None:
-    if "af_mode" in set_:
-        print("OK: setter gates on af_mode (IT2's own CamAutoFocus condition)")
-    else:
-        print("FAIL: setter does not gate on af_mode -- AF could be sent with AF off")
-        ok = False
+if "af_mode" not in put:
+    print("FAIL: set path does not gate on af_mode -- AF could be sent with AF off")
+    ok = False
+else:
+    print("OK: set path gates on af_mode (IT2's own CamAutoFocus condition)")
+
+if "_pentax_readiness_preflight" not in put:
+    print("FAIL: set path dropped the readiness preflight")
+    ok = False
+else:
+    print("OK: set path keeps the readiness preflight")
+
+# Deleting a still-transfer candidate would destroy user photos, so the settle
+# loop must never remove one.
+if "ptp_delete_object" in put:
+    print("FAIL: set path deletes candidates -- risks user data")
+    ok = False
+else:
+    print("OK: set path never deletes a transfer candidate")
 
 print("VERDICT:", "fix present and correctly scoped" if ok else "FIX NOT VERIFIED")
 sys.exit(0 if ok else 1)

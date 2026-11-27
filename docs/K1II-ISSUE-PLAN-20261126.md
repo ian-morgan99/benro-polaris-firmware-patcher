@@ -49,13 +49,41 @@ Two findings genuinely change what should be done first:
 | Symptom | Issue | Status | What v118 evidence adds |
 |---|---|---|---|
 | LV flickers off/on every 3–4 s | **#389** (+ #369) | open | `held_ms` 1276–4557 ms on `0x100540` = `STAGE2_CONFIG_WAIT_RETURN`. Confirms the 7.85 s config cost is now *bounded and recovering* instead of wedging. Symptom, not cause. |
-| AF "trying but not working" | **#359** (+ #146/#147) | open | Fails on v118 too. `ret:-1` in **every** log file containing an attempt, 0 successes ever. Fails with **0 refusals** in the same file (`Clog_000033`) → contention ruled out. ~~Vendor `polestar_app`, not our code~~ **withdrawn**: pgphoto's `updateCameraAutoFocus` is a generic libgphoto2 widget call (see `docs/evidence/k1ii-overnight-20261126/HANDOFF.md`), so ownership is undecided. |
+| AF "trying but not working" | **#359** (+ #146/#147) | **root-caused, fix shipped in v119; runtime unqualified** | Fails on v118 too. `ret:-1` in **every** log file containing an attempt, 0 successes ever. Fails with **0 refusals** in the same file (`Clog_000033`) → contention ruled out. ~~Vendor `polestar_app`, not our code~~ **withdrawn**: pgphoto's `updateCameraAutoFocus` is a generic libgphoto2 widget call (see `docs/evidence/k1ii-overnight-20261126/HANDOFF.md`). **Root cause found:** `_get_Pentax_AutofocusDrive` returned `NOT_SUPPORTED` unless the model was in the PC-live-view table, which removed the widget from the tree entirely — so pgphoto's `_find_widget_by_name("autofocusdrive")` failed and AF reported `-1` with no diagnostic. Only K-3 III and K-3 III Monochrome carry `supports_pc_live_view = 1`, which is exactly why AF worked there and nowhere else. Fixed in libgphoto2 `089ae66c7`; shipped in v119 (`ptp2.so` md5 `84c724e2…`). **Still unproven on hardware:** no camera was attached when v119 was installed (`lsusb` shows hubs only), so the qualification round could not run. |
 | Focus peaking garbles lower half | **#363** (+ #383) | open | #363 already records K-1 II **>50%** vs K-3 III ~20 px. Confirms it survives to v118. No device-side log evidence exists — needs live repro. |
 | RAW+JPEG shown as RAW (#362) | **#362** | open | Detection works (`companions=1` on every dual-format capture, fresh boot included). `gp_camera_get_extra_capture_files` still has **no consumer**. |
 | Negative capture durations | **#315** | open | #315 already logs `capture end -14660 ms`. v118 adds scale: **32 negative, 0 positive** across every log ever written on this rig — it is *every* capture, not one instance, and persists to v118. |
 | Shutter says "processing" before actuation | **#315** | open | #315's title is literally "shutter release timing wrong". The K-1 II vs K-3 III **ordering difference** is the only part not captured — comment on #315 rather than filing new. |
 | Old iPad crashes Benro Connect | client app | out of scope | No device-side crash text at all. iPhone/Android fine. Not Stage-2. |
 | Clients dropping out | **#360** (+ new) | partial | `SP_ClientCtxDel:not find this is id[N]` × **307**, open+close in the same millisecond. Vendor socket bookkeeping race — not tracked as its own defect. |
+
+### Blast radius of the #359 fix (v119) — which bodies need AF re-testing
+
+`supports_pc_live_view = 1` is set for exactly two entries in
+`pentax_model_capabilities[]` (`camlibs/ptp2/pentax-utils.c:1042,1064`). Because the
+old AF getter required it, `autofocusdrive` existed on **only** those bodies. Removing
+the requirement exposes the widget on every supported Pentax model, so this is not a
+K-1 II-only change and cannot be qualified by testing one body.
+
+| Body | `autofocusdrive` before v119 | After v119 | AF runtime status |
+|---|---|---|---|
+| K-3 III | present | present (unchanged) | was the only body where AF worked — re-test to prove no regression |
+| K-3 III Monochrome | present | present (unchanged) | untested, no hardware |
+| **K-1 II** | **absent → `-1`** | present | **the #359 case; untested, no camera attached** |
+| K-1 | absent → `-1` | present | untested, no hardware |
+| K-P, K-70, K-3, GR III, 645D, 645Z, KF | absent → `-1` | present | untested, no hardware |
+
+The set path is gated on `conditions.af_mode != 0`, matching IT2's own `CamAutoFocus()`
+precondition, and returns a clear error rather than sending `PTP_OC 0x9011` when the
+body is in MF. It keeps `_pentax_readiness_preflight` and never deletes a transfer
+candidate. So a body that genuinely cannot drive AF should fail cleanly instead of
+misbehaving — but "should" is not evidence, and none of these bodies has been driven
+since the change.
+
+Verify statically with `scripts/check-af-fix.py <config.c>`: it passes on `089ae66c7`
+and fails on the parent commit, checking the getter, the `af_mode` gate, the retained
+preflight and the no-delete rule by function scope. It cannot substitute for a body on
+the bench.
 
 ## Genuinely new — but read N1 first
 
