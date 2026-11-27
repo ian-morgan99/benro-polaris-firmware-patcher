@@ -174,15 +174,77 @@ Final state verified: supervisor 276 running, pgphoto 13735 running, `fuser /dev
 13735. No artifact was modified; nothing was deployed. All three runs left the appliance in the
 state it was found, with a fresh pgphoto session bound to the same camera identity.
 
-## 7. What is still not measured
+## 7. Reproduction of the headline numbers
+
+A second independent run (`anom-20261127-084205`) reproduced both figures:
+
+| Key | rc | ops | duration |
+|---|---|---|---|
+| `iso` (leaf) | 0 | **13** | 2.217 s |
+| `/main/imgsettings/iso` (section-qualified) | 0 | **63** | 8.274 s |
+
+An intermediate run appeared to show `ops=0` for the section-qualified key, which would have
+contradicted §3. It was a bug in my own script: the key contains `/`, and I used it directly as
+an output filename, so the debug file never existed and `grep -c` on a missing path returned 0.
+Caught by re-measuring rather than reported. Fixed script uses fixed filenames.
+
+## 8. The mode-change freshness test is INCONCLUSIVE — and cannot be done from software at all
+
+This is the #316-class correctness gate for any caching change, so I attempted it three times.
+All three are inconclusive, and the reason is worth recording precisely.
+
+**Attempt 1 (`stale-20261127-083619`) — invalid, my error.** I ran
+`--get-config drivemode --get-config shutterspeed --set-config drivemode=Bulb …`. The debug stream
+contains **zero** `gp_camera_set_config` calls and only three `get_single_config` calls: `drivemode`
+is not a valid leaf name, so the set never happened. The three shutter reads all returned 56
+identical choices — which proves nothing, because no mode change occurred. My first pass also
+reported "0 fractional choices", which was a broken regex: the enum plainly contains `1/6400`,
+`1/8000`. Both errors were mine and are recorded rather than dropped.
+
+**Attempt 2 (`stale2-…`) — aborted by its own precondition check.** `--list-config` returns
+section-qualified keys, so my leaf-name match for a drive-mode key found none and the script exited
+before touching anything. (Side observation: `--list-config` output does **not** round-trip as a
+leaf name — it is already section-qualified, which is where the 100-per-boot expensive pattern
+comes from.)
+
+**Attempt 3 (`stale3-20261127-083945`) — inconclusive for a real reason.** Correct key found:
+`pentaxdrivemode`, current value `single`, 23 choices. Setting it to `Bulb` fails:
+
+```
+*** Error ***  Failed to set new configuration value Bulb for configuration entry pentaxdrivemode.
+*** Error (-2: 'Bad parameters') ***
+```
+
+Because `Bulb` is not a drive mode on this body. The 23 choices are
+`single, interval, interval-movie, unknown-3, continuous-hi/mid/lo, self-timer-12s, self-timer-2s,
+remote, remote-3s, remote-cont, mirror-up, mirror-up-remote, unknown-14, multi-exposure,
+unknown-16..21, self-timer-cont` — no Bulb. On Pentax, **Bulb is an exposure mode**, and there is
+no exposure-mode setter among the 52 enumerated keys (`/main/actions/bulb` is a capture *action*,
+not a mode switch).
+
+**Consequence.** The shutter-enum staleness question cannot be answered through gphoto2 at all on
+this driver. Reproducing "in Bulb the shutter enum contains only `mm:ss` values" requires someone to
+**turn the mode dial on the body by hand**. That is an operator action, not an access or rig problem,
+and it is the concrete blocker for validating any descriptor cache against #316. Recorded as such.
+
+What attempt 3 did establish incidentally: a session doing 3 shutter reads plus one failed set issued
+**82** `0x1014` fetches — consistent with each fresh process paying a full enumeration, not with
+per-read refetching.
+
+## 9. What is still not measured
 
 - **pgphoto's own call pattern** — whether it reuses one session or opens one per settings request.
   The 170/375 CONFIG-vs-CONFIG refusals from `deal_camera_control_handler` (commit `4f38e814`) hint
   at serialised settings requests, but that is queue time, not op count. Needs Clog with the read
   path instrumented, or a counted run while pgphoto is the caller.
-- **Mode-change freshness.** I measured repeat reads inside one session, not a Manual→Bulb→Manual
-  transition. Whether `dpd_cache` serves a stale shutter enum across a mode change is still
-  unproven — and it is the #316 correctness risk that gates any caching change. This needs the
-  body switched between modes mid-session, which I did not do here.
+- **Mode-change freshness** — see §8: needs the dial turned by hand; no software path exists.
 - **K-3 III.** Only `25fb:0183` has ever appeared in `usb-watch.log` (720 sightings, no other
   Pentax ID). Cross-model confirmation is impossible until it is cabled.
+
+## 10. Second evidence batch
+
+[`raw/ptp-evidence2.tgz`](raw/ptp-evidence2.tgz), sha256
+`55d32d625bcacc89540d14b5337c54b3a0146a8e258b88496b0d6125c6a28b1a`, hash-verified equal on both
+ends. Contains the three inconclusive staleness runs and the reproduction run. Final appliance
+state verified after every run: supervisor running, pgphoto running (last observed pid 994),
+`fuser /dev/bus/usb/*/*` returning that pid. Drive mode left at its original value `single`.
