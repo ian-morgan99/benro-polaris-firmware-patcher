@@ -15,6 +15,12 @@
 #   --no-boot          pass NO_BOOT=1 to install_astro.sh (files only, no hook)
 #   --reboot           reboot and wait for 8090 instead of just reporting it
 #   --skip-verify      stage + install, do not verify hashes or the port
+#   --keep-stale       leave kit files that this release no longer ships on the
+#                      card. Default prunes them: tar is additive, so an orphan
+#                      from an older release survives forever and makes
+#                      install_astro.sh refuse a healthy install. Config,
+#                      credentials, state, logs and catalogue-tiles/ are never
+#                      removed either way.
 #   --max-wait SECS    seconds to wait for 8090 after --reboot (default 600)
 #   -h | --help
 #
@@ -61,6 +67,7 @@ DO_REBOOT=0
 SKIP_VERIFY=0
 MAX_WAIT=600
 ALLOW_PARTIAL="${ALLOW_PARTIAL:-0}"
+KEEP_STALE="${KEEP_STALE:-0}"
 ALLOW_FWVER_MISMATCH="${ALLOW_FWVER_MISMATCH:-0}"
 
 while [ $# -gt 0 ]; do
@@ -74,8 +81,9 @@ while [ $# -gt 0 ]; do
     --no-boot) NO_BOOT=1; shift;;
     --reboot) DO_REBOOT=1; shift;;
     --skip-verify) SKIP_VERIFY=1; shift;;
+    --keep-stale) KEEP_STALE=1; shift;;
     --max-wait) MAX_WAIT="$2"; shift 2;;
-    -h|--help) sed -n '2,48p' "$0"; exit 0;;
+    -h|--help) awk 'NR>1 { if ($0 ~ /^#/) { print; next } exit }' "$0"; exit 0;;
     *) BUILD_DIR="$1"; shift;;
   esac
 done
@@ -277,6 +285,52 @@ echo "  streaming $((TOTAL_KB / 1024)) MB ..."
 tar czf - -C "$SD_ROOT" "${DIRS[@]}" | \
   ssh "${SSH_ARGS[@]}" "$SSH" 'tar xzf - -C /app/sd && sync'
 echo "  staged."
+
+# --- 2b. Prune kit files dropped since the last install ----------------------
+# tar extraction is additive, so a file shipped by an older release and removed
+# since survives on the card indefinitely. That is not cosmetic: install_astro.sh
+# asks whether every script present in /app/sd/polaris-astro is listed in
+# polaris-astro.manifest, so a single orphan fails a healthy install. v119 was
+# refused with "1 file(s) in the bundle are not listed" because usb-watch.sh --
+# dropped from the kit long ago and never in git history -- was still sitting there
+# from an earlier release, and the only message offered was "the manifest is
+# truncated or damaged, re-extract the release zip", which sends the operator to
+# the wrong artifact entirely.
+#
+# Deleting everything absent from the bundle would be worse than leaving it. Three
+# files in polaris-astro are user-owned and read at runtime -- site.conf (TZ_OFFSET_SEC,
+# solve-now.sh:156), target.json (solve-now.sh:131) and keep-wifi-awake, which
+# polaris-astro-boot.sh:285 tests before starting wifi-keepalive -- plus wpa.conf in
+# polaris-wifi and the one-time catalogue-tiles/ tree. None ship in the bundle, so a
+# naive mirror would wipe a configured rig on every upgrade.
+#
+# So prune only what cannot be user data: files absent from the bundle that are not
+# config, credentials, state, logs, or the one-time catalogue.
+if [ "${KEEP_STALE:-0}" = "1" ]; then
+  echo "--- [2b/5] SKIPPED stale-file prune (--keep-stale) ---"
+else
+  PRESERVE='^(site\.conf|site\.conf\..*|target\.json|keep-wifi-awake|keep-wifi-force|wpa\.conf|last-focal)$|\.log$|^catalogue-tiles/'
+  STALE=""
+  for d in "${DIRS[@]}"; do
+    dev="$(ssh "${SSH_ARGS[@]}" "$SSH" "cd /app/sd/$d 2>/dev/null && find . -type f | sed 's|^\./||'" || true)"
+    [ -n "$dev" ] || continue
+    bundle="$( cd "$SD_ROOT/$d" && find . -type f | sed 's|^\./||' )"
+    orphans="$(printf '%s\n%s\n' "$dev" "$bundle" | LC_ALL=C sort | uniq -u | grep -vE "$PRESERVE" || true)"
+    for p in $orphans; do
+      # present on the device, absent from the bundle -> stale. uniq -u alone would
+      # also list bundle-only files, which must never be deleted.
+      printf '%s\n' "$dev" | grep -qxF "$p" && STALE="$STALE$d/$p"$'\n'
+    done
+  done
+  STALE="$(printf '%s' "$STALE" | sed '/^$/d')"
+  if [ -n "$STALE" ]; then
+    echo "--- [2b/5] Pruning kit files no longer shipped ---"
+    printf '%s\n' "$STALE" | sed 's/^/    removing /'
+    printf '%s\n' "$STALE" | ssh "${SSH_ARGS[@]}" "$SSH" \
+      'cd /app/sd && while IFS= read -r p; do [ -n "$p" ] && rm -f "$p"; done && sync' \
+      || { echo "ERROR: could not prune stale kit files." >&2; exit 5; }
+  fi
+fi
 
 # --- 3. Verify staged bytes --------------------------------------------------
 if [ "$SKIP_VERIFY" = "1" ]; then
