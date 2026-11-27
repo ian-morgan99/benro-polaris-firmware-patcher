@@ -58,3 +58,60 @@ Not proven here:
 - **K-3 III regression.** The K-3 III is not present on either host, so the body that
   previously worked has not been re-tested. The fix removes a gate rather than adding
   one, and the set path now enforces `af_mode != 0`, but no regression evidence exists.
+
+---
+
+## Shipped-binary verification (2026-11-27, lock-in)
+
+The runtime qualification above used a host-built camlib. This section proves the
+**ARM driver that actually ships** carries the same fix, by content rather than by
+hash alone.
+
+| Stage | Artifact | md5 |
+|---|---|---|
+| Source pin | libgphoto2 `089ae66c7` (clean tree, `dirty_diff_hash=` empty) | — |
+| Built into the release | `appfs.ubifs` → `lib/stage2/libgphoto2/2.5.34/ptp2.so` | `84c724e23a447a688a445f6f18dd9a46` |
+| Built into the release | `appfs.ubifs` → `lib/libgphoto2/2.5.27.1/ptp2.so` | `84c724e23a447a688a445f6f18dd9a46` |
+| Running on the head | `/app/lib/stage2/libgphoto2/2.5.34/ptp2.so` | `84c724e23a447a688a445f6f18dd9a46` |
+| Running on the head | `/app/lib/libgphoto2/2.5.27.1/ptp2.so` | `84c724e23a447a688a445f6f18dd9a46` |
+
+The built copy was extracted from `out/astro-v119-build-20261127/FwPkt/camera/appfs.ubifs`
+with `tools/ubireader-docker`, so the comparison is against what the package contains,
+not against an intermediate build directory.
+
+Architecture check: `file` reports `ELF 32-bit LSB shared object, ARM, EABI5 (SYSV)` for
+the extracted driver — this is the cross-built ARM binary, not an x86 artifact that
+happened to share a name.
+
+A hash match alone would not prove much, so the two strings the fix introduces were
+checked inside the shipped binary itself:
+
+```
+requires the body to be in an AF mode:        PRESENT
+Pentax autofocus drive: release_mode:         PRESENT
+```
+
+Both are absent from any pre-fix build, so their presence is direct evidence that
+`_put_Pentax_AutofocusDrive`'s `af_mode` gate is compiled into what the head runs.
+
+Release provenance (`out/astro-v119-build-20261127/build-source-provenance.txt`):
+```
+source_kind=git-directory   actual_version=2.5.34
+git_commit=089ae66c74f02f8b0305ffd5847ef18f56d880c4
+dirty_diff_hash=            patcher_dirty_diff_hash=
+patcher_commit=d6b4bd49a99b4ffe225fb876f9179ce2f21fee34
+selected_camlibs=ptp2,pentax   build_id=astro-v119-build-20261127
+```
+Both diff hashes are empty: the release was built from a clean tree at the pinned commit.
+
+## Test suites at lock-in
+- libgphoto2 at `089ae66c7`: **28/28 OK, 0 fail** (`meson test -C builddir-af`), including
+  `test-pentax-aperture-alias`, the test the fix corrects.
+- Patchersuite: **1046 passed, 13 skipped, 19 subtests**, 0 failures.
+
+## Still open after lock-in
+AF through pgphoto on the head is still unexercised: the head enumerates no Pentax body
+(`lsusb` shows only the onboard hub `1a40:0101`, which is soldered silicon, not a device
+in the user's cable run). The fix is proven on a physical K-1 Mark II over a host camlib
+and is proven present in the shipped ARM binary; what remains unproven is the head's own
+pgphoto → ARM libgphoto2 path driving a lens. K-3 III regression likewise needs that body.
