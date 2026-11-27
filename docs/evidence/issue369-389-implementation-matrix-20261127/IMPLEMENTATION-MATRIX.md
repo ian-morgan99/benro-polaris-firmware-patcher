@@ -94,7 +94,7 @@ pgphoto  deal_camera_control_handler / updateCameraViewFinder   [vendor binary, 
    │  indirect call through a slot in the exe's own .bss  (ldr pc,[r12])
    ▼
 libpolaris_stage2.so   stage2_shim_gp_camera_get_single_config      ← THE CONSUMER BOUNDARY
-   │  pass-through, dlsym'd real core fn                            (loader.c:1675)
+   │  pass-through, dlsym'd real core fn          (loader.c:1644 deployed / 1675 on main)
    ▼
 libgphoto2.so.6 (our build)   gp_camera_get_single_config → camera_get_single_config
    ▼
@@ -183,7 +183,7 @@ a third time on this issue.
 |---|---|---|---|
 | 1 | Source-to-artifact matrix | **Delivered here** | §1–§3, all hashes re-read from device today |
 | 2 | Reconcile #389 with #369; stop reusing discredited numbers | **Delivered**; #389 body/title still carry the retracted claim → corrected in #389 comment | §3 |
-| 3a | Resolve capabilities/choices once per session generation + mode transition | **NOT IMPLEMENTED** | No cache at the consumer boundary (§2, zero grep hits). A `gp_camera_init` shim already exists (`loader.c:2376`) and a session-generation concept already exists (`native_gate.generation`, #127) — the invalidation hook is present, nothing consumes it for reads |
+| 3a | Resolve capabilities/choices once per session generation + mode transition | **NOT IMPLEMENTED** | No cache at the consumer boundary (§2, zero grep hits in both `main` and the deployed blob). A `gp_camera_init` shim already exists (deployed blob line 2313; `main` line 2376) and a session-generation concept already exists (`native_gate.generation`, #127) — the invalidation hook is present, nothing consumes it for reads |
 | 3b | Avoid redundant optional-property full-tree fallback where proven safe | **BLOCKED, not skipped** | The expensive arm is *section-qualified keys* issued by pgphoto/caller code we do not patch (§3). "Proven safe" requires knowing which caller issues them and at what frequency on the appliance; the v115 binary analysis names `_find_widget_by_name` (0xf2710) → full config (0xf2754) as a candidate but its runtime frequency on Polaris was never measured |
 | 3c | One fresh `GetAllConditions` snapshot per logical refresh for supported current values | **NOT IMPLEMENTED** | Opcode shipped in `ptp2.so`; no consumer at the loader boundary. Also cannot be done blindly: which leaf names map to conditions offsets is model-dependent and must be enumerated per field, not assumed |
 | 3d | Coalesce duplicate pending read requests | **NOT IMPLEMENTED** | No request coalescing anywhere in `stage2_loader.c` |
