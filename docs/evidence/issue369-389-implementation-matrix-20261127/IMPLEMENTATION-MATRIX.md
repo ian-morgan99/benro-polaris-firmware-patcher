@@ -17,7 +17,7 @@ correct as written.
 
 | TA claim | Verification | Result |
 |---|---|---|
-| `container/stage2_loader.c` blob `fe322f0962724dc8d0e5853e382a5638636aff01`, lines 1675–1755 | `git rev-parse origin/main:container/stage2_loader.c` → `fe322f0962724dc8d0e5853e382a5638636aff01`; line 1675 is `stage2_shim_gp_camera_get_single_config` | **Correct** |
+| `container/stage2_loader.c` blob `fe322f0962724dc8d0e5853e382a5638636aff01`, lines 1675–1755 | `git rev-parse origin/main:container/stage2_loader.c` → `fe322f0962724dc8d0e5853e382a5638636aff01`; line 1675 is `stage2_shim_gp_camera_get_single_config` | **Correct for `main` — but see the note below: that is not the blob deployed in v118** |
 | That shim "resolves and calls the real single-config API on every invocation"; special handling = choice validation + gated shutter fallback, **not** a shared conditions refresh | Line 1690 calls `g_real_gp_camera_get_single_config(...)` unconditionally; success path → `stage2_reject_empty_choice_widget()`; failure path gated by `STAGE2_SHUTTER_FALLBACK` (default OFF) and restricted to `name=="shutterspeed"` | **Correct** |
 | libgphoto2 `camlibs/ptp2/config.c` blob `b533f771d7f9ab4d86f121cad1c0a39689d15ddf` | `git rev-parse f48a05e0:camlibs/ptp2/config.c` → `b533f771…` — i.e. this blob **is** the source of the driver packaged in v118 (provenance `git_commit=f48a05e0`) | **Correct, and it is the shipped tree** |
 | config.c 15831 / 15893 filter by leaf name in `MODE_SINGLE_GET` | Both lines are `if ((mode == MODE_SINGLE_GET) && strcmp (cursub->name, confname)) continue;` | **Correct** |
@@ -30,6 +30,29 @@ correct as written.
 No factual error was found in the maintainer comment. The disagreement below is about
 **scope of what was delivered**, not about their reading.
 
+### One source-vs-artifact mismatch worth flagging, since action 1 asks for exactly this
+
+The comment cites loader blob `fe322f09…`, which is `origin/main` **today**. The deployed v118
+loader was built from patcher commit `858edfd87`, whose `container/stage2_loader.c` blob is
+`ad73ceaf290975e0f721412170e1a47aa00571dd` — a different blob, 2396 lines versus main's 2459.
+
+Consequence: **the cited line numbers do not point at the deployed artifact.** In `858edfd87`
+the shim is at line **1644**, not 1675; the slot installation is at **2368**, not 2430. Anyone
+opening the `main` permalink to check the shipped behaviour will read a file that is 63 lines
+longer than what is on the appliance.
+
+The *substance* of the claim survives unchanged, which I verified rather than assumed: in the
+deployed blob the shim body is byte-for-byte the same logic — resolve the real core fn, call it
+unconditionally (`int ret = g_real_gp_camera_get_single_config(camera, name, widget_out, context);`),
+validate choices on success, gated shutter fallback on failure. And `grep GetAllConditions\|cachetime\|snapshot`
+on the **deployed** blob is also zero hits, so "no shared conditions refresh" holds for what is
+actually running, not just for `main`.
+
+The 66 lines `main` adds over the deployed loader are unrelated to reads: a
+`STAGE2_CAPTURE_STOREFULL_REMAP` gate and capture-path comments. So no read-path behaviour
+differs between `main` and deployment — but the line-number drift is real and is recorded so
+future citations name the blob that is on the device.
+
 ---
 
 ## 1. Shipped artifact chain (v118, currently installed on o-v15r)
@@ -40,7 +63,7 @@ Device `192.168.0.1`, read live on 2026-11-27. `/app/sd/polaris-astro/VERSION`:
 | Artifact on device | sha256 | Built from |
 |---|---|---|
 | `/app/lib/stage2/pgphoto.stage2ondisk` | (manifest) | **vendor binary, never patched by us**; md5 `79d4454f` identical for v115/v117/v118 |
-| `/app/lib/stage2/libpolaris_stage2.so` | `ec18c1648b8253d417f53589cb34b3807ec262ee7877e9587bd2d6671e63a9cb` | patcher `858edfd87be3681d26cbfee4810dff2c25c8696f`, source `container/stage2_loader.c` blob `fe322f09…` |
+| `/app/lib/stage2/libpolaris_stage2.so` | `ec18c1648b8253d417f53589cb34b3807ec262ee7877e9587bd2d6671e63a9cb` | patcher `858edfd87be3681d26cbfee4810dff2c25c8696f`, source `container/stage2_loader.c` blob **`ad73ceaf290975e0f721412170e1a47aa00571dd`** |
 | `/app/lib/stage2/libgphoto2.so.6` | `cefa7b399b8c25ad8801a74bad6db3124f15187190528266b4b36116f13d2b62` (199 356 B) | libgphoto2 `f48a05e08b54d6d433a556c2df512987a51ce742` |
 | `/app/lib/stage2/libgphoto2/2.5.34/ptp2.so` | (manifest) | same commit; **this is where the Pentax batch code actually lives** |
 | `/app/lib/libgphoto2.so.6.1.0` | `8b461f8ac31f7df156fd77bd973a7562ff708b6c5da1203a0eb9eaedd965feed` (409 296 B) | **stock vendor** copy, untouched |
