@@ -434,6 +434,30 @@ SD_ROOT="$OUT/astro-bundle/COPY-TO-SD-CARD-ROOT"
       || { echo "ERROR: failed to build polaris-wifi.zip" >&2; exit 1; }
   fi
   if [ -d astrometry ]; then
+    # Upstream's md5sums.txt covers the whole 4100 series (4107..4119). We ship
+    # only the subset that overlaps the focal range, so the copied manifest lists
+    # files that are deliberately absent. On the device `md5sum -c .md5sums.txt`
+    # then reports "can't open index-4107.fits: FAILED" for each one -- three
+    # failures that read exactly like corruption on a perfectly healthy card.
+    # That cost a full diagnostic detour on 2026-11-26 while a real truncated
+    # index-4110 sat in the same directory, and the two were indistinguishable.
+    # Prune to files actually present so the check is honest: PASS means verified,
+    # FAIL means a real problem, and nothing is reported for what we never shipped.
+    if [ -f astrometry/.md5sums.txt ]; then
+      tmp_md5=$(mktemp) || exit 1
+      while read -r sum name; do
+        [ -n "$name" ] || continue
+        f=${name#\*}
+        [ -f "astrometry/$f" ] && printf '%s *%s\n' "$sum" "$f" >> "$tmp_md5"
+      done < astrometry/.md5sums.txt
+      if [ -s "$tmp_md5" ]; then
+        mv "$tmp_md5" astrometry/.md5sums.txt || exit 1
+      else
+        rm -f "$tmp_md5"
+        echo "ERROR: astrometry/.md5sums.txt matched no shipped index files" >&2
+        exit 1
+      fi
+    fi
     rm -f astrometry-indexes.zip
     zip -qrX astrometry-indexes.zip astrometry \
       || { echo "ERROR: failed to build astrometry-indexes.zip" >&2; exit 1; }

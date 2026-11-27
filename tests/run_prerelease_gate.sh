@@ -369,6 +369,11 @@ PY_TESTS=(
     # reports an absent tarball as NOT_APPLICABLE, so the check above cannot see that
     # gap -- 6.0.0.54.117 and .118 shipped incomplete and nothing failed.
     tests/test_publish_republish_completeness.py
+    # astrometry-indexes.zip shipped upstream's whole-series md5sums.txt while
+    # carrying only 4110..4119, so `md5sum -c .md5sums.txt` on the rig reported
+    # three phantom FAILED entries. On 2026-11-26 a genuinely truncated index-4110
+    # was indistinguishable among them, and the real defect was nearly missed.
+    tests/test_index_manifest_pruning.py
     tests/test_setup_wifi_psk_not_in_argv.py
     # Added alongside scripts/release/install-astro-kit.sh and
     # docs/RELEASE-ENTRYPOINTS.md. Registered here deliberately: test_astro_regression.py
