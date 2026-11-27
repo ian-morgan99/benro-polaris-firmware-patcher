@@ -563,6 +563,15 @@ PY_TESTS=(
     tests/test_fetch_indexes_integrity.py
     tests/test_pick_downsample_shared.py
     tests/test_solve_stage_timings.py
+    # Issue N1: scripts/check-no-cookies.py existed for weeks and ran only when a
+    # human remembered to run it, which is the exact failure mode this gate was
+    # built to remove (#308 item 1). It is now invoked by check_credentials_not_in_
+    # tracked_files above. This suite pins that wiring AND the guard's own detection,
+    # because a detector whose patterns silently stop matching is the same failure in
+    # a different shape. It also pins the redactor/guard marker contract and documents
+    # that PSK findings have no automated remediation yet.
+    # Offline-safe: reads the git index and two scripts, no camera, no network, ~2 s.
+    tests/test_credential_guard.py
 )
 
 if python3 -m pytest -q "${PY_TESTS[@]}" > /tmp/prerelease-pytest.log 2>&1; then
@@ -1016,6 +1025,32 @@ check_rig_tooling_selftest() {
     [ -z "$failures" ] || bad "rig tooling self-test (invalid argv) -- $failures"
 }
 check_rig_tooling_selftest
+
+# --- credential guard (issue N1) ---------------------------------------------
+# The vendor account flow (code:790) writes account material -- PIN and security
+# answer -- into the rotating camera log on every session. Those logs get captured
+# into docs/evidence/ and this repository is public, so eight credential-bearing
+# files reached origin/main. scripts/redact-evidence-credentials.py cleaned them at
+# HEAD and scripts/check-no-cookies.py was written to catch the next one, but
+# neither was wired to anything: the guard existed and ran only when a human or
+# agent remembered to invoke it. That is precisely the failure mode this gate
+# exists to remove (see #308 item 1), and a leak-detection check that nobody runs
+# is worse than none, because it advertises protection that does not exist.
+#
+# The guard scans the git index rather than the working tree, so gitignored device
+# logs are correctly out of scope -- they never reach the repository. It needs no
+# rig, no docker and no built package, so it runs unconditionally here.
+check_credentials_not_in_tracked_files() {
+    local script="$ROOT/scripts/check-no-cookies.py" out
+    [ -f "$script" ] || { skp "credential guard (scripts/check-no-cookies.py absent)"; return 0; }
+    if out="$(python3 "$script" 2>&1)"; then
+        ok "credential guard ($(printf '%s' "$out" | tail -1))"
+    else
+        bad "credential guard (tracked files contain credential material) -- $(printf '%s\n' "$out" | head -1)"
+        printf '%s\n' "$out" | sed 's/^/    /' >&2
+    fi
+}
+check_credentials_not_in_tracked_files
 
 # --- libgphoto2 source contracts, run against the exact tree that built this candidate
 # .75 (libgphoto2 e7d0cf1dd) made every timed capture spin forever waiting for a file
