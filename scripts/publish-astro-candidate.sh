@@ -55,6 +55,19 @@ ACTUAL_SHA="$(sha256sum "$BUILD/FwPkt.zip" | awk '{print $1}')"
 ACTUAL_MD5="$(md5sum "$BUILD/FwPkt.zip" | awk '{print $1}')"
 [ "$ACTUAL_SHA" = "$ZIP_SHA" ] || die "FwPkt SHA-256 mismatch"
 [ "$ACTUAL_MD5" = "$ZIP_MD5" ] || die "FwPkt MD5 mismatch"
+
+# The appfs digest lives inside the packet, not in the candidate manifest, so it
+# has to be read out of FwPkt.zip. It belongs in the published README because it
+# is the value release-fwpkt.sh checks on the device before staging: without it a
+# reader cannot tell a truncated download from a good one, and #288 showed a bad
+# appfs produces a confident wrong sky position rather than an error. Derived from
+# the bytes being published, never copied from a previous README -- the template
+# had no row for it, so every re-publish silently deleted it.
+APPFS_MD5="$(unzip -p "$BUILD/FwPkt.zip" FwPkt/firmwareInfo 2>/dev/null \
+  | tr ';' '\n' | sed -n 's/^appfs MD5:\([0-9a-f]\{32\}\)$/\1/p' | head -1 || true)"
+APPFS_ROW=""
+[ -n "$APPFS_MD5" ] && APPFS_ROW="| appfs MD5 | \`$APPFS_MD5\` |"$'\n'
+BUNDLE_MD5="$(md5sum "$BUILD/astro-bundle.tar.gz" | awk '{print $1}')"
 DEST="firmware-packets/$DISPLAY_FWVER--$ID"
 
 if [ -z "$PR_CHECKOUT" ]; then
@@ -88,6 +101,20 @@ if [ -e "$PR_CHECKOUT/$DEST" ]; then
 else
   mkdir -p "$PR_CHECKOUT/$DEST"
   cp "$BUILD/FwPkt.zip" "$PR_CHECKOUT/$DEST/"
+fi
+
+# astro-bundle.tar.gz used to be copied inside the else branch above, so a
+# re-publish of an existing candidate silently left it out: the guard meant to
+# protect published bytes also skipped publishing them. 6.0.0.54.117 and .118
+# both shipped without it while .115 and .116 carried it, and nothing complained
+# -- verify-published-astro-candidate.py reports an absent tarball as
+# NOT_APPLICABLE rather than FAIL, so the gate could not see the gap either.
+# Publishing it here on a re-run closes that gap; the refuse-to-replace rule is
+# the same one every other published archive obeys.
+if [ "$EXISTING" = 1 ] && [ -f "$PR_CHECKOUT/$DEST/astro-bundle.tar.gz" ]; then
+  cmp -s "$BUILD/astro-bundle.tar.gz" "$PR_CHECKOUT/$DEST/astro-bundle.tar.gz" \
+    || die "refusing to replace published astro-bundle.tar.gz bytes for existing candidate: $DEST"
+else
   cp "$BUILD/astro-bundle.tar.gz" "$PR_CHECKOUT/$DEST/"
 fi
 
@@ -362,6 +389,7 @@ proves the firmware, not that the device can solve anything.
 | display firmware version | $DISPLAY_FWVER |
 | FwPkt SHA-256 | $ACTUAL_SHA |
 | FwPkt MD5 | $ACTUAL_MD5 |
+${APPFS_ROW}| astro-bundle.tar.gz MD5 | \`$BUNDLE_MD5\` |
 $SD_ROWS| patcher commit | $PATCHER_SHA |
 | libgphoto2 commit | $LIBG_SHA |
 | status | $STATUS |

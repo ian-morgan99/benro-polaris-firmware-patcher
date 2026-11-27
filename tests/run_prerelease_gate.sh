@@ -339,6 +339,12 @@ PY_TESTS=(
     tests/test_camera_death_watch_detects_pentax.py
     tests/test_manifest_covers_usb_supervisor.py
     tests/test_skills_reference_real_tooling.py
+    # polaris-evidence-discipline tells agents to run
+    # scripts/find-authoritative-source.py before claiming a defect is not ours.
+    # If that script silently returns nothing the guard reads as confirmation the
+    # defect is upstream -- the exact wrong conclusion #359 got. Pinned here so the
+    # guard cannot stop working without failing the gate.
+    tests/test_authoritative_source_lookup.py
     tests/test_install_astro_boot_hook_failclosed.py
     tests/test_autonomous_install.py
     tests/test_assert_orphan_wrote.py
@@ -358,6 +364,11 @@ PY_TESTS=(
     tests/test_wifi_licence_on_every_build_path.py
     tests/test_apsta_down_stops_station.py
     tests/test_verify_published_candidate.py
+    # publish-astro-candidate.sh dropped astro-bundle.tar.gz and the README appfs
+    # row when re-publishing an existing candidate. verify-published-astro-candidate.py
+    # reports an absent tarball as NOT_APPLICABLE, so the check above cannot see that
+    # gap -- 6.0.0.54.117 and .118 shipped incomplete and nothing failed.
+    tests/test_publish_republish_completeness.py
     tests/test_setup_wifi_psk_not_in_argv.py
     # Added alongside scripts/release/install-astro-kit.sh and
     # docs/RELEASE-ENTRYPOINTS.md. Registered here deliberately: test_astro_regression.py
