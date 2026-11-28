@@ -158,6 +158,35 @@ events with wall-clock `sleep`s against poll counts — the same coupling this f
 fixes at lines 259 and 314 of that script. The supervisor behaved correctly (one extra restart on a
 genuinely stable identity). Left unfixed deliberately: rewriting that timing without reproducing the
 failure would be guessing, and the honest state is "known flake, documented, not yet fixed".
+
+**2026-11-28 — three races removed from that suite; the recorded flake is still unfixed.** Three tests
+were still coupling wall-clock `sleep` to poll counts and have been converted to wait on the supervisor's
+own `supervisor ready` marker, the pattern this file already documents at lines 259/314:
+
+- the change test (`sleep 0.15` before mutating devnum) — if the sleep expired before the baseline was
+  taken, the change folded into the baseline and no restart fired;
+- the retry test (same coupling, `sleep 0.15`);
+- the #121 startup-grace flap test — its subshell did `sleep 0.05` then mutated, racing startup in both
+  directions: too early and the flap became the baseline (test passes without exercising absorption), too
+  late and it landed after the window and restarted pgphoto. It now waits for the baseline to be
+  announced with devnum 3 in it, mutates, and additionally asserts `startup grace: absorbing identity
+  change` actually appeared, so it cannot silently degrade into "no change was seen". Its `MAX_POLLS`
+  went 3 -> 8 because the supervisor exits from inside the grace branch once `polls >= MAX_POLLS`, which
+  raced the mutation; `STARTUP_GRACE_POLLS` is untouched, so the window is still the default 3 polls.
+
+Verified: suite passes standalone and 5/5 under 24 CPU spinners (load average ~46 on 32 cores); full
+prerelease gate GREEN, 20 passed / 0 failed / 2 skipped; registry hash check still passes (23 rows).
+
+**This does not fix the recorded `test 4 = 3`.** That assertion is in the churn test at line ~447
+(`grep -c restart` must equal 3), whose driver is still a chain of `sleep 1.2` / `sleep 0.8` against
+poll-count thresholds — untouched, because I could not reproduce the failure. Under the same 24-spinner
+load the **pre-fix** code passed 6/6, so my load harness does not trigger it and any rewrite would be
+the guessing this section explicitly declined to do. The mechanism is still unestablished: slower polls
+under load change how many polls each `sleep` spans, which can move the identity-6 hold across the
+`REBIND_STABLE_POLLS` boundary in either direction, but I have not demonstrated which. Closing it needs
+either a reproduction or a poll-driven driver, and the supervisor emits no per-poll line carrying the
+poll number for ordinary polls — only `camera_returned`/`camera_absent` do — so a poll-driven driver
+would need a new marker in the supervisor itself.
 ## 2026-11-26 (later) — trace tooling added; `state:5` correlation refuted by my own count
 
 `scripts/k1ii-capture-trace.py` added, per operator request for scripts and Mlog traces. It records

@@ -166,7 +166,17 @@ OPENPOLARIS_RESTART_GPHOTO=$TMP/restart OPENPOLARIS_USB_POLL_SECS=0.1 \
 OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 \
 OPENPOLARIS_USB_MAX_POLLS=8 sh "$SUPERVISOR" > "$TMP/change.out" &
 pid=$!
-sleep 0.15
+# Wait for the supervisor to announce its baseline rather than sleeping a guessed
+# duration. `sleep 0.15` was unsound in the same way as the #121 post-grace test:
+# under load the supervisor may still be starting up when it expires, so the devnum
+# change is folded into the baseline instead of being detected, and no restart ever
+# fires -- which is how this test failed intermittently (test 0 = 1). "supervisor
+# ready" is emitted before the first poll sleeps, so waiting for it guarantees the
+# baseline exists and the mutation below is seen as a change.
+wait_for_log "$TMP/change.out" 'supervisor ready' || {
+    echo "FAIL: supervisor never announced its baseline (change test)"
+    cat "$TMP/change.out"; exit 1
+}
 printf '4\n' > "$TMP/sys/1-2/devnum"
 wait "$pid"
 test "$(wc -l < "$RESTART_LOG")" -eq 1
@@ -198,7 +208,13 @@ OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 OPENPOLARIS_USB_STABLE_POLLS=2 \
 OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=2 OPENPOLARIS_USB_RESTART_RETRY_POLLS=3 \
 OPENPOLARIS_USB_MAX_POLLS=18 sh "$SUPERVISOR" > "$TMP/retry.out" 2>&1 &
 pid=$!
-sleep 0.15
+# Same coupling as the change test: the devnum mutation must land after the
+# baseline is taken, or the supervisor never sees a change and the retry path is
+# never exercised -- the assertion below would then be checking nothing.
+wait_for_log "$TMP/retry.out" 'supervisor ready' || {
+    echo "FAIL: supervisor never announced its baseline (retry test)"
+    cat "$TMP/retry.out"; exit 1
+}
 printf '4\n' > "$TMP/sys/1-1/devnum"
 wait "$pid"
 test "$(cat "$RETRY_LOG")" = 2
@@ -238,20 +254,42 @@ test "$(cat "$TMP/run/openpolaris-camera-usb-supervisor.lock/pid")" = "4343"
 rm -rf "$TMP/sys" "$TMP/run" "$RESTART_LOG"
 mkdir -p "$TMP/sys" "$TMP/run"
 make_usb 1-1 25fb 0183 1 3   # camera already present at supervisor start
-# Polls 1-3 (grace window, default 3): the device re-enumerates to a new
-# devnum on poll 2 — a transient startup flap that must NOT restart pgphoto.
-(
-    sleep 0.05
-    remove_usb 1-1
-    make_usb 1-1 25fb 0183 1 7   # same body, new device number (re-enumeration)
-) &
-FLAP_PID=$!
+# Polls 1-3 (grace window, default 3): the device re-enumerates to a new devnum
+# while the window is open — a transient startup flap that must NOT restart pgphoto.
+#
+# This was originally driven by a subshell doing `sleep 0.05` before mutating,
+# racing the supervisor's own startup. That is unsound in both directions: if the
+# flap lands before the baseline is taken it becomes the baseline (the test passes
+# without exercising absorption at all), and under load a poll can take longer than
+# POLL_SECS so the flap lands after the window has closed, where it is treated as a
+# stable identity change and DOES restart -- failing `test ! -e "$RESTART_LOG"`. It
+# now waits for the baseline to be announced with devnum 3 in it, then mutates, so
+# the change provably arrives during the window rather than by luck.
 OPENPOLARIS_RUN_DIR=$TMP/run OPENPOLARIS_USB_SYSFS=$TMP/sys \
 OPENPOLARIS_PROC_ROOT=$TMP/proc \
 OPENPOLARIS_RESTART_GPHOTO=$TMP/restart OPENPOLARIS_USB_POLL_SECS=0.05 \
-OPENPOLARIS_USB_MAX_POLLS=3 sh "$SUPERVISOR" > "$TMP/grace.out"
-wait "$FLAP_PID" 2>/dev/null || true
+OPENPOLARIS_USB_MAX_POLLS=8 sh "$SUPERVISOR" > "$TMP/grace.out" &
+grace_pid=$!
+# MAX_POLLS is 8 rather than 3 because the supervisor exits from inside the grace
+# branch once polls >= MAX_POLLS; with 3 it can exit before this test's mutation
+# lands, which reintroduces exactly the timing race being removed. The window itself
+# is still the default 3 polls -- STARTUP_GRACE_POLLS is untouched, so the flap is
+# still required to be absorbed by the grace window and not by some other path.
+wait_for_log "$TMP/grace.out" 'supervisor ready; identity=1-1|25fb:0183|1:3' || {
+    kill "$grace_pid" 2>/dev/null || true; wait "$grace_pid" 2>/dev/null || true
+    echo "FAIL: supervisor did not baseline on devnum 3 before the flap (grace test)"
+    cat "$TMP/grace.out"; exit 1
+}
+remove_usb 1-1
+make_usb 1-1 25fb 0183 1 7   # same body, new device number (re-enumeration)
+wait "$grace_pid" 2>/dev/null || true
 test ! -e "$RESTART_LOG"   # no restart during the startup grace window
+# Absorption must actually have happened; otherwise this test proved nothing about
+# the grace window and silently degraded into "no camera change was seen".
+grep -q 'startup grace: absorbing identity change' "$TMP/grace.out" || {
+    echo "FAIL: flap was not absorbed by the startup grace window (grace test)"
+    cat "$TMP/grace.out"; exit 1
+}
 
 # After the grace window, a stable identity change still causes exactly one
 # restart (the normal #57 behaviour is preserved).
