@@ -57,16 +57,51 @@ Proven:
   an empty folder with `DIRECTORY_NOT_FOUND` (`gphoto2-camera.c:1717`) *before* the filesystem call, so
   the folder string I passed was non-empty and the lookup was actually reached.
 
-Inferred, **not measured**: that the companion's ledger entry is missing at read time. I have no debug
-log from my own test process, so I never observed whether `pentax_capture_publication_add` ran for the
-companion there, nor whether a `Serving retained Pentax capture publication` line was emitted for it.
-The plausible mechanisms — `pentax_capture_publications_clear` at `library.c:7210` (runs per capture in
-`camera_pentax_capture_internal`), `_remove`, or the generation bump — are **untested**, and one of them
-may not be involved at all.
+## Third revision: the "companion-specific" conclusion is also wrong
 
-Closing this needs a debug log from inside a process that both captures and then fetches, i.e. one more
-shutter on the user's camera. I stopped rather than fire it unprompted. Do not plan a fix from this
-document alone.
+The instrumented run (one further capture, `K1II8842`, in-process debug callback) contradicts the claim
+above that the companion fails while the primary succeeds. In that run:
+
+```
+retains //K1II8842.DNG in slot 0        <- companion IS in the ledger
+published extra capture file //K1II8842.DNG (44426528 bytes)
+retains //K1II8842.JPG in slot 1        <- primary IS in the ledger
+extra API: No error count=1             <- companion named
+primary read -> I/O in progress         <- PRIMARY ALSO FAILS
+companion //K1II8842.DNG read -> I/O in progress
+```
+
+No `Serving retained Pentax capture publication` line was emitted for **either** file, despite both being
+in the ledger in generation 1. So the earlier contrast — "primary downloads cleanly, companion does not" —
+was a single observation from one run (`dl_test3`, where the primary did download and save), and it did not
+reproduce. `GP_ERROR_CAMERA_BUSY` on post-capture reads is **intermittent and affects both outputs**, so it
+is not evidence of a companion-specific defect, and "the ledger entry is missing at read time" is now
+withdrawn entirely: the lookup evidently does not hit for either file, which is a different question.
+
+Two candidate explanations for the intermittency, both **untested**:
+- The body is still committing to the SD card after exposure and answers `DeviceBusy` to any object
+  fetch, primary or companion alike. This would make the whole read-after-capture window unreliable
+  regardless of #362.
+- `gvfs-gphoto2-volume-monitor` polls the camera concurrently. It holds the session in every run
+  ("session already open from a previous connection"). Not ruled out; not confirmed.
+
+## What is actually solid after five captures
+
+Reproduced on every attempt, and safe to build on:
+1. `gp_camera_get_extra_capture_files` returns `GP_OK` with `count=1`, naming the companion DNG. v121's
+   reporting fix is live code and will fire on a real JPG+RAW capture.
+2. The camlib downloads the companion during `gp_camera_capture()` — 38 MB and 44 MB observed — and
+   records it in both the ledger and `extra_capture_files`. Delivery of those bytes into the process is
+   not the gap.
+3. Folder `/` is a virtual root populated only by the current capture: `list_files("/")` returns 0 with
+   no capture, and pre-existing card files return `File not found`.
+
+Everything about *why* a subsequent read fails is unresolved and currently unreproducible. Do not plan a
+fix from this document. The next step is to characterise the read-after-capture window on both outputs
+with the desktop volume monitor stopped, which needs no code change — but I have not done it, and it may
+need another capture.
+
+Five shutters fired on the user's K-1 II in total (`K1II8838`–`K1II8842`, JPG+DNG each). All left on the card.
 
 ## What this changes for #362
 

@@ -117,11 +117,15 @@ see the `.120` row in `docs/FWPKT-PROVENANCE-CONTRACT.md` and the guard added in
 read: *"the loader cannot download the companion because it cannot know pgphoto's destination
 directory."* Measured on a PC against a real K-1 II on 2026-11-28, that is not the blocker — see
 `docs/evidence/issue-362-companion-delivery-pc-20261128/SUMMARY.md`. The companion's bytes are already
-transferred and held in memory by the camlib during `gp_camera_capture()`, so destination knowledge is
-not what is missing. What is missing is that those retained bytes are not served back:
-`gp_camera_file_get()` returns `GP_ERROR_CAMERA_BUSY` for the companion on every attempt while the
-primary in the same session downloads cleanly. #362 stays open, but the fix may live entirely inside
-libgphoto2 rather than requiring a pgphoto change. That candidate is unproven and unattempted.
+transferred and held in memory by the camlib during `gp_camera_capture()` (38 MB and 44 MB observed),
+so destination knowledge is not what is missing.
+
+What remains unresolved is *why a subsequent read fails*, and it is **not** companion-specific. An
+instrumented run showed both outputs in the retention ledger, yet `gp_camera_file_get()` returned
+`GP_ERROR_CAMERA_BUSY` for the primary as well; an earlier run had the primary download cleanly. The
+failure is intermittent and affects both files, so no mechanism has been established. #362 stays open.
+Do not plan a fix from that evidence file — it lists what is solid (the API returns `count=1` naming the
+companion, so v121's reporting is live code) and what is unreproducible.
 
 **2026-11-28 (later) — v121 is the artifact to deploy, not v120.** The v120 mislabel was corrected by
 re-issuing the same two fixes through `scripts/build-astro-candidate.sh`, which is the only producer
