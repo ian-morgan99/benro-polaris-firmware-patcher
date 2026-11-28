@@ -37,6 +37,48 @@ OUT="$ROOT/out/$ID"
 VERSION_STATE="$ROOT/docs/RELEASE-VERSION-STATE.md"
 
 # ---------------------------------------------------------------------------
+# A firmware-only builder must not publish under an Astro release name.
+#
+# This script produces a firmware-only packet: FwPkt.zip plus the install
+# manifest. It never emits polaris-astro.zip, polaris-wifi.zip or
+# astro-bundle.tar.gz. Those are built by scripts/build-astro-candidate.sh,
+# which is the only producer that satisfies the mandatory complete-release
+# distribution gate in docs/FWPKT-PROVENANCE-CONTRACT.md.
+#
+# docs/RELEASE-VERSION-STATE.md makes astro-vNNN and 6.0.0.54.NNN one release
+# carrying two names. Putting an astro-vNNN id on a firmware-only packet therefore
+# announces an Astro release to anyone reading the folder name, the registry row or
+# /app/FwVer, while shipping none of the kit archives that gate requires.
+#
+# Observed on this path: CANDIDATE_ID=astro-v120-companion-reporting-20261128
+# claimed 6.0.0.54.120 and published six files where the comparable Astro release
+# (6.0.0.54.118) publishes seventeen, with polaris-astro.zip, polaris-wifi.zip,
+# astro-bundle.tar.gz and astrometry-indexes.zip all absent. Nothing complained:
+# the display version on this path comes from --next rather than from the id, so
+# the numbering looked self-consistent, and verify-published-astro-candidate.py
+# reports an absent tarball as NOT_APPLICABLE rather than FAIL.
+#
+# A short vNNN id is deliberately not caught: that family (v86, v9l-74-77, ...) is
+# used for controlled tests and does not assert Astro completeness. Only the
+# astro-vNNN prefix does.
+#
+# Checked here, before the doctor and before anything is built: a ~20-minute ARM
+# build must not be spent on an identity that will be rejected at the very last
+# step, which is exactly what happened to the first v120 attempt -- it died in the
+# change-manifest step after packaging had already finished.
+# Firmware-only candidates belong in the o-main-* family.
+case "$ID" in
+  astro-v[0-9]*)
+    echo "ERROR: candidate id '$ID' claims an Astro release (astro-vNNN -> 6.0.0.54.NNN)," >&2
+    echo "       but this builder produces a firmware-only packet with no kit archives." >&2
+    echo "       Astro releases must be built by scripts/build-astro-candidate.sh, which" >&2
+    echo "       publishes polaris-astro.zip, polaris-wifi.zip and astro-bundle.tar.gz." >&2
+    echo "       Use an o-main-* id for a firmware-only candidate, or run the Astro builder." >&2
+    exit 1
+    ;;
+esac
+
+# ---------------------------------------------------------------------------
 # Prerequisites, checked BEFORE anything is built (issue #306 follow-up).
 #
 # AGENTS.md has always said "Before any candidate build, run scripts/build-doctor.sh",
