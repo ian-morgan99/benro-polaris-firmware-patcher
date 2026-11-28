@@ -94,6 +94,16 @@ USB_PIN_POWER=${OPENPOLARIS_USB_PIN_POWER:-0}
 CAMERA_STATE_PROBE_POLLS=${OPENPOLARIS_USB_STATE_PROBE_POLLS:-30}
 LOCKDIR=$RUN_DIR/openpolaris-camera-usb-supervisor.lock
 PROC_ROOT=${OPENPOLARIS_PROC_ROOT:-/proc}
+# Issue #358 task 5: correlate supervisor events with pgphoto's own log lines.
+# Across every Clog in docs/evidence/v117-k1ii-regression-20261125, 0 of 181
+# [camera-usb] lines carry a timestamp while every sp_Gphoto_Init / port line
+# does -- so "the supervisor restarted, then init failed" cannot be established
+# from the log at all, only inferred from line order in a merged file. pgphoto
+# uses [HH:MM:SS:mmm]; busybox date has no %N, so this is second resolution and
+# ordering within a second still relies on line order. Better than nothing.
+# Never fatal: if date is unavailable the line is still emitted.
+ts() { date '+%H:%M:%S' 2>/dev/null || printf '??:??:??'; }
+
 # A literal newline for pattern matching. fingerprint() emits one line per camera,
 # so a fingerprint containing a newline means more than one device matched and no
 # single bind can be attributed to it. Written this way because a raw newline
@@ -199,7 +209,7 @@ report_camera_state() {
         last_state_identity=$_cur
         state="usb_present=$usb_present camera_init_ok=$init_ok restarted_process=$restarted preview_ready=not-measured"
         if [ "$state" != "$last_reported_state" ]; then
-            echo "[camera-usb] camera-state: $state identity=${_cur:-none} restarts=$restarts (issue #358)"
+            echo "$(ts) [camera-usb] camera-state: $state identity=${_cur:-none} restarts=$restarts (issue #358)"
             last_reported_state=$state
         fi
     fi
@@ -296,23 +306,23 @@ pin_camera_power() {
         [ -w "$d/power/control" ] || continue
         [ "$(cat "$d/power/control" 2>/dev/null)" = "on" ] && continue
         echo on > "$d/power/control" 2>/dev/null \
-            && echo "[camera-usb] usb-power: pinned ${vendor}:${product} power/control=on (autosuspend disabled for this device; issue #347)" >&2
+            && echo "$(ts) [camera-usb] usb-power: pinned ${vendor}:${product} power/control=on (autosuspend disabled for this device; issue #347)" >&2
     done
 }
 
 dump_usb_evidence() {
     lost="$1"
-    echo "[camera-usb] usb-evidence: capturing kernel view after losing ${lost}" >&2
+    echo "$(ts) [camera-usb] usb-evidence: capturing kernel view after losing ${lost}" >&2
     if command -v dmesg >/dev/null 2>&1; then
         # Tail only: the ring buffer is small on this kernel and the interesting
         # lines (disconnect / reset / suspend-resume failures) are the newest.
         dmesg 2>/dev/null | grep -iE "usb|xhci|hub" | tail -25 >&2
     else
-        echo "[camera-usb] usb-evidence: dmesg unavailable" >&2
+        echo "$(ts) [camera-usb] usb-evidence: dmesg unavailable" >&2
     fi
     for p in /sys/module/usbcore/parameters/autosuspend \
              /sys/module/usbcore/parameters/blinkenlights; do
-        [ -r "$p" ] && echo "[camera-usb] usb-evidence: ${p}=$(cat "$p" 2>/dev/null)" >&2
+        [ -r "$p" ] && echo "$(ts) [camera-usb] usb-evidence: ${p}=$(cat "$p" 2>/dev/null)" >&2
     done
     # Runtime power state of the remaining topology. If the camera link was
     # suspended at the moment it died, that is the single most useful fact we
@@ -384,7 +394,7 @@ absent_announced=0
 # cannot restart pgphoto on every poll (which is what drove the dlopen churn).
 COOLDOWN=$STABLE_POLLS
 [ "$RESTART_COOLDOWN_POLLS" -gt "$COOLDOWN" ] && COOLDOWN=$RESTART_COOLDOWN_POLLS
-echo "[camera-usb] supervisor ready; identity=${baseline:-none}"
+echo "$(ts) [camera-usb] supervisor ready; identity=${baseline:-none}"
 
 while :; do
     sleep "$POLL_SECS"
@@ -400,7 +410,7 @@ while :; do
     # healthy, or is sitting pending a restart.
     if [ -n "$current" ]; then
         if [ "$absent_announced" = "1" ]; then
-            echo "[camera-usb] camera_returned: ${current} after $absent_polls absent polls (poll $polls)"
+            echo "$(ts) [camera-usb] camera_returned: ${current} after $absent_polls absent polls (poll $polls)"
         fi
         last_seen_identity=$current
         absent_polls=0
@@ -410,7 +420,7 @@ while :; do
         if [ "$ABSENT_ANNOUNCE_POLLS" -gt 0 ] \
            && [ "$absent_polls" -ge "$ABSENT_ANNOUNCE_POLLS" ] \
            && [ "$absent_announced" = "0" ]; then
-            echo "[camera-usb] camera_absent: ${last_seen_identity} has not re-enumerated for $absent_polls polls (poll $polls); pgphoto has no device to bind and will not recover on its own -- power-cycle or replug the body (issue #347)" >&2
+            echo "$(ts) [camera-usb] camera_absent: ${last_seen_identity} has not re-enumerated for $absent_polls polls (poll $polls); pgphoto has no device to bind and will not recover on its own -- power-cycle or replug the body (issue #347)" >&2
             [ "$ABSENT_EVIDENCE" = "1" ] && dump_usb_evidence "$last_seen_identity"
             absent_announced=1
         fi
@@ -431,7 +441,7 @@ while :; do
     # new baseline so a later genuine change is still detected.
     if [ "$STARTUP_GRACE_POLLS" -gt 0 ] && [ "$polls" -le "$STARTUP_GRACE_POLLS" ]; then
         if [ "$current" != "$baseline" ]; then
-            echo "[camera-usb] startup grace: absorbing identity change ${baseline:-none} -> ${current:-none} (no restart, poll $polls/$STARTUP_GRACE_POLLS)"
+            echo "$(ts) [camera-usb] startup grace: absorbing identity change ${baseline:-none} -> ${current:-none} (no restart, poll $polls/$STARTUP_GRACE_POLLS)"
             baseline=$current
             candidate=$current
             stable=0
@@ -466,7 +476,7 @@ while :; do
             # (qstable is held at the threshold so the next stable window retries)
             # rather than silently accepting a possibly-stale session as healthy.
             if "$RESTART"; then
-                echo "[camera-usb] quarantined identity ${qcandidate:-none} revalidated after $qstable stable polls; bounded rebind succeeded, resuming normal operation (issue #119)"
+                echo "$(ts) [camera-usb] quarantined identity ${qcandidate:-none} revalidated after $qstable stable polls; bounded rebind succeeded, resuming normal operation (issue #119)"
                 baseline=$qcandidate
                 candidate=$baseline
                 stable=0
@@ -476,13 +486,13 @@ while :; do
                 restarts=0
                 retry_after_poll=0
             else
-                echo "[camera-usb] quarantined identity ${qcandidate:-none} stable for $qstable polls but bounded rebind failed; remaining degraded (issue #119)" >&2
+                echo "$(ts) [camera-usb] quarantined identity ${qcandidate:-none} stable for $qstable polls but bounded rebind failed; remaining degraded (issue #119)" >&2
                 # Stay quarantined. Hold qstable at the threshold so the next poll
                 # that keeps the identity stable immediately retries the rebind,
                 # while any identity change resets qstable to 1 and re-arms it.
                 qstable=$REBIND_STABLE_POLLS
                 retry_after_poll=$((polls + RESTART_RETRY_POLLS))
-                echo "[camera-usb] rebind retry deferred until poll $retry_after_poll" >&2
+                echo "$(ts) [camera-usb] rebind retry deferred until poll $retry_after_poll" >&2
             fi
         fi
     else
@@ -522,14 +532,14 @@ while :; do
                 # The operator-visible signal for this state is the #347
                 # camera_absent line above, which fires independently of here.
                 if [ -n "$baseline" ]; then
-                    echo "[camera-usb] body absent; not restarting pgphoto (nothing to bind) -- awaiting reconnection of ${baseline} (issue #358)"
+                    echo "$(ts) [camera-usb] body absent; not restarting pgphoto (nothing to bind) -- awaiting reconnection of ${baseline} (issue #358)"
                 fi
                 baseline=""
                 candidate=""
                 stable=0
                 retry_after_poll=0
             elif [ -z "$baseline" ] && already_bound_k3iii "$candidate"; then
-                echo "[camera-usb] adopting active pgphoto binding: $candidate"
+                echo "$(ts) [camera-usb] adopting active pgphoto binding: $candidate"
                 baseline=$candidate
                 stable=0
                 retry_after_poll=0
@@ -543,18 +553,18 @@ while :; do
                 # above). This keeps a genuinely reconnected camera from being
                 # silently accepted while the existing pgphoto session is still
                 # bound to the old device/session.
-                echo "[camera-usb] restart_budget_exhausted ($MAX_RESTARTS); quarantining identity ${candidate:-none} -- no further restarts until it revalidates (issue #119)" >&2
+                echo "$(ts) [camera-usb] restart_budget_exhausted ($MAX_RESTARTS); quarantining identity ${candidate:-none} -- no further restarts until it revalidates (issue #119)" >&2
                 quarantined=1
                 qcandidate=$candidate
                 qstable=0
             else
-                echo "[camera-usb] stable identity change: ${baseline:-none} -> ${candidate:-none}; restarting pgphoto"
+                echo "$(ts) [camera-usb] stable identity change: ${baseline:-none} -> ${candidate:-none}; restarting pgphoto"
                 if "$RESTART"; then
                     restarts=$((restarts + 1))
                     baseline=$candidate
                     stable=0
                     retry_after_poll=0
-                    echo "[camera-usb] pgphoto restart complete (restart $restarts${MAX_RESTARTS:+/$MAX_RESTARTS})"
+                    echo "$(ts) [camera-usb] pgphoto restart complete (restart $restarts${MAX_RESTARTS:+/$MAX_RESTARTS})"
                 else
                     # A competing watchdog/app restart may hold restart_gphoto's
                     # lock exactly when USB identity changes (observed on device:
@@ -564,7 +574,7 @@ while :; do
                     restarts=$((restarts + 1))
                     stable=$COOLDOWN
                     retry_after_poll=$((polls + RESTART_RETRY_POLLS))
-                    echo "[camera-usb] pgphoto restart failed; identity remains pending; retry deferred until poll $retry_after_poll" >&2
+                    echo "$(ts) [camera-usb] pgphoto restart failed; identity remains pending; retry deferred until poll $retry_after_poll" >&2
                 fi
             fi
         fi

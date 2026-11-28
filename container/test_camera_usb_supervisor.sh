@@ -753,10 +753,23 @@ grep -q 'camera-state: usb_present=1 camera_init_ok=0 restarted_process=0' "$POR
 # wait_for_log() only answers "has this line ever appeared", so reusing it per
 # cycle returns instantly from cycle 1 onward and the test would pass while
 # asserting nothing. These cycles are driven off occurrence counts instead.
+count_matches() {
+    # grep -c exits 1 when nothing matched, so `... || echo 0` emits a second
+    # line and yields "0\n0", which makes [ -ge ] fail with "Illegal number".
+    # Truncate to the first line and never let the pipeline status leak.
+    _n=$(grep -c "$2" "$1" 2>/dev/null | head -1) || _n=""
+    printf '%s\n' "${_n:-0}"
+}
+
 wait_for_count() {
+    # Budget is overridable because the cycle test drives four full
+    # unplug/replug cycles through a real poll loop. At the default 200 x 0.05 s
+    # it failed once under harness load -- a gate check that fails for the wrong
+    # reason is worse than no check, so the cycle test asks for more headroom.
     _f=$1; _pat=$2; _want=$3; _i=0
-    while [ "$_i" -lt 200 ]; do
-        [ "$(grep -c "$_pat" "$_f" 2>/dev/null || echo 0)" -ge "$_want" ] && return 0
+    _max=${4:-200}
+    while [ "$_i" -lt "$_max" ]; do
+        [ "$(count_matches "$_f" "$_pat")" -ge "$_want" ] && return 0
         sleep 0.05; _i=$((_i + 1))
     done
     return 1
@@ -783,13 +796,13 @@ cycle=0
 while [ "$cycle" -lt 4 ]; do
     cycle=$((cycle + 1))
     rm -rf "$TMP/sys/1-2"
-    if ! wait_for_count "$CYCLE_LOG" 'body absent; not restarting pgphoto' "$cycle"; then
+    if ! wait_for_count "$CYCLE_LOG" 'body absent; not restarting pgphoto' "$cycle" 800; then
         kill "$cy_pid" 2>/dev/null || true; wait "$cy_pid" 2>/dev/null || true
         echo "FAIL: cycle $cycle produced no NEW absence notice (#358 task 3)"
         cat "$CYCLE_LOG"; exit 1
     fi
     make_usb 1-2 25fb 0183 1 3
-    if ! wait_for_count "$RESTART_LOG" 'restart' "$cycle"; then
+    if ! wait_for_count "$RESTART_LOG" 'restart' "$cycle" 800; then
         kill "$cy_pid" 2>/dev/null || true; wait "$cy_pid" 2>/dev/null || true
         echo "FAIL: after cycle $cycle expected $cycle restarts, got \
 $(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0) (#358 task 3)"
@@ -798,7 +811,7 @@ $(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0) (#358 task 3)"
 done
 sleep 0.4
 kill "$cy_pid" 2>/dev/null || true; wait "$cy_pid" 2>/dev/null || true
-test "$(grep -c restart "$RESTART_LOG")" -eq 4 || {
+test "$(count_matches "$RESTART_LOG" restart)" -eq 4 || {
     echo "FAIL: 4 unplug/replug cycles did not cost exactly 4 restarts (#358 task 3)"
     cat "$CYCLE_LOG"; exit 1
 }
@@ -807,6 +820,45 @@ if grep -q 'restart_budget_exhausted' "$CYCLE_LOG"; then
 fi
 # Four cycles must have produced four distinct absence notices and four restarts,
 # i.e. one each -- not two per cycle.
-test "$(grep -c 'body absent; not restarting pgphoto' "$CYCLE_LOG")" -eq 4
+test "$(count_matches "$CYCLE_LOG" 'body absent; not restarting pgphoto')" -eq 4
 
 echo 'PASS: camera USB supervisor reports present-but-unopenable as init_ok=0 and costs one restart per unplug/replug cycle (issue #358 task 3)'
+
+# Issue #358 task 5 (partial): supervisor events must be correlatable with
+# pgphoto's own log lines. Across every Clog in
+# docs/evidence/v117-k1ii-regression-20261125, 0 of 181 [camera-usb] lines carry
+# a timestamp while every sp_Gphoto_Init / port line does. "The supervisor
+# restarted and then init failed" therefore cannot be established from the log --
+# only inferred from line order in a merged file, which is how the v104 restarts
+# came to be read as a recovery. Pin that every supervisor line is timestamped.
+rm -rf "$TMP/sys" "$TMP/run" "$TMP/proc" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/run" "$TMP/proc"
+make_usb 1-2 25fb 0183 1 3
+TS_LOG=$TMP/ts.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_PROC_ROOT="$TMP/proc" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 OPENPOLARIS_USB_STABLE_POLLS=1 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=1 OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=2 \
+OPENPOLARIS_USB_MAX_POLLS=0 sh "$SUPERVISOR" >"$TS_LOG" 2>&1 &
+ts_pid=$!
+wait_for_log "$TS_LOG" 'supervisor ready' || {
+    kill "$ts_pid" 2>/dev/null || true; wait "$ts_pid" 2>/dev/null || true
+    echo "FAIL: supervisor produced no output for the timestamp test (#358 task 5)"; exit 1
+}
+rm -rf "$TMP/sys/1-2"
+wait_for_log "$TS_LOG" 'body absent' || {
+    kill "$ts_pid" 2>/dev/null || true; wait "$ts_pid" 2>/dev/null || true
+    echo "FAIL: no absence line for the timestamp test (#358 task 5)"; exit 1
+}
+sleep 0.3
+kill "$ts_pid" 2>/dev/null || true; wait "$ts_pid" 2>/dev/null || true
+total=$(count_matches "$TS_LOG" '\[camera-usb\]')
+[ "$total" -gt 0 ] || { echo "FAIL: no [camera-usb] lines to check (#358 task 5)"; exit 1; }
+untimed=$(grep '\[camera-usb\]' "$TS_LOG" | grep -vcE '^[0-9]{2}:[0-9]{2}:[0-9]{2} ' | head -1) || untimed=0
+test "$untimed" -eq 0 || {
+    echo "FAIL: $untimed of $total [camera-usb] lines are untimestamped (#358 task 5)"
+    cat "$TS_LOG"; exit 1
+}
+
+echo 'PASS: every camera USB supervisor line is timestamped so it can be correlated with pgphoto (issue #358 task 5)'
