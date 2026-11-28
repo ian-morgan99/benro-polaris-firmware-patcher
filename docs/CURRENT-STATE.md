@@ -108,12 +108,20 @@ change and built on the workstation (v120, `5cad2e4c3`). What remains is the par
 done from here: flash it and re-run `scripts/k1ii-capture-trace.py` to confirm what the new
 `extra-capture` lines actually report on a real JPG+RAW capture. No device-side build or hot-swap.
 
-Still open after v120, stated plainly: reporting is not delivery. The loader cannot download the
-companion because it cannot know pgphoto's destination directory, so #362 stays open until either
-pgphoto calls `gp_camera_get_extra_capture_files` itself or a consumer that knows the target path
-is added. v120 also shipped as a firmware-only packet under an astro-vNNN name with no kit archives,
-so it is not installable as an Astro release — see the `.120` row in
-`docs/FWPKT-PROVENANCE-CONTRACT.md` and the guard added in `scripts/build-release-candidate.sh`.
+Still open after v120, stated plainly: reporting is not delivery. v120 also shipped as a firmware-only
+packet under an astro-vNNN name with no kit archives, so it is not installable as an Astro release —
+see the `.120` row in `docs/FWPKT-PROVENANCE-CONTRACT.md` and the guard added in
+`scripts/build-release-candidate.sh`.
+
+**The reason originally recorded here for #362 staying open was wrong, and is corrected below.** It
+read: *"the loader cannot download the companion because it cannot know pgphoto's destination
+directory."* Measured on a PC against a real K-1 II on 2026-11-28, that is not the blocker — see
+`docs/evidence/issue-362-companion-delivery-pc-20261128/SUMMARY.md`. The companion's bytes are already
+transferred and held in memory by the camlib during `gp_camera_capture()`, so destination knowledge is
+not what is missing. What is missing is that those retained bytes are not served back:
+`gp_camera_file_get()` returns `GP_ERROR_CAMERA_BUSY` for the companion on every attempt while the
+primary in the same session downloads cleanly. #362 stays open, but the fix may live entirely inside
+libgphoto2 rather than requiring a pgphoto change. That candidate is unproven and unattempted.
 
 **2026-11-28 (later) — v121 is the artifact to deploy, not v120.** The v120 mislabel was corrected by
 re-issuing the same two fixes through `scripts/build-astro-candidate.sh`, which is the only producer
