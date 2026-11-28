@@ -85,15 +85,35 @@ So a companion the camlib publishes has no consumer anywhere in the firmware sta
 observed symptom exactly: JPG+RAW captures cost the extra camera-side time, deliver one JPEG, and
 nothing downstream reports an error, because nothing ever asks for the second file.
 
+**Corrected 2026-11-28 against v120.** The loader half above is now false as written. Re-measured on
+the bytes v120 actually ships
+(`out/astro-v120-companion-reporting-20261128/stage2-ondisk/ondisk/`):
+
+- `strings libpolaris_stage2.so | grep -c extra_capture` = **4** — the loader now calls
+  `gp_camera_get_extra_capture_files` after a successful still capture and names each companion,
+  or says plainly that the count is unknown when the query fails (#362).
+- `strings pgphoto.stage2ondisk | grep -c extra_capture` = **0** — unchanged. pgphoto still never
+  calls it, so the companion is still not *delivered*.
+
+The bullet pair described the state at the time of writing; it was accurate then and is not a
+transcript of the current tree. Read the counts above as the current ones.
+
 **Unresolved observation (collected during my unattributable manual relaunch, so treat as weak):**
 with `STAGE2_CAPTURE_TRACE=1` set in the process environment, no `[stage2-trace]` lines appeared in
 either log, although the deployed loader contains that string and reads that variable. `[pentax]`
 camlib markers did appear. Cause not determined; do not build on this.
 
-**Next step, within the rules:** implement companion surfacing in the loader as a source change,
-build on the workstation, gate, package as a registered zip, flash, then re-run
-`scripts/k1ii-capture-trace.py` to confirm a second file is delivered. No device-side build or
-hot-swap.
+**Next step, within the rules:** companion surfacing in the loader is now implemented as a source
+change and built on the workstation (v120, `5cad2e4c3`). What remains is the part that cannot be
+done from here: flash it and re-run `scripts/k1ii-capture-trace.py` to confirm what the new
+`extra-capture` lines actually report on a real JPG+RAW capture. No device-side build or hot-swap.
+
+Still open after v120, stated plainly: reporting is not delivery. The loader cannot download the
+companion because it cannot know pgphoto's destination directory, so #362 stays open until either
+pgphoto calls `gp_camera_get_extra_capture_files` itself or a consumer that knows the target path
+is added. v120 also shipped as a firmware-only packet under an astro-vNNN name with no kit archives,
+so it is not installable as an Astro release — see the `.120` row in
+`docs/FWPKT-PROVENANCE-CONTRACT.md` and the guard added in `scripts/build-release-candidate.sh`.
 ## 2026-11-26 (later) — trace tooling added; `state:5` correlation refuted by my own count
 
 `scripts/k1ii-capture-trace.py` added, per operator request for scripts and Mlog traces. It records
