@@ -114,6 +114,38 @@ pgphoto calls `gp_camera_get_extra_capture_files` itself or a consumer that know
 is added. v120 also shipped as a firmware-only packet under an astro-vNNN name with no kit archives,
 so it is not installable as an Astro release — see the `.120` row in
 `docs/FWPKT-PROVENANCE-CONTRACT.md` and the guard added in `scripts/build-release-candidate.sh`.
+
+**2026-11-28 (later) — v121 is the artifact to deploy, not v120.** The v120 mislabel was corrected by
+re-issuing the same two fixes through `scripts/build-astro-candidate.sh`, which is the only producer
+that emits the kit archives:
+
+- **`astro-v121-companion-reporting-complete-kit-20261128` → `6.0.0.54.121`**, patcher
+  `9065600f1c764666ce75193d3a50b4e664700d86`, libgphoto2 unchanged at `089ae66c7`.
+- Published to `firmware-packets/6.0.0.54.121--astro-v121-companion-reporting-complete-kit-20261128/`
+  (fifteen files). **All six mandatory archives confirmed present against the published bytes** via the
+  contents API: `FwPkt.zip`, `polaris-astro.zip`, `polaris-wifi.zip`, `astro-bundle.tar.gz`,
+  `astrometry-indexes.zip`, `polaris-sd-package.zip`. v120 published six files and had none of them.
+- `verify-published-astro-candidate.py`: **ARTIFACTS_INTERNALLY_CONSISTENT (21 checks, 0 fail,
+  0 unknown)**. Pre-release gate **GREEN (29 passed, 0 failed, 1 skipped)**.
+  `CANDIDATE IDENTITY: PASS (deployable)`. `FwVer:6.0.0.54.121;date:2026.11.28;` verified inside the zip.
+- Both fixes re-confirmed in this packet's shipped ARM bytes: loader `extra_capture` count 4 with
+  `STAGE2_EXTRA_CAPTURE_REPORT`, and `[ -n "$bus" ] && [ -n "$dev" ]` at lines 166 and 251 of the
+  published `camera_usb_supervisor.sh`.
+
+**Use `.121` for the flash.** `.120` is not installable as an Astro release and its bytes are immutable,
+so it stays published with that limitation recorded rather than renamed. Nothing has been installed: no
+Polaris was reachable this session (`192.168.0.1` resolved via `enp11s0` to the home cable router — the
+false positive AGENTS.md warns about), no `polaris_*` AP association, and this host holds no SSH
+credential for the head. Arm the 9090 keepalive before the first SSH command.
+
+**Unresolved test flakiness, not a supervisor defect:**
+`container/test_camera_usb_supervisor.sh` failed once during the *first* v121 attempt with `test 4 = 3`
+at the restart-budget assertion, while a concurrent ARM build was saturating the CPU. It passed 29/0 in
+the successful build and 7/7 standalone plus 4/4 under deliberate 4-way concurrency. The suite drives
+events with wall-clock `sleep`s against poll counts — the same coupling this file already documents and
+fixes at lines 259 and 314 of that script. The supervisor behaved correctly (one extra restart on a
+genuinely stable identity). Left unfixed deliberately: rewriting that timing without reproducing the
+failure would be guessing, and the honest state is "known flake, documented, not yet fixed".
 ## 2026-11-26 (later) — trace tooling added; `state:5` correlation refuted by my own count
 
 `scripts/k1ii-capture-trace.py` added, per operator request for scripts and Mlog traces. It records
