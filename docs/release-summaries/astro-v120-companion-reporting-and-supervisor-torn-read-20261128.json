@@ -9,32 +9,45 @@
     {
       "component": "patcher",
       "summary": "camera_usb_supervisor fingerprint() rejects torn sysfs reads: a device that disappears mid-scan yields an identity with an empty bus/dev, which differs from the baseline and was debounced as a stable identity change, restarting pgphoto for a body that was already absent. That is the dlopen plus 64-shim churn issue #358 exists to prevent, triggered by the supervisor's own read of sysfs. On real hardware busnum and devnum vanish during unplug while idVendor and idProduct can still be readable, so this is not harness-only.",
-      "issues": ["#358"]
+      "issues": [
+        "#358"
+      ]
     },
     {
       "component": "patcher",
       "summary": "camera_usb_supervisor reports camera state separately from restart success, timestamps every log line so it can be correlated with other logs, and does not restart pgphoto for an absent body.",
-      "issues": ["#358"]
+      "issues": [
+        "#358"
+      ]
     },
     {
       "component": "patcher",
       "summary": "Stage-2 loader queries gp_camera_get_extra_capture_files after a successful still capture and names every companion the camlib recorded. Detection already worked (companions=1 on dual-format captures) but nothing consumed it: strings gives zero references to extra_capture in pgphoto.stage2ondisk and zero in libpolaris_stage2.so, so a companion was detected, paid for in camera-side capture time, and silently dropped. The capture result is never altered, GP_ERROR_NOT_SUPPORTED stays silent, and STAGE2_EXTRA_CAPTURE_REPORT=0 is the escape hatch. This closes the silence, not the delivery: the loader cannot know pgphoto's destination directory.",
-      "issues": ["#362"]
+      "issues": [
+        "#362"
+      ]
     },
     {
       "component": "patcher",
       "summary": "Release process: never prune astrometry indexes or operator backups, prune kit files a release no longer ships without touching config, and compare source provenance rather than only FwVer before skipping a flash.",
-      "issues": ["#359"]
+      "issues": [
+        "#359"
+      ]
     },
     {
       "component": "tests",
       "summary": "New deterministic coverage: companion reporting across eleven cases (one, two, zero, NOT_SUPPORTED silent, other errors surfaced, escape hatch not calling the driver, failed capture, non-still type, empty-path false success, count above the buffer printed clamped). camera_usb_supervisor suite made deterministic under load by plugging and unplugging sysfs devices atomically and synchronising on supervisor log markers instead of guessed wall-clock sleeps. Verified non-vacuous: both suites fail with their fix removed.",
-      "issues": ["#362", "#358"]
+      "issues": [
+        "#362",
+        "#358"
+      ]
     },
     {
-      "component": "ci",
+      "component": "packaging",
       "summary": "The credential guard is now enforced by the pre-release gate and itself covered by tests, so a leak detector cannot silently stop matching or silently stop running.",
-      "issues": ["N1"]
+      "issues": [
+        "N1"
+      ]
     }
   ],
   "known_limits": [
