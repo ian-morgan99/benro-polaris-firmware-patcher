@@ -50,14 +50,20 @@ int main(void)
     for (int trace = 0; trace < 2; trace++)
     for (int guard = 0; guard < 2; guard++)
     for (int check = 0; check < 2; check++)
-    for (int remap = 0; remap < 2; remap++) {
+    for (int remap = 0; remap < 2; remap++)
+    /* Issue #362: companion reporting is a fifth mode on the same call
+     * boundary. It defaults ON, so it must be enumerated explicitly here or
+     * the "every mode off preserves the exact core target" case below would
+     * silently stop being reachable. */
+    for (int report = 0; report < 2; report++) {
         setenv("STAGE2_CAPTURE_TRACE", trace ? "1" : "0", 1);
         setenv("STAGE2_CAPTURE_GUARD", guard ? "1" : "0", 1);
         setenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK", check ? "1" : "0", 1);
         setenv("STAGE2_CAPTURE_STOREFULL_REMAP", remap ? "1" : "0", 1);
+        setenv("STAGE2_EXTRA_CAPTURE_REPORT", report ? "1" : "0", 1);
         stage2_gp_camera_capture_fn target = (stage2_gp_camera_capture_fn)
             stage2_capture_slot_target("gp_camera_capture", (void *)fake_capture);
-        assert(target == ((trace || guard || check || remap) ?
+        assert(target == ((trace || guard || check || remap || report) ?
                stage2_guarded_gp_camera_capture : fake_capture));
         assert(stage2_capture_slot_target("gp_camera_exit", (void *)fake_capture)
                == (void *)fake_capture);
@@ -112,11 +118,13 @@ int main(void)
         }
     }
     /* Preserve default trace-off/guard-off/check-on selection and unresolved
-     * core behavior, without leaking an in-flight marker. */
+     * core behavior, without leaking an in-flight marker. Companion reporting
+     * is also left at its default (ON), so the wrapper must still be installed. */
     unsetenv("STAGE2_CAPTURE_TRACE");
     unsetenv("STAGE2_CAPTURE_GUARD");
     unsetenv("STAGE2_CAPTURE_EMPTY_PATH_CHECK");
     unsetenv("STAGE2_CAPTURE_STOREFULL_REMAP");
+    unsetenv("STAGE2_EXTRA_CAPTURE_REPORT");
     assert(stage2_capture_slot_target("gp_camera_capture", (void *)fake_capture)
            == (void *)stage2_guarded_gp_camera_capture);
     g_real_gp_camera_capture = NULL;
@@ -136,6 +144,6 @@ int main(void)
         assert(wait(&camera, 3000, &type, &data, &context) == core_result);
         assert(errno == EAGAIN && type == 2 && data == &core_path);
     }
-    puts("PASS: capture composition (16 combinations x 3 shots x 7 scenarios)");
+    puts("PASS: capture composition (32 combinations x 3 shots x 7 scenarios)");
     return 0;
 }

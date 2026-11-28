@@ -732,6 +732,9 @@ static int g_k1ii_preview_prompt;
  * subject to the shutter failure budget; movie/sound/preview-like extensions
  * must remain exact pass-through calls. */
 #define STAGE2_GP_CAPTURE_IMAGE 0
+/* GP_CAPTURE_VIDEO, mirrored so the companion guard's type check is testable
+ * without pulling in libgphoto2 headers. */
+#define STAGE2_GP_CAPTURE_VIDEO 1
 
 /* Issue #128: the preview-settle window (armed only when the PTP session was
  * ALREADY open at init -- camera pre-powered, PC live view active) gates
@@ -2159,6 +2162,98 @@ static int stage2_capture_storefull_remap_enabled(void)
     return !e || strcmp(e, "0") != 0;
 }
 
+/* Issue #362: companion reporting. Default on; STAGE2_EXTRA_CAPTURE_REPORT=0
+ * is the escape hatch, matching every other capture mode in this file. */
+static int stage2_extra_capture_report_enabled(void)
+{
+    const char *e = getenv("STAGE2_EXTRA_CAPTURE_REPORT");
+    return !e || strcmp(e, "0") != 0;
+}
+
+/* gp_camera_get_extra_capture_files(Camera*, CameraFilePath*, int, int*).
+ * Mirrored rather than included: the loader deliberately has no libgphoto2
+ * headers on its include path (see the CameraFilePath comment below). */
+typedef int (*stage2_get_extra_files_fn)(void *camera, void *paths,
+                                         int max_count, int *count);
+static stage2_get_extra_files_fn g_real_get_extra_files = NULL;
+/* Set once a lookup has failed, so an older core without the symbol is not
+ * re-resolved on every single capture. */
+static int g_extra_files_lookup_failed = 0;
+
+#define STAGE2_EXTRA_MAX 8
+/* CameraFilePath: char name[128]; char folder[1024]. */
+#define STAGE2_CAMERA_FILE_PATH_SIZE (128 + 1024)
+
+/* Surface companions that the camlib detected but nobody asked for.
+ *
+ * Why this exists.  On a JPG+RAW capture the ptp2 Pentax driver reads the
+ * output mode immediately before the shutter and records every extra member of
+ * the exposure in params->pentax.extra_capture_count / extra_capture_files,
+ * exposed through gp_camera_get_extra_capture_files().  Detection demonstrably
+ * works: the [pentax] initiate-enter marker shows companions=1 on dual-format
+ * captures across retained logs.  Nothing consumes it.  `strings` against the
+ * deployed binaries gives zero references to extra_capture in pgphoto.stage2ondisk
+ * and zero in libpolaris_stage2.so, so a companion is detected, paid for in
+ * camera-side capture time, and then silently dropped -- which is exactly the
+ * reported symptom "RAW+JPEG shown as RAW", with no error anywhere because
+ * nothing ever asks for the second file.
+ *
+ * pgphoto is closed and cannot be changed here, so this loader queries the
+ * driver itself after a successful still capture and makes the gap visible.
+ * This deliberately does NOT alter the capture result: a failure to report is
+ * never a reason to fail an exposure that actually happened.  It also does not
+ * download anything -- the loader cannot know pgphoto's destination directory,
+ * and writing a companion somewhere the closed caller will not look for it is
+ * worse than not writing it.  Delivery remains open; what closes here is the
+ * silence. */
+static void stage2_report_extra_capture_files(void *camera)
+{
+    char buf[STAGE2_EXTRA_MAX * STAGE2_CAMERA_FILE_PATH_SIZE];
+    int count = -1;
+    int i, rc;
+
+    if (!g_real_get_extra_files && !g_extra_files_lookup_failed) {
+        if (g_stage2_core)
+            g_real_get_extra_files = (stage2_get_extra_files_fn)
+                dlsym(g_stage2_core, "gp_camera_get_extra_capture_files");
+        /* In a process where the constructor never ran (offline tests) the core
+         * handle is NULL, so fall back to the global namespace. */
+        if (!g_real_get_extra_files)
+            g_real_get_extra_files = (stage2_get_extra_files_fn)
+                dlsym(RTLD_DEFAULT, "gp_camera_get_extra_capture_files");
+        if (!g_real_get_extra_files)
+            g_extra_files_lookup_failed = 1;
+    }
+    /* Older cores have no such symbol; there is nothing to ask. */
+    if (!g_real_get_extra_files)
+        return;
+
+    memset(buf, 0, sizeof buf);
+    rc = g_real_get_extra_files(camera, buf, STAGE2_EXTRA_MAX, &count);
+    if (rc != 0) {
+        /* GP_ERROR_NOT_SUPPORTED (-6) is the documented answer for a body or
+         * camlib without dual-format support: normal, not a defect. */
+        if (rc != STAGE2_GP_ERROR_NOT_SUPPORTED)
+            fprintf(stderr, "[stage2] extra-capture-query=error ret=%d -- "
+                            "companion count unknown (issue #362)\n", rc);
+        return;
+    }
+    if (count <= 0)
+        return;   /* single-format capture, nothing expected */
+
+    fprintf(stderr, "[stage2] extra-capture count=%d primary delivered but "
+                    "%d companion(s) of the same exposure were NOT requested by "
+                    "any consumer -- pgphoto never calls "
+                    "gp_camera_get_extra_capture_files (issue #362)\n",
+            count, count);
+    for (i = 0; i < count && i < STAGE2_EXTRA_MAX; i++) {
+        char *p = buf + (i * STAGE2_CAMERA_FILE_PATH_SIZE);
+        fprintf(stderr, "[stage2] extra-capture[%d] folder=%.1024s name=%.128s\n",
+                i, p + 128, p);
+    }
+    fflush(stderr);
+}
+
 static int stage2_guarded_gp_camera_capture(void *camera, int type,
                                            void *path, void *context)
 {
@@ -2227,6 +2322,15 @@ static int stage2_guarded_gp_camera_capture(void *camera, int type,
             return STAGE2_GP_ERROR_CAMERA_ERROR;
         }
     }
+    /* Issue #362: the primary file is what pgphoto asked for and got.  Ask the
+     * driver whether the same exposure had companions it never requested, so a
+     * silently dropped RAW stops being invisible.  Runs after the empty-path
+     * guard so a bogus success is not reported as a partial delivery, and
+     * never changes ret: an exposure that happened must not be failed because
+     * reporting it was impossible. */
+    if (ret == 0 && type == STAGE2_GP_CAPTURE_IMAGE &&
+        stage2_extra_capture_report_enabled())
+        stage2_report_extra_capture_files(camera);
     return ret;
 }
 
@@ -2262,7 +2366,8 @@ static void *stage2_capture_slot_target(const char *name, void *resolved)
          * With every mode off, preserve the exact resolved core target. */
         if (stage2_capture_trace_enabled() || stage2_capture_guard_enabled() ||
             stage2_capture_empty_path_check_enabled() ||
-            stage2_capture_storefull_remap_enabled()) {
+            stage2_capture_storefull_remap_enabled() ||
+            stage2_extra_capture_report_enabled()) {
             g_real_gp_camera_capture = (stage2_gp_camera_capture_fn)resolved;
             return (void *)&stage2_guarded_gp_camera_capture;
         }

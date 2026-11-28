@@ -98,6 +98,11 @@ int main(void)
      * check, so the legacy escape hatch must name it explicitly to get an
      * un-wrapped gp_camera_capture. */
     setenv("STAGE2_CAPTURE_STOREFULL_REMAP", "0", 1);
+    /* Issue #362: companion reporting is ON by default for the same reason, so
+     * the escape hatch must name it too -- otherwise "all policy disabled" would
+     * silently stop being reachable and this regression would stop testing what
+     * its name claims. */
+    setenv("STAGE2_EXTRA_CAPTURE_REPORT", "0", 1);
     assert(stage2_capture_slot_target("gp_camera_capture",
                                       &direct_capture_target) ==
            &direct_capture_target);
