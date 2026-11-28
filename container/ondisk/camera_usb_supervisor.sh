@@ -154,6 +154,16 @@ fingerprint() {
         fi
         bus=$(cat "$d/busnum" 2>/dev/null)
         dev=$(cat "$d/devnum" 2>/dev/null)
+        # The four attributes are read separately, so a device that disappears
+        # mid-scan can yield an identity with an empty bus/dev -- "1-2|25fb:0183|:".
+        # That is not a camera, it is a torn read, and treating it as an identity is
+        # actively harmful: it differs from the baseline, so the supervisor debounces
+        # it as a stable identity change and restarts pgphoto for a device that was
+        # already gone. Observed under load as an extra restart per unplug/replug
+        # cycle, which is precisely the churn this issue is about. A device whose
+        # address cannot be read completely is not present; skip it and let the next
+        # poll see it properly absent or properly present.
+        [ -n "$bus" ] && [ -n "$dev" ] || continue
         printf '%s|%s:%s|%s:%s\n' "${d##*/}" "$vendor" "$product" "$bus" "$dev"
     done | sort
 }
@@ -388,6 +398,7 @@ retry_after_poll=0
 last_seen_identity=$baseline
 absent_polls=0
 absent_announced=0
+grace_announced=0
 # Issue #119: minimum polls between restarts. The stable-change detector already
 # requires STABLE_POLLS consecutive identical polls; requiring the larger of that
 # and RESTART_COOLDOWN_POLLS spaces out restarts so a fast re-enumeration flap
@@ -448,6 +459,18 @@ while :; do
         fi
         [ "$MAX_POLLS" -gt 0 ] && [ "$polls" -ge "$MAX_POLLS" ] && exit 0
         continue
+    fi
+
+    # Emitted once, on the first poll after the grace window closes. The window is
+    # measured in polls, not wall-clock time, so a test that wants to mutate the
+    # device "after startup" cannot reliably sleep for it: under load each poll
+    # takes longer than POLL_SECS and a fixed sleep lands inside the window, where
+    # the change is absorbed into the baseline and no restart ever fires. That is
+    # how the #121 post-grace test failed intermittently in CI (test 0 = 1). This
+    # marker gives that test an event to wait for instead of a guessed duration.
+    if [ "$STARTUP_GRACE_POLLS" -gt 0 ] && [ "$grace_announced" != "1" ]; then
+        grace_announced=1
+        echo "$(ts) [camera-usb] startup grace: window closed after $STARTUP_GRACE_POLLS polls; resuming restart logic (baseline=${baseline:-none})"
     fi
 
     if [ "$quarantined" = "1" ]; then
