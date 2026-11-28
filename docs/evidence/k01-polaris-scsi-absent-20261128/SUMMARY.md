@@ -106,29 +106,65 @@ correct and it fixed the PC case — but on the Polaris the USB-SCSI backend has
 port to bind to, so removing the shadowing row changes nothing. The PC result
 does not transfer: the PC has `/dev/sg2`, the Polaris has no sg layer at all.
 
-## Feasible fix direction (verified feasible, not yet implemented)
+## Working SCSI transport exists — via `/dev/sda` with `O_NONBLOCK`
 
-`bsg` **is** present and exposes the same SCSI device:
+An earlier draft of this file claimed `bsg` was the way forward. **That was
+wrong and is retracted.** A cross-compiled probe (`sgio_probe.c`, in this
+directory) was run on the rig against every candidate node:
+
+| Node | Open flags | Result |
+|---|---|---|
+| `/dev/bsg/0:0:0:0` | `O_RDWR` | `ioctl SG_IO: Invalid argument` (EINVAL) |
+| `/dev/bsg/0:0:0:0` | `O_RDONLY` | `ioctl SG_IO: Invalid argument` |
+| `/dev/sda` | `O_RDWR` | `open: No medium found` (ENOMEDIUM) |
+| `/dev/sda` | `O_RDONLY` | `open: No medium found` |
+| `/dev/sda` | **`O_RDWR \| O_NONBLOCK`** | **`INQUIRY OK vendor=[PENTAX] model=[DSC_K-01] rev=[1.05]`** |
 
 ```
-/dev/bsg/0:0:0:0            crw-rw---- root root 252, 0
-/sys/class/scsi_device/     0:0:0:0
+$ /tmp/probe_rw /dev/sda          # O_RDWR | O_NONBLOCK
+path=/dev/sda status=0 masked=0 resid=60 host=0 driver=0
+INQUIRY OK vendor=[PENTAX] model=[DSC_K-01] rev=[1.05]
+VERDICT=SGIO_OK
 ```
 
-`gp_port_usbscsi_open()` opens whatever path it is given and issues `SG_IO`,
-which `bsg` supports — so the open/io half already works unchanged. Only
-enumeration needs adapting, and the required `modalias` is reachable at the same
-relative depth from `scsi_device`:
+So `bsg` on this 4.9.37 kernel does **not** implement `SG_IO`, and the block node
+refuses to open without `O_NONBLOCK` because the K-01 reports no medium. The
+combination that works is exactly what `gp_port_usbscsi_open()` already does
+(`open(path, O_RDWR)` then `ioctl(fd, SG_IO, …)`) **plus `O_NONBLOCK`**.
 
-```
-/sys/class/scsi_device/0:0:0:0/device -> …/usb1/1-1/1-1.2/1-1.2:1.0/host0/target0:0:0/0:0:0:0
-/sys/bus/usb/devices/1-1.2:1.0/modalias = usb:v25FBp0130d0105dc00dsc00dp00ic08isc06ip50in00
-```
+Probe ABI was checked, not assumed: `sizeof(sg_io_hdr_t) = 64` on the target
+(32-bit ARM EABI5), matching the canonical layout, so the EINVAL on `bsg` is a
+kernel limitation rather than a malformed request.
 
-`usbscsi.c`'s older-kernel fallback (`device/../../../modalias`) lands exactly on
-that interface directory, so a `scsi_generic` → `scsi_device` enumeration
-fallback plus `/dev/bsg/<host:target:lun>` as the port path is a small, local
-change. It has **not** been implemented or tested; treat it as a candidate.
+### What a fix needs (now grounded in measurement)
+
+Two changes to `libgphoto2_port/usbscsi/linux.c`, both small:
+
+1. **Enumeration fallback.** `gp_port_library_list()` opens
+   `/sys/class/scsi_generic`, which is empty here. Fall back to `/sys/block`
+   when it yields nothing. The USB id is reachable with the *existing*
+   older-kernel walk shape — verified on the rig:
+
+   ```
+   /sys/block/sda/device/../../../modalias
+     = usb:v25FBp0130d0105dc00dsc00dp00ic08isc06ip50in00
+   ```
+
+   which parses cleanly with the current `sscanf(s, "usb:v%4hxp%4hx%c", …)`.
+2. **`O_NONBLOCK` on open.** Without it the port cannot be opened at all,
+   because a control-only SCSI body reports no medium.
+
+The port path handed to libgphoto2 would then be `/dev/sda` rather than
+`/dev/sgN`. `gp_camera_init` has not been exercised against it yet — this proves
+the transport is reachable, not that the pentax camlib drives the body through
+it. That is the first thing a fix must test.
+
+Rebuild and run the probe:
+
+```sh
+arm-linux-gnueabi-gcc -static -o sgio_probe sgio_probe.c
+scp -O sgio_probe root@192.168.0.1:/tmp/ && ssh root@192.168.0.1 '/tmp/sgio_probe /dev/sda'
+```
 
 ## What this changes for #378/#379/#380
 

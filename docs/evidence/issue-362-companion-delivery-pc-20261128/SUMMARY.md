@@ -42,11 +42,31 @@ object fetch, which the K-1 II answers with `PTP_RC_DeviceBusy` → `GP_ERROR_CA
 (`library.c:95`). Note the human-readable string for that code is **"I/O in progress"**
 (`gphoto2-result.c:42`), which reads as transient but is not here — it was stable across every retry.
 
-The lookup is an exact `strcmp` on both folder and name (`pentax-publication.c:52-60`). Both the
-primary and the companion are reported with folder `/`, so a plain path mismatch does not obviously
-explain the miss; the ledger entry for the companion appears not to survive to read time. Pinning down
-which of `pentax_capture_publications_clear` / `_remove` / the generation bump at `library.c:7211`
-drops it is the next step, and I have **not** done that. Do not plan a fix from this document alone.
+The lookup is an exact `strcmp` on both folder and name (`pentax-publication.c:52-60`).
+
+**What is proven vs. inferred, stated separately, because the distinction matters.**
+
+Proven:
+- Both outputs are inserted into the ledger in the same generation. The CLI capture's debug log shows
+  `retains //K1II8838.DNG in slot 0` and `retains //K1II8838.JPG in slot 1`, both generation 1.
+- Folder `/` is a **virtual root** populated only by the current capture: with no capture performed,
+  `gp_camera_folder_list_files(cam, "/")` returns `count=0`, and fetching four pre-existing card files
+  from `/` returns `File not found`. So the ledger is the only route to those bytes.
+- The companion request reaches the PTP layer rather than being rejected early: it returns
+  `GP_ERROR_CAMERA_BUSY`, not `DIRECTORY_NOT_FOUND` or `FILE_NOT_FOUND`. `gp_camera_file_get()` rejects
+  an empty folder with `DIRECTORY_NOT_FOUND` (`gphoto2-camera.c:1717`) *before* the filesystem call, so
+  the folder string I passed was non-empty and the lookup was actually reached.
+
+Inferred, **not measured**: that the companion's ledger entry is missing at read time. I have no debug
+log from my own test process, so I never observed whether `pentax_capture_publication_add` ran for the
+companion there, nor whether a `Serving retained Pentax capture publication` line was emitted for it.
+The plausible mechanisms — `pentax_capture_publications_clear` at `library.c:7210` (runs per capture in
+`camera_pentax_capture_internal`), `_remove`, or the generation bump — are **untested**, and one of them
+may not be involved at all.
+
+Closing this needs a debug log from inside a process that both captures and then fetches, i.e. one more
+shutter on the user's camera. I stopped rather than fire it unprompted. Do not plan a fix from this
+document alone.
 
 ## What this changes for #362
 
