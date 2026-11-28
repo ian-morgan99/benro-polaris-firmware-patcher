@@ -179,14 +179,35 @@ prerelease gate GREEN, 20 passed / 0 failed / 2 skipped; registry hash check sti
 
 **This does not fix the recorded `test 4 = 3`.** That assertion is in the churn test at line ~447
 (`grep -c restart` must equal 3), whose driver is still a chain of `sleep 1.2` / `sleep 0.8` against
-poll-count thresholds — untouched, because I could not reproduce the failure. Under the same 24-spinner
-load the **pre-fix** code passed 6/6, so my load harness does not trigger it and any rewrite would be
-the guessing this section explicitly declined to do. The mechanism is still unestablished: slower polls
-under load change how many polls each `sleep` spans, which can move the identity-6 hold across the
-`REBIND_STABLE_POLLS` boundary in either direction, but I have not demonstrated which. Closing it needs
-either a reproduction or a poll-driven driver, and the supervisor emits no per-poll line carrying the
-poll number for ordinary polls — only `camera_returned`/`camera_absent` do — so a poll-driven driver
-would need a new marker in the supervisor itself.
+poll-count thresholds — untouched, because I could not reproduce the failure. Closing it needs either a
+reproduction or a poll-driven driver, and the supervisor emits no per-poll line carrying the poll number
+for ordinary polls — only `camera_returned`/`camera_absent` do — so a poll-driven driver would need a new
+marker in the supervisor itself.
+
+**Three mechanisms tested on 2026-11-28 and ruled out here**, so the next attempt should not repeat them:
+
+1. *CPU pressure changes how many polls each `sleep` spans.* Extracted the churn scenario verbatim into
+   an isolated harness (`/tmp/churn_repro.sh`, same env, same driver timings, same supervisor) and ran it
+   12 times under 24 CPU spinners at load average ~57 on a 32-core host: **12/12 gave `count=3`**, with
+   the rebind and budget-exhausted markers present every time. The whole suite also passed 5/5 under that
+   load, and the **pre-fix** code passed 6/6 under it — so my harness does not trigger the failure and any
+   rewrite of that timing would be guessing, which is what this note has always declined to do.
+2. *The driver's `mktemp`/`mv` are I/O-bound, and a concurrent ARM build is I/O as well as CPU pressure.*
+   Added 8 looping `dd` writers on top of 16 spinners (load average ~68): **10/10 gave `count=3`**.
+3. *A leaked earlier supervisor kept writing to the shared `$RESTART_LOG`.* The suite does launch several
+   supervisors with `MAX_POLLS=0`, which never exit on their own, and they share one restart log — a real
+   hazard in principle. Only two of them run **before** the churn test (the post-grace test at ~315 and the
+   grace-reconnect test at ~366), and both are killed on their success *and* every failure path, so neither
+   can be alive when the churn assertion runs. Instrumenting the churn assertion confirmed it: count was 3
+   with two live processes, which is the suite itself plus the churn supervisor. Note for future
+   instrumentation: `pgrep -fc camera_usb_supervisor.sh` also matches the *test script*, because its name
+   contains that string — subtract one, or the reading looks like a leak when there is none. Supervisors
+   launched after the churn test (~596 onward) were not audited; they cannot affect this assertion, but the
+   shared-log pattern is worth a look if a later count assertion ever flakes.
+
+The failure mode is an **extra** restart (4 where 3 was expected), not a missing one, and none of the
+above produced one on this host. The CI runner that failed had a concurrent ARM build, which this host
+cannot faithfully imitate. State remains: known flake, documented, mechanism unestablished, not fixed.
 ## 2026-11-26 (later) — trace tooling added; `state:5` correlation refuted by my own count
 
 `scripts/k1ii-capture-trace.py` added, per operator request for scripts and Mlog traces. It records
