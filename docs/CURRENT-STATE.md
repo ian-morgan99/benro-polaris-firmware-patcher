@@ -150,18 +150,44 @@ Polaris was reachable this session (`192.168.0.1` resolved via `enp11s0` to the 
 false positive AGENTS.md warns about), no `polaris_*` AP association, and this host holds no SSH
 credential for the head. Arm the 9090 keepalive before the first SSH command.
 
-**Unresolved test flakiness, not a supervisor defect:**
-`container/test_camera_usb_supervisor.sh` failed once during the *first* v121 attempt with `test 4 = 3`
-at the restart-budget assertion, while a concurrent ARM build was saturating the CPU. It passed 29/0 in
-the successful build and 7/7 standalone plus 4/4 under deliberate 4-way concurrency. The suite drives
-events with wall-clock `sleep`s against poll counts — the same coupling this file already documents and
-fixes at lines 259 and 314 of that script. The supervisor behaved correctly (one extra restart on a
-genuinely stable identity). Left unfixed deliberately: rewriting that timing without reproducing the
-failure would be guessing, and the honest state is "known flake, documented, not yet fixed".
+**There is no unresolved supervisor flake. The one recorded here never happened.**
+This section previously said `container/test_camera_usb_supervisor.sh` failed once during the *first* v121
+attempt with `test 4 = 3` at the restart-budget assertion, under a concurrent ARM build. That claim is
+withdrawn: **I can find no evidence that it ever occurred.** It appears only in prose — introduced by
+`bb34c4c` and repeated in `FWPKT-PROVENANCE-CONTRACT.md` — and in no log at all. Verified on 2026-11-28:
 
-**2026-11-28 — three races removed from that suite; the recorded flake is still unfixed.** Three tests
-were still coupling wall-clock `sleep` to poll counts and have been converted to wait on the supervisor's
-own `supervisor ready` marker, the pattern this file already documents at lines 259/314:
+- Downloaded the artifacts of **all 17 failed runs** in this repo's CI history
+  (`gh run download`, `-R ian-morgan99/benro-polaris-firmware-patcher`). Across every
+  `prerelease-camera-usb-supervisor.log` the only assertion failures ever recorded are `test 0 = 1` and a
+  passing `test 4343 = 4343`. The string `test 4 = 3` appears in none of them.
+- Grepped every local `/tmp/*.log` from that period, including the ARM build logs: no supervisor assertion
+  failure of any kind. The real failures in those logs are a `ptp2.so` compile failure (`code=127`) and
+  deterministic-gate mismatches.
+- Note on tooling: `gh` resolves this repo to `blaineam/benro-polaris-firmware-patcher`, which has no runs
+  at all, so an unqualified `gh run list` returns `[]` and looks like CI never ran. Always pass
+  `-R ian-morgan99/benro-polaris-firmware-patcher`.
+
+**What actually failed, and it is already fixed.** The single real supervisor failure in history is run
+`46091054438` (offline-gate, 2026-11-28T01:02Z), which aborted on `test 0 = 1` — the #121 post-grace test
+observing *zero* restarts where one was expected. That is a missing restart, not an extra one, and it is
+the wall-clock-vs-polls bug already documented at line ~264 of that test file, which cites this exact run
+ID. It was fixed by the `startup grace: window closed` marker plus `wait_for_count`, and CI has been green
+on every push since. So the correct state is: **no open flake in this suite.**
+
+**The lesson, recorded because it cost real time.** I spent a session trying to reproduce `test 4 = 3` —
+extracting the churn scenario into an isolated harness, running it under CPU and I/O pressure, instrumenting
+the assertion — and reported three mechanisms "ruled out". All of that was effort spent on a failure that
+never occurred, and the write-up was confident about a phantom. The fix is procedural and obvious in
+hindsight: when a recorded failure has no log attached to it, fetch the CI artifact before investigating it.
+A claim about a specific assertion (`test 4 = 3`) is cheap to verify against a real log, and I did not do
+that until the reproduction attempts had already failed.
+
+**2026-11-28 — three latent races removed from that suite.** Three tests were still coupling wall-clock
+`sleep` to poll counts, the same class of bug this file already documents and fixes at lines 259/314. These
+were found by reading the suite, **not** by reproducing a failure, and they are genuine: each can produce a
+test that passes while asserting nothing, or fails spuriously under load. All three now wait on the
+supervisor's own `supervisor ready` marker, which is emitted before the loop's first `sleep POLL_SECS`, so
+waiting on it proves the baseline exists without guessing a duration:
 
 - the change test (`sleep 0.15` before mutating devnum) — if the sleep expired before the baseline was
   taken, the change folded into the baseline and no restart fired;
@@ -175,35 +201,24 @@ own `supervisor ready` marker, the pattern this file already documents at lines 
   raced the mutation; `STARTUP_GRACE_POLLS` is untouched, so the window is still the default 3 polls.
 
 Verified: suite passes standalone and 5/5 under 24 CPU spinners (load average ~46 on 32 cores); full
-prerelease gate GREEN, 20 passed / 0 failed / 2 skipped; registry hash check still passes (23 rows).
+prerelease gate GREEN, 20 passed / 0 failed / 2 skipped; registry hash check still passes (23 rows);
+pytest unchanged at 1059 passed / 13 skipped; CI green on the push.
 
-**This does not fix the recorded `test 4 = 3`.** That assertion is in the churn test at line ~447
-(`grep -c restart` must equal 3), whose driver is still a chain of `sleep 1.2` / `sleep 0.8` against
-poll-count thresholds — untouched, because I could not reproduce the failure. Closing it needs either a
-reproduction or a poll-driven driver, and the supervisor emits no per-poll line carrying the poll number
-for ordinary polls — only `camera_returned`/`camera_absent` do — so a poll-driven driver would need a new
-marker in the supervisor itself.
+**Two facts worth keeping from the phantom investigation.** The churn test at line ~447 (`grep -c restart`
+must equal 3) is driven by a chain of `sleep 1.2` / `sleep 0.8` against poll-count thresholds, so it has the
+same latent coupling as the three tests above. It is currently passing and there is no recorded failure for
+it, so I have not changed it — but if it ever does fail, that driver is the first suspect, and note that a
+poll-driven driver would need a new marker in the supervisor itself: the supervisor emits no per-poll line
+carrying the poll number for ordinary polls, only `camera_returned`/`camera_absent` do.
 
-**Three mechanisms tested on 2026-11-28 and ruled out here**, so the next attempt should not repeat them:
-
-1. *CPU pressure changes how many polls each `sleep` spans.* Extracted the churn scenario verbatim into
-   an isolated harness (`/tmp/churn_repro.sh`, same env, same driver timings, same supervisor) and ran it
-   12 times under 24 CPU spinners at load average ~57 on a 32-core host: **12/12 gave `count=3`**, with
-   the rebind and budget-exhausted markers present every time. The whole suite also passed 5/5 under that
-   load, and the **pre-fix** code passed 6/6 under it — so my harness does not trigger the failure and any
-   rewrite of that timing would be guessing, which is what this note has always declined to do.
-2. *The driver's `mktemp`/`mv` are I/O-bound, and a concurrent ARM build is I/O as well as CPU pressure.*
-   Added 8 looping `dd` writers on top of 16 spinners (load average ~68): **10/10 gave `count=3`**.
-3. *A leaked earlier supervisor kept writing to the shared `$RESTART_LOG`.* The suite does launch several
-   supervisors with `MAX_POLLS=0`, which never exit on their own, and they share one restart log — a real
-   hazard in principle. Only two of them run **before** the churn test (the post-grace test at ~315 and the
-   grace-reconnect test at ~366), and both are killed on their success *and* every failure path, so neither
-   can be alive when the churn assertion runs. Instrumenting the churn assertion confirmed it: count was 3
-   with two live processes, which is the suite itself plus the churn supervisor. Note for future
-   instrumentation: `pgrep -fc camera_usb_supervisor.sh` also matches the *test script*, because its name
-   contains that string — subtract one, or the reading looks like a leak when there is none. Supervisors
-   launched after the churn test (~596 onward) were not audited; they cannot affect this assertion, but the
-   shared-log pattern is worth a look if a later count assertion ever flakes.
+Second, an instrumentation gotcha: `pgrep -fc camera_usb_supervisor.sh` also matches the **test script**,
+because its name contains that string — subtract one, or a healthy run looks like a leaked supervisor.
+Relatedly, several supervisors in this suite are launched with `MAX_POLLS=0` and therefore never exit on
+their own, sharing one `$RESTART_LOG`. The two that run before the churn assertion (~315 post-grace, ~366
+grace-reconnect) are killed on their success *and* every failure path, so they cannot contaminate it —
+verified by instrumenting the assertion. Supervisors launched after it (~596 onward) were not audited; they
+cannot affect that assertion, but the shared-log pattern is worth checking if a later count assertion ever
+flakes.
 
 The failure mode is an **extra** restart (4 where 3 was expected), not a missing one, and none of the
 above produced one on this host. The CI runner that failed had a concurrent ARM build, which this host
