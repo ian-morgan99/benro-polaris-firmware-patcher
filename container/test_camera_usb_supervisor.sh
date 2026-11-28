@@ -720,3 +720,93 @@ if grep -qE 'preview_ready=(1|yes|true)' "$BOUND_LOG" "$UNBOUND_LOG"; then
 fi
 
 echo 'PASS: camera USB supervisor reports usb_present/camera_init_ok/restarted_process separately and leaves preview_ready unmeasured (issue #358)'
+
+# Issue #358 task 3, remaining scenarios that are testable at this layer.
+#
+# "USB port unavailable" here means the inconsistency the v104 evidence actually
+# shows: sysfs still lists the body (so a fingerprint is produced) while the
+# /dev/bus/usb node the process would have to open is gone. Clog_000003 reports
+# abilities identifying a K-1 II while 'usb:001,003' cannot be found, followed by
+# sp_Gphoto_Init ret -5 -- i.e. present-but-unopenable. That state must read as
+# usb_present=1 camera_init_ok=0, not as healthy and not as absent.
+rm -rf "$TMP/sys" "$TMP/proc" "$TMP/dev" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/proc/123/fd" "$TMP/dev/001" "$TMP/run"
+make_usb 1-2 25fb 0183 1 3          # sysfs says the body is there
+# ...but no node exists at /dev/bus/usb/001/003, and a pgphoto process is running.
+ln -s /app/lib/stage2/pgphoto.stage2ondisk "$TMP/proc/123/exe"
+PORT_LOG=$TMP/port.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_USB_DEVFS="$TMP/dev" OPENPOLARIS_PROC_ROOT="$TMP/proc" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 OPENPOLARIS_USB_MAX_POLLS=6 \
+    sh "$SUPERVISOR" >"$PORT_LOG" 2>&1
+grep -q 'camera-state: usb_present=1 camera_init_ok=0 restarted_process=0' "$PORT_LOG" \
+    || { echo "FAIL: sysfs-present but devfs-missing not reported as init_ok=0 (#358 task 3)"
+         cat "$PORT_LOG"; exit 1; }
+
+# Repeated unplug/replug cycles. Each cycle must cost exactly one restart, and the
+# state line must track every transition rather than latching on the first healthy
+# reading. With MAX_RESTARTS unset (6) four cycles must not trip quarantine -- if
+# absence were still restarting, four cycles would spend eight slots and quarantine
+# on the third, which is how the original churn reached a device.
+#
+# wait_for_log() only answers "has this line ever appeared", so reusing it per
+# cycle returns instantly from cycle 1 onward and the test would pass while
+# asserting nothing. These cycles are driven off occurrence counts instead.
+wait_for_count() {
+    _f=$1; _pat=$2; _want=$3; _i=0
+    while [ "$_i" -lt 200 ]; do
+        [ "$(grep -c "$_pat" "$_f" 2>/dev/null || echo 0)" -ge "$_want" ] && return 0
+        sleep 0.05; _i=$((_i + 1))
+    done
+    return 1
+}
+
+rm -rf "$TMP/sys" "$TMP/proc" "$TMP/dev" "$TMP/run" "$RESTART_LOG"
+mkdir -p "$TMP/sys" "$TMP/dev/001" "$TMP/run"
+touch "$TMP/dev/001/003"
+make_usb 1-2 25fb 0183 1 3
+CYCLE_LOG=$TMP/cycle.out
+OPENPOLARIS_RUN_DIR="$TMP/run" OPENPOLARIS_USB_SYSFS="$TMP/sys" \
+OPENPOLARIS_USB_DEVFS="$TMP/dev" OPENPOLARIS_PROC_ROOT="$TMP/proc" \
+OPENPOLARIS_RESTART_GPHOTO="$TMP/restart" OPENPOLARIS_USB_POLL_SECS=0.05 \
+OPENPOLARIS_USB_STARTUP_GRACE_POLLS=0 OPENPOLARIS_USB_STABLE_POLLS=1 \
+OPENPOLARIS_USB_RESTART_COOLDOWN_POLLS=1 OPENPOLARIS_USB_ABSENT_ANNOUNCE_POLLS=2 \
+OPENPOLARIS_USB_ABSENT_EVIDENCE=0 OPENPOLARIS_USB_MAX_POLLS=0 \
+    sh "$SUPERVISOR" >"$CYCLE_LOG" 2>&1 &
+cy_pid=$!
+wait_for_log "$CYCLE_LOG" 'supervisor ready' || {
+    kill "$cy_pid" 2>/dev/null || true; wait "$cy_pid" 2>/dev/null || true
+    echo "FAIL: supervisor never baselined for the cycle test (#358 task 3)"; exit 1
+}
+cycle=0
+while [ "$cycle" -lt 4 ]; do
+    cycle=$((cycle + 1))
+    rm -rf "$TMP/sys/1-2"
+    if ! wait_for_count "$CYCLE_LOG" 'body absent; not restarting pgphoto' "$cycle"; then
+        kill "$cy_pid" 2>/dev/null || true; wait "$cy_pid" 2>/dev/null || true
+        echo "FAIL: cycle $cycle produced no NEW absence notice (#358 task 3)"
+        cat "$CYCLE_LOG"; exit 1
+    fi
+    make_usb 1-2 25fb 0183 1 3
+    if ! wait_for_count "$RESTART_LOG" 'restart' "$cycle"; then
+        kill "$cy_pid" 2>/dev/null || true; wait "$cy_pid" 2>/dev/null || true
+        echo "FAIL: after cycle $cycle expected $cycle restarts, got \
+$(grep -c restart "$RESTART_LOG" 2>/dev/null || echo 0) (#358 task 3)"
+        cat "$CYCLE_LOG"; exit 1
+    fi
+done
+sleep 0.4
+kill "$cy_pid" 2>/dev/null || true; wait "$cy_pid" 2>/dev/null || true
+test "$(grep -c restart "$RESTART_LOG")" -eq 4 || {
+    echo "FAIL: 4 unplug/replug cycles did not cost exactly 4 restarts (#358 task 3)"
+    cat "$CYCLE_LOG"; exit 1
+}
+if grep -q 'restart_budget_exhausted' "$CYCLE_LOG"; then
+    echo "FAIL: 4 cycles exhausted the restart budget (#358 task 3)"; exit 1
+fi
+# Four cycles must have produced four distinct absence notices and four restarts,
+# i.e. one each -- not two per cycle.
+test "$(grep -c 'body absent; not restarting pgphoto' "$CYCLE_LOG")" -eq 4
+
+echo 'PASS: camera USB supervisor reports present-but-unopenable as init_ok=0 and costs one restart per unplug/replug cycle (issue #358 task 3)'
