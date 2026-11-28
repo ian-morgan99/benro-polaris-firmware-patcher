@@ -316,6 +316,13 @@ PY_TESTS=(
     tests/test_astro_multishot.py
     tests/test_display_fwver_monotonic.py
     tests/test_release_number_matches_display_fwver.py
+    # A firmware-only builder must not publish under an astro-vNNN name. v120 did
+    # exactly that: six published files where .118 publishes seventeen, no kit
+    # archives, and nothing complained because the completeness gate is not on
+    # that code path. Pinned here so the guard cannot silently stop working --
+    # the same class of blindness that let .117 and .118 ship without
+    # astro-bundle.tar.gz.
+    tests/test_firmware_only_builder_rejects_astro_id.py
     # Added for #389: the widget-enumeration A/B was run twice badly before it was
     # run once well. INI settings syntax made libgphoto2's verify_settings() unlink
     # the file, so cachetime=30 silently measured the default and a 45% "improvement"
