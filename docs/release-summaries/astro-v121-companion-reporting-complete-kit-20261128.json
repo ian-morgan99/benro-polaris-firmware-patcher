@@ -1,0 +1,61 @@
+{
+  "baseline": {
+    "candidate_id": "astro-v120-companion-reporting-20261128",
+    "libgphoto2_commit": "089ae66c74f02f8b0305ffd5847ef18f56d880c4",
+    "patcher_commit": "5cad2e4c31ccba91c176c79ccaf87a4a3caf7549"
+  },
+  "purpose": "Re-issue the two v120 behavioural fixes as a complete Astro release. v120 was built by build-release-candidate.sh, which emits only FwPkt.zip and the install manifest; it published six files where the comparable Astro release 6.0.0.54.118 publishes seventeen, with polaris-astro.zip, polaris-wifi.zip, astro-bundle.tar.gz and astrometry-indexes.zip all absent. Despite its astro-vNNN name it therefore does not satisfy the mandatory complete-release distribution gate in docs/FWPKT-PROVENANCE-CONTRACT.md and cannot be installed as an Astro release. This candidate is built by scripts/build-astro-candidate.sh, the only producer that emits the kit archives, so the same two fixes ship in a packet that is actually installable.",
+  "changes": [
+    {
+      "component": "patcher",
+      "summary": "Stage-2 queries gp_camera_get_extra_capture_files after a successful still capture and names every companion the camlib recorded, or states plainly that the count is unknown when the query fails. Detection already worked: [pentax] capture=N companions=1 on dual-format captures, but nothing in the firmware stack consumed it (zero references to extra_capture in pgphoto.stage2ondisk or libpolaris_stage2.so), so a companion was detected, paid for in camera-side capture time, and silently dropped.",
+      "issues": [
+        "#362"
+      ]
+    },
+    {
+      "component": "patcher",
+      "summary": "The camera-USB supervisor rejects torn sysfs reads instead of debouncing an empty bus/dev identity as a real device change. A partial read of /sys/bus/usb/devices/*/busnum produced an empty bus/dev pair, which the debounce treated as a genuine removal, restarting pgphoto for a body that was already gone.",
+      "issues": [
+        "#358"
+      ]
+    },
+    {
+      "component": "packaging",
+      "summary": "build-release-candidate.sh now refuses an astro-vNNN candidate id before the doctor and before anything is built. A firmware-only packet must not be published under an Astro release name, because docs/RELEASE-VERSION-STATE.md makes astro-vNNN and 6.0.0.54.NNN one release carrying two names. The guard fires early so a rejected identity cannot cost a full ARM build; the first v120 attempt spent ~20 minutes and died only in the change-manifest step.",
+      "issues": [
+        "#169"
+      ]
+    },
+    {
+      "component": "tests",
+      "summary": "Regression coverage for both behavioural fixes and for the new release guard. The companion-reporting test drives the loader's extra-capture path; the torn-read test reproduces a partial sysfs read offline; the guard test asserts an astro-vNNN id is refused by the firmware-only builder while o-main-* and short vNNN ids still pass, and that the guard precedes both the doctor and the version claim. All three verified non-vacuous by removing the fix and observing failure.",
+      "issues": [
+        "#362",
+        "#358",
+        "#169"
+      ]
+    },
+    {
+      "component": "docs",
+      "summary": "docs/CURRENT-STATE.md corrected against v120's shipped bytes: it asserted strings libpolaris_stage2.so | grep -c extra_capture = 0, which was true when written and is false now (the count is 4). pgphoto remains 0, which is the half that keeps #362 open: reporting is not delivery. The .120 row in docs/FWPKT-PROVENANCE-CONTRACT.md records that v120 is firmware-only and must not be installed as an Astro release.",
+      "issues": [
+        "#362"
+      ]
+    }
+  ],
+  "known_limits": [
+    "Companion delivery (#362) is NOT fixed. The loader reports companions it found but cannot download them, because it cannot know pgphoto's destination directory. Delivery needs either pgphoto calling gp_camera_get_extra_capture_files itself or a consumer that knows the target path. Only the silence is closed.",
+    "Nothing in this candidate has been installed or run on hardware. No Polaris was reachable when it was built: 192.168.0.1 resolved via enp11s0 to the home cable router (the exact false-positive AGENTS.md warns about), no polaris_* AP was associated, and this host holds no SSH credential for the head.",
+    "The torn sysfs read is reproduced offline only; it has never been observed on a physical unplug.",
+    "AF through the head's own runtime remains unqualified, and K-3 III regression for #359 is outstanding.",
+    "libgphoto2 is unchanged from v119/v120 (089ae66c74f02f8b0305ffd5847ef18f56d880c4); there is no driver delta in this release.",
+    "A successful offline gate, publication, or identity check does not by itself prove camera behaviour."
+  ],
+  "validation_focus": [
+    "Confirm the published folder carries every mandatory archive: FwPkt.zip, polaris-astro.zip, polaris-wifi.zip, astro-bundle.tar.gz, astrometry-indexes.zip and polaris-sd-package.zip.",
+    "On a real JPG+RAW capture, read the new extra-capture lines and confirm what count they report; this is the first time the number will be observed on hardware.",
+    "Re-run scripts/k1ii-capture-trace.py after flashing to confirm whether a second file is delivered.",
+    "Confirm the camera-USB supervisor no longer restarts pgphoto on an empty bus/dev read during a physical unplug."
+  ]
+}
