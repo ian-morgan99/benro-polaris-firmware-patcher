@@ -4,8 +4,29 @@ set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 SUPERVISOR=$ROOT/container/ondisk/camera_usb_supervisor.sh
 TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 mkdir -p "$TMP/sys" "$TMP/run" "$TMP/proc"
+
+# Diagnostics for unexpected aborts. The suite runs under `set -eu`, and dash has
+# no ERR trap, so any command that fails outside an explicit `|| { echo FAIL; exit 1; }`
+# exits with no message at all. CI run 46086618810 showed exactly that: the gate
+# reported "FAIL: camera USB supervisor behaviour" with a completely empty log, so
+# nothing could be learned from it.
+#
+# xtrace therefore goes to a side file on stderr, and the EXIT trap dumps its tail
+# to the real stderr (kept on fd 4) whenever the status is non-zero. FAIL messages
+# in this suite are plain `echo`, i.e. stdout, so they still reach the gate log
+# directly and are unaffected by the redirect.
+TRACE=$TMP/xtrace
+exec 4>&2
+exec 2>"$TRACE"
+set -x
+
+trap 'st=$?
+      if [ "$st" -ne 0 ]; then
+          printf "%s\n" "--- suite aborted with status $st; last 60 xtrace lines follow ---" >&4
+          tail -n 60 "$TRACE" >&4 2>/dev/null || printf "%s\n" "no trace captured" >&4
+      fi
+      rm -rf "$TMP"' EXIT HUP INT TERM
 
 make_usb() {
     dir=$TMP/sys/$1
